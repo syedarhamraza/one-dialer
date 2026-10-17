@@ -14,10 +14,9 @@ import 'speed_dial_screen.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_collapsible_header.dart';
 import '../../widgets/one_ui_floating_menu.dart';
-import '../contacts/contact_details_screen.dart';
-import '../contacts/contact_picker_screen.dart';
 import '../../widgets/place_call.dart';
 import 't9.dart';
+import '../search/search_screen.dart';
 
 /// Samsung-style dial pad: T9 contact search above, the typed number, the keypad and
 /// one call button per SIM (two when "Ask every time" is set on a dual-SIM phone).
@@ -142,15 +141,6 @@ class _KeypadScreenState extends State<KeypadScreen> with WidgetsBindingObserver
     );
   }
 
-  /// shortcut: the contact list with search until the Samsung search page (plan step 6) exists.
-  Future<void> _search() async {
-    final picked = await pickContact(context, title: 'Search');
-    if (picked != null && mounted) {
-      await Navigator.of(context)
-          .push(MaterialPageRoute<void>(builder: (_) => ContactDetailsScreen(contactId: picked.id)));
-    }
-  }
-
   /// One button per SIM only when Android has no default SIM to use.
   List<SimCard?> get _callButtons => _sims.length > 1 && !_sims.any((s) => s.isDefault) ? _sims : const [null];
 
@@ -182,7 +172,12 @@ class _KeypadScreenState extends State<KeypadScreen> with WidgetsBindingObserver
                           tooltip: 'Add to Contacts',
                           onTap: () => showAddToContacts(context, number),
                         ),
-                      OneUIHeaderAction(icon: Icons.search_rounded, size: 26, tooltip: 'Search', onTap: _search),
+                      OneUIHeaderAction(
+                        icon: Icons.search_rounded,
+                        size: 26,
+                        tooltip: 'Search',
+                        onTap: () => openSearch(context),
+                      ),
                       OneUIHeaderAction(
                         actionKey: _menuKey,
                         icon: Icons.more_vert_rounded,

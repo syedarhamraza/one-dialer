@@ -16,12 +16,11 @@ import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_floating_modal.dart';
 import '../../widgets/one_ui_radio.dart';
 import '../../widgets/swipe_to_call.dart';
-import '../contacts/contact_details_screen.dart';
-import '../contacts/contact_picker_screen.dart';
 import '../settings/settings_screen.dart';
 import 'call_details_screen.dart';
 import 'call_log.dart';
 import 'call_log_repository.dart';
+import '../search/search_screen.dart';
 
 /// Samsung-style Recents: calls grouped by day, All / Missed filter, swipe right to
 /// call and left to message, tap for details, long-press to multi-select and delete.
@@ -108,15 +107,6 @@ class _RecentsScreenState extends State<RecentsScreen> {
       ),
     ],
   );
-
-  /// shortcut: the contact list with search until the Samsung search page (plan step 6) exists.
-  Future<void> _search() async {
-    final picked = await pickContact(context, title: 'Search');
-    if (picked != null && mounted) {
-      await Navigator.of(context)
-          .push(MaterialPageRoute<void>(builder: (_) => ContactDetailsScreen(contactId: picked.id)));
-    }
-  }
 
   void _toggle(CallGroup group) {
     final ids = group.calls.map((c) => c.id);
@@ -216,7 +206,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
                 ? null
                 : [
                     OneUIHeaderAction(icon: Icons.filter_list_rounded, tooltip: 'Filter calls', onTap: _chooseFilter),
-                    OneUIHeaderAction(icon: Icons.search_rounded, tooltip: 'Search', onTap: _search),
+                    OneUIHeaderAction(icon: Icons.search_rounded, tooltip: 'Search', onTap: () => openSearch(context)),
                     OneUIHeaderAction(icon: Icons.more_vert_rounded, tooltip: 'More options', onTap: _openMenu),
                   ],
           ),

@@ -18,11 +18,11 @@ import '../../widgets/one_ui_floating_modal.dart';
 import '../../widgets/one_ui_scroll_to_top_button.dart';
 import '../settings/settings_screen.dart';
 import 'contact_details_screen.dart';
-import 'contact_picker_screen.dart';
 import 'contact_sections.dart';
 import 'contacts_widgets.dart';
 import 'editor/contact_editor_screen.dart';
 import 'groups_screen.dart';
+import '../search/search_screen.dart';
 
 /// Samsung-style Contacts tab: favourite tiles, My profile, Groups, A–Z section cards
 /// with an inline quick card on tap, a dotted fast scroller and multi-select delete.
@@ -189,12 +189,6 @@ class _ContactsScreenState extends State<ContactsScreen> {
     ],
   );
 
-  /// shortcut: our contact picker until the Samsung search page (plan step 6) exists.
-  Future<void> _search() async {
-    final picked = await pickContact(context, title: 'Search');
-    if (picked != null && mounted) _open(picked);
-  }
-
   // --- Build -------------------------------------------------------------------
 
   @override
@@ -264,7 +258,11 @@ class _ContactsScreenState extends State<ContactsScreen> {
                           tooltip: 'Create contact',
                           onTap: () => openContactEditor(context),
                         ),
-                        OneUIHeaderAction(icon: Icons.search_rounded, tooltip: 'Search', onTap: _search),
+                        OneUIHeaderAction(
+                          icon: Icons.search_rounded,
+                          tooltip: 'Search',
+                          onTap: () => openSearch(context),
+                        ),
                         OneUIHeaderAction(icon: Icons.more_vert_rounded, tooltip: 'More options', onTap: _openMenu),
                       ],
               ),

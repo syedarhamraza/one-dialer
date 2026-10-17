@@ -37,6 +37,20 @@ class DialerPrefs {
     changes.value++;
   }
 
+  /// Search page "Recent searches", newest first.
+  Future<List<String>> recentSearches() async => await _prefs.getStringList('recent_searches') ?? const [];
+
+  /// Adds [query] to the front (or removes it with [remove]); keeps the last 10.
+  Future<void> updateRecentSearch(String query, {bool remove = false}) async {
+    final list = [
+      for (final s in await recentSearches())
+        if (s != query) s,
+    ];
+    await _prefs.setStringList('recent_searches', [if (!remove) query, ...list].take(10).toList());
+  }
+
+  Future<void> clearRecentSearches() => _prefs.remove('recent_searches');
+
   /// Contacts › "View favorites as list" (Samsung shows tiles by default).
   Future<bool> favoritesAsList() async => await _prefs.getBool('favorites_as_list') ?? false;
 
