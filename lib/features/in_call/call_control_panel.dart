@@ -105,6 +105,8 @@ class _CallControlPanelState extends State<CallControlPanel> {
       _tone = null;
       _ending = false;
       _endingTimeout?.cancel();
+      _noteAt = null;
+      _hasNote = false;
     } else if (!widget.keypadOpen || widget.animating) {
       _stopTone();
     }
@@ -161,8 +163,6 @@ class _CallControlPanelState extends State<CallControlPanel> {
       layoutProgress,
     )!;
     final holding = widget.call.state == CallState.holding;
-    final number = widget.call.number ?? '';
-    final canMessage = !widget.call.isPrivate && !widget.call.isConference && number.isNotEmpty;
     final actions = <({IconData icon, String label, bool active, VoidCallback? tap})>[
       (
         icon: widget.audio.muted ? Icons.mic_off_rounded : Icons.mic_none_rounded,
@@ -179,16 +179,11 @@ class _CallControlPanelState extends State<CallControlPanel> {
             : null,
       ),
       (icon: Icons.add_call, label: 'Add call', active: false, tap: telecom.openDialer),
-      // Merge only matters with two calls; otherwise the slot offers a message to the caller.
-      if ((widget.callCount > 1 && widget.call.canMerge) || !canMessage)
-        (
-          icon: Icons.call_merge_rounded,
-          label: 'Merge',
-          active: false,
-          tap: widget.callCount > 1 && widget.call.canMerge ? () => telecom.merge(widget.call.id) : null,
-        )
+      // Merge only matters with two calls; otherwise the slot holds a note, kept on screen.
+      if (widget.callCount > 1 && widget.call.canMerge)
+        (icon: Icons.call_merge_rounded, label: 'Merge', active: false, tap: () => telecom.merge(widget.call.id))
       else
-        (icon: Icons.chat_bubble_outline_rounded, label: 'Message', active: false, tap: () => _message(number)),
+        (icon: Icons.edit_note_rounded, label: 'Note', active: _hasNote, tap: _editNote),
     ];
     final route = widget.audio.route;
     final routeLabel = switch (route) {
@@ -369,12 +364,14 @@ class _CallControlPanelState extends State<CallControlPanel> {
   static const _innerOut = Interval(0, .32, curve: Curves.easeOut);
   static const _outerOut = Interval(.08, .40, curve: Curves.easeOut);
 
-  Future<void> _message(String number) async {
-    try {
-      await TelecomBridge.instance.sendSms(number);
-    } on PlatformException {
-      // No SMS app: nothing to open.
-    }
+  /// When this call's note was first opened; the note's identity for Recents.
+  DateTime? _noteAt;
+  bool _hasNote = false;
+
+  Future<void> _editNote() async {
+    final at = _noteAt ??= DateTime.now();
+    final hasNote = await editCallNote(context, widget.call.number ?? '', at);
+    if (mounted) setState(() => _hasNote = hasNote);
   }
 
   Widget _keypadKey(int index, double p, double size, double stride, double upperHeight) {

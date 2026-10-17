@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/one_ui_floating_modal.dart';
@@ -185,4 +188,82 @@ Future<void> chooseCallAudioRoute(BuildContext context, AudioInfo audio) async {
     ),
   );
   if (route != null && context.mounted) await TelecomBridge.instance.setAudioRoute(route);
+}
+
+/// Opens the call note over the call screen. Text saves as it's typed, so a note survives the
+/// other side hanging up mid-sentence. Returns whether a note is left.
+Future<bool> editCallNote(BuildContext context, String number, DateTime at) async {
+  final initial = await DialerPrefs.instance.callNote(number, at) ?? '';
+  if (!context.mounted) return initial.isNotEmpty;
+  final text = await OneUIFloatingModal.show<String>(
+    context: context,
+    builder: (context) => _CallNoteSheet(number: number, at: at, initial: initial),
+  );
+  return (text ?? await DialerPrefs.instance.callNote(number, at) ?? '').trim().isNotEmpty;
+}
+
+class _CallNoteSheet extends StatefulWidget {
+  const _CallNoteSheet({required this.number, required this.at, required this.initial});
+  final String number;
+  final DateTime at;
+  final String initial;
+
+  @override
+  State<_CallNoteSheet> createState() => _CallNoteSheetState();
+}
+
+class _CallNoteSheetState extends State<_CallNoteSheet> {
+  late final _controller = TextEditingController(text: widget.initial);
+  Timer? _save;
+
+  void _flush() {
+    _save?.cancel();
+    _save = null;
+    DialerPrefs.instance.setCallNote(widget.number, widget.at, _controller.text);
+  }
+
+  @override
+  void dispose() {
+    if (_save != null) _flush();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Colors.transparent,
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            const Expanded(
+              child: Text('Call note', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+            ),
+            TextButton(
+              onPressed: () {
+                _flush();
+                Navigator.of(context).pop(_controller.text);
+              },
+              child: const Text('Done'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _controller,
+          autofocus: true,
+          minLines: 3,
+          maxLines: 6,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: const InputDecoration(hintText: 'Write something to remember from this call'),
+          onChanged: (_) {
+            _save?.cancel();
+            _save = Timer(const Duration(milliseconds: 400), _flush);
+          },
+        ),
+      ],
+    ),
+  );
 }

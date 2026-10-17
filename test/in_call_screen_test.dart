@@ -9,6 +9,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dialer/core/prefs/dialer_prefs.dart';
+import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -17,6 +20,7 @@ void main() {
   const codec = StandardMethodCodec();
   setUp(() {
     nativeCalls.clear();
+    SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.empty();
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     messenger.setMockMethodCallHandler(const MethodChannel(events), (_) async => null);
     messenger.setMockMethodCallHandler(const MethodChannel('flutter_contacts'), (call) async {
@@ -127,21 +131,30 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('the fourth action is Message for one call and Merge for two', (tester) async {
+  testWidgets('the fourth action takes a note on one call and merges with two', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
-    await tester.tap(find.byTooltip('Message'));
-    expect(nativeCalls.any((c) => c.method == 'sendSms' && c.arguments['number'] == '5550100'), isTrue);
+    await tester.tap(find.byTooltip('Note'));
+    await tester.pumpAndSettle();
+    expect(find.text('Call note'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'Send the invoice');
+    await tester.pump(const Duration(milliseconds: 500)); // Saved while typing.
+    final notes = await DialerPrefs.instance.callNotes('5550100');
+    expect(notes.single.$2, 'Send the invoice');
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TextField), findsNothing); // Still on the call screen.
+    expect(
+      tester.widget<IconButton>(find.byWidgetPredicate((w) => w is IconButton && w.tooltip == 'Note')).isSelected,
+      isTrue,
+    );
     await emit(tester, [
       {...call('active'), 'canMerge': true},
       call('holding', id: 'held'),
     ]);
     await tester.pumpAndSettle();
-    expect(find.byTooltip('Message'), findsNothing);
+    expect(find.byTooltip('Note'), findsNothing);
     expect(find.byTooltip('Merge'), findsOneWidget);
-    await emit(tester, [call('active', private: true)]);
-    await tester.pumpAndSettle();
-    expect(find.byTooltip('Message'), findsNothing);
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -297,8 +310,8 @@ void main() {
       tester.widget<IconButton>(find.byWidgetPredicate((w) => w is IconButton && w.tooltip == 'Hold')).onPressed,
       isNull,
     );
-    expect(find.byTooltip('Merge'), findsNothing); // One call: the slot offers Message instead.
-    expect(find.byTooltip('Message'), findsOneWidget);
+    expect(find.byTooltip('Merge'), findsNothing); // One call: the slot holds a note instead.
+    expect(find.byTooltip('Note'), findsOneWidget);
     await emit(tester, [
       {...call('active'), 'canHold': true, 'canMerge': true},
       call('holding', id: 'held'),

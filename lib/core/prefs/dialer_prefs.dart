@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../features/recents/call_log.dart' show numberKey;
+
 /// Small app settings: speed dial slots and per-contact default SIM.
 class DialerPrefs {
   DialerPrefs._();
@@ -57,6 +59,40 @@ class DialerPrefs {
   Future<void> setFavoritesAsList(bool value) async {
     await _prefs.setBool('favorites_as_list', value);
     changes.value++;
+  }
+
+  /// Notes taken during calls live under `call_note_<number>_<millis>`, where millis is when the
+  /// call's first note was saved; Recents matches them to the logged call by time.
+  static String _notePrefix(String number) {
+    final key = numberKey(number);
+    return 'call_note_${key.isEmpty ? 'private' : key}_';
+  }
+
+  Future<String?> callNote(String number, DateTime at) =>
+      _prefs.getString('${_notePrefix(number)}${at.millisecondsSinceEpoch}');
+
+  /// Saves (or, when blank, removes) the note for the call with [number] begun at [at].
+  Future<void> setCallNote(String number, DateTime at, String text) async {
+    final key = '${_notePrefix(number)}${at.millisecondsSinceEpoch}';
+    if (text.trim().isEmpty) {
+      await _prefs.remove(key);
+    } else {
+      await _prefs.setString(key, text.trim());
+    }
+    changes.value++;
+  }
+
+  /// Every note for [number] with when it was taken, oldest first.
+  Future<List<(DateTime, String)>> callNotes(String number) async {
+    final prefix = _notePrefix(number);
+    final keys = (await _prefs.getKeys()).where((k) => k.startsWith(prefix)).toSet();
+    if (keys.isEmpty) return const [];
+    final notes = [
+      for (final MapEntry(:key, :value) in (await _prefs.getAll(allowList: keys)).entries)
+        if ((value, int.tryParse(key.substring(prefix.length))) case (final String text, final int millis?))
+          (DateTime.fromMillisecondsSinceEpoch(millis), text),
+    ]..sort((a, b) => a.$1.compareTo(b.$1));
+    return notes;
   }
 
   /// The SIM id (see `SimCard.id`) calls to this contact should use; null = ask / Android default.

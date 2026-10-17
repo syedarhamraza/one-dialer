@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/contacts/contacts_repository.dart';
+import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_scroll.dart';
 import '../../theme/one_ui_theme.dart';
@@ -114,16 +115,22 @@ class CallDetailsScreen extends StatelessWidget {
                   ],
                 ),
               const SizedBox(height: 24),
-              Container(
-                decoration: BoxDecoration(color: OneUITheme.surfaceCard, borderRadius: OneUITheme.cardBorderRadius),
-                child: Column(
-                  children: [
-                    for (var i = 0; i < history.length; i++) ...[
-                      if (i > 0)
-                        Divider(height: 1, indent: 16, endIndent: 16, color: Colors.white.withValues(alpha: 0.08)),
-                      _HistoryRow(call: history[i]),
-                    ],
-                  ],
+              ValueListenableBuilder(
+                valueListenable: DialerPrefs.instance.changes,
+                builder: (context, _, _) => FutureBuilder(
+                  future: DialerPrefs.instance.callNotes(call.number),
+                  builder: (context, notes) => Container(
+                    decoration: BoxDecoration(color: OneUITheme.surfaceCard, borderRadius: OneUITheme.cardBorderRadius),
+                    child: Column(
+                      children: [
+                        for (var i = 0; i < history.length; i++) ...[
+                          if (i > 0)
+                            Divider(height: 1, indent: 16, endIndent: 16, color: Colors.white.withValues(alpha: 0.08)),
+                          _HistoryRow(call: history[i], notes: notesFor(history[i], history, notes.data ?? const [])),
+                        ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 32),
@@ -166,10 +173,23 @@ class _Action extends StatelessWidget {
   }
 }
 
+/// Notes taken during [call]: each note goes to the newest logged call whose time span (with a
+/// little slack for ringing and the call log's rounding) contains the moment it was started.
+List<String> notesFor(CallLogEntry call, List<CallLogEntry> history, List<(DateTime, String)> notes) {
+  bool during(CallLogEntry c, DateTime at) =>
+      !at.isBefore(c.date.subtract(const Duration(minutes: 1))) &&
+      at.isBefore(c.date.add(c.duration + const Duration(minutes: 2)));
+  return [
+    for (final (at, text) in notes)
+      if (history.where((c) => during(c, at)).firstOrNull == call) text,
+  ];
+}
+
 class _HistoryRow extends StatelessWidget {
-  const _HistoryRow({required this.call});
+  const _HistoryRow({required this.call, this.notes = const []});
 
   final CallLogEntry call;
+  final List<String> notes;
 
   @override
   Widget build(BuildContext context) {
@@ -192,6 +212,18 @@ class _HistoryRow extends StatelessWidget {
                   '${dayLabel(call.date, DateTime.now())}, ${timeLabel(call.date)}',
                   style: const TextStyle(fontSize: 13, color: OneUITheme.textSecondary),
                 ),
+                for (final note in notes)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.edit_note_rounded, size: 16, color: OneUITheme.textSecondary),
+                        const SizedBox(width: 6),
+                        Expanded(child: Text(note, style: const TextStyle(fontSize: 14))),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
