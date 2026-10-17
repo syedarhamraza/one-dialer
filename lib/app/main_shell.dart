@@ -8,6 +8,7 @@ import '../features/recents/call_log_repository.dart';
 import '../features/recents/recents_screen.dart';
 import '../widgets/one_ui_floating_nav_bar.dart';
 import '../widgets/one_ui_status_bar_scrim.dart';
+import 'return_to_call_banner.dart';
 
 /// A tab's selection actions (a docked `OneUIFloatingActionBar`). While set, the nav
 /// bar morphs into them (OneSpend's `dockedContent`).
@@ -92,6 +93,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
             ],
           ),
           const Positioned(top: 0, left: 0, right: 0, child: OneUIStatusBarScrim()),
+          const Positioned(top: 0, left: 0, right: 0, child: ReturnToCallBanner()),
           ValueListenableBuilder<String>(
             valueListenable: _input,
             builder: (context, number, _) {

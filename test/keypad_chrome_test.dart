@@ -13,7 +13,7 @@ void main() {
 
   setUp(() {
     SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.empty();
-    for (final name in ['com.syedarhamraza.dialer/telecom', 'flutter_contacts']) {
+    for (final name in ['com.syedarhamraza.dialer/telecom', 'com.syedarhamraza.dialer/call_state', 'flutter_contacts']) {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
         MethodChannel(name),
         (_) async => null,

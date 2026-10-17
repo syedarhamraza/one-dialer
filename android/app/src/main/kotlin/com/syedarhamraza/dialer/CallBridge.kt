@@ -104,6 +104,10 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
             "getState" -> result.success(CallManager.snapshot())
             "placeCall" -> placeCall(call.argument<String>("number"), call.argument<String>("simId"), result)
             "getSims" -> getSims(result)
+            "showInCallScreen" -> {
+                context.getSystemService(TelecomManager::class.java).showInCallScreen(false)
+                result.success(null)
+            }
             "getMessagingApps" -> inBackground(result) { ContactExtras.messagingApps(context, call.argument<String>("contactId")!!) }
             "openContactData" -> {
                 runCatching {
