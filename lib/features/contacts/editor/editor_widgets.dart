@@ -57,6 +57,7 @@ class EditorField extends StatelessWidget {
     this.keyboardType,
     this.maxLines = 1,
     this.autofocus = false,
+    this.focusNode,
     this.capitalization = TextCapitalization.sentences,
   });
 
@@ -66,6 +67,7 @@ class EditorField extends StatelessWidget {
   final TextInputType? keyboardType;
   final int? maxLines;
   final bool autofocus;
+  final FocusNode? focusNode;
   final TextCapitalization capitalization;
 
   @override
@@ -74,6 +76,7 @@ class EditorField extends StatelessWidget {
       initialValue: value,
       onChanged: onChanged,
       autofocus: autofocus,
+      focusNode: focusNode,
       keyboardType: keyboardType,
       maxLines: maxLines,
       minLines: 1,
