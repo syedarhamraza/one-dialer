@@ -89,10 +89,17 @@ class ContactsRepository {
             primaryIndex: phones.indexWhere((p) => p.isPrimary ?? false),
           ),
     ]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-    _byNumber = {
-      for (final e in entries)
-        for (final n in e.numbers) numberKey(n): e,
-    };
+    // Several contacts can share a number (duplicates across accounts); prefer one with a photo,
+    // else the first by name, so the call screen shows the photo when any copy has one.
+    final byNumber = <String, DialerContact>{};
+    for (final e in entries) {
+      for (final n in e.numbers) {
+        final key = numberKey(n);
+        final current = byNumber[key];
+        if (current == null || (current.thumbnail == null && e.thumbnail != null)) byNumber[key] = e;
+      }
+    }
+    _byNumber = byNumber;
     contacts.value = entries;
   }
 
