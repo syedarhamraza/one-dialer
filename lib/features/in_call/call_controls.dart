@@ -15,14 +15,12 @@ class CallAction extends StatelessWidget {
     this.active = false,
     required this.onPressed,
     this.size = 60,
-    this.showFill = true,
   });
   final IconData icon;
   final String label;
   final bool active;
   final VoidCallback? onPressed;
   final double size;
-  final bool showFill;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -35,13 +33,9 @@ class CallAction extends StatelessWidget {
           isSelected: active,
           iconSize: 27,
           style: IconButton.styleFrom(
-            backgroundColor: !showFill
-                ? Colors.transparent
-                : active
-                ? Colors.white
-                : callControlFill,
+            backgroundColor: active ? Colors.white : callControlFill,
             foregroundColor: active ? const Color(0xFF183139) : Colors.white,
-            disabledBackgroundColor: showFill ? callControlFill : Colors.transparent,
+            disabledBackgroundColor: callControlFill,
             disabledForegroundColor: Colors.white38,
             shape: const CircleBorder(),
             side: BorderSide.none,

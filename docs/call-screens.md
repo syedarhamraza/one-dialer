@@ -27,12 +27,15 @@ filled circles: Mute, Hold/Resume, Add call, Merge above Speaker, End call, Keyp
 End call has extra bottom clearance on taller portrait screens, with a smaller
 gap on compact and landscape layouts.
 
-A single reversible 280 ms controller moves the upper action circles into keypad
-corners, interpolates panel height, and compacts the caller header. Other keys
-reveal progressively. Speaker and the wide End call pill remain anchored; Keypad
-becomes Hide keypad. Upper input is blocked during the morph, while the bottom row
-stays active. Back reverses the animation; rapid toggles reverse from the current
-value. Reduced motion snaps directly to either endpoint.
+A single reversible 280 ms controller shrinks and fades the four-action row
+back while the keypad rises, scales in, and fades up. The action row does not
+slide into digit positions. Panel height and caller-header compaction share that
+controller. Whole circles reveal as space opens to avoid clipping their edges.
+Speaker and the wide End call pill remain anchored; Keypad becomes Hide keypad.
+Upper input is blocked during animation, while the bottom row stays active.
+Back and rapid toggles reverse from the current value. Reduced motion snaps
+directly to either endpoint. Portrait action circles are 76 px and keypad circles
+80 px, with smaller sizes on compact and landscape screens.
 
 ## Verification
 

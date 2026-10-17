@@ -131,6 +131,8 @@ void main() {
     final mute = tester.widget<IconButton>(find.byWidgetPredicate((w) => w is IconButton && w.tooltip == 'Mute'));
     expect(mute.style!.backgroundColor!.resolve({}), const Color(0xFF344850));
     expect(mute.style!.side?.resolve({}), anyOf(isNull, BorderSide.none));
+    expect(tester.getSize(find.byTooltip('Mute')), const Size(76, 76));
+    expect(tester.getSize(find.byTooltip('Speaker')), const Size(76, 76));
     expect(tester.getBottomLeft(find.byTooltip('End call')).dy, lessThanOrEqualTo(915 - 48));
     await tester.pumpWidget(const SizedBox());
   });
@@ -222,20 +224,20 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('keypad morph moves circles continuously and keeps the bottom row anchored', (tester) async {
+  testWidgets('actions recede while keypad rises and the bottom row stays anchored', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
     final panel = find.byKey(const ValueKey('call-upper-panel'));
-    final circle = find.byKey(const ValueKey('morph-key-1'));
-    final start = tester.getTopLeft(circle);
+    final actions = find.byKey(const ValueKey('receding-call-actions'));
+    expect(tester.widget<Transform>(actions).transform.storage[0], 1);
     final height = tester.getSize(panel).height;
     final end = tester.getRect(find.byTooltip('End call'));
     final speaker = tester.getRect(find.byTooltip('Speaker'));
     await tester.tap(find.byTooltip('Keypad'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 140));
-    final middle = tester.getTopLeft(circle);
-    expect(middle, isNot(start));
+    expect(tester.widget<Transform>(actions).transform.storage[0], lessThan(1));
+    final middle = tester.getTopLeft(find.byKey(const ValueKey('morph-key-1')));
     expect(tester.getSize(panel).height, greaterThan(height));
     expect(tester.getRect(find.byTooltip('End call')), end);
     expect(tester.getRect(find.byTooltip('Speaker')), speaker);
@@ -245,7 +247,8 @@ void main() {
     await tester.tap(find.byTooltip('End call'));
     expect(nativeCalls.last.method, 'hangUp');
     await tester.pump(const Duration(milliseconds: 140));
-    expect(tester.getTopLeft(circle), isNot(middle));
+    expect(tester.getTopLeft(find.byKey(const ValueKey('morph-key-1'))).dy, lessThan(middle.dy));
+    expect(actions, findsNothing);
     expect(tester.getRect(find.byTooltip('End call')), end);
     expect(tester.getRect(find.byTooltip('Speaker')), speaker);
     expect(tester.takeException(), isNull);
@@ -255,26 +258,26 @@ void main() {
   testWidgets('rapid toggles reverse from the current geometry without a jump', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
-    final circle = find.byKey(const ValueKey('morph-key-1'));
-    final start = tester.getTopLeft(circle);
+    final panel = find.byKey(const ValueKey('call-upper-panel'));
+    final start = tester.getSize(panel).height;
     await tester.tap(find.byTooltip('Keypad'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 110));
-    final before = tester.getTopLeft(circle);
+    final before = tester.getSize(panel).height;
     await tester.tap(find.byTooltip('Hide keypad'));
     await tester.pump();
-    expect(tester.getTopLeft(circle), before);
+    expect(tester.getSize(panel).height, before);
     await tester.pump(const Duration(milliseconds: 35));
-    final reversing = tester.getTopLeft(circle);
-    expect((reversing - start).distance, lessThan((before - start).distance));
+    final reversing = tester.getSize(panel).height;
+    expect(reversing, lessThan(before));
     await tester.tap(find.byTooltip('Keypad'));
     await tester.pump();
-    expect(tester.getTopLeft(circle), reversing);
+    expect(tester.getSize(panel).height, reversing);
     await tester.pumpAndSettle();
     expect(find.bySemanticsLabel('5'), findsOneWidget);
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
-    expect(tester.getTopLeft(circle), start);
+    expect(tester.getSize(panel).height, start);
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -333,8 +336,13 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       expect(tester.getBottomLeft(find.byTooltip('End call')).dy, lessThan(size.height));
+      final footerPosition = tester.getRect(find.byTooltip('End call'));
       await tester.tap(find.byTooltip('Keypad'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 140));
+      expect(tester.getRect(find.byTooltip('End call')), footerPosition);
       await tester.pumpAndSettle();
+      expect(tester.getRect(find.byTooltip('End call')), footerPosition);
       expect(tester.takeException(), isNull);
       expect(tester.getBottomLeft(find.byTooltip('End call')).dy, lessThan(size.height));
       await tester.pumpWidget(const SizedBox());

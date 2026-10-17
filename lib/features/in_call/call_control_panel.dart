@@ -7,7 +7,7 @@ import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import 'call_controls.dart';
 
-/// One persistent surface: four action circles travel into the keypad corners.
+/// Actions recede while the keypad rises within one reversible animated panel.
 /// The bottom row is outside the changing panel, so it never moves.
 class CallControlPanel extends StatefulWidget {
   const CallControlPanel({
@@ -58,7 +58,6 @@ class _CallControlPanelState extends State<CallControlPanel> {
     ('0', '+'),
     ('#', ''),
   ];
-  static const _corners = [0, 2, 9, 11];
 
   void _stopTone() {
     if (_tone == null) return;
@@ -101,16 +100,32 @@ class _CallControlPanelState extends State<CallControlPanel> {
     final telecom = TelecomBridge.instance;
     final p = widget.progress;
     final compact = widget.compact;
-    final circle = compact ? 48.0 : 64.0;
-    final actionSize = compact ? 48.0 : 60.0;
+    final circle = widget.landscape
+        ? 48.0
+        : compact
+        ? 64.0
+        : 80.0;
+    final actionSize = widget.landscape
+        ? 48.0
+        : compact
+        ? 56.0
+        : 76.0;
     final stride =
         circle +
         (widget.landscape
             ? 4
             : compact
             ? 6
-            : 12);
-    final upperHeight = lerpDouble(compact ? 96 : 112, 32 + stride * 4 - (widget.landscape ? 4 : 0), p)!;
+            : 8);
+    final upperHeight = lerpDouble(
+      widget.landscape
+          ? 96
+          : compact
+          ? 112
+          : 128,
+      32 + stride * 4 - (widget.landscape ? 4 : 0),
+      p,
+    )!;
     final holding = widget.call.state == CallState.holding;
     final actions = <({IconData icon, String label, bool active, VoidCallback? tap})>[
       (
@@ -150,7 +165,7 @@ class _CallControlPanelState extends State<CallControlPanel> {
           height: upperHeight,
           width: widget.width,
           child: Stack(
-            clipBehavior: Clip.none,
+            clipBehavior: Clip.hardEdge,
             children: [
               if (p > 0)
                 Positioned(
@@ -172,9 +187,48 @@ class _CallControlPanelState extends State<CallControlPanel> {
                     ),
                   ),
                 ),
-              for (var i = 0; i < 12; i++) ...[
-                if (_corners.contains(i) || p > 0) _morphKey(i, p, circle, actionSize, stride, actions),
-              ],
+              if (p < 1)
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: widget.landscape
+                      ? 96
+                      : compact
+                      ? 112
+                      : 128,
+                  child: IgnorePointer(
+                    ignoring: p > 0,
+                    child: ExcludeSemantics(
+                      excluding: p > 0,
+                      child: Opacity(
+                        opacity: (1 - p * 2).clamp(0.0, 1.0),
+                        child: Transform.scale(
+                          key: const ValueKey('receding-call-actions'),
+                          scale: 1 - .12 * p,
+                          alignment: Alignment.topCenter,
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              for (final action in actions)
+                                Expanded(
+                                  child: CallAction(
+                                    icon: action.icon,
+                                    label: action.label,
+                                    active: action.active,
+                                    onPressed: action.tap,
+                                    size: actionSize,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              if (p > 0)
+                for (var i = 0; i < 12; i++) _keypadKey(i, p, circle, stride, upperHeight),
             ],
           ),
         ),
@@ -183,7 +237,7 @@ class _CallControlPanelState extends State<CallControlPanel> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (widget.landscape) Expanded(child: SingleChildScrollView(child: upper)) else upper,
+        if (widget.landscape) Expanded(child: SingleChildScrollView(reverse: true, child: upper)) else upper,
         Padding(
           padding: EdgeInsets.only(
             top: compact ? 8 : 20,
@@ -197,7 +251,7 @@ class _CallControlPanelState extends State<CallControlPanel> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(
-                width: compact ? 72 : 84,
+                width: compact ? 72 : 92,
                 child: CallAction(
                   icon: switch (route) {
                     AudioRoute.bluetooth => Icons.bluetooth_audio_rounded,
@@ -238,7 +292,7 @@ class _CallControlPanelState extends State<CallControlPanel> {
                 ),
               ),
               SizedBox(
-                width: compact ? 72 : 84,
+                width: compact ? 72 : 92,
                 child: CallAction(
                   icon: widget.keypadOpen ? Icons.keyboard_arrow_down_rounded : Icons.dialpad_rounded,
                   label: widget.keypadOpen ? 'Hide keypad' : 'Keypad',
@@ -253,113 +307,62 @@ class _CallControlPanelState extends State<CallControlPanel> {
     );
   }
 
-  Widget _morphKey(
-    int index,
-    double p,
-    double circle,
-    double actionSize,
-    double stride,
-    List<({IconData icon, String label, bool active, VoidCallback? tap})> actions,
-  ) {
-    final source = _corners.indexOf(index);
-    final size = lerpDouble(actionSize, circle, p)!;
-    final endX = (index % 3 + .5) * widget.width / 3 - circle / 2;
-    final startX = source < 0 ? endX : (source + .5) * widget.width / 4 - actionSize / 2;
-    final endY = 32 + index ~/ 3 * stride;
-    final revealStart = .35 + (index ~/ 3) * .06;
-    final reveal = source >= 0 ? 1.0 : ((p - revealStart) / (1 - revealStart)).clamp(0.0, 1.0);
+  Widget _keypadKey(int index, double p, double size, double stride, double upperHeight) {
     final (digit, letters) = _keys[index];
+    final fullHeight = 32 + stride * 4 - (widget.landscape ? 4 : 0);
+    final top = upperHeight - fullHeight + 32 + index ~/ 3 * stride + (1 - p) * 24;
+    // Reveal whole circles as space opens, avoiding a sliced circle at either edge.
+    final edgeReveal = (top / 16).clamp(0.0, 1.0) * ((upperHeight - top - size) / 4).clamp(0.0, 1.0);
     return Positioned(
       key: ValueKey('morph-key-$digit'),
-      left: lerpDouble(startX, endX, p),
-      top: lerpDouble(0, endY.toDouble(), p),
+      left: (index % 3 + .5) * widget.width / 3 - size / 2,
+      top: top,
       width: size,
-      height: size + 48,
+      height: size,
       child: Opacity(
-        opacity: reveal,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            if (source >= 0 && p > 0)
-              Container(
-                width: size,
-                height: size,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _tone == digit
-                      ? const Color(0xFF617A80)
-                      : Color.lerp(actions[source].active ? Colors.white : callControlFill, callControlFill, p),
-                ),
-              ),
-            if (source >= 0 && p < 1)
-              Opacity(
-                opacity: (1 - p * 2).clamp(0.0, 1.0),
-                child: ExcludeSemantics(
-                  excluding: p > 0,
-                  child: CallAction(
-                    icon: actions[source].icon,
-                    label: actions[source].label,
-                    active: actions[source].active,
-                    onPressed: actions[source].tap,
-                    size: size,
-                    showFill: p == 0,
+        opacity: p * edgeReveal,
+        child: Transform.scale(
+          scale: .92 + .08 * p,
+          child: ExcludeSemantics(
+            excluding: p < 1,
+            child: Semantics(
+              button: true,
+              label: digit,
+              excludeSemantics: true,
+              onTap: () {
+                _startTone(digit);
+                _releaseTone();
+              },
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTapDown: (_) => _startTone(digit),
+                onTapUp: (_) => _releaseTone(),
+                onTapCancel: _releaseTone,
+                child: Container(
+                  width: size,
+                  height: size,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _tone == digit ? const Color(0xFF617A80) : callControlFill,
                   ),
-                ),
-              ),
-            if (p > 0)
-              Opacity(
-                opacity: ((p - .3) / .7).clamp(0.0, 1.0),
-                child: ExcludeSemantics(
-                  excluding: p < 1,
-                  child: Semantics(
-                    button: true,
-                    label: digit,
-                    excludeSemantics: true,
-                    onTap: () {
-                      _startTone(digit);
-                      _releaseTone();
-                    },
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTapDown: (_) => _startTone(digit),
-                      onTapUp: (_) => _releaseTone(),
-                      onTapCancel: _releaseTone,
-                      child: Container(
-                        width: size,
-                        height: size,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: source >= 0
-                              ? Colors.transparent
-                              : _tone == digit
-                              ? const Color(0xFF617A80)
-                              : callControlFill,
+                  padding: const EdgeInsets.all(4),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(digit, style: const TextStyle(fontSize: 30, height: 1.05, color: Colors.white)),
+                        Text(
+                          letters.isEmpty ? ' ' : letters,
+                          style: const TextStyle(fontSize: 9, height: 1.2, letterSpacing: 1, color: Colors.white70),
                         ),
-                        padding: const EdgeInsets.all(4),
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(digit, style: const TextStyle(fontSize: 30, height: 1.05, color: Colors.white)),
-                              Text(
-                                letters.isEmpty ? ' ' : letters,
-                                style: const TextStyle(
-                                  fontSize: 9,
-                                  height: 1.2,
-                                  letterSpacing: 1,
-                                  color: Colors.white70,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      ],
                     ),
                   ),
                 ),
               ),
-          ],
+            ),
+          ),
         ),
       ),
     );
