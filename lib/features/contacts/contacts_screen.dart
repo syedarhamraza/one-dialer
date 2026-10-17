@@ -9,6 +9,7 @@ import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_collapsible_header.dart';
 import '../../widgets/swipe_to_call.dart';
 import 'contact_details_screen.dart';
+import 'editor/contact_editor_screen.dart';
 import 'contact_sections.dart';
 
 /// Samsung-style Contacts: search, Favourites, A–Z sections with a fast-scroll index,
@@ -199,7 +200,7 @@ class _SearchBar extends StatelessWidget {
             IconButton(
               tooltip: 'Create contact',
               icon: const Icon(Icons.add_rounded, size: 28),
-              onPressed: ContactsRepository.instance.addNumber,
+              onPressed: () => openContactEditor(context),
             ),
           ],
         ),

@@ -50,6 +50,9 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
     /** Set by [MainActivity], which owns the activity result for the role request. */
     var roleRequester: ((String, MethodChannel.Result) -> Unit)? = null
 
+    /** Set by [MainActivity]: opens the photo picker; the result is JPEG bytes or null. */
+    var photoPicker: ((MethodChannel.Result) -> Unit)? = null
+
     /** A `tel:` number the app was opened with, handed to Flutter once. */
     var pendingDialNumber: String? = null
 
@@ -98,6 +101,8 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
             "getState" -> result.success(CallManager.snapshot())
             "placeCall" -> placeCall(call.argument<String>("number"), call.argument<String>("simId"), result)
             "getSims" -> getSims(result)
+            "pickPhoto" -> photoPicker?.invoke(result)
+                ?: result.error("NO_ACTIVITY", "Photos can only be picked from the main screen", null)
             "getQuickReplies" -> result.success(com.syedarhamraza.dialer.telecom.QuickReplies.read(context))
             "setQuickReplies" -> {
                 com.syedarhamraza.dialer.telecom.QuickReplies.write(context, call.argument<List<String>>("replies").orEmpty())

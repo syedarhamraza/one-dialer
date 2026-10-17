@@ -112,19 +112,4 @@ class ContactsRepository {
     if (contact == null) return;
     await FlutterContacts.update(contact.copyWith(android: AndroidData(isFavorite: favorite)));
   }
-
-  /// Opens Android's "new contact" screen, with [number] filled in if given.
-  Future<void> addNumber([String? number]) => FlutterContacts.native.showCreator(
-    contact: number == null ? null : Contact(phones: [Phone(number: number)]),
-  );
-
-  /// Opens Android's contact editor.
-  Future<void> edit(String id) => FlutterContacts.native.showEditor(id);
-
-  /// Android's contact picker; returns the picked name and numbers, or null if cancelled.
-  Future<(String, List<String>)?> pickNumber() async {
-    final c = await FlutterContacts.native.showPicker(properties: {ContactProperty.phone});
-    if (c == null || c.phones.isEmpty) return null;
-    return (c.displayName ?? c.phones.first.number, [for (final p in c.phones) p.number]);
-  }
 }

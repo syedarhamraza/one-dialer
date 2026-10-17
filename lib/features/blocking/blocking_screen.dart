@@ -4,6 +4,7 @@ import '../../core/contacts/contacts_repository.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/one_ui_subpage.dart';
 import '../../widgets/one_ui_group_card.dart';
+import '../contacts/contact_picker_screen.dart';
 import '../recents/call_details_screen.dart';
 import '../recents/call_log.dart';
 import '../recents/call_log_repository.dart';
@@ -52,7 +53,7 @@ class _BlockingScreenState extends State<BlockingScreen> {
       ),
     );
     if (!mounted || choice == null) return;
-    final numbers = choice == 'type' ? [?await _typeNumber()] : (await ContactsRepository.instance.pickNumber())?.$2;
+    final numbers = choice == 'type' ? [?await _typeNumber()] : (await pickContact(context, title: 'Block contact'))?.numbers;
     for (final n in numbers ?? const <String>[]) {
       await _repo.setBlocked(n, true);
     }
