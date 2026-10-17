@@ -17,6 +17,8 @@ class CallLogRepository {
   final ValueNotifier<bool> hasAccess = ValueNotifier(true);
 
   Future<void> start() async {
+    // Once loaded with access, the call-log observer keeps it current.
+    if (TelecomBridge.instance.onCallLogChanged != null && hasAccess.value) return;
     TelecomBridge.instance.onCallLogChanged = _load;
     await _load();
   }

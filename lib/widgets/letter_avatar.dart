@@ -27,19 +27,29 @@ class LetterAvatar extends StatelessWidget {
 
   /// Up to two initials: the first letter of each of the first two words (symbols skipped).
   static String initials(String name) {
-    final letter = RegExp(r'\p{L}', unicode: true);
     final letters = [
-      for (final w in name.trim().split(RegExp(r'\s+')))
-        if (letter.firstMatch(w) case final m?) m[0]!.toUpperCase(),
+      for (final w in name.trim().split(_space))
+        if (_letter.firstMatch(w) case final m?) m[0]!.toUpperCase(),
     ];
     return letters.take(2).join();
   }
+
+  static final _letter = RegExp(r'\p{L}', unicode: true);
+  static final _space = RegExp(r'\s+');
 
   @override
   Widget build(BuildContext context) {
     if (photo case final bytes?) {
       return ClipOval(
-        child: Image.memory(bytes, width: size, height: size, fit: BoxFit.cover, gaplessPlayback: true),
+        child: Image.memory(
+          bytes,
+          width: size,
+          height: size,
+          // Decode at display size, not the thumbnail's full resolution.
+          cacheWidth: (size * MediaQuery.devicePixelRatioOf(context)).round(),
+          fit: BoxFit.cover,
+          gaplessPlayback: true,
+        ),
       );
     }
     final text = initials(name);

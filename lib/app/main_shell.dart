@@ -106,18 +106,26 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
               ),
               child: ValueListenableBuilder<Widget?>(
                 valueListenable: navDock,
-                builder: (context, dock, _) => AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 220),
-                  child: dock != null
-                      ? Align(key: const ValueKey('dock'), alignment: Alignment.bottomCenter, child: dock)
-                      : SafeArea(
-                          key: const ValueKey('nav'),
+                // The glass bar stays mounted under the selection bar (faded out, not
+                // painted), so leaving selection mode doesn't rebuild its shaders.
+                builder: (context, dock, _) => Stack(
+                  alignment: Alignment.bottomCenter,
+                  children: [
+                    IgnorePointer(
+                      ignoring: dock != null,
+                      child: AnimatedOpacity(
+                        opacity: dock == null ? 1 : 0,
+                        duration: const Duration(milliseconds: 220),
+                        child: SafeArea(
                           top: false,
                           child: GlassTabBar.bottom(
                             tabs: _tabs,
                             selectedIndex: _tab,
                             onTabSelected: _select,
+                            // Highest tier everywhere: premium indicator and track, high-quality masking.
                             quality: GlassQuality.premium,
+                            backgroundQuality: GlassQuality.premium,
+                            maskingQuality: MaskingQuality.high,
                             barHeight: kFloatingNavBarHeight,
                             verticalPadding: kNavBarVerticalPadding,
                             tabWidth: _tabWidth,
@@ -129,6 +137,10 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
                             unselectedLabelColor: OneUITheme.navbar3dInactiveText,
                           ),
                         ),
+                      ),
+                    ),
+                    AnimatedSwitcher(duration: const Duration(milliseconds: 220), child: dock),
+                  ],
                 ),
               ),
             ),

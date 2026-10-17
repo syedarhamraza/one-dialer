@@ -76,11 +76,11 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
       _accounts = await FlutterContacts.accounts.getAll();
       _account = await FlutterContacts.accounts.getDefault() ?? _accounts.firstOrNull;
     }
-    final savedSignature = form.signature; // the number below is an unsaved change
-    if (widget.initialNumber case final n? when n.trim().isNotEmpty) {
-      form.phones.add(LabeledValue(label: 'mobile', value: n.trim()));
-    }
-    if (form.phones.isEmpty) form.phones.add(LabeledValue(label: 'mobile'));
+    final initialNumber = widget.initialNumber?.trim() ?? '';
+    // The blank phone row isn't a change; a number passed in (Add to Contacts) is.
+    if (form.phones.isEmpty && initialNumber.isEmpty) form.phones.add(LabeledValue(label: 'mobile'));
+    final savedSignature = form.signature;
+    if (initialNumber.isNotEmpty) form.phones.add(LabeledValue(label: 'mobile', value: initialNumber));
     _groups = _userGroups(await FlutterContacts.groups.getAll(accounts: _account == null ? null : [_account!]));
     if (!mounted) return;
     setState(() {
@@ -125,6 +125,19 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
     }
   }
 
+  static String _avatarName(ContactForm form) =>
+      form.fullName.isEmpty ? (form.phones.firstOrNull?.value ?? '') : form.fullName;
+
+  (bool, String)? _shown;
+
+  /// Text edits only rebuild the screen when something drawn from the text changes:
+  /// the Save pill (empty or not) and the photo's initials.
+  void _edited() {
+    final form = _form!;
+    final shown = (form.isEmpty, LetterAvatar.initials(_avatarName(form)));
+    if (shown != _shown) setState(() => _shown = shown);
+  }
+
   /// "Save your changes or discard them?" on back with unsaved changes.
   Future<void> _confirmLeave() async {
     final choice = await OneUIFloatingModal.show<String>(
@@ -167,9 +180,11 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
   Widget build(BuildContext context) {
     final form = _form;
     return PopScope(
-      canPop: !_dirty,
+      // Decided at back-press time, so typing doesn't have to rebuild to keep it current.
+      canPop: false,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _confirmLeave();
+        if (didPop) return;
+        _dirty ? _confirmLeave() : Navigator.of(context).pop();
       },
       child: Scaffold(
         body: form == null
@@ -223,7 +238,10 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                                 hint: 'Notes',
                                 value: form.notes,
                                 maxLines: null,
-                                onChanged: (v) => setState(() => form.notes = v),
+                                onChanged: (v) {
+                                  form.notes = v;
+                                  _edited();
+                                },
                               ),
                             ),
                           ],
@@ -362,11 +380,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
     final photo = form.newPhoto ?? existing;
     return Column(
       children: [
-        LetterAvatar(
-          name: form.fullName.isEmpty ? (form.phones.firstOrNull?.value ?? '') : form.fullName,
-          photo: photo,
-          size: 128,
-        ),
+        LetterAvatar(name: _avatarName(form), photo: photo, size: 128),
         const SizedBox(height: 14),
         FilledButton.tonal(
           onPressed: () => _photoMenu(hasPhoto: photo != null),
@@ -441,7 +455,10 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                         hint: hint,
                         value: get(),
                         capitalization: TextCapitalization.words,
-                        onChanged: (v) => setState(() => set(v)),
+                        onChanged: (v) {
+                          set(v);
+                          _edited();
+                        },
                       ),
                   ],
                 )
@@ -451,7 +468,10 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                   value: form.fullName,
                   autofocus: _isNew && widget.initialNumber == null,
                   capitalization: TextCapitalization.words,
-                  onChanged: (v) => setState(() => form.fullName = v),
+                  onChanged: (v) {
+                    form.fullName = v;
+                    _edited();
+                  },
                 ),
         ),
         for (final (i, phone) in form.phones.indexed)
@@ -472,7 +492,10 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                   hint: 'Phone',
                   value: phone.value,
                   keyboardType: TextInputType.phone,
-                  onChanged: (v) => setState(() => phone.value = v),
+                  onChanged: (v) {
+                    phone.value = v;
+                    _edited();
+                  },
                 ),
               ],
             ),
@@ -492,16 +515,29 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
             icon: Icons.work_outline_rounded,
             child: Column(
               children: [
-                EditorField(hint: 'Company', value: form.company, onChanged: (v) => setState(() => form.company = v)),
+                EditorField(
+                  hint: 'Company',
+                  value: form.company,
+                  onChanged: (v) {
+                    form.company = v;
+                    _edited();
+                  },
+                ),
                 EditorField(
                   hint: 'Job title',
                   value: form.jobTitle,
-                  onChanged: (v) => setState(() => form.jobTitle = v),
+                  onChanged: (v) {
+                    form.jobTitle = v;
+                    _edited();
+                  },
                 ),
                 EditorField(
                   hint: 'Department',
                   value: form.department,
-                  onChanged: (v) => setState(() => form.department = v),
+                  onChanged: (v) {
+                    form.department = v;
+                    _edited();
+                  },
                 ),
               ],
             ),
@@ -550,7 +586,10 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                   keyboardType: keyboard,
                   capitalization: capitalization,
                   autofocus: row.value.isEmpty && i == rows.length - 1,
-                  onChanged: (v) => setState(() => row.value = v),
+                  onChanged: (v) {
+                    row.value = v;
+                    _edited();
+                  },
                 ),
               ],
             ),
@@ -596,17 +635,44 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                   hint: 'Street',
                   value: a.street,
                   maxLines: null,
-                  onChanged: (v) => setState(() => a.street = v),
+                  onChanged: (v) {
+                    a.street = v;
+                    _edited();
+                  },
                 ),
-                EditorField(hint: 'City', value: a.city, onChanged: (v) => setState(() => a.city = v)),
-                EditorField(hint: 'State/Province', value: a.region, onChanged: (v) => setState(() => a.region = v)),
+                EditorField(
+                  hint: 'City',
+                  value: a.city,
+                  onChanged: (v) {
+                    a.city = v;
+                    _edited();
+                  },
+                ),
+                EditorField(
+                  hint: 'State/Province',
+                  value: a.region,
+                  onChanged: (v) {
+                    a.region = v;
+                    _edited();
+                  },
+                ),
                 EditorField(
                   hint: 'Postal code',
                   value: a.postcode,
                   keyboardType: TextInputType.streetAddress,
-                  onChanged: (v) => setState(() => a.postcode = v),
+                  onChanged: (v) {
+                    a.postcode = v;
+                    _edited();
+                  },
                 ),
-                EditorField(hint: 'Country', value: a.country, onChanged: (v) => setState(() => a.country = v)),
+                EditorField(
+                  hint: 'Country',
+                  value: a.country,
+                  onChanged: (v) {
+                    a.country = v;
+                    _edited();
+                  },
+                ),
               ],
             ),
           ),

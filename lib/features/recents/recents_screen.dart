@@ -21,6 +21,7 @@ import 'call_details_screen.dart';
 import 'call_log.dart';
 import 'call_log_repository.dart';
 import '../search/search_screen.dart';
+import '../../widgets/select_mark.dart';
 
 /// Samsung-style Recents: calls grouped by day, All / Missed filter, swipe right to
 /// call and left to message, tap for details, long-press to multi-select and delete.
@@ -37,6 +38,10 @@ class _RecentsScreenState extends State<RecentsScreen> {
   CallFilter _filter = CallFilter.all;
   bool _hideBlocked = true;
   Set<int>? _selected; // call ids; null when not selecting
+
+  /// Bumped when the selection changes but selection mode doesn't, so only the
+  /// header count and the visible rows' checkboxes rebuild, not the whole list.
+  final _selectionChanged = ValueNotifier(0);
   List<SimCard> _sims = const [];
 
   @override
@@ -52,6 +57,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
   @override
   void dispose() {
     DialerPrefs.instance.changes.removeListener(_loadPrefs);
+    _selectionChanged.dispose();
     super.dispose();
   }
 
@@ -110,16 +116,21 @@ class _RecentsScreenState extends State<RecentsScreen> {
 
   void _toggle(CallGroup group) {
     final ids = group.calls.map((c) => c.id);
-    setState(() {
-      final selected = _selected ??= {};
-      if (ids.every(selected.contains)) {
-        selected.removeAll(ids);
-      } else {
-        selected.addAll(ids);
-      }
-      if (selected.isEmpty) _selected = null;
-    });
-    _updateDock();
+    final entering = _selected == null;
+    final selected = _selected ??= {};
+    if (ids.every(selected.contains)) {
+      selected.removeAll(ids);
+    } else {
+      selected.addAll(ids);
+    }
+    if (selected.isEmpty) {
+      _endSelection();
+    } else if (entering) {
+      setState(() {});
+      _updateDock();
+    } else {
+      _selectionChanged.value++;
+    }
   }
 
   void _endSelection() {
@@ -139,8 +150,8 @@ class _RecentsScreenState extends State<RecentsScreen> {
           icon: Icons.select_all_rounded,
           label: 'All',
           onTap: () {
-            setState(() => _selected = {for (final c in _visibleCalls) c.id});
-            _updateDock();
+            _selected = {for (final c in _visibleCalls) c.id};
+            _selectionChanged.value++;
           },
         ),
         OneUIFloatingActionBarItem(
@@ -188,26 +199,47 @@ class _RecentsScreenState extends State<RecentsScreen> {
       if (_filter.matches(c, hideBlocked: _hideBlocked)) c,
   ];
 
+  // groupByDay is only redone when the calls or the filter change, not on every selection tap.
+  (List<CallLogEntry>, CallFilter, bool)? _groupedFor;
+  List<(DateTime, List<CallGroup>)> _days = const [];
+
+  List<(DateTime, List<CallGroup>)> get _groupedDays {
+    final key = (_repo.calls.value, _filter, _hideBlocked);
+    final old = _groupedFor;
+    if (old == null || !identical(old.$1, key.$1) || old.$2 != key.$2 || old.$3 != key.$3) {
+      _groupedFor = key;
+      _days = groupByDay(_visibleCalls);
+    }
+    return _days;
+  }
+
   Widget _buildList(BuildContext context) {
-    final days = groupByDay(_visibleCalls);
+    final days = _groupedDays;
     final now = DateTime.now();
     final selecting = _selected != null;
     return CustomScrollView(
       physics: OneUIScrollPhysics.bigHeader,
       slivers: [
-        SliverPersistentHeader(
-          pinned: true,
-          delegate: OneUICollapsibleHeaderDelegate(
-            title: selecting ? '${_selected!.length} selected' : 'Phone',
-            subtitle: selecting || _filter == CallFilter.all ? null : _filter.label,
-            actionsPillKey: _menuKey,
-            actions: selecting
-                ? null
-                : [
-                    OneUIHeaderAction(icon: Icons.filter_list_rounded, tooltip: 'Filter calls', onTap: _chooseFilter),
-                    OneUIHeaderAction(icon: Icons.search_rounded, tooltip: 'Search', onTap: () => openSearch(context)),
-                    OneUIHeaderAction(icon: Icons.more_vert_rounded, tooltip: 'More options', onTap: _openMenu),
-                  ],
+        ValueListenableBuilder(
+          valueListenable: _selectionChanged,
+          builder: (context, _, _) => SliverPersistentHeader(
+            pinned: true,
+            delegate: OneUICollapsibleHeaderDelegate(
+              title: selecting ? '${_selected!.length} selected' : 'Phone',
+              subtitle: selecting || _filter == CallFilter.all ? null : _filter.label,
+              actionsPillKey: _menuKey,
+              actions: selecting
+                  ? null
+                  : [
+                      OneUIHeaderAction(icon: Icons.filter_list_rounded, tooltip: 'Filter calls', onTap: _chooseFilter),
+                      OneUIHeaderAction(
+                        icon: Icons.search_rounded,
+                        tooltip: 'Search',
+                        onTap: () => openSearch(context),
+                      ),
+                      OneUIHeaderAction(icon: Icons.more_vert_rounded, tooltip: 'More options', onTap: _openMenu),
+                    ],
+            ),
           ),
         ),
         if (!_repo.hasAccess.value)
@@ -225,44 +257,62 @@ class _RecentsScreenState extends State<RecentsScreen> {
         else if (days.isEmpty)
           _Empty(text: _filter == CallFilter.all ? 'No recent calls' : 'No ${_filter.label.toLowerCase()}')
         else
-          for (final (day, groups) in days) ...[
-            SliverToBoxAdapter(child: _DayHeader(label: dayLabel(day, now))),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverToBoxAdapter(
-                child: ClipRRect(
-                  borderRadius: OneUITheme.cardBorderRadius,
-                  child: ColoredBox(
-                    color: OneUITheme.surfaceCard,
-                    child: Column(
-                      children: [
-                        for (var i = 0; i < groups.length; i++) ...[
-                          if (i > 0)
-                            Divider(height: 1, indent: 74, endIndent: 16, color: Colors.white.withValues(alpha: 0.08)),
-                          _CallRow(
-                            group: groups[i],
-                            simBadge: _simBadge(groups[i].latest.simId),
-                            selected: _selected?.contains(groups[i].latest.id),
-                            onTap: () => _selected != null
-                                ? _toggle(groups[i])
-                                : Navigator.of(context).push(
-                                    MaterialPageRoute<void>(builder: (_) => CallDetailsScreen(call: groups[i].latest)),
-                                  ),
-                            onLongPress: () {
-                              HapticFeedback.mediumImpact();
-                              _toggle(groups[i]);
-                            },
-                          ),
-                        ],
-                      ],
+          for (final (day, groups) in days)
+            SliverMainAxisGroup(
+              slivers: [
+                SliverToBoxAdapter(child: _DayHeader(label: dayLabel(day, now))),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  // Lazy: only the rows on screen are built.
+                  sliver: DecoratedSliver(
+                    decoration: BoxDecoration(color: OneUITheme.surfaceCard, borderRadius: OneUITheme.cardBorderRadius),
+                    sliver: SliverList.builder(
+                      itemCount: groups.length,
+                      itemBuilder: (context, i) => _cardRow(context, groups, i),
                     ),
                   ),
                 ),
-              ),
+              ],
             ),
-          ],
         SliverToBoxAdapter(child: SizedBox(height: navBarClearance(context) + 8)),
       ],
+    );
+  }
+
+  /// One row of a day card; the first and last are clipped to the card's corners so
+  /// swipe backgrounds and ink stay inside it.
+  Widget _cardRow(BuildContext context, List<CallGroup> groups, int i) {
+    const radius = Radius.circular(OneUITheme.radiusCard);
+    final group = groups[i];
+    final row = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (i > 0) Divider(height: 1, indent: 74, endIndent: 16, color: Colors.white.withValues(alpha: 0.08)),
+        _CallRow(
+          group: group,
+          simBadge: _simBadge(group.latest.simId),
+          selecting: _selected != null,
+          // Only the circle listens to selection taps; the rest of the row stays built.
+          selectMark: ValueListenableBuilder(
+            valueListenable: _selectionChanged,
+            builder: (context, _, _) => SelectMark(selected: _selected?.contains(group.latest.id), gap: 12),
+          ),
+          onTap: () => _selected != null
+              ? _toggle(group)
+              : Navigator.of(context)
+                    .push(MaterialPageRoute<void>(builder: (_) => CallDetailsScreen(call: group.latest))),
+          onLongPress: () {
+            HapticFeedback.mediumImpact();
+            _toggle(group);
+          },
+        ),
+      ],
+    );
+    final first = i == 0, last = i == groups.length - 1;
+    if (!first && !last) return row;
+    return ClipRRect(
+      borderRadius: BorderRadius.vertical(top: first ? radius : Radius.zero, bottom: last ? radius : Radius.zero),
+      child: row,
     );
   }
 }
@@ -271,7 +321,8 @@ class _CallRow extends StatelessWidget {
   const _CallRow({
     required this.group,
     required this.simBadge,
-    required this.selected,
+    required this.selecting,
+    required this.selectMark,
     required this.onTap,
     required this.onLongPress,
   });
@@ -279,8 +330,8 @@ class _CallRow extends StatelessWidget {
   final CallGroup group;
   final (String, Color)? simBadge;
 
-  /// null when not in selection mode.
-  final bool? selected;
+  final bool selecting;
+  final Widget selectMark;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
 
@@ -298,14 +349,7 @@ class _CallRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            if (selected != null)
-              Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: Icon(
-                  selected! ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-                  color: selected! ? OneUITheme.accentBlue : OneUITheme.textTertiary,
-                ),
-              ),
+            selectMark,
             LetterAvatar(name: call.isPrivate ? '' : name),
             const SizedBox(width: 16),
             Expanded(
@@ -348,9 +392,15 @@ class _CallRow extends StatelessWidget {
       ),
     );
 
-    if (selected != null || call.isPrivate || call.number.isEmpty) return row;
+    if (call.isPrivate || call.number.isEmpty) return row;
     // Call back on the SIM the call used.
-    return SwipeToCallOrMessage(key: ValueKey(call.id), number: call.number, simId: call.simId, child: row);
+    return SwipeToCallOrMessage(
+      key: ValueKey(call.id),
+      number: call.number,
+      simId: call.simId,
+      enabled: !selecting,
+      child: row,
+    );
   }
 }
 

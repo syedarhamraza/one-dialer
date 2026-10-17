@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 
 import 'one_ui_effects.dart';
@@ -81,6 +82,11 @@ class OneUITheme {
       centerTitle: false,
     ),
     dividerTheme: const DividerThemeData(color: Color(0x1AFFFFFF), thickness: 0.8),
+    // Slide, like One UI. Android's default zoom transition fades whole pages, which
+    // costs a full-screen save layer every frame of every push and pop.
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: {TargetPlatform.android: CupertinoPageTransitionsBuilder()},
+    ),
   );
 
   /// Pass to `MaterialApp.scrollBehavior`.

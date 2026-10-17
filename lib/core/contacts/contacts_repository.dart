@@ -59,11 +59,18 @@ class ContactsRepository {
   /// Loads contacts if READ_CONTACTS is granted (the dialer role grants it), then
   /// reloads on every change to the contacts database.
   Future<void> start() async {
+    if (_changes != null) return; // already loaded and following changes
     hasAccess.value = await FlutterContacts.permissions.has(PermissionType.read);
     if (!hasAccess.value) return;
-    _changes ??= FlutterContacts.onDatabaseChange.listen((_) => _load());
+    // Android fires bursts of changes (e.g. after every call); reload once they settle.
+    _changes = FlutterContacts.onDatabaseChange.listen((_) {
+      _reload?.cancel();
+      _reload = Timer(const Duration(milliseconds: 400), _load);
+    });
     await _load();
   }
+
+  Timer? _reload;
 
   Future<void> _load() async {
     final all = await FlutterContacts.getAll(

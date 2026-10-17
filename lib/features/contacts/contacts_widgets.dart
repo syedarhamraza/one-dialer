@@ -10,6 +10,7 @@ import '../../theme/one_ui_theme.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/swipe_to_call.dart';
 import 'call_contact.dart';
+import '../../widgets/select_mark.dart';
 
 /// Section header text ("Favorites", "A", "My profile").
 class ContactsSectionHeader extends StatelessWidget {
@@ -65,14 +66,17 @@ class FavoriteTile extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               if (photo != null)
-                ImageFiltered(
-                  imageFilter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-                  child: Image.memory(
-                    photo,
-                    fit: BoxFit.cover,
-                    gaplessPlayback: true,
-                    color: Colors.black.withValues(alpha: 0.2),
-                    colorBlendMode: BlendMode.darken,
+                // Cache the blurred photo as a layer instead of re-blurring every frame.
+                RepaintBoundary(
+                  child: ImageFiltered(
+                    imageFilter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                    child: Image.memory(
+                      photo,
+                      fit: BoxFit.cover,
+                      gaplessPlayback: true,
+                      color: Colors.black.withValues(alpha: 0.2),
+                      colorBlendMode: BlendMode.darken,
+                    ),
                   ),
                 )
               else
@@ -160,13 +164,7 @@ class ContactRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 18),
         child: Row(
           children: [
-            if (selected != null) ...[
-              Icon(
-                selected! ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-                color: selected! ? OneUITheme.accentBlue : OneUITheme.textTertiary,
-              ),
-              const SizedBox(width: 14),
-            ],
+            SelectMark(selected: selected, gap: 14),
             LetterAvatar(name: contact.name, photo: contact.thumbnail, size: 54),
             const SizedBox(width: 18),
             Expanded(
@@ -194,13 +192,12 @@ class ContactRow extends StatelessWidget {
       padding: const EdgeInsets.only(left: 16, right: 30), // right: room for the fast scroller
       child: ClipRRect(
         borderRadius: BorderRadius.vertical(top: isFirst ? radius : Radius.zero, bottom: isLast ? radius : Radius.zero),
-        child: selected != null
-            ? ColoredBox(color: OneUITheme.surfaceCard, child: row)
-            : SwipeToCallOrMessage(
-                key: ValueKey('contact-${contact.id}'),
-                number: contact.callNumber ?? contact.numbers.first,
-                child: row,
-              ),
+        child: SwipeToCallOrMessage(
+          key: ValueKey('contact-${contact.id}'),
+          number: contact.callNumber ?? contact.numbers.first,
+          enabled: selected == null,
+          child: row,
+        ),
       ),
     );
   }
