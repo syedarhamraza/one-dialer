@@ -43,6 +43,16 @@ void main() {
     expect(t9Search('17654', all).single.entry, ana); // across the dash
   });
 
+  test('a typed national number finds the saved international form', () {
+    const saved = T9Entry(name: 'Zong', numbers: ['+923701234567']);
+    final r = t9Search('03701234567', [saved]);
+    expect(r.single.entry, saved);
+    expect(r.single.numberRange, (3, 13)); // "3701234567" after "+92"
+    expect(t9Search('0370', [saved]), hasLength(1));
+    expect(t9Search('037', [saved]), isEmpty); // Too short to guess a country code.
+    expect(t9Search('0380', [saved]), isEmpty);
+  });
+
   test('skips contacts without numbers and empty queries', () {
     expect(t9Search('', all), isEmpty);
     expect(t9Search('564669', all), isEmpty); // Johnny has no number

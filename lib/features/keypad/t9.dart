@@ -140,7 +140,20 @@ List<(int, String, bool)> _letters(String name) {
       buf.write(number[i]);
     }
   }
-  final at = buf.toString().indexOf(query);
+  final digits = buf.toString();
+  var at = digits.indexOf(query);
+  var length = query.length;
+  // Typed national form against a saved international one: "0370…" finds "+92 370…",
+  // the leading 0 standing in for a 1–3 digit country code.
+  if (at < 0 && query.length >= 4 && query.startsWith('0') && digits.startsWith('+')) {
+    final rest = query.substring(1);
+    for (var code = 1; code <= 3 && at < 0; code++) {
+      if (digits.startsWith(rest, 1 + code)) {
+        at = 1 + code;
+        length = rest.length;
+      }
+    }
+  }
   if (at < 0) return null;
-  return (kept[at], kept[at + query.length - 1] + 1);
+  return (kept[at], kept[at + length - 1] + 1);
 }

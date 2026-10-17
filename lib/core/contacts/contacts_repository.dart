@@ -72,7 +72,20 @@ class ContactsRepository {
 
   Timer? _reload;
 
+  final _fullPhotos = <String, Future<Uint8List?>>{};
+
+  /// The full-resolution photo for large avatars; the 96 px thumbnail turns soft when scaled
+  /// up. Cached per contact until the contacts database changes.
+  Future<Uint8List?> fullPhoto(String id) => _fullPhotos[id] ??= () async {
+    try {
+      return (await FlutterContacts.get(id, properties: {ContactProperty.photoFullRes}))?.photo?.fullSize;
+    } on Object {
+      return null; // The thumbnail stays.
+    }
+  }();
+
   Future<void> _load() async {
+    _fullPhotos.clear();
     final all = await FlutterContacts.getAll(
       properties: {ContactProperty.phone, ContactProperty.photoThumbnail, ContactProperty.favorite},
     );

@@ -349,7 +349,14 @@ class _ResultTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
         child: Row(
           children: [
-            LetterAvatar(name: name, size: 40),
+            LetterAvatar(
+              name: name,
+              photo: switch (match.entry) {
+                DialerContact(:final thumbnail) => thumbnail,
+                _ => null,
+              },
+              size: 40,
+            ),
             const SizedBox(width: 16),
             // Unsaved numbers (from Recents) are named by their number; show it once.
             if (name == match.number)

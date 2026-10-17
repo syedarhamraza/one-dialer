@@ -247,7 +247,13 @@ class CallHeader extends StatelessWidget {
                                 color: Colors.white70,
                               ),
                             )
-                          : LetterAvatar(name: name, photo: contact?.thumbnail, size: avatarSize),
+                          : FutureBuilder(
+                              future: contact?.thumbnail == null
+                                  ? null
+                                  : ContactsRepository.instance.fullPhoto(contact!.id),
+                              builder: (context, full) =>
+                                  LetterAvatar(name: name, photo: full.data ?? contact?.thumbnail, size: avatarSize),
+                            ),
                     ),
                   ),
                 ],
