@@ -13,9 +13,18 @@ import '../../widgets/one_ui_floating_modal.dart';
 /// Contact-page actions behind Share and More.
 abstract final class ContactActions {
   /// Share › vCard file (VCF).
-  static Future<void> shareVCard(Contact contact) async {
-    final vcard = FlutterContacts.vCard.export(contact);
-    final name = (contact.displayName?.trim().isNotEmpty ?? false) ? contact.displayName!.trim() : 'contact';
+  static Future<void> shareVCard(Contact contact) => shareVCards([contact]);
+
+  /// Several contacts in one .vcf (selection mode's Share).
+  static Future<void> shareVCards(List<Contact> contacts) async {
+    if (contacts.isEmpty) return;
+    final vcard = contacts.map((c) => FlutterContacts.vCard.export(c)).join('\n');
+    final first = contacts.first;
+    final name = contacts.length > 1
+        ? '${contacts.length} contacts'
+        : (first.displayName?.trim().isNotEmpty ?? false)
+        ? first.displayName!.trim()
+        : 'contact';
     await SharePlus.instance.share(
       ShareParams(
         files: [XFile.fromData(utf8.encode(vcard), mimeType: 'text/x-vcard', name: '$name.vcf')],

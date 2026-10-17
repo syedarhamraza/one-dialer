@@ -7,10 +7,11 @@ import '../features/keypad/keypad_screen.dart';
 import '../features/recents/call_log_repository.dart';
 import '../features/recents/recents_screen.dart';
 import '../theme/one_ui_theme.dart';
+import '../widgets/one_ui_glass_surface.dart';
 import 'layout.dart';
 
-/// A tab's selection actions (a `OneUIFloatingActionBar`); while set, it replaces the
-/// nav bar, like Samsung's Delete / Share bar.
+/// A tab's selection actions (a docked `OneUIFloatingActionBar`). While set, a glass
+/// bar of them springs in over the tab bar.
 final ValueNotifier<Widget?> navDock = ValueNotifier(null);
 
 /// The three Samsung tabs under the floating nav bar. Tabs stay alive (IndexedStack)
@@ -106,47 +107,73 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
               ),
               child: ValueListenableBuilder<Widget?>(
                 valueListenable: navDock,
-                // The glass bar stays mounted under the selection bar (faded out, not
-                // painted), so leaving selection mode doesn't rebuild its shaders.
-                builder: (context, dock, _) => Stack(
-                  alignment: Alignment.bottomCenter,
-                  children: [
-                    IgnorePointer(
-                      ignoring: dock != null,
-                      child: AnimatedOpacity(
-                        opacity: dock == null ? 1 : 0,
-                        duration: const Duration(milliseconds: 220),
-                        child: SafeArea(
-                          top: false,
-                          child: GlassTabBar.bottom(
-                            tabs: _tabs,
-                            selectedIndex: _tab,
-                            onTabSelected: _select,
-                            // Highest tier everywhere: premium indicator and track, high-quality masking.
-                            quality: GlassQuality.premium,
-                            backgroundQuality: GlassQuality.premium,
-                            maskingQuality: MaskingQuality.high,
-                            barHeight: kFloatingNavBarHeight,
-                            verticalPadding: kNavBarVerticalPadding,
-                            tabWidth: _tabWidth,
-                            // The package left-aligns a fixed-width pill; centre it like Samsung's.
-                            horizontalPadding: (MediaQuery.sizeOf(context).width - _tabWidth * _tabs.length) / 2,
-                            selectedIconColor: OneUITheme.textPrimary,
-                            selectedLabelColor: OneUITheme.textPrimary,
-                            unselectedIconColor: OneUITheme.navbar3dInactiveIcon,
-                            unselectedLabelColor: OneUITheme.navbar3dInactiveText,
-                          ),
-                        ),
-                      ),
-                    ),
-                    AnimatedSwitcher(duration: const Duration(milliseconds: 220), child: dock),
-                  ],
-                ),
+                builder: (context, dock, _) => _tabBar(context, dock),
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  /// The liquid glass tab bar. It stays mounted (faded, not painted) while a bar of
+  /// the selection actions springs in over it.
+  Widget _tabBar(BuildContext context, Widget? dock) {
+    return Stack(
+      alignment: Alignment.bottomCenter,
+      children: [
+        IgnorePointer(
+          ignoring: dock != null,
+          child: AnimatedOpacity(
+            opacity: dock == null ? 1 : 0,
+            duration: const Duration(milliseconds: 220),
+            child: SafeArea(
+              top: false,
+              child: GlassTabBar.bottom(
+                tabs: _tabs,
+                selectedIndex: _tab,
+                onTabSelected: _select,
+                // Highest tier everywhere: premium indicator and track, high-quality masking.
+                quality: GlassQuality.premium,
+                backgroundQuality: GlassQuality.premium,
+                maskingQuality: MaskingQuality.high,
+                barHeight: kFloatingNavBarHeight,
+                verticalPadding: kNavBarVerticalPadding,
+                tabWidth: _tabWidth,
+                // The package left-aligns a fixed-width pill; centre it like Samsung's.
+                horizontalPadding: (MediaQuery.sizeOf(context).width - _tabWidth * _tabs.length) / 2,
+                selectedIconColor: OneUITheme.textPrimary,
+                selectedLabelColor: OneUITheme.textPrimary,
+                unselectedIconColor: OneUITheme.navbar3dInactiveIcon,
+                unselectedLabelColor: OneUITheme.navbar3dInactiveText,
+              ),
+            ),
+          ),
+        ),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 320),
+          switchInCurve: Curves.easeOutBack,
+          switchOutCurve: Curves.easeInCubic,
+          transitionBuilder: (child, animation) => FadeTransition(
+            opacity: animation,
+            child: ScaleTransition(scale: Tween(begin: 0.85, end: 1.0).animate(animation), child: child),
+          ),
+          child: dock == null
+              ? const SizedBox.shrink()
+              : SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: OneUIGlassSurface(
+                      elevation: OneUIGlassElevation.navbar,
+                      height: kFloatingNavBarHeight,
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      child: dock,
+                    ),
+                  ),
+                ),
+        ),
+      ],
     );
   }
 }

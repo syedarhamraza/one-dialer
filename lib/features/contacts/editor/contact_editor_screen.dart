@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../../app/layout.dart';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:intl/intl.dart';
@@ -264,7 +267,8 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                     child: SafeArea(
                       top: false,
                       child: Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
+                        // Same baseline as every bottom floating bar.
+                        padding: const EdgeInsets.only(bottom: kNavBarVerticalPadding),
                         child: OneUIFloatingCancelSavePill(
                           onCancel: () => Navigator.of(context).maybePop(),
                           onSave: _save,
