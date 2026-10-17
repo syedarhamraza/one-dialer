@@ -53,6 +53,9 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
     /** Set by [MainActivity]: opens the photo picker; the result is JPEG bytes or null. */
     var photoPicker: ((MethodChannel.Result) -> Unit)? = null
 
+    /** Set by [MainActivity]: the system ringtone picker; the result is the picked URI, "" for Default, null if cancelled. */
+    var ringtonePicker: ((String?, MethodChannel.Result) -> Unit)? = null
+
     /** A `tel:` number the app was opened with, handed to Flutter once. */
     var pendingDialNumber: String? = null
 
@@ -101,6 +104,26 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
             "getState" -> result.success(CallManager.snapshot())
             "placeCall" -> placeCall(call.argument<String>("number"), call.argument<String>("simId"), result)
             "getSims" -> getSims(result)
+            "getMessagingApps" -> inBackground(result) { ContactExtras.messagingApps(context, call.argument<String>("contactId")!!) }
+            "openContactData" -> {
+                runCatching {
+                    ContactExtras.openData(context, call.argument<Number>("dataId")!!.toLong(), call.argument<String>("mimeType")!!)
+                }.onSuccess { result.success(null) }.onFailure { result.error("NO_APP", it.message, null) }
+            }
+            "getRawContacts" -> inBackground(result) { ContactExtras.rawContacts(context, call.argument<String>("contactId")!!) }
+            "unlinkRawContacts" -> inBackground(result) {
+                ContactExtras.unlink(
+                    context,
+                    call.argument<String>("contactId")!!,
+                    call.argument<List<Number>>("rawIds").orEmpty().map(Number::toLong),
+                )
+            }
+            "getRingtone" -> inBackground(result) { ContactExtras.ringtone(context, call.argument<String>("contactId")!!) }
+            "setRingtone" -> inBackground(result) {
+                ContactExtras.setRingtone(context, call.argument<String>("contactId")!!, call.argument<String>("uri"))
+            }
+            "pickRingtone" -> ringtonePicker?.invoke(call.argument<String>("current"), result)
+                ?: result.error("NO_ACTIVITY", "Ringtones can only be picked from the main screen", null)
             "pickPhoto" -> photoPicker?.invoke(result)
                 ?: result.error("NO_ACTIVITY", "Photos can only be picked from the main screen", null)
             "getQuickReplies" -> result.success(com.syedarhamraza.dialer.telecom.QuickReplies.read(context))

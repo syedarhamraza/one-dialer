@@ -12,12 +12,14 @@ class MainActivity : FlutterActivity() {
     private var bridge: CallBridge? = null
     private var pendingRoleResult: MethodChannel.Result? = null
     private var pendingPhotoResult: MethodChannel.Result? = null
+    private var pendingRingtoneResult: MethodChannel.Result? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         bridge = CallBridge(applicationContext, flutterEngine.dartExecutor.binaryMessenger).also {
             it.roleRequester = ::requestRole
             it.photoPicker = ::pickPhoto
+            it.ringtonePicker = ::pickRingtone
             it.pendingDialNumber = dialNumberFrom(intent)
             it.pendingOpenRecents = intent.getBooleanExtra(EXTRA_OPEN_RECENTS, false)
         }
@@ -59,10 +61,39 @@ class MainActivity : FlutterActivity() {
         startActivityForResult(intent, REQUEST_PHOTO)
     }
 
+    /** Android's ringtone picker with the contact's current tone selected; "Default" comes back as "". */
+    private fun pickRingtone(current: String?, result: MethodChannel.Result) {
+        pendingRingtoneResult?.success(null)
+        pendingRingtoneResult = result
+        val intent = Intent(android.media.RingtoneManager.ACTION_RINGTONE_PICKER)
+            .putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_TYPE, android.media.RingtoneManager.TYPE_RINGTONE)
+            .putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+            // No "Silent": AOSP Contacts doesn't offer it per contact either.
+            .putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+            .putExtra(
+                android.media.RingtoneManager.EXTRA_RINGTONE_EXISTING_URI,
+                current?.let(android.net.Uri::parse) ?: android.provider.Settings.System.DEFAULT_RINGTONE_URI,
+            )
+        @Suppress("DEPRECATION")
+        startActivityForResult(intent, REQUEST_RINGTONE)
+    }
+
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         @Suppress("DEPRECATION")
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_RINGTONE) {
+            val result = pendingRingtoneResult ?: return
+            pendingRingtoneResult = null
+            if (resultCode != RESULT_OK) return result.success(null)
+            @Suppress("DEPRECATION")
+            val picked = data?.getParcelableExtra<android.net.Uri>(android.media.RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            // "Default" comes back as the default-ringtone URI (→ "", meaning clear the custom tone).
+            result.success(
+                if (picked == null || picked == android.provider.Settings.System.DEFAULT_RINGTONE_URI) "" else picked.toString(),
+            )
+            return
+        }
         if (requestCode == REQUEST_PHOTO) {
             val result = pendingPhotoResult ?: return
             pendingPhotoResult = null
@@ -102,6 +133,7 @@ class MainActivity : FlutterActivity() {
     companion object {
         private const val REQUEST_ROLE = 1001
         private const val REQUEST_PHOTO = 1002
+        private const val REQUEST_RINGTONE = 1003
         private const val PHOTO_MAX = 720
         private const val EXTRA_OPEN_RECENTS = "open_recents"
 

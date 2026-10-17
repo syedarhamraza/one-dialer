@@ -51,6 +51,30 @@ class TelecomBridge {
   /// Android's photo picker; returns the picked photo as JPEG bytes (max 720px), or null.
   Future<Uint8List?> pickPhoto() => _methods.invokeMethod<Uint8List>('pickPhoto');
 
+  // Contact extras (ContactExtras.kt)
+  /// WhatsApp / WhatsApp Business chat rows for a contact: label, dataId, mimeType, icon (PNG bytes).
+  Future<List<Map<Object?, Object?>>> getMessagingApps(String contactId) async =>
+      await _methods.invokeListMethod<Map<Object?, Object?>>('getMessagingApps', {'contactId': contactId}) ?? const [];
+
+  Future<void> openContactData(int dataId, String mimeType) =>
+      _methods.invokeMethod('openContactData', {'dataId': dataId, 'mimeType': mimeType});
+
+  /// The accounts' copies linked into a contact: id, name, accountType, accountName.
+  Future<List<Map<Object?, Object?>>> getRawContacts(String contactId) async =>
+      await _methods.invokeListMethod<Map<Object?, Object?>>('getRawContacts', {'contactId': contactId}) ?? const [];
+
+  Future<void> unlinkRawContacts(String contactId, List<int> rawIds) =>
+      _methods.invokeMethod('unlinkRawContacts', {'contactId': contactId, 'rawIds': rawIds});
+
+  /// The contact's custom ringtone URI, or null for the default.
+  Future<String?> getRingtone(String contactId) => _methods.invokeMethod<String>('getRingtone', {'contactId': contactId});
+
+  Future<void> setRingtone(String contactId, String? uri) =>
+      _methods.invokeMethod('setRingtone', {'contactId': contactId, 'uri': uri});
+
+  /// Android's ringtone picker. Returns the picked URI, "" for Default, or null if cancelled.
+  Future<String?> pickRingtone(String? current) => _methods.invokeMethod<String>('pickRingtone', {'current': current});
+
   // Settings
   Future<List<String>> getQuickReplies() async =>
       await _methods.invokeListMethod<String>('getQuickReplies') ?? const [];
