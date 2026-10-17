@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'dart:math' as math;
+
 import '../../app/layout.dart';
 import '../../core/contacts/contacts_repository.dart';
-import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../core/prefs/dialer_prefs.dart';
@@ -19,9 +20,10 @@ import 't9.dart';
 import '../search/search_screen.dart';
 
 /// Samsung-style dial pad: T9 contact search above, the typed number, the keypad and
-/// one call button per SIM (two when "Ask every time" is set on a dual-SIM phone).
+/// one call button, with SIM selection when required.
 class KeypadScreen extends StatefulWidget {
-  const KeypadScreen({super.key, required this.input});
+  const KeypadScreen({super.key, required this.input, this.isActive = true});
+  final bool isActive;
 
   /// The typed number; the shell also writes `tel:` links into it.
   final ValueNotifier<String> input;
@@ -31,34 +33,41 @@ class KeypadScreen extends StatefulWidget {
 }
 
 /// Samsung's keypad sits on charcoal, not the pure black of the other tabs.
-const keypadBackground = Color(0xFF17171A);
+const keypadBackground = Color(0xFF161616);
 
-class _KeypadScreenState extends State<KeypadScreen> with WidgetsBindingObserver {
+class _KeypadScreenState extends State<KeypadScreen> {
   final _telecom = TelecomBridge.instance;
   final _menuKey = GlobalKey();
-  List<SimCard> _sims = const [];
+  bool _collapsed = false;
+  bool _calling = false;
+
+  void _collapse() {
+    if (!_collapsed && widget.input.value.isNotEmpty && mounted) setState(() => _collapsed = true);
+  }
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _loadSims();
+    widget.input.addListener(_inputChanged);
+  }
+
+  void _inputChanged() {
+    if (_collapsed && mounted) setState(() => _collapsed = false);
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _loadSims(); // SIM settings may have changed
+  void didUpdateWidget(covariant KeypadScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.input != widget.input) {
+      oldWidget.input.removeListener(_inputChanged);
+      widget.input.addListener(_inputChanged);
+    }
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+    widget.input.removeListener(_inputChanged);
     super.dispose();
-  }
-
-  Future<void> _loadSims() async {
-    final sims = await _telecom.getSims();
-    if (mounted) setState(() => _sims = sims);
   }
 
   void _type(String key) {
@@ -108,7 +117,8 @@ class _KeypadScreenState extends State<KeypadScreen> with WidgetsBindingObserver
     if (digits.isNotEmpty) widget.input.value += digits;
   }
 
-  Future<void> _call(SimCard? sim) async {
+  Future<void> _call() async {
+    if (_calling) return;
     final number = widget.input.value;
     if (number.isEmpty) {
       // Like Samsung: an empty call button fills in the last dialled number.
@@ -116,8 +126,17 @@ class _KeypadScreenState extends State<KeypadScreen> with WidgetsBindingObserver
       return;
     }
     HapticFeedback.mediumImpact();
-    await _telecom.placeCall(number, simId: sim?.id);
-    widget.input.value = '';
+    setState(() => _calling = true);
+    try {
+      final called = await placeCall(context, number);
+      if (called && widget.input.value == number) widget.input.value = '';
+    } on PlatformException {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not place the call.')));
+      }
+    } finally {
+      if (mounted) setState(() => _calling = false);
+    }
   }
 
   void _openMenu() {
@@ -128,6 +147,10 @@ class _KeypadScreenState extends State<KeypadScreen> with WidgetsBindingObserver
       width: 250,
       items: [
         if (typing) ...[
+          OneUIFloatingMenuItem(
+            label: _collapsed ? 'Show keypad' : 'Hide keypad',
+            onTap: () => setState(() => _collapsed = !_collapsed),
+          ),
           OneUIFloatingMenuItem(label: 'Add 2-sec pause', onTap: () => widget.input.value += ','),
           OneUIFloatingMenuItem(label: 'Add wait', onTap: () => widget.input.value += ';'),
           OneUIFloatingMenuItem(label: 'Send message', onTap: () => _telecom.sendSms(widget.input.value)),
@@ -141,9 +164,6 @@ class _KeypadScreenState extends State<KeypadScreen> with WidgetsBindingObserver
     );
   }
 
-  /// One button per SIM only when Android has no default SIM to use.
-  List<SimCard?> get _callButtons => _sims.length > 1 && !_sims.any((s) => s.isDefault) ? _sims : const [null];
-
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
@@ -153,62 +173,130 @@ class _KeypadScreenState extends State<KeypadScreen> with WidgetsBindingObserver
         child: ValueListenableBuilder<String>(
           valueListenable: widget.input,
           builder: (context, number, _) {
-            // The shell hides the nav bar while typing, so the call row drops to the bottom.
-            final bottomSpace = number.isEmpty
-                ? navBarClearance(context) + 8
-                : MediaQuery.paddingOf(context).bottom + 40;
-            return Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    spacing: 16,
-                    children: [
-                      if (number.isNotEmpty)
-                        OneUIHeaderAction(
-                          icon: Icons.add_rounded,
-                          size: 28,
-                          tooltip: 'Add to Contacts',
-                          onTap: () => showAddToContacts(context, number),
+            // Reserve the same space whether the navigation bar is visible or hidden.
+            final bottomSpace = navBarClearance(context) + 8;
+            final collapsed = _collapsed && number.isNotEmpty;
+            return PopScope(
+              canPop: !collapsed || !widget.isActive,
+              onPopInvokedWithResult: (didPop, result) {
+                if (!didPop && collapsed && widget.isActive) setState(() => _collapsed = false);
+              },
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final height = math.max(constraints.maxHeight, bottomSpace + 480);
+                  final keyHeight = ((height - bottomSpace - 220) / 5).clamp(56.0, 84.0);
+                  final panelHeight = 88 + keyHeight * 4 + 8 + 72 + bottomSpace;
+                  return TweenAnimationBuilder<double>(
+                    tween: Tween(end: collapsed ? 1.0 : 0.0),
+                    duration: MediaQuery.disableAnimationsOf(context)
+                        ? Duration.zero
+                        : const Duration(milliseconds: 300),
+                    curve: Curves.easeInOutCubic,
+                    builder: (context, progress, child) => SingleChildScrollView(
+                      physics: collapsed ? const NeverScrollableScrollPhysics() : null,
+                      child: SizedBox(
+                        height: height - (height - constraints.maxHeight) * progress,
+                        child: Stack(
+                          children: [
+                            Column(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    spacing: 16,
+                                    children: [
+                                      if (number.isNotEmpty)
+                                        OneUIHeaderAction(
+                                          icon: Icons.add_rounded,
+                                          size: 28,
+                                          tooltip: 'Add to Contacts',
+                                          onTap: () => showAddToContacts(context, number),
+                                        ),
+                                      OneUIHeaderAction(
+                                        icon: Icons.search_rounded,
+                                        size: 26,
+                                        tooltip: 'Search',
+                                        onTap: () => openSearch(context),
+                                      ),
+                                      OneUIHeaderAction(
+                                        actionKey: _menuKey,
+                                        icon: Icons.more_vert_rounded,
+                                        size: 26,
+                                        tooltip: 'More options',
+                                        onTap: _openMenu,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Expanded(
+                                  child: ValueListenableBuilder<List<DialerContact>>(
+                                    valueListenable: ContactsRepository.instance.contacts,
+                                    builder: (context, contacts, _) => _Results(
+                                      matches: number.isEmpty ? const [] : t9Search(number, contacts),
+                                      expanded: collapsed,
+                                      onScroll: _collapse,
+                                      onPick: (m) {
+                                        setState(() => _collapsed = false);
+                                        widget.input.value = m.number;
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(height: panelHeight * (1 - progress)),
+                              ],
+                            ),
+                            Positioned(
+                              left: 0,
+                              right: 0,
+                              bottom: -panelHeight * progress,
+                              child: IgnorePointer(
+                                ignoring: collapsed,
+                                child: ExcludeSemantics(
+                                  excluding: collapsed,
+                                  child: ColoredBox(
+                                    color: keypadBackground,
+                                    child: Column(
+                                      key: const ValueKey('keypad-panel'),
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        _NumberDisplay(number: number, onPaste: _paste),
+                                        _Keypad(onKey: _type, onLongPress: _longPress, keyHeight: keyHeight),
+                                        const SizedBox(height: 8),
+                                        _CallRow(
+                                          showBackspace: number.isNotEmpty,
+                                          onCall: _calling ? null : _call,
+                                          onBackspace: _backspace,
+                                          onClear: () => widget.input.value = '',
+                                        ),
+                                        SizedBox(height: bottomSpace),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            if (collapsed)
+                              Positioned(
+                                right: 24,
+                                bottom: MediaQuery.paddingOf(context).bottom + 16,
+                                child: FloatingActionButton(
+                                  tooltip: 'Show keypad',
+                                  backgroundColor: const Color(0xFF08AB60),
+                                  foregroundColor: Colors.black,
+                                  shape: const CircleBorder(),
+                                  elevation: 0,
+                                  onPressed: () => setState(() => _collapsed = false),
+                                  child: const Icon(Icons.dialpad_rounded),
+                                ),
+                              ),
+                          ],
                         ),
-                      OneUIHeaderAction(
-                        icon: Icons.search_rounded,
-                        size: 26,
-                        tooltip: 'Search',
-                        onTap: () => openSearch(context),
                       ),
-                      OneUIHeaderAction(
-                        actionKey: _menuKey,
-                        icon: Icons.more_vert_rounded,
-                        size: 26,
-                        tooltip: 'More options',
-                        onTap: _openMenu,
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: ValueListenableBuilder<List<DialerContact>>(
-                    valueListenable: ContactsRepository.instance.contacts,
-                    builder: (context, contacts, _) => _Results(
-                      matches: number.isEmpty ? const [] : t9Search(number, contacts),
-                      onPick: (m) => widget.input.value = m.number,
                     ),
-                  ),
-                ),
-                _NumberDisplay(number: number, onPaste: _paste),
-                _Keypad(onKey: _type, onLongPress: _longPress),
-                const SizedBox(height: 8),
-                _CallRow(
-                  sims: _callButtons,
-                  showBackspace: number.isNotEmpty,
-                  onCall: _call,
-                  onBackspace: _backspace,
-                  onClear: () => widget.input.value = '',
-                ),
-                SizedBox(height: bottomSpace),
-              ],
+                  );
+                },
+              ),
             );
           },
         ),
@@ -218,17 +306,28 @@ class _KeypadScreenState extends State<KeypadScreen> with WidgetsBindingObserver
 }
 
 class _Results extends StatelessWidget {
-  const _Results({required this.matches, required this.onPick});
+  const _Results({required this.matches, required this.onPick, required this.onScroll, required this.expanded});
 
   final List<T9Match> matches;
   final ValueChanged<T9Match> onPick;
+  final VoidCallback onScroll;
+  final bool expanded;
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      itemCount: matches.length,
-      itemBuilder: (context, i) => _ResultTile(match: matches[i], onTap: () => onPick(matches[i])),
+    return NotificationListener<ScrollStartNotification>(
+      onNotification: (notification) {
+        if (notification.dragDetails != null && !expanded) {
+          WidgetsBinding.instance.addPostFrameCallback((_) => onScroll());
+        }
+        return false;
+      },
+      child: ListView.builder(
+        key: ValueKey(expanded),
+        padding: EdgeInsets.fromLTRB(24, 12, 24, expanded ? 88 : 0),
+        itemCount: matches.length,
+        itemBuilder: (context, i) => _ResultTile(match: matches[i], onTap: () => onPick(matches[i])),
+      ),
     );
   }
 }
@@ -247,10 +346,10 @@ class _ResultTile extends StatelessWidget {
       onTap: onTap,
       borderRadius: OneUITheme.cardBorderRadius,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
         child: Row(
           children: [
-            LetterAvatar(name: name, size: 36),
+            LetterAvatar(name: name, size: 40),
             const SizedBox(width: 16),
             // Unsaved numbers (from Recents) are named by their number; show it once.
             if (name == match.number)
@@ -270,10 +369,15 @@ class _ResultTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              _highlighted(
-                match.number,
-                match.numberRange,
-                const TextStyle(fontSize: 15, color: OneUITheme.textSecondary),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: _highlighted(
+                    match.number,
+                    match.numberRange,
+                    const TextStyle(fontSize: 15, color: OneUITheme.textSecondary),
+                  ),
+                ),
               ),
             ],
           ],
@@ -335,7 +439,6 @@ class _NumberDisplay extends StatelessWidget {
                       color: OneUITheme.textPrimary,
                     ),
                   ),
-                  if (number.isNotEmpty) Container(width: 2.5, height: 52, color: OneUITheme.accentBlue),
                 ],
               ),
             ),
@@ -347,7 +450,8 @@ class _NumberDisplay extends StatelessWidget {
 }
 
 class _Keypad extends StatelessWidget {
-  const _Keypad({required this.onKey, required this.onLongPress});
+  const _Keypad({required this.onKey, required this.onLongPress, required this.keyHeight});
+  final double keyHeight;
 
   final ValueChanged<String> onKey;
   final ValueChanged<String> onLongPress;
@@ -380,6 +484,7 @@ class _Keypad extends StatelessWidget {
                   Expanded(
                     child: _Key(
                       digit: digit,
+                      keyHeight: keyHeight,
                       letters: letters,
                       onTap: () => onKey(digit),
                       onLongPress: () => onLongPress(digit),
@@ -394,7 +499,14 @@ class _Keypad extends StatelessWidget {
 }
 
 class _Key extends StatelessWidget {
-  const _Key({required this.digit, required this.letters, required this.onTap, this.onLongPress});
+  const _Key({
+    required this.digit,
+    required this.letters,
+    required this.onTap,
+    required this.keyHeight,
+    this.onLongPress,
+  });
+  final double keyHeight;
 
   final String digit;
   final String letters;
@@ -414,32 +526,35 @@ class _Key extends StatelessWidget {
       child: InkResponse(
         onTap: onTap,
         onLongPress: onLongPress,
-        radius: 36,
+        radius: 44,
         highlightShape: BoxShape.circle,
         splashColor: Colors.white.withValues(alpha: 0.08),
-        highlightColor: Colors.white.withValues(alpha: 0.05),
+        highlightColor: Colors.white.withValues(alpha: 0.15),
         child: SizedBox(
-          height: 66,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                digit,
-                style: TextStyle(
-                  fontSize: digit == '*' ? 38 : 32,
-                  height: 1.1,
-                  fontWeight: FontWeight.w400,
-                  color: OneUITheme.textPrimary,
-                ),
+          height: keyHeight,
+          child: Center(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    digit,
+                    style: TextStyle(
+                      fontSize: digit == '*' ? 44 : 38,
+                      height: 1.1,
+                      fontWeight: FontWeight.w400,
+                      color: OneUITheme.textPrimary,
+                    ),
+                  ),
+                  if (letters == 'VM')
+                    const Icon(Icons.voicemail_rounded, size: 18, color: OneUITheme.textSecondary)
+                  else if (letters.isNotEmpty)
+                    Text(letters, style: const TextStyle(fontSize: 13, color: OneUITheme.textSecondary)),
+                ],
               ),
-              if (letters == 'VM')
-                const Icon(Icons.voicemail_rounded, size: 18, color: OneUITheme.textSecondary)
-              else if (letters.isNotEmpty)
-                Text(
-                  letters,
-                  style: const TextStyle(fontSize: 11, letterSpacing: 1.2, color: OneUITheme.textSecondary),
-                ),
-            ],
+            ),
           ),
         ),
       ),
@@ -448,96 +563,65 @@ class _Key extends StatelessWidget {
 }
 
 class _CallRow extends StatelessWidget {
-  const _CallRow({
-    required this.sims,
-    required this.showBackspace,
-    required this.onCall,
-    required this.onBackspace,
-    required this.onClear,
-  });
+  const _CallRow({required this.showBackspace, required this.onCall, required this.onBackspace, required this.onClear});
 
-  /// One entry per call button; `null` lets Android pick the SIM.
-  final List<SimCard?> sims;
   final bool showBackspace;
-  final ValueChanged<SimCard?> onCall;
+  final VoidCallback? onCall;
   final VoidCallback onBackspace;
   final VoidCallback onClear;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const Spacer(),
-        for (final sim in sims)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: _CallButton(sim: sim, onTap: () => onCall(sim)),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Row(
+        children: [
+          const Spacer(),
+          Expanded(
+            child: Center(child: _CallButton(onTap: onCall)),
           ),
-        Expanded(
-          child: showBackspace
-              ? Semantics(
-                  button: true,
-                  label: 'Delete, long-press to clear',
-                  excludeSemantics: true,
-                  child: InkResponse(
-                    onTap: onBackspace,
-                    onLongPress: onClear,
-                    radius: 28,
-                    child: const SizedBox(
-                      height: 64,
-                      child: Icon(Icons.backspace_rounded, color: OneUITheme.textSecondary, size: 30),
+          Expanded(
+            child: showBackspace
+                ? Semantics(
+                    button: true,
+                    label: 'Delete, long-press to clear',
+                    excludeSemantics: true,
+                    child: InkResponse(
+                      onTap: onBackspace,
+                      onLongPress: onClear,
+                      radius: 28,
+                      child: const SizedBox(
+                        height: 64,
+                        child: Icon(Icons.backspace_rounded, color: OneUITheme.textSecondary, size: 30),
+                      ),
                     ),
-                  ),
-                )
-              : const SizedBox(height: 64),
-        ),
-      ],
+                  )
+                : const SizedBox(height: 64),
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _CallButton extends StatelessWidget {
-  const _CallButton({required this.sim, required this.onTap});
-
-  final SimCard? sim;
-  final VoidCallback onTap;
+  const _CallButton({required this.onTap});
+  final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) {
-    final sim = this.sim;
-    return Semantics(
-      button: true,
-      label: sim == null ? 'Call' : 'Call with ${sim.label}',
-      excludeSemantics: true,
-      child: Material(
-        color: OneUITheme.accentGreen,
-        shape: sim == null ? const CircleBorder() : const StadiumBorder(),
-        child: InkWell(
-          onTap: onTap,
-          customBorder: sim == null ? const CircleBorder() : const StadiumBorder(),
-          child: SizedBox(
-            height: 64,
-            width: sim == null ? 64 : 112,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.call_rounded, color: Colors.white, size: 28),
-                if (sim != null) ...[
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                      sim.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    label: 'Call',
+    enabled: onTap != null,
+    excludeSemantics: true,
+    child: Material(
+      color: const Color(0xFF08AB60),
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: const SizedBox(height: 72, width: 72, child: Icon(Icons.call_rounded, color: Colors.white, size: 38)),
       ),
-    );
-  }
+    ),
+  );
 }

@@ -67,7 +67,8 @@ class TelecomBridge {
       _methods.invokeMethod('unlinkRawContacts', {'contactId': contactId, 'rawIds': rawIds});
 
   /// The contact's custom ringtone URI, or null for the default.
-  Future<String?> getRingtone(String contactId) => _methods.invokeMethod<String>('getRingtone', {'contactId': contactId});
+  Future<String?> getRingtone(String contactId) =>
+      _methods.invokeMethod<String>('getRingtone', {'contactId': contactId});
 
   Future<void> setRingtone(String contactId, String? uri) =>
       _methods.invokeMethod('setRingtone', {'contactId': contactId, 'uri': uri});
