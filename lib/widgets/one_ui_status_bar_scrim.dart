@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import '../theme/one_ui_theme.dart';
@@ -50,10 +52,20 @@ class OneUIStatusBarScrim extends StatelessWidget {
           child: SizedBox(
             height: scrimHeight,
             width: double.infinity,
-            // Dialer change from OneSpend: gradient only. The masked backdrop blur cost two
-            // full-width save layers per frame on every page, and over our black pages
-            // the near-opaque gradient already hides what scrolls under the status bar.
-            child: const DecoratedBox(decoration: BoxDecoration(gradient: topGradient)),
+            child: ClipRect(
+              child: ShaderMask(
+                shaderCallback: (Rect bounds) {
+                  return blurMask.createShader(bounds);
+                },
+                blendMode: BlendMode.dstIn,
+                child: RepaintBoundary(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+                    child: const DecoratedBox(decoration: BoxDecoration(gradient: topGradient)),
+                  ),
+                ),
+              ),
+            ),
           ),
         );
       },

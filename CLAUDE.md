@@ -8,11 +8,11 @@ A custom Android default phone app (dialer). The UI is Flutter; a Kotlin layer u
 
 The UI design is ported from the sibling app OneSpend at `D:\one-spend` (pitch-black Samsung One UI); the reference screenshots of Samsung's Phone app are in `Images/` (local only, git-ignored). OneSpend widgets are copied **verbatim** into `lib/widgets/` (reformatted only) and compile against three stand-ins at the same import paths: `lib/theme/one_ui_effects.dart` (`OneUIEffectsController` returning OneSpend's flat-look values, re-exported by `one_ui_theme.dart`), `lib/core/haptics/haptics.dart`, and `lib/core/speech/voice_input.dart` (no mic yet). To add another OneSpend widget, copy it the same way; don't hand-rewrite.
 
-Liquid glass (`liquid_glass_widgets`, shaders pre-warmed and the app wrapped in `main()`; follow `.claude/skills/liquid-glass-widgets/SKILL.md`):
-- `OneUIGlassSurface` (the one surface behind every floating element: header pills, scroll-to-top, action and selection bars, search pill, Cancel | Save, menus, modals, toasts) renders liquid glass. It's premium for `OneUIGlassElevation.navbar`, standard otherwise. Use it for any new floating chrome, and never nest one inside another.
-- The bottom nav bar is the package's `GlassTabBar.bottom` (premium). While a tab is selecting, its actions (`navDock`, a docked `OneUIFloatingActionBar`) spring in over it in a glass bar, and the tab bar stays mounted underneath.
-- It floats in a `Stack` in `MainShell`. Tabs pad with `navBarClearance()` (`lib/app/layout.dart`), and every bottom bar sits on the same baseline (`kFloatingNavBarHeight`, `kNavBarVerticalPadding`).
-- Selection mode follows OneSpend: the header's `isSelectionMode` with `OneUISelectionCountPill` (select all) and the cancel pill, and the actions in a glass bar over the tab bar.
+Floating chrome is OneSpend's, 1:1 (no liquid glass; it was tried and removed):
+- Every floating element (nav bar, header pills, scroll-to-top, action and selection bars, search pill, Cancel | Save, menus, modals) is a verbatim OneSpend widget on `OneUIGlassSurface`, in OneSpend's default flat look (the effects stand-in). Keep them verbatim: re-copy from `D:\one-spend\lib\widgets` rather than editing.
+- `MainShell` hosts `OneUIFloatingNavBar` the way OneSpend's `home_screen.dart` does: in a `Stack` (the bar fills its parent's height, so it can't be a `Scaffold.bottomNavigationBar`), under a top `OneUIStatusBarScrim`, with `AnimatedPositioned(bottom: -120)` + `AnimatedOpacity` to hide it while typing on the keypad, and `Haptics.tap()` on tab taps. While a tab is selecting, the bar morphs into its actions (`navDock` → `dockedContent`, a docked `OneUIFloatingActionBar`).
+- Tabs pad with `navBarClearance()` (`lib/app/layout.dart`); bottom bars sit on one baseline (`kFloatingNavBarHeight`, `kNavBarVerticalPadding`).
+- Selection mode follows OneSpend: the header's `isSelectionMode` with `OneUISelectionCountPill` (select all) and the cancel pill.
 
 ## Git workflow
 
@@ -32,7 +32,7 @@ flutter run --profile                          # judge smoothness here or in --r
 flutter build apk --release                    # installs today: release falls back to debug signing without key.properties
 ```
 
-Performance rules that keep the lists smooth: list content goes in lazy slivers (`SliverList.builder`, `DecoratedSliver` for card backgrounds), never a `Column` of all rows. Selection taps update a `ValueNotifier` that only the selection circle (`SelectMark`) listens to. Row structure stays the same in and out of selection mode (`SwipeToCallOrMessage(enabled:)`). Avoid `BackdropFilter`/`ShaderMask` on full-width bars (each is a save layer every frame).
+Performance rules that keep the lists smooth: list content goes in lazy slivers (`SliverList.builder`, `DecoratedSliver` for card backgrounds), never a `Column` of all rows. Selection taps update a `ValueNotifier` that only the selection circle (`SelectMark`) listens to. Row structure stays the same in and out of selection mode (`SwipeToCallOrMessage(enabled:)`). Don't add new full-width `BackdropFilter`/`ShaderMask` layers beyond OneSpend's own (each is a save layer every frame).
 
 Incoming calls can be tested without a second phone: debug builds include a fake "Test line" (`android/app/src/debug/.../FakeCalls.kt`, never in release). Enable it once, then ring the phone (add `--ez private true` for a hidden number):
 
