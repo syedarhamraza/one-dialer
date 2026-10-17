@@ -4,39 +4,52 @@ import 'package:flutter/services.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
+import '../../widgets/one_ui_floating_modal.dart';
 
 /// Incoming call: swipe the green circle to answer or the red one to decline (Samsung style),
 /// plus "Decline with message".
 class IncomingControls extends StatelessWidget {
-  const IncomingControls({super.key, required this.call});
+  const IncomingControls({super.key, required this.call, this.isCurrent});
 
   final CallInfo call;
+  final bool Function()? isCurrent;
 
   Future<void> _declineWithMessage(BuildContext context) async {
     // Edited in Settings › Quick decline messages.
     final quickReplies = await TelecomBridge.instance.getQuickReplies();
-    if (!context.mounted) return;
-    final message = await showModalBottomSheet<String>(
+    if (!context.mounted || isCurrent?.call() == false) return;
+    final message = await OneUIFloatingModal.show<String>(
       context: context,
-      backgroundColor: OneUITheme.surfaceCard,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(OneUITheme.radiusCard)),
-      ),
-      builder: (context) => SafeArea(
+      builder: (context) => Material(
+        color: Colors.transparent,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(20),
-              child: Text('Decline with message', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+            const Text('Decline with message', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 16),
+            ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.5),
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  if (quickReplies.isEmpty)
+                    const Padding(padding: EdgeInsets.all(16), child: Text('No quick replies saved')),
+                  for (final m in quickReplies)
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(m),
+                      onTap: () => Navigator.of(context).pop(m),
+                    ),
+                ],
+              ),
             ),
-            for (final m in quickReplies) ListTile(title: Text(m), onTap: () => Navigator.of(context).pop(m)),
-            const SizedBox(height: 8),
           ],
         ),
       ),
     );
-    if (message != null) await TelecomBridge.instance.rejectWithMessage(call.id, message);
+    if (message != null && context.mounted && isCurrent?.call() != false) {
+      await TelecomBridge.instance.rejectWithMessage(call.id, message);
+    }
   }
 
   @override
@@ -44,38 +57,68 @@ class IncomingControls extends StatelessWidget {
     final telecom = TelecomBridge.instance;
     final canText = !call.isPrivate && (call.number?.isNotEmpty ?? false);
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         if (canText)
           TextButton.icon(
             onPressed: () => _declineWithMessage(context),
             icon: const Icon(Icons.message_outlined),
             label: const Text('Decline with message'),
-            style: TextButton.styleFrom(foregroundColor: OneUITheme.textSecondary),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: Colors.white.withValues(alpha: 0.10),
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+              shape: const StadiumBorder(),
+            ),
           ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
+          padding: EdgeInsets.zero,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              SwipeCircle(
-                color: OneUITheme.accentGreen,
-                icon: Icons.call_rounded,
-                label: 'Answer',
-                onTriggered: () => telecom.answer(call.id),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SwipeCircle(
+                      color: OneUITheme.accentGreen,
+                      icon: Icons.call_rounded,
+                      label: 'Answer',
+                      onTriggered: () => telecom.answer(call.id),
+                    ),
+                    const ExcludeSemantics(
+                      child: Text('Answer', style: TextStyle(fontSize: 15, color: Colors.white)),
+                    ),
+                  ],
+                ),
               ),
-              SwipeCircle(
-                color: OneUITheme.accentRed,
-                icon: Icons.call_end_rounded,
-                label: 'Decline',
-                onTriggered: () => telecom.reject(call.id),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SwipeCircle(
+                      color: OneUITheme.accentRed,
+                      icon: Icons.call_end_rounded,
+                      label: 'Decline',
+                      onTriggered: () => telecom.reject(call.id),
+                    ),
+                    const ExcludeSemantics(
+                      child: Text('Decline', style: TextStyle(fontSize: 15, color: Colors.white)),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 12),
-        const Text('Swipe to answer or decline', style: TextStyle(fontSize: 13, color: OneUITheme.textTertiary)),
-        const SizedBox(height: 32),
+        const Text(
+          'Swipe to answer or decline',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 13, color: Colors.white70),
+        ),
+        const SizedBox(height: 20),
       ],
     );
   }
@@ -108,9 +151,15 @@ class SwipeCircle extends StatefulWidget {
 class _SwipeCircleState extends State<SwipeCircle> with SingleTickerProviderStateMixin {
   Offset _drag = Offset.zero;
   bool _fired = false;
-  late final AnimationController _back = AnimationController(vsync: this, duration: const Duration(milliseconds: 220))
+  late final AnimationController _back = AnimationController(vsync: this, duration: const Duration(milliseconds: 200))
     ..addListener(() => setState(() => _drag = _from * (1 - Curves.easeOut.transform(_back.value))));
   Offset _from = Offset.zero;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _back.duration = MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 200);
+  }
 
   @override
   void dispose() {
