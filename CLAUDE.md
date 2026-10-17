@@ -10,11 +10,9 @@ The UI design is ported from the sibling app OneSpend at `D:\one-spend` (pitch-b
 
 Liquid glass (`liquid_glass_widgets`, shaders pre-warmed and the app wrapped in `main()`; follow `.claude/skills/liquid-glass-widgets/SKILL.md`):
 - `OneUIGlassSurface` (the one surface behind every floating element: header pills, scroll-to-top, action and selection bars, search pill, Cancel | Save, menus, modals, toasts) renders liquid glass. It's premium for `OneUIGlassElevation.navbar`, standard otherwise. Use it for any new floating chrome, and never nest one inside another.
-- The bottom nav bar has two styles, switched in Settings › *Morphing nav bar* (`DialerPrefs.oneSpendNavBar`):
-  - OneSpend's `OneUIFloatingNavBar`, which morphs into a tab's selection actions (`navDock`, a docked `OneUIFloatingActionBar`);
-  - the package's `GlassTabBar.bottom`, with the actions springing in over it.
-- Both float in a `Stack` in `MainShell`. Tabs pad with `navBarClearance()` (`lib/app/layout.dart`), and every bottom bar sits on the same baseline (`kFloatingNavBarHeight`, `kNavBarVerticalPadding`).
-- Selection mode follows OneSpend: the header's `isSelectionMode` with `OneUISelectionCountPill` (select all) and the cancel pill, and the actions in the nav bar.
+- The bottom nav bar is the package's `GlassTabBar.bottom` (premium). While a tab is selecting, its actions (`navDock`, a docked `OneUIFloatingActionBar`) spring in over it in a glass bar, and the tab bar stays mounted underneath.
+- It floats in a `Stack` in `MainShell`. Tabs pad with `navBarClearance()` (`lib/app/layout.dart`), and every bottom bar sits on the same baseline (`kFloatingNavBarHeight`, `kNavBarVerticalPadding`).
+- Selection mode follows OneSpend: the header's `isSelectionMode` with `OneUISelectionCountPill` (select all) and the cancel pill, and the actions in a glass bar over the tab bar.
 
 ## Git workflow
 

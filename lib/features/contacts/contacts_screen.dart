@@ -133,8 +133,8 @@ class _ContactsScreenState extends State<ContactsScreen> {
     navDock.value = null;
   }
 
-  /// OneSpend's selection mode: All and Cancel live in the header pills; the nav bar
-  /// morphs into these actions.
+  /// OneSpend's selection mode: All and Cancel live in the header pills; a glass bar
+  /// of these actions springs in over the tab bar.
   void _updateDock() {
     final count = _selected?.length ?? 0;
     navDock.value = OneUIFloatingActionBar(

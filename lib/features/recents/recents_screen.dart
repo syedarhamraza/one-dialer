@@ -140,8 +140,8 @@ class _RecentsScreenState extends State<RecentsScreen> {
     navDock.value = null;
   }
 
-  /// OneSpend's selection mode: All and Cancel live in the header pills; the nav bar
-  /// morphs into the actions (same as Contacts).
+  /// OneSpend's selection mode: All and Cancel live in the header pills; a glass bar
+  /// of the actions springs in over the tab bar (same as Contacts).
   void _updateDock() {
     if (_selected == null) {
       navDock.value = null;
