@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../app/layout.dart';
@@ -47,6 +49,15 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
   Account? _account;
   List<Group> _groups = const [];
   bool _nameExpanded = false, _workOpen = false, _more = false, _saving = false;
+  bool _closing = false, _confirming = false, _loadFailed = false;
+  final _loadReady = ValueNotifier(false);
+  bool get _ready => _loadReady.value;
+  final _nameFocus = FocusNode();
+  final _entered = Completer<void>();
+  Animation<double>? _routeAnimation;
+  MediaQueryData? _exitMediaQuery;
+
+  bool get _active => mounted && !_closing;
 
   bool get _isNew => widget.contactId == null;
 
@@ -59,47 +70,144 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
   @override
   void initState() {
     super.initState();
+    if (_isNew) _form = _prepareForm(ContactForm());
     _load();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final animation = ModalRoute.of(context)?.animation;
+    if (animation != _routeAnimation) {
+      _routeAnimation?.removeStatusListener(_routeStatusChanged);
+      _routeAnimation = animation;
+      animation?.addStatusListener(_routeStatusChanged);
+    }
+    // Flutter initially exposes an always-complete proxy before wiring the
+    // route's actual animation. Check it after that first frame, not during build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_active && (_routeAnimation == null || _routeAnimation!.isCompleted)) {
+        _routeStatusChanged(AnimationStatus.completed);
+      }
+    });
+  }
+
+  void _routeStatusChanged(AnimationStatus status) {
+    if (status == AnimationStatus.completed && !_entered.isCompleted) {
+      _entered.complete();
+    }
+  }
+
+  @override
+  void dispose() {
+    _closing = true;
+    _routeAnimation?.removeStatusListener(_routeStatusChanged);
+    if (!_entered.isCompleted) _entered.complete();
+    _nameFocus.dispose();
+    _loadReady.dispose();
+    super.dispose();
+  }
+
+  ContactForm _prepareForm(ContactForm form) {
+    final initialNumber = widget.initialNumber?.trim() ?? '';
+    // A blank phone row is not a change; a supplied number is.
+    if (form.phones.isEmpty && initialNumber.isEmpty) {
+      form.phones.add(LabeledValue(label: 'mobile'));
+    }
+    _savedSignature = form.signature;
+    if (initialNumber.isNotEmpty) {
+      form.phones.add(LabeledValue(label: 'mobile', value: initialNumber));
+    }
+    return form;
+  }
+
   Future<void> _load() async {
-    var form = ContactForm();
+    try {
+      await _loadData();
+    } catch (_) {
+      // Record waits wrap platform failures in ParallelWaitError.
+      if (_active) setState(() => _loadFailed = true);
+    }
+  }
+
+  void _retryLoad() {
+    setState(() => _loadFailed = false);
+    _load();
+  }
+
+  Future<void> _loadData() async {
     if (!_isNew) {
-      final c = await FlutterContacts.get(widget.contactId!, properties: ContactProperties.all);
+      final (c, membership, groups) = await (
+        FlutterContacts.get(widget.contactId!, properties: ContactProperties.all),
+        FlutterContacts.groups.getOf(widget.contactId!),
+        FlutterContacts.groups.getAll(),
+      ).wait;
+      await _entered.future;
+      if (!_active) return;
       if (c == null) {
-        if (mounted) Navigator.of(context).pop();
+        _close();
         return;
       }
-      final groups = await FlutterContacts.groups.getOf(widget.contactId!);
-      _base = c;
-      _initialGroups = {for (final g in groups) ?g.id};
-      form = ContactForm.fromContact(c, groupIds: _initialGroups);
+      setState(() {
+        _base = c;
+        _initialGroups = {for (final g in membership) ?g.id};
+        final form = _prepareForm(ContactForm.fromContact(c, groupIds: _initialGroups));
+        _form = form;
+        _groups = _userGroups(groups);
+        _workOpen = form.company.isNotEmpty || form.jobTitle.isNotEmpty || form.department.isNotEmpty;
+        _more = form.dates.isNotEmpty || form.websites.isNotEmpty || form.relations.isNotEmpty || form.notes.isNotEmpty;
+        _loadReady.value = true;
+      });
     } else {
-      _accounts = _contactAccounts(await FlutterContacts.accounts.getAll());
-      final fallback = await FlutterContacts.accounts.getDefault();
-      _account =
-          _accounts.where((a) => a.type == fallback?.type && a.name == fallback?.name).firstOrNull ??
-          _accounts.where((a) => a.type == 'com.google').firstOrNull ??
-          _accounts.firstOrNull;
+      final (all, fallback) = await (FlutterContacts.accounts.getAll(), FlutterContacts.accounts.getDefault()).wait;
+      if (!_active) return;
+      final accounts = _contactAccounts(all);
+      final account =
+          accounts.where((a) => a.type == fallback?.type && a.name == fallback?.name).firstOrNull ??
+          accounts.where((a) => a.type == 'com.google').firstOrNull ??
+          accounts.firstOrNull;
+      final groups = await FlutterContacts.groups.getAll(accounts: account == null ? null : [account]);
+      await _entered.future;
+      if (!_active) return;
+      setState(() {
+        _accounts = accounts;
+        _account = account;
+        _groups = _userGroups(groups);
+        _loadReady.value = true;
+      });
+      if (widget.initialNumber == null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_active &&
+              !_nameExpanded &&
+              ModalRoute.of(context)?.isCurrent == true &&
+              FocusScope.of(context).focusedChild == null) {
+            _nameFocus.requestFocus();
+          }
+        });
+      }
     }
-    final initialNumber = widget.initialNumber?.trim() ?? '';
-    // The blank phone row isn't a change; a number passed in (Add to Contacts) is.
-    if (form.phones.isEmpty && initialNumber.isEmpty) form.phones.add(LabeledValue(label: 'mobile'));
-    final savedSignature = form.signature;
-    if (initialNumber.isNotEmpty) form.phones.add(LabeledValue(label: 'mobile', value: initialNumber));
-    _groups = _userGroups(await FlutterContacts.groups.getAll(accounts: _account == null ? null : [_account!]));
-    if (!mounted) return;
+  }
+
+  void _close([String? result]) {
+    if (!_active) return;
+    // Freeze the outgoing layout while Android dismisses the keyboard. The route
+    // can slide out immediately without resizing its form and floating pill.
     setState(() {
-      _form = form;
-      _savedSignature = savedSignature;
-      _workOpen = form.company.isNotEmpty || form.jobTitle.isNotEmpty || form.department.isNotEmpty;
-      _more = form.dates.isNotEmpty || form.websites.isNotEmpty || form.relations.isNotEmpty || form.notes.isNotEmpty;
+      _exitMediaQuery = MediaQuery.of(context);
+      _closing = true;
     });
+    FocusScope.of(context).unfocus();
+    Navigator.of(context).pop(result);
+  }
+
+  void _requestLeave() {
+    if (!_active || _saving || _confirming) return;
+    _dirty ? _confirmLeave() : _close();
   }
 
   Future<void> _save() async {
     final form = _form!;
-    if (form.isEmpty || _saving) return;
+    if (form.isEmpty || _saving || !_ready || !_active) return;
     setState(() => _saving = true);
     try {
       final String id;
@@ -115,9 +223,9 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
       for (final g in _initialGroups.difference(form.groupIds)) {
         await FlutterContacts.groups.removeContacts(groupId: g, contactIds: [id]);
       }
-      if (mounted) Navigator.of(context).pop(id);
+      if (_active) _close(id);
     } on PlatformException catch (e) {
-      if (!mounted) return;
+      if (!mounted || _closing) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -146,62 +254,74 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
 
   /// "Save your changes or discard them?" on back with unsaved changes.
   Future<void> _confirmLeave() async {
+    _confirming = true;
     final choice = await OneUIFloatingModal.show<String>(
       context: context,
-      builder: (ctx) => Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Save your changes or discard them?', style: TextStyle(fontSize: 16.5, color: Colors.white)),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              for (final (i, (label, value)) in [
-                ('Cancel', null),
-                ('Discard', 'discard'),
-                ('Save', 'save'),
-              ].indexed) ...[
-                if (i > 0) Container(width: 1, height: 18, color: Colors.white.withValues(alpha: 0.10)),
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(ctx, value),
-                    child: Text(
-                      label,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+      builder: (ctx) => ValueListenableBuilder(
+        valueListenable: _loadReady,
+        builder: (ctx, ready, _) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Save your changes or discard them?', style: TextStyle(fontSize: 16.5, color: Colors.white)),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                for (final (i, (label, value)) in [
+                  ('Cancel', null),
+                  ('Discard', 'discard'),
+                  ('Save', 'save'),
+                ].indexed) ...[
+                  if (i > 0) Container(width: 1, height: 18, color: Colors.white.withValues(alpha: 0.10)),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: value == 'save' && !ready ? null : () => Navigator.pop(ctx, value),
+                      child: Text(
+                        label,
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ],
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
-    if (!mounted) return;
-    if (choice == 'discard') Navigator.of(context).pop();
+    _confirming = false;
+    if (!_active) return;
+    if (choice == 'discard') _close();
     if (choice == 'save') await _save();
   }
 
   @override
   Widget build(BuildContext context) {
     final form = _form;
-    return PopScope(
+    final screen = PopScope(
       // Decided at back-press time, so typing doesn't have to rebuild to keep it current.
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
-        if (didPop) return;
-        _dirty ? _confirmLeave() : Navigator.of(context).pop();
+        if (didPop) {
+          _closing = true;
+          return;
+        }
+        _requestLeave();
       },
       child: Scaffold(
         body: form == null
-            ? const SizedBox.expand()
+            ? Center(
+                child: _loadFailed
+                    ? TextButton(onPressed: _retryLoad, child: const Text("Couldn't load the contact. Retry"))
+                    : const CircularProgressIndicator(),
+              )
             : Stack(
                 children: [
                   ListView(
                     physics: const OneUIScrollPhysics(),
                     padding: EdgeInsets.fromLTRB(16, MediaQuery.paddingOf(context).top + 16, 16, 140),
                     children: [
-                      if (_isNew && _accounts.isNotEmpty) _accountRow(),
+                      if (_isNew) _accountRow(),
                       _photo(form),
                       const SizedBox(height: 24),
                       _mainCard(form),
@@ -275,7 +395,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                         child: OneUIFloatingCancelSavePill(
                           onCancel: () => Navigator.of(context).maybePop(),
                           onSave: _save,
-                          canSave: !form.isEmpty && !_saving,
+                          canSave: _ready && !form.isEmpty && !_saving && !_closing,
                         ),
                       ),
                     ),
@@ -284,6 +404,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
               ),
       ),
     );
+    return MediaQuery(data: _exitMediaQuery ?? MediaQuery.of(context), child: screen);
   }
 
   // --- Account ---------------------------------------------------------------
@@ -295,7 +416,11 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
     return InkWell(
       key: _accountKey,
       borderRadius: OneUITheme.pillBorderRadius,
-      onTap: _chooseAccount,
+      onTap: _loadFailed
+          ? _retryLoad
+          : _ready
+          ? _chooseAccount
+          : null,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         child: Row(
@@ -304,7 +429,11 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
             const SizedBox(width: 14),
             Flexible(
               child: Text(
-                account == null || account.type.contains('phone') ? 'Phone' : account.name,
+                !_ready
+                    ? (_loadFailed ? "Couldn't load accounts" : 'Loading accounts…')
+                    : account == null || account.type.contains('phone')
+                    ? 'Phone'
+                    : account.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontSize: 18),
@@ -348,8 +477,9 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
       ],
     );
     final account = picked;
-    if (account == null || !mounted) return;
+    if (account == null || !_active) return;
     final groups = _userGroups(await FlutterContacts.groups.getAll(accounts: [account]));
+    if (!_active) return;
     setState(() {
       _account = account;
       _groups = groups;
@@ -420,7 +550,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
   Future<void> _photoMenu({required bool hasPhoto}) async {
     Future<void> gallery() async {
       final bytes = await TelecomBridge.instance.pickPhoto();
-      if (bytes != null) {
+      if (bytes != null && _active) {
         setState(
           () => _form!
             ..newPhoto = bytes
@@ -488,7 +618,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                   key: const ValueKey('name-full'),
                   hint: 'Name',
                   value: form.fullName,
-                  autofocus: _isNew && widget.initialNumber == null,
+                  focusNode: _nameFocus,
                   capitalization: TextCapitalization.words,
                   onChanged: (v) {
                     form.fullName = v;
@@ -741,7 +871,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
           ],
         ),
       );
-      if (ok != true) return;
+      if (ok != true || !_active) return;
       setState(() {
         if (existing == null) {
           form.dates.add(DateValue(year: chosen.year, month: chosen.month, day: chosen.day));
@@ -856,6 +986,6 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
         ),
       ),
     );
-    if (ok == true) setState(() => form.groupIds = selected);
+    if (ok == true && _active) setState(() => form.groupIds = selected);
   }
 }
