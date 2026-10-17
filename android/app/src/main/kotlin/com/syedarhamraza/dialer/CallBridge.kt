@@ -104,17 +104,6 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
             "getState" -> result.success(CallManager.snapshot())
             "placeCall" -> placeCall(call.argument<String>("number"), call.argument<String>("simId"), result)
             "getSims" -> getSims(result)
-            "getWhatsAppCalls" -> inBackground(result) {
-                WhatsAppCalls.discover(context, call.argument<String>("number").orEmpty())
-            }
-            "startWhatsAppCall" -> inBackground(result) {
-                WhatsAppCalls.call(context, call.argument<String>("number").orEmpty(), call.argument<String>("package").orEmpty())
-            }
-            "openWhatsAppChat" -> {
-                runCatching {
-                    WhatsAppCalls.chat(context, call.argument<String>("number").orEmpty(), call.argument<String>("package").orEmpty())
-                }.onSuccess { result.success(null) }.onFailure { result.error("NO_APP", "Could not open WhatsApp", null) }
-            }
             "getMessagingApps" -> inBackground(result) { ContactExtras.messagingApps(context, call.argument<String>("contactId")!!) }
             "openContactData" -> {
                 runCatching {

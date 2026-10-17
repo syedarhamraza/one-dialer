@@ -8,7 +8,7 @@ import '../theme/one_ui_theme.dart';
 
 /// Calls [number] the way Samsung does: on [simId] if given, else on the contact's chosen
 /// SIM, else (dual SIM with "Ask every time") after asking with our own SIM sheet.
-Future<void> placeCall(BuildContext context, String number, {String? simId}) async {
+Future<bool> placeCall(BuildContext context, String number, {String? simId}) async {
   final telecom = TelecomBridge.instance;
   if (simId == null) {
     final contact = ContactsRepository.instance.contactFor(number);
@@ -17,13 +17,14 @@ Future<void> placeCall(BuildContext context, String number, {String? simId}) asy
   if (simId == null) {
     final sims = await telecom.getSims();
     if (sims.length > 1 && !sims.any((s) => s.isDefault)) {
-      if (!context.mounted) return;
+      if (!context.mounted) return false;
       final sim = await _pickSim(context, sims);
-      if (sim == null) return;
+      if (sim == null) return false;
       simId = sim.id;
     }
   }
   await telecom.placeCall(number, simId: simId);
+  return true;
 }
 
 Future<SimCard?> _pickSim(BuildContext context, List<SimCard> sims) => showModalBottomSheet<SimCard>(

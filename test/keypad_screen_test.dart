@@ -129,11 +129,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(input.value, '03331234500');
     expect(find.byTooltip('Show keypad'), findsNothing);
-    expect(find.byTooltip('WhatsApp voice call'), findsOneWidget);
+    expect(find.byTooltip('WhatsApp voice call'), findsNothing);
+    expect(find.bySemanticsLabel('Call'), findsOneWidget);
     expect(nativeCalls.where((call) => call.method == 'placeCall'), isEmpty);
   });
 
-  testWidgets('empty and service-code input disable WhatsApp', (tester) async {
+  testWidgets('typing and clearing leave keypad at the same position', (tester) async {
     final input = ValueNotifier('');
     await tester.pumpWidget(
       MaterialApp(
@@ -142,15 +143,43 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(tester.takeException(), isNull);
-    for (final number in ['', '+', '*123#', '123,4', '123;4']) {
-      input.value = number;
-      await tester.pumpAndSettle();
-      final button = tester.widget<IconButton>(
-        find.byWidgetPredicate((w) => w is IconButton && w.tooltip == 'WhatsApp voice call'),
-      );
-      expect(button.onPressed, isNull);
-    }
+    final before = tester.getTopLeft(find.byKey(const ValueKey('keypad-panel')));
+    input.value = '0333';
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(find.byKey(const ValueKey('keypad-panel'))), before);
+    input.value = '';
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(find.byKey(const ValueKey('keypad-panel'))), before);
+    expect(find.byTooltip('WhatsApp voice call'), findsNothing);
+  });
+
+  testWidgets('keypad slides down and back up through intermediate positions', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: OneUITheme.darkTheme,
+        home: Scaffold(body: KeypadScreen(input: ValueNotifier('0333'))),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final panel = find.byKey(const ValueKey('keypad-panel'));
+    final opened = tester.getTopLeft(panel).dy;
+    await tester.drag(find.byType(ListView), const Offset(0, -40));
+    await tester.pump();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 120));
+    final closing = tester.getTopLeft(panel).dy;
+    expect(closing, greaterThan(opened));
+    await tester.pumpAndSettle();
+    final closed = tester.getTopLeft(panel).dy;
+    expect(closed, greaterThan(closing));
+    await tester.tap(find.byTooltip('Show keypad'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 120));
+    final opening = tester.getTopLeft(panel).dy;
+    expect(opening, lessThan(closed));
+    expect(opening, greaterThan(opened));
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(panel).dy, opened);
   });
 
   testWidgets('inactive collapsed keypad does not block route back', (tester) async {
@@ -179,7 +208,7 @@ void main() {
     expect(find.byTooltip('Show keypad'), findsNothing);
   });
 
-  testWidgets('two SIM actions fit a compact screen and keep their routing', (tester) async {
+  testWidgets('one call button offers both SIMs and routes the selected SIM', (tester) async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
       nativeCalls.add(call);
       if (call.method == 'getSims') {
@@ -202,9 +231,86 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
-    await tester.tap(find.bySemanticsLabel('Call with Work'));
+    expect(find.bySemanticsLabel('Call'), findsOneWidget);
+    expect(find.text('Work'), findsNothing);
+    await tester.tap(find.bySemanticsLabel('Call'));
+    await tester.pumpAndSettle();
+    expect(find.text('Call using'), findsOneWidget);
+    await tester.tap(find.text('Work'));
     await tester.pumpAndSettle();
     expect(nativeCalls.singleWhere((call) => call.method == 'placeCall').arguments['simId'], 'sim2');
+  });
+
+  testWidgets('cancelling SIM selection preserves the number and places no call', (tester) async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
+      nativeCalls.add(call);
+      if (call.method == 'getSims') {
+        return [
+          {'id': 'sim1', 'label': 'Personal', 'isDefault': false},
+          {'id': 'sim2', 'label': 'Work', 'isDefault': false},
+        ];
+      }
+      return null;
+    });
+    final input = ValueNotifier('5551234567');
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: OneUITheme.darkTheme,
+        home: Scaffold(body: KeypadScreen(input: input)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.bySemanticsLabel('Call'));
+    await tester.pumpAndSettle();
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(input.value, '5551234567');
+    expect(nativeCalls.where((call) => call.method == 'placeCall'), isEmpty);
+  });
+
+  testWidgets('system default SIM calls without showing a chooser', (tester) async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
+      nativeCalls.add(call);
+      if (call.method == 'getSims') {
+        return [
+          {'id': 'sim1', 'label': 'Personal', 'isDefault': true},
+          {'id': 'sim2', 'label': 'Work', 'isDefault': false},
+        ];
+      }
+      return null;
+    });
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: OneUITheme.darkTheme,
+        home: Scaffold(body: KeypadScreen(input: ValueNotifier('5551234567'))),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.bySemanticsLabel('Call'));
+    await tester.pumpAndSettle();
+    expect(find.text('Call using'), findsNothing);
+    expect(nativeCalls.singleWhere((call) => call.method == 'placeCall').arguments['number'], '5551234567');
+  });
+
+  testWidgets('collapsed keypad restore button stays reachable in landscape', (tester) async {
+    tester.view.physicalSize = const Size(700, 360);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: OneUITheme.darkTheme,
+        home: Scaffold(body: KeypadScreen(input: ValueNotifier('0333'))),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView), const Offset(0, -40));
+    await tester.pumpAndSettle();
+    expect(tester.getBottomRight(find.byTooltip('Show keypad')).dy, lessThanOrEqualTo(360));
+    await tester.tap(find.byTooltip('Show keypad'));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Show keypad'), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('compact keypad fits with larger text and action ordering', (tester) async {
@@ -223,9 +329,6 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
-    expect(
-      tester.getCenter(find.byTooltip('WhatsApp voice call')).dx,
-      lessThan(tester.getCenter(find.bySemanticsLabel('Call')).dx),
-    );
+    expect(tester.getCenter(find.bySemanticsLabel('Call')).dx, 160);
   });
 }
