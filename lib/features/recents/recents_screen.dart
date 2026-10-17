@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../app/layout.dart';
 import '../../app/main_shell.dart' show navDock;
 import '../../core/contacts/contacts_repository.dart';
+import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_scroll.dart';
@@ -11,7 +12,13 @@ import '../../theme/one_ui_theme.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_collapsible_header.dart';
 import '../../widgets/one_ui_floating_action_bar.dart';
+import '../../widgets/one_ui_floating_menu.dart';
+import '../../widgets/one_ui_floating_modal.dart';
+import '../../widgets/one_ui_radio.dart';
 import '../../widgets/swipe_to_call.dart';
+import '../contacts/contact_details_screen.dart';
+import '../contacts/contact_picker_screen.dart';
+import '../settings/settings_screen.dart';
 import 'call_details_screen.dart';
 import 'call_log.dart';
 import 'call_log_repository.dart';
@@ -27,7 +34,9 @@ class RecentsScreen extends StatefulWidget {
 
 class _RecentsScreenState extends State<RecentsScreen> {
   final _repo = CallLogRepository.instance;
-  bool _missedOnly = false;
+  final _menuKey = GlobalKey();
+  CallFilter _filter = CallFilter.all;
+  bool _hideBlocked = true;
   Set<int>? _selected; // call ids; null when not selecting
   List<SimCard> _sims = const [];
 
@@ -37,6 +46,76 @@ class _RecentsScreenState extends State<RecentsScreen> {
     TelecomBridge.instance.getSims().then((s) {
       if (mounted) setState(() => _sims = s);
     });
+    DialerPrefs.instance.changes.addListener(_loadPrefs);
+    _loadPrefs();
+  }
+
+  @override
+  void dispose() {
+    DialerPrefs.instance.changes.removeListener(_loadPrefs);
+    super.dispose();
+  }
+
+  Future<void> _loadPrefs() async {
+    final hide = await DialerPrefs.instance.hideBlockedCalls();
+    if (mounted && hide != _hideBlocked) setState(() => _hideBlocked = hide);
+  }
+
+  /// Samsung's "Filter calls" dialog (radio list, Cancel | OK).
+  Future<void> _chooseFilter() async {
+    var choice = _filter;
+    final ok = await OneUIFloatingModal.showConfirmationDialog(
+      context: context,
+      title: 'Filter calls',
+      confirmLabel: 'OK',
+      customContent: StatefulBuilder(
+        builder: (ctx, setModal) => Column(
+          children: [
+            for (final f in CallFilter.values)
+              InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () => setModal(() => choice = f),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: Row(
+                    children: [
+                      OneUIRadio(isSelected: choice == f),
+                      const SizedBox(width: 22),
+                      Text(f.label, style: const TextStyle(fontSize: 18)),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (ok == true && mounted) setState(() => _filter = choice);
+  }
+
+  void _openMenu() => OneUIFloatingMenu.show(
+    context: context,
+    anchorKey: _menuKey,
+    width: 250,
+    items: [
+      OneUIFloatingMenuItem(
+        label: _hideBlocked ? 'Show blocked calls' : 'Hide blocked calls',
+        onTap: () => DialerPrefs.instance.setHideBlockedCalls(!_hideBlocked),
+      ),
+      OneUIFloatingMenuItem(
+        label: 'Settings',
+        onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),
+      ),
+    ],
+  );
+
+  /// shortcut: the contact list with search until the Samsung search page (plan step 6) exists.
+  Future<void> _search() async {
+    final picked = await pickContact(context, title: 'Search');
+    if (picked != null && mounted) {
+      await Navigator.of(context)
+          .push(MaterialPageRoute<void>(builder: (_) => ContactDetailsScreen(contactId: picked.id)));
+    }
   }
 
   void _toggle(CallGroup group) {
@@ -115,30 +194,31 @@ class _RecentsScreenState extends State<RecentsScreen> {
     );
   }
 
-  /// Blocked calls live under Block numbers, not Recents (like Samsung).
   List<CallLogEntry> get _visibleCalls => [
     for (final c in _repo.calls.value)
-      if (c.type != CallType.blocked && (!_missedOnly || c.isMissed)) c,
+      if (_filter.matches(c, hideBlocked: _hideBlocked)) c,
   ];
 
   Widget _buildList(BuildContext context) {
     final days = groupByDay(_visibleCalls);
     final now = DateTime.now();
-    final title = _selected == null ? 'Recents' : '${_selected!.length} selected';
+    final selecting = _selected != null;
     return CustomScrollView(
       physics: OneUIScrollPhysics.bigHeader,
       slivers: [
-        SliverPersistentHeader(pinned: true, delegate: OneUICollapsibleHeaderDelegate(title: title)),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-            child: Row(
-              children: [
-                _FilterPill(label: 'All', selected: !_missedOnly, onTap: () => setState(() => _missedOnly = false)),
-                const SizedBox(width: 8),
-                _FilterPill(label: 'Missed', selected: _missedOnly, onTap: () => setState(() => _missedOnly = true)),
-              ],
-            ),
+        SliverPersistentHeader(
+          pinned: true,
+          delegate: OneUICollapsibleHeaderDelegate(
+            title: selecting ? '${_selected!.length} selected' : 'Phone',
+            subtitle: selecting || _filter == CallFilter.all ? null : _filter.label,
+            actionsPillKey: _menuKey,
+            actions: selecting
+                ? null
+                : [
+                    OneUIHeaderAction(icon: Icons.filter_list_rounded, tooltip: 'Filter calls', onTap: _chooseFilter),
+                    OneUIHeaderAction(icon: Icons.search_rounded, tooltip: 'Search', onTap: _search),
+                    OneUIHeaderAction(icon: Icons.more_vert_rounded, tooltip: 'More options', onTap: _openMenu),
+                  ],
           ),
         ),
         if (!_repo.hasAccess.value)
@@ -154,7 +234,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
             ),
           )
         else if (days.isEmpty)
-          _Empty(icon: Icons.watch_later_outlined, text: _missedOnly ? 'No missed calls' : 'No recent calls')
+          _Empty(text: _filter == CallFilter.all ? 'No recent calls' : 'No ${_filter.label.toLowerCase()}')
         else
           for (final (day, groups) in days) ...[
             SliverToBoxAdapter(child: _DayHeader(label: dayLabel(day, now))),
@@ -358,43 +438,8 @@ class _DayHeader extends StatelessWidget {
   }
 }
 
-class _FilterPill extends StatelessWidget {
-  const _FilterPill({required this.label, required this.selected, required this.onTap});
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      selected: selected,
-      button: true,
-      child: Material(
-        color: selected ? OneUITheme.surfacePillActive : OneUITheme.surfacePill,
-        borderRadius: OneUITheme.pillBorderRadius,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: OneUITheme.pillBorderRadius,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                color: selected ? OneUITheme.textPrimary : OneUITheme.textSecondary,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _Empty extends StatelessWidget {
-  const _Empty({required this.icon, required this.text, this.action});
+  const _Empty({this.icon = Icons.watch_later_outlined, required this.text, this.action});
 
   final IconData icon;
   final String text;

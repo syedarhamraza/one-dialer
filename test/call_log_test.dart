@@ -49,4 +49,22 @@ void main() {
   test('numberKey matches international and local formats', () {
     expect(numberKey('+92 300 1234567'), numberKey('0300-1234567'));
   });
+
+  test('call filters', () {
+    final now = DateTime(2026, 10, 17, 12);
+    final calls = {
+      for (final t in [CallType.incoming, CallType.outgoing, CallType.missed, CallType.rejected, CallType.blocked])
+        t: call(t.index, '0300', now, type: t),
+    };
+    List<CallType> shown(CallFilter f, {bool hideBlocked = true}) =>
+        [for (final c in calls.values) if (f.matches(c, hideBlocked: hideBlocked)) c.type];
+
+    expect(shown(CallFilter.all), [CallType.incoming, CallType.outgoing, CallType.missed, CallType.rejected]);
+    expect(shown(CallFilter.all, hideBlocked: false), contains(CallType.blocked));
+    expect(shown(CallFilter.missed), [CallType.missed]);
+    expect(shown(CallFilter.rejected), [CallType.rejected]);
+    expect(shown(CallFilter.outgoing), [CallType.outgoing]);
+    expect(shown(CallFilter.incoming), [CallType.incoming]);
+    expect(shown(CallFilter.missed, hideBlocked: false), [CallType.missed]); // blocked only under All
+  });
 }

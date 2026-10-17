@@ -12,6 +12,10 @@ import '../contacts/editor/add_to_contacts.dart';
 import '../settings/settings_screen.dart';
 import 'speed_dial_screen.dart';
 import '../../widgets/letter_avatar.dart';
+import '../../widgets/one_ui_collapsible_header.dart';
+import '../../widgets/one_ui_floating_menu.dart';
+import '../contacts/contact_details_screen.dart';
+import '../contacts/contact_picker_screen.dart';
 import '../../widgets/place_call.dart';
 import 't9.dart';
 
@@ -27,8 +31,12 @@ class KeypadScreen extends StatefulWidget {
   State<KeypadScreen> createState() => _KeypadScreenState();
 }
 
+/// Samsung's keypad sits on charcoal, not the pure black of the other tabs.
+const keypadBackground = Color(0xFF17171A);
+
 class _KeypadScreenState extends State<KeypadScreen> with WidgetsBindingObserver {
   final _telecom = TelecomBridge.instance;
+  final _menuKey = GlobalKey();
   List<SimCard> _sims = const [];
 
   @override
@@ -113,95 +121,124 @@ class _KeypadScreenState extends State<KeypadScreen> with WidgetsBindingObserver
     widget.input.value = '';
   }
 
+  void _openMenu() {
+    final typing = widget.input.value.isNotEmpty;
+    OneUIFloatingMenu.show(
+      context: context,
+      anchorKey: _menuKey,
+      width: 250,
+      items: [
+        if (typing) ...[
+          OneUIFloatingMenuItem(label: 'Add 2-sec pause', onTap: () => widget.input.value += ','),
+          OneUIFloatingMenuItem(label: 'Add wait', onTap: () => widget.input.value += ';'),
+          OneUIFloatingMenuItem(label: 'Send message', onTap: () => _telecom.sendSms(widget.input.value)),
+        ],
+        OneUIFloatingMenuItem(label: 'Speed dial numbers', onTap: _openSpeedDial),
+        OneUIFloatingMenuItem(
+          label: 'Settings',
+          onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),
+        ),
+      ],
+    );
+  }
+
+  /// shortcut: the contact list with search until the Samsung search page (plan step 6) exists.
+  Future<void> _search() async {
+    final picked = await pickContact(context, title: 'Search');
+    if (picked != null && mounted) {
+      await Navigator.of(context)
+          .push(MaterialPageRoute<void>(builder: (_) => ContactDetailsScreen(contactId: picked.id)));
+    }
+  }
+
   /// One button per SIM only when Android has no default SIM to use.
   List<SimCard?> get _callButtons => _sims.length > 1 && !_sims.any((s) => s.isDefault) ? _sims : const [null];
 
   @override
   Widget build(BuildContext context) {
-    final navSpace = navBarClearance(context) + 8;
-    return SafeArea(
-      bottom: false,
-      child: ValueListenableBuilder<String>(
-        valueListenable: widget.input,
-        builder: (context, number, _) {
-          return Column(
-            children: [
-              Align(
-                alignment: Alignment.centerRight,
-                child: PopupMenuButton<void>(
-                  tooltip: 'More options',
-                  icon: const Icon(Icons.more_vert_rounded, color: OneUITheme.textSecondary),
-                  color: OneUITheme.surfacePill,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  itemBuilder: (_) => [
-                    PopupMenuItem(onTap: _openSpeedDial, child: const Text('Speed dial numbers')),
-                    PopupMenuItem(
-                      onTap: () =>
-                          Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),
-                      child: const Text('Settings'),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: ValueListenableBuilder<List<DialerContact>>(
-                  valueListenable: ContactsRepository.instance.contacts,
-                  builder: (context, contacts, _) => _Results(
-                    matches: t9Search(number, contacts),
-                    query: number,
-                    onPick: (m) => widget.input.value = m.number,
+    return ColoredBox(
+      color: keypadBackground,
+      child: SafeArea(
+        bottom: false,
+        child: ValueListenableBuilder<String>(
+          valueListenable: widget.input,
+          builder: (context, number, _) {
+            // The shell hides the nav bar while typing, so the call row drops to the bottom.
+            final bottomSpace = number.isEmpty
+                ? navBarClearance(context) + 8
+                : MediaQuery.paddingOf(context).bottom + 40;
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    spacing: 16,
+                    children: [
+                      if (number.isNotEmpty)
+                        OneUIHeaderAction(
+                          icon: Icons.add_rounded,
+                          size: 28,
+                          tooltip: 'Add to Contacts',
+                          onTap: () => showAddToContacts(context, number),
+                        ),
+                      OneUIHeaderAction(icon: Icons.search_rounded, size: 26, tooltip: 'Search', onTap: _search),
+                      OneUIHeaderAction(
+                        actionKey: _menuKey,
+                        icon: Icons.more_vert_rounded,
+                        size: 26,
+                        tooltip: 'More options',
+                        onTap: _openMenu,
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              _NumberDisplay(number: number, onPaste: _paste),
-              _Keypad(onKey: _type, onLongPress: _longPress),
-              const SizedBox(height: 8),
-              _CallRow(
-                sims: _callButtons,
-                showBackspace: number.isNotEmpty,
-                onCall: _call,
-                onBackspace: _backspace,
-                onClear: () => widget.input.value = '',
-              ),
-              SizedBox(height: navSpace),
-            ],
-          );
-        },
+                Expanded(
+                  child: ValueListenableBuilder<List<DialerContact>>(
+                    valueListenable: ContactsRepository.instance.contacts,
+                    builder: (context, contacts, _) => _Results(
+                      matches: number.isEmpty ? const [] : t9Search(number, contacts),
+                      onPick: (m) => widget.input.value = m.number,
+                    ),
+                  ),
+                ),
+                _NumberDisplay(number: number, onPaste: _paste),
+                _Keypad(onKey: _type, onLongPress: _longPress),
+                const SizedBox(height: 8),
+                _CallRow(
+                  sims: _callButtons,
+                  showBackspace: number.isNotEmpty,
+                  onCall: _call,
+                  onBackspace: _backspace,
+                  onClear: () => widget.input.value = '',
+                ),
+                SizedBox(height: bottomSpace),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
 }
 
 class _Results extends StatelessWidget {
-  const _Results({required this.matches, required this.query, required this.onPick});
+  const _Results({required this.matches, required this.onPick});
 
   final List<T9Match> matches;
-  final String query;
   final ValueChanged<T9Match> onPick;
 
   @override
   Widget build(BuildContext context) {
-    if (query.isEmpty) return const SizedBox.expand();
-    if (matches.isEmpty) {
-      return Align(
-        alignment: Alignment.bottomCenter,
-        child: TextButton.icon(
-          onPressed: () => showAddToContacts(context, query),
-          icon: const Icon(Icons.person_add_alt_1_rounded, size: 20),
-          label: const Text('Add to Contacts'),
-          style: TextButton.styleFrom(foregroundColor: OneUITheme.accentBlue),
-        ),
-      );
-    }
     return ListView.builder(
-      reverse: true, // best match sits closest to the number, like Samsung
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       itemCount: matches.length,
       itemBuilder: (context, i) => _ResultTile(match: matches[i], onTap: () => onPick(matches[i])),
     );
   }
 }
 
+/// Samsung's T9 row: avatar and name on the left, the number on the right, matched part in blue.
 class _ResultTile extends StatelessWidget {
   const _ResultTile({required this.match, required this.onTap});
 
@@ -215,25 +252,35 @@ class _ResultTile extends StatelessWidget {
       onTap: onTap,
       borderRadius: OneUITheme.cardBorderRadius,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         child: Row(
           children: [
-            LetterAvatar(name: name),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _highlighted(name, match.nameRange, const TextStyle(fontSize: 16, color: OneUITheme.textPrimary)),
-                  const SizedBox(height: 2),
-                  _highlighted(
-                    match.number,
-                    match.numberRange,
-                    const TextStyle(fontSize: 13.5, color: OneUITheme.textSecondary),
-                  ),
-                ],
+            LetterAvatar(name: name, size: 48),
+            const SizedBox(width: 16),
+            // Unsaved numbers (from Recents) are named by their number; show it once.
+            if (name == match.number)
+              Expanded(
+                child: _highlighted(
+                  name,
+                  match.numberRange,
+                  const TextStyle(fontSize: 20, color: OneUITheme.textPrimary),
+                ),
+              )
+            else ...[
+              Expanded(
+                child: _highlighted(
+                  name,
+                  match.nameRange,
+                  const TextStyle(fontSize: 20, color: OneUITheme.textPrimary),
+                ),
               ),
-            ),
+              const SizedBox(width: 12),
+              _highlighted(
+                match.number,
+                match.numberRange,
+                const TextStyle(fontSize: 17, color: OneUITheme.textSecondary),
+              ),
+            ],
           ],
         ),
       ),
@@ -250,7 +297,7 @@ class _ResultTile extends StatelessWidget {
           TextSpan(text: text.substring(0, start)),
           TextSpan(
             text: text.substring(start, end),
-            style: const TextStyle(color: OneUITheme.accentBlue, fontWeight: FontWeight.w600),
+            style: const TextStyle(color: OneUITheme.accentBlue, fontWeight: FontWeight.w700),
           ),
           TextSpan(text: text.substring(end)),
         ],
@@ -275,21 +322,26 @@ class _NumberDisplay extends StatelessWidget {
         onLongPress: onPaste,
         behavior: HitTestBehavior.opaque,
         child: SizedBox(
-          height: 72,
+          height: 88,
           width: double.infinity,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text(
-                number,
-                maxLines: 1,
-                style: const TextStyle(
-                  fontSize: 36,
-                  fontWeight: FontWeight.w400,
-                  letterSpacing: 0.5,
-                  color: OneUITheme.textPrimary,
-                ),
+              child: Row(
+                children: [
+                  Text(
+                    number,
+                    maxLines: 1,
+                    style: const TextStyle(
+                      fontSize: 44,
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: 0.5,
+                      color: OneUITheme.textPrimary,
+                    ),
+                  ),
+                  if (number.isNotEmpty) Container(width: 2.5, height: 52, color: OneUITheme.accentBlue),
+                ],
               ),
             ),
           ),
@@ -306,7 +358,7 @@ class _Keypad extends StatelessWidget {
   final ValueChanged<String> onLongPress;
 
   static const _keys = [
-    ('1', ''),
+    ('1', 'VM'),
     ('2', 'ABC'),
     ('3', 'DEF'),
     ('4', 'GHI'),
@@ -385,7 +437,9 @@ class _Key extends StatelessWidget {
                   color: OneUITheme.textPrimary,
                 ),
               ),
-              if (letters.isNotEmpty)
+              if (letters == 'VM')
+                const Icon(Icons.voicemail_rounded, size: 18, color: OneUITheme.textSecondary)
+              else if (letters.isNotEmpty)
                 Text(
                   letters,
                   style: const TextStyle(fontSize: 11, letterSpacing: 1.2, color: OneUITheme.textSecondary),
@@ -436,7 +490,7 @@ class _CallRow extends StatelessWidget {
                     radius: 28,
                     child: const SizedBox(
                       height: 64,
-                      child: Icon(Icons.backspace_outlined, color: OneUITheme.textSecondary, size: 24),
+                      child: Icon(Icons.backspace_rounded, color: OneUITheme.textSecondary, size: 30),
                     ),
                   ),
                 )
