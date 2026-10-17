@@ -581,8 +581,15 @@ class _CallRow extends StatelessWidget {
             child: Center(child: _CallButton(onTap: onCall)),
           ),
           Expanded(
-            child: showBackspace
-                ? Semantics(
+            child: IgnorePointer(
+              ignoring: !showBackspace,
+              child: ExcludeSemantics(
+                excluding: !showBackspace,
+                child: AnimatedOpacity(
+                  opacity: showBackspace ? 1 : 0,
+                  duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 200),
+                  curve: Curves.easeInOutCubic,
+                  child: Semantics(
                     button: true,
                     label: 'Delete, long-press to clear',
                     excludeSemantics: true,
@@ -595,8 +602,10 @@ class _CallRow extends StatelessWidget {
                         child: Icon(Icons.backspace_rounded, color: OneUITheme.textSecondary, size: 30),
                       ),
                     ),
-                  )
-                : const SizedBox(height: 64),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),

@@ -10,7 +10,7 @@ The UI design is ported from the sibling app OneSpend at `D:\one-spend` (pitch-b
 
 Floating chrome is OneSpend's, 1:1 (no liquid glass; it was tried and removed):
 - Every floating element (nav bar, header pills, scroll-to-top, action and selection bars, search pill, Cancel | Save, menus, modals) is a verbatim OneSpend widget on `OneUIGlassSurface`, in OneSpend's default flat look (the effects stand-in). Keep them verbatim: re-copy from `D:\one-spend\lib\widgets` rather than editing.
-- `MainShell` hosts `OneUIFloatingNavBar` the way OneSpend's `home_screen.dart` does: in a `Stack` (the bar fills its parent's height, so it can't be a `Scaffold.bottomNavigationBar`), under a top `OneUIStatusBarScrim`, with `AnimatedPositioned(bottom: -120)` + `AnimatedOpacity` to hide it while typing on the keypad, and `Haptics.tap()` on tab taps. While a tab is selecting, the bar morphs into its actions (`navDock` → `dockedContent`, a docked `OneUIFloatingActionBar`).
+- `MainShell` hosts `OneUIFloatingNavBar` the way OneSpend's `home_screen.dart` does: in a `Stack` (the bar fills its parent's height, so it can't be a `Scaffold.bottomNavigationBar`), under a top `OneUIStatusBarScrim`. The bar stays in place and fades out while typing on the keypad; Delete fades in with the same 200 ms curve. Hidden controls ignore touches and semantics, and reduced motion skips the fades. Tab taps use `Haptics.tap()`. While a tab is selecting, the bar morphs into its actions (`navDock` → `dockedContent`, a docked `OneUIFloatingActionBar`).
 - Tabs pad with `navBarClearance()` (`lib/app/layout.dart`); bottom bars sit on one baseline (`kFloatingNavBarHeight`, `kNavBarVerticalPadding`).
 - Selection mode follows OneSpend: the header's `isSelectionMode` with `OneUISelectionCountPill` (select all) and the cancel pill.
 
@@ -33,6 +33,8 @@ flutter build apk --release                    # installs today: release falls b
 ```
 
 Performance rules that keep the lists smooth: list content goes in lazy slivers (`SliverList.builder`, `DecoratedSliver` for card backgrounds), never a `Column` of all rows. Selection taps update a `ValueNotifier` that only the selection circle (`SelectMark`) listens to. Row structure stays the same in and out of selection mode (`SwipeToCallOrMessage(enabled:)`). Don't add new full-width `BackdropFilter`/`ShaderMask` layers beyond OneSpend's own (each is a save layer every frame).
+
+`OneUIScrollPhysics` accepts drags only when content has a scroll range; do not give it an `AlwaysScrollableScrollPhysics` parent for ordinary pages. This prevents empty/short lists and the fitted keypad from stretching. Long pages keep their end stretch and big-header snap. The shared `placeCall` SIM chooser uses `OneUIFloatingModal.show`, matching the app's floating sheets.
 
 Incoming calls can be tested without a second phone: debug builds include a fake "Test line" (`android/app/src/debug/.../FakeCalls.kt`, never in release). Enable it once, then ring the phone (add `--ez private true` for a hidden number):
 

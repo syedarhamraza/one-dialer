@@ -1,6 +1,7 @@
 import 'package:dialer/core/contacts/contacts_repository.dart';
 import 'package:dialer/features/keypad/keypad_screen.dart';
 import 'package:dialer/theme/one_ui_theme.dart';
+import 'package:dialer/widgets/one_ui_floating_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -236,6 +237,9 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Call'));
     await tester.pumpAndSettle();
     expect(find.text('Call using'), findsOneWidget);
+    expect(find.byType(OneUIFloatingModal), findsOneWidget);
+    final modalBounds = tester.getRect(find.byType(OneUIFloatingModal));
+    expect(modalBounds.height, lessThan(568));
     await tester.tap(find.text('Work'));
     await tester.pumpAndSettle();
     expect(nativeCalls.singleWhere((call) => call.method == 'placeCall').arguments['simId'], 'sim2');

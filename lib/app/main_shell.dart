@@ -77,7 +77,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     // Hosted like OneSpend's home shell: the bar floats over the tabs in a Stack (it
-    // fills its parent's height), under a top status-bar scrim, and slides away while
+    // fills its parent's height), under a top status-bar scrim, and fades away while
     // a number is being typed on the keypad. Tabs pad themselves with navBarClearance().
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -96,27 +96,31 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
             valueListenable: _input,
             builder: (context, number, _) {
               final isNavHidden = _tab == 0 && number.isNotEmpty;
-              return AnimatedPositioned(
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeInOutCubic,
+              return Positioned(
                 left: 0,
                 right: 0,
-                bottom: isNavHidden ? -120 : 0,
+                bottom: 0,
                 child: IgnorePointer(
                   ignoring: isNavHidden,
-                  child: AnimatedOpacity(
-                    duration: const Duration(milliseconds: 200),
-                    opacity: isNavHidden ? 0.0 : 1.0,
-                    child: ValueListenableBuilder<Widget?>(
-                      valueListenable: navDock,
-                      builder: (context, dock, _) => OneUIFloatingNavBar(
-                        currentIndex: _tab,
-                        dockedContent: dock,
-                        onTap: (index) {
-                          Haptics.tap();
-                          _select(index);
-                        },
-                        items: _items,
+                  child: ExcludeSemantics(
+                    excluding: isNavHidden,
+                    child: AnimatedOpacity(
+                      duration: MediaQuery.disableAnimationsOf(context)
+                          ? Duration.zero
+                          : const Duration(milliseconds: 200),
+                      curve: Curves.easeInOutCubic,
+                      opacity: isNavHidden ? 0.0 : 1.0,
+                      child: ValueListenableBuilder<Widget?>(
+                        valueListenable: navDock,
+                        builder: (context, dock, _) => OneUIFloatingNavBar(
+                          currentIndex: _tab,
+                          dockedContent: dock,
+                          onTap: (index) {
+                            Haptics.tap();
+                            _select(index);
+                          },
+                          items: _items,
+                        ),
                       ),
                     ),
                   ),
