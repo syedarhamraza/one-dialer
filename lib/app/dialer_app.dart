@@ -55,11 +55,13 @@ class _SetupGateState extends State<_SetupGate> with WidgetsBindingObserver {
 
   Future<void> _check() async {
     final isDefault = await TelecomBridge.instance.isDefaultDialer();
-    // Contacts and call-log access arrive with the role, so (re)start loading after each check.
-    await ContactsRepository.instance.start();
-    await CallLogRepository.instance.start();
-    await BlockingRepository.instance.load();
-    if (mounted) setState(() => _isDefault = isDefault);
+    if (!mounted || isDefault == _isDefault) return;
+    // Contacts and call-log access arrive with the role. The tabs listen to the
+    // repositories, so the shell shows right away and fills in as data arrives.
+    ContactsRepository.instance.start();
+    CallLogRepository.instance.start();
+    BlockingRepository.instance.load();
+    setState(() => _isDefault = isDefault);
   }
 
   @override

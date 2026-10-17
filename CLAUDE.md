@@ -22,7 +22,11 @@ flutter test test/widget_test.dart             # one file
 flutter test --plain-name "primary call"       # one test by name
 flutter build apk --debug                      # also compiles the Kotlin layer
 flutter run                                    # needs a real phone with a SIM for calls
+flutter run --profile                          # judge smoothness here or in --release, never in debug (JIT)
+flutter build apk --release                    # installs today: release falls back to debug signing without key.properties
 ```
+
+Performance rules that keep the lists smooth: list content goes in lazy slivers (`SliverList.builder`, `DecoratedSliver` for card backgrounds), never a `Column` of all rows. Selection taps update a `ValueNotifier` that only the selection circle (`SelectMark`) listens to. Row structure stays the same in and out of selection mode (`SwipeToCallOrMessage(enabled:)`). Avoid `BackdropFilter`/`ShaderMask` on full-width bars (each is a save layer every frame).
 
 Incoming calls can be tested without a second phone: debug builds include a fake "Test line" (`android/app/src/debug/.../FakeCalls.kt`, never in release). Enable it once, then ring the phone (add `--ez private true` for a hidden number):
 

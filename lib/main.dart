@@ -9,7 +9,14 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Pre-warms the glass shaders used by the nav bar so its first frame doesn't flash.
   await LiquidGlassWidgets.initialize();
-  runApp(LiquidGlassWidgets.wrap(brightnessResolver: Theme.maybeBrightnessOf, child: const DialerApp()));
+  runApp(
+    LiquidGlassWidgets.wrap(
+      brightnessResolver: Theme.maybeBrightnessOf,
+      // Benchmarks the device and steps glass quality down on slower GPUs.
+      adaptiveQuality: true,
+      child: const DialerApp(),
+    ),
+  );
 }
 
 /// Runs on the pre-warmed engine started by `InCallEngine.kt` for the call screen.
