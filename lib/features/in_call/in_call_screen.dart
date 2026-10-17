@@ -5,7 +5,7 @@ import '../../core/contacts/contacts_repository.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_scroll.dart';
-import 'call_controls.dart';
+import 'call_control_panel.dart';
 import 'call_screen_widgets.dart';
 import 'incoming_controls.dart';
 
@@ -86,18 +86,38 @@ class _CallSession extends StatefulWidget {
   State<_CallSession> createState() => _CallSessionState();
 }
 
-class _CallSessionState extends State<_CallSession> {
+class _CallSessionState extends State<_CallSession> with SingleTickerProviderStateMixin {
   bool _keypadOpen = false;
   String _digits = '';
+  late final AnimationController _morph = AnimationController(vsync: this, duration: const Duration(milliseconds: 280));
 
   Widget _scrollArea(Widget child) => CustomScrollView(
     physics: const OneUIScrollPhysics(),
     slivers: [SliverFillRemaining(hasScrollBody: false, child: child)],
   );
 
-  void _hideKeypad() {
-    TelecomBridge.instance.stopDtmf(widget.call.id);
-    setState(() => _keypadOpen = false);
+  void _toggleKeypad() {
+    if (_keypadOpen) TelecomBridge.instance.stopDtmf(widget.call.id);
+    setState(() => _keypadOpen = !_keypadOpen);
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _morph.value = _keypadOpen ? 1 : 0;
+    } else if (_keypadOpen) {
+      _morph.forward();
+    } else {
+      _morph.reverse();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context) && _morph.isAnimating) _morph.value = _keypadOpen ? 1 : 0;
+  }
+
+  @override
+  void dispose() {
+    _morph.dispose();
+    super.dispose();
   }
 
   @override
@@ -105,121 +125,90 @@ class _CallSessionState extends State<_CallSession> {
     final call = widget.call;
     final ringing = call.state == CallState.ringing;
     final ended = call.state == CallState.disconnected || call.state == CallState.disconnecting;
-    final duration = MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 200);
     final held = widget.snapshot.calls.where((c) => c.id != call.id && c.state == CallState.holding).firstOrNull;
-    final controls = AnimatedSwitcher(
-      duration: duration,
-      switchInCurve: Curves.easeInOutCubic,
-      switchOutCurve: Curves.easeInOutCubic,
-      layoutBuilder: (current, previous) => Stack(
-        alignment: Alignment.bottomCenter,
-        children: [
-          for (final child in previous) IgnorePointer(child: ExcludeSemantics(child: child)),
-          ?current,
-        ],
-      ),
-      child: ringing
-          ? IncomingControls(
-              key: ValueKey('incoming-${call.id}'),
-              call: call,
-              isCurrent: () => mounted && widget.call.state == CallState.ringing,
-            )
-          : _keypadOpen
-          ? CallDtmfKeypad(
-              key: ValueKey('keypad-${call.id}'),
-              callId: call.id,
-              onDigit: (digit) {
-                HapticFeedback.lightImpact();
-                setState(() => _digits += digit);
-              },
-            )
-          : CallActionGrid(
-              key: const ValueKey('actions'),
-              call: call,
-              audio: widget.snapshot.audio,
-              callCount: widget.snapshot.calls.length,
-              onKeypad: () => setState(() => _keypadOpen = true),
-            ),
-    );
-    final footer = ended || ringing
-        ? const SizedBox.shrink()
-        : EndCallBar(
-            onHideKeypad: _keypadOpen ? _hideKeypad : null,
-            onEnd: () {
-              HapticFeedback.mediumImpact();
-              TelecomBridge.instance.hangUp(call.id);
-            },
-          );
     return PopScope(
       canPop: !_keypadOpen,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop && _keypadOpen) _hideKeypad();
+        if (!didPop && _keypadOpen) _toggleKeypad();
       },
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final landscape = constraints.maxWidth > constraints.maxHeight;
-          final compact = landscape || constraints.maxHeight < 700 || _keypadOpen;
-          final header = Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CallHeader(call: call, sims: widget.sims, compact: compact, digits: _keypadOpen ? _digits : ''),
-              if (held != null && !ringing && !ended) ...[
-                const SizedBox(height: 16),
-                HeldCallChip(call: held, onSwap: () => TelecomBridge.instance.unhold(held.id)),
+      child: AnimatedBuilder(
+        animation: _morph,
+        builder: (context, _) => LayoutBuilder(
+          builder: (context, constraints) {
+            final landscape = constraints.maxWidth > constraints.maxHeight;
+            final compact = landscape || constraints.maxHeight < 700;
+            final progress = Curves.easeInOutCubic.transform(_morph.value);
+            final controls = ringing
+                ? IncomingControls(call: call, isCurrent: () => mounted && widget.call.state == CallState.ringing)
+                : CallControlPanel(
+                    call: call,
+                    audio: widget.snapshot.audio,
+                    callCount: widget.snapshot.calls.length,
+                    width: landscape ? (constraints.maxWidth - 56) / 2 : constraints.maxWidth - 32,
+                    compact: compact,
+                    landscape: landscape,
+                    progress: progress,
+                    animating: _morph.isAnimating,
+                    keypadOpen: _keypadOpen,
+                    digits: _digits,
+                    onDigit: (digit) => setState(() => _digits += digit),
+                    onToggle: _toggleKeypad,
+                  );
+            final header = Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CallHeader(call: call, sims: widget.sims, compact: compact, keypadProgress: progress),
+                if (held != null && !ringing && !ended) ...[
+                  const SizedBox(height: 16),
+                  HeldCallChip(call: held, onSwap: () => TelecomBridge.instance.unhold(held.id)),
+                ],
               ],
-            ],
-          );
-          if (ended) {
-            return Center(
-              child: SingleChildScrollView(padding: const EdgeInsets.all(24), child: header),
             );
-          }
-          if (landscape) {
+            if (ended) {
+              return Center(
+                child: SingleChildScrollView(padding: const EdgeInsets.all(24), child: header),
+              );
+            }
+            if (landscape) {
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _scrollArea(Column(mainAxisAlignment: MainAxisAlignment.center, children: [header])),
+                    ),
+                    const SizedBox(width: 24),
+                    Expanded(
+                      child: ringing
+                          ? _scrollArea(Column(mainAxisAlignment: MainAxisAlignment.center, children: [controls]))
+                          : controls,
+                    ),
+                  ],
+                ),
+              );
+            }
             return Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Row(
+              child: Column(
                 children: [
                   Expanded(
-                    child: _scrollArea(Column(mainAxisAlignment: MainAxisAlignment.center, children: [header])),
-                  ),
-                  const SizedBox(width: 24),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        Expanded(
-                          child: _scrollArea(Column(mainAxisAlignment: MainAxisAlignment.center, children: [controls])),
-                        ),
-                        footer,
-                      ],
+                    child: _scrollArea(
+                      Column(
+                        children: [
+                          SizedBox(height: compact ? 4 : (constraints.maxHeight * 0.055).clamp(24.0, 48.0)),
+                          header,
+                          const SizedBox(height: 28),
+                          const Spacer(),
+                        ],
+                      ),
                     ),
                   ),
+                  controls,
                 ],
               ),
             );
-          }
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: Column(
-              children: [
-                Expanded(
-                  child: _scrollArea(
-                    Column(
-                      children: [
-                        SizedBox(height: compact ? 4 : (constraints.maxHeight * 0.055).clamp(24.0, 48.0)),
-                        header,
-                        const SizedBox(height: 28),
-                        const Spacer(),
-                      ],
-                    ),
-                  ),
-                ),
-                // Actions stay reachable while long caller details scroll above them.
-                controls,
-                footer,
-              ],
-            ),
-          );
-        },
+          },
+        ),
       ),
     );
   }

@@ -129,7 +129,7 @@ void main() {
     await open(tester);
     await emit(tester, [call('active')]);
     final mute = tester.widget<IconButton>(find.byWidgetPredicate((w) => w is IconButton && w.tooltip == 'Mute'));
-    expect(mute.style!.backgroundColor!.resolve({}), Colors.transparent);
+    expect(mute.style!.backgroundColor!.resolve({}), const Color(0xFF344850));
     expect(mute.style!.side?.resolve({}), anyOf(isNull, BorderSide.none));
     expect(tester.getBottomLeft(find.byTooltip('End call')).dy, lessThanOrEqualTo(915 - 48));
     await tester.pumpWidget(const SizedBox());
@@ -222,6 +222,95 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('keypad morph moves circles continuously and keeps the bottom row anchored', (tester) async {
+    await open(tester);
+    await emit(tester, [call('active')]);
+    final panel = find.byKey(const ValueKey('call-upper-panel'));
+    final circle = find.byKey(const ValueKey('morph-key-1'));
+    final start = tester.getTopLeft(circle);
+    final height = tester.getSize(panel).height;
+    final end = tester.getRect(find.byTooltip('End call'));
+    final speaker = tester.getRect(find.byTooltip('Speaker'));
+    await tester.tap(find.byTooltip('Keypad'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 140));
+    final middle = tester.getTopLeft(circle);
+    expect(middle, isNot(start));
+    expect(tester.getSize(panel).height, greaterThan(height));
+    expect(tester.getRect(find.byTooltip('End call')), end);
+    expect(tester.getRect(find.byTooltip('Speaker')), speaker);
+    // Upper-panel touches are ignored in flight, but ending the call is always available.
+    await tester.tapAt(tester.getCenter(find.byKey(const ValueKey('morph-key-5'))));
+    expect(nativeCalls.where((c) => c.method == 'playDtmf'), isEmpty);
+    await tester.tap(find.byTooltip('End call'));
+    expect(nativeCalls.last.method, 'hangUp');
+    await tester.pump(const Duration(milliseconds: 140));
+    expect(tester.getTopLeft(circle), isNot(middle));
+    expect(tester.getRect(find.byTooltip('End call')), end);
+    expect(tester.getRect(find.byTooltip('Speaker')), speaker);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('rapid toggles reverse from the current geometry without a jump', (tester) async {
+    await open(tester);
+    await emit(tester, [call('active')]);
+    final circle = find.byKey(const ValueKey('morph-key-1'));
+    final start = tester.getTopLeft(circle);
+    await tester.tap(find.byTooltip('Keypad'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 110));
+    final before = tester.getTopLeft(circle);
+    await tester.tap(find.byTooltip('Hide keypad'));
+    await tester.pump();
+    expect(tester.getTopLeft(circle), before);
+    await tester.pump(const Duration(milliseconds: 35));
+    final reversing = tester.getTopLeft(circle);
+    expect((reversing - start).distance, lessThan((before - start).distance));
+    await tester.tap(find.byTooltip('Keypad'));
+    await tester.pump();
+    expect(tester.getTopLeft(circle), reversing);
+    await tester.pumpAndSettle();
+    expect(find.bySemanticsLabel('5'), findsOneWidget);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(circle), start);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('tones cancel on pointer cancellation, hiding, and changing calls', (tester) async {
+    await open(tester);
+    await emit(tester, [call('active')]);
+    await tester.tap(find.byTooltip('Keypad'));
+    await tester.pumpAndSettle();
+    Future<TestGesture> press() async {
+      final gesture = await tester.startGesture(tester.getCenter(find.byKey(const ValueKey('morph-key-5'))));
+      await tester.pump(const Duration(milliseconds: 120));
+      expect(nativeCalls.last.method, 'playDtmf');
+      return gesture;
+    }
+
+    final cancelled = await press();
+    await cancelled.cancel();
+    await tester.pump();
+    expect(nativeCalls.last.method, 'stopDtmf');
+    expect(find.text('5'), findsNWidgets(2)); // Entered digits and the key.
+    final hidden = await press();
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    expect(nativeCalls.last.method, 'stopDtmf');
+    await hidden.up();
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Keypad'));
+    await tester.pumpAndSettle();
+    final changed = await press();
+    await emit(tester, [call('active', id: 'replacement')]);
+    expect(nativeCalls.last.method, 'stopDtmf');
+    expect(nativeCalls.last.arguments['id'], 'call-1');
+    await changed.up();
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('a reply selected after the ringing call changes cannot reject it', (tester) async {
     await open(tester);
     await emit(tester, [call('ringing')]);
@@ -255,7 +344,9 @@ void main() {
   testWidgets('reduced motion disables call transitions and ended calls have no actions', (tester) async {
     await open(tester, reduceMotion: true);
     await emit(tester, [call('active')]);
-    expect(tester.widget<AnimatedSwitcher>(find.byType(AnimatedSwitcher)).duration, Duration.zero);
+    await tester.tap(find.byTooltip('Keypad'));
+    await tester.pump();
+    expect(find.bySemanticsLabel('5'), findsOneWidget);
     await emit(tester, [call('disconnected')]);
     expect(find.text('Call ended'), findsOneWidget);
     expect(find.byTooltip('End call'), findsNothing);
@@ -281,8 +372,8 @@ void main() {
       });
       final boundary = GlobalKey();
       await open(tester, boundary: boundary);
-      Future<void> capture(String name) async {
-        await tester.pumpAndSettle();
+      Future<void> capture(String name, {bool settle = true}) async {
+        if (settle) await tester.pumpAndSettle();
         await tester.runAsync(() async {
           final image = await (boundary.currentContext!.findRenderObject() as RenderRepaintBoundary).toImage(
             pixelRatio: 2,
@@ -300,7 +391,18 @@ void main() {
         await capture(state);
       }
       await tester.tap(find.byTooltip('Keypad'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 140));
+      await capture('midpoint', settle: false);
       await capture('keypad');
+      await open(tester, boundary: boundary, size: const Size(320, 568), textScale: 1.5);
+      await emit(tester, [call('active', id: 'compact')]);
+      await tester.tap(find.byTooltip('Keypad'));
+      await capture('compact-keypad');
+      await open(tester, boundary: boundary, size: const Size(700, 360), textScale: 1.5);
+      await emit(tester, [call('active', id: 'landscape')]);
+      await tester.tap(find.byTooltip('Keypad'));
+      await capture('landscape-keypad');
       await tester.pumpWidget(const SizedBox());
     });
   }

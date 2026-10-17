@@ -56,11 +56,11 @@ String callerName(CallInfo call) {
 }
 
 class CallHeader extends StatelessWidget {
-  const CallHeader({super.key, required this.call, required this.sims, required this.compact, this.digits = ''});
+  const CallHeader({super.key, required this.call, required this.sims, required this.compact, this.keypadProgress = 0});
   final CallInfo call;
   final List<SimCard> sims;
   final bool compact;
-  final String digits;
+  final double keypadProgress;
 
   @override
   Widget build(BuildContext context) {
@@ -68,12 +68,9 @@ class CallHeader extends StatelessWidget {
     final number = call.number ?? '';
     final sim = sims.where((s) => s.id == call.simId).firstOrNull;
     final contact = call.isPrivate || call.isConference ? null : ContactsRepository.instance.contactFor(number);
-    final duration = MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 200);
-    final avatarSize = digits.isNotEmpty
-        ? 64.0
-        : compact
-        ? 80.0
-        : 112.0;
+    final avatarSize = (compact ? 80.0 : 112.0) * (1 - keypadProgress) + 64 * keypadProgress;
+    double spacing(double regular, double small) =>
+        (compact ? small : regular) * (1 - keypadProgress) + small * keypadProgress;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -87,37 +84,33 @@ class CallHeader extends StatelessWidget {
             if (call.isWifi) const _Badge(icon: Icons.wifi_rounded, label: 'Wi-Fi Calling'),
           ],
         ),
-        SizedBox(height: compact ? 18 : 28),
-        AnimatedSize(
-          duration: duration,
-          curve: Curves.easeInOutCubic,
-          child: Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-            ),
-            child: call.isPrivate || call.isConference
-                ? CircleAvatar(
-                    radius: avatarSize / 2,
-                    backgroundColor: Colors.white.withValues(alpha: 0.10),
-                    child: Icon(
-                      call.isConference ? Icons.groups_rounded : Icons.person_rounded,
-                      size: avatarSize * 0.48,
-                      color: Colors.white70,
-                    ),
-                  )
-                : LetterAvatar(name: name, photo: contact?.thumbnail, size: avatarSize),
+        SizedBox(height: spacing(28, 12)),
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
           ),
+          child: call.isPrivate || call.isConference
+              ? CircleAvatar(
+                  radius: avatarSize / 2,
+                  backgroundColor: Colors.white.withValues(alpha: 0.10),
+                  child: Icon(
+                    call.isConference ? Icons.groups_rounded : Icons.person_rounded,
+                    size: avatarSize * 0.48,
+                    color: Colors.white70,
+                  ),
+                )
+              : LetterAvatar(name: name, photo: contact?.thumbnail, size: avatarSize),
         ),
-        SizedBox(height: compact ? 14 : 22),
+        SizedBox(height: spacing(22, 12)),
         Text(
           name,
           textAlign: TextAlign.center,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: compact ? 28 : 34,
+            fontSize: spacing(34, 28),
             height: 1.15,
             fontWeight: FontWeight.w600,
             letterSpacing: -0.6,
@@ -134,15 +127,6 @@ class CallHeader extends StatelessWidget {
         ],
         const SizedBox(height: 12),
         CallStatus(call: call),
-        if (digits.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          Text(
-            digits,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 24, letterSpacing: 3, color: Colors.white),
-          ),
-        ],
       ],
     );
   }

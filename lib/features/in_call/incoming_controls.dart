@@ -148,24 +148,9 @@ class SwipeCircle extends StatefulWidget {
   State<SwipeCircle> createState() => _SwipeCircleState();
 }
 
-class _SwipeCircleState extends State<SwipeCircle> with SingleTickerProviderStateMixin {
+class _SwipeCircleState extends State<SwipeCircle> {
   Offset _drag = Offset.zero;
   bool _fired = false;
-  late final AnimationController _back = AnimationController(vsync: this, duration: const Duration(milliseconds: 200))
-    ..addListener(() => setState(() => _drag = _from * (1 - Curves.easeOut.transform(_back.value))));
-  Offset _from = Offset.zero;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _back.duration = MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 200);
-  }
-
-  @override
-  void dispose() {
-    _back.dispose();
-    super.dispose();
-  }
 
   void _fire() {
     if (_fired) return;
@@ -175,55 +160,40 @@ class _SwipeCircleState extends State<SwipeCircle> with SingleTickerProviderStat
   }
 
   @override
-  Widget build(BuildContext context) {
-    final progress = (_drag.distance / SwipeCircle.threshold).clamp(0.0, 1.0);
-    return Semantics(
-      button: true,
-      label: widget.label,
-      onTap: _fire,
-      excludeSemantics: true,
-      child: GestureDetector(
-        onPanStart: (_) => _back.stop(),
-        onPanUpdate: (d) {
-          final before = _drag.distance >= SwipeCircle.threshold;
-          setState(() => _drag += d.delta);
-          // A tick when crossing the line, so you can feel it's armed before letting go.
-          if (!before && _drag.distance >= SwipeCircle.threshold) HapticFeedback.selectionClick();
-        },
-        onPanEnd: (_) {
-          if (_drag.distance >= SwipeCircle.threshold) _fire();
-          _from = _drag;
-          _back.forward(from: 0);
-        },
-        onPanCancel: () {
-          _from = _drag;
-          _back.forward(from: 0);
-        },
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    label: widget.label,
+    onTap: _fire,
+    excludeSemantics: true,
+    child: GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onPanStart: (_) => _drag = Offset.zero,
+      onPanUpdate: (d) {
+        final before = _drag.distance >= SwipeCircle.threshold;
+        _drag += d.delta;
+        if (!before && _drag.distance >= SwipeCircle.threshold) HapticFeedback.selectionClick();
+      },
+      onPanEnd: (_) {
+        if (_drag.distance >= SwipeCircle.threshold) _fire();
+        _drag = Offset.zero;
+      },
+      onPanCancel: () => _drag = Offset.zero,
+      child: Listener(
+        // A cancelled accepted drag can be reported as a pan end by the recognizer.
+        // Clear its distance at the pointer layer before any release handling.
+        onPointerCancel: (_) => _drag = Offset.zero,
         child: SizedBox.square(
           dimension: SwipeCircle.size + SwipeCircle.threshold * 0.6,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // The ring tracks the finger; the actual button stays anchored.
-              SizedBox.square(
-                dimension: SwipeCircle.size + 16,
-                child: CircularProgressIndicator(
-                  value: progress,
-                  strokeWidth: 4,
-                  color: widget.color,
-                  backgroundColor: widget.color.withValues(alpha: 0.18),
-                ),
-              ),
-              Container(
-                width: SwipeCircle.size,
-                height: SwipeCircle.size,
-                decoration: BoxDecoration(color: widget.color, shape: BoxShape.circle),
-                child: Icon(widget.icon, color: Colors.white, size: 32),
-              ),
-            ],
+          child: Center(
+            child: Container(
+              width: SwipeCircle.size,
+              height: SwipeCircle.size,
+              decoration: BoxDecoration(color: widget.color, shape: BoxShape.circle),
+              child: Icon(widget.icon, color: Colors.white, size: 32),
+            ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
 }

@@ -39,6 +39,7 @@ void main() {
     await gesture.moveBy(const Offset(0, -100));
     await tester.pump();
     expect(tester.getCenter(icon), center);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
     await gesture.up();
     await tester.pumpAndSettle();
     expect(tester.getCenter(icon), center);
@@ -64,5 +65,16 @@ void main() {
     tester.semantics.tap(find.semantics.byLabel('Answer'));
     expect(fired, ['x']);
     semantics.dispose();
+  });
+
+  testWidgets('cancelling a threshold swipe does not trigger or retain its distance', (tester) async {
+    final fired = await pump(tester);
+    final gesture = await tester.startGesture(tester.getCenter(find.byIcon(Icons.call)));
+    await gesture.moveBy(const Offset(0, -50));
+    await gesture.moveBy(const Offset(0, -160));
+    await gesture.cancel();
+    await tester.drag(find.byIcon(Icons.call), const Offset(30, 0));
+    expect(fired, isEmpty);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
   });
 }
