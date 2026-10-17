@@ -37,6 +37,14 @@ class DialerPrefs {
     changes.value++;
   }
 
+  /// Settings › Nav bar style: OneSpend's morphing bar (default) or the package's tab bar.
+  Future<bool> oneSpendNavBar() async => await _prefs.getBool('onespend_nav_bar') ?? true;
+
+  Future<void> setOneSpendNavBar(bool value) async {
+    await _prefs.setBool('onespend_nav_bar', value);
+    changes.value++;
+  }
+
   /// Search page "Recent searches", newest first.
   Future<List<String>> recentSearches() async => await _prefs.getStringList('recent_searches') ?? const [];
 

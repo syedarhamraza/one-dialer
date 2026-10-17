@@ -53,6 +53,8 @@ android {
             signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
             // Ships native symbol tables in the .aab so Play can symbolize native crashes.
             ndk { debugSymbolLevel = "SYMBOL_TABLE" }
+            // Added to Flutter's own R8 rules (see the file for why).
+            proguardFiles("proguard-rules.pro")
         }
     }
 }

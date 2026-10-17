@@ -22,6 +22,8 @@ import 'call_log.dart';
 import 'call_log_repository.dart';
 import '../search/search_screen.dart';
 import '../../widgets/select_mark.dart';
+import '../blocking/blocking_repository.dart';
+import '../../widgets/one_ui_selection_header_pills.dart';
 
 /// Samsung-style Recents: calls grouped by day, All / Missed filter, swipe right to
 /// call and left to message, tap for details, long-press to multi-select and delete.
@@ -138,31 +140,36 @@ class _RecentsScreenState extends State<RecentsScreen> {
     navDock.value = null;
   }
 
-  /// While selecting, the nav bar morphs into OneSpend's action bar (same as Contacts).
+  /// OneSpend's selection mode: All and Cancel live in the header pills; the nav bar
+  /// morphs into the actions (same as Contacts).
   void _updateDock() {
     if (_selected == null) {
       navDock.value = null;
       return;
     }
     navDock.value = OneUIFloatingActionBar(
+      docked: true,
       items: [
-        OneUIFloatingActionBarItem(
-          icon: Icons.select_all_rounded,
-          label: 'All',
-          onTap: () {
-            _selected = {for (final c in _visibleCalls) c.id};
-            _selectionChanged.value++;
-          },
-        ),
+        OneUIFloatingActionBarItem(icon: Icons.block_rounded, label: 'Block', onTap: _blockSelected),
         OneUIFloatingActionBarItem(
           icon: Icons.delete_outline_rounded,
           label: 'Delete',
           color: OneUITheme.accentRed,
           onTap: _deleteSelected,
         ),
-        OneUIFloatingActionBarItem(icon: Icons.close_rounded, label: 'Cancel', onTap: _endSelection),
       ],
     );
+  }
+
+  /// Rows (call groups), which is what the user sees and counts.
+  Iterable<CallGroup> get _rows => _groupedDays.expand((d) => d.$2);
+
+  int get _selectedRows => _rows.where((g) => _selected?.contains(g.latest.id) ?? false).length;
+
+  void _toggleSelectAll() {
+    final all = _selectedRows == _rows.length;
+    _selected = all ? {} : {for (final c in _visibleCalls) c.id};
+    _selectionChanged.value++;
   }
 
   Future<void> _deleteSelected() async {
@@ -170,6 +177,27 @@ class _RecentsScreenState extends State<RecentsScreen> {
     if (ids == null || ids.isEmpty) return;
     _endSelection();
     await _repo.delete(ids);
+  }
+
+  Future<void> _blockSelected() async {
+    final ids = _selected ?? const {};
+    final numbers = {
+      for (final g in _rows)
+        if (ids.contains(g.latest.id) && !g.latest.isPrivate && g.latest.number.isNotEmpty) g.latest.number,
+    };
+    if (numbers.isEmpty) return;
+    final ok = await OneUIFloatingModal.showConfirmationDialog(
+      context: context,
+      title: numbers.length == 1 ? 'Block ${numbers.single}?' : 'Block ${numbers.length} numbers?',
+      message: "You won't get calls from blocked numbers.",
+      confirmLabel: 'Block',
+      confirmTextColor: OneUITheme.accentRed,
+    );
+    if (ok != true) return;
+    for (final n in numbers) {
+      await BlockingRepository.instance.setBlocked(n, true);
+    }
+    _endSelection();
   }
 
   /// "1"/"2" badge, only on dual-SIM phones.
@@ -225,8 +253,19 @@ class _RecentsScreenState extends State<RecentsScreen> {
           builder: (context, _, _) => SliverPersistentHeader(
             pinned: true,
             delegate: OneUICollapsibleHeaderDelegate(
-              title: selecting ? '${_selected!.length} selected' : 'Phone',
-              subtitle: selecting || _filter == CallFilter.all ? null : _filter.label,
+              title: selecting ? '$_selectedRows selected' : 'Phone',
+              subtitle: selecting
+                  ? (_selectedRows == _rows.length ? 'All selected • Tap (O) to deselect' : 'Tap (O) to select all')
+                  : (_filter == CallFilter.all ? null : _filter.label),
+              isSelectionMode: selecting,
+              selectionLeading: selecting
+                  ? OneUISelectionCountPill(
+                      selectedCount: _selectedRows,
+                      totalCount: _rows.length,
+                      onToggleSelectAll: _toggleSelectAll,
+                    )
+                  : null,
+              onSelectionCancel: selecting ? _endSelection : null,
               actionsPillKey: _menuKey,
               actions: selecting
                   ? null

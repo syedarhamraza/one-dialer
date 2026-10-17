@@ -1,9 +1,11 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../theme/one_ui_theme.dart';
 
+/// Dialer change from OneSpend: rendered as liquid glass (`liquid_glass_widgets`) instead
+/// of a translucent fill with a backdrop blur; the size, padding and API are unchanged.
+///
 /// The one floating "glass" surface used by every piece of floating chrome: the nav
 /// bar, header buttons, search capsules, Cancel | Save pills, action bars, menus,
 /// sheets and modals.
@@ -56,60 +58,43 @@ class OneUIGlassSurface extends StatelessWidget {
        padding = null,
        alignment = Alignment.center;
 
+  /// Dark tints keep text readable over the black pages; modals carry more text.
+  static const _floatingTint = Color(0x5C1C1C20);
+  static const _modalTint = Color(0x9E18181C);
+
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: OneUIEffectsController.instance,
-      builder: (context, _) {
-        final fx = OneUIEffectsController.instance;
-        final t = progress.clamp(0.0, 1.0);
-        final isModal = elevation == OneUIGlassElevation.modal;
+    final t = progress.clamp(0.0, 1.0);
+    final body = AnimatedContainer(
+      duration: duration,
+      curve: Curves.easeOutCubic,
+      width: width,
+      height: height,
+      padding: padding,
+      alignment: alignment,
+      child: child,
+    );
 
-        final body = AnimatedContainer(
-          duration: duration,
-          curve: Curves.easeOutCubic,
-          width: width,
-          height: height,
-          padding: padding,
-          alignment: alignment,
-          decoration: t <= 0.05
-              ? null
-              : BoxDecoration(
-                  color: fx.floating3dEffect ? null : _fade(isModal ? fx.modalColor : fx.floatingColor, t),
-                  gradient: (isModal ? fx.modalGradient : fx.floatingGradient)?.scale(t),
-                  borderRadius: borderRadius,
-                ),
-          child: child,
-        );
+    // Fully faded out: no glass work at all.
+    if (t <= 0.05) return body;
 
-        // Fully faded out: no blur, clip or shadow work at all.
-        if (t <= 0.05) return body;
-
-        final rim = fx.floatingRimGradient;
-        final shadows = [
-          for (final s in fx.glassShadow(elevation)) t >= 1.0 ? s : s.copyWith(color: _fade(s.color, t)),
-        ];
-
-        return DecoratedBox(
-          decoration: BoxDecoration(borderRadius: borderRadius, boxShadow: shadows),
-          child: ClipRRect(
-            borderRadius: borderRadius,
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: fx.blurSigma * t, sigmaY: fx.blurSigma * t),
-              child: rim == null
-                  ? body
-                  : CustomPaint(
-                      foregroundPainter: OneUIRimPainter(gradient: rim, borderRadius: borderRadius, opacity: t),
-                      child: body,
-                    ),
-            ),
-          ),
-        );
-      },
+    final radius = borderRadius.topLeft.x;
+    final isModal = elevation == OneUIGlassElevation.modal;
+    return GlassContainer(
+      useOwnLayer: true,
+      // Premium for the bottom bars (nav, action, Cancel | Save); standard elsewhere.
+      quality: elevation == OneUIGlassElevation.navbar ? GlassQuality.premium : GlassQuality.standard,
+      shape: radius >= 999 ? const LiquidOval() : LiquidRoundedSuperellipse(borderRadius: radius),
+      clipBehavior: Clip.antiAlias,
+      settings: LiquidGlassSettings(
+        visibility: t,
+        glassColor: isModal ? _modalTint : _floatingTint,
+        thickness: isModal ? 14 : 22,
+        blur: isModal ? 12 : 6,
+      ),
+      child: body,
     );
   }
-
-  static Color _fade(Color c, double t) => c.withValues(alpha: c.a * t);
 }
 
 /// Strokes a rounded-rect outline with a gradient: the 3D "rim light" on glass

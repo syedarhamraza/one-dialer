@@ -23,6 +23,8 @@ import 'contacts_widgets.dart';
 import 'editor/contact_editor_screen.dart';
 import 'groups_screen.dart';
 import '../search/search_screen.dart';
+import 'contact_actions.dart';
+import '../../widgets/one_ui_selection_header_pills.dart';
 
 /// Samsung-style Contacts tab: favourite tiles, My profile, Groups, A–Z section cards
 /// with an inline quick card on tap, a dotted fast scroller and multi-select delete.
@@ -131,28 +133,41 @@ class _ContactsScreenState extends State<ContactsScreen> {
     navDock.value = null;
   }
 
-  /// The nav bar morphs into these actions while selecting.
+  /// OneSpend's selection mode: All and Cancel live in the header pills; the nav bar
+  /// morphs into these actions.
   void _updateDock() {
     final count = _selected?.length ?? 0;
     navDock.value = OneUIFloatingActionBar(
+      docked: true,
       items: [
         OneUIFloatingActionBarItem(
-          icon: Icons.select_all_rounded,
-          label: 'All',
-          onTap: () {
-            setState(() => _selected = {for (final c in ContactsRepository.instance.contacts.value) c.id});
-            _updateDock();
-          },
+          icon: Icons.share_outlined,
+          label: 'Share',
+          isEnabled: count > 0,
+          onTap: _shareSelected,
         ),
         OneUIFloatingActionBarItem(
           icon: Icons.delete_outline_rounded,
           label: 'Delete',
+          color: OneUITheme.accentRed,
           isEnabled: count > 0,
           onTap: _deleteSelected,
         ),
-        OneUIFloatingActionBarItem(icon: Icons.close_rounded, label: 'Cancel', onTap: _endSelection),
       ],
     );
+  }
+
+  void _toggleSelectAll() {
+    final all = ContactsRepository.instance.contacts.value;
+    setState(() => _selected = _selected?.length == all.length ? {} : {for (final c in all) c.id});
+    _updateDock();
+  }
+
+  Future<void> _shareSelected() async {
+    final ids = _selected?.toList() ?? const <String>[];
+    if (ids.isEmpty) return;
+    final contacts = await FlutterContacts.getAll(properties: ContactProperties.all, filter: ContactFilter.ids(ids));
+    await ContactActions.shareVCards(contacts);
   }
 
   Future<void> _deleteSelected() async {
@@ -247,7 +262,18 @@ class _ContactsScreenState extends State<ContactsScreen> {
               pinned: true,
               delegate: OneUICollapsibleHeaderDelegate(
                 title: selecting ? '${_selected!.length} selected' : 'Phone',
-                subtitle: selecting ? null : '${all.length} contacts',
+                subtitle: selecting
+                    ? (_selected!.length == all.length ? 'All selected • Tap (O) to deselect' : 'Tap (O) to select all')
+                    : '${all.length} contacts',
+                isSelectionMode: selecting,
+                selectionLeading: selecting
+                    ? OneUISelectionCountPill(
+                        selectedCount: _selected!.length,
+                        totalCount: all.length,
+                        onToggleSelectAll: _toggleSelectAll,
+                      )
+                    : null,
+                onSelectionCancel: selecting ? _endSelection : null,
                 actionsPillKey: _menuKey,
                 actions: selecting
                     ? null

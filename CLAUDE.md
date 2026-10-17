@@ -6,7 +6,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A custom Android default phone app (dialer). The UI is Flutter; a Kotlin layer under `android/` talks to Android's Telecom framework. Android-only (`--platforms android`); `minSdk 29` (needs `RoleManager.ROLE_DIALER`), `compileSdk 37` (required by `permission_handler_android`).
 
-The UI design is ported from the sibling app OneSpend at `D:\one-spend` (pitch-black Samsung One UI); the reference screenshots of Samsung's Phone app are in `Images/` (local only, git-ignored). OneSpend widgets are copied **verbatim** into `lib/widgets/` (reformatted only) and compile against three stand-ins at the same import paths: `lib/theme/one_ui_effects.dart` (`OneUIEffectsController` returning OneSpend's flat-look values, re-exported by `one_ui_theme.dart`), `lib/core/haptics/haptics.dart`, and `lib/core/speech/voice_input.dart` (no mic yet). To add another OneSpend widget, copy it the same way; don't hand-rewrite. The one exception is the bottom nav bar: it's `GlassTabBar.bottom` from `liquid_glass_widgets` (shaders pre-warmed and the app wrapped in `main()`; follow `.claude/skills/liquid-glass-widgets/SKILL.md` for any glass work). It floats in a `Stack` in `MainShell`, not a `GlassScaffold`/`Scaffold.bottomNavigationBar`; tabs pad with `navBarClearance()` (`lib/app/layout.dart`), and a tab's selection bar (`navDock`) replaces it while selecting.
+The UI design is ported from the sibling app OneSpend at `D:\one-spend` (pitch-black Samsung One UI); the reference screenshots of Samsung's Phone app are in `Images/` (local only, git-ignored). OneSpend widgets are copied **verbatim** into `lib/widgets/` (reformatted only) and compile against three stand-ins at the same import paths: `lib/theme/one_ui_effects.dart` (`OneUIEffectsController` returning OneSpend's flat-look values, re-exported by `one_ui_theme.dart`), `lib/core/haptics/haptics.dart`, and `lib/core/speech/voice_input.dart` (no mic yet). To add another OneSpend widget, copy it the same way; don't hand-rewrite.
+
+Liquid glass (`liquid_glass_widgets`, shaders pre-warmed and the app wrapped in `main()`; follow `.claude/skills/liquid-glass-widgets/SKILL.md`):
+- `OneUIGlassSurface` (the one surface behind every floating element: header pills, scroll-to-top, action and selection bars, search pill, Cancel | Save, menus, modals, toasts) renders liquid glass. It's premium for `OneUIGlassElevation.navbar`, standard otherwise. Use it for any new floating chrome, and never nest one inside another.
+- The bottom nav bar has two styles, switched in Settings › *Morphing nav bar* (`DialerPrefs.oneSpendNavBar`):
+  - OneSpend's `OneUIFloatingNavBar`, which morphs into a tab's selection actions (`navDock`, a docked `OneUIFloatingActionBar`);
+  - the package's `GlassTabBar.bottom`, with the actions springing in over it.
+- Both float in a `Stack` in `MainShell`. Tabs pad with `navBarClearance()` (`lib/app/layout.dart`), and every bottom bar sits on the same baseline (`kFloatingNavBarHeight`, `kNavBarVerticalPadding`).
+- Selection mode follows OneSpend: the header's `isSelectionMode` with `OneUISelectionCountPill` (select all) and the cancel pill, and the actions in the nav bar.
 
 ## Git workflow
 

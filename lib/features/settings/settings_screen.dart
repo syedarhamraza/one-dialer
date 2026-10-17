@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../app/app_info.dart';
+import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/one_ui_subpage.dart';
 import '../../widgets/one_ui_group_card.dart';
+import '../../widgets/one_ui_switch.dart';
 import '../blocking/blocking_repository.dart';
 import '../blocking/blocking_screen.dart';
 import '../keypad/speed_dial_screen.dart';
@@ -21,6 +23,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObserver {
   final _telecom = TelecomBridge.instance;
   Map<Object?, Object?> _health = const {};
+  bool _oneSpendNav = true;
 
   @override
   void initState() {
@@ -42,7 +45,18 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
 
   Future<void> _refresh() async {
     final health = await _telecom.getCallHealth();
-    if (mounted) setState(() => _health = health);
+    final oneSpendNav = await DialerPrefs.instance.oneSpendNavBar();
+    if (mounted) {
+      setState(() {
+        _health = health;
+        _oneSpendNav = oneSpendNav;
+      });
+    }
+  }
+
+  void _setOneSpendNav(bool value) {
+    setState(() => _oneSpendNav = value);
+    DialerPrefs.instance.setOneSpendNavBar(value);
   }
 
   void _push(Widget page) => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
@@ -110,6 +124,20 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               leading: const Icon(Icons.speed_rounded, color: OneUITheme.accentGreen),
               title: 'Speed dial numbers',
               onTap: () => _push(const SpeedDialScreen()),
+            ),
+          ],
+        ),
+        OneUIGroupCard(
+          headerTitle: 'Nav bar style',
+          items: [
+            OneUIGroupItem(
+              leading: const Icon(Icons.water_drop_outlined, color: OneUITheme.accentBlue),
+              title: 'Morphing nav bar',
+              subtitle: _oneSpendNav
+                  ? 'OneSpend style: morphs into the selection bar'
+                  : 'Liquid glass tab bar with the jelly indicator',
+              onTap: () => _setOneSpendNav(!_oneSpendNav),
+              trailing: OneUISwitch(value: _oneSpendNav, onChanged: _setOneSpendNav),
             ),
           ],
         ),
