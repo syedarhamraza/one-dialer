@@ -1,0 +1,6 @@
+# Copy to key.properties (git-ignored) and fill in. Keep the keystore and passwords safe:
+# losing them means you can't update the app on Google Play (unless Play App Signing resets the upload key).
+storeFile=C:/Users/YOU/keys/dialer-upload.jks
+storePassword=
+keyAlias=upload
+keyPassword=
