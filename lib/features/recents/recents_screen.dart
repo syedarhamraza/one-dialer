@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../app/layout.dart';
+import '../../app/main_shell.dart' show navDock;
 import '../../core/contacts/contacts_repository.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
@@ -9,7 +10,7 @@ import '../../theme/one_ui_scroll.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_collapsible_header.dart';
-import '../../widgets/one_ui_glass_surface.dart';
+import '../../widgets/one_ui_floating_action_bar.dart';
 import '../../widgets/swipe_to_call.dart';
 import 'call_details_screen.dart';
 import 'call_log.dart';
@@ -49,12 +50,46 @@ class _RecentsScreenState extends State<RecentsScreen> {
       }
       if (selected.isEmpty) _selected = null;
     });
+    _updateDock();
+  }
+
+  void _endSelection() {
+    setState(() => _selected = null);
+    navDock.value = null;
+  }
+
+  /// While selecting, the nav bar morphs into OneSpend's action bar (same as Contacts).
+  void _updateDock() {
+    if (_selected == null) {
+      navDock.value = null;
+      return;
+    }
+    navDock.value = OneUIFloatingActionBar(
+      docked: true,
+      items: [
+        OneUIFloatingActionBarItem(
+          icon: Icons.select_all_rounded,
+          label: 'All',
+          onTap: () {
+            setState(() => _selected = {for (final c in _visibleCalls) c.id});
+            _updateDock();
+          },
+        ),
+        OneUIFloatingActionBarItem(
+          icon: Icons.delete_outline_rounded,
+          label: 'Delete',
+          color: OneUITheme.accentRed,
+          onTap: _deleteSelected,
+        ),
+        OneUIFloatingActionBarItem(icon: Icons.close_rounded, label: 'Cancel', onTap: _endSelection),
+      ],
+    );
   }
 
   Future<void> _deleteSelected() async {
     final ids = _selected;
     if (ids == null || ids.isEmpty) return;
-    setState(() => _selected = null);
+    _endSelection();
     await _repo.delete(ids);
   }
 
@@ -71,22 +106,11 @@ class _RecentsScreenState extends State<RecentsScreen> {
     return PopScope(
       canPop: !selecting,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) setState(() => _selected = null);
+        if (!didPop) _endSelection();
       },
-      child: Stack(
-        children: [
-          ListenableBuilder(
-            listenable: Listenable.merge([_repo.calls, _repo.hasAccess, ContactsRepository.instance.contacts]),
-            builder: (context, _) => _buildList(context),
-          ),
-          if (selecting)
-            _SelectionBar(
-              count: _selected!.length,
-              onCancel: () => setState(() => _selected = null),
-              onSelectAll: () => setState(() => _selected = {for (final c in _visibleCalls) c.id}),
-              onDelete: _deleteSelected,
-            ),
-        ],
+      child: ListenableBuilder(
+        listenable: Listenable.merge([_repo.calls, _repo.hasAccess, ContactsRepository.instance.contacts]),
+        builder: (context, _) => _buildList(context),
       ),
     );
   }
@@ -395,43 +419,6 @@ class _Empty extends StatelessWidget {
               FilledButton(onPressed: onTap, child: Text(label)),
             ],
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Floating Cancel | Select all | Delete pill above the nav bar while selecting.
-class _SelectionBar extends StatelessWidget {
-  const _SelectionBar({required this.count, required this.onCancel, required this.onSelectAll, required this.onDelete});
-
-  final int count;
-  final VoidCallback onCancel;
-  final VoidCallback onSelectAll;
-  final VoidCallback onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      left: 0,
-      right: 0,
-      bottom: MediaQuery.paddingOf(context).bottom + kFloatingNavBarHeight + 20,
-      child: Center(
-        child: OneUIGlassSurface(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextButton(onPressed: onCancel, child: const Text('Cancel')),
-              TextButton(onPressed: onSelectAll, child: const Text('Select all')),
-              TextButton.icon(
-                onPressed: count == 0 ? null : onDelete,
-                icon: const Icon(Icons.delete_outline_rounded),
-                label: const Text('Delete'),
-                style: TextButton.styleFrom(foregroundColor: OneUITheme.accentRed),
-              ),
-            ],
-          ),
         ),
       ),
     );

@@ -11,6 +11,7 @@ import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_scroll.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/letter_avatar.dart';
+import '../../widgets/one_ui_bottom_vignette.dart';
 import '../../widgets/one_ui_floating_action_bar.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_floating_modal.dart';
@@ -213,41 +214,41 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   ),
                 ],
               ),
+              // Same placement as OneSpend's detail screens: a bottom vignette, and the bar
+              // centred at its own (content) width, with its own safe area and padding.
+              const Positioned(left: 0, right: 0, bottom: 0, child: OneUIBottomVignette()),
               Positioned(
                 left: 0,
                 right: 0,
                 bottom: 0,
-                child: SafeArea(
-                  top: false,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(28, 0, 28, 12), // inset like Samsung's bar
-                    child: OneUIFloatingActionBar(
-                      items: [
-                        OneUIFloatingActionBarItem(
-                          icon: contact.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
-                          label: 'Favorites',
-                          color: contact.isFavorite ? const Color(0xFFF7A93B) : null,
-                          onTap: () => repo.setFavorite(contact.id, !contact.isFavorite),
-                        ),
-                        OneUIFloatingActionBarItem(
-                          icon: Icons.edit_outlined,
-                          label: 'Edit',
-                          onTap: () => openContactEditor(context, contactId: contact.id),
-                        ),
-                        OneUIFloatingActionBarItem(
-                          key: _shareKey,
-                          icon: Icons.share_outlined,
-                          label: 'Share',
-                          onTap: () => _share(contact),
-                        ),
-                        OneUIFloatingActionBarItem(
-                          key: _moreKey,
-                          icon: Icons.more_vert_rounded,
-                          label: 'More',
-                          onTap: () => _more(contact),
-                        ),
-                      ],
-                    ),
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: OneUIFloatingActionBar(
+                    items: [
+                      OneUIFloatingActionBarItem(
+                        icon: contact.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
+                        label: 'Favorites',
+                        color: contact.isFavorite ? const Color(0xFFF7A93B) : null,
+                        onTap: () => repo.setFavorite(contact.id, !contact.isFavorite),
+                      ),
+                      OneUIFloatingActionBarItem(
+                        icon: Icons.edit_outlined,
+                        label: 'Edit',
+                        onTap: () => openContactEditor(context, contactId: contact.id),
+                      ),
+                      OneUIFloatingActionBarItem(
+                        key: _shareKey,
+                        icon: Icons.share_outlined,
+                        label: 'Share',
+                        onTap: () => _share(contact),
+                      ),
+                      OneUIFloatingActionBarItem(
+                        key: _moreKey,
+                        icon: Icons.more_vert_rounded,
+                        label: 'More',
+                        onTap: () => _more(contact),
+                      ),
+                    ],
                   ),
                 ),
               ),
