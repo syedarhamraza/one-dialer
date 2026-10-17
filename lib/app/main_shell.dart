@@ -122,8 +122,10 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
                             tabs: _tabs,
                             selectedIndex: _tab,
                             onTabSelected: _select,
-                            // Standard: premium's multi-pass dispersion is barely visible over black and costs every frame.
-                            quality: GlassQuality.standard,
+                            // Highest tier everywhere: premium indicator and track, high-quality masking.
+                            quality: GlassQuality.premium,
+                            backgroundQuality: GlassQuality.premium,
+                            maskingQuality: MaskingQuality.high,
                             barHeight: kFloatingNavBarHeight,
                             verticalPadding: kNavBarVerticalPadding,
                             tabWidth: _tabWidth,
