@@ -42,6 +42,9 @@ class TelecomBridge {
 
   Future<bool> requestDefaultDialer() async => await _methods.invokeMethod<bool>('requestDefaultDialer') ?? false;
 
+  /// Brings the ongoing call's screen back (the "return to call" banner).
+  Future<void> showInCallScreen() => _methods.invokeMethod('showInCallScreen');
+
   /// The `tel:` number the app was launched with, if any (returned once).
   Future<String?> consumeDialNumber() => _methods.invokeMethod<String>('consumeDialNumber');
 
