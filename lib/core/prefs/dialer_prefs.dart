@@ -29,6 +29,14 @@ class DialerPrefs {
     changes.value++;
   }
 
+  /// Contacts › "View favorites as list" (Samsung shows tiles by default).
+  Future<bool> favoritesAsList() async => await _prefs.getBool('favorites_as_list') ?? false;
+
+  Future<void> setFavoritesAsList(bool value) async {
+    await _prefs.setBool('favorites_as_list', value);
+    changes.value++;
+  }
+
   /// The SIM id (see `SimCard.id`) calls to this contact should use; null = ask / Android default.
   Future<String?> contactSim(String contactId) => _prefs.getString('contact_sim_$contactId');
 

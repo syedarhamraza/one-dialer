@@ -15,12 +15,19 @@ class DialerContact extends T9Entry {
     required this.labels,
     this.thumbnail,
     this.isFavorite = false,
+    this.primaryIndex = -1,
   });
 
   /// "Mobile", "Home", ... for each of [numbers], same order.
   final List<String> labels;
   final Uint8List? thumbnail;
   final bool isFavorite;
+
+  /// Index in [numbers] of Android's default number for this contact, or -1 if none is set.
+  final int primaryIndex;
+
+  /// The number to call without asking: the default, or the only number. Null means ask.
+  String? get callNumber => primaryIndex >= 0 ? numbers[primaryIndex] : (numbers.length == 1 ? numbers.single : null);
 
   @override
   String get id => super.id!;
@@ -72,6 +79,7 @@ class ContactsRepository {
             labels: [for (final p in phones) _label(p.label)],
             thumbnail: c.photo?.thumbnail,
             isFavorite: c.android?.isFavorite ?? false,
+            primaryIndex: phones.indexWhere((p) => p.isPrimary ?? false),
           ),
     ]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     _byNumber = {
@@ -104,6 +112,29 @@ class ContactsRepository {
     await start();
     return hasAccess.value;
   }
+
+  /// Makes [number] the contact's default number (Samsung's "Set as default").
+  Future<void> setDefaultNumber(String id, String number) async {
+    // Fetch only the phones, so update() can't touch anything else.
+    final contact = await FlutterContacts.get(id, properties: {ContactProperty.phone});
+    if (contact == null) return;
+    final key = numberKey(number);
+    await FlutterContacts.update(
+      contact.copyWith(
+        phones: [
+          for (final p in contact.phones)
+            Phone(
+              number: p.number,
+              normalizedNumber: p.normalizedNumber,
+              label: p.label,
+              isPrimary: numberKey(p.number) == key,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> delete(List<String> ids) => FlutterContacts.deleteAll(ids);
 
   /// Stars or unstars a contact (Android's favourites).
   Future<void> setFavorite(String id, bool favorite) async {
