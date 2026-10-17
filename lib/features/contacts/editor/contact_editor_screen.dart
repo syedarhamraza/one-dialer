@@ -12,6 +12,7 @@ import '../../../widgets/one_ui_date_wheel.dart';
 import '../../../widgets/one_ui_floating_menu.dart';
 import '../../../widgets/one_ui_floating_modal.dart';
 import '../../../widgets/one_ui_radio.dart';
+import '../groups_screen.dart' show hiddenGroupNames;
 import 'contact_form.dart';
 import 'editor_widgets.dart';
 
@@ -46,6 +47,11 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
   bool _nameExpanded = false, _workOpen = false, _more = false, _saving = false;
 
   bool get _isNew => widget.contactId == null;
+
+  static List<Group> _userGroups(List<Group> all) => [
+    for (final g in all)
+      if (!hiddenGroupNames.contains(g.name)) g,
+  ];
   bool get _dirty => _form != null && _form!.signature != _savedSignature;
 
   @override
@@ -75,7 +81,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
       form.phones.add(LabeledValue(label: 'mobile', value: n.trim()));
     }
     if (form.phones.isEmpty) form.phones.add(LabeledValue(label: 'mobile'));
-    _groups = await FlutterContacts.groups.getAll(accounts: _account == null ? null : [_account!]);
+    _groups = _userGroups(await FlutterContacts.groups.getAll(accounts: _account == null ? null : [_account!]));
     if (!mounted) return;
     setState(() {
       _form = form;
@@ -333,7 +339,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
       ),
     );
     if (picked == null) return;
-    final groups = await FlutterContacts.groups.getAll(accounts: [picked]);
+    final groups = _userGroups(await FlutterContacts.groups.getAll(accounts: [picked]));
     setState(() {
       _account = picked;
       _groups = groups;

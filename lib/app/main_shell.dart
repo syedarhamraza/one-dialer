@@ -7,6 +7,10 @@ import '../features/recents/call_log_repository.dart';
 import '../features/recents/recents_screen.dart';
 import '../widgets/one_ui_floating_nav_bar.dart';
 
+/// A tab's selection actions; while set, the nav bar morphs into them (OneSpend's
+/// `dockedContent`), like Samsung's Delete / Share bar.
+final ValueNotifier<Widget?> navDock = ValueNotifier(null);
+
 /// The three Samsung tabs under the floating nav bar. Tabs stay alive (IndexedStack)
 /// so a half-typed number survives switching tabs.
 class MainShell extends StatefulWidget {
@@ -87,7 +91,11 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
             left: 0,
             right: 0,
             bottom: 0,
-            child: OneUIFloatingNavBar(currentIndex: _tab, items: _items, onTap: _select),
+            child: ValueListenableBuilder<Widget?>(
+              valueListenable: navDock,
+              builder: (context, dock, _) =>
+                  OneUIFloatingNavBar(currentIndex: _tab, items: _items, onTap: _select, dockedContent: dock),
+            ),
           ),
         ],
       ),

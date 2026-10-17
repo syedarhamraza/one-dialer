@@ -1,5 +1,6 @@
 import 'package:dialer/core/contacts/contacts_repository.dart';
 import 'package:dialer/features/contacts/contact_sections.dart';
+import 'package:dialer/widgets/letter_avatar.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 DialerContact c(String name, [String number = '0300 1234567']) =>
@@ -19,5 +20,13 @@ void main() {
     expect(searchContacts(all, 'bil').single.name, 'Bilal');
     expect(searchContacts(all, '3001112').single.name, 'Ali');
     expect(searchContacts(all, '  '), all);
+  });
+
+  test('avatar initials: up to two, letters only', () {
+    expect(LetterAvatar.initials('Aamir Zaman'), 'AZ');
+    expect(LetterAvatar.initials('Haider Abbas Kazmi'), 'HA');
+    expect(LetterAvatar.initials('~Abdullah Shahid~'), 'AS'); // symbols skipped
+    expect(LetterAvatar.initials('03001234567'), '');
+    expect(LetterAvatar.colorFor('Wasif'), LetterAvatar.colorFor(' wasif '));
   });
 }
