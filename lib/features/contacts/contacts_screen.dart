@@ -230,7 +230,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
     final selecting = _selected != null;
 
     // Heights of the blocks above the A–Z list.
-    final tileHeight = (width - 32 - _tileSpacing * 2) / 3 / _tileAspect;
+    final tileHeight = (width - 20 - _tileSpacing * 2) / 3 / _tileAspect;
     final favHeight = favourites.isEmpty
         ? 0.0
         : ContactsSectionHeader.height +
@@ -317,7 +317,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                 _rows(favourites, selecting)
               else
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
                   sliver: SliverGrid.builder(
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3,
@@ -452,7 +452,7 @@ class _ProfileRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final name = (profile.displayName?.trim().isNotEmpty ?? false) ? profile.displayName!.trim() : 'Me';
     return _CardRow(
-      leading: LetterAvatar(name: name, photo: profile.photo?.thumbnail, size: 54),
+      leading: LetterAvatar(name: name, photo: profile.photo?.thumbnail, size: 36),
       title: name,
     );
   }
@@ -468,10 +468,10 @@ class _GroupsRow extends StatelessWidget {
     return _CardRow(
       onTap: onTap,
       leading: Container(
-        width: 54,
-        height: 54,
+        width: 36,
+        height: 36,
         decoration: const BoxDecoration(color: Color(0xFFD9D9DE), shape: BoxShape.circle),
-        child: const Icon(Icons.group_rounded, color: Colors.white, size: 28),
+        child: const Icon(Icons.group_rounded, color: Colors.white, size: 20),
       ),
       title: 'Groups',
     );
@@ -489,7 +489,7 @@ class _CardRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 30),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Material(
         color: OneUITheme.surfaceCard,
         borderRadius: OneUITheme.cardBorderRadius,
@@ -502,7 +502,7 @@ class _CardRow extends StatelessWidget {
               children: [
                 const SizedBox(width: 18),
                 leading,
-                const SizedBox(width: 18),
+                const SizedBox(width: 14),
                 Expanded(child: Text(title, style: const TextStyle(fontSize: 18))),
               ],
             ),
