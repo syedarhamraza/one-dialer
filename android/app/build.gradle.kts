@@ -70,5 +70,7 @@ flutter {
 }
 
 dependencies {
+    // Formats caller numbers and names a foreign caller's country on the call screen.
+    implementation("com.googlecode.libphonenumber:libphonenumber:8.13.50")
     testImplementation("junit:junit:4.13.2")
 }

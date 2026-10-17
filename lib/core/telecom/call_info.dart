@@ -51,6 +51,10 @@ class CallInfo {
     this.isHd = false,
     this.isWifi = false,
     this.isPrivate = false,
+    this.formattedNumber,
+    this.location,
+    this.disconnectCode,
+    this.disconnectLabel,
   });
 
   factory CallInfo.fromMap(Map<Object?, Object?> map) {
@@ -69,6 +73,10 @@ class CallInfo {
       isHd: map['isHd'] as bool? ?? false,
       isWifi: map['isWifi'] as bool? ?? false,
       isPrivate: map['isPrivate'] as bool? ?? false,
+      formattedNumber: map['formattedNumber'] as String?,
+      location: map['location'] as String?,
+      disconnectCode: map['disconnectCode'] as String?,
+      disconnectLabel: map['disconnectLabel'] as String?,
     );
   }
 
@@ -89,6 +97,18 @@ class CallInfo {
 
   /// Caller hid their number.
   final bool isPrivate;
+
+  /// Grouped for display (`0300 1234567`); null when the number can't be parsed.
+  final String? formattedNumber;
+
+  /// Country of a foreign caller; null for domestic numbers.
+  final String? location;
+
+  /// Why the call ended: busy, rejected, missed, error, local, remote, canceled.
+  final String? disconnectCode;
+
+  /// The carrier's own explanation, when it gave one.
+  final String? disconnectLabel;
 
   String get displayName => (name?.isNotEmpty ?? false) ? name! : (number ?? 'Unknown');
 }
