@@ -1,8 +1,11 @@
 package com.syedarhamraza.dialer.telecom
 
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.telecom.Call
 import android.telecom.CallAudioState
+import android.telecom.DisconnectCause
 import java.util.concurrent.CopyOnWriteArraySet
 
 /**
@@ -29,7 +32,17 @@ object CallManager {
 
     val hasCalls: Boolean get() = calls.isNotEmpty()
 
+    /** The last call, kept briefly after Telecom removes it so the screen can show why it ended. */
+    private var ended: Map<String, Any?>? = null
+    private val handler = Handler(Looper.getMainLooper())
+    private val clearEnded = Runnable { ended = null; notifyChanged() }
+
+    /** True while the call screen should stay up: live calls or the brief "Call ended" summary. */
+    val isShowingCalls: Boolean get() = calls.isNotEmpty() || ended != null
+
     fun onCallAdded(call: Call): String {
+        handler.removeCallbacks(clearEnded)
+        ended = null
         val id = "call-${nextId++}"
         calls[id] = call
         ids[call] = id
@@ -40,7 +53,12 @@ object CallManager {
 
     fun onCallRemoved(call: Call) {
         call.unregisterCallback(callback)
-        ids.remove(call)?.let { calls.remove(it) }
+        val id = ids.remove(call)?.also { calls.remove(it) }
+        if (id != null && calls.isEmpty()) {
+            ended = serialize(id, call) + ("state" to "disconnected")
+            handler.removeCallbacks(clearEnded)
+            handler.postDelayed(clearEnded, ENDED_LINGER_MS)
+        }
         notifyChanged()
     }
 
@@ -59,7 +77,7 @@ object CallManager {
 
     /** Serialized for the Flutter side: `{calls: [...], audio: {...}}`. */
     fun snapshot(): Map<String, Any?> = mapOf(
-        "calls" to calls.map { (id, call) -> serialize(id, call) },
+        "calls" to (if (calls.isEmpty()) listOfNotNull(ended) else calls.map { (id, call) -> serialize(id, call) }),
         "audio" to audioSnapshot(),
     )
 
@@ -74,9 +92,15 @@ object CallManager {
         } else {
             details.callerDisplayName
         }
+        val number = details.handle?.schemeSpecificPart
+        val display = service?.let { NumberDisplay.of(it, number) }
         return mapOf(
             "id" to id,
-            "number" to details.handle?.schemeSpecificPart,
+            "number" to number,
+            "formattedNumber" to display?.formatted,
+            "location" to display?.location,
+            "disconnectCode" to disconnectName(details.disconnectCause?.code),
+            "disconnectLabel" to details.disconnectCause?.label?.toString()?.takeIf { it.isNotBlank() },
             "name" to name,
             "state" to stateName(stateOf(call)),
             "connectTimeMillis" to details.connectTimeMillis,
@@ -120,6 +144,19 @@ object CallManager {
         Call.STATE_SIMULATED_RINGING -> "ringing"
         else -> "unknown"
     }
+
+    private fun disconnectName(code: Int?): String? = when (code) {
+        DisconnectCause.BUSY -> "busy"
+        DisconnectCause.REJECTED -> "rejected"
+        DisconnectCause.MISSED -> "missed"
+        DisconnectCause.ERROR -> "error"
+        DisconnectCause.LOCAL -> "local"
+        DisconnectCause.REMOTE -> "remote"
+        DisconnectCause.CANCELED -> "canceled"
+        else -> null
+    }
+
+    private const val ENDED_LINGER_MS = 2000L
 
     private val ROUTES = listOf(
         CallAudioState.ROUTE_EARPIECE to "earpiece",

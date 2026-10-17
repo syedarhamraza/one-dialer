@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:dialer/features/in_call/in_call_screen.dart';
+import 'package:dialer/features/in_call/call_controls.dart';
 import 'package:dialer/features/in_call/call_screen_widgets.dart';
 import 'package:dialer/widgets/one_ui_floating_modal.dart';
 import 'package:dialer/theme/one_ui_theme.dart';
@@ -99,9 +100,72 @@ void main() {
     await open(tester, size: const Size(320, 568));
     await emit(tester, [call('ringing')]);
     expect(tester.takeException(), isNull);
-    expect(find.text('Answer'), findsOneWidget);
-    expect(find.text('Decline'), findsOneWidget);
+    expect(find.byKey(const ValueKey('swipe-Answer')), findsOneWidget);
+    expect(find.byKey(const ValueKey('swipe-Decline')), findsOneWidget);
+    expect(find.text('Decline with message'), findsOneWidget);
     expect(find.text('Alex Morgan'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('formatted number, location and end reasons come from Telecom', (tester) async {
+    await open(tester);
+    await emit(tester, [
+      {...call('active'), 'formattedNumber': '+44 20 7183 8750', 'location': 'United Kingdom'},
+    ]);
+    expect(find.text('+44 20 7183 8750 · United Kingdom'), findsOneWidget);
+    await emit(tester, [
+      {...call('disconnected'), 'disconnectCode': 'busy'},
+    ]);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.textContaining('Line busy'), findsOneWidget);
+    await emit(tester, [
+      {...call('disconnected', id: 'other'), 'disconnectCode': 'error', 'disconnectLabel': 'No service', 'connectTimeMillis': 0},
+    ]);
+    expect(find.text('No service'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('typed digits replace the caller name while the keypad is open', (tester) async {
+    await open(tester);
+    await emit(tester, [call('active')]);
+    await tester.tap(find.byTooltip('Keypad'));
+    await tester.pumpAndSettle();
+    expect(find.text('Alex Morgan'), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel('4'));
+    await tester.tap(find.bySemanticsLabel('2'));
+    await tester.pumpAndSettle();
+    expect(find.text('42'), findsOneWidget);
+    expect(find.text('Alex Morgan'), findsOneWidget); // Now the subtitle.
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('42'), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('mute shows a status chip and route changes flash a toast', (tester) async {
+    await open(tester);
+    await emit(tester, [call('active')]);
+    expect(find.text('Muted'), findsNothing);
+    tester.binding.defaultBinaryMessenger.handlePlatformMessage(
+      'com.syedarhamraza.dialer/call_state',
+      const StandardMethodCodec().encodeSuccessEnvelope({
+        'calls': [call('active')],
+        'audio': {
+          'muted': true,
+          'route': 'speaker',
+          'supportedRoutes': ['earpiece', 'speaker'],
+        },
+      }),
+      (_) {},
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Speaker on'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Speaker on'), findsNothing);
+    expect(find.text('Muted'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
   });
 
   testWidgets('connected timer ticks without another Telecom event', (tester) async {
@@ -129,7 +193,7 @@ void main() {
     await open(tester);
     await emit(tester, [call('active')]);
     final mute = tester.widget<IconButton>(find.byWidgetPredicate((w) => w is IconButton && w.tooltip == 'Mute'));
-    expect(mute.style!.backgroundColor!.resolve({}), const Color(0xFF344850));
+    expect(mute.style!.backgroundColor!.resolve({}), callControlFill);
     expect(mute.style!.side?.resolve({}), anyOf(isNull, BorderSide.none));
     expect(tester.getSize(find.byTooltip('Mute')), const Size(76, 76));
     expect(tester.getSize(find.byTooltip('Speaker')), const Size(76, 76));
@@ -138,7 +202,7 @@ void main() {
   });
 
   testWidgets('audio output and quick replies use floating sheets', (tester) async {
-    await open(tester);
+    await open(tester, reduceMotion: true); // The ringing hint loops, which pumpAndSettle can't outwait.
     await emit(tester, [call('active')], bluetooth: true);
     await tester.tap(find.byTooltip('Speaker'));
     await tester.pumpAndSettle();
@@ -238,9 +302,12 @@ void main() {
     await tester.pump(const Duration(milliseconds: 210));
     expect(tester.widget<Transform>(actions).transform.storage[0], lessThan(1));
     final keySpring = find.byKey(const ValueKey('keypad-spring-8'));
-    expect(tester.widget<Transform>(keySpring).transform.storage[0], inExclusiveRange(1.025, 1.05));
-    final keyFade = find.ancestor(of: keySpring, matching: find.byType(Opacity)).first;
-    expect(tester.widget<Opacity>(keyFade).opacity, inExclusiveRange(0, 1));
+    double fade(String digit) => tester
+        .widget<Opacity>(
+          find.ancestor(of: find.byKey(ValueKey('keypad-spring-$digit')), matching: find.byType(Opacity)).first,
+        )
+        .opacity;
+    expect(fade('2'), inExclusiveRange(0, 1)); // The top row arrives last.
     final middle = tester.getTopLeft(find.byKey(const ValueKey('morph-key-1')));
     expect(tester.getSize(panel).height, greaterThan(height));
     expect(tester.getRect(find.byTooltip('End call')), end);
@@ -250,7 +317,10 @@ void main() {
     expect(nativeCalls.where((c) => c.method == 'playDtmf'), isEmpty);
     await tester.tap(find.byTooltip('End call'));
     expect(nativeCalls.last.method, 'hangUp');
-    await tester.pump(const Duration(milliseconds: 210));
+    // The spring's tail is longer than the old fixed curve; let it come to rest.
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
     final settled = tester.getTopLeft(find.byKey(const ValueKey('morph-key-1')));
     expect(settled.dy - middle.dy, inExclusiveRange(0, 8));
     expect(actions, findsNothing);
@@ -273,7 +343,10 @@ void main() {
     await tester.tap(find.byTooltip('Hide keypad'));
     await tester.pump();
     expect(tester.getSize(panel).height, before);
-    await tester.pump(const Duration(milliseconds: 35));
+    // The spring carries its momentum briefly, then heads back down.
+    await tester.pump(const Duration(milliseconds: 60));
+    await tester.pump(const Duration(milliseconds: 60));
+    await tester.pump(const Duration(milliseconds: 60));
     final reversing = tester.getSize(panel).height;
     expect(reversing, lessThan(before));
     await tester.tap(find.byTooltip('Keypad'));
@@ -322,7 +395,7 @@ void main() {
   });
 
   testWidgets('a reply selected after the ringing call changes cannot reject it', (tester) async {
-    await open(tester);
+    await open(tester, reduceMotion: true);
     await emit(tester, [call('ringing')]);
     await tester.tap(find.text('Decline with message'));
     await tester.pumpAndSettle();
@@ -338,7 +411,7 @@ void main() {
       await open(tester, size: size, textScale: 1.5);
       await emit(tester, [call('ringing')]);
       expect(tester.takeException(), isNull);
-      expect(tester.getBottomLeft(find.text('Decline')).dy, lessThan(size.height));
+      expect(tester.getBottomLeft(find.byKey(const ValueKey('swipe-Decline'))).dy, lessThan(size.height));
       await emit(tester, [call('active')]);
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
@@ -363,7 +436,7 @@ void main() {
     await tester.pump();
     expect(find.bySemanticsLabel('5'), findsOneWidget);
     await emit(tester, [call('disconnected')]);
-    expect(find.text('Call ended'), findsOneWidget);
+    expect(find.textContaining(RegExp(r'^Call ended · 00:0\d$')), findsOneWidget);
     expect(find.byTooltip('End call'), findsNothing);
     expect(find.byTooltip('Mute'), findsNothing);
     expect(find.byType(CallBackdrop), findsOneWidget);
@@ -403,8 +476,18 @@ void main() {
 
       for (final state in ['ringing', 'dialing', 'active']) {
         await emit(tester, [call(state)]);
-        await capture(state);
+        if (state == 'ringing') await tester.pump(const Duration(milliseconds: 400));
+        await capture(state, settle: state != 'ringing');
       }
+      await emit(tester, [
+        {...call('ringing', id: 'foreign'), 'name': 'Priya Shah', 'formattedNumber': '+44 20 7183 8750', 'location': 'United Kingdom'},
+      ]);
+      await tester.pump(const Duration(milliseconds: 600));
+      await capture('ringing-tint', settle: false);
+      await emit(tester, [call('ringing', id: 'private', private: true)]);
+      await tester.pump(const Duration(milliseconds: 600));
+      await capture('ringing-private', settle: false);
+      await emit(tester, [call('active', id: 'call-1')]);
       await tester.tap(find.byTooltip('Keypad'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 210));

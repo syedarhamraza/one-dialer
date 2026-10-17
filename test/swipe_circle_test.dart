@@ -3,59 +3,63 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  // The idle hint loops forever, so these tests pump fixed durations instead of settling.
   Future<List<String>> pump(WidgetTester tester) async {
     final fired = <String>[];
     await tester.pumpWidget(
       MaterialApp(
         home: Center(
-          child: SwipeCircle(color: Colors.green, icon: Icons.call, label: 'Answer', onTriggered: () => fired.add('x')),
+          child: SwipeUpButton(
+            color: Colors.green,
+            icon: Icons.call,
+            label: 'Answer',
+            onTriggered: () => fired.add('answer'),
+          ),
         ),
       ),
     );
     return fired;
   }
 
-  testWidgets('a tap or short drag does not answer', (tester) async {
+  Finder button() => find.byKey(const ValueKey('swipe-Answer'));
+  Future<void> settle(WidgetTester tester) async {
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+  }
+
+  testWidgets('a tap, sideways or short drag does nothing and springs back', (tester) async {
     final fired = await pump(tester);
-    await tester.tap(find.byIcon(Icons.call));
-    await tester.drag(find.byIcon(Icons.call), const Offset(50, 0));
-    await tester.pumpAndSettle();
+    final start = tester.getCenter(button());
+    await tester.tap(button());
+    await tester.drag(button(), const Offset(0, -50));
+    await tester.drag(button(), const Offset(0, 80)); // Downward never fires.
+    await settle(tester);
     expect(fired, isEmpty);
+    expect(tester.getCenter(button()), start);
   });
 
-  testWidgets('dragging past the threshold answers once', (tester) async {
+  testWidgets('sliding up past the threshold fires once', (tester) async {
     final fired = await pump(tester);
-    await tester.drag(find.byIcon(Icons.call), const Offset(0, -200));
-    await tester.pumpAndSettle();
-    expect(fired, ['x']);
+    await tester.drag(button(), const Offset(0, -160));
+    await settle(tester);
+    await tester.drag(button(), const Offset(0, -160));
+    await settle(tester);
+    expect(fired, ['answer']);
   });
 
-  testWidgets('the button stays fixed while the swipe arms and resets', (tester) async {
-    await pump(tester);
-    final icon = find.byIcon(Icons.call);
-    final center = tester.getCenter(icon);
-    final gesture = await tester.startGesture(center);
-    await gesture.moveBy(const Offset(0, -50));
+  testWidgets('the button follows the finger and nothing fires until release', (tester) async {
+    final fired = await pump(tester);
+    final start = tester.getCenter(button());
+    final gesture = await tester.startGesture(start);
+    await gesture.moveBy(const Offset(0, -40));
     await gesture.moveBy(const Offset(0, -100));
     await tester.pump();
-    expect(tester.getCenter(icon), center);
-    expect(find.byType(CircularProgressIndicator), findsNothing);
-    await gesture.up();
-    await tester.pumpAndSettle();
-    expect(tester.getCenter(icon), center);
-  });
-
-  testWidgets('nothing happens until the finger lifts, and sliding back cancels', (tester) async {
-    final fired = await pump(tester);
-    final gesture = await tester.startGesture(tester.getCenter(find.byIcon(Icons.call)));
-    await gesture.moveBy(const Offset(0, -60));
-    await gesture.moveBy(const Offset(0, -140)); // well past the threshold, still holding
-    await tester.pump();
+    expect(tester.getCenter(button()).dy, lessThan(start.dy - 80));
     expect(fired, isEmpty);
-
-    await gesture.moveBy(const Offset(0, 170)); // back near the start
+    await gesture.moveBy(const Offset(0, 130)); // back near the start
     await gesture.up();
-    await tester.pumpAndSettle();
+    await settle(tester);
     expect(fired, isEmpty);
   });
 
@@ -63,18 +67,19 @@ void main() {
     final fired = await pump(tester);
     final semantics = tester.ensureSemantics();
     tester.semantics.tap(find.semantics.byLabel('Answer'));
-    expect(fired, ['x']);
+    expect(fired, ['answer']);
     semantics.dispose();
   });
 
   testWidgets('cancelling a threshold swipe does not trigger or retain its distance', (tester) async {
     final fired = await pump(tester);
-    final gesture = await tester.startGesture(tester.getCenter(find.byIcon(Icons.call)));
+    final gesture = await tester.startGesture(tester.getCenter(button()));
     await gesture.moveBy(const Offset(0, -50));
     await gesture.moveBy(const Offset(0, -160));
     await gesture.cancel();
-    await tester.drag(find.byIcon(Icons.call), const Offset(30, 0));
+    await settle(tester);
+    await tester.drag(button(), const Offset(0, -30));
+    await settle(tester);
     expect(fired, isEmpty);
-    expect(find.byType(CircularProgressIndicator), findsNothing);
   });
 }

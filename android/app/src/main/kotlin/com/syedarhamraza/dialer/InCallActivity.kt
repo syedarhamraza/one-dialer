@@ -10,7 +10,7 @@ import io.flutter.embedding.engine.FlutterEngine
 /** Hosts the in-call Flutter UI on the cached [InCallEngine]; shows over the lock screen. */
 class InCallActivity : FlutterActivity() {
 
-    private val closeWhenIdle = { if (!CallManager.hasCalls) finish() }
+    private val closeWhenIdle = { if (!CallManager.isShowingCalls) finish() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

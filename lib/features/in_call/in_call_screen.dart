@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/contacts/contacts_repository.dart';
@@ -6,6 +9,7 @@ import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_scroll.dart';
 import 'call_control_panel.dart';
+import 'call_controls.dart';
 import 'call_screen_widgets.dart';
 import 'incoming_controls.dart';
 
@@ -41,37 +45,49 @@ class _InCallScreenState extends State<InCallScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    body: CallBackdrop(
-      child: SafeArea(
-        child: StreamBuilder<CallSnapshot>(
-          stream: TelecomBridge.instance.callState,
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) return const SizedBox.expand();
-            final state = snapshot.data!;
-            final call = state.primary;
-            if (call == null) {
-              return const Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.call_end_rounded, size: 44, color: Colors.white54),
-                    SizedBox(height: 20),
-                    Text(
-                      'Call ended',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500, color: Colors.white70),
+    backgroundColor: Colors.black,
+    body: StreamBuilder<CallSnapshot>(
+      stream: TelecomBridge.instance.callState,
+      builder: (context, snapshot) {
+        final state = snapshot.data;
+        final call = state?.primary;
+        return ValueListenableBuilder(
+          valueListenable: ContactsRepository.instance.contacts,
+          builder: (context, _, _) {
+            final contact = call == null || call.isPrivate || call.isConference
+                ? null
+                : ContactsRepository.instance.contactFor(call.number ?? '');
+            return CallBackdrop(
+              photo: contact?.thumbnail,
+              seed: call == null ? null : backdropSeed(call),
+              child: SafeArea(
+                child: switch ((state, call)) {
+                  (null, _) => const SizedBox.expand(),
+                  (_, null) => const Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.call_end_rounded, size: 44, color: Colors.white54),
+                        SizedBox(height: 20),
+                        Text(
+                          'Call ended',
+                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500, color: Colors.white70),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              );
-            }
-            return ValueListenableBuilder(
-              valueListenable: ContactsRepository.instance.contacts,
-              builder: (context, _, _) =>
-                  _CallSession(key: ValueKey(call.id), snapshot: state, call: call, sims: _sims),
+                  ),
+                  (final state?, final call?) => _CallSession(
+                    key: ValueKey(call.id),
+                    snapshot: state,
+                    call: call,
+                    sims: _sims,
+                  ),
+                },
+              ),
             );
           },
-        ),
-      ),
+        );
+      },
     ),
   );
 }
@@ -89,7 +105,15 @@ class _CallSession extends StatefulWidget {
 class _CallSessionState extends State<_CallSession> with SingleTickerProviderStateMixin {
   bool _keypadOpen = false;
   String _digits = '';
-  late final AnimationController _morph = AnimationController(vsync: this, duration: const Duration(milliseconds: 420));
+  String? _routeToast;
+  Timer? _toastTimer;
+
+  /// Keypad morph progress, spring-driven so a mid-flight reversal keeps its momentum.
+  late final AnimationController _morph = AnimationController(vsync: this);
+  static final _spring = SpringDescription.withDampingRatio(mass: 1, stiffness: 300, ratio: 1);
+
+  /// Snaps the last 1% so the keypad accepts touches quickly instead of waiting out the tail.
+  static const _settled = Tolerance(distance: .01, velocity: .1);
 
   Widget _scrollArea(Widget child) => CustomScrollView(
     physics: const OneUIScrollPhysics(),
@@ -99,12 +123,18 @@ class _CallSessionState extends State<_CallSession> with SingleTickerProviderSta
   void _toggleKeypad() {
     if (_keypadOpen) TelecomBridge.instance.stopDtmf(widget.call.id);
     setState(() => _keypadOpen = !_keypadOpen);
+    final target = _keypadOpen ? 1.0 : 0.0;
     if (MediaQuery.disableAnimationsOf(context)) {
-      _morph.value = _keypadOpen ? 1 : 0;
-    } else if (_keypadOpen) {
-      _morph.forward();
+      _morph.value = target;
     } else {
-      _morph.reverse();
+      _morph.animateWith(SpringSimulation(
+          _spring,
+          _morph.value,
+          target,
+          _morph.velocity,
+          tolerance: _settled,
+          snapToEnd: true,
+        ));
     }
   }
 
@@ -115,7 +145,21 @@ class _CallSessionState extends State<_CallSession> with SingleTickerProviderSta
   }
 
   @override
+  void didUpdateWidget(_CallSession oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final route = widget.snapshot.audio.route;
+    if (route != oldWidget.snapshot.audio.route) {
+      _toastTimer?.cancel();
+      setState(() => _routeToast = route == AudioRoute.speaker ? 'Speaker on' : audioRouteLabel(route));
+      _toastTimer = Timer(const Duration(milliseconds: 1500), () {
+        if (mounted) setState(() => _routeToast = null);
+      });
+    }
+  }
+
+  @override
   void dispose() {
+    _toastTimer?.cancel();
     _morph.dispose();
     super.dispose();
   }
@@ -126,6 +170,7 @@ class _CallSessionState extends State<_CallSession> with SingleTickerProviderSta
     final ringing = call.state == CallState.ringing;
     final ended = call.state == CallState.disconnected || call.state == CallState.disconnecting;
     final held = widget.snapshot.calls.where((c) => c.id != call.id && c.state == CallState.holding).firstOrNull;
+    final switchDuration = MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 300);
     return PopScope(
       canPop: !_keypadOpen,
       onPopInvokedWithResult: (didPop, _) {
@@ -138,9 +183,17 @@ class _CallSessionState extends State<_CallSession> with SingleTickerProviderSta
             final landscape = constraints.maxWidth > constraints.maxHeight;
             final compact = landscape || constraints.maxHeight < 700;
             final progress = Curves.easeInOutCubic.transform(_morph.value);
-            final controls = ringing
-                ? IncomingControls(call: call, isCurrent: () => mounted && widget.call.state == CallState.ringing)
+            final Widget controls = ended
+                ? const SizedBox(key: ValueKey('ended'), width: double.infinity)
+                : ringing
+                ? IncomingControls(
+                    key: const ValueKey('incoming'),
+                    call: call,
+                    compact: compact,
+                    isCurrent: () => mounted && widget.call.state == CallState.ringing,
+                  )
                 : CallControlPanel(
+                    key: const ValueKey('connected'),
                     call: call,
                     audio: widget.snapshot.audio,
                     callCount: widget.snapshot.calls.length,
@@ -150,25 +203,41 @@ class _CallSessionState extends State<_CallSession> with SingleTickerProviderSta
                     progress: _morph.value,
                     animating: _morph.isAnimating,
                     keypadOpen: _keypadOpen,
-                    digits: _digits,
                     onDigit: (digit) => setState(() => _digits += digit),
                     onToggle: _toggleKeypad,
                   );
+            final animatedControls = AnimatedSwitcher(
+              duration: switchDuration,
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              layoutBuilder: (current, previous) =>
+                  Stack(alignment: Alignment.bottomCenter, children: [...previous, ?current]),
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween(begin: const Offset(0, .08), end: Offset.zero).animate(animation),
+                  child: child,
+                ),
+              ),
+              child: controls,
+            );
             final header = Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CallHeader(call: call, sims: widget.sims, compact: compact, keypadProgress: progress),
+                CallHeader(
+                  call: call,
+                  sims: widget.sims,
+                  compact: compact,
+                  keypadProgress: progress,
+                  digits: _digits,
+                  chip: ringing || ended ? null : _routeToast ?? (widget.snapshot.audio.muted ? 'Muted' : null),
+                ),
                 if (held != null && !ringing && !ended) ...[
                   const SizedBox(height: 16),
                   HeldCallChip(call: held, onSwap: () => TelecomBridge.instance.unhold(held.id)),
                 ],
               ],
             );
-            if (ended) {
-              return Center(
-                child: SingleChildScrollView(padding: const EdgeInsets.all(24), child: header),
-              );
-            }
             if (landscape) {
               return Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -179,9 +248,9 @@ class _CallSessionState extends State<_CallSession> with SingleTickerProviderSta
                     ),
                     const SizedBox(width: 24),
                     Expanded(
-                      child: ringing
-                          ? _scrollArea(Column(mainAxisAlignment: MainAxisAlignment.center, children: [controls]))
-                          : controls,
+                      child: ringing || ended
+                          ? _scrollArea(Column(mainAxisAlignment: MainAxisAlignment.end, children: [animatedControls]))
+                          : animatedControls,
                     ),
                   ],
                 ),
@@ -195,15 +264,17 @@ class _CallSessionState extends State<_CallSession> with SingleTickerProviderSta
                     child: _scrollArea(
                       Column(
                         children: [
-                          SizedBox(height: compact ? 4 : (constraints.maxHeight * 0.055).clamp(24.0, 48.0)),
+                          SizedBox(height: compact ? 4 : 16),
+                          // Slightly above centre in the space the controls leave.
+                          const Spacer(flex: 2),
                           header,
-                          const SizedBox(height: 28),
-                          const Spacer(),
+                          const SizedBox(height: 16),
+                          const Spacer(flex: 3),
                         ],
                       ),
                     ),
                   ),
-                  controls,
+                  animatedControls,
                 ],
               ),
             );

@@ -21,7 +21,6 @@ class CallControlPanel extends StatefulWidget {
     required this.width,
     required this.compact,
     required this.landscape,
-    required this.digits,
     required this.onDigit,
     required this.onToggle,
   });
@@ -34,7 +33,6 @@ class CallControlPanel extends StatefulWidget {
   final double width;
   final bool compact;
   final bool landscape;
-  final String digits;
   final ValueChanged<String> onDigit;
   final VoidCallback onToggle;
 
@@ -44,6 +42,10 @@ class CallControlPanel extends StatefulWidget {
 
 class _CallControlPanelState extends State<CallControlPanel> {
   String? _tone;
+  bool _ending = false;
+
+  /// A soft settle for keys: a little overshoot, much gentler than easeOutBack.
+  static const _settle = Cubic(.34, 1.3, .64, 1);
   static const _keys = [
     ('1', ''),
     ('2', 'ABC'),
@@ -84,6 +86,7 @@ class _CallControlPanelState extends State<CallControlPanel> {
     if (oldWidget.call.id != widget.call.id) {
       if (_tone != null) TelecomBridge.instance.stopDtmf(oldWidget.call.id);
       _tone = null;
+      _ending = false;
     } else if (!widget.keypadOpen || widget.animating) {
       _stopTone();
     }
@@ -124,7 +127,7 @@ class _CallControlPanelState extends State<CallControlPanel> {
           : compact
           ? 112
           : 128,
-      32 + stride * 4 - (widget.landscape ? 4 : 0),
+      _keypadTop + stride * 4 - (widget.landscape ? 4 : 0),
       layoutProgress,
     )!;
     final holding = widget.call.state == CallState.holding;
@@ -168,26 +171,6 @@ class _CallControlPanelState extends State<CallControlPanel> {
           child: Stack(
             clipBehavior: Clip.hardEdge,
             children: [
-              if (p > 0)
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: 28,
-                  child: Opacity(
-                    opacity: Curves.easeInOut.transform(p),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        widget.digits,
-                        maxLines: 1,
-                        textAlign: TextAlign.center,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 22, letterSpacing: 3, color: Colors.white),
-                      ),
-                    ),
-                  ),
-                ),
               if (p < 1)
                 Positioned(
                   bottom: 0,
@@ -202,17 +185,18 @@ class _CallControlPanelState extends State<CallControlPanel> {
                     ignoring: p > 0,
                     child: ExcludeSemantics(
                       excluding: p > 0,
-                      child: Opacity(
-                        opacity: 1 - const Interval(0, .7, curve: Curves.easeOut).transform(p),
-                        child: Transform.scale(
-                          key: const ValueKey('receding-call-actions'),
-                          scale: 1 - .20 * Curves.easeOutBack.transform(p),
-                          alignment: Alignment.topCenter,
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              for (final action in actions)
-                                Expanded(
+                      child: Transform.scale(
+                        key: const ValueKey('receding-call-actions'),
+                        scale: 1 - .10 * const Interval(0, .45, curve: Curves.easeOut).transform(p),
+                        alignment: Alignment.topCenter,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            for (final (i, action) in actions.indexed)
+                              Expanded(
+                                // The middle pair leaves first, then the outer pair.
+                                child: Opacity(
+                                  opacity: 1 - (i == 1 || i == 2 ? _innerOut : _outerOut).transform(p),
                                   child: CallAction(
                                     icon: action.icon,
                                     label: action.label,
@@ -221,8 +205,8 @@ class _CallControlPanelState extends State<CallControlPanel> {
                                     size: actionSize,
                                   ),
                                 ),
-                            ],
-                          ),
+                              ),
+                          ],
                         ),
                       ),
                     ),
@@ -272,22 +256,34 @@ class _CallControlPanelState extends State<CallControlPanel> {
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: SizedBox(
-                    height: actionSize,
-                    child: IconButton.filled(
-                      tooltip: 'End call',
-                      iconSize: 32,
-                      style: IconButton.styleFrom(
-                        backgroundColor: const Color(0xFFEE5265),
-                        foregroundColor: Colors.white,
-                        shape: const StadiumBorder(),
-                        elevation: 0,
+                  child: PressScale(
+                    scale: .95,
+                    child: AnimatedOpacity(
+                      opacity: _ending ? .5 : 1,
+                      duration: const Duration(milliseconds: 200),
+                      child: SizedBox(
+                        height: actionSize,
+                        child: IconButton.filled(
+                          tooltip: 'End call',
+                          iconSize: 32,
+                          style: IconButton.styleFrom(
+                            backgroundColor: const Color(0xFFEE5265),
+                            disabledBackgroundColor: const Color(0xFFEE5265),
+                            foregroundColor: Colors.white,
+                            disabledForegroundColor: Colors.white,
+                            shape: const StadiumBorder(),
+                            elevation: 0,
+                          ),
+                          onPressed: _ending
+                              ? null
+                              : () {
+                                  HapticFeedback.mediumImpact();
+                                  setState(() => _ending = true);
+                                  telecom.hangUp(widget.call.id);
+                                },
+                          icon: const Icon(Icons.call_end_rounded),
+                        ),
                       ),
-                      onPressed: () {
-                        HapticFeedback.mediumImpact();
-                        telecom.hangUp(widget.call.id);
-                      },
-                      icon: const Icon(Icons.call_end_rounded),
                     ),
                   ),
                 ),
@@ -308,12 +304,19 @@ class _CallControlPanelState extends State<CallControlPanel> {
     );
   }
 
+  // Room above the top row so its edge reveal reaches full opacity.
+  static const double _keypadTop = 16;
+  static const _innerOut = Interval(0, .32, curve: Curves.easeOut);
+  static const _outerOut = Interval(.08, .40, curve: Curves.easeOut);
+
   Widget _keypadKey(int index, double p, double size, double stride, double upperHeight) {
     final (digit, letters) = _keys[index];
-    // Overshoot only the painted key, keeping layout and the bottom row stable.
-    final spring = Curves.easeOutBack.transform(p);
-    final fullHeight = 32 + stride * 4 - (widget.landscape ? 4 : 0);
-    final top = upperHeight - fullHeight + 32 + index ~/ 3 * stride + (1 - spring) * 48;
+    // The panel opens from the bottom, so rows cascade bottom-up with it; motion is paint-only.
+    final row = index ~/ 3;
+    final q = Interval((3 - row) * .08, (3 - row) * .08 + .76).transform(p);
+    final spring = _settle.transform(q);
+    final fullHeight = _keypadTop + stride * 4 - (widget.landscape ? 4 : 0);
+    final top = upperHeight - fullHeight + _keypadTop + row * stride + (1 - spring) * 24;
     // Reveal whole circles as space opens, avoiding a sliced circle at either edge.
     final edgeReveal = (top / 16).clamp(0.0, 1.0) * ((upperHeight - top - size) / 4).clamp(0.0, 1.0);
     return Positioned(
@@ -323,10 +326,10 @@ class _CallControlPanelState extends State<CallControlPanel> {
       width: size,
       height: size,
       child: Opacity(
-        opacity: const Interval(0, .75, curve: Curves.easeOut).transform(p) * edgeReveal,
+        opacity: const Interval(0, .6, curve: Curves.easeOut).transform(q) * edgeReveal,
         child: Transform.scale(
           key: ValueKey('keypad-spring-$digit'),
-          scale: .60 + .40 * spring,
+          scale: .85 + .15 * spring,
           child: ExcludeSemantics(
             excluding: p < 1,
             child: Semantics(
@@ -342,12 +345,15 @@ class _CallControlPanelState extends State<CallControlPanel> {
                 onTapDown: (_) => _startTone(digit),
                 onTapUp: (_) => _releaseTone(),
                 onTapCancel: _releaseTone,
-                child: Container(
+                child: AnimatedContainer(
+                  duration: Duration(milliseconds: _tone == digit ? 40 : 220),
                   width: size,
                   height: size,
+                  transformAlignment: Alignment.center,
+                  transform: Matrix4.diagonal3Values(_tone == digit ? .94 : 1, _tone == digit ? .94 : 1, 1),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: _tone == digit ? const Color(0xFF617A80) : callControlFill,
+                    color: _tone == digit ? const Color(0x4DFFFFFF) : const Color(0x1FFFFFFF),
                   ),
                   padding: const EdgeInsets.all(4),
                   child: FittedBox(
@@ -355,10 +361,16 @@ class _CallControlPanelState extends State<CallControlPanel> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(digit, style: const TextStyle(fontSize: 30, height: 1.05, color: Colors.white)),
+                        Text(digit, style: const TextStyle(fontSize: 32, height: 1.05, color: Colors.white)),
                         Text(
                           letters.isEmpty ? ' ' : letters,
-                          style: const TextStyle(fontSize: 9, height: 1.2, letterSpacing: 1, color: Colors.white70),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            height: 1.2,
+                            letterSpacing: 1.5,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white60,
+                          ),
                         ),
                       ],
                     ),
