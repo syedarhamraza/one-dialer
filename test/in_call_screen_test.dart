@@ -237,6 +237,10 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 140));
     expect(tester.widget<Transform>(actions).transform.storage[0], lessThan(1));
+    final keySpring = find.byKey(const ValueKey('keypad-spring-8'));
+    expect(tester.widget<Transform>(keySpring).transform.storage[0], inExclusiveRange(1, 1.02));
+    final keyFade = find.ancestor(of: keySpring, matching: find.byType(Opacity)).first;
+    expect(tester.widget<Opacity>(keyFade).opacity, inExclusiveRange(0, 1));
     final middle = tester.getTopLeft(find.byKey(const ValueKey('morph-key-1')));
     expect(tester.getSize(panel).height, greaterThan(height));
     expect(tester.getRect(find.byTooltip('End call')), end);
@@ -249,6 +253,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 140));
     expect(tester.getTopLeft(find.byKey(const ValueKey('morph-key-1'))).dy, lessThan(middle.dy));
     expect(actions, findsNothing);
+    expect(tester.widget<Transform>(keySpring).transform.storage[0], 1);
     expect(tester.getRect(find.byTooltip('End call')), end);
     expect(tester.getRect(find.byTooltip('Speaker')), speaker);
     expect(tester.takeException(), isNull);
@@ -275,6 +280,7 @@ void main() {
     expect(tester.getSize(panel).height, reversing);
     await tester.pumpAndSettle();
     expect(find.bySemanticsLabel('5'), findsOneWidget);
+    expect(tester.widget<Transform>(find.byKey(const ValueKey('keypad-spring-5'))).transform.storage[0], 1);
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(tester.getSize(panel).height, start);

@@ -28,7 +28,9 @@ End call has extra bottom clearance on taller portrait screens, with a smaller
 gap on compact and landscape layouts.
 
 A single reversible 280 ms controller shrinks and fades the four-action row
-back while the keypad rises, scales in, and fades up. The action row does not
+back while the keypad rises, scales in, and fades up. Eased opacity curves soften
+the crossfade, and a restrained back curve adds less than 1% scale overshoot
+before the keypad settles. The spring affects painting only, keeping layout stable. The action row does not
 slide into digit positions. Panel height and caller-header compaction share that
 controller. Whole circles reveal as space opens to avoid clipping their edges.
 Speaker and the wide End call pill remain anchored; Keypad becomes Hide keypad.

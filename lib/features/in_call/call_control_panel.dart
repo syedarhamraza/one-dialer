@@ -174,7 +174,7 @@ class _CallControlPanelState extends State<CallControlPanel> {
                   right: 0,
                   height: 28,
                   child: Opacity(
-                    opacity: p,
+                    opacity: Curves.easeInOut.transform(p),
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
@@ -202,10 +202,10 @@ class _CallControlPanelState extends State<CallControlPanel> {
                     child: ExcludeSemantics(
                       excluding: p > 0,
                       child: Opacity(
-                        opacity: (1 - p * 2).clamp(0.0, 1.0),
+                        opacity: 1 - const Interval(0, .7, curve: Curves.easeOut).transform(p),
                         child: Transform.scale(
                           key: const ValueKey('receding-call-actions'),
-                          scale: 1 - .12 * p,
+                          scale: 1 - .12 * Curves.easeOutBack.transform(p),
                           alignment: Alignment.topCenter,
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -309,6 +309,8 @@ class _CallControlPanelState extends State<CallControlPanel> {
 
   Widget _keypadKey(int index, double p, double size, double stride, double upperHeight) {
     final (digit, letters) = _keys[index];
+    // Overshoot only the painted key, keeping layout and the bottom row stable.
+    final spring = Curves.easeOutBack.transform(p);
     final fullHeight = 32 + stride * 4 - (widget.landscape ? 4 : 0);
     final top = upperHeight - fullHeight + 32 + index ~/ 3 * stride + (1 - p) * 24;
     // Reveal whole circles as space opens, avoiding a sliced circle at either edge.
@@ -320,9 +322,10 @@ class _CallControlPanelState extends State<CallControlPanel> {
       width: size,
       height: size,
       child: Opacity(
-        opacity: p * edgeReveal,
+        opacity: Curves.easeInOut.transform(p) * edgeReveal,
         child: Transform.scale(
-          scale: .92 + .08 * p,
+          key: ValueKey('keypad-spring-$digit'),
+          scale: .92 + .08 * spring,
           child: ExcludeSemantics(
             excluding: p < 1,
             child: Semantics(
