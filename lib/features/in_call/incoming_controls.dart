@@ -63,26 +63,30 @@ class IncomingControls extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              SwipeUpButton(
-                color: OneUITheme.accentRed,
-                icon: Icons.call_end_rounded,
-                label: 'Decline',
-                compact: compact,
-                onTriggered: () => telecom.reject(call.id),
-              ),
-              SwipeUpButton(
-                color: OneUITheme.accentGreen,
-                icon: Icons.call_rounded,
-                label: 'Answer',
-                compact: compact,
-                // Offset so the two hints don't pulse in lockstep.
-                hintPhase: .5,
-                onTriggered: () => telecom.answer(call.id),
-              ),
-            ],
+          Padding(
+            // Near the edges like ColorOS, leaving room between the two targets.
+            padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                SwipeUpButton(
+                  color: OneUITheme.accentRed,
+                  icon: Icons.call_end_rounded,
+                  label: 'Decline',
+                  compact: compact,
+                  onTriggered: () => telecom.reject(call.id),
+                ),
+                SwipeUpButton(
+                  color: OneUITheme.accentGreen,
+                  icon: Icons.call_rounded,
+                  label: 'Answer',
+                  compact: compact,
+                  // Offset so the two hints don't pulse in lockstep.
+                  hintPhase: .5,
+                  onTriggered: () => telecom.answer(call.id),
+                ),
+              ],
+            ),
           ),
           SizedBox(height: compact ? 12 : 28),
           if (canText)
@@ -254,7 +258,7 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                       top: travel - 22 - (reduceMotion ? 0 : 10 * rise),
                       child: Opacity(
                         opacity: dash,
-                        child: CustomPaint(size: const Size(22, 8), painter: _ArcHint(widget.color)),
+                        child: CustomPaint(size: const Size(26, 6), painter: _ArcHint(widget.color)),
                       ),
                     ),
                     Positioned(
@@ -285,7 +289,7 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
   }
 }
 
-/// The ColorOS swipe hint: a short arc bowing upward, with rounded ends.
+/// The ColorOS swipe hint: a shallow arc echoing the button's curve, with rounded ends.
 class _ArcHint extends CustomPainter {
   const _ArcHint(this.color);
   final Color color;
@@ -294,7 +298,8 @@ class _ArcHint extends CustomPainter {
   void paint(Canvas canvas, Size size) => canvas.drawPath(
     Path()
       ..moveTo(1.5, size.height - 1.5)
-      ..quadraticBezierTo(size.width / 2, -size.height / 2 + 1.5, size.width - 1.5, size.height - 1.5),
+      // A ~2.5 px rise over the width, close to the curve of the 72 px button.
+      ..quadraticBezierTo(size.width / 2, size.height - 6.5, size.width - 1.5, size.height - 1.5),
     Paint()
       ..color = color
       ..style = PaintingStyle.stroke
