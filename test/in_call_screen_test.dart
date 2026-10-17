@@ -125,6 +125,16 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('connected controls are flat and End call has comfortable bottom clearance', (tester) async {
+    await open(tester);
+    await emit(tester, [call('active')]);
+    final mute = tester.widget<IconButton>(find.byWidgetPredicate((w) => w is IconButton && w.tooltip == 'Mute'));
+    expect(mute.style!.backgroundColor!.resolve({}), Colors.transparent);
+    expect(mute.style!.side?.resolve({}), anyOf(isNull, BorderSide.none));
+    expect(tester.getBottomLeft(find.byTooltip('End call')).dy, lessThanOrEqualTo(915 - 48));
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('audio output and quick replies use floating sheets', (tester) async {
     await open(tester);
     await emit(tester, [call('active')], bluetooth: true);

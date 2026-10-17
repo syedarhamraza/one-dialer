@@ -204,23 +204,21 @@ class _SwipeCircleState extends State<SwipeCircle> with SingleTickerProviderStat
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // Halo that grows with the drag, so the gesture reads as "pull this".
-              Container(
-                width: SwipeCircle.size + 40 * progress + 16,
-                height: SwipeCircle.size + 40 * progress + 16,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: widget.color.withValues(alpha: 0.15 + 0.2 * progress),
+              // The ring tracks the finger; the actual button stays anchored.
+              SizedBox.square(
+                dimension: SwipeCircle.size + 16,
+                child: CircularProgressIndicator(
+                  value: progress,
+                  strokeWidth: 4,
+                  color: widget.color,
+                  backgroundColor: widget.color.withValues(alpha: 0.18),
                 ),
               ),
-              Transform.translate(
-                offset: _drag,
-                child: Container(
-                  width: SwipeCircle.size,
-                  height: SwipeCircle.size,
-                  decoration: BoxDecoration(color: widget.color, shape: BoxShape.circle),
-                  child: Icon(widget.icon, color: Colors.white, size: 32),
-                ),
+              Container(
+                width: SwipeCircle.size,
+                height: SwipeCircle.size,
+                decoration: BoxDecoration(color: widget.color, shape: BoxShape.circle),
+                child: Icon(widget.icon, color: Colors.white, size: 32),
               ),
             ],
           ),

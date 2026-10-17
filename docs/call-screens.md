@@ -20,11 +20,15 @@ that has already changed state.
 Controls remain reachable below independently scrollable caller details. Landscape
 uses side-by-side caller details and controls. Transitions last 200 ms and respect
 reduced motion. Audio output and quick replies use the shared floating modal.
+Incoming buttons stay anchored during swipes; a progress ring indicates arming.
+Connected controls use flat icons without raised-looking rims or inactive fills.
+End call has extra bottom clearance on taller portrait screens, with a smaller
+gap on compact and landscape layouts.
 
 ## Verification
 
 - `flutter analyze`
-- `flutter test` (69 tests, including 12 call-screen cases)
+- `flutter test` (71 tests, including 13 call-screen cases)
 - Render previews with real fonts:
   `flutter test test/in_call_screen_test.dart --plain-name "render One UI call previews" --dart-define=PREVIEW_FONT=<path-to-roboto-regular.ttf>`
 - Preview PNGs are local artifacts in `build/call-previews/`.

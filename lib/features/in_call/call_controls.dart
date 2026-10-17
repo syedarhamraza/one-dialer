@@ -143,11 +143,12 @@ class _CallAction extends StatelessWidget {
           isSelected: active,
           iconSize: 27,
           style: IconButton.styleFrom(
-            backgroundColor: active ? Colors.white : Colors.white.withValues(alpha: 0.10),
+            backgroundColor: active ? Colors.white : Colors.transparent,
             foregroundColor: active ? const Color(0xFF183139) : Colors.white,
-            disabledBackgroundColor: Colors.white.withValues(alpha: 0.04),
+            disabledBackgroundColor: Colors.transparent,
             disabledForegroundColor: Colors.white38,
-            side: BorderSide(color: Colors.white.withValues(alpha: active ? 0 : 0.08)),
+            side: BorderSide.none,
+            elevation: 0,
           ),
           onPressed: onPressed,
           icon: Icon(icon),
@@ -265,7 +266,14 @@ class EndCallBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(top: 16, bottom: 12),
+    padding: EdgeInsets.only(
+      top: 16,
+      bottom:
+          MediaQuery.sizeOf(context).height > MediaQuery.sizeOf(context).width &&
+              MediaQuery.sizeOf(context).height >= 700
+          ? (MediaQuery.sizeOf(context).height * 0.07).clamp(28.0, 64.0)
+          : 16,
+    ),
     child: Row(
       children: [
         const Spacer(),

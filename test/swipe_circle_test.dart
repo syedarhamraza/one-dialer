@@ -5,11 +5,13 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   Future<List<String>> pump(WidgetTester tester) async {
     final fired = <String>[];
-    await tester.pumpWidget(MaterialApp(
-      home: Center(
-        child: SwipeCircle(color: Colors.green, icon: Icons.call, label: 'Answer', onTriggered: () => fired.add('x')),
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Center(
+          child: SwipeCircle(color: Colors.green, icon: Icons.call, label: 'Answer', onTriggered: () => fired.add('x')),
+        ),
       ),
-    ));
+    );
     return fired;
   }
 
@@ -26,6 +28,20 @@ void main() {
     await tester.drag(find.byIcon(Icons.call), const Offset(0, -200));
     await tester.pumpAndSettle();
     expect(fired, ['x']);
+  });
+
+  testWidgets('the button stays fixed while the swipe arms and resets', (tester) async {
+    await pump(tester);
+    final icon = find.byIcon(Icons.call);
+    final center = tester.getCenter(icon);
+    final gesture = await tester.startGesture(center);
+    await gesture.moveBy(const Offset(0, -50));
+    await gesture.moveBy(const Offset(0, -100));
+    await tester.pump();
+    expect(tester.getCenter(icon), center);
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(tester.getCenter(icon), center);
   });
 
   testWidgets('nothing happens until the finger lifts, and sliding back cancels', (tester) async {
