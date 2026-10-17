@@ -30,8 +30,7 @@ class IncomingControls extends StatelessWidget {
               padding: EdgeInsets.all(20),
               child: Text('Decline with message', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
             ),
-            for (final m in quickReplies)
-              ListTile(title: Text(m), onTap: () => Navigator.of(context).pop(m)),
+            for (final m in quickReplies) ListTile(title: Text(m), onTap: () => Navigator.of(context).pop(m)),
             const SizedBox(height: 8),
           ],
         ),

@@ -78,7 +78,8 @@ List<(DateTime, List<CallGroup>)> groupByDay(List<CallLogEntry> calls) {
     if (days.isEmpty || days.last.$1 != day) days.add((day, []));
     final groups = days.last.$2;
     final last = groups.isEmpty ? null : groups.last.latest;
-    final sameRow = last != null &&
+    final sameRow =
+        last != null &&
         !call.isPrivate &&
         !last.isPrivate &&
         numberKey(last.number) == numberKey(call.number) &&

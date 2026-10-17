@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../app/layout.dart';
 import '../../core/contacts/contacts_repository.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_scroll.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/letter_avatar.dart';
-import '../../widgets/one_ui_big_header.dart';
-import '../../widgets/one_ui_floating_nav_bar.dart';
+import '../../widgets/one_ui_collapsible_header.dart';
 import '../../widgets/one_ui_glass_surface.dart';
 import '../../widgets/swipe_to_call.dart';
 import 'call_details_screen.dart';
@@ -93,9 +93,9 @@ class _RecentsScreenState extends State<RecentsScreen> {
 
   /// Blocked calls live under Block numbers, not Recents (like Samsung).
   List<CallLogEntry> get _visibleCalls => [
-        for (final c in _repo.calls.value)
-          if (c.type != CallType.blocked && (!_missedOnly || c.isMissed)) c,
-      ];
+    for (final c in _repo.calls.value)
+      if (c.type != CallType.blocked && (!_missedOnly || c.isMissed)) c,
+  ];
 
   Widget _buildList(BuildContext context) {
     final days = groupByDay(_visibleCalls);
@@ -104,7 +104,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
     return CustomScrollView(
       physics: OneUIScrollPhysics.bigHeader,
       slivers: [
-        SliverPersistentHeader(pinned: true, delegate: OneUIBigHeader(title: title)),
+        SliverPersistentHeader(pinned: true, delegate: OneUICollapsibleHeaderDelegate(title: title)),
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
@@ -121,10 +121,13 @@ class _RecentsScreenState extends State<RecentsScreen> {
           _Empty(
             icon: Icons.lock_outline_rounded,
             text: 'Set Dialer as your default phone app to see recent calls',
-            action: ('Set as default', () async {
-              await TelecomBridge.instance.requestDefaultDialer();
-              await _repo.start();
-            }),
+            action: (
+              'Set as default',
+              () async {
+                await TelecomBridge.instance.requestDefaultDialer();
+                await _repo.start();
+              },
+            ),
           )
         else if (days.isEmpty)
           _Empty(icon: Icons.watch_later_outlined, text: _missedOnly ? 'No missed calls' : 'No recent calls')
@@ -149,9 +152,9 @@ class _RecentsScreenState extends State<RecentsScreen> {
                             selected: _selected?.contains(groups[i].latest.id),
                             onTap: () => _selected != null
                                 ? _toggle(groups[i])
-                                : Navigator.of(context).push(MaterialPageRoute<void>(
-                                    builder: (_) => CallDetailsScreen(call: groups[i].latest),
-                                  )),
+                                : Navigator.of(context).push(
+                                    MaterialPageRoute<void>(builder: (_) => CallDetailsScreen(call: groups[i].latest)),
+                                  ),
                             onLongPress: () {
                               HapticFeedback.mediumImpact();
                               _toggle(groups[i]);
@@ -165,9 +168,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
               ),
             ),
           ],
-        SliverToBoxAdapter(
-          child: SizedBox(height: MediaQuery.paddingOf(context).bottom + OneUIFloatingNavBar.barHeight + 32),
-        ),
+        SliverToBoxAdapter(child: SizedBox(height: MediaQuery.paddingOf(context).bottom + kFloatingNavBarHeight + 32)),
       ],
     );
   }
@@ -280,13 +281,13 @@ class CallTypeIcon extends StatelessWidget {
 }
 
 String callTypeLabel(CallType type) => switch (type) {
-      CallType.outgoing => 'Outgoing call',
-      CallType.missed => 'Missed call',
-      CallType.rejected => 'Rejected call',
-      CallType.blocked => 'Blocked call',
-      CallType.voicemail => 'Voicemail',
-      _ => 'Incoming call',
-    };
+  CallType.outgoing => 'Outgoing call',
+  CallType.missed => 'Missed call',
+  CallType.rejected => 'Rejected call',
+  CallType.blocked => 'Blocked call',
+  CallType.voicemail => 'Voicemail',
+  _ => 'Incoming call',
+};
 
 /// SIM slot number in its SIM colour.
 class SimBadge extends StatelessWidget {
@@ -303,7 +304,10 @@ class SimBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(3),
         border: Border.all(color: color, width: 1),
       ),
-      child: Text(label, style: TextStyle(fontSize: 10, height: 1.3, fontWeight: FontWeight.w700, color: color)),
+      child: Text(
+        label,
+        style: TextStyle(fontSize: 10, height: 1.3, fontWeight: FontWeight.w700, color: color),
+      ),
     );
   }
 }
@@ -381,7 +385,11 @@ class _Empty extends StatelessWidget {
           children: [
             Icon(icon, size: 40, color: OneUITheme.textSecondary),
             const SizedBox(height: 12),
-            Text(text, textAlign: TextAlign.center, style: const TextStyle(color: OneUITheme.textSecondary)),
+            Text(
+              text,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: OneUITheme.textSecondary),
+            ),
             if (action case (final label, final onTap)) ...[
               const SizedBox(height: 16),
               FilledButton(onPressed: onTap, child: Text(label)),
@@ -395,12 +403,7 @@ class _Empty extends StatelessWidget {
 
 /// Floating Cancel | Select all | Delete pill above the nav bar while selecting.
 class _SelectionBar extends StatelessWidget {
-  const _SelectionBar({
-    required this.count,
-    required this.onCancel,
-    required this.onSelectAll,
-    required this.onDelete,
-  });
+  const _SelectionBar({required this.count, required this.onCancel, required this.onSelectAll, required this.onDelete});
 
   final int count;
   final VoidCallback onCancel;
@@ -412,7 +415,7 @@ class _SelectionBar extends StatelessWidget {
     return Positioned(
       left: 0,
       right: 0,
-      bottom: MediaQuery.paddingOf(context).bottom + OneUIFloatingNavBar.barHeight + 20,
+      bottom: MediaQuery.paddingOf(context).bottom + kFloatingNavBarHeight + 20,
       child: Center(
         child: OneUIGlassSurface(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

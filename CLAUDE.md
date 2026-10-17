@@ -6,7 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A custom Android default phone app (dialer). The UI is Flutter; a Kotlin layer under `android/` talks to Android's Telecom framework. Android-only (`--platforms android`); `minSdk 29` (needs `RoleManager.ROLE_DIALER`), `compileSdk 37` (required by `permission_handler_android`).
 
-The UI design is ported from the sibling app OneSpend at `D:\one-spend` (pitch-black Samsung One UI). `lib/theme/` and `lib/widgets/` hold the ported pieces: only OneSpend's default flat look, without its `OneUIEffectsController` appearance settings. When a screen needs another OneSpend widget, port it from `D:\one-spend\lib\widgets\` the same way: replace `OneUIEffectsController` lookups with the flat values (cards `0xFF1C1C1E`, no border or shadow). `OneUIBigHeader` must keep its 270/92 extents in sync with `OneUIScrollPhysics.bigHeaderCollapse`.
+The UI design is ported from the sibling app OneSpend at `D:\one-spend` (pitch-black Samsung One UI); the reference screenshots of Samsung's Phone app are in `Images/` (local only, git-ignored). OneSpend widgets are copied **verbatim** into `lib/widgets/` (reformatted only) and compile against three stand-ins at the same import paths: `lib/theme/one_ui_effects.dart` (`OneUIEffectsController` returning OneSpend's flat-look values, re-exported by `one_ui_theme.dart`), `lib/core/haptics/haptics.dart`, and `lib/core/speech/voice_input.dart` (no mic yet). To add another OneSpend widget, copy it the same way; don't hand-rewrite. `OneUIFloatingNavBar` fills its parent's height, so it floats in a `Stack` in `MainShell`, not as `Scaffold.bottomNavigationBar`; tabs pad with `navBarClearance()` (`lib/app/layout.dart`).
+
+## Git workflow
+
+Remote: `https://github.com/syedarhamraza/one-dialer` (private). Never commit to `main` directly: every change gets a branch (`feat/...`, `fix/...`), is pushed, and gets a pull request into `main` via `gh pr create`; merge only after the user approves.
 
 ## Commands
 

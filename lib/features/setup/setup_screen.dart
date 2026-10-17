@@ -4,7 +4,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_scroll.dart';
 import '../../theme/one_ui_theme.dart';
-import '../../widgets/one_ui_big_header.dart';
+import '../../widgets/one_ui_collapsible_header.dart';
 import '../../widgets/one_ui_group_card.dart';
 
 /// First run: asks to become the default phone app. [onSkip] continues without it
@@ -31,7 +31,7 @@ class SetupScreen extends StatelessWidget {
         slivers: [
           const SliverPersistentHeader(
             pinned: true,
-            delegate: OneUIBigHeader(title: 'Phone', subtitle: 'Set up your dialer'),
+            delegate: OneUICollapsibleHeaderDelegate(title: 'Phone', subtitle: 'Set up your dialer'),
           ),
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 16),

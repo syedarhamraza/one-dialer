@@ -20,8 +20,11 @@ class SwipeToCallOrMessage extends StatelessWidget {
     return Dismissible(
       key: key ?? ValueKey(number),
       background: const _Background(color: OneUITheme.accentGreen, icon: Icons.call_rounded, alignLeft: true),
-      secondaryBackground:
-          const _Background(color: OneUITheme.accentBlue, icon: Icons.message_rounded, alignLeft: false),
+      secondaryBackground: const _Background(
+        color: OneUITheme.accentBlue,
+        icon: Icons.message_rounded,
+        alignLeft: false,
+      ),
       confirmDismiss: (direction) async {
         HapticFeedback.mediumImpact();
         if (direction == DismissDirection.startToEnd) {

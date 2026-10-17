@@ -13,8 +13,10 @@ class BlockingRepository {
 
   /// Blocked numbers as stored; empty when not the default dialer.
   final ValueNotifier<List<String>> numbers = ValueNotifier(const []);
-  final ValueNotifier<({bool blockHidden, bool blockNonContacts})> rules =
-      ValueNotifier((blockHidden: false, blockNonContacts: false));
+  final ValueNotifier<({bool blockHidden, bool blockNonContacts})> rules = ValueNotifier((
+    blockHidden: false,
+    blockNonContacts: false,
+  ));
 
   /// False when the rules are saved but another app took the call-screening role.
   final ValueNotifier<bool> hasScreeningRole = ValueNotifier(true);
@@ -40,7 +42,10 @@ class BlockingRepository {
     } else {
       // Unblock every stored form of this number (it may be saved as local and +E.164).
       final key = numberKey(number);
-      await _api.unblockAll([for (final n in numbers.value) if (numberKey(n) == key) n]);
+      await _api.unblockAll([
+        for (final n in numbers.value)
+          if (numberKey(n) == key) n,
+      ]);
     }
     await load();
   }

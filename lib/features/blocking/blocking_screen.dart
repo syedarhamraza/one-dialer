@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../core/contacts/contacts_repository.dart';
-import '../../theme/one_ui_scroll.dart';
 import '../../theme/one_ui_theme.dart';
-import '../../widgets/one_ui_big_header.dart';
+import '../../widgets/one_ui_subpage.dart';
 import '../../widgets/one_ui_group_card.dart';
 import '../recents/call_details_screen.dart';
 import '../recents/call_log.dart';
@@ -62,9 +61,8 @@ class _BlockingScreenState extends State<BlockingScreen> {
   Future<void> _setRules({required bool blockHidden, required bool blockNonContacts}) async {
     final saved = await _repo.setRules(blockHidden: blockHidden, blockNonContacts: blockNonContacts);
     if (!saved && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Set Dialer as your caller ID & spam app to block these calls'),
-      ));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Set Dialer as your caller ID & spam app to block these calls')));
     }
   }
 
@@ -75,98 +73,86 @@ class _BlockingScreenState extends State<BlockingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: ListenableBuilder(
-        listenable: Listenable.merge(
-          [_repo.numbers, _repo.rules, _repo.hasScreeningRole, CallLogRepository.instance.calls],
-        ),
-        builder: (context, _) {
-          final rules = _repo.rules.value;
-          final blockedCalls =
-              CallLogRepository.instance.calls.value.where((c) => c.type == CallType.blocked).take(50).toList();
-          return CustomScrollView(
-            physics: OneUIScrollPhysics.bigHeader,
-            slivers: [
-              const SliverPersistentHeader(pinned: true, delegate: OneUIBigHeader(title: 'Block numbers')),
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                sliver: SliverList.list(
-                  children: [
-                    if ((rules.blockHidden || rules.blockNonContacts) && !_repo.hasScreeningRole.value)
-                      OneUIGroupCard(
-                        items: [
-                          OneUIGroupItem(
-                            leading: const Icon(Icons.warning_amber_rounded, color: OneUITheme.accentRed),
-                            title: 'Blocking rules are paused',
-                            subtitle: 'Another app screens your calls. Tap to let Dialer screen them.',
-                            subtitleColor: OneUITheme.accentRed,
-                            onTap: () => _setRules(
-                              blockHidden: rules.blockHidden,
-                              blockNonContacts: rules.blockNonContacts,
-                            ),
-                          ),
-                        ],
-                      ),
-                    OneUIGroupCard(
-                      items: [
-                        _switch(
-                          title: 'Block unknown/private numbers',
-                          subtitle: 'Callers who hide their number',
-                          value: rules.blockHidden,
-                          onChanged: (v) => _setRules(blockHidden: v, blockNonContacts: rules.blockNonContacts),
-                        ),
-                        _switch(
-                          title: 'Block calls from numbers not in Contacts',
-                          subtitle: 'Only your contacts can ring you',
-                          value: rules.blockNonContacts,
-                          onChanged: (v) => _setRules(blockHidden: rules.blockHidden, blockNonContacts: v),
-                        ),
-                      ],
-                    ),
-                    OneUIGroupCard(
-                      headerTitle: 'Blocked numbers',
-                      items: [
-                        OneUIGroupItem(
-                          leading: const Icon(Icons.add_rounded, color: OneUITheme.accentBlue),
-                          title: 'Add number',
-                          onTap: _add,
-                          trailing: const SizedBox.shrink(),
-                        ),
-                        for (final n in _repo.numbers.value)
-                          OneUIGroupItem(
-                            title: ContactsRepository.instance.nameFor(n) ?? n,
-                            subtitle: ContactsRepository.instance.nameFor(n) == null ? null : n,
-                            trailing: IconButton(
-                              tooltip: 'Unblock',
-                              icon: const Icon(Icons.remove_circle_outline_rounded, color: OneUITheme.accentRed),
-                              onPressed: () => _repo.setBlocked(n, false),
-                            ),
-                          ),
-                      ],
-                    ),
-                    if (blockedCalls.isNotEmpty)
-                      OneUIGroupCard(
-                        headerTitle: 'Blocked calls',
-                        items: [
-                          for (final c in blockedCalls)
-                            OneUIGroupItem(
-                              leading: const Icon(Icons.block_rounded, color: OneUITheme.textSecondary),
-                              title: callerName(c),
-                              subtitle: '${dayLabel(c.date, DateTime.now())}, ${timeLabel(c.date)}',
-                              onTap: () => Navigator.of(context).push(
-                                MaterialPageRoute<void>(builder: (_) => CallDetailsScreen(call: c)),
-                              ),
-                            ),
-                        ],
-                      ),
-                    const SizedBox(height: 32),
-                  ],
+    return OneUISubpage(
+      title: 'Block numbers',
+      listenable: Listenable.merge([
+        _repo.numbers,
+        _repo.rules,
+        _repo.hasScreeningRole,
+        CallLogRepository.instance.calls,
+      ]),
+      builder: (context) {
+        final rules = _repo.rules.value;
+        final blockedCalls = CallLogRepository.instance.calls.value
+            .where((c) => c.type == CallType.blocked)
+            .take(50)
+            .toList();
+        return [
+          if ((rules.blockHidden || rules.blockNonContacts) && !_repo.hasScreeningRole.value)
+            OneUIGroupCard(
+              items: [
+                OneUIGroupItem(
+                  leading: const Icon(Icons.warning_amber_rounded, color: OneUITheme.accentRed),
+                  title: 'Blocking rules are paused',
+                  subtitle: 'Another app screens your calls. Tap to let Dialer screen them.',
+                  subtitleColor: OneUITheme.accentRed,
+                  onTap: () => _setRules(blockHidden: rules.blockHidden, blockNonContacts: rules.blockNonContacts),
                 ),
+              ],
+            ),
+          OneUIGroupCard(
+            items: [
+              _switch(
+                title: 'Block unknown/private numbers',
+                subtitle: 'Callers who hide their number',
+                value: rules.blockHidden,
+                onChanged: (v) => _setRules(blockHidden: v, blockNonContacts: rules.blockNonContacts),
+              ),
+              _switch(
+                title: 'Block calls from numbers not in Contacts',
+                subtitle: 'Only your contacts can ring you',
+                value: rules.blockNonContacts,
+                onChanged: (v) => _setRules(blockHidden: rules.blockHidden, blockNonContacts: v),
               ),
             ],
-          );
-        },
-      ),
+          ),
+          OneUIGroupCard(
+            headerTitle: 'Blocked numbers',
+            items: [
+              OneUIGroupItem(
+                leading: const Icon(Icons.add_rounded, color: OneUITheme.accentBlue),
+                title: 'Add number',
+                onTap: _add,
+                trailing: const SizedBox.shrink(),
+              ),
+              for (final n in _repo.numbers.value)
+                OneUIGroupItem(
+                  title: ContactsRepository.instance.nameFor(n) ?? n,
+                  subtitle: ContactsRepository.instance.nameFor(n) == null ? null : n,
+                  trailing: IconButton(
+                    tooltip: 'Unblock',
+                    icon: const Icon(Icons.remove_circle_outline_rounded, color: OneUITheme.accentRed),
+                    onPressed: () => _repo.setBlocked(n, false),
+                  ),
+                ),
+            ],
+          ),
+          if (blockedCalls.isNotEmpty)
+            OneUIGroupCard(
+              headerTitle: 'Blocked calls',
+              items: [
+                for (final c in blockedCalls)
+                  OneUIGroupItem(
+                    leading: const Icon(Icons.block_rounded, color: OneUITheme.textSecondary),
+                    title: callerName(c),
+                    subtitle: '${dayLabel(c.date, DateTime.now())}, ${timeLabel(c.date)}',
+                    onTap: () =>
+                        Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => CallDetailsScreen(call: c))),
+                  ),
+              ],
+            ),
+        ];
+      },
     );
   }
 
@@ -175,13 +161,12 @@ class _BlockingScreenState extends State<BlockingScreen> {
     required String subtitle,
     required bool value,
     required ValueChanged<bool> onChanged,
-  }) =>
-      OneUIGroupItem(
-        title: title,
-        subtitle: subtitle,
-        onTap: () => onChanged(!value),
-        trailing: Switch(value: value, onChanged: onChanged, activeTrackColor: OneUITheme.accentBlue),
-      );
+  }) => OneUIGroupItem(
+    title: title,
+    subtitle: subtitle,
+    onTap: () => onChanged(!value),
+    trailing: Switch(value: value, onChanged: onChanged, activeTrackColor: OneUITheme.accentBlue),
+  );
 }
 
 /// Owns its text controller, so it lives until the dialog's close animation has finished.

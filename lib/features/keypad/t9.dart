@@ -27,9 +27,32 @@ class T9Match {
 }
 
 const _keys = {
-  'a': '2', 'b': '2', 'c': '2', 'd': '3', 'e': '3', 'f': '3', 'g': '4', 'h': '4', 'i': '4',
-  'j': '5', 'k': '5', 'l': '5', 'm': '6', 'n': '6', 'o': '6', 'p': '7', 'q': '7', 'r': '7',
-  's': '7', 't': '8', 'u': '8', 'v': '8', 'w': '9', 'x': '9', 'y': '9', 'z': '9',
+  'a': '2',
+  'b': '2',
+  'c': '2',
+  'd': '3',
+  'e': '3',
+  'f': '3',
+  'g': '4',
+  'h': '4',
+  'i': '4',
+  'j': '5',
+  'k': '5',
+  'l': '5',
+  'm': '6',
+  'n': '6',
+  'o': '6',
+  'p': '7',
+  'q': '7',
+  'r': '7',
+  's': '7',
+  't': '8',
+  'u': '8',
+  'v': '8',
+  'w': '9',
+  'x': '9',
+  'y': '9',
+  'z': '9',
 };
 
 String? _digitOf(String ch) {
@@ -51,8 +74,7 @@ List<T9Match> t9Search(String query, Iterable<T9Entry> entries, {int limit = 50}
     if (entry.numbers.isEmpty) continue;
     final nameMatch = digitsOnly ? _matchName(query, entry.name) : null;
     if (nameMatch != null) {
-      (nameMatch.$1 == 0 ? first : other)
-          .add(T9Match(entry: entry, number: entry.numbers.first, nameRange: nameMatch));
+      (nameMatch.$1 == 0 ? first : other).add(T9Match(entry: entry, number: entry.numbers.first, nameRange: nameMatch));
       continue;
     }
     for (final number in entry.numbers) {

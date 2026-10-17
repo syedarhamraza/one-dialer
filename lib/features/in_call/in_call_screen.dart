@@ -47,7 +47,9 @@ class _InCallScreenState extends State<InCallScreen> {
             if (call == null) {
               _keypadOpen = false;
               _dtmf = '';
-              return const Center(child: Text('Call ended', style: TextStyle(color: OneUITheme.textSecondary)));
+              return const Center(
+                child: Text('Call ended', style: TextStyle(color: OneUITheme.textSecondary)),
+              );
             }
             final held = snapshot.calls.where((c) => c.id != call.id && c.state == CallState.holding).firstOrNull;
             final ringing = call.state == CallState.ringing;
@@ -58,14 +60,14 @@ class _InCallScreenState extends State<InCallScreen> {
                   const SizedBox(height: 16),
                   _CallBadges(call: call, sims: _sims),
                   const SizedBox(height: 28),
-                  if (!_keypadOpen) ...[
-                    _CallerAvatar(call: call),
-                    const SizedBox(height: 20),
-                  ],
+                  if (!_keypadOpen) ...[_CallerAvatar(call: call), const SizedBox(height: 20)],
                   _CallerName(call: call),
                   const SizedBox(height: 6),
                   _keypadOpen && _dtmf.isNotEmpty
-                      ? Text(_dtmf, style: const TextStyle(fontSize: 22, letterSpacing: 2, color: OneUITheme.textSecondary))
+                      ? Text(
+                          _dtmf,
+                          style: const TextStyle(fontSize: 22, letterSpacing: 2, color: OneUITheme.textSecondary),
+                        )
                       : _CallStatus(call: call),
                   if (held != null && !ringing) ...[
                     const SizedBox(height: 16),
@@ -256,7 +258,10 @@ class _HeldCallChip extends StatelessWidget {
               const SizedBox(width: 8),
               Text('On hold: ${callerName(call)}', style: const TextStyle(fontSize: 14)),
               const SizedBox(width: 12),
-              const Text('Swap', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: OneUITheme.accentBlue)),
+              const Text(
+                'Swap',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: OneUITheme.accentBlue),
+              ),
             ],
           ),
         ),
@@ -266,12 +271,7 @@ class _HeldCallChip extends StatelessWidget {
 }
 
 class _OngoingControls extends StatelessWidget {
-  const _OngoingControls({
-    required this.call,
-    required this.audio,
-    required this.callCount,
-    required this.onKeypad,
-  });
+  const _OngoingControls({required this.call, required this.audio, required this.callCount, required this.onKeypad});
 
   final CallInfo call;
   final AudioInfo audio;
@@ -303,8 +303,8 @@ class _OngoingControls extends StatelessWidget {
                 onPressed: hasBluetooth
                     ? () => _chooseRoute(context, audio)
                     : () => telecom.setAudioRoute(
-                          audio.route == AudioRoute.speaker ? AudioRoute.earpiece : AudioRoute.speaker,
-                        ),
+                        audio.route == AudioRoute.speaker ? AudioRoute.earpiece : AudioRoute.speaker,
+                      ),
               ),
               _Toggle(
                 icon: audio.muted ? Icons.mic_off_rounded : Icons.mic_none_rounded,

@@ -22,9 +22,9 @@ class TelecomBridge {
   /// Fires on every change to the system call log.
   VoidCallback? onCallLogChanged;
 
-  late final Stream<CallSnapshot> callState = _events
-      .receiveBroadcastStream()
-      .map((e) => CallSnapshot.fromMap(e as Map<Object?, Object?>));
+  late final Stream<CallSnapshot> callState = _events.receiveBroadcastStream().map(
+    (e) => CallSnapshot.fromMap(e as Map<Object?, Object?>),
+  );
 
   Future<dynamic> _onNativeCall(MethodCall call) async {
     switch (call.method) {
@@ -38,19 +38,15 @@ class TelecomBridge {
   }
 
   // Setup
-  Future<bool> isDefaultDialer() async =>
-      await _methods.invokeMethod<bool>('isDefaultDialer') ?? false;
+  Future<bool> isDefaultDialer() async => await _methods.invokeMethod<bool>('isDefaultDialer') ?? false;
 
-  Future<bool> requestDefaultDialer() async =>
-      await _methods.invokeMethod<bool>('requestDefaultDialer') ?? false;
+  Future<bool> requestDefaultDialer() async => await _methods.invokeMethod<bool>('requestDefaultDialer') ?? false;
 
   /// The `tel:` number the app was launched with, if any (returned once).
-  Future<String?> consumeDialNumber() =>
-      _methods.invokeMethod<String>('consumeDialNumber');
+  Future<String?> consumeDialNumber() => _methods.invokeMethod<String>('consumeDialNumber');
 
   /// Whether the app was opened from the missed-call notification (returned once).
-  Future<bool> consumeOpenRecents() async =>
-      await _methods.invokeMethod<bool>('consumeOpenRecents') ?? false;
+  Future<bool> consumeOpenRecents() async => await _methods.invokeMethod<bool>('consumeOpenRecents') ?? false;
 
   // Settings
   Future<List<String>> getQuickReplies() async =>
@@ -70,8 +66,7 @@ class TelecomBridge {
   Future<bool> hasScreeningRole() async => await _methods.invokeMethod<bool>('hasScreeningRole') ?? false;
 
   /// Shows Android's prompt; true if the role is held afterwards.
-  Future<bool> requestScreeningRole() async =>
-      await _methods.invokeMethod<bool>('requestScreeningRole') ?? false;
+  Future<bool> requestScreeningRole() async => await _methods.invokeMethod<bool>('requestScreeningRole') ?? false;
 
   Future<Map<Object?, Object?>> getBlocking() async =>
       await _methods.invokeMapMethod<Object?, Object?>('getBlocking') ?? const {};
@@ -122,17 +117,13 @@ class TelecomBridge {
   Future<void> merge(String id) => _call('merge', id);
   Future<void> swap(String id) => _call('swap', id);
 
-  Future<void> playDtmf(String id, String digit) =>
-      _methods.invokeMethod('playDtmf', {'id': id, 'digit': digit});
+  Future<void> playDtmf(String id, String digit) => _methods.invokeMethod('playDtmf', {'id': id, 'digit': digit});
   Future<void> stopDtmf(String id) => _call('stopDtmf', id);
 
   // Audio
-  Future<void> setMuted(bool muted) =>
-      _methods.invokeMethod('setMuted', {'muted': muted});
+  Future<void> setMuted(bool muted) => _methods.invokeMethod('setMuted', {'muted': muted});
 
-  Future<void> setAudioRoute(AudioRoute route) =>
-      _methods.invokeMethod('setAudioRoute', {'route': route.name});
+  Future<void> setAudioRoute(AudioRoute route) => _methods.invokeMethod('setAudioRoute', {'route': route.name});
 
-  Future<void> _call(String method, String id) =>
-      _methods.invokeMethod(method, {'id': id});
+  Future<void> _call(String method, String id) => _methods.invokeMethod(method, {'id': id});
 }

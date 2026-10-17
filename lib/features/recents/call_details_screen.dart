@@ -31,8 +31,10 @@ class CallDetailsScreen extends StatelessWidget {
                 final blocked = BlockingRepository.instance.isBlocked(call.number);
                 return IconButton(
                   tooltip: blocked ? 'Unblock' : 'Block',
-                  icon: Icon(blocked ? Icons.block_rounded : Icons.block_outlined,
-                      color: blocked ? OneUITheme.accentRed : null),
+                  icon: Icon(
+                    blocked ? Icons.block_rounded : Icons.block_outlined,
+                    color: blocked ? OneUITheme.accentRed : null,
+                  ),
                   onPressed: () => BlockingRepository.instance.setBlocked(call.number, !blocked),
                 );
               },
@@ -42,7 +44,10 @@ class CallDetailsScreen extends StatelessWidget {
               tooltip: 'Delete call history',
               icon: const Icon(Icons.delete_outline_rounded),
               onPressed: () async {
-                final ids = [for (final c in repo.calls.value) if (numberKey(c.number) == key) c.id];
+                final ids = [
+                  for (final c in repo.calls.value)
+                    if (numberKey(c.number) == key) c.id,
+                ];
                 await repo.delete(ids);
                 if (context.mounted) Navigator.of(context).pop();
               },
@@ -55,7 +60,10 @@ class CallDetailsScreen extends StatelessWidget {
           // Private calls have no number to match on; show just this one.
           final history = call.isPrivate
               ? [call]
-              : [for (final c in repo.calls.value) if (numberKey(c.number) == key) c];
+              : [
+                  for (final c in repo.calls.value)
+                    if (numberKey(c.number) == key) c,
+                ];
           final name = callerName(call);
           final isContact = ContactsRepository.instance.nameFor(call.number) != null;
           return ListView(
@@ -72,9 +80,11 @@ class CallDetailsScreen extends StatelessWidget {
               ),
               if (name != call.number && !call.isPrivate) ...[
                 const SizedBox(height: 4),
-                Text(call.number,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 15, color: OneUITheme.textSecondary)),
+                Text(
+                  call.number,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 15, color: OneUITheme.textSecondary),
+                ),
               ],
               const SizedBox(height: 24),
               if (!call.isPrivate)
@@ -108,7 +118,8 @@ class CallDetailsScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     for (var i = 0; i < history.length; i++) ...[
-                      if (i > 0) Divider(height: 1, indent: 16, endIndent: 16, color: Colors.white.withValues(alpha: 0.08)),
+                      if (i > 0)
+                        Divider(height: 1, indent: 16, endIndent: 16, color: Colors.white.withValues(alpha: 0.08)),
                       _HistoryRow(call: history[i]),
                     ],
                   ],
@@ -162,8 +173,8 @@ class _HistoryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Missed and rejected calls log ring time as duration; only talk time is shown.
-    final answered = (call.type == CallType.incoming || call.type == CallType.outgoing) &&
-        call.duration > Duration.zero;
+    final answered =
+        (call.type == CallType.incoming || call.type == CallType.outgoing) && call.duration > Duration.zero;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(

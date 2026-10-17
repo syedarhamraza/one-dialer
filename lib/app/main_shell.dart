@@ -70,22 +70,27 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    // The nav bar floats over the tabs (OneSpend's bar fills its parent's height, so it
+    // can't be a Scaffold.bottomNavigationBar); tabs pad themselves with navBarClearance().
     return Scaffold(
-      extendBody: true,
-      body: IndexedStack(
-        index: _tab,
+      body: Stack(
         children: [
-          KeypadScreen(input: _input),
-          const RecentsScreen(),
-          const ContactsScreen(),
+          IndexedStack(
+            index: _tab,
+            children: [
+              KeypadScreen(input: _input),
+              const RecentsScreen(),
+              const ContactsScreen(),
+            ],
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: OneUIFloatingNavBar(currentIndex: _tab, items: _items, onTap: _select),
+          ),
         ],
-      ),
-      bottomNavigationBar: OneUIFloatingNavBar(
-        currentIndex: _tab,
-        items: _items,
-        onTap: _select,
       ),
     );
   }
 }
-
