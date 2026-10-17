@@ -235,10 +235,10 @@ void main() {
     final speaker = tester.getRect(find.byTooltip('Speaker'));
     await tester.tap(find.byTooltip('Keypad'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 140));
+    await tester.pump(const Duration(milliseconds: 210));
     expect(tester.widget<Transform>(actions).transform.storage[0], lessThan(1));
     final keySpring = find.byKey(const ValueKey('keypad-spring-8'));
-    expect(tester.widget<Transform>(keySpring).transform.storage[0], inExclusiveRange(1, 1.02));
+    expect(tester.widget<Transform>(keySpring).transform.storage[0], inExclusiveRange(1.025, 1.05));
     final keyFade = find.ancestor(of: keySpring, matching: find.byType(Opacity)).first;
     expect(tester.widget<Opacity>(keyFade).opacity, inExclusiveRange(0, 1));
     final middle = tester.getTopLeft(find.byKey(const ValueKey('morph-key-1')));
@@ -250,8 +250,9 @@ void main() {
     expect(nativeCalls.where((c) => c.method == 'playDtmf'), isEmpty);
     await tester.tap(find.byTooltip('End call'));
     expect(nativeCalls.last.method, 'hangUp');
-    await tester.pump(const Duration(milliseconds: 140));
-    expect(tester.getTopLeft(find.byKey(const ValueKey('morph-key-1'))).dy, lessThan(middle.dy));
+    await tester.pump(const Duration(milliseconds: 210));
+    final settled = tester.getTopLeft(find.byKey(const ValueKey('morph-key-1')));
+    expect(settled.dy - middle.dy, inExclusiveRange(0, 8));
     expect(actions, findsNothing);
     expect(tester.widget<Transform>(keySpring).transform.storage[0], 1);
     expect(tester.getRect(find.byTooltip('End call')), end);
@@ -406,7 +407,7 @@ void main() {
       }
       await tester.tap(find.byTooltip('Keypad'));
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 140));
+      await tester.pump(const Duration(milliseconds: 210));
       await capture('midpoint', settle: false);
       await capture('keypad');
       await open(tester, boundary: boundary, size: const Size(320, 568), textScale: 1.5);

@@ -99,6 +99,7 @@ class _CallControlPanelState extends State<CallControlPanel> {
   Widget build(BuildContext context) {
     final telecom = TelecomBridge.instance;
     final p = widget.progress;
+    final layoutProgress = const Interval(0, .65, curve: Curves.easeOutCubic).transform(p);
     final compact = widget.compact;
     final circle = widget.landscape
         ? 48.0
@@ -124,7 +125,7 @@ class _CallControlPanelState extends State<CallControlPanel> {
           ? 112
           : 128,
       32 + stride * 4 - (widget.landscape ? 4 : 0),
-      p,
+      layoutProgress,
     )!;
     final holding = widget.call.state == CallState.holding;
     final actions = <({IconData icon, String label, bool active, VoidCallback? tap})>[
@@ -205,7 +206,7 @@ class _CallControlPanelState extends State<CallControlPanel> {
                         opacity: 1 - const Interval(0, .7, curve: Curves.easeOut).transform(p),
                         child: Transform.scale(
                           key: const ValueKey('receding-call-actions'),
-                          scale: 1 - .12 * Curves.easeOutBack.transform(p),
+                          scale: 1 - .20 * Curves.easeOutBack.transform(p),
                           alignment: Alignment.topCenter,
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -312,7 +313,7 @@ class _CallControlPanelState extends State<CallControlPanel> {
     // Overshoot only the painted key, keeping layout and the bottom row stable.
     final spring = Curves.easeOutBack.transform(p);
     final fullHeight = 32 + stride * 4 - (widget.landscape ? 4 : 0);
-    final top = upperHeight - fullHeight + 32 + index ~/ 3 * stride + (1 - p) * 24;
+    final top = upperHeight - fullHeight + 32 + index ~/ 3 * stride + (1 - spring) * 48;
     // Reveal whole circles as space opens, avoiding a sliced circle at either edge.
     final edgeReveal = (top / 16).clamp(0.0, 1.0) * ((upperHeight - top - size) / 4).clamp(0.0, 1.0);
     return Positioned(
@@ -322,10 +323,10 @@ class _CallControlPanelState extends State<CallControlPanel> {
       width: size,
       height: size,
       child: Opacity(
-        opacity: Curves.easeInOut.transform(p) * edgeReveal,
+        opacity: const Interval(0, .75, curve: Curves.easeOut).transform(p) * edgeReveal,
         child: Transform.scale(
           key: ValueKey('keypad-spring-$digit'),
-          scale: .92 + .08 * spring,
+          scale: .60 + .40 * spring,
           child: ExcludeSemantics(
             excluding: p < 1,
             child: Semantics(

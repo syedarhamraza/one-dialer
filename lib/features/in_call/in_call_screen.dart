@@ -89,7 +89,7 @@ class _CallSession extends StatefulWidget {
 class _CallSessionState extends State<_CallSession> with SingleTickerProviderStateMixin {
   bool _keypadOpen = false;
   String _digits = '';
-  late final AnimationController _morph = AnimationController(vsync: this, duration: const Duration(milliseconds: 280));
+  late final AnimationController _morph = AnimationController(vsync: this, duration: const Duration(milliseconds: 420));
 
   Widget _scrollArea(Widget child) => CustomScrollView(
     physics: const OneUIScrollPhysics(),
@@ -147,7 +147,7 @@ class _CallSessionState extends State<_CallSession> with SingleTickerProviderSta
                     width: landscape ? (constraints.maxWidth - 56) / 2 : constraints.maxWidth - 32,
                     compact: compact,
                     landscape: landscape,
-                    progress: progress,
+                    progress: _morph.value,
                     animating: _morph.isAnimating,
                     keypadOpen: _keypadOpen,
                     digits: _digits,
