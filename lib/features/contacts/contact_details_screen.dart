@@ -195,7 +195,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _Hero(contact: contact, onCall: _call, simLabel: _simLabel),
+                  _Hero(contact: contact, photo: _full?.photo?.fullSize, onCall: _call, simLabel: _simLabel),
                   if (contact.numbers.length > 1 || contact.primaryIndex > 0) _numbersCard(contact),
                   if (_full case final full?) ..._detailCards(full),
                   if (_apps.isNotEmpty) _appsCard(),
@@ -358,9 +358,12 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
 /// Name, default number, photo and the Call / Message buttons.
 class _Hero extends StatelessWidget {
-  const _Hero({required this.contact, required this.onCall, required this.simLabel});
+  const _Hero({required this.contact, required this.onCall, required this.simLabel, this.photo});
 
   final DialerContact contact;
+
+  /// Full-resolution photo once loaded; the thumbnail is soft at this size.
+  final Uint8List? photo;
   final Future<void> Function(String) onCall;
   final String? simLabel;
 
@@ -399,7 +402,7 @@ class _Hero extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            LetterAvatar(name: contact.name, photo: contact.thumbnail, size: 52),
+            LetterAvatar(name: contact.name, photo: photo ?? contact.thumbnail, size: 52),
           ],
         ),
         const SizedBox(height: 28),
