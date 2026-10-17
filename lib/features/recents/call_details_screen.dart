@@ -7,6 +7,7 @@ import '../../theme/one_ui_theme.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/place_call.dart';
 import '../blocking/blocking_repository.dart';
+import '../contacts/editor/add_to_contacts.dart';
 import 'call_log.dart';
 import 'call_log_repository.dart';
 import 'recents_screen.dart';
@@ -108,7 +109,7 @@ class CallDetailsScreen extends StatelessWidget {
                         icon: Icons.person_add_alt_1_rounded,
                         label: 'Add',
                         color: OneUITheme.textPrimary,
-                        onTap: () => ContactsRepository.instance.addNumber(call.number),
+                        onTap: () => showAddToContacts(context, call.number),
                       ),
                   ],
                 ),

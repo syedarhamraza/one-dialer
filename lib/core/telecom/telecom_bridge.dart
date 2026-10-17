@@ -48,6 +48,9 @@ class TelecomBridge {
   /// Whether the app was opened from the missed-call notification (returned once).
   Future<bool> consumeOpenRecents() async => await _methods.invokeMethod<bool>('consumeOpenRecents') ?? false;
 
+  /// Android's photo picker; returns the picked photo as JPEG bytes (max 720px), or null.
+  Future<Uint8List?> pickPhoto() => _methods.invokeMethod<Uint8List>('pickPhoto');
+
   // Settings
   Future<List<String>> getQuickReplies() async =>
       await _methods.invokeListMethod<String>('getQuickReplies') ?? const [];

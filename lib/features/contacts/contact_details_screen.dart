@@ -5,6 +5,7 @@ import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../blocking/blocking_repository.dart';
+import 'editor/contact_editor_screen.dart';
 import '../../theme/one_ui_scroll.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/letter_avatar.dart';
@@ -124,7 +125,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               IconButton(
                 tooltip: 'Edit',
                 icon: const Icon(Icons.edit_outlined),
-                onPressed: () => repo.edit(contact.id),
+                onPressed: () => openContactEditor(context, contactId: contact.id),
               ),
             ],
           ),

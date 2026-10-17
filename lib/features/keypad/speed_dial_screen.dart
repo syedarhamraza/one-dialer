@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../core/contacts/contacts_repository.dart';
 import '../../core/prefs/dialer_prefs.dart';
+import '../contacts/contact_picker_screen.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/one_ui_subpage.dart';
 import '../../widgets/one_ui_group_card.dart';
@@ -11,22 +11,9 @@ class SpeedDialScreen extends StatelessWidget {
   const SpeedDialScreen({super.key});
 
   Future<void> _assign(BuildContext context, String digit) async {
-    final picked = await ContactsRepository.instance.pickNumber();
-    if (picked == null || !context.mounted) return;
-    final (name, numbers) = picked;
-    final number = numbers.length == 1
-        ? numbers.single
-        : await showDialog<String>(
-            context: context,
-            builder: (context) => SimpleDialog(
-              title: Text(name),
-              children: [
-                for (final n in numbers)
-                  SimpleDialogOption(onPressed: () => Navigator.of(context).pop(n), child: Text(n)),
-              ],
-            ),
-          );
-    if (number != null) await DialerPrefs.instance.setSpeedDial(digit, (name, number));
+    final picked = await pickContactNumber(context, title: 'Speed dial $digit');
+    if (picked == null) return;
+    await DialerPrefs.instance.setSpeedDial(digit, (picked.$1.name, picked.$2));
   }
 
   @override

@@ -11,11 +11,13 @@ class MainActivity : FlutterActivity() {
 
     private var bridge: CallBridge? = null
     private var pendingRoleResult: MethodChannel.Result? = null
+    private var pendingPhotoResult: MethodChannel.Result? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         bridge = CallBridge(applicationContext, flutterEngine.dartExecutor.binaryMessenger).also {
             it.roleRequester = ::requestRole
+            it.photoPicker = ::pickPhoto
             it.pendingDialNumber = dialNumberFrom(intent)
             it.pendingOpenRecents = intent.getBooleanExtra(EXTRA_OPEN_RECENTS, false)
         }
@@ -44,13 +46,53 @@ class MainActivity : FlutterActivity() {
         startActivityForResult(roles.createRequestRoleIntent(role), REQUEST_ROLE)
     }
 
+    /** Android's photo picker (no storage permission needed); falls back to "get content". */
+    private fun pickPhoto(result: MethodChannel.Result) {
+        pendingPhotoResult?.success(null)
+        pendingPhotoResult = result
+        val intent = if (android.os.Build.VERSION.SDK_INT >= 33) {
+            Intent(android.provider.MediaStore.ACTION_PICK_IMAGES)
+        } else {
+            Intent(Intent.ACTION_GET_CONTENT).setType("image/*")
+        }
+        @Suppress("DEPRECATION")
+        startActivityForResult(intent, REQUEST_PHOTO)
+    }
+
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         @Suppress("DEPRECATION")
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_PHOTO) {
+            val result = pendingPhotoResult ?: return
+            pendingPhotoResult = null
+            val uri = data?.data.takeIf { resultCode == RESULT_OK } ?: return result.success(null)
+            Thread {
+                val bytes = runCatching { scaledJpeg(uri) }.getOrNull()
+                runOnUiThread { result.success(bytes) }
+            }.start()
+            return
+        }
         if (requestCode == REQUEST_ROLE) {
             pendingRoleResult?.success(resultCode == RESULT_OK)
             pendingRoleResult = null
+        }
+    }
+
+    /** Decodes [uri] at most [PHOTO_MAX] px on its long side (contacts store small photos anyway). */
+    private fun scaledJpeg(uri: android.net.Uri): ByteArray {
+        val source = android.graphics.ImageDecoder.createSource(contentResolver, uri)
+        val bitmap = android.graphics.ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
+            val longSide = maxOf(info.size.width, info.size.height)
+            if (longSide > PHOTO_MAX) {
+                val scale = PHOTO_MAX.toFloat() / longSide
+                decoder.setTargetSize((info.size.width * scale).toInt(), (info.size.height * scale).toInt())
+            }
+            decoder.allocator = android.graphics.ImageDecoder.ALLOCATOR_SOFTWARE
+        }
+        return java.io.ByteArrayOutputStream().use {
+            bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, it)
+            it.toByteArray()
         }
     }
 
@@ -59,6 +101,8 @@ class MainActivity : FlutterActivity() {
 
     companion object {
         private const val REQUEST_ROLE = 1001
+        private const val REQUEST_PHOTO = 1002
+        private const val PHOTO_MAX = 720
         private const val EXTRA_OPEN_RECENTS = "open_recents"
 
         fun openRecentsIntent(context: Context): Intent =

@@ -8,6 +8,7 @@ import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../core/prefs/dialer_prefs.dart';
 import '../recents/call_log_repository.dart';
+import '../contacts/editor/add_to_contacts.dart';
 import '../settings/settings_screen.dart';
 import 'speed_dial_screen.dart';
 import '../../widgets/letter_avatar.dart';
@@ -185,7 +186,7 @@ class _Results extends StatelessWidget {
       return Align(
         alignment: Alignment.bottomCenter,
         child: TextButton.icon(
-          onPressed: () => ContactsRepository.instance.addNumber(query),
+          onPressed: () => showAddToContacts(context, query),
           icon: const Icon(Icons.person_add_alt_1_rounded, size: 20),
           label: const Text('Add to Contacts'),
           style: TextButton.styleFrom(foregroundColor: OneUITheme.accentBlue),
