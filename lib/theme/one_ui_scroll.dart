@@ -33,7 +33,8 @@ class OneUIScrollPhysics extends ClampingScrollPhysics {
   /// The scroll range at the top of the page that a header snaps across, if any.
   final double? headerSnap;
 
-  const OneUIScrollPhysics({super.parent = const AlwaysScrollableScrollPhysics(), this.headerSnap});
+  // Short pages should stay still: a drag is accepted only when content can scroll.
+  const OneUIScrollPhysics({super.parent, this.headerSnap});
 
   @override
   OneUIScrollPhysics applyTo(ScrollPhysics? ancestor) =>
