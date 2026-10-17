@@ -67,7 +67,8 @@ class TelecomBridge {
       _methods.invokeMethod('unlinkRawContacts', {'contactId': contactId, 'rawIds': rawIds});
 
   /// The contact's custom ringtone URI, or null for the default.
-  Future<String?> getRingtone(String contactId) => _methods.invokeMethod<String>('getRingtone', {'contactId': contactId});
+  Future<String?> getRingtone(String contactId) =>
+      _methods.invokeMethod<String>('getRingtone', {'contactId': contactId});
 
   Future<void> setRingtone(String contactId, String? uri) =>
       _methods.invokeMethod('setRingtone', {'contactId': contactId, 'uri': uri});
@@ -112,6 +113,15 @@ class TelecomBridge {
   Future<void> markMissedRead() => _methods.invokeMethod('markMissedRead');
 
   // Calls
+  Future<Map<Object?, Object?>> getWhatsAppCalls(String number) async =>
+      await _methods.invokeMapMethod<Object?, Object?>('getWhatsAppCalls', {'number': number}) ?? const {};
+
+  Future<void> startWhatsAppCall(String number, String package) =>
+      _methods.invokeMethod('startWhatsAppCall', {'number': number, 'package': package});
+
+  Future<void> openWhatsAppChat(String number, String package) =>
+      _methods.invokeMethod('openWhatsAppChat', {'number': number, 'package': package});
+
   /// Calls [number], on the SIM with [simId] if given (otherwise Android's default or its own picker).
   Future<void> placeCall(String number, {String? simId}) =>
       _methods.invokeMethod('placeCall', {'number': number, 'simId': simId});

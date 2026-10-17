@@ -86,7 +86,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
           IndexedStack(
             index: _tab,
             children: [
-              KeypadScreen(input: _input),
+              KeypadScreen(input: _input, isActive: _tab == 0),
               const RecentsScreen(),
               const ContactsScreen(),
             ],
