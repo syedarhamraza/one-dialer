@@ -1,8 +1,5 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
-import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/telecom/call_info.dart';
@@ -10,8 +7,8 @@ import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/one_ui_floating_modal.dart';
 
-/// Incoming call, ColorOS style: slide the handle up to answer or down to decline, with
-/// Message and Decline buttons beside it.
+/// Incoming call, ColorOS style: Decline and Answer side by side, each swiped up to act,
+/// with a "Decline with message" pill underneath.
 class IncomingControls extends StatelessWidget {
   const IncomingControls({super.key, required this.call, this.isCurrent, this.compact = false});
 
@@ -62,107 +59,86 @@ class IncomingControls extends StatelessWidget {
     final telecom = TelecomBridge.instance;
     final canText = !call.isPrivate && (call.number?.isNotEmpty ?? false);
     return Padding(
-      padding: EdgeInsets.only(bottom: compact ? 8 : 28),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+      padding: EdgeInsets.only(bottom: compact ? 8 : 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: canText
-                ? _SideButton(
-                    icon: Icons.chat_bubble_rounded,
-                    label: 'Message',
-                    tooltip: 'Decline with message',
-                    color: Colors.white.withValues(alpha: .16),
-                    onPressed: () => _declineWithMessage(context),
-                  )
-                : const SizedBox.shrink(),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              SwipeUpButton(
+                color: OneUITheme.accentRed,
+                icon: Icons.call_end_rounded,
+                label: 'Decline',
+                compact: compact,
+                onTriggered: () => telecom.reject(call.id),
+              ),
+              SwipeUpButton(
+                color: OneUITheme.accentGreen,
+                icon: Icons.call_rounded,
+                label: 'Answer',
+                compact: compact,
+                // Offset so the two hints don't pulse in lockstep.
+                hintPhase: .5,
+                onTriggered: () => telecom.answer(call.id),
+              ),
+            ],
           ),
-          SlideToAnswer(
-            compact: compact,
-            onAnswer: () => telecom.answer(call.id),
-            onDecline: () => telecom.reject(call.id),
-          ),
-          Expanded(
-            child: _SideButton(
-              icon: Icons.call_end_rounded,
-              label: 'Decline',
-              color: OneUITheme.accentRed,
-              onPressed: () {
-                HapticFeedback.mediumImpact();
-                telecom.reject(call.id);
-              },
+          SizedBox(height: compact ? 12 : 28),
+          if (canText)
+            TextButton.icon(
+              onPressed: () => _declineWithMessage(context),
+              icon: const Icon(Icons.chat_bubble_rounded, size: 18),
+              label: const Text('Decline with message', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.white.withValues(alpha: .16),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                shape: const StadiumBorder(),
+              ),
             ),
-          ),
         ],
       ),
     );
   }
 }
 
-class _SideButton extends StatelessWidget {
-  const _SideButton({
+/// A call button that acts when released after sliding up past [threshold]; shorter slides
+/// spring back and taps do nothing, so pocket touches can't answer or decline. A dash above
+/// it rises and fades to show the gesture. Screen readers can activate it directly.
+class SwipeUpButton extends StatefulWidget {
+  const SwipeUpButton({
+    super.key,
+    required this.color,
     required this.icon,
     required this.label,
-    required this.color,
-    required this.onPressed,
-    this.tooltip,
+    required this.onTriggered,
+    this.compact = false,
+    this.hintPhase = 0,
   });
+
+  final Color color;
   final IconData icon;
   final String label;
-  final String? tooltip;
-  final Color color;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) => Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      SizedBox.square(
-        dimension: 56,
-        child: IconButton(
-          tooltip: tooltip ?? label,
-          iconSize: 26,
-          style: IconButton.styleFrom(backgroundColor: color, foregroundColor: Colors.white, shape: const CircleBorder()),
-          onPressed: onPressed,
-          icon: Icon(icon),
-        ),
-      ),
-      const SizedBox(height: 8),
-      ExcludeSemantics(
-        child: Text(label, style: const TextStyle(fontSize: 13, color: Colors.white)),
-      ),
-    ],
-  );
-}
-
-/// A handle that answers when released after sliding up past [upThreshold] and declines when
-/// released after sliding down past [downThreshold]; anything shorter springs back. Taps do
-/// nothing, so pocket touches can't answer; screen readers get Answer and Decline actions.
-class SlideToAnswer extends StatefulWidget {
-  const SlideToAnswer({super.key, required this.onAnswer, required this.onDecline, this.compact = false});
-
-  final VoidCallback onAnswer;
-  final VoidCallback onDecline;
+  final VoidCallback onTriggered;
   final bool compact;
+  final double hintPhase;
 
-  static const double handle = 76;
-  static const double upThreshold = 110;
-  static const double downThreshold = 64;
+  static const double size = 72;
+  static const double threshold = 96;
 
   @override
-  State<SlideToAnswer> createState() => _SlideToAnswerState();
+  State<SwipeUpButton> createState() => _SwipeUpButtonState();
 }
 
-class _SlideToAnswerState extends State<SlideToAnswer> with TickerProviderStateMixin {
-  /// Handle offset in px: negative is up (answer), positive is down (decline).
-  late final AnimationController _offset = AnimationController.unbounded(vsync: this);
-  late final AnimationController _hint = AnimationController(vsync: this, duration: const Duration(milliseconds: 1600));
+class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateMixin {
+  /// Upward travel in px: 0 at rest, positive while dragged up.
+  late final AnimationController _lift = AnimationController.unbounded(vsync: this);
+  late final AnimationController _hint = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800));
   bool _dragging = false;
   bool _fired = false;
 
-  double get _scale => widget.compact ? .7 : 1;
-  double get _up => SlideToAnswer.upThreshold * _scale;
-  double get _down => SlideToAnswer.downThreshold * _scale;
+  double get _threshold => SwipeUpButton.threshold * (widget.compact ? .75 : 1);
 
   @override
   void didChangeDependencies() {
@@ -175,53 +151,49 @@ class _SlideToAnswerState extends State<SlideToAnswer> with TickerProviderStateM
     if (run && !_hint.isAnimating) {
       _hint.repeat();
     } else if (!run && _hint.isAnimating) {
-      _hint
-        ..stop()
-        ..value = 0;
+      _hint.stop();
     }
   }
 
-  void _fire(VoidCallback action) {
+  void _fire() {
     if (_fired) return;
     _fired = true;
     _syncHint();
     HapticFeedback.heavyImpact();
-    action();
+    widget.onTriggered();
   }
 
   void _onStart(DragStartDetails _) {
     if (_fired) return;
-    _offset.stop();
+    _lift.stop();
     setState(() => _dragging = true);
     _syncHint();
   }
 
   void _onUpdate(DragUpdateDetails d) {
     if (_fired) return;
-    final before = _offset.value;
-    final next = (before + d.delta.dy).clamp(-_up * 1.25, _down * 1.25);
-    if ((before > -_up) != (next > -_up) || (before < _down) != (next < _down)) HapticFeedback.selectionClick();
-    _offset.value = next;
+    final before = _lift.value;
+    final next = (before - d.delta.dy).clamp(0.0, _threshold * 1.3);
+    if ((before >= _threshold) != (next >= _threshold)) HapticFeedback.selectionClick();
+    _lift.value = next;
   }
 
   void _onEnd(DragEndDetails d) {
     if (_fired) return;
-    final y = _offset.value;
-    if (y <= -_up) return _fire(widget.onAnswer);
-    if (y >= _down) return _fire(widget.onDecline);
-    _springBack(d.velocity.pixelsPerSecond.dy);
+    if (_lift.value >= _threshold) return _fire();
+    _springBack(-d.velocity.pixelsPerSecond.dy);
   }
 
   void _springBack([double velocity = 0]) {
     setState(() => _dragging = false);
     _syncHint();
     if (MediaQuery.disableAnimationsOf(context)) {
-      _offset.value = 0;
+      _lift.value = 0;
     } else {
-      _offset.animateWith(
+      _lift.animateWith(
         SpringSimulation(
           SpringDescription.withDampingRatio(mass: 1, stiffness: 520, ratio: .62),
-          _offset.value,
+          _lift.value,
           0,
           velocity,
           snapToEnd: true,
@@ -232,22 +204,21 @@ class _SlideToAnswerState extends State<SlideToAnswer> with TickerProviderStateM
 
   @override
   void dispose() {
-    _offset.dispose();
+    _lift.dispose();
     _hint.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final size = SlideToAnswer.handle * (widget.compact ? .85 : 1);
-    final above = _up + 44 * _scale;
-    final below = _down + 8;
+    final size = SwipeUpButton.size * (widget.compact ? .85 : 1);
+    final travel = _threshold + 28;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
     return Semantics(
       button: true,
-      label: 'Answer',
-      hint: 'Swipe up to answer, down to decline',
-      onTap: () => _fire(widget.onAnswer),
-      customSemanticsActions: {const CustomSemanticsAction(label: 'Decline'): () => _fire(widget.onDecline)},
+      label: widget.label,
+      hint: 'Swipe up to ${widget.label.toLowerCase()}',
+      onTap: _fire,
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -259,71 +230,51 @@ class _SlideToAnswerState extends State<SlideToAnswer> with TickerProviderStateM
         },
         child: Listener(
           // A cancelled accepted drag can be reported as a drag end by the recognizer.
-          // Reset the offset at the pointer layer so that end can't trigger anything.
+          // Reset the lift at the pointer layer so that end can't trigger anything.
           onPointerCancel: (_) {
-            if (!_fired) _offset.value = 0;
+            if (!_fired) _lift.value = 0;
           },
           child: SizedBox(
-            width: size + 48,
-            height: above + size + below,
+            width: size + 40,
+            height: travel + size,
             child: AnimatedBuilder(
-              animation: Listenable.merge([_offset, _hint]),
+              animation: Listenable.merge([_lift, _hint]),
               builder: (context, _) {
-                final y = _offset.value;
-                final answer = (-y / _up).clamp(0.0, 1.0);
-                final decline = (y / _down).clamp(0.0, 1.0);
-                final h = _hint.value;
-                final bob = _dragging || _fired ? 0.0 : -7 * math.pow(math.sin(math.pi * h), 2).toDouble();
-                final color = Color.lerp(
-                  Color.lerp(Colors.white, OneUITheme.accentGreen, answer),
-                  OneUITheme.accentRed,
-                  decline,
-                )!;
-                final iconColor = answer > .5 || decline > .5 ? Colors.white : OneUITheme.accentGreen;
+                final lift = _lift.value;
+                final armed = (lift / _threshold).clamp(0.0, 1.0);
+                // The dash drifts up 10 px and fades out, once per cycle.
+                final phase = (_hint.value + widget.hintPhase) % 1;
+                final rise = Curves.easeOut.transform((phase / .7).clamp(0.0, 1.0));
+                final dash = reduceMotion ? .6 : (_dragging || _fired || phase >= .7 ? 0.0 : .9 * (1 - rise));
                 return Stack(
                   clipBehavior: Clip.none,
                   alignment: Alignment.topCenter,
                   children: [
-                    // Chevrons climb toward the answer point.
-                    for (var i = 0; i < 3; i++)
-                      Positioned(
-                        top: above - 30 * _scale - i * 18 * _scale,
-                        child: Opacity(
-                          opacity: (1 - answer - decline).clamp(0.0, 1.0) * _chevron(h, i),
-                          child: Icon(Icons.keyboard_arrow_up_rounded, size: 30 * _scale, color: Colors.white),
-                        ),
-                      ),
                     Positioned(
-                      top: above - 30 * _scale - 3 * 18 * _scale - 18,
+                      top: travel - 22 - (reduceMotion ? 0 : 10 * rise),
                       child: Opacity(
-                        opacity: (1 - 2 * (answer + decline)).clamp(0.0, 1.0),
-                        child: const ExcludeSemantics(
-                          child: Text('Swipe up to answer', style: TextStyle(fontSize: 13, color: Colors.white70)),
+                        opacity: dash,
+                        child: Container(
+                          width: 18,
+                          height: 4,
+                          decoration: BoxDecoration(color: widget.color, borderRadius: BorderRadius.circular(2)),
                         ),
                       ),
                     ),
                     Positioned(
-                      top: above + y + bob,
+                      top: travel - lift,
                       child: Transform.scale(
-                        scale: 1 + .08 * math.max(answer, decline),
+                        scale: 1 + .1 * armed,
                         child: Container(
-                          key: const ValueKey('answer-handle'),
+                          key: ValueKey('swipe-${widget.label}'),
                           width: size,
                           height: size,
                           decoration: BoxDecoration(
-                            color: color,
+                            color: widget.color,
                             shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Color.lerp(Colors.black26, color.withValues(alpha: .5), math.max(answer, decline))!,
-                                blurRadius: 24,
-                              ),
-                            ],
+                            boxShadow: [BoxShadow(color: widget.color.withValues(alpha: .45 * armed), blurRadius: 28)],
                           ),
-                          child: Transform.rotate(
-                            angle: decline * 3 * math.pi / 4,
-                            child: Icon(Icons.call_rounded, color: iconColor, size: size * .42),
-                          ),
+                          child: Icon(widget.icon, color: Colors.white, size: size * .42),
                         ),
                       ),
                     ),
@@ -335,11 +286,5 @@ class _SlideToAnswerState extends State<SlideToAnswer> with TickerProviderStateM
         ),
       ),
     );
-  }
-
-  /// A wave of light travelling up the three chevrons.
-  static double _chevron(double phase, int index) {
-    final wave = math.sin(2 * math.pi * (phase - index * .18));
-    return .25 + .75 * ((wave + 1) / 2);
   }
 }

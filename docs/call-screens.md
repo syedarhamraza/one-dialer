@@ -35,22 +35,20 @@ number geocoder isn't public API.
 
 ## Incoming
 
-The ColorOS-style slide-up handle follows the finger on the vertical axis.
+ColorOS-style: Decline (left) and Answer (right) are each swiped up to act, with a
+"Decline with message" pill underneath. Each button follows the finger upward.
 
-- Release above `upThreshold` to answer. Release below `downThreshold` to
-  decline.
+- Release past `threshold` (96 px) to act.
 - Anything shorter springs back (`SpringSimulation`).
-- Taps never answer.
-- The handle tints green or red as it moves, and the phone icon turns toward
-  hang-up.
+- Taps never answer or decline.
+- The button grows and glows as it arms.
 - A haptic fires when you cross a threshold.
 - A cancelled pointer resets the offset before release handling runs.
-- While idle, chevrons pulse upward, the handle bobs, and rings breathe around
+- While idle, a dash above each button drifts up and fades (staggered), and rings breathe around
   the avatar. These loops stop while dragging and under reduced motion. Because
   they loop, widget tests pump fixed durations instead of `pumpAndSettle` while
   ringing (or use reduced motion).
-- Message (quick replies) and a tappable Decline sit beside the handle.
-- Screen readers get Answer and a custom Decline action.
+- Screen readers activate Answer and Decline directly.
 
 ## Connected and keypad
 

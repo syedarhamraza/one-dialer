@@ -100,9 +100,9 @@ void main() {
     await open(tester, size: const Size(320, 568));
     await emit(tester, [call('ringing')]);
     expect(tester.takeException(), isNull);
-    expect(find.text('Swipe up to answer'), findsOneWidget);
-    expect(find.text('Decline'), findsOneWidget);
-    expect(find.text('Message'), findsOneWidget);
+    expect(find.byKey(const ValueKey('swipe-Answer')), findsOneWidget);
+    expect(find.byKey(const ValueKey('swipe-Decline')), findsOneWidget);
+    expect(find.text('Decline with message'), findsOneWidget);
     expect(find.text('Alex Morgan'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
@@ -211,7 +211,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(nativeCalls.any((c) => c.method == 'setAudioRoute' && c.arguments['route'] == 'bluetooth'), isTrue);
     await emit(tester, [call('ringing', id: 'call-2')]);
-    await tester.tap(find.byTooltip('Decline with message'));
+    await tester.tap(find.text('Decline with message'));
     await tester.pumpAndSettle();
     expect(find.byType(OneUIFloatingModal), findsOneWidget);
     await tester.tap(find.text("I'll call you back"));
@@ -225,7 +225,7 @@ void main() {
     await emit(tester, [call('ringing', private: true)]);
     expect(find.text('Private number'), findsOneWidget);
     expect(find.text('5550100'), findsNothing);
-    expect(find.byTooltip('Decline with message'), findsNothing);
+    expect(find.text('Decline with message'), findsNothing);
     await emit(tester, [call('active', conference: true)]);
     expect(find.text('Conference call'), findsOneWidget);
     await emit(tester, []);
@@ -397,7 +397,7 @@ void main() {
   testWidgets('a reply selected after the ringing call changes cannot reject it', (tester) async {
     await open(tester, reduceMotion: true);
     await emit(tester, [call('ringing')]);
-    await tester.tap(find.byTooltip('Decline with message'));
+    await tester.tap(find.text('Decline with message'));
     await tester.pumpAndSettle();
     await emit(tester, [call('active')]);
     await tester.tap(find.text("I'll call you back"));
@@ -411,7 +411,7 @@ void main() {
       await open(tester, size: size, textScale: 1.5);
       await emit(tester, [call('ringing')]);
       expect(tester.takeException(), isNull);
-      expect(tester.getBottomLeft(find.text('Decline')).dy, lessThan(size.height));
+      expect(tester.getBottomLeft(find.byKey(const ValueKey('swipe-Decline'))).dy, lessThan(size.height));
       await emit(tester, [call('active')]);
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
