@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:dialer/features/in_call/in_call_screen.dart';
-import 'package:dialer/features/in_call/call_controls.dart';
 import 'package:dialer/features/in_call/call_screen_widgets.dart';
 import 'package:dialer/widgets/one_ui_floating_modal.dart';
 import 'package:dialer/theme/one_ui_theme.dart';
@@ -10,6 +9,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dialer/core/prefs/dialer_prefs.dart';
+import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -18,6 +20,7 @@ void main() {
   const codec = StandardMethodCodec();
   setUp(() {
     nativeCalls.clear();
+    SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.empty();
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     messenger.setMockMethodCallHandler(const MethodChannel(events), (_) async => null);
     messenger.setMockMethodCallHandler(const MethodChannel('flutter_contacts'), (call) async {
@@ -64,6 +67,9 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 250));
+    // The controls' entrance clock starts on the frame after they appear.
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
   }
 
   Future<void> open(
@@ -122,6 +128,68 @@ void main() {
       {...call('disconnected', id: 'other'), 'disconnectCode': 'error', 'disconnectLabel': 'No service', 'connectTimeMillis': 0},
     ]);
     expect(find.text('No service'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('the fourth action takes a note on one call and merges with two', (tester) async {
+    await open(tester);
+    await emit(tester, [call('active')]);
+    await tester.tap(find.byTooltip('Note'));
+    await tester.pumpAndSettle();
+    expect(find.text('Call note'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'Send the invoice');
+    await tester.pump(const Duration(milliseconds: 500)); // Saved while typing.
+    final notes = await DialerPrefs.instance.callNotes('5550100');
+    expect(notes.single.$2, 'Send the invoice');
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TextField), findsNothing); // Still on the call screen.
+    expect(
+      tester.widget<IconButton>(find.byWidgetPredicate((w) => w is IconButton && w.tooltip == 'Note')).isSelected,
+      isTrue,
+    );
+    await emit(tester, [
+      {...call('active'), 'canMerge': true},
+      call('holding', id: 'held'),
+    ]);
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Note'), findsNothing);
+    expect(find.byTooltip('Merge'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  for (final size in [const Size(412, 915), const Size(320, 568), const Size(700, 360)]) {
+    testWidgets('with the keypad open, the last row sits one row-gap above the bottom row at $size', (tester) async {
+      await open(tester, size: size);
+      await emit(tester, [call('active')]);
+      await tester.tap(find.byTooltip('Keypad'));
+      await tester.pumpAndSettle();
+      Rect key(String digit) => tester.getRect(find.byKey(ValueKey('morph-key-$digit')));
+      final rowGap = key('4').top - key('1').bottom;
+      final footerGap = tester.getRect(find.byTooltip('End call')).top - key('0').bottom;
+      expect(footerGap, moreOrLessEquals(rowGap, epsilon: 1));
+      await tester.pumpWidget(const SizedBox());
+    });
+  }
+
+  testWidgets('controls rise in when the call screen opens', (tester) async {
+    await open(tester);
+    tester.binding.defaultBinaryMessenger.handlePlatformMessage(
+      'com.syedarhamraza.dialer/call_state',
+      const StandardMethodCodec().encodeSuccessEnvelope({
+        'calls': [call('dialing')],
+        'audio': {'muted': false, 'route': 'earpiece', 'supportedRoutes': ['earpiece']},
+      }),
+      (_) {},
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    double fade() => tester
+        .widget<Opacity>(find.ancestor(of: find.byTooltip('End call'), matching: find.byType(Opacity)).last)
+        .opacity;
+    expect(fade(), lessThan(1));
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(fade(), 1);
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -193,7 +261,7 @@ void main() {
     await open(tester);
     await emit(tester, [call('active')]);
     final mute = tester.widget<IconButton>(find.byWidgetPredicate((w) => w is IconButton && w.tooltip == 'Mute'));
-    expect(mute.style!.backgroundColor!.resolve({}), callControlFill);
+    expect(mute.style!.backgroundColor!.resolve({}), Colors.transparent); // The body is painted behind.
     expect(mute.style!.side?.resolve({}), anyOf(isNull, BorderSide.none));
     expect(tester.getSize(find.byTooltip('Mute')), const Size(76, 76));
     expect(tester.getSize(find.byTooltip('Speaker')), const Size(76, 76));
@@ -237,15 +305,13 @@ void main() {
   testWidgets('dialing, held calls, capabilities and selected controls reflect Telecom state', (tester) async {
     await open(tester);
     await emit(tester, [call('dialing')]);
-    expect(find.text('Calling…'), findsOneWidget);
+    expect(find.textContaining('Calling'), findsOneWidget);
     expect(
       tester.widget<IconButton>(find.byWidgetPredicate((w) => w is IconButton && w.tooltip == 'Hold')).onPressed,
       isNull,
     );
-    expect(
-      tester.widget<IconButton>(find.byWidgetPredicate((w) => w is IconButton && w.tooltip == 'Merge')).onPressed,
-      isNull,
-    );
+    expect(find.byTooltip('Merge'), findsNothing); // One call: the slot holds a note instead.
+    expect(find.byTooltip('Note'), findsOneWidget);
     await emit(tester, [
       {...call('active'), 'canHold': true, 'canMerge': true},
       call('holding', id: 'held'),
@@ -317,6 +383,7 @@ void main() {
     expect(nativeCalls.where((c) => c.method == 'playDtmf'), isEmpty);
     await tester.tap(find.byTooltip('End call'));
     expect(nativeCalls.last.method, 'hangUp');
+    final endCenter = tester.getCenter(find.byTooltip('End call'));
     // The spring's tail is longer than the old fixed curve; let it come to rest.
     for (var i = 0; i < 6; i++) {
       await tester.pump(const Duration(milliseconds: 100));
@@ -325,7 +392,9 @@ void main() {
     expect(settled.dy - middle.dy, inExclusiveRange(0, 8));
     expect(actions, findsNothing);
     expect(tester.widget<Transform>(keySpring).transform.storage[0], 1);
-    expect(tester.getRect(find.byTooltip('End call')), end);
+    // Once tapped, End call draws in to a circle around the same centre.
+    expect(tester.getCenter(find.byTooltip('End call')), endCenter);
+    expect(endCenter, end.center);
     expect(tester.getRect(find.byTooltip('Speaker')), speaker);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
@@ -476,8 +545,9 @@ void main() {
 
       for (final state in ['ringing', 'dialing', 'active']) {
         await emit(tester, [call(state)]);
-        if (state == 'ringing') await tester.pump(const Duration(milliseconds: 400));
-        await capture(state, settle: state != 'ringing');
+        // Ringing and dialing loop their hints, so capture them mid-animation.
+        if (state != 'active') await tester.pump(const Duration(milliseconds: 900));
+        await capture(state, settle: state == 'active');
       }
       await emit(tester, [
         {...call('ringing', id: 'foreign'), 'name': 'Priya Shah', 'formattedNumber': '+44 20 7183 8750', 'location': 'United Kingdom'},

@@ -55,15 +55,20 @@ ColorOS-style: Decline (left) and Answer (right) are each swiped up to act, with
 Controls switch between incoming, connected and ended with a 300 ms fade-and-rise.
 The header sits slightly above the centre of the space the controls leave.
 
-- **Action circles**:
-  - Translucent fills.
-  - Animated active fill and icon crossfade.
+- **Action circles** (`CallAction`):
+  - A painted top-lit gradient with a hairline highlight (`callControlBody`, shared with keypad keys). Nothing is blurred.
+  - Turning an action on grows a white fill out from the icon. The icon colour animates and the icon crossfades.
+  - Unavailable actions (Hold while dialing) show as an outline, not a dim fill.
   - Press scale.
-  - Unavailable actions dim to 40%.
-- **End call**: dims and ignores repeat taps once pressed.
-- **Status chip**: "Muted" shows under the timer. An audio route change shows
-  a 1.5 s chip ("Speaker on", "Bluetooth"). Hold dims the header and pulses
-  "On hold".
+- **Fourth slot**: Note on a single call. It opens a floating sheet over the call that saves as you type, so the note survives the other side hanging up. Notes are stored in `DialerPrefs` as `call_note_<number>_<millis>`, and Recents call details show each note under the logged call it was taken during. The slot becomes Merge once two calls can merge.
+- **End call**: a red gradient pill with a soft glow. Once tapped it draws in to a circle and dims. If Telecom hasn't ended the call within 3 s, it becomes tappable again.
+- **Entrance**: when the connected or dialing controls appear, the action row and the bottom row fade and rise 16 px, staggered (520 ms total). Reduced motion skips it.
+- **Header**:
+  - A thin ring around the avatar.
+  - The SIM badge carries the SIM's colour dot.
+  - The running timer sits in a pill with a static green live dot. It doesn't pulse, because calls can last an hour.
+  - While dialing, the avatar ripples slowly and "Calling" fills in its dots.
+- **Status chip**: "Muted" shows under the timer. An audio route change shows a 1.5 s chip ("Speaker on", "Bluetooth"). Hold dims the header and pulses "On hold".
 
 The keypad morph runs on a critically damped spring (`SpringSimulation` with a
 1% snap tolerance). Reversing mid-flight keeps its velocity.
@@ -74,6 +79,7 @@ The keypad morph runs on a critically damped spring (`SpringSimulation` with a
   85% scale with a soft settle. Pressed keys brighten and shrink to 94%.
 - **Header**: the avatar and badges collapse away. Typed digits replace the
   caller name, and the name becomes the subtitle.
+- **Spacing**: with the keypad open, the gap above the bottom row equals the gap between key rows.
 - **Bottom row**: Speaker, End call and Keypad/Hide keypad never move. Upper
   input is blocked while the panel animates.
 - **Back** closes the keypad.

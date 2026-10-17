@@ -149,7 +149,9 @@ String callerName(CallInfo call) {
   if (call.isPrivate) return 'Private number';
   final number = call.number ?? '';
   return ContactsRepository.instance.nameFor(number) ??
-      ((call.name?.trim().isNotEmpty ?? false) ? call.name!.trim() : (call.formattedNumber ?? (number.isEmpty ? 'Unknown' : number)));
+      ((call.name?.trim().isNotEmpty ?? false)
+          ? call.name!.trim()
+          : (call.formattedNumber ?? (number.isEmpty ? 'Unknown' : number)));
 }
 
 /// The caller's name when there is one worth tinting by; null for private, conference and bare numbers.
@@ -223,19 +225,23 @@ class CallHeader extends StatelessWidget {
                     spacing: 6,
                     runSpacing: 6,
                     children: [
-                      _Badge(icon: Icons.sim_card_outlined, label: sim?.label ?? 'Phone call'),
+                      _Badge(icon: Icons.sim_card_outlined, label: sim?.label ?? 'Phone call', dot: sim?.color),
                       if (call.isHd) const _Badge(label: 'HD'),
                       if (call.isWifi) const _Badge(icon: Icons.wifi_rounded, label: 'Wi-Fi Calling'),
                     ],
                   ),
                   SizedBox(height: compact ? 16 : 28),
                   _RingingHalo(
-                    active: call.state == CallState.ringing,
-                    size: avatarSize,
-                    child: DecoratedBox(
-                      decoration: const BoxDecoration(
+                    // Ripples while it rings, and more slowly while we're calling out.
+                    active: call.state == CallState.ringing || _calling(call.state),
+                    slow: call.state != CallState.ringing,
+                    size: avatarSize + 5,
+                    child: Container(
+                      padding: const EdgeInsets.all(2.5),
+                      decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: Color(0x40000000), blurRadius: 32, offset: Offset(0, 6))],
+                        border: Border.all(color: const Color(0x38FFFFFF), width: 1.5),
+                        boxShadow: const [BoxShadow(color: Color(0x40000000), blurRadius: 32, offset: Offset(0, 6))],
                       ),
                       child: call.isPrivate || call.isConference
                           ? CircleAvatar(
@@ -314,9 +320,13 @@ class CallHeader extends StatelessWidget {
 }
 
 /// Soft rings breathing out from the avatar while the phone rings.
+bool _calling(CallState state) =>
+    state == CallState.dialing || state == CallState.connecting || state == CallState.newCall;
+
 class _RingingHalo extends StatefulWidget {
-  const _RingingHalo({required this.active, required this.size, required this.child});
+  const _RingingHalo({required this.active, required this.size, required this.child, this.slow = false});
   final bool active;
+  final bool slow;
   final double size;
   final Widget child;
 
@@ -325,7 +335,10 @@ class _RingingHalo extends StatefulWidget {
 }
 
 class _RingingHaloState extends State<_RingingHalo> with SingleTickerProviderStateMixin {
-  late final AnimationController _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 2400));
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2400),
+  );
 
   @override
   void didChangeDependencies() {
@@ -341,6 +354,7 @@ class _RingingHaloState extends State<_RingingHalo> with SingleTickerProviderSta
 
   void _sync() {
     final run = widget.active && !MediaQuery.disableAnimationsOf(context);
+    _pulse.duration = Duration(milliseconds: widget.slow ? 3200 : 2400);
     if (run && !_pulse.isAnimating) {
       _pulse.repeat();
     } else if (!run && _pulse.isAnimating) {
@@ -358,10 +372,7 @@ class _RingingHaloState extends State<_RingingHalo> with SingleTickerProviderSta
   @override
   Widget build(BuildContext context) => SizedBox.square(
     dimension: widget.size,
-    child: CustomPaint(
-      painter: widget.active ? _HaloPainter(_pulse) : null,
-      child: widget.child,
-    ),
+    child: CustomPaint(painter: widget.active ? _HaloPainter(_pulse) : null, child: widget.child),
   );
 }
 
@@ -387,10 +398,13 @@ class _HaloPainter extends CustomPainter {
 }
 
 class _Badge extends StatelessWidget {
-  const _Badge({required this.label, this.icon, this.bright = false});
+  const _Badge({required this.label, this.icon, this.bright = false, this.dot});
   final String label;
   final IconData? icon;
   final bool bright;
+
+  /// The SIM's own colour, as Android shows it.
+  final Color? dot;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -402,17 +416,23 @@ class _Badge extends StatelessWidget {
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (icon != null) ...[Icon(icon, size: 13, color: Colors.white70), const SizedBox(width: 5)],
+        if (dot != null) ...[
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 6),
+        ] else if (icon != null) ...[
+          Icon(icon, size: 13, color: Colors.white70),
+          const SizedBox(width: 5),
+        ],
         Flexible(
           child: Text(
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: bright ? Colors.white : Colors.white70,
-            ),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: bright ? Colors.white : Colors.white70),
           ),
         ),
       ],
@@ -430,7 +450,10 @@ class CallStatus extends StatefulWidget {
 class _CallStatusState extends State<CallStatus> with SingleTickerProviderStateMixin {
   Timer? _ticker;
   DateTime? _endedAt;
-  late final AnimationController _holdPulse = AnimationController(
+  int _dots = 3;
+
+  /// Breathes the "On hold" text. The live dot stays still: a call can last an hour.
+  late final AnimationController _pulse = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1200),
     lowerBound: .45,
@@ -440,14 +463,9 @@ class _CallStatusState extends State<CallStatus> with SingleTickerProviderStateM
   bool get _ended => widget.call.state == CallState.disconnected || widget.call.state == CallState.disconnecting;
 
   @override
-  void initState() {
-    super.initState();
-    _syncTicker();
-  }
-
-  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _ticker ?? _syncTicker();
     _syncPulse();
   }
 
@@ -464,18 +482,27 @@ class _CallStatusState extends State<CallStatus> with SingleTickerProviderStateM
     _ticker?.cancel();
     // The duration freezes when the call ends rather than counting through the summary.
     if (_ended) _endedAt ??= DateTime.now();
-    _ticker = widget.call.state == CallState.active && widget.call.connectTime != null
-        ? Timer.periodic(const Duration(seconds: 1), (_) {
-            if (mounted) setState(() {});
-          })
-        : null;
+    _dots = 3;
+    if (widget.call.state == CallState.active && widget.call.connectTime != null) {
+      _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) setState(() {});
+      });
+    } else if (_calling(widget.call.state) && !MediaQuery.disableAnimationsOf(context)) {
+      _ticker = Timer.periodic(const Duration(milliseconds: 400), (_) {
+        if (mounted) setState(() => _dots = (_dots + 1) % 4);
+      });
+    } else {
+      _ticker = null;
+    }
   }
+
+  bool get _live => widget.call.state == CallState.active && widget.call.connectTime != null;
 
   void _syncPulse() {
     if (widget.call.state == CallState.holding && !MediaQuery.disableAnimationsOf(context)) {
-      if (!_holdPulse.isAnimating) _holdPulse.repeat(reverse: true);
+      if (!_pulse.isAnimating) _pulse.repeat(reverse: true);
     } else {
-      _holdPulse
+      _pulse
         ..stop()
         ..value = 1;
     }
@@ -484,7 +511,7 @@ class _CallStatusState extends State<CallStatus> with SingleTickerProviderStateM
   @override
   void dispose() {
     _ticker?.cancel();
-    _holdPulse.dispose();
+    _pulse.dispose();
     super.dispose();
   }
 
@@ -507,31 +534,68 @@ class _CallStatusState extends State<CallStatus> with SingleTickerProviderStateM
     final text = switch (call.state) {
       CallState.active when call.connectTime != null => _format(DateTime.now().difference(call.connectTime!)),
       CallState.active => 'Connected',
-      CallState.dialing || CallState.connecting || CallState.newCall || CallState.selectPhoneAccount => 'Calling…',
+      CallState.dialing || CallState.connecting || CallState.newCall || CallState.selectPhoneAccount => 'Calling',
       CallState.ringing => 'Incoming call',
       CallState.holding => 'On hold',
       CallState.disconnecting || CallState.disconnected => _endedText(call),
       CallState.unknown => 'Phone call',
     };
+    final style = TextStyle(
+      fontSize: 16,
+      color: call.state == CallState.active ? const Color(0xFFB5E8D1) : Colors.white70,
+      fontFeatures: const [FontFeature.tabularFigures()],
+    );
+    final Widget label = text == 'Calling'
+        // Dots fill in one by one; the hidden ones keep the width steady.
+        ? Text.rich(
+            TextSpan(
+              text: 'Calling',
+              children: [
+                for (var i = 0; i < 3; i++)
+                  TextSpan(
+                    text: '.',
+                    style: TextStyle(color: i < _dots ? null : Colors.transparent),
+                  ),
+              ],
+            ),
+            style: style,
+          )
+        : Text(text, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: style);
     return SizedBox(
-      height: 22,
+      height: 28,
       child: AnimatedSwitcher(
         duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 220),
-        child: FadeTransition(
-          // Keyed by phase, not by text, so the timer ticks in place.
-          key: ValueKey(call.state == CallState.active && call.connectTime != null ? 'timer' : call.state),
-          opacity: _holdPulse,
-          child: Text(
-            text,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 16,
-              color: call.state == CallState.active ? const Color(0xFFB5E8D1) : Colors.white70,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
+        // Keyed by phase, not by text, so the timer ticks in place.
+        child: KeyedSubtree(
+          key: ValueKey(_live ? 'timer' : call.state),
+          child: _live
+              ? Center(
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(10, 3, 12, 3),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: .10),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        FadeTransition(
+                          opacity: _pulse,
+                          child: Container(
+                            width: 7,
+                            height: 7,
+                            decoration: const BoxDecoration(color: Color(0xFF5BD69A), shape: BoxShape.circle),
+                          ),
+                        ),
+                        const SizedBox(width: 7),
+                        label,
+                      ],
+                    ),
+                  ),
+                )
+              : Center(
+                  child: FadeTransition(opacity: _pulse, child: label),
+                ),
         ),
       ),
     );

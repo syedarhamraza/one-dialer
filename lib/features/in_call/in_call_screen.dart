@@ -102,7 +102,7 @@ class _CallSession extends StatefulWidget {
   State<_CallSession> createState() => _CallSessionState();
 }
 
-class _CallSessionState extends State<_CallSession> with SingleTickerProviderStateMixin {
+class _CallSessionState extends State<_CallSession> with TickerProviderStateMixin {
   bool _keypadOpen = false;
   String _digits = '';
   String? _routeToast;
@@ -110,6 +110,21 @@ class _CallSessionState extends State<_CallSession> with SingleTickerProviderSta
 
   /// Keypad morph progress, spring-driven so a mid-flight reversal keeps its momentum.
   late final AnimationController _morph = AnimationController(vsync: this);
+
+  /// Plays once when the call's controls first appear (opened, or just answered).
+  late final AnimationController _entrance = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 520),
+  );
+
+  void _enter() {
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _entrance.value = 1;
+    } else if (_entrance.value == 0 && !_entrance.isAnimating) {
+      _entrance.forward();
+    }
+  }
+
   static final _spring = SpringDescription.withDampingRatio(mass: 1, stiffness: 300, ratio: 1);
 
   /// Snaps the last 1% so the keypad accepts touches quickly instead of waiting out the tail.
@@ -127,14 +142,9 @@ class _CallSessionState extends State<_CallSession> with SingleTickerProviderSta
     if (MediaQuery.disableAnimationsOf(context)) {
       _morph.value = target;
     } else {
-      _morph.animateWith(SpringSimulation(
-          _spring,
-          _morph.value,
-          target,
-          _morph.velocity,
-          tolerance: _settled,
-          snapToEnd: true,
-        ));
+      _morph.animateWith(
+        SpringSimulation(_spring, _morph.value, target, _morph.velocity, tolerance: _settled, snapToEnd: true),
+      );
     }
   }
 
@@ -142,11 +152,13 @@ class _CallSessionState extends State<_CallSession> with SingleTickerProviderSta
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (MediaQuery.disableAnimationsOf(context) && _morph.isAnimating) _morph.value = _keypadOpen ? 1 : 0;
+    if (widget.call.state != CallState.ringing) _enter();
   }
 
   @override
   void didUpdateWidget(_CallSession oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.call.state != CallState.ringing) _enter();
     final route = widget.snapshot.audio.route;
     if (route != oldWidget.snapshot.audio.route) {
       _toastTimer?.cancel();
@@ -161,6 +173,7 @@ class _CallSessionState extends State<_CallSession> with SingleTickerProviderSta
   void dispose() {
     _toastTimer?.cancel();
     _morph.dispose();
+    _entrance.dispose();
     super.dispose();
   }
 
@@ -205,6 +218,7 @@ class _CallSessionState extends State<_CallSession> with SingleTickerProviderSta
                     keypadOpen: _keypadOpen,
                     onDigit: (digit) => setState(() => _digits += digit),
                     onToggle: _toggleKeypad,
+                    entrance: _entrance,
                   );
             final animatedControls = AnimatedSwitcher(
               duration: switchDuration,
