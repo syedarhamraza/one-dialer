@@ -254,11 +254,7 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                       top: travel - 22 - (reduceMotion ? 0 : 10 * rise),
                       child: Opacity(
                         opacity: dash,
-                        child: Container(
-                          width: 18,
-                          height: 4,
-                          decoration: BoxDecoration(color: widget.color, borderRadius: BorderRadius.circular(2)),
-                        ),
+                        child: CustomPaint(size: const Size(22, 8), painter: _ArcHint(widget.color)),
                       ),
                     ),
                     Positioned(
@@ -287,4 +283,25 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
       ),
     );
   }
+}
+
+/// The ColorOS swipe hint: a short arc bowing upward, with rounded ends.
+class _ArcHint extends CustomPainter {
+  const _ArcHint(this.color);
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) => canvas.drawPath(
+    Path()
+      ..moveTo(1.5, size.height - 1.5)
+      ..quadraticBezierTo(size.width / 2, -size.height / 2 + 1.5, size.width - 1.5, size.height - 1.5),
+    Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round,
+  );
+
+  @override
+  bool shouldRepaint(_ArcHint oldDelegate) => oldDelegate.color != color;
 }
