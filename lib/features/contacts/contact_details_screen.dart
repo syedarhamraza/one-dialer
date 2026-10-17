@@ -184,7 +184,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             children: [
               ListView(
                 physics: const OneUIScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(16, MediaQuery.paddingOf(context).top + 4, 16, 140),
+                padding: EdgeInsets.fromLTRB(10, MediaQuery.paddingOf(context).top + 4, 10, 140),
                 children: [
                   Align(
                     alignment: Alignment.centerLeft,
@@ -345,8 +345,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             title: app['label']! as String,
             trailing: app['icon'] is Uint8List
                 ? ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.memory(app['icon']! as Uint8List, width: 44, height: 44),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.memory(app['icon']! as Uint8List, width: 28, height: 28),
                   )
                 : const Icon(Icons.chat_rounded),
             onTap: () => _bridge.openContactData(app['dataId']! as int, app['mimeType']! as String),
@@ -369,7 +369,7 @@ class _Hero extends StatelessWidget {
     final i = contact.primaryIndex >= 0 ? contact.primaryIndex : 0;
     final number = contact.numbers[i];
     return _Card(
-      padding: const EdgeInsets.fromLTRB(26, 26, 22, 22),
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 22),
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -380,12 +380,12 @@ class _Hero extends StatelessWidget {
                 children: [
                   Text(
                     contact.name,
-                    style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w700, letterSpacing: -0.6),
+                    style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w700, letterSpacing: -0.6),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   Text(
                     '${contact.labels[i]} $number',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
                   ),
                   if (simLabel != null)
                     Padding(
@@ -399,10 +399,10 @@ class _Hero extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            LetterAvatar(name: contact.name, photo: contact.thumbnail, size: 96),
+            LetterAvatar(name: contact.name, photo: contact.thumbnail, size: 52),
           ],
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 28),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -426,7 +426,7 @@ class _Hero extends StatelessWidget {
 }
 
 class _Card extends StatelessWidget {
-  const _Card({required this.children, this.padding = const EdgeInsets.fromLTRB(26, 12, 14, 12)});
+  const _Card({required this.children, this.padding = const EdgeInsets.fromLTRB(18, 8, 12, 8)});
 
   final List<Widget> children;
   final EdgeInsets padding;
@@ -434,7 +434,7 @@ class _Card extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: const EdgeInsets.only(bottom: 20),
       padding: padding,
       decoration: BoxDecoration(color: OneUITheme.surfaceCard, borderRadius: OneUITheme.cardBorderRadius),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
@@ -464,7 +464,7 @@ class _ValueRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: const TextStyle(fontSize: 14, color: OneUITheme.textSecondary)),
+                  Text(label, style: const TextStyle(fontSize: 13, color: OneUITheme.textSecondary)),
                   const SizedBox(height: 2),
                   Text(value, style: const TextStyle(fontSize: 19)),
                 ],
@@ -491,7 +491,7 @@ class _RowAction extends StatelessWidget {
     return IconButton(
       tooltip: tooltip,
       onPressed: onTap,
-      icon: Icon(icon, color: color, size: 28),
+      icon: Icon(icon, color: color, size: 24),
     );
   }
 }
@@ -507,12 +507,13 @@ class _BigAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox.square(
-      dimension: 76,
+      dimension: 44,
       child: IconButton(
         tooltip: label,
         onPressed: onTap,
+        padding: EdgeInsets.zero,
         style: IconButton.styleFrom(backgroundColor: OneUITheme.surfacePill),
-        icon: Icon(icon, color: color, size: 34),
+        icon: Icon(icon, color: color, size: 20),
       ),
     );
   }
@@ -528,16 +529,16 @@ class _PillButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.only(bottom: 16),
       child: Center(
         child: FilledButton(
           onPressed: onTap,
           style: FilledButton.styleFrom(
             backgroundColor: OneUITheme.surfacePill,
             foregroundColor: OneUITheme.textPrimary,
-            minimumSize: const Size(300, 64),
+            minimumSize: const Size(230, 52),
           ),
-          child: Text(label, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w700)),
+          child: Text(label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
         ),
       ),
     );

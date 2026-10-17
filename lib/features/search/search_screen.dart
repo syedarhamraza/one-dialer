@@ -108,7 +108,7 @@ class _SearchScreenState extends State<SearchScreen> {
           _FiltersHeader(open: _showFilters, onTap: () => setState(() => _showFilters = !_showFilters)),
           if (_showFilters)
             _Card(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
               children: [
                 const _Label('Call time'),
                 _Chips(
@@ -116,7 +116,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   selected: _time?.index,
                   onTap: (i) => setState(() => _time = _time == CallTime.values[i] ? null : CallTime.values[i]),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
                 const _Label('Call type'),
                 _Chips(
                   labels: [for (final t in _types) t.label],
@@ -184,7 +184,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 children: [
                   for (final (i, h) in list.indexed)
                     _ResultRow(
-                      avatar: LetterAvatar(name: h.contact.name, photo: h.contact.thumbnail, size: 54),
+                      avatar: LetterAvatar(name: h.contact.name, photo: h.contact.thumbnail, size: 36),
                       title: _highlighted(h.contact.name, h.nameRange, 19),
                       subtitle: _highlighted(h.number, h.numberRange, 15, color: OneUITheme.textSecondary),
                       divider: i > 0,
@@ -200,7 +200,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 // shortcut: shows the newest 100 matches, add paging if people need older calls here.
                 for (final (i, c) in calls.take(100).indexed)
                   _ResultRow(
-                    avatar: LetterAvatar(name: callName(c, contactsRepo.nameFor) ?? '', size: 54),
+                    avatar: LetterAvatar(name: callName(c, contactsRepo.nameFor) ?? '', size: 36),
                     title: _highlighted(
                       c.isPrivate ? 'Private number' : callName(c, contactsRepo.nameFor) ?? c.number,
                       c.isPrivate ? null : matchRange(callName(c, contactsRepo.nameFor) ?? c.number, query),
@@ -267,7 +267,7 @@ class _FiltersHeader extends StatelessWidget {
             const Expanded(
               child: Text(
                 'Filters',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: OneUITheme.textSecondary),
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: OneUITheme.textSecondary),
               ),
             ),
             Icon(
@@ -289,7 +289,7 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const style = TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: OneUITheme.textSecondary);
+    const style = TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: OneUITheme.textSecondary);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
       child: Row(
@@ -328,10 +328,10 @@ class _Label extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.only(bottom: 14),
     child: Text(
       text,
-      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: OneUITheme.textSecondary),
+      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: OneUITheme.textSecondary),
     ),
   );
 }
@@ -347,7 +347,7 @@ class _Chips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: 10,
+      spacing: 9,
       runSpacing: 10,
       children: [
         for (final (i, label) in labels.indexed)
@@ -358,13 +358,13 @@ class _Chips extends StatelessWidget {
               onTap: () => onTap(i),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 160),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: i == selected ? OneUITheme.accentBlue : Colors.transparent,
                   borderRadius: BorderRadius.circular(OneUITheme.radiusPill),
                   border: Border.all(color: i == selected ? OneUITheme.accentBlue : OneUITheme.surfacePillActive),
                 ),
-                child: Text(label, style: const TextStyle(fontSize: 16, color: OneUITheme.textPrimary)),
+                child: Text(label, style: const TextStyle(fontSize: 15, color: OneUITheme.textPrimary)),
               ),
             ),
           ),
@@ -392,7 +392,7 @@ class _RecentChip extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(label, style: const TextStyle(fontSize: 17)),
+              Text(label, style: const TextStyle(fontSize: 15)),
               const SizedBox(width: 10),
               Semantics(
                 button: true,
@@ -437,7 +437,7 @@ class _ResultRow extends StatelessWidget {
         child: Row(
           children: [
             avatar,
-            const SizedBox(width: 18),
+            const SizedBox(width: 16),
             Expanded(
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 16),

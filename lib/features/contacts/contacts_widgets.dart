@@ -26,7 +26,7 @@ class ContactsSectionHeader extends StatelessWidget {
     return SizedBox(
       height: height,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(32, 18, 16, 0),
+        padding: const EdgeInsets.fromLTRB(28, 18, 16, 0),
         child: Row(
           children: [
             if (icon != null) ...[Icon(icon, size: 20, color: OneUITheme.textSecondary), const SizedBox(width: 8)],
@@ -94,12 +94,12 @@ class FavoriteTile extends StatelessWidget {
                 children: [
                   if (photo != null)
                     ClipOval(
-                      child: Image.memory(photo, width: 84, height: 84, fit: BoxFit.cover, gaplessPlayback: true),
+                      child: Image.memory(photo, width: 60, height: 60, fit: BoxFit.cover, gaplessPlayback: true),
                     )
                   else
                     Container(
-                      width: 84,
-                      height: 84,
+                      width: 60,
+                      height: 60,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
@@ -107,17 +107,17 @@ class FavoriteTile extends StatelessWidget {
                       ),
                       child: Text(
                         LetterAvatar.initials(contact.name).characters.firstOrNull ?? '#',
-                        style: const TextStyle(fontSize: 46, fontWeight: FontWeight.w300, color: Colors.white),
+                        style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w300, color: Colors.white),
                       ),
                     ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 14),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Text(
                       contact.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white),
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white),
                     ),
                   ),
                 ],
@@ -142,7 +142,7 @@ class ContactRow extends StatelessWidget {
     this.selected,
   });
 
-  static const double height = 76;
+  static const double height = 54;
 
   final DialerContact contact;
   final bool isFirst, isLast;
@@ -165,8 +165,8 @@ class ContactRow extends StatelessWidget {
         child: Row(
           children: [
             SelectMark(selected: selected, gap: 14),
-            LetterAvatar(name: contact.name, photo: contact.thumbnail, size: 54),
-            const SizedBox(width: 18),
+            LetterAvatar(name: contact.name, photo: contact.thumbnail, size: 36),
+            const SizedBox(width: 14),
             Expanded(
               child: Container(
                 height: height,
@@ -189,7 +189,7 @@ class ContactRow extends StatelessWidget {
       ),
     );
     return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 30), // right: room for the fast scroller
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       child: ClipRRect(
         borderRadius: BorderRadius.vertical(top: isFirst ? radius : Radius.zero, bottom: isLast ? radius : Radius.zero),
         child: SwipeToCallOrMessage(
@@ -207,7 +207,7 @@ class ContactRow extends StatelessWidget {
 class ContactQuickCard extends StatelessWidget {
   const ContactQuickCard({super.key, required this.contact, required this.onInfo});
 
-  static const double height = 250;
+  static const double height = 196;
 
   final DialerContact contact;
   final VoidCallback onInfo;
@@ -217,8 +217,8 @@ class ContactQuickCard extends StatelessWidget {
     final i = contact.primaryIndex >= 0 ? contact.primaryIndex : 0;
     return Container(
       height: height - 12,
-      margin: const EdgeInsets.fromLTRB(16, 6, 30, 6),
-      padding: const EdgeInsets.fromLTRB(26, 22, 22, 18),
+      margin: const EdgeInsets.fromLTRB(10, 6, 10, 6),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
       decoration: BoxDecoration(color: OneUITheme.surfaceCard, borderRadius: OneUITheme.cardBorderRadius),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,7 +234,7 @@ class ContactQuickCard extends StatelessWidget {
                       contact.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700, letterSpacing: -0.5),
+                      style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w700, letterSpacing: -0.5),
                     ),
                     const SizedBox(height: 6),
                     InkWell(
@@ -261,7 +261,7 @@ class ContactQuickCard extends StatelessWidget {
                   ],
                 ),
               ),
-              LetterAvatar(name: contact.name, photo: contact.thumbnail, size: 64),
+              LetterAvatar(name: contact.name, photo: contact.thumbnail, size: 52),
             ],
           ),
           const Spacer(),
@@ -303,12 +303,13 @@ class _QuickAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox.square(
-      dimension: 60,
+      dimension: 44,
       child: IconButton(
         tooltip: label,
         onPressed: onTap,
+        padding: EdgeInsets.zero,
         style: IconButton.styleFrom(backgroundColor: OneUITheme.surfacePill),
-        icon: Icon(icon, color: color, size: 28),
+        icon: Icon(icon, color: color, size: 20),
       ),
     );
   }

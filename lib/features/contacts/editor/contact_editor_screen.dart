@@ -14,7 +14,6 @@ import '../../../widgets/one_ui_cancel_save_pill.dart';
 import '../../../widgets/one_ui_date_wheel.dart';
 import '../../../widgets/one_ui_floating_menu.dart';
 import '../../../widgets/one_ui_floating_modal.dart';
-import '../../../widgets/one_ui_radio.dart';
 import '../groups_screen.dart' show hiddenGroupNames;
 import 'contact_form.dart';
 import 'editor_widgets.dart';
@@ -76,8 +75,12 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
       _initialGroups = {for (final g in groups) ?g.id};
       form = ContactForm.fromContact(c, groupIds: _initialGroups);
     } else {
-      _accounts = await FlutterContacts.accounts.getAll();
-      _account = await FlutterContacts.accounts.getDefault() ?? _accounts.firstOrNull;
+      _accounts = _contactAccounts(await FlutterContacts.accounts.getAll());
+      final fallback = await FlutterContacts.accounts.getDefault();
+      _account =
+          _accounts.where((a) => a.type == fallback?.type && a.name == fallback?.name).firstOrNull ??
+          _accounts.where((a) => a.type == 'com.google').firstOrNull ??
+          _accounts.firstOrNull;
     }
     final initialNumber = widget.initialNumber?.trim() ?? '';
     // The blank phone row isn't a change; a number passed in (Add to Contacts) is.
@@ -285,9 +288,12 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
 
   // --- Account ---------------------------------------------------------------
 
+  final _accountKey = GlobalKey();
+
   Widget _accountRow() {
     final account = _account;
     return InkWell(
+      key: _accountKey,
       borderRadius: OneUITheme.pillBorderRadius,
       onTap: _chooseAccount,
       child: Padding(
@@ -298,7 +304,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
             const SizedBox(width: 14),
             Flexible(
               child: Text(
-                account?.name ?? 'Phone',
+                account == null || account.type.contains('phone') ? 'Phone' : account.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontSize: 18),
@@ -325,52 +331,64 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
     );
   }
 
+  /// Samsung's anchored "Save contact to" popup.
   Future<void> _chooseAccount() async {
-    final picked = await OneUIFloatingModal.show<Account>(
+    Account? picked;
+    await OneUIFloatingMenu.show(
       context: context,
-      builder: (ctx) => Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Save contact to', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 12),
-          for (final a in _accounts)
-            InkWell(
-              borderRadius: BorderRadius.circular(16),
-              onTap: () => Navigator.pop(ctx, a),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Row(
-                  children: [
-                    OneUIRadio(isSelected: a.id == _account?.id && a.type == _account?.type),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(_accountTypeName(a), style: const TextStyle(fontSize: 17)),
-                          Text(a.name, style: const TextStyle(fontSize: 14, color: OneUITheme.textSecondary)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-        ],
-      ),
+      anchorKey: _accountKey,
+      width: 300,
+      items: [
+        for (final a in _accounts)
+          OneUIFloatingMenuItem(
+            icon: a.type == _account?.type && a.name == _account?.name ? Icons.check_circle_rounded : null,
+            label: a.type.contains('phone') ? 'Phone' : '${_accountTypeName(a)}\n${a.name}',
+            onTap: () => picked = a,
+          ),
+      ],
     );
-    if (picked == null) return;
-    final groups = _userGroups(await FlutterContacts.groups.getAll(accounts: [picked]));
+    final account = picked;
+    if (account == null || !mounted) return;
+    final groups = _userGroups(await FlutterContacts.groups.getAll(accounts: [account]));
     setState(() {
-      _account = picked;
+      _account = account;
       _groups = groups;
       _form!.groupIds = {}; // groups belong to an account
     });
   }
 
+  /// Samsung's "Save contact to" choices: Samsung account, Phone and Google accounts,
+  /// not every app that syncs contacts (WhatsApp, Meet, a second Samsung service, ...).
+  static List<Account> _contactAccounts(List<Account> all) {
+    final seen = <String>{};
+    final keep = [
+      for (final a in all)
+        if ((a.type == 'com.google' ||
+                a.type == 'com.osp.app.signin' ||
+                a.type.contains('phone') ||
+                a.type.contains('local')) &&
+            seen.add('${a.type}|${a.name}'))
+          a,
+    ];
+    // shortcut: flutter_contacts doesn't report the two accounts Samsung Contacts saves to
+    // (Samsung account `com.osp.app.signin` and the on-device `vnd.sec.contact.phone`), only
+    // Samsung's other services (`com.samsung.*`). On Samsung phones add those two, in Samsung's
+    // order; other phones keep their own list.
+    final samsung = all.where((a) => a.type.startsWith('com.samsung') || a.type == 'com.osp.app.signin').firstOrNull;
+    if (samsung != null) {
+      final extra = [
+        Account(id: '', name: samsung.name, type: 'com.osp.app.signin'),
+        const Account(id: '', name: 'vnd.sec.contact.phone', type: 'vnd.sec.contact.phone'),
+      ];
+      keep.removeWhere((a) => a.type == 'com.osp.app.signin');
+      keep.insertAll(0, extra);
+    }
+    return keep;
+  }
+
   static String _accountTypeName(Account a) => switch (a.type) {
     final t when t.contains('google') => 'Google',
+    'com.osp.app.signin' => 'Samsung account',
     final t when t.contains('samsung') => 'Samsung account',
     final t when t.contains('whatsapp') => 'WhatsApp',
     final t when t.contains('sim') => 'SIM',
@@ -384,7 +402,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
     final photo = form.newPhoto ?? existing;
     return Column(
       children: [
-        LetterAvatar(name: _avatarName(form), photo: photo, size: 128),
+        LetterAvatar(name: _avatarName(form), photo: photo, size: 98),
         const SizedBox(height: 14),
         FilledButton.tonal(
           onPressed: () => _photoMenu(hasPhoto: photo != null),

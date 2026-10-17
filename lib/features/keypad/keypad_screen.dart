@@ -250,7 +250,7 @@ class _ResultTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         child: Row(
           children: [
-            LetterAvatar(name: name, size: 48),
+            LetterAvatar(name: name, size: 36),
             const SizedBox(width: 16),
             // Unsaved numbers (from Recents) are named by their number; show it once.
             if (name == match.number)
@@ -258,7 +258,7 @@ class _ResultTile extends StatelessWidget {
                 child: _highlighted(
                   name,
                   match.numberRange,
-                  const TextStyle(fontSize: 20, color: OneUITheme.textPrimary),
+                  const TextStyle(fontSize: 18, color: OneUITheme.textPrimary),
                 ),
               )
             else ...[
@@ -266,14 +266,14 @@ class _ResultTile extends StatelessWidget {
                 child: _highlighted(
                   name,
                   match.nameRange,
-                  const TextStyle(fontSize: 20, color: OneUITheme.textPrimary),
+                  const TextStyle(fontSize: 18, color: OneUITheme.textPrimary),
                 ),
               ),
               const SizedBox(width: 12),
               _highlighted(
                 match.number,
                 match.numberRange,
-                const TextStyle(fontSize: 17, color: OneUITheme.textSecondary),
+                const TextStyle(fontSize: 15, color: OneUITheme.textSecondary),
               ),
             ],
           ],
