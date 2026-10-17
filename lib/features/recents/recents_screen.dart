@@ -134,7 +134,6 @@ class _RecentsScreenState extends State<RecentsScreen> {
       return;
     }
     navDock.value = OneUIFloatingActionBar(
-      docked: true,
       items: [
         OneUIFloatingActionBarItem(
           icon: Icons.select_all_rounded,
@@ -262,7 +261,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
               ),
             ),
           ],
-        SliverToBoxAdapter(child: SizedBox(height: MediaQuery.paddingOf(context).bottom + kFloatingNavBarHeight + 32)),
+        SliverToBoxAdapter(child: SizedBox(height: navBarClearance(context) + 8)),
       ],
     );
   }
