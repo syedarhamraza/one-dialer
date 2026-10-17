@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
+import '../core/haptics/haptics.dart';
 import '../core/telecom/telecom_bridge.dart';
 import '../features/contacts/contacts_screen.dart';
 import '../features/keypad/keypad_screen.dart';
 import '../features/recents/call_log_repository.dart';
 import '../features/recents/recents_screen.dart';
-import '../theme/one_ui_theme.dart';
-import '../widgets/one_ui_glass_surface.dart';
-import 'layout.dart';
+import '../widgets/one_ui_floating_nav_bar.dart';
+import '../widgets/one_ui_status_bar_scrim.dart';
 
-/// A tab's selection actions (a docked `OneUIFloatingActionBar`). While set, a glass
-/// bar of them springs in over the tab bar.
+/// A tab's selection actions (a docked `OneUIFloatingActionBar`). While set, the nav
+/// bar morphs into them (OneSpend's `dockedContent`).
 final ValueNotifier<Widget?> navDock = ValueNotifier(null);
 
 /// The three Samsung tabs under the floating nav bar. Tabs stay alive (IndexedStack)
@@ -27,12 +26,10 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   final _input = ValueNotifier('');
   int _tab = 0;
 
-  static const double _tabWidth = 96;
-
-  static const _tabs = [
-    GlassTab(icon: Icon(Icons.dialpad_rounded), label: 'Keypad'),
-    GlassTab(icon: Icon(Icons.watch_later_outlined), activeIcon: Icon(Icons.watch_later_rounded), label: 'Recents'),
-    GlassTab(icon: Icon(Icons.person_outline_rounded), activeIcon: Icon(Icons.person_rounded), label: 'Contacts'),
+  static const _items = [
+    OneUINavItem(activeIcon: Icons.dialpad_rounded, inactiveIcon: Icons.dialpad_rounded, label: 'Keypad'),
+    OneUINavItem(activeIcon: Icons.watch_later_rounded, inactiveIcon: Icons.watch_later_outlined, label: 'Recents'),
+    OneUINavItem(activeIcon: Icons.person_rounded, inactiveIcon: Icons.person_outline_rounded, label: 'Contacts'),
   ];
 
   @override
@@ -79,9 +76,11 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    // The nav bar floats over the tabs (OneSpend's bar fills its parent's height, so it
-    // can't be a Scaffold.bottomNavigationBar); tabs pad themselves with navBarClearance().
+    // Hosted like OneSpend's home shell: the bar floats over the tabs in a Stack (it
+    // fills its parent's height), under a top status-bar scrim, and slides away while
+    // a number is being typed on the keypad. Tabs pad themselves with navBarClearance().
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
           IndexedStack(
@@ -92,88 +91,41 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
               const ContactsScreen(),
             ],
           ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            // Like Samsung, the bar slides away while a number is being typed on the keypad.
-            child: ValueListenableBuilder<String>(
-              valueListenable: _input,
-              builder: (context, number, navBar) => AnimatedSlide(
-                offset: _tab == 0 && number.isNotEmpty ? const Offset(0, 1.5) : Offset.zero,
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOutCubic,
-                child: navBar,
-              ),
-              child: ValueListenableBuilder<Widget?>(
-                valueListenable: navDock,
-                builder: (context, dock, _) => _tabBar(context, dock),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// The liquid glass tab bar. It stays mounted (faded, not painted) while a bar of
-  /// the selection actions springs in over it.
-  Widget _tabBar(BuildContext context, Widget? dock) {
-    return Stack(
-      alignment: Alignment.bottomCenter,
-      children: [
-        IgnorePointer(
-          ignoring: dock != null,
-          child: AnimatedOpacity(
-            opacity: dock == null ? 1 : 0,
-            duration: const Duration(milliseconds: 220),
-            child: SafeArea(
-              top: false,
-              child: GlassTabBar.bottom(
-                tabs: _tabs,
-                selectedIndex: _tab,
-                onTabSelected: _select,
-                // Highest tier everywhere: premium indicator and track, high-quality masking.
-                quality: GlassQuality.premium,
-                backgroundQuality: GlassQuality.premium,
-                maskingQuality: MaskingQuality.high,
-                barHeight: kFloatingNavBarHeight,
-                verticalPadding: kNavBarVerticalPadding,
-                tabWidth: _tabWidth,
-                // The package left-aligns a fixed-width pill; centre it like Samsung's.
-                horizontalPadding: (MediaQuery.sizeOf(context).width - _tabWidth * _tabs.length) / 2,
-                selectedIconColor: OneUITheme.textPrimary,
-                selectedLabelColor: OneUITheme.textPrimary,
-                unselectedIconColor: OneUITheme.navbar3dInactiveIcon,
-                unselectedLabelColor: OneUITheme.navbar3dInactiveText,
-              ),
-            ),
-          ),
-        ),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 320),
-          switchInCurve: Curves.easeOutBack,
-          switchOutCurve: Curves.easeInCubic,
-          transitionBuilder: (child, animation) => FadeTransition(
-            opacity: animation,
-            child: ScaleTransition(scale: Tween(begin: 0.85, end: 1.0).animate(animation), child: child),
-          ),
-          child: dock == null
-              ? const SizedBox.shrink()
-              : SafeArea(
-                  top: false,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: OneUIGlassSurface(
-                      elevation: OneUIGlassElevation.navbar,
-                      height: kFloatingNavBarHeight,
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      child: dock,
+          const Positioned(top: 0, left: 0, right: 0, child: OneUIStatusBarScrim()),
+          ValueListenableBuilder<String>(
+            valueListenable: _input,
+            builder: (context, number, _) {
+              final isNavHidden = _tab == 0 && number.isNotEmpty;
+              return AnimatedPositioned(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOutCubic,
+                left: 0,
+                right: 0,
+                bottom: isNavHidden ? -120 : 0,
+                child: IgnorePointer(
+                  ignoring: isNavHidden,
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 200),
+                    opacity: isNavHidden ? 0.0 : 1.0,
+                    child: ValueListenableBuilder<Widget?>(
+                      valueListenable: navDock,
+                      builder: (context, dock, _) => OneUIFloatingNavBar(
+                        currentIndex: _tab,
+                        dockedContent: dock,
+                        onTap: (index) {
+                          Haptics.tap();
+                          _select(index);
+                        },
+                        items: _items,
+                      ),
                     ),
                   ),
                 ),
-        ),
-      ],
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }
