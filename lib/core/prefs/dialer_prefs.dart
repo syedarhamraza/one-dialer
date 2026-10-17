@@ -29,6 +29,14 @@ class DialerPrefs {
     changes.value++;
   }
 
+  /// Recents › "Hide blocked calls" (on by default; they're always in Block numbers).
+  Future<bool> hideBlockedCalls() async => await _prefs.getBool('hide_blocked_calls') ?? true;
+
+  Future<void> setHideBlockedCalls(bool value) async {
+    await _prefs.setBool('hide_blocked_calls', value);
+    changes.value++;
+  }
+
   /// Contacts › "View favorites as list" (Samsung shows tiles by default).
   Future<bool> favoritesAsList() async => await _prefs.getBool('favorites_as_list') ?? false;
 

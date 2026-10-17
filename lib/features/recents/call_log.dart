@@ -118,3 +118,29 @@ String durationLabel(Duration d) {
   if (d.inMinutes > 0) return '${d.inMinutes} min ${d.inSeconds.remainder(60)} sec';
   return '${d.inSeconds} sec';
 }
+
+/// Samsung's "Filter calls" choices in Recents.
+enum CallFilter {
+  all('All calls'),
+  missed('Missed calls'),
+  rejected('Rejected calls'),
+  outgoing('Outgoing calls'),
+  incoming('Incoming calls');
+
+  const CallFilter(this.label);
+
+  final String label;
+
+  /// Whether [call] shows under this filter. Blocked calls show only when not hidden
+  /// (they always appear in Block numbers › Blocked calls).
+  bool matches(CallLogEntry call, {required bool hideBlocked}) {
+    if (call.type == CallType.blocked) return this == CallFilter.all && !hideBlocked;
+    return switch (this) {
+      CallFilter.all => true,
+      CallFilter.missed => call.isMissed,
+      CallFilter.rejected => call.type == CallType.rejected,
+      CallFilter.outgoing => call.type == CallType.outgoing,
+      CallFilter.incoming => call.type == CallType.incoming || call.type == CallType.answeredExternally,
+    };
+  }
+}

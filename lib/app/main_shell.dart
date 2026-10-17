@@ -91,10 +91,20 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
             left: 0,
             right: 0,
             bottom: 0,
-            child: ValueListenableBuilder<Widget?>(
-              valueListenable: navDock,
-              builder: (context, dock, _) =>
-                  OneUIFloatingNavBar(currentIndex: _tab, items: _items, onTap: _select, dockedContent: dock),
+            // Like Samsung, the bar slides away while a number is being typed on the keypad.
+            child: ValueListenableBuilder<String>(
+              valueListenable: _input,
+              builder: (context, number, navBar) => AnimatedSlide(
+                offset: _tab == 0 && number.isNotEmpty ? const Offset(0, 1.5) : Offset.zero,
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                child: navBar,
+              ),
+              child: ValueListenableBuilder<Widget?>(
+                valueListenable: navDock,
+                builder: (context, dock, _) =>
+                    OneUIFloatingNavBar(currentIndex: _tab, items: _items, onTap: _select, dockedContent: dock),
+              ),
             ),
           ),
         ],
