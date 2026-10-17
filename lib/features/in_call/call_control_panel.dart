@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
@@ -23,6 +24,7 @@ class CallControlPanel extends StatefulWidget {
     required this.landscape,
     required this.onDigit,
     required this.onToggle,
+    this.entrance = kAlwaysCompleteAnimation,
   });
   final CallInfo call;
   final AudioInfo audio;
@@ -36,6 +38,9 @@ class CallControlPanel extends StatefulWidget {
   final ValueChanged<String> onDigit;
   final VoidCallback onToggle;
 
+  /// Runs once when the controls first appear: rows fade and rise in, staggered.
+  final Animation<double> entrance;
+
   @override
   State<CallControlPanel> createState() => _CallControlPanelState();
 }
@@ -43,6 +48,18 @@ class CallControlPanel extends StatefulWidget {
 class _CallControlPanelState extends State<CallControlPanel> {
   String? _tone;
   bool _ending = false;
+  Timer? _endingTimeout;
+
+  void _endCall() {
+    HapticFeedback.mediumImpact();
+    setState(() => _ending = true);
+    TelecomBridge.instance.hangUp(widget.call.id);
+    // If Telecom doesn't end the call, give the button back rather than leave it dead.
+    _endingTimeout?.cancel();
+    _endingTimeout = Timer(const Duration(seconds: 3), () {
+      if (mounted) setState(() => _ending = false);
+    });
+  }
 
   /// A soft settle for keys: a little overshoot, much gentler than easeOutBack.
   static const _settle = Cubic(.34, 1.3, .64, 1);
@@ -87,6 +104,7 @@ class _CallControlPanelState extends State<CallControlPanel> {
       if (_tone != null) TelecomBridge.instance.stopDtmf(oldWidget.call.id);
       _tone = null;
       _ending = false;
+      _endingTimeout?.cancel();
     } else if (!widget.keypadOpen || widget.animating) {
       _stopTone();
     }
@@ -95,6 +113,7 @@ class _CallControlPanelState extends State<CallControlPanel> {
   @override
   void dispose() {
     _stopTone();
+    _endingTimeout?.cancel();
     super.dispose();
   }
 
@@ -102,6 +121,17 @@ class _CallControlPanelState extends State<CallControlPanel> {
   Widget build(BuildContext context) {
     final telecom = TelecomBridge.instance;
     final p = widget.progress;
+    Widget rise(Interval interval, Widget child) => AnimatedBuilder(
+      animation: widget.entrance,
+      child: child,
+      builder: (context, child) {
+        final t = interval.transform(widget.entrance.value);
+        return Opacity(
+          opacity: t,
+          child: Transform.translate(offset: Offset(0, 16 * (1 - t)), child: child),
+        );
+      },
+    );
     final layoutProgress = const Interval(0, .65, curve: Curves.easeOutCubic).transform(p);
     final compact = widget.compact;
     final circle = widget.landscape
@@ -131,6 +161,8 @@ class _CallControlPanelState extends State<CallControlPanel> {
       layoutProgress,
     )!;
     final holding = widget.call.state == CallState.holding;
+    final number = widget.call.number ?? '';
+    final canMessage = !widget.call.isPrivate && !widget.call.isConference && number.isNotEmpty;
     final actions = <({IconData icon, String label, bool active, VoidCallback? tap})>[
       (
         icon: widget.audio.muted ? Icons.mic_off_rounded : Icons.mic_none_rounded,
@@ -147,12 +179,16 @@ class _CallControlPanelState extends State<CallControlPanel> {
             : null,
       ),
       (icon: Icons.add_call, label: 'Add call', active: false, tap: telecom.openDialer),
-      (
-        icon: Icons.call_merge_rounded,
-        label: 'Merge',
-        active: false,
-        tap: widget.callCount > 1 && widget.call.canMerge ? () => telecom.merge(widget.call.id) : null,
-      ),
+      // Merge only matters with two calls; otherwise the slot offers a message to the caller.
+      if ((widget.callCount > 1 && widget.call.canMerge) || !canMessage)
+        (
+          icon: Icons.call_merge_rounded,
+          label: 'Merge',
+          active: false,
+          tap: widget.callCount > 1 && widget.call.canMerge ? () => telecom.merge(widget.call.id) : null,
+        )
+      else
+        (icon: Icons.chat_bubble_outline_rounded, label: 'Message', active: false, tap: () => _message(number)),
     ];
     final route = widget.audio.route;
     final routeLabel = switch (route) {
@@ -185,28 +221,31 @@ class _CallControlPanelState extends State<CallControlPanel> {
                     ignoring: p > 0,
                     child: ExcludeSemantics(
                       excluding: p > 0,
-                      child: Transform.scale(
-                        key: const ValueKey('receding-call-actions'),
-                        scale: 1 - .10 * const Interval(0, .45, curve: Curves.easeOut).transform(p),
-                        alignment: Alignment.topCenter,
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            for (final (i, action) in actions.indexed)
-                              Expanded(
-                                // The middle pair leaves first, then the outer pair.
-                                child: Opacity(
-                                  opacity: 1 - (i == 1 || i == 2 ? _innerOut : _outerOut).transform(p),
-                                  child: CallAction(
-                                    icon: action.icon,
-                                    label: action.label,
-                                    active: action.active,
-                                    onPressed: action.tap,
-                                    size: actionSize,
+                      child: rise(
+                        const Interval(0, .62, curve: Curves.easeOutCubic),
+                        Transform.scale(
+                          key: const ValueKey('receding-call-actions'),
+                          scale: 1 - .10 * const Interval(0, .45, curve: Curves.easeOut).transform(p),
+                          alignment: Alignment.topCenter,
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              for (final (i, action) in actions.indexed)
+                                Expanded(
+                                  // The middle pair leaves first, then the outer pair.
+                                  child: Opacity(
+                                    opacity: 1 - (i == 1 || i == 2 ? _innerOut : _outerOut).transform(p),
+                                    child: CallAction(
+                                      icon: action.icon,
+                                      label: action.label,
+                                      active: action.active,
+                                      onPressed: action.tap,
+                                      size: actionSize,
+                                    ),
                                   ),
                                 ),
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -225,79 +264,100 @@ class _CallControlPanelState extends State<CallControlPanel> {
         if (widget.landscape) Expanded(child: SingleChildScrollView(reverse: true, child: upper)) else upper,
         Padding(
           padding: EdgeInsets.only(
-            top: compact ? 8 : 20,
+            // With the keypad open, the gap matches the key rows' (landscape drops the last row's own gap).
+            top: lerpDouble(compact ? 8 : 20, widget.landscape ? 4 : 0, layoutProgress)!,
             bottom: widget.landscape
                 ? 8
                 : compact
                 ? 16
                 : 56,
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: compact ? 72 : 92,
-                child: CallAction(
-                  icon: switch (route) {
-                    AudioRoute.bluetooth => Icons.bluetooth_audio_rounded,
-                    AudioRoute.wiredHeadset => Icons.headset_rounded,
-                    _ => Icons.volume_up_rounded,
-                  },
-                  label: routeLabel,
-                  active: route != AudioRoute.earpiece,
-                  size: actionSize,
-                  onPressed: widget.audio.supportedRoutes.contains(AudioRoute.bluetooth)
-                      ? () => chooseCallAudioRoute(context, widget.audio)
-                      : () => telecom.setAudioRoute(
-                          route == AudioRoute.speaker ? AudioRoute.earpiece : AudioRoute.speaker,
-                        ),
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: PressScale(
-                    scale: .95,
-                    child: AnimatedOpacity(
-                      opacity: _ending ? .5 : 1,
-                      duration: const Duration(milliseconds: 200),
-                      child: SizedBox(
-                        height: actionSize,
-                        child: IconButton.filled(
-                          tooltip: 'End call',
-                          iconSize: 32,
-                          style: IconButton.styleFrom(
-                            backgroundColor: const Color(0xFFEE5265),
-                            disabledBackgroundColor: const Color(0xFFEE5265),
-                            foregroundColor: Colors.white,
-                            disabledForegroundColor: Colors.white,
-                            shape: const StadiumBorder(),
-                            elevation: 0,
+          child: rise(
+            const Interval(.12, .74, curve: Curves.easeOutCubic),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: compact ? 72 : 92,
+                  child: CallAction(
+                    icon: switch (route) {
+                      AudioRoute.bluetooth => Icons.bluetooth_audio_rounded,
+                      AudioRoute.wiredHeadset => Icons.headset_rounded,
+                      _ => Icons.volume_up_rounded,
+                    },
+                    label: routeLabel,
+                    active: route != AudioRoute.earpiece,
+                    size: actionSize,
+                    onPressed: widget.audio.supportedRoutes.contains(AudioRoute.bluetooth)
+                        ? () => chooseCallAudioRoute(context, widget.audio)
+                        : () => telecom.setAudioRoute(
+                            route == AudioRoute.speaker ? AudioRoute.earpiece : AudioRoute.speaker,
                           ),
-                          onPressed: _ending
-                              ? null
-                              : () {
-                                  HapticFeedback.mediumImpact();
-                                  setState(() => _ending = true);
-                                  telecom.hangUp(widget.call.id);
-                                },
-                          icon: const Icon(Icons.call_end_rounded),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: PressScale(
+                      scale: .95,
+                      child: LayoutBuilder(
+                        builder: (context, box) => Align(
+                          alignment: Alignment.topCenter,
+                          child: AnimatedOpacity(
+                            opacity: _ending ? .55 : 1,
+                            duration: const Duration(milliseconds: 220),
+                            child: AnimatedContainer(
+                              // While ending, the pill draws in to a circle.
+                              duration: MediaQuery.disableAnimationsOf(context)
+                                  ? Duration.zero
+                                  : const Duration(milliseconds: 280),
+                              curve: Curves.easeInOutCubic,
+                              width: _ending ? actionSize : box.maxWidth,
+                              height: actionSize,
+                              decoration: ShapeDecoration(
+                                shape: const StadiumBorder(),
+                                gradient: const LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [Color(0xFFF26573), Color(0xFFE0465A)],
+                                ),
+                                shadows: [
+                                  BoxShadow(
+                                    color: const Color(0xFFE0465A).withValues(alpha: _ending ? 0 : .38),
+                                    blurRadius: 22,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ],
+                              ),
+                              child: IconButton(
+                                tooltip: 'End call',
+                                iconSize: 32,
+                                style: IconButton.styleFrom(
+                                  foregroundColor: Colors.white,
+                                  disabledForegroundColor: Colors.white,
+                                  shape: const StadiumBorder(),
+                                ),
+                                onPressed: _ending ? null : _endCall,
+                                icon: const Icon(Icons.call_end_rounded),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              SizedBox(
-                width: compact ? 72 : 92,
-                child: CallAction(
-                  icon: widget.keypadOpen ? Icons.keyboard_arrow_down_rounded : Icons.dialpad_rounded,
-                  label: widget.keypadOpen ? 'Hide keypad' : 'Keypad',
-                  size: actionSize,
-                  onPressed: widget.onToggle,
+                SizedBox(
+                  width: compact ? 72 : 92,
+                  child: CallAction(
+                    icon: widget.keypadOpen ? Icons.keyboard_arrow_down_rounded : Icons.dialpad_rounded,
+                    label: widget.keypadOpen ? 'Hide keypad' : 'Keypad',
+                    size: actionSize,
+                    onPressed: widget.onToggle,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],
@@ -308,6 +368,14 @@ class _CallControlPanelState extends State<CallControlPanel> {
   static const double _keypadTop = 16;
   static const _innerOut = Interval(0, .32, curve: Curves.easeOut);
   static const _outerOut = Interval(.08, .40, curve: Curves.easeOut);
+
+  Future<void> _message(String number) async {
+    try {
+      await TelecomBridge.instance.sendSms(number);
+    } on PlatformException {
+      // No SMS app: nothing to open.
+    }
+  }
 
   Widget _keypadKey(int index, double p, double size, double stride, double upperHeight) {
     final (digit, letters) = _keys[index];
@@ -351,10 +419,7 @@ class _CallControlPanelState extends State<CallControlPanel> {
                   height: size,
                   transformAlignment: Alignment.center,
                   transform: Matrix4.diagonal3Values(_tone == digit ? .94 : 1, _tone == digit ? .94 : 1, 1),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _tone == digit ? const Color(0x4DFFFFFF) : const Color(0x1FFFFFFF),
-                  ),
+                  decoration: callControlBody(pressed: _tone == digit),
                   padding: const EdgeInsets.all(4),
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
