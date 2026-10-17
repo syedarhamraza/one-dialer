@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../app/layout.dart';
 import '../../core/contacts/contacts_repository.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
@@ -10,7 +11,6 @@ import '../recents/call_log_repository.dart';
 import '../settings/settings_screen.dart';
 import 'speed_dial_screen.dart';
 import '../../widgets/letter_avatar.dart';
-import '../../widgets/one_ui_floating_nav_bar.dart';
 import '../../widgets/place_call.dart';
 import 't9.dart';
 
@@ -87,8 +87,7 @@ class _KeypadScreenState extends State<KeypadScreen> with WidgetsBindingObserver
     if (assign == true && mounted) _openSpeedDial();
   }
 
-  void _openSpeedDial() =>
-      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SpeedDialScreen()));
+  void _openSpeedDial() => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SpeedDialScreen()));
 
   void _backspace() {
     final text = widget.input.value;
@@ -114,12 +113,11 @@ class _KeypadScreenState extends State<KeypadScreen> with WidgetsBindingObserver
   }
 
   /// One button per SIM only when Android has no default SIM to use.
-  List<SimCard?> get _callButtons =>
-      _sims.length > 1 && !_sims.any((s) => s.isDefault) ? _sims : const [null];
+  List<SimCard?> get _callButtons => _sims.length > 1 && !_sims.any((s) => s.isDefault) ? _sims : const [null];
 
   @override
   Widget build(BuildContext context) {
-    final navSpace = MediaQuery.paddingOf(context).bottom + OneUIFloatingNavBar.barHeight + 16;
+    final navSpace = navBarClearance(context) + 8;
     return SafeArea(
       bottom: false,
       child: ValueListenableBuilder<String>(
@@ -137,8 +135,8 @@ class _KeypadScreenState extends State<KeypadScreen> with WidgetsBindingObserver
                   itemBuilder: (_) => [
                     PopupMenuItem(onTap: _openSpeedDial, child: const Text('Speed dial numbers')),
                     PopupMenuItem(
-                      onTap: () => Navigator.of(context)
-                          .push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),
+                      onTap: () =>
+                          Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),
                       child: const Text('Settings'),
                     ),
                   ],
@@ -225,11 +223,13 @@ class _ResultTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _highlighted(name, match.nameRange,
-                      const TextStyle(fontSize: 16, color: OneUITheme.textPrimary)),
+                  _highlighted(name, match.nameRange, const TextStyle(fontSize: 16, color: OneUITheme.textPrimary)),
                   const SizedBox(height: 2),
-                  _highlighted(match.number, match.numberRange,
-                      const TextStyle(fontSize: 13.5, color: OneUITheme.textSecondary)),
+                  _highlighted(
+                    match.number,
+                    match.numberRange,
+                    const TextStyle(fontSize: 13.5, color: OneUITheme.textSecondary),
+                  ),
                 ],
               ),
             ),
@@ -243,14 +243,17 @@ class _ResultTile extends StatelessWidget {
     if (range == null) return Text(text, style: style, maxLines: 1, overflow: TextOverflow.ellipsis);
     final (start, end) = range;
     return Text.rich(
-      TextSpan(style: style, children: [
-        TextSpan(text: text.substring(0, start)),
-        TextSpan(
-          text: text.substring(start, end),
-          style: const TextStyle(color: OneUITheme.accentBlue, fontWeight: FontWeight.w600),
-        ),
-        TextSpan(text: text.substring(end)),
-      ]),
+      TextSpan(
+        style: style,
+        children: [
+          TextSpan(text: text.substring(0, start)),
+          TextSpan(
+            text: text.substring(start, end),
+            style: const TextStyle(color: OneUITheme.accentBlue, fontWeight: FontWeight.w600),
+          ),
+          TextSpan(text: text.substring(end)),
+        ],
+      ),
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
     );
@@ -302,10 +305,18 @@ class _Keypad extends StatelessWidget {
   final ValueChanged<String> onLongPress;
 
   static const _keys = [
-    ('1', ''), ('2', 'ABC'), ('3', 'DEF'),
-    ('4', 'GHI'), ('5', 'JKL'), ('6', 'MNO'),
-    ('7', 'PQRS'), ('8', 'TUV'), ('9', 'WXYZ'),
-    ('*', ''), ('0', '+'), ('#', ''),
+    ('1', ''),
+    ('2', 'ABC'),
+    ('3', 'DEF'),
+    ('4', 'GHI'),
+    ('5', 'JKL'),
+    ('6', 'MNO'),
+    ('7', 'PQRS'),
+    ('8', 'TUV'),
+    ('9', 'WXYZ'),
+    ('*', ''),
+    ('0', '+'),
+    ('#', ''),
   ];
 
   @override

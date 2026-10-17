@@ -14,17 +14,17 @@ enum CallState {
   unknown;
 
   static CallState parse(String? raw) => switch (raw) {
-        'new' => newCall,
-        'dialing' => dialing,
-        'connecting' => connecting,
-        'ringing' => ringing,
-        'active' => active,
-        'holding' => holding,
-        'disconnecting' => disconnecting,
-        'disconnected' => disconnected,
-        'selectPhoneAccount' => selectPhoneAccount,
-        _ => unknown,
-      };
+    'new' => newCall,
+    'dialing' => dialing,
+    'connecting' => connecting,
+    'ringing' => ringing,
+    'active' => active,
+    'holding' => holding,
+    'disconnecting' => disconnecting,
+    'disconnected' => disconnected,
+    'selectPhoneAccount' => selectPhoneAccount,
+    _ => unknown,
+  };
 }
 
 enum AudioRoute {
@@ -33,8 +33,7 @@ enum AudioRoute {
   bluetooth,
   wiredHeadset;
 
-  static AudioRoute parse(String? raw) =>
-      values.firstWhere((r) => r.name == raw, orElse: () => earpiece);
+  static AudioRoute parse(String? raw) => values.firstWhere((r) => r.name == raw, orElse: () => earpiece);
 }
 
 class CallInfo {
@@ -61,9 +60,7 @@ class CallInfo {
       state: CallState.parse(map['state'] as String?),
       number: map['number'] as String?,
       name: map['name'] as String?,
-      connectTime: connectMillis > 0
-          ? DateTime.fromMillisecondsSinceEpoch(connectMillis)
-          : null,
+      connectTime: connectMillis > 0 ? DateTime.fromMillisecondsSinceEpoch(connectMillis) : null,
       isConference: map['isConference'] as bool? ?? false,
       canHold: map['canHold'] as bool? ?? false,
       canMerge: map['canMerge'] as bool? ?? false,
@@ -93,8 +90,7 @@ class CallInfo {
   /// Caller hid their number.
   final bool isPrivate;
 
-  String get displayName =>
-      (name?.isNotEmpty ?? false) ? name! : (number ?? 'Unknown');
+  String get displayName => (name?.isNotEmpty ?? false) ? name! : (number ?? 'Unknown');
 }
 
 class AudioInfo {
@@ -105,12 +101,12 @@ class AudioInfo {
   });
 
   factory AudioInfo.fromMap(Map<Object?, Object?> map) => AudioInfo(
-        muted: map['muted'] as bool? ?? false,
-        route: AudioRoute.parse(map['route'] as String?),
-        supportedRoutes: (map['supportedRoutes'] as List<Object?>? ?? const [])
-            .map((r) => AudioRoute.parse(r as String?))
-            .toList(),
-      );
+    muted: map['muted'] as bool? ?? false,
+    route: AudioRoute.parse(map['route'] as String?),
+    supportedRoutes: (map['supportedRoutes'] as List<Object?>? ?? const [])
+        .map((r) => AudioRoute.parse(r as String?))
+        .toList(),
+  );
 
   final bool muted;
   final AudioRoute route;
@@ -122,13 +118,11 @@ class CallSnapshot {
   const CallSnapshot({this.calls = const [], this.audio = const AudioInfo()});
 
   factory CallSnapshot.fromMap(Map<Object?, Object?> map) => CallSnapshot(
-        calls: (map['calls'] as List<Object?>? ?? const [])
-            .map((c) => CallInfo.fromMap(c! as Map<Object?, Object?>))
-            .toList(),
-        audio: map['audio'] == null
-            ? const AudioInfo()
-            : AudioInfo.fromMap(map['audio']! as Map<Object?, Object?>),
-      );
+    calls: (map['calls'] as List<Object?>? ?? const [])
+        .map((c) => CallInfo.fromMap(c! as Map<Object?, Object?>))
+        .toList(),
+    audio: map['audio'] == null ? const AudioInfo() : AudioInfo.fromMap(map['audio']! as Map<Object?, Object?>),
+  );
 
   final List<CallInfo> calls;
   final AudioInfo audio;
@@ -138,10 +132,7 @@ class CallSnapshot {
     if (calls.isEmpty) return null;
     return calls.firstWhere(
       (c) => c.state == CallState.ringing,
-      orElse: () => calls.firstWhere(
-        (c) => c.state != CallState.holding,
-        orElse: () => calls.first,
-      ),
+      orElse: () => calls.firstWhere((c) => c.state != CallState.holding, orElse: () => calls.first),
     );
   }
 }
@@ -151,11 +142,11 @@ class SimCard {
   const SimCard({required this.id, required this.label, required this.color, this.isDefault = false});
 
   factory SimCard.fromMap(Map<Object?, Object?> map) => SimCard(
-        id: map['id']! as String,
-        label: (map['label'] as String?)?.trim().isNotEmpty == true ? map['label']! as String : 'SIM',
-        color: Color(map['color'] as int? ?? 0xFF5390F5).withAlpha(0xFF),
-        isDefault: map['isDefault'] as bool? ?? false,
-      );
+    id: map['id']! as String,
+    label: (map['label'] as String?)?.trim().isNotEmpty == true ? map['label']! as String : 'SIM',
+    color: Color(map['color'] as int? ?? 0xFF5390F5).withAlpha(0xFF),
+    isDefault: map['isDefault'] as bool? ?? false,
+  );
 
   final String id;
   final String label;

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../app/layout.dart';
 import '../../core/contacts/contacts_repository.dart';
 import '../../theme/one_ui_scroll.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/letter_avatar.dart';
-import '../../widgets/one_ui_big_header.dart';
-import '../../widgets/one_ui_floating_nav_bar.dart';
+import '../../widgets/one_ui_collapsible_header.dart';
 import '../../widgets/swipe_to_call.dart';
 import 'contact_details_screen.dart';
 import 'contact_sections.dart';
@@ -37,9 +37,8 @@ class _ContactsScreenState extends State<ContactsScreen> {
     super.dispose();
   }
 
-  void _open(DialerContact contact) => Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => ContactDetailsScreen(contactId: contact.id)),
-      );
+  void _open(DialerContact contact) =>
+      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ContactDetailsScreen(contactId: contact.id)));
 
   @override
   Widget build(BuildContext context) {
@@ -49,10 +48,13 @@ class _ContactsScreenState extends State<ContactsScreen> {
         final all = ContactsRepository.instance.contacts.value;
         final query = _search.text;
         final searching = query.trim().isNotEmpty;
-        final favourites = searching ? const <DialerContact>[] : [for (final c in all) if (c.isFavorite) c];
-        final sections = searching
-            ? [('Results', searchContacts(all, query))]
-            : sectionContacts(all);
+        final favourites = searching
+            ? const <DialerContact>[]
+            : [
+                for (final c in all)
+                  if (c.isFavorite) c,
+              ];
+        final sections = searching ? [('Results', searchContacts(all, query))] : sectionContacts(all);
 
         // Scroll offset of each section, for the index.
         final offsets = <String, double>{};
@@ -71,9 +73,14 @@ class _ContactsScreenState extends State<ContactsScreen> {
               slivers: [
                 SliverPersistentHeader(
                   pinned: true,
-                  delegate: OneUIBigHeader(title: 'Contacts', subtitle: '${all.length} contacts with numbers'),
+                  delegate: OneUICollapsibleHeaderDelegate(
+                    title: 'Contacts',
+                    subtitle: '${all.length} contacts with numbers',
+                  ),
                 ),
-                SliverToBoxAdapter(child: _SearchBar(controller: _search, onChanged: () => setState(() {}))),
+                SliverToBoxAdapter(
+                  child: _SearchBar(controller: _search, onChanged: () => setState(() {})),
+                ),
                 if (!ContactsRepository.instance.hasAccess.value)
                   SliverToBoxAdapter(
                     child: _AccessNeeded(
@@ -88,11 +95,13 @@ class _ContactsScreenState extends State<ContactsScreen> {
                   const SliverToBoxAdapter(
                     child: Padding(
                       padding: EdgeInsets.only(top: 40),
-                      child: Center(child: Text('No contacts found', style: TextStyle(color: OneUITheme.textSecondary))),
+                      child: Center(
+                        child: Text('No contacts found', style: TextStyle(color: OneUITheme.textSecondary)),
+                      ),
                     ),
                   ),
                 SliverToBoxAdapter(
-                  child: SizedBox(height: MediaQuery.paddingOf(context).bottom + OneUIFloatingNavBar.barHeight + 32),
+                  child: SizedBox(height: MediaQuery.paddingOf(context).bottom + kFloatingNavBarHeight + 32),
                 ),
               ],
             ),
@@ -100,7 +109,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
               Positioned(
                 right: 0,
                 top: MediaQuery.paddingOf(context).top + 120,
-                bottom: MediaQuery.paddingOf(context).bottom + OneUIFloatingNavBar.barHeight + 24,
+                bottom: MediaQuery.paddingOf(context).bottom + kFloatingNavBarHeight + 24,
                 child: _IndexStrip(
                   letters: [for (final (l, _) in sections) l],
                   onLetter: (l) {
@@ -117,39 +126,35 @@ class _ContactsScreenState extends State<ContactsScreen> {
   }
 
   List<Widget> _section(String title, List<DialerContact> list) => [
-        SliverToBoxAdapter(
-          child: SizedBox(
-            height: _sectionHeaderHeight,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(32, 16, 16, 0),
-              child: Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.2,
-                  color: OneUITheme.sectionHeader,
-                ),
-              ),
+    SliverToBoxAdapter(
+      child: SizedBox(
+        height: _sectionHeaderHeight,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(32, 16, 16, 0),
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.2,
+              color: OneUITheme.sectionHeader,
             ),
           ),
         ),
-        SliverPadding(
-          padding: const EdgeInsets.only(left: 16, right: 28), // room for the A–Z index
-          sliver: SliverFixedExtentList(
-            itemExtent: _rowHeight,
-            delegate: SliverChildBuilderDelegate(
-              (context, i) => _ContactRow(
-                contact: list[i],
-                isFirst: i == 0,
-                isLast: i == list.length - 1,
-                onTap: () => _open(list[i]),
-              ),
-              childCount: list.length,
-            ),
-          ),
+      ),
+    ),
+    SliverPadding(
+      padding: const EdgeInsets.only(left: 16, right: 28), // room for the A–Z index
+      sliver: SliverFixedExtentList(
+        itemExtent: _rowHeight,
+        delegate: SliverChildBuilderDelegate(
+          (context, i) =>
+              _ContactRow(contact: list[i], isFirst: i == 0, isLast: i == list.length - 1, onTap: () => _open(list[i])),
+          childCount: list.length,
         ),
-      ];
+      ),
+    ),
+  ];
 }
 
 class _SearchBar extends StatelessWidget {
@@ -280,7 +285,14 @@ class _IndexStrip extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   for (final l in letters)
-                    Text(l, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: OneUITheme.textSecondary)),
+                    Text(
+                      l,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: OneUITheme.textSecondary,
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -307,7 +319,11 @@ class _AccessNeeded extends StatelessWidget {
         children: [
           const Icon(Icons.lock_outline_rounded, size: 40, color: OneUITheme.textSecondary),
           const SizedBox(height: 12),
-          Text(text, textAlign: TextAlign.center, style: const TextStyle(color: OneUITheme.textSecondary)),
+          Text(
+            text,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: OneUITheme.textSecondary),
+          ),
           const SizedBox(height: 16),
           FilledButton(onPressed: onTap, child: Text(action)),
         ],

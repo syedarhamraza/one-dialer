@@ -10,8 +10,14 @@ class LetterAvatar extends StatelessWidget {
   final double size;
 
   static const _colors = [
-    Color(0xFFF07167), Color(0xFFFB8C00), Color(0xFF00C05A), Color(0xFF48B5A0),
-    Color(0xFF34AADC), Color(0xFF5390F5), Color(0xFF7E57C2), Color(0xFFEF6C9A),
+    Color(0xFFF07167),
+    Color(0xFFFB8C00),
+    Color(0xFF00C05A),
+    Color(0xFF48B5A0),
+    Color(0xFF34AADC),
+    Color(0xFF5390F5),
+    Color(0xFF7E57C2),
+    Color(0xFFEF6C9A),
   ];
 
   @override
@@ -38,7 +44,10 @@ class LetterAvatar extends StatelessWidget {
       height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(color: color.withValues(alpha: 0.22), shape: BoxShape.circle),
-      child: Text(letter, style: TextStyle(fontSize: size * 0.42, fontWeight: FontWeight.w600, color: color)),
+      child: Text(
+        letter,
+        style: TextStyle(fontSize: size * 0.42, fontWeight: FontWeight.w600, color: color),
+      ),
     );
   }
 }

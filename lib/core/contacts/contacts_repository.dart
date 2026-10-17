@@ -84,7 +84,10 @@ class ContactsRepository {
   /// Linked accounts (Google, WhatsApp, ...) each carry a copy of the same number; keep one.
   static List<Phone> _uniquePhones(List<Phone> phones) {
     final seen = <String>{};
-    return [for (final p in phones) if (seen.add(numberKey(p.number))) p];
+    return [
+      for (final p in phones)
+        if (seen.add(numberKey(p.number))) p,
+    ];
   }
 
   static String _label(Label<PhoneLabel> label) {
@@ -112,8 +115,8 @@ class ContactsRepository {
 
   /// Opens Android's "new contact" screen, with [number] filled in if given.
   Future<void> addNumber([String? number]) => FlutterContacts.native.showCreator(
-        contact: number == null ? null : Contact(phones: [Phone(number: number)]),
-      );
+    contact: number == null ? null : Contact(phones: [Phone(number: number)]),
+  );
 
   /// Opens Android's contact editor.
   Future<void> edit(String id) => FlutterContacts.native.showEditor(id);

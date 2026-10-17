@@ -41,8 +41,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     });
   }
 
-  String get _simLabel =>
-      _sims.where((s) => s.id == _simId).map((s) => s.label).firstOrNull ?? 'Ask every time';
+  String get _simLabel => _sims.where((s) => s.id == _simId).map((s) => s.label).firstOrNull ?? 'Ask every time';
 
   Future<void> _chooseSim() async {
     final picked = await showModalBottomSheet<(String?,)>(
@@ -86,7 +85,9 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           // Deleted (e.g. from the editor) or lost its numbers.
           return Scaffold(
             appBar: AppBar(),
-            body: const Center(child: Text('Contact not found', style: TextStyle(color: OneUITheme.textSecondary))),
+            body: const Center(
+              child: Text('Contact not found', style: TextStyle(color: OneUITheme.textSecondary)),
+            ),
           );
         }
         Future<void> call(String number) => placeCall(context, number, simId: _simId);
@@ -108,8 +109,10 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   final blocked = contact.numbers.every(blocking.isBlocked);
                   return IconButton(
                     tooltip: blocked ? 'Unblock contact' : 'Block contact',
-                    icon: Icon(blocked ? Icons.block_rounded : Icons.block_outlined,
-                        color: blocked ? OneUITheme.accentRed : null),
+                    icon: Icon(
+                      blocked ? Icons.block_rounded : Icons.block_outlined,
+                      color: blocked ? OneUITheme.accentRed : null,
+                    ),
                     onPressed: () async {
                       for (final n in contact.numbers) {
                         await blocking.setBlocked(n, !blocked);
@@ -130,7 +133,9 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             children: [
               const SizedBox(height: 8),
-              Center(child: LetterAvatar(name: contact.name, photo: contact.thumbnail, size: 96)),
+              Center(
+                child: LetterAvatar(name: contact.name, photo: contact.thumbnail, size: 96),
+              ),
               const SizedBox(height: 16),
               Text(
                 contact.name,

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../core/telecom/telecom_bridge.dart';
-import '../../theme/one_ui_scroll.dart';
 import '../../theme/one_ui_theme.dart';
-import '../../widgets/one_ui_big_header.dart';
+import '../../widgets/one_ui_subpage.dart';
 import '../../widgets/one_ui_group_card.dart';
 
 /// Edit the "Decline with message" texts (up to [max]).
@@ -48,43 +47,39 @@ class _QuickRepliesScreenState extends State<QuickRepliesScreen> {
   @override
   Widget build(BuildContext context) {
     final replies = _replies;
-    return Scaffold(
-      body: CustomScrollView(
-        physics: OneUIScrollPhysics.bigHeader,
-        slivers: [
-          const SliverPersistentHeader(
-            pinned: true,
-            delegate: OneUIBigHeader(title: 'Quick decline messages', subtitle: 'Sent when you decline with a message'),
+    return OneUISubpage(
+      title: 'Quick decline messages',
+      builder: (context) => [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 0, 16, 4),
+          child: Text(
+            'Sent when you decline a call with a message',
+            style: TextStyle(fontSize: 13.5, color: OneUITheme.textSecondary),
           ),
-          if (replies != null)
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverToBoxAdapter(
-                child: OneUIGroupCard(
-                  items: [
-                    for (var i = 0; i < replies.length; i++)
-                      OneUIGroupItem(
-                        title: replies[i],
-                        onTap: () => _edit(i),
-                        trailing: IconButton(
-                          tooltip: 'Delete',
-                          icon: const Icon(Icons.remove_circle_outline_rounded, color: OneUITheme.accentRed),
-                          onPressed: replies.length == 1 ? null : () => _save([...replies]..removeAt(i)),
-                        ),
-                      ),
-                    if (replies.length < QuickRepliesScreen.max)
-                      OneUIGroupItem(
-                        leading: const Icon(Icons.add_rounded, color: OneUITheme.accentBlue),
-                        title: 'Add message',
-                        onTap: () => _edit(null),
-                        trailing: const SizedBox.shrink(),
-                      ),
-                  ],
+        ),
+        if (replies != null)
+          OneUIGroupCard(
+            items: [
+              for (var i = 0; i < replies.length; i++)
+                OneUIGroupItem(
+                  title: replies[i],
+                  onTap: () => _edit(i),
+                  trailing: IconButton(
+                    tooltip: 'Delete',
+                    icon: const Icon(Icons.remove_circle_outline_rounded, color: OneUITheme.accentRed),
+                    onPressed: replies.length == 1 ? null : () => _save([...replies]..removeAt(i)),
+                  ),
                 ),
-              ),
-            ),
-        ],
-      ),
+              if (replies.length < QuickRepliesScreen.max)
+                OneUIGroupItem(
+                  leading: const Icon(Icons.add_rounded, color: OneUITheme.accentBlue),
+                  title: 'Add message',
+                  onTap: () => _edit(null),
+                  trailing: const SizedBox.shrink(),
+                ),
+            ],
+          ),
+      ],
     );
   }
 }

@@ -16,7 +16,7 @@ class OneUIScrollPhysics extends ClampingScrollPhysics {
   /// Friction of a fling; Flutter's default is 0.015.
   static const double flingFriction = 0.011;
 
-  /// How far a big header collapses: [OneUIBigHeader]'s expanded
+  /// How far a big header collapses: `OneUICollapsibleHeaderDelegate`'s default expanded
   /// height (270) minus its collapsed height (92).
   static const double bigHeaderCollapse = 270.0 - 92.0;
 
@@ -44,7 +44,8 @@ class OneUIScrollPhysics extends ClampingScrollPhysics {
     if (position.outOfRange) return super.createBallisticSimulation(position, velocity);
     final tolerance = toleranceFor(position);
     final pixels = position.pixels;
-    final fling = velocity.abs() < tolerance.velocity ||
+    final fling =
+        velocity.abs() < tolerance.velocity ||
             (velocity > 0 && pixels >= position.maxScrollExtent) ||
             (velocity < 0 && pixels <= position.minScrollExtent)
         ? null
@@ -77,7 +78,7 @@ class OneUIScrollPhysics extends ClampingScrollPhysics {
   }
 }
 
-/// Wraps big-header pages so pulling down at the top
+/// Wraps big-header pages (the home tabs, in `HomeScreen`) so pulling down at the top
 /// doesn't stretch them.
 /// The big header is the top of those pages, and the stretch drew the glass cards in an
 /// offscreen layer, which made their glow flare while pulling. The bottom still stretches.
