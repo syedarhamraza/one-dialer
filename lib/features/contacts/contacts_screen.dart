@@ -135,7 +135,6 @@ class _ContactsScreenState extends State<ContactsScreen> {
   void _updateDock() {
     final count = _selected?.length ?? 0;
     navDock.value = OneUIFloatingActionBar(
-      docked: true,
       items: [
         OneUIFloatingActionBarItem(
           icon: Icons.select_all_rounded,

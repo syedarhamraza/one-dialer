@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../core/telecom/telecom_bridge.dart';
 import '../features/contacts/contacts_screen.dart';
 import '../features/keypad/keypad_screen.dart';
 import '../features/recents/call_log_repository.dart';
 import '../features/recents/recents_screen.dart';
-import '../widgets/one_ui_floating_nav_bar.dart';
+import '../theme/one_ui_theme.dart';
+import 'layout.dart';
 
-/// A tab's selection actions; while set, the nav bar morphs into them (OneSpend's
-/// `dockedContent`), like Samsung's Delete / Share bar.
+/// A tab's selection actions (a `OneUIFloatingActionBar`); while set, it replaces the
+/// nav bar, like Samsung's Delete / Share bar.
 final ValueNotifier<Widget?> navDock = ValueNotifier(null);
 
 /// The three Samsung tabs under the floating nav bar. Tabs stay alive (IndexedStack)
@@ -24,10 +26,12 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   final _input = ValueNotifier('');
   int _tab = 0;
 
-  static const _items = [
-    OneUINavItem(activeIcon: Icons.dialpad_rounded, inactiveIcon: Icons.dialpad_rounded, label: 'Keypad'),
-    OneUINavItem(activeIcon: Icons.watch_later_rounded, inactiveIcon: Icons.watch_later_outlined, label: 'Recents'),
-    OneUINavItem(activeIcon: Icons.person_rounded, inactiveIcon: Icons.person_outline_rounded, label: 'Contacts'),
+  static const double _tabWidth = 96;
+
+  static const _tabs = [
+    GlassTab(icon: Icon(Icons.dialpad_rounded), label: 'Keypad'),
+    GlassTab(icon: Icon(Icons.watch_later_outlined), activeIcon: Icon(Icons.watch_later_rounded), label: 'Recents'),
+    GlassTab(icon: Icon(Icons.person_outline_rounded), activeIcon: Icon(Icons.person_rounded), label: 'Contacts'),
   ];
 
   @override
@@ -102,8 +106,30 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
               ),
               child: ValueListenableBuilder<Widget?>(
                 valueListenable: navDock,
-                builder: (context, dock, _) =>
-                    OneUIFloatingNavBar(currentIndex: _tab, items: _items, onTap: _select, dockedContent: dock),
+                builder: (context, dock, _) => AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  child: dock != null
+                      ? Align(key: const ValueKey('dock'), alignment: Alignment.bottomCenter, child: dock)
+                      : SafeArea(
+                          key: const ValueKey('nav'),
+                          top: false,
+                          child: GlassTabBar.bottom(
+                            tabs: _tabs,
+                            selectedIndex: _tab,
+                            onTabSelected: _select,
+                            quality: GlassQuality.premium,
+                            barHeight: kFloatingNavBarHeight,
+                            verticalPadding: kNavBarVerticalPadding,
+                            tabWidth: _tabWidth,
+                            // The package left-aligns a fixed-width pill; centre it like Samsung's.
+                            horizontalPadding: (MediaQuery.sizeOf(context).width - _tabWidth * _tabs.length) / 2,
+                            selectedIconColor: OneUITheme.textPrimary,
+                            selectedLabelColor: OneUITheme.textPrimary,
+                            unselectedIconColor: OneUITheme.navbar3dInactiveIcon,
+                            unselectedLabelColor: OneUITheme.navbar3dInactiveText,
+                          ),
+                        ),
+                ),
               ),
             ),
           ),
