@@ -396,7 +396,6 @@ class _CallControlPanelState extends State<CallControlPanel> {
     menu: (circle) => GlassMenu(
       menuAlignment: GlassMenuAlignment.bottomRight,
       menuWidth: 210,
-      quality: GlassQuality.premium,
       triggerBuilder: (context, toggle) => circle(toggle),
       items: [
         GlassMenuItem(

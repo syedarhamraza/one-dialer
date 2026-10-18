@@ -13,7 +13,8 @@ left, with the photo in a circle on the right. The controls are liquid glass
 (`liquid_glass_widgets`, initialised in `inCallMain` only). One
 `CallGlassLayer` wraps the control panel, and every circle and key inside it is
 a grouped `CallGlass`, so they render in a single pass. Like the old glass nav
-bar, it uses the package's default glass at `GlassQuality.premium`. The main app's floating
+bar, it uses the package's default glass at standard quality: premium looked too heavy and its
+backdrop snapshot blanked the controls mid-animation. The main app's floating
 chrome stays OneSpend's, without glass.
 
 `InCallScreen` subscribes to the existing Telecom snapshot stream. Presentation

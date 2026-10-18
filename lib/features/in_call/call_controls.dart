@@ -15,8 +15,8 @@ class CallGlassLayer extends StatelessWidget {
   final Widget child;
 
   @override
-  // The package's own glass at its top tier, like the old glass nav bar.
-  Widget build(BuildContext context) => AdaptiveLiquidGlassLayer(quality: GlassQuality.premium, child: child);
+  // The package's own glass. Premium snapshots the backdrop and blanks out mid-animation.
+  Widget build(BuildContext context) => AdaptiveLiquidGlassLayer(child: child);
 }
 
 /// A glass body inside [CallGlassLayer]: a circle, or a stadium when [radius] is given.
@@ -30,7 +30,6 @@ class CallGlass extends StatelessWidget {
   @override
   Widget build(BuildContext context) => AdaptiveGlass.grouped(
     shape: radius == null ? const LiquidOval() : LiquidRoundedRectangle(borderRadius: radius!),
-    quality: GlassQuality.premium,
     isInteractive: true,
     child: AnimatedContainer(
       duration: Duration(milliseconds: pressed ? 40 : 220),
