@@ -229,6 +229,8 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     // The ball wears the End pill's finish the whole way, its colour morphing from Answer's green
     // through orange to End's red, so it lands as the pill itself.
     final color = _ballColor.transform(settled)!;
+    // Lands on the End pill's exact top colour (not just a lightened red), so the swap is invisible.
+    final top = Color.lerp(Color.lerp(color, Colors.white, .16), const Color(0xFFE5604F), settled * settled)!;
     final shape = RoundedSuperellipseBorder(
       borderRadius: BorderRadius.circular(rect.shortestSide / 2),
       side: const BorderSide(color: Color(0x40FFFFFF), width: .8),
@@ -243,12 +245,8 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
           key: const ValueKey('answer-flight'),
           decoration: ShapeDecoration(
             shape: shape,
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color.lerp(color, Colors.white, .16)!, color],
-            ),
-            shadows: [BoxShadow(color: color.withValues(alpha: .35), blurRadius: 22, offset: const Offset(0, 6))],
+            gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [top, color]),
+            shadows: [BoxShadow(color: color.withValues(alpha: .3), blurRadius: 22, offset: const Offset(0, 6))],
           ),
           foregroundDecoration: ShapeDecoration(
             shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(rect.shortestSide / 2)),
