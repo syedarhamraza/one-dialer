@@ -13,7 +13,6 @@ import '../../theme/one_ui_theme.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_collapsible_header.dart';
 import '../../widgets/one_ui_floating_action_bar.dart';
-import '../../widgets/morph_menu_action.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_floating_modal.dart';
 import '../../widgets/one_ui_scroll_to_top_button.dart';
@@ -187,17 +186,22 @@ class _ContactsScreenState extends State<ContactsScreen> {
 
   // --- Menu and search ---------------------------------------------------------
 
-  List<OneUIFloatingMenuItem> get _menuItems => [
-    OneUIFloatingMenuItem(label: 'Select', onTap: _startSelection),
-    OneUIFloatingMenuItem(
-      label: _favoritesAsList ? 'View favorites as tiles' : 'View favorites as list',
-      onTap: () => DialerPrefs.instance.setFavoritesAsList(!_favoritesAsList),
-    ),
-    OneUIFloatingMenuItem(
-      label: 'Settings',
-      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),
-    ),
-  ];
+  void _openMenu() => OneUIFloatingMenu.show(
+    context: context,
+    anchorKey: _menuKey,
+    width: 250,
+    items: [
+      OneUIFloatingMenuItem(label: 'Select', onTap: _startSelection),
+      OneUIFloatingMenuItem(
+        label: _favoritesAsList ? 'View favorites as tiles' : 'View favorites as list',
+        onTap: () => DialerPrefs.instance.setFavoritesAsList(!_favoritesAsList),
+      ),
+      OneUIFloatingMenuItem(
+        label: 'Settings',
+        onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),
+      ),
+    ],
+  );
 
   // --- Build -------------------------------------------------------------------
 
@@ -284,7 +288,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                           tooltip: 'Search',
                           onTap: () => openSearch(context),
                         ),
-                        MorphMenuAction(items: _menuItems),
+                        OneUIHeaderAction(icon: Icons.more_vert_rounded, tooltip: 'More options', onTap: _openMenu),
                       ],
               ),
             ),

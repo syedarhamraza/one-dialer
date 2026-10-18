@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../theme/one_ui_theme.dart';
-import 'frosted_body.dart';
 import 'one_ui_glass_surface.dart';
 import 'one_ui_morph_switcher.dart';
 
@@ -62,19 +61,15 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
         child: Align(
           alignment: Alignment.bottomCenter,
           child: RepaintBoundary(
-            // The whole bar presses as one, outside the tabs' own taps.
-            child: GlassPress(
-              radius: OneUIFloatingNavBar._barHeight / 2,
-              child: OneUIGlassSurface(
-                elevation: OneUIGlassElevation.navbar,
-                height: OneUIFloatingNavBar._barHeight,
-                // One glass bar that stretches between the tabs and a tab's docked
-                // actions, fading through its content (see OneUIMorphSwitcher).
-                child: OneUIMorphSwitcher(
-                  child: docked != null
-                      ? KeyedSubtree(key: const ValueKey('docked'), child: docked)
-                      : KeyedSubtree(key: const ValueKey('tabs'), child: _buildTabs(context, reduceMotion)),
-                ),
+            child: OneUIGlassSurface(
+              elevation: OneUIGlassElevation.navbar,
+              height: OneUIFloatingNavBar._barHeight,
+              // One glass bar that stretches between the tabs and a tab's docked
+              // actions, fading through its content (see OneUIMorphSwitcher).
+              child: OneUIMorphSwitcher(
+                child: docked != null
+                    ? KeyedSubtree(key: const ValueKey('docked'), child: docked)
+                    : KeyedSubtree(key: const ValueKey('tabs'), child: _buildTabs(context, reduceMotion)),
               ),
             ),
           ),

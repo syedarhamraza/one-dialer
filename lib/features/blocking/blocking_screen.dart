@@ -53,9 +53,7 @@ class _BlockingScreenState extends State<BlockingScreen> {
       ),
     );
     if (!mounted || choice == null) return;
-    final numbers = choice == 'type'
-        ? [?await _typeNumber()]
-        : (await pickContact(context, title: 'Block contact'))?.numbers;
+    final numbers = choice == 'type' ? [?await _typeNumber()] : (await pickContact(context, title: 'Block contact'))?.numbers;
     for (final n in numbers ?? const <String>[]) {
       await _repo.setBlocked(n, true);
     }
