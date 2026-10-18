@@ -74,7 +74,7 @@ the other button and the pill fade out as it arms.
   the flight.
 - While dragged, a ball stretches like jelly: it elongates along the drag and squashes
   a third as much across it (up to 18%).
-- Anything shorter springs back on `GlassSpring.bouncy`.
+- Anything shorter springs back on `GlassSpring.snappy`, carrying a third of the fling, wobbling at most 8% past rest (never through to the other side). Downward drags give only 16 px, so a ball never slides under the pill.
 - Taps never answer or decline.
 - The button grows and glows as it arms.
 - A haptic fires when you cross a threshold.

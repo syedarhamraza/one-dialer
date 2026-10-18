@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
@@ -216,7 +218,8 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
 
   double get _threshold => SwipeUpButton.threshold * (widget.compact ? .75 : 1);
 
-  Offset get _offset => _drag * _hold.value;
+  // The spring back may wobble just past rest, never fling through to the other side.
+  Offset get _offset => _drag * math.max(_hold.value, -.08);
 
   /// Only an upward-leaning drag arms, so a downward brush never fires.
   bool _armedBy(Offset drag) => drag.distance >= _threshold && drag.dy < 0;
@@ -273,7 +276,9 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
     final next = _drag + d.delta;
     // A long throw stops short of leaving the screen.
     final max = _threshold * 2.2;
-    final limited = next.distance > max ? next / next.distance * max : next;
+    // Downward can't act, so it only gives a little and never slides under the pill below.
+    final kept = Offset(next.dx, math.min(next.dy, 16));
+    final limited = kept.distance > max ? kept / kept.distance * max : kept;
     if (_armedBy(_drag) != _armedBy(limited)) HapticFeedback.selectionClick();
     setState(() => _drag = limited);
     widget.onProgress?.call(_armedFraction(_drag));
@@ -295,8 +300,9 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
       return;
     }
     // The fling's speed along the drag, as a rate of change of the 0-1 hold.
-    final along = (velocity.dx * _drag.dx + velocity.dy * _drag.dy) / (_drag.distance * _drag.distance);
-    _hold.animateWith(SpringSimulation(GlassSpring.bouncy(), _hold.value, 0, along, snapToEnd: true));
+    // A third of the fling carries into the return, so a hard flick can't hurl the ball past rest.
+    final along = .35 * (velocity.dx * _drag.dx + velocity.dy * _drag.dy) / (_drag.distance * _drag.distance);
+    _hold.animateWith(SpringSimulation(GlassSpring.snappy(), _hold.value, 0, along, snapToEnd: true));
   }
 
   /// The glass package's anchor stretch on a free ball: it elongates along the drag and
