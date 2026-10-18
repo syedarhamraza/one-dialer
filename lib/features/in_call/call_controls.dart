@@ -34,7 +34,7 @@ class CallBody extends StatelessWidget {
       // Frosted like ColorOS: what's behind is blurred away. Grouped, so all the controls under
       // one BackdropGroup share a single backdrop read instead of a blur layer each.
       child: BackdropFilter.grouped(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
         child: CustomPaint(painter: _TintedBody(radius), child: child),
       ),
     ),
@@ -77,7 +77,7 @@ class _TintedBody extends CustomPainter {
           ..shader = const LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0x1AFFFFFF), Color(0x4DFFFFFF), Color(0x66FFFFFF)],
+            colors: [Color(0x0FFFFFFF), Color(0x2BFFFFFF), Color(0x3DFFFFFF)],
             stops: [0, .5, 1],
           ).createShader(rect),
       )

@@ -113,7 +113,7 @@ class CallBackdrop extends StatelessWidget {
 }
 
 /// The contact's photo, sharp and cover-fit; the thumbnail stands in until the full size loads.
-/// It blurs progressively as [blur] rises, the way ColorOS softens the poster behind its keypad.
+/// Always softly blurred, as on ColorOS, and blurrier as [blur] (the keypad) rises.
 class _PosterPhoto extends StatelessWidget {
   const _PosterPhoto({required this.thumbnail, this.contactId, this.blur});
   final Uint8List thumbnail;
@@ -135,13 +135,11 @@ class _PosterPhoto extends StatelessWidget {
         ),
       ),
     );
-    if (blur == null) return photo;
     return ValueListenableBuilder(
-      valueListenable: blur!,
+      valueListenable: blur ?? const AlwaysStoppedAnimation(0.0),
       child: photo,
       builder: (context, t, child) => ImageFiltered(
-        enabled: t > 0,
-        imageFilter: ImageFilter.blur(sigmaX: 28 * t, sigmaY: 28 * t, tileMode: TileMode.clamp),
+        imageFilter: ImageFilter.blur(sigmaX: 12 + 16 * t, sigmaY: 12 + 16 * t, tileMode: TileMode.clamp),
         child: child!,
       ),
     );
