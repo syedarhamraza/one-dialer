@@ -15,20 +15,24 @@ class CallGlassLayer extends StatelessWidget {
   const CallGlassLayer({super.key, required this.child});
   final Widget child;
 
-  /// Frosted: a heavy blur under a milky tint, with barely any bend or highlight. (The package's
-  /// own frost only exists on the premium path, which blanks the controls mid-animation.)
+  /// Premium frosted glass: the package's native frost, tuned to its dark-material values.
   static const settings = LiquidGlassSettings(
-    thickness: 3,
-    blur: 12,
-    glassColor: Color.fromRGBO(255, 255, 255, 0.16),
-    lightIntensity: .3,
-    refractiveIndex: 1.05,
-    saturation: 1.0,
+    thickness: 10,
+    blur: 8,
+    frost: .6,
+    frostOpacity: .85,
+    frostClamp: -.45,
+    frostWeight: .5,
+    glassColor: Color.fromRGBO(255, 255, 255, 0.08),
+    lightIntensity: .5,
+    refractiveIndex: 1.15,
+    saturation: 1.2,
     chromaticAberration: 0,
   );
 
   @override
-  Widget build(BuildContext context) => AdaptiveLiquidGlassLayer(settings: settings, child: child);
+  Widget build(BuildContext context) =>
+      AdaptiveLiquidGlassLayer(settings: settings, quality: GlassQuality.premium, child: child);
 }
 
 /// A glass body inside [CallGlassLayer] with the package's press feel: it squeezes, stretches
@@ -46,6 +50,7 @@ class CallGlass extends StatelessWidget {
     onTap: _taps,
     excludeFromSemantics: true,
     canRequestFocus: false,
+    quality: GlassQuality.premium,
     shape: radius == null ? const LiquidOval() : LiquidRoundedRectangle(borderRadius: radius!),
     child: child,
   );

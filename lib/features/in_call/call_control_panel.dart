@@ -199,87 +199,92 @@ class _CallControlPanelState extends State<CallControlPanel> {
       AudioRoute.wiredHeadset => 'Headset',
       _ => 'Speaker',
     };
-    final upper = IgnorePointer(
-      ignoring: widget.animating,
-      child: ExcludeSemantics(
-        excluding: widget.animating,
-        child: SizedBox(
-          key: const ValueKey('call-upper-panel'),
-          height: upperHeight,
-          width: widget.width,
-          child: Stack(
-            clipBehavior: Clip.hardEdge,
-            children: [
-              if (p < 1)
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  height: widget.landscape
-                      ? 96
-                      : compact
-                      ? 112
-                      : 128,
-                  child: IgnorePointer(
-                    ignoring: p > 0,
-                    child: ExcludeSemantics(
-                      excluding: p > 0,
-                      child: rise(
-                        const Interval(0, .62, curve: Curves.easeOutCubic),
-                        KeyedSubtree(
-                          key: const ValueKey('receding-call-actions'),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              for (final (i, action) in actions.indexed)
-                                Expanded(
-                                  // The middle pair leaves first, then the outer pair.
-                                  child: Opacity(
-                                    opacity: 1 - (i == 1 || i == 2 ? _innerOut : _outerOut).transform(p),
-                                    child: CallAction(
-                                      icon: action.icon,
-                                      label: action.label,
-                                      active: action.active,
-                                      onPressed: action.tap,
-                                      size: actionSize,
+    // Premium glass draws at most 16 shapes per layer (LiquidGlassBlendGroup.maxShapesPerLayer)
+    // and paints nothing above that. Mid-morph the upper panel holds 4 actions + 12 keys, so the
+    // bottom row gets a layer of its own.
+    final upper = CallGlassLayer(
+      child: IgnorePointer(
+        ignoring: widget.animating,
+        child: ExcludeSemantics(
+          excluding: widget.animating,
+          child: SizedBox(
+            key: const ValueKey('call-upper-panel'),
+            height: upperHeight,
+            width: widget.width,
+            child: Stack(
+              clipBehavior: Clip.hardEdge,
+              children: [
+                if (p < 1)
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: widget.landscape
+                        ? 96
+                        : compact
+                        ? 112
+                        : 128,
+                    child: IgnorePointer(
+                      ignoring: p > 0,
+                      child: ExcludeSemantics(
+                        excluding: p > 0,
+                        child: rise(
+                          const Interval(0, .62, curve: Curves.easeOutCubic),
+                          KeyedSubtree(
+                            key: const ValueKey('receding-call-actions'),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                for (final (i, action) in actions.indexed)
+                                  Expanded(
+                                    // The middle pair leaves first, then the outer pair.
+                                    child: Opacity(
+                                      opacity: 1 - (i == 1 || i == 2 ? _innerOut : _outerOut).transform(p),
+                                      child: CallAction(
+                                        icon: action.icon,
+                                        label: action.label,
+                                        active: action.active,
+                                        onPressed: action.tap,
+                                        size: actionSize,
+                                      ),
                                     ),
                                   ),
+                                Expanded(
+                                  child: Opacity(
+                                    opacity: 1 - _outerOut.transform(p),
+                                    child: _moreMenu(actionSize, showNote: canMerge),
+                                  ),
                                 ),
-                              Expanded(
-                                child: Opacity(
-                                  opacity: 1 - _outerOut.transform(p),
-                                  child: _moreMenu(actionSize, showNote: canMerge),
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              if (p > 0)
-                for (var i = 0; i < 12; i++) _keypadKey(i, p, keyHeight, stride, upperHeight),
-            ],
+                if (p > 0)
+                  for (var i = 0; i < 12; i++) _keypadKey(i, p, keyHeight, stride, upperHeight),
+              ],
+            ),
           ),
         ),
       ),
     );
-    return CallGlassLayer(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (widget.landscape) Expanded(child: SingleChildScrollView(reverse: true, child: upper)) else upper,
-          Padding(
-            padding: EdgeInsets.only(
-              // With the keypad open, the gap matches the key rows' (landscape drops the last row's own gap).
-              top: lerpDouble(compact ? 8 : 20, widget.landscape ? 4 : 0, layoutProgress)!,
-              bottom: widget.landscape
-                  ? 8
-                  : compact
-                  ? 16
-                  : 56,
-            ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (widget.landscape) Expanded(child: SingleChildScrollView(reverse: true, child: upper)) else upper,
+        Padding(
+          padding: EdgeInsets.only(
+            // With the keypad open, the gap matches the key rows' (landscape drops the last row's own gap).
+            top: lerpDouble(compact ? 8 : 20, widget.landscape ? 4 : 0, layoutProgress)!,
+            bottom: widget.landscape
+                ? 8
+                : compact
+                ? 16
+                : 56,
+          ),
+          child: CallGlassLayer(
             child: rise(
               const Interval(.12, .74, curve: Curves.easeOutCubic),
               Row(
@@ -378,8 +383,8 @@ class _CallControlPanelState extends State<CallControlPanel> {
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

@@ -11,12 +11,14 @@ white text readable.
 
 The layout follows ColorOS 17. The name, number and status sit at the top on the
 left, with the photo in a circle on the right. The controls are liquid glass
-(`liquid_glass_widgets`, initialised in `inCallMain` only). One
-`CallGlassLayer` wraps the control panel, and every circle and key inside it is
-a grouped `CallGlass`, so they render in a single pass. Like the old glass nav
-bar, it uses frosted glass: a heavy blur under a milky tint, with barely any bend (no colour
-fringing; `CallGlassLayer.settings`) at standard quality: premium looked too heavy and its
-backdrop snapshot blanked the controls mid-animation. The main app's floating
+(`liquid_glass_widgets`, initialised in `inCallMain` only) at `GlassQuality.premium`
+with the package's native frost, tuned to its dark-material values
+(`CallGlassLayer.settings`). Premium draws at most 16 shapes per layer
+(`LiquidGlassBlendGroup.maxShapesPerLayer`) and paints nothing above that, which
+showed as the controls blanking mid-morph. So the upper panel (4 actions + 12
+keys, exactly 16) and the bottom row (Speaker, Keypad) each get their own
+`CallGlassLayer`, and every circle and key is a grouped `CallGlass` inside one.
+Keep any new glass control under that limit. The main app's floating
 chrome stays OneSpend's, without glass.
 
 `InCallScreen` subscribes to the existing Telecom snapshot stream. Presentation
