@@ -68,8 +68,9 @@ the other button and the pill fade out as it arms.
 - Touching a ball grows it to 108% (a glass-button press); it settles back on release. Taps never act.
 - **Answer → End**: the released Answer ball stays where it was let go until
   Telecom connects. Then the session flies it into the End pill along a curve, as
-  on ColorOS: it drops first, then sweeps across (a quadratic Bezier bending at
-  the point below the ball, level with End), fast at first and slowing smoothly
+  on ColorOS: it drops first, then sweeps across (a quadratic Bezier bending
+  45% of the way from the straight line toward the corner below the ball, level
+  with End), fast at first and slowing smoothly
   into place with no overshoot (650 ms, `easeOutCubic`). The ball wears the End
   pill's finish the whole way (gradient, gloss, rim, glow, squircle shape) while
   its colour morphs green → orange → End's red, its icon grows to End's size and

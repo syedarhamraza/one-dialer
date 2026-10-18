@@ -211,12 +211,13 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     final t = to == null ? 0.0 : _fly.value;
     final settled = t.clamp(0.0, 1.0);
     // ColorOS's path curves: the ball drops first, then sweeps across into the pill (a quadratic
-    // Bezier bending at the point below the ball, level with End).
+    // Bezier bending toward the point below the ball, level with End).
     final Rect rect;
     if (to == null) {
       rect = from;
     } else {
-      final bend = Offset(from.center.dx, to.center.dy);
+      // Bends only part way toward the corner below the ball, for a gentle arc.
+      final bend = Offset.lerp((from.center + to.center) / 2, Offset(from.center.dx, to.center.dy), .45)!;
       final u = 1 - t;
       final centre = from.center * (u * u) + bend * (2 * u * t) + to.center * (t * t);
       rect = Rect.fromCenter(
