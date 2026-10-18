@@ -228,16 +228,17 @@ class _CallControlPanelState extends State<CallControlPanel> {
                       excluding: p > 0,
                       child: rise(
                         const Interval(0, .62, curve: Curves.easeOutCubic),
-                        KeyedSubtree(
+                        Transform.scale(
                           key: const ValueKey('receding-call-actions'),
+                          // A slight shrink as the row clears out.
+                          scale: 1 - .06 * _actionsOut.transform(p),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              for (final (i, action) in actions.indexed)
+                              for (final action in actions)
                                 Expanded(
-                                  // The middle pair leaves first, then the outer pair.
                                   child: Opacity(
-                                    opacity: 1 - (i == 1 || i == 2 ? _innerOut : _outerOut).transform(p),
+                                    opacity: 1 - _actionsOut.transform(p),
                                     child: CallAction(
                                       icon: action.icon,
                                       label: action.label,
@@ -419,8 +420,9 @@ class _CallControlPanelState extends State<CallControlPanel> {
 
   // Room above the top row so its edge reveal reaches full opacity.
   static const double _keypadTop = 16;
-  static const _innerOut = Interval(0, .32, curve: Curves.easeOut);
-  static const _outerOut = Interval(.08, .40, curve: Curves.easeOut);
+
+  /// The action row clears out quickly and all at once, as on ColorOS, before the keys rise.
+  static const _actionsOut = Interval(0, .2, curve: Curves.easeOut);
 
   /// When this call's note was first opened; the note's identity for Recents.
   DateTime? _noteAt;
@@ -434,9 +436,11 @@ class _CallControlPanelState extends State<CallControlPanel> {
 
   Widget _keypadKey(int index, double p, double size, double stride, double upperHeight) {
     final (digit, letters) = _keys[index];
-    // Keys fade in as the panel opens from the bottom, rows a beat apart bottom-up; paint-only.
+    // ColorOS 17: every key has its own entrance. Rows arrive bottom-up a beat apart, and in each
+    // row the middle key leads its neighbours; each fades in, rises into place and grows to size.
     final row = index ~/ 3;
-    final q = Interval(.2 + (3 - row) * .06, .8 + (3 - row) * .06, curve: Curves.easeOut).transform(p);
+    final delay = (3 - row) * .09 + (index % 3 == 1 ? 0 : .05);
+    final q = Interval(.08 + delay, .52 + delay, curve: Curves.easeOutCubic).transform(p);
     final fullHeight = _keypadTop + stride * 4 - (widget.landscape ? 4 : 0);
     final top = upperHeight - fullHeight + _keypadTop + row * stride;
     // Reveal whole circles as space opens, avoiding a sliced circle at either edge.
@@ -451,43 +455,48 @@ class _CallControlPanelState extends State<CallControlPanel> {
       child: Opacity(
         key: ValueKey('keypad-fade-$digit'),
         opacity: q * edgeReveal,
-        child: ExcludeSemantics(
-          excluding: p < 1,
-          child: Semantics(
-            button: true,
-            label: digit,
-            excludeSemantics: true,
-            onTap: () {
-              _startTone(digit);
-              _releaseTone();
-            },
-            child: CallBody(
-              radius: size / 2,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTapDown: (_) => _startTone(digit),
-                onTapUp: (_) => _releaseTone(),
-                onTapCancel: _releaseTone,
-                child: SizedBox.expand(
-                  child: Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(digit, style: const TextStyle(fontSize: 30, height: 1.05, color: Colors.white)),
-                          Text(
-                            letters.isEmpty ? ' ' : letters,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              height: 1.2,
-                              letterSpacing: 1.5,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white60,
+        // Paint-only, so the key's hit area stays put.
+        child: Transform(
+          alignment: Alignment.center,
+          transform: Matrix4.translationValues(0, 30 * (1 - q), 0)..scaleByDouble(.86 + .14 * q, .86 + .14 * q, 1, 1),
+          child: ExcludeSemantics(
+            excluding: p < 1,
+            child: Semantics(
+              button: true,
+              label: digit,
+              excludeSemantics: true,
+              onTap: () {
+                _startTone(digit);
+                _releaseTone();
+              },
+              child: CallBody(
+                radius: size / 2,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTapDown: (_) => _startTone(digit),
+                  onTapUp: (_) => _releaseTone(),
+                  onTapCancel: _releaseTone,
+                  child: SizedBox.expand(
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(digit, style: const TextStyle(fontSize: 30, height: 1.05, color: Colors.white)),
+                            Text(
+                              letters.isEmpty ? ' ' : letters,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                height: 1.2,
+                                letterSpacing: 1.5,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white60,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
