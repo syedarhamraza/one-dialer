@@ -205,7 +205,7 @@ class CallAction extends StatelessWidget {
             IconButton(
               tooltip: label,
               isSelected: active,
-              iconSize: size * .42,
+              iconSize: size * .46,
               style: IconButton.styleFrom(
                 backgroundColor: Colors.transparent,
                 disabledBackgroundColor: Colors.transparent,
@@ -239,7 +239,8 @@ class CallAction extends StatelessWidget {
         circle(onPressed),
         const SizedBox(height: 6),
         SizedBox(
-          height: 40,
+          // Room for a two-line label, no more, so the rows sit close as on ColorOS.
+          height: 32,
           child: AnimatedSwitcher(
             duration: fast,
             // Labels hang just under the circle, level with End's.

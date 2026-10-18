@@ -220,7 +220,9 @@ void main() {
   });
 
   for (final size in [const Size(412, 915), const Size(320, 568), const Size(700, 360)]) {
-    testWidgets('with the keypad open, the last row sits one row-gap above the bottom row at $size', (tester) async {
+    testWidgets('with the keypad open, the last row sits a little over a row-gap above the bottom row at $size', (
+      tester,
+    ) async {
       await open(tester, size: size);
       await emit(tester, [call('active')]);
       await tester.tap(find.byTooltip('Dial pad'));
@@ -228,7 +230,7 @@ void main() {
       Rect key(String digit) => tester.getRect(find.byKey(ValueKey('morph-key-$digit')));
       final rowGap = key('4').top - key('1').bottom;
       final footerGap = tester.getRect(find.byTooltip('End call')).top - key('0').bottom;
-      expect(footerGap, moreOrLessEquals(rowGap, epsilon: 1));
+      expect(footerGap, inInclusiveRange(rowGap - 1, rowGap + 11));
       await tester.pumpWidget(const SizedBox());
     });
   }

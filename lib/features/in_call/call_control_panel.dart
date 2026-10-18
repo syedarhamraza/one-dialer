@@ -165,8 +165,8 @@ class _CallControlPanelState extends State<CallControlPanel> {
       widget.landscape
           ? 96
           : compact
-          ? 112
-          : 128,
+          ? 104
+          : 120,
       _keypadTop + stride * 4 - (widget.landscape ? 4 : 0),
       layoutProgress,
     )!;
@@ -220,8 +220,8 @@ class _CallControlPanelState extends State<CallControlPanel> {
                   height: widget.landscape
                       ? 96
                       : compact
-                      ? 112
-                      : 128,
+                      ? 104
+                      : 120,
                   child: IgnorePointer(
                     ignoring: p > 0,
                     child: ExcludeSemantics(
@@ -269,8 +269,17 @@ class _CallControlPanelState extends State<CallControlPanel> {
           if (widget.landscape) Expanded(child: SingleChildScrollView(reverse: true, child: upper)) else upper,
           Padding(
             padding: EdgeInsets.only(
-              // With the keypad open, the gap matches the key rows' (landscape drops the last row's own gap).
-              top: lerpDouble(compact ? 2 : 6, widget.landscape ? 4 : 0, layoutProgress)!,
+              // With the keypad open, a little more than a key-row gap separates the keys from the bottom
+              // row (landscape drops the last row's own gap).
+              top: lerpDouble(
+                compact ? 0 : 2,
+                widget.landscape
+                    ? 4
+                    : compact
+                    ? 6
+                    : 10,
+                layoutProgress,
+              )!,
               bottom: widget.landscape
                   ? 8
                   : compact
@@ -362,7 +371,7 @@ class _CallControlPanelState extends State<CallControlPanel> {
                                     ),
                                     child: IconButton(
                                       tooltip: 'End call',
-                                      iconSize: 38,
+                                      iconSize: 41,
                                       style: IconButton.styleFrom(
                                         foregroundColor: Colors.white,
                                         disabledForegroundColor: Colors.white,
