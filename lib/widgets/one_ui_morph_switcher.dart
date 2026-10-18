@@ -165,11 +165,9 @@ class _OneUIMorphSwitcherState extends State<OneUIMorphSwitcher> with TickerProv
             ),
       ],
     );
-    final duration = OneUIMorphSwitcher.durationOf(context);
-    // Reduced motion: no size animation (a zero-length AnimatedSize asserts if its child resizes mid-layout).
-    if (!widget.animateSize || duration == Duration.zero) return stack;
+    if (!widget.animateSize) return stack;
     return AnimatedSize(
-      duration: duration,
+      duration: OneUIMorphSwitcher.durationOf(context),
       curve: OneUIMorphSwitcher.sizeCurve,
       alignment: widget.alignment,
       child: stack,
