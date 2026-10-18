@@ -11,7 +11,7 @@ import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/one_ui_floating_modal.dart';
 
 /// A ColorOS 17 call-control body: frosted (the backdrop blurred behind it), milky, glowing up
-/// from the bottom, with only a faint highlight along the top edge. Needs a [BackdropGroup] above it. The glass package supplies the press: it squeezes, stretches toward
+/// from every edge (least along the top), with only a hint of a lip along the top edge. Needs a [BackdropGroup] above it. The glass package supplies the press: it squeezes, stretches toward
 /// the finger and glows, with no glass surface (`GlassButtonStyle.transparent`).
 /// Taps still belong to [child] (its IconButton or key detector); the glass button only reads
 /// raw pointer events for the effect. A circle, or a stadium when [radius] is given.
@@ -41,7 +41,7 @@ class CallBody extends StatelessWidget {
   );
 }
 
-/// The milky wash, bottom glow and top highlight drawn over each control's frosted blur.
+/// The milky wash, edge glow and top lip drawn over each control's frosted blur.
 class _TintedBody extends CustomPainter {
   const _TintedBody(this.radius);
   final double? radius;
@@ -63,27 +63,36 @@ class _TintedBody extends CustomPainter {
           stops: [0, .5, 1],
         ).createShader(rect),
     );
-    // The ColorOS glow: a soft haze rising from the bottom edge.
-    canvas.drawRRect(
-      shape,
-      Paint()
-        ..shader = RadialGradient(
-          center: const Alignment(0, 1.5),
-          radius: size.width > size.height ? .9 : 1.1,
-          colors: const [Color(0x2EFFFFFF), Color(0x00FFFFFF)],
-        ).createShader(rect),
-    );
-    // No 3D rim: just a faint highlight along the top edge, as on ColorOS.
+    // The ColorOS glow: a soft light hugging every edge, shallow so the centre stays clear, and
+    // weaker along the top. A blurred stroke clipped to the shape keeps it inside.
+    canvas
+      ..save()
+      ..clipRRect(shape)
+      ..drawRRect(
+        shape,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 7
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5)
+          ..shader = const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0x1AFFFFFF), Color(0x4DFFFFFF), Color(0x66FFFFFF)],
+            stops: [0, .5, 1],
+          ).createShader(rect),
+      )
+      ..restore();
+    // Just a hint of a lip along the top edge.
     canvas.drawRRect(
       shape.deflate(.5),
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1
+        ..strokeWidth = .8
         ..shader = const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0x40FFFFFF), Color(0x00FFFFFF)],
-          stops: [0, .3],
+          colors: [Color(0x26FFFFFF), Color(0x00FFFFFF)],
+          stops: [0, .2],
         ).createShader(rect),
     );
   }
