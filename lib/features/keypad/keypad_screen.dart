@@ -17,6 +17,7 @@ import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_collapsible_header.dart';
 import '../../widgets/frosted_body.dart';
 import '../../widgets/one_ui_glass_surface.dart';
+import '../../widgets/morph_menu_action.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/place_call.dart';
 import 't9.dart';
@@ -41,7 +42,6 @@ const keypadBackground = Color(0xFF161616);
 
 class _KeypadScreenState extends State<KeypadScreen> {
   final _telecom = TelecomBridge.instance;
-  final _menuKey = GlobalKey();
   bool _collapsed = false;
   bool _calling = false;
 
@@ -143,29 +143,24 @@ class _KeypadScreenState extends State<KeypadScreen> {
     }
   }
 
-  void _openMenu() {
+  List<OneUIFloatingMenuItem> get _menuItems {
     final typing = widget.input.value.isNotEmpty;
-    OneUIFloatingMenu.show(
-      context: context,
-      anchorKey: _menuKey,
-      width: 250,
-      items: [
-        if (typing) ...[
-          OneUIFloatingMenuItem(
-            label: _collapsed ? 'Show keypad' : 'Hide keypad',
-            onTap: () => setState(() => _collapsed = !_collapsed),
-          ),
-          OneUIFloatingMenuItem(label: 'Add 2-sec pause', onTap: () => widget.input.value += ','),
-          OneUIFloatingMenuItem(label: 'Add wait', onTap: () => widget.input.value += ';'),
-          OneUIFloatingMenuItem(label: 'Send message', onTap: () => _telecom.sendSms(widget.input.value)),
-        ],
-        OneUIFloatingMenuItem(label: 'Speed dial numbers', onTap: _openSpeedDial),
+    return [
+      if (typing) ...[
         OneUIFloatingMenuItem(
-          label: 'Settings',
-          onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),
+          label: _collapsed ? 'Show keypad' : 'Hide keypad',
+          onTap: () => setState(() => _collapsed = !_collapsed),
         ),
+        OneUIFloatingMenuItem(label: 'Add 2-sec pause', onTap: () => widget.input.value += ','),
+        OneUIFloatingMenuItem(label: 'Add wait', onTap: () => widget.input.value += ';'),
+        OneUIFloatingMenuItem(label: 'Send message', onTap: () => _telecom.sendSms(widget.input.value)),
       ],
-    );
+      OneUIFloatingMenuItem(label: 'Speed dial numbers', onTap: _openSpeedDial),
+      OneUIFloatingMenuItem(
+        label: 'Settings',
+        onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),
+      ),
+    ];
   }
 
   @override
@@ -233,13 +228,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
                                               tooltip: 'Search',
                                               onTap: () => openSearch(context),
                                             ),
-                                            OneUIHeaderAction(
-                                              actionKey: _menuKey,
-                                              icon: Icons.more_vert_rounded,
-                                              size: 26,
-                                              tooltip: 'More options',
-                                              onTap: _openMenu,
-                                            ),
+                                            MorphMenuAction(items: _menuItems, iconSize: 26),
                                           ],
                                         ),
                                       ),
