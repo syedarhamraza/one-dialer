@@ -56,15 +56,16 @@ number geocoder isn't public API.
 
 ## Incoming
 
-ColorOS 17 style: Decline (left) and Answer (right) each follow the finger
-anywhere, with a "Decline with message" pill underneath. They're finished like
+ColorOS 17 style: Decline (left) and Answer (right) each slide straight up to
+act, with a "Decline with message" pill underneath. They're finished like
 the connected screen: the balls take the End pill's look (top-lit gradient,
 glossy top half, light rim, a glow that brightens as the drag arms) in End's red
 and `answerGreen`, and the pill is a frosted `CallBody` with the same glass
 press. While one is dragged,
 the other button and the pill fade out as it arms.
 
-- Release at least `threshold` (96 px) away, moving upward, to act. Downward drags never arm.
+- Release at least `threshold` (96 px) up to act. The ball moves only vertically (sideways is ignored), up to 1.3× the threshold, and grows and glows as it arms.
+- Touching a ball grows it to 108% (a glass-button press); it settles back on release. Taps never act.
 - **Answer → End**: the released Answer ball stays where it was let go until
   Telecom connects. Then the session flies it into the End pill on `GlassSpring.snappy` (a slight overshoot),
   stretching from a circle to a stadium. Its colour goes from green through
@@ -72,9 +73,7 @@ the other button and the pill fade out as it arms.
   stays hidden until it lands. If the call never connects, the ball is dropped
   after 4 s. Answering from the notification, or with reduced motion on, skips
   the flight.
-- While dragged, a ball stretches like jelly: it elongates along the drag and squashes
-  a third as much across it (up to 18%).
-- Anything shorter springs back on `GlassSpring.snappy`, carrying a third of the fling, wobbling at most 8% past rest (never through to the other side). Downward drags give only 16 px, so a ball never slides under the pill.
+- Anything shorter springs back on `GlassSpring.snappy`, carrying a third of the fling, wobbling at most 8% past rest (never through to the other side). Downward drags give only 16 px.
 - Taps never answer or decline.
 - The button grows and glows as it arms.
 - A haptic fires when you cross a threshold.

@@ -68,20 +68,32 @@ void main() {
     expect(fired, isEmpty);
   });
 
-  testWidgets('a diagonal drag fires and reports where the ball was let go', (tester) async {
+  testWidgets('the ball only moves straight up and reports where it was let go', (tester) async {
     final fired = await pump(tester);
     final start = tester.getRect(button());
     final gesture = await tester.startGesture(start.center);
     await gesture.moveBy(const Offset(-20, -20));
-    await gesture.moveBy(const Offset(-80, -80));
+    await gesture.moveBy(const Offset(-80, -100));
     await tester.pump();
     final held = tester.getRect(button());
+    expect(held.center.dx, closeTo(start.center.dx, 1)); // Sideways is ignored.
+    expect(held.center.dy, lessThan(start.center.dy - 80));
     await gesture.up();
     await settle(tester);
     expect(fired, ['answer']);
     expect(released!.center.dx, closeTo(held.center.dx, 1));
     expect(released!.center.dy, closeTo(held.center.dy, 1));
-    expect(held.center.dx, lessThan(start.center.dx - 80));
+  });
+
+  testWidgets('touching the ball grows it a little without acting', (tester) async {
+    final fired = await pump(tester);
+    final gesture = await tester.startGesture(tester.getCenter(button()));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(tester.widget<AnimatedScale>(find.ancestor(of: button(), matching: find.byType(AnimatedScale))).scale, 1.08);
+    await gesture.up();
+    await settle(tester);
+    expect(tester.widget<AnimatedScale>(find.ancestor(of: button(), matching: find.byType(AnimatedScale))).scale, 1);
+    expect(fired, isEmpty);
   });
 
   testWidgets('screen readers can activate it', (tester) async {

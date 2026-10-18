@@ -221,10 +221,17 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
   // The spring back may wobble just past rest, never fling through to the other side.
   Offset get _offset => _drag * math.max(_hold.value, -.08);
 
-  /// Only an upward-leaning drag arms, so a downward brush never fires.
-  bool _armedBy(Offset drag) => drag.distance >= _threshold && drag.dy < 0;
+  /// Only an upward drag arms, so a downward brush never fires.
+  bool _armedBy(Offset drag) => -drag.dy >= _threshold;
 
-  double _armedFraction(Offset drag) => drag.dy >= 0 ? 0 : (drag.distance / _threshold).clamp(0.0, 1.0);
+  double _armedFraction(Offset drag) => (-drag.dy / _threshold).clamp(0.0, 1.0);
+
+  /// Touched: the ball grows a little under the finger, like a glass button.
+  bool _pressed = false;
+
+  void _press(bool down) {
+    if (_pressed != down && mounted) setState(() => _pressed = down);
+  }
 
   @override
   void initState() {
@@ -273,12 +280,9 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
 
   void _onUpdate(DragUpdateDetails d) {
     if (_fired) return;
-    final next = _drag + d.delta;
-    // A long throw stops short of leaving the screen.
-    final max = _threshold * 2.2;
-    // Downward can't act, so it only gives a little and never slides under the pill below.
-    final kept = Offset(next.dx, math.min(next.dy, 16));
-    final limited = kept.distance > max ? kept / kept.distance * max : kept;
+    // Straight up only, a little past the threshold; downward can't act, so it only gives a
+    // little and never slides under the pill below.
+    final limited = Offset(0, (_drag.dy + d.delta.dy).clamp(-_threshold * 1.3, 16.0));
     if (_armedBy(_drag) != _armedBy(limited)) HapticFeedback.selectionClick();
     setState(() => _drag = limited);
     widget.onProgress?.call(_armedFraction(_drag));
@@ -305,16 +309,6 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
     _hold.animateWith(SpringSimulation(GlassSpring.snappy(), _hold.value, 0, along, snapToEnd: true));
   }
 
-  /// The glass package's anchor stretch on a free ball: it elongates along the drag and
-  /// squashes across it (a third as much), so it reads as jelly rather than a stiff disc.
-  Matrix4 _jelly(Offset offset, double scale) {
-    final stretch = (offset.distance / _threshold).clamp(0.0, 1.0) * .18;
-    final angle = offset.direction;
-    return Matrix4.rotationZ(angle)
-      ..scaleByDouble(scale * (1 + stretch), scale * (1 - stretch * .3), 1, 1)
-      ..rotateZ(-angle);
-  }
-
   @override
   void dispose() {
     _hold.dispose();
@@ -335,16 +329,19 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onPanStart: _onStart,
-        onPanUpdate: _onUpdate,
-        onPanEnd: _onEnd,
-        onPanCancel: () {
+        onVerticalDragStart: _onStart,
+        onVerticalDragUpdate: _onUpdate,
+        onVerticalDragEnd: _onEnd,
+        onVerticalDragCancel: () {
           if (!_fired) _springBack();
         },
         child: Listener(
           // A cancelled accepted drag can be reported as a drag end by the recognizer.
           // Reset the drag at the pointer layer so that end can't trigger anything.
+          onPointerDown: (_) => _press(true),
+          onPointerUp: (_) => _press(false),
           onPointerCancel: (_) {
+            _press(false);
             if (!_fired) _drag = Offset.zero;
           },
           child: SizedBox(
@@ -375,45 +372,49 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                       top: travel,
                       child: Transform.translate(
                         offset: offset,
-                        child: Transform(
-                          alignment: Alignment.center,
-                          transform: _jelly(offset, 1 + .1 * armed),
-                          child: Opacity(
-                            opacity: widget.hidden ? 0 : 1,
-                            child: KeyedSubtree(
-                              key: _ball,
-                              child: Container(
-                                key: ValueKey('swipe-${widget.label}'),
-                                width: size,
-                                height: size,
-                                // The connected screen's End pill finish: top-lit, a glossy top half and
-                                // a soft glow, brighter as the drag arms.
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: const Color(0x40FFFFFF), width: .8),
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    colors: [Color.lerp(widget.color, Colors.white, .16)!, widget.color],
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: widget.color.withValues(alpha: .3 + .25 * armed),
-                                      blurRadius: 22 + 10 * armed,
-                                      offset: const Offset(0, 6),
+                        child: AnimatedScale(
+                          scale: _pressed && !_fired ? 1.08 : 1,
+                          duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 180),
+                          curve: _pressed ? Curves.easeOutCubic : Curves.easeOutBack,
+                          child: Transform.scale(
+                            scale: 1 + .1 * armed,
+                            child: Opacity(
+                              opacity: widget.hidden ? 0 : 1,
+                              child: KeyedSubtree(
+                                key: _ball,
+                                child: Container(
+                                  key: ValueKey('swipe-${widget.label}'),
+                                  width: size,
+                                  height: size,
+                                  // The connected screen's End pill finish: top-lit, a glossy top half and
+                                  // a soft glow, brighter as the drag arms.
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: const Color(0x40FFFFFF), width: .8),
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [Color.lerp(widget.color, Colors.white, .16)!, widget.color],
                                     ),
-                                  ],
-                                ),
-                                foregroundDecoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    colors: [Color(0x40FFFFFF), Color(0x0AFFFFFF), Color(0x00FFFFFF)],
-                                    stops: [0, .45, .55],
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: widget.color.withValues(alpha: .3 + .25 * armed),
+                                        blurRadius: 22 + 10 * armed,
+                                        offset: const Offset(0, 6),
+                                      ),
+                                    ],
                                   ),
+                                  foregroundDecoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [Color(0x40FFFFFF), Color(0x0AFFFFFF), Color(0x00FFFFFF)],
+                                      stops: [0, .45, .55],
+                                    ),
+                                  ),
+                                  child: Icon(widget.icon, color: Colors.white, size: size * .46),
                                 ),
-                                child: Icon(widget.icon, color: Colors.white, size: size * .46),
                               ),
                             ),
                           ),
