@@ -159,19 +159,32 @@ class _TintedBody extends CustomPainter {
           ).createShader(rect),
       )
       ..restore();
-    // The 3D lip: clearer along the top edge, fainter along the bottom.
-    canvas.drawPath(
-      bodyPath(rect.deflate(.5), radius == null ? null : radius! - .5),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1
-        ..shader = const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0x3BFFFFFF), Color(0x00FFFFFF), Color(0x00FFFFFF), Color(0x1FFFFFFF)],
-          stops: [0, .3, .7, 1],
-        ).createShader(rect),
-    );
+    // The 3D lip: clearer along the top edge, fainter along the bottom, and faded out toward the
+    // sides so it doesn't wrap round the rounded ends.
+    canvas
+      ..saveLayer(rect, Paint())
+      ..drawPath(
+        bodyPath(rect.deflate(.5), radius == null ? null : radius! - .5),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1
+          ..shader = const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0x3BFFFFFF), Color(0x00FFFFFF), Color(0x00FFFFFF), Color(0x1FFFFFFF)],
+            stops: [0, .3, .7, 1],
+          ).createShader(rect),
+      )
+      ..drawRect(
+        rect,
+        Paint()
+          ..blendMode = BlendMode.dstIn
+          ..shader = const LinearGradient(
+            colors: [Color(0x00000000), Color(0xFF000000), Color(0xFF000000), Color(0x00000000)],
+            stops: [.12, .32, .68, .88],
+          ).createShader(rect),
+      )
+      ..restore();
   }
 
   @override
