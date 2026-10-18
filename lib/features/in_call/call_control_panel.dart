@@ -66,6 +66,7 @@ class _CallControlPanelState extends State<CallControlPanel> with SingleTickerPr
     _keysIn = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 650),
+      reverseDuration: const Duration(milliseconds: 300),
       value: widget.keypadOpen ? 1 : 0,
     );
   }
@@ -155,6 +156,8 @@ class _CallControlPanelState extends State<CallControlPanel> with SingleTickerPr
   Widget build(BuildContext context) {
     final telecom = TelecomBridge.instance;
     final p = widget.progress;
+    // On the keys' clock, not the panel spring's slow tail.
+    final actionsGone = (widget.keypadOpen ? _actionsOut : _actionsBack).transform(_keysIn.value);
     Widget rise(Interval interval, Widget child) => AnimatedBuilder(
       animation: widget.entrance,
       child: child,
@@ -256,14 +259,14 @@ class _CallControlPanelState extends State<CallControlPanel> with SingleTickerPr
                         Transform.scale(
                           key: const ValueKey('receding-call-actions'),
                           // A slight shrink as the row clears out.
-                          scale: 1 - .06 * _actionsOut.transform(p),
+                          scale: 1 - .06 * actionsGone,
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               for (final action in actions)
                                 Expanded(
                                   child: Opacity(
-                                    opacity: 1 - _actionsOut.transform(p),
+                                    opacity: 1 - actionsGone,
                                     child: CallAction(
                                       icon: action.icon,
                                       label: action.label,
@@ -449,8 +452,13 @@ class _CallControlPanelState extends State<CallControlPanel> with SingleTickerPr
   /// Bouncier than the package's own bouncy preset, so a key visibly floats past its place.
   static final _keyFloat = GlassSpringCurve(GlassSpring.bouncy(extraBounce: .2), const Duration(milliseconds: 800));
 
-  /// The action row clears out quickly and all at once, as on ColorOS, before the keys rise.
+  /// On closing the keys are gone within the first 40% of their 300 ms reverse.
+  static const _keysOut = Interval(.6, 1);
+
+  /// The action row clears out quickly and all at once as the keys rise, and on closing comes
+  /// back in the last third of the keys' reverse, a beat after they have gone (as on ColorOS).
   static const _actionsOut = Interval(0, .2, curve: Curves.easeOut);
+  static const _actionsBack = Interval(0, .35, curve: Curves.easeOut);
 
   /// When this call's note was first opened; the note's identity for Recents.
   DateTime? _noteAt;
@@ -484,16 +492,28 @@ class _CallControlPanelState extends State<CallControlPanel> with SingleTickerPr
       child: AnimatedBuilder(
         animation: _keysIn,
         builder: (context, child) {
-          final t = interval.transform(_keysIn.value);
-          final float = _keyFloat.transform(t);
+          // Closing isn't the entrance reversed: on ColorOS the whole keypad fades out at once,
+          // sinking and shrinking a touch, with no stagger or bounce.
+          final double opacity, rise, scale;
+          if (widget.keypadOpen) {
+            final t = interval.transform(_keysIn.value);
+            final float = _keyFloat.transform(t);
+            opacity = Curves.easeOut.transform(t);
+            rise = 40 * (1 - float);
+            scale = .86 + .14 * float;
+          } else {
+            final k = Curves.easeIn.transform(_keysOut.transform(_keysIn.value));
+            opacity = k;
+            rise = 14 * (1 - k);
+            scale = .94 + .06 * k;
+          }
           return Opacity(
             key: ValueKey('keypad-fade-$digit'),
-            opacity: Curves.easeOut.transform(t) * edgeReveal,
+            opacity: opacity * edgeReveal,
             // Paint-only, so the key's hit area stays put.
             child: Transform(
               alignment: Alignment.center,
-              transform: Matrix4.translationValues(0, 40 * (1 - float), 0)
-                ..scaleByDouble(.86 + .14 * float, .86 + .14 * float, 1, 1),
+              transform: Matrix4.translationValues(0, rise, 0)..scaleByDouble(scale, scale, 1, 1),
               child: child,
             ),
           );
