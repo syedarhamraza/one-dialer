@@ -10,7 +10,7 @@ import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/one_ui_floating_modal.dart';
 
-/// A ColorOS 17 call-control body: frosted (the backdrop blurred behind it), milky, glowing up
+/// A ColorOS 17 call-control body, a circle or (with [radius]) a squircle-ended key: frosted (the backdrop blurred behind it), milky, glowing up
 /// from every edge (least along the top), with a lip along the top edge and a fainter one below. Needs a [BackdropGroup] above it. The glass package supplies the press: it squeezes, stretches toward
 /// the finger and glows, with no glass surface (`GlassButtonStyle.transparent`).
 /// Taps still belong to [child] (its IconButton or key detector); the glass button only reads
@@ -28,9 +28,9 @@ class CallBody extends StatelessWidget {
     onTap: _taps,
     excludeFromSemantics: true,
     canRequestFocus: false,
-    shape: radius == null ? const LiquidOval() : LiquidRoundedRectangle(borderRadius: radius!),
-    child: ClipRRect(
-      borderRadius: BorderRadius.circular(radius ?? 999),
+    shape: radius == null ? const LiquidOval() : LiquidRoundedSuperellipse(borderRadius: radius!),
+    child: ClipPath(
+      clipper: _BodyClip(radius),
       // Frosted like ColorOS: what's behind is blurred away. Grouped, so all the controls under
       // one BackdropGroup share a single backdrop read instead of a blur layer each.
       child: BackdropFilter.grouped(
@@ -49,11 +49,9 @@ class _TintedBody extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
-    final shape = radius == null
-        ? RRect.fromRectAndRadius(rect, Radius.circular(size.shortestSide / 2))
-        : RRect.fromRectAndRadius(rect, Radius.circular(radius!));
+    final shape = bodyPath(rect, radius);
     // An even milky wash over the blur, a little lighter toward the bottom.
-    canvas.drawRRect(
+    canvas.drawPath(
       shape,
       Paint()
         ..shader = const LinearGradient(
@@ -67,8 +65,8 @@ class _TintedBody extends CustomPainter {
     // weaker along the top. A blurred stroke clipped to the shape keeps it inside.
     canvas
       ..save()
-      ..clipRRect(shape)
-      ..drawRRect(
+      ..clipPath(shape)
+      ..drawPath(
         shape,
         Paint()
           ..style = PaintingStyle.stroke
@@ -83,8 +81,8 @@ class _TintedBody extends CustomPainter {
       )
       ..restore();
     // The 3D lip: clearer along the top edge, fainter along the bottom.
-    canvas.drawRRect(
-      shape.deflate(.5),
+    canvas.drawPath(
+      bodyPath(rect.deflate(.5), radius == null ? null : radius! - .5),
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1
@@ -99,6 +97,22 @@ class _TintedBody extends CustomPainter {
 
   @override
   bool shouldRepaint(_TintedBody oldDelegate) => oldDelegate.radius != radius;
+}
+
+/// A circle, or a superellipse whose ends are ColorOS's soft oval rather than a true semicircle.
+Path bodyPath(Rect rect, double? radius) => radius == null
+    ? (Path()..addOval(rect))
+    : (Path()..addRSuperellipse(RSuperellipse.fromRectAndRadius(rect, Radius.circular(radius))));
+
+class _BodyClip extends CustomClipper<Path> {
+  const _BodyClip(this.radius);
+  final double? radius;
+
+  @override
+  Path getClip(Size size) => bodyPath(Offset.zero & size, radius);
+
+  @override
+  bool shouldReclip(_BodyClip oldClipper) => oldClipper.radius != radius;
 }
 
 /// A [GlassSpring] as a curve, so implicit animations can move like the glass package.
@@ -133,12 +147,16 @@ class CallAction extends StatelessWidget {
     this.active = false,
     required this.onPressed,
     this.size = 60,
+    this.glyph,
   });
   final IconData icon;
   final String label;
   final bool active;
   final VoidCallback? onPressed;
   final double size;
+
+  /// Draws the icon instead of [icon], for glyphs Material lacks (the 12-dot dial pad).
+  final Widget Function(Color? color)? glyph;
 
   @override
   Widget build(BuildContext context) {
@@ -168,7 +186,7 @@ class CallAction extends StatelessWidget {
             IconButton(
               tooltip: label,
               isSelected: active,
-              iconSize: size * .36,
+              iconSize: size * .42,
               style: IconButton.styleFrom(
                 backgroundColor: Colors.transparent,
                 disabledBackgroundColor: Colors.transparent,
@@ -186,7 +204,7 @@ class CallAction extends StatelessWidget {
                     opacity: animation,
                     child: ScaleTransition(scale: Tween(begin: .6, end: 1.0).animate(animation), child: child),
                   ),
-                  child: Icon(icon, key: ValueKey(icon), color: color),
+                  child: glyph?.call(color) ?? Icon(icon, key: ValueKey(icon), color: color),
                 ),
               ),
             ),
@@ -341,4 +359,38 @@ class _CallNoteSheetState extends State<_CallNoteSheet> {
       ],
     ),
   );
+}
+
+/// ColorOS's dial pad glyph: twelve dots, three across and four down, sized like an icon.
+class DialPadGlyph extends StatelessWidget {
+  const DialPadGlyph({super.key, this.color});
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = IconTheme.of(context).size ?? 24;
+    return CustomPaint(size: Size.square(size), painter: _DialPadDots(color ?? IconTheme.of(context).color!));
+  }
+}
+
+class _DialPadDots extends CustomPainter {
+  const _DialPadDots(this.color);
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final gap = size.height / 4.6;
+    final dot = gap * .3;
+    final left = size.width / 2 - gap;
+    final top = size.height / 2 - gap * 1.5;
+    final paint = Paint()..color = color;
+    for (var row = 0; row < 4; row++) {
+      for (var column = 0; column < 3; column++) {
+        canvas.drawCircle(Offset(left + column * gap, top + row * gap), dot, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DialPadDots oldDelegate) => oldDelegate.color != color;
 }

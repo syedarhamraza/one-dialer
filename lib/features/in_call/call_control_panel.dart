@@ -329,8 +329,10 @@ class _CallControlPanelState extends State<CallControlPanel> {
                                     width: _ending ? actionSize : box.maxWidth,
                                     height: actionSize,
                                     // A gloss across the top half, as on ColorOS.
-                                    foregroundDecoration: const ShapeDecoration(
-                                      shape: StadiumBorder(),
+                                    foregroundDecoration: ShapeDecoration(
+                                      shape: RoundedSuperellipseBorder(
+                                        borderRadius: BorderRadius.circular(actionSize / 2),
+                                      ),
                                       gradient: LinearGradient(
                                         begin: Alignment.topCenter,
                                         end: Alignment.bottomCenter,
@@ -340,7 +342,11 @@ class _CallControlPanelState extends State<CallControlPanel> {
                                     ),
                                     decoration: ShapeDecoration(
                                       // ColorOS 17's tomato red, with a glossy rim.
-                                      shape: const StadiumBorder(side: BorderSide(color: Color(0x40FFFFFF), width: .8)),
+                                      // Squircle ends, like the keys.
+                                      shape: RoundedSuperellipseBorder(
+                                        borderRadius: BorderRadius.circular(actionSize / 2),
+                                        side: const BorderSide(color: Color(0x40FFFFFF), width: .8),
+                                      ),
                                       gradient: const LinearGradient(
                                         begin: Alignment.topCenter,
                                         end: Alignment.bottomCenter,
@@ -356,7 +362,7 @@ class _CallControlPanelState extends State<CallControlPanel> {
                                     ),
                                     child: IconButton(
                                       tooltip: 'End call',
-                                      iconSize: 32,
+                                      iconSize: 38,
                                       style: IconButton.styleFrom(
                                         foregroundColor: Colors.white,
                                         disabledForegroundColor: Colors.white,
@@ -383,6 +389,7 @@ class _CallControlPanelState extends State<CallControlPanel> {
                     child: CallAction(
                       // As on ColorOS: same button either way, lit white while the keypad is open.
                       icon: Icons.dialpad_rounded,
+                      glyph: (color) => DialPadGlyph(color: color),
                       label: 'Dial pad',
                       active: widget.keypadOpen,
                       size: actionSize,

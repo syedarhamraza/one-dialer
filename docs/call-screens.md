@@ -94,7 +94,8 @@ The header sits slightly above the centre of the space the controls leave.
   - Press feel from the package's `GlassButton.custom`: squeeze, stretch toward the finger and glow. It reads raw pointer events only, so taps, tooltips and semantics stay on the inner `IconButton`.
 - **Row**: Mute, Hold, Note (or Merge), Add call.
 - **Third slot**: Note on a single call. It opens a floating sheet over the call that saves as you type, so the note survives the other side hanging up. Notes are stored in `DialerPrefs` as `call_note_<number>_<millis>`, and Recents call details show each note under the logged call it was taken during. The slot becomes Merge once two calls can merge.
-- **End call**: a tomato-red gradient pill with a glossy rim and a soft glow. Its press comes from a `GlassButton.custom` in `GlassButtonStyle.transparent` (the package's glow and stretch, no glass body). Once tapped it draws in to a circle and dims. If Telecom hasn't ended the call within 3 s, it becomes tappable again.
+- **Icons** are 42% of the circle. Dial pad uses `DialPadGlyph`, ColorOS's 3×4 grid of 12 dots (Material's dialpad has 10).
+- **End call**: a squircle-ended tomato-red gradient pill with a glossy rim and a soft glow. Its press comes from a `GlassButton.custom` in `GlassButtonStyle.transparent` (the package's glow and stretch, no glass body). Once tapped it draws in to a circle and dims. If Telecom hasn't ended the call within 3 s, it becomes tappable again.
 - **Entrance**: when the connected or dialing controls appear, the action row and the bottom row fade and rise 16 px, staggered (520 ms total). Reduced motion skips it.
 - **Header**:
   - A thin ring around the avatar.
@@ -107,7 +108,7 @@ The keypad morph runs on the glass package's smooth spring (`GlassSpring.smooth`
 no overshoot, 1% snap tolerance). Reversing mid-flight keeps its velocity.
 
 - **Action row**: the four actions fade out in place, middle pair first.
-- **Keys**: solid stadiums, three across (ColorOS 17). Keys fade in where they sit, rows a beat apart
+- **Keys**: squircle-ended keys (a superellipse, `bodyPath`, rather than true semicircle ends), three across (ColorOS 17). Keys fade in where they sit, rows a beat apart
   bottom-up with the opening panel. Presses get the same `GlassButton` squeeze and glow.
 - **Header**: the avatar and badges collapse away. Typed digits replace the
   caller name, and the name becomes the subtitle.
