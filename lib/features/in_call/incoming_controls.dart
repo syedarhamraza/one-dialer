@@ -7,14 +7,51 @@ import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/one_ui_floating_modal.dart';
 
-/// Incoming call, ColorOS style: Decline and Answer side by side, each swiped up to act,
-/// with a "Decline with message" pill underneath.
-class IncomingControls extends StatelessWidget {
-  const IncomingControls({super.key, required this.call, this.isCurrent, this.compact = false});
+/// Incoming call, ColorOS 17 style: Decline and Answer side by side, each dragged away to act,
+/// with a "Decline with message" pill underneath. Dragging one fades out everything else.
+class IncomingControls extends StatefulWidget {
+  const IncomingControls({
+    super.key,
+    required this.call,
+    this.isCurrent,
+    this.compact = false,
+    this.onAnswer,
+    this.answerHidden = false,
+  });
 
   final CallInfo call;
   final bool Function()? isCurrent;
   final bool compact;
+
+  /// Answers with the released ball's global rect, so the screen can fly it into the End pill.
+  final ValueChanged<Rect>? onAnswer;
+
+  /// Hides the Answer ball once the screen has taken it over for that flight.
+  final bool answerHidden;
+
+  @override
+  State<IncomingControls> createState() => _IncomingControlsState();
+}
+
+class _IncomingControlsState extends State<IncomingControls> {
+  /// Which button is being dragged, and how close it is to acting (0–1).
+  String? _active;
+  double _armed = 0;
+
+  CallInfo get call => widget.call;
+  bool Function()? get isCurrent => widget.isCurrent;
+  bool get compact => widget.compact;
+
+  void _progress(String label, double armed) {
+    if (_active == label && _armed == armed) return;
+    setState(() {
+      _active = armed > 0 ? label : null;
+      _armed = armed;
+    });
+  }
+
+  /// Everything but the dragged button fades as it arms.
+  double _opacityFor(String? label) => _active == null || _active == label ? 1 : 1 - _armed;
 
   Future<void> _declineWithMessage(BuildContext context) async {
     // Edited in Settings › Quick decline messages.
@@ -69,36 +106,48 @@ class IncomingControls extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SwipeUpButton(
-                  color: OneUITheme.accentRed,
-                  icon: Icons.call_end_rounded,
-                  label: 'Decline',
-                  compact: compact,
-                  onTriggered: () => telecom.reject(call.id),
+                Opacity(
+                  opacity: _opacityFor('Decline'),
+                  child: SwipeUpButton(
+                    color: OneUITheme.accentRed,
+                    icon: Icons.call_end_rounded,
+                    label: 'Decline',
+                    compact: compact,
+                    onProgress: (armed) => _progress('Decline', armed),
+                    onTriggered: (_) => telecom.reject(call.id),
+                  ),
                 ),
-                SwipeUpButton(
-                  color: OneUITheme.accentGreen,
-                  icon: Icons.call_rounded,
-                  label: 'Answer',
-                  compact: compact,
-                  // Offset so the two hints don't pulse in lockstep.
-                  hintPhase: .5,
-                  onTriggered: () => telecom.answer(call.id),
+                Opacity(
+                  opacity: _opacityFor('Answer'),
+                  child: SwipeUpButton(
+                    color: OneUITheme.accentGreen,
+                    icon: Icons.call_rounded,
+                    label: 'Answer',
+                    compact: compact,
+                    hidden: widget.answerHidden,
+                    // Offset so the two hints don't pulse in lockstep.
+                    hintPhase: .5,
+                    onProgress: (armed) => _progress('Answer', armed),
+                    onTriggered: (ball) => widget.onAnswer != null ? widget.onAnswer!(ball) : telecom.answer(call.id),
+                  ),
                 ),
               ],
             ),
           ),
           SizedBox(height: compact ? 12 : 28),
           if (canText)
-            TextButton.icon(
-              onPressed: () => _declineWithMessage(context),
-              icon: const Icon(Icons.chat_bubble_rounded, size: 18),
-              label: const Text('Decline with message', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: Colors.white.withValues(alpha: .16),
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                shape: const StadiumBorder(),
+            Opacity(
+              opacity: _opacityFor(null),
+              child: TextButton.icon(
+                onPressed: () => _declineWithMessage(context),
+                icon: const Icon(Icons.chat_bubble_rounded, size: 18),
+                label: const Text('Decline with message', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.white.withValues(alpha: .16),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  shape: const StadiumBorder(),
+                ),
               ),
             ),
         ],
@@ -107,9 +156,10 @@ class IncomingControls extends StatelessWidget {
   }
 }
 
-/// A call button that acts when released after sliding up past [threshold]; shorter slides
-/// spring back and taps do nothing, so pocket touches can't answer or decline. A dash above
-/// it rises and fades to show the gesture. Screen readers can activate it directly.
+//// A call button that follows the finger anywhere and acts when released at least [threshold]
+/// away and above where it started; shorter or downward drags spring back and taps do nothing,
+/// so pocket touches can't answer or decline. A dash above it rises and fades to show the
+/// gesture. Screen readers can activate it directly.
 class SwipeUpButton extends StatefulWidget {
   const SwipeUpButton({
     super.key,
@@ -117,15 +167,23 @@ class SwipeUpButton extends StatefulWidget {
     required this.icon,
     required this.label,
     required this.onTriggered,
+    this.onProgress,
     this.compact = false,
+    this.hidden = false,
     this.hintPhase = 0,
   });
 
   final Color color;
   final IconData icon;
   final String label;
-  final VoidCallback onTriggered;
+
+  /// Gets the ball's global rect where it was released (its resting rect from a screen reader).
+  final ValueChanged<Rect> onTriggered;
+
+  /// How armed the drag is, 0 at rest to 1 at [threshold].
+  final ValueChanged<double>? onProgress;
   final bool compact;
+  final bool hidden;
   final double hintPhase;
 
   static const double size = 72;
@@ -136,13 +194,32 @@ class SwipeUpButton extends StatefulWidget {
 }
 
 class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateMixin {
-  /// Upward travel in px: 0 at rest, positive while dragged up.
-  late final AnimationController _lift = AnimationController.unbounded(vsync: this);
+  /// Where the finger has taken the ball, relative to its resting place.
+  Offset _drag = Offset.zero;
+
+  /// Scales [_drag]: 1 while held, springing to 0 when let go short.
+  late final AnimationController _hold = AnimationController.unbounded(vsync: this, value: 1);
   late final AnimationController _hint = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800));
+  final _ball = GlobalKey();
   bool _dragging = false;
   bool _fired = false;
 
   double get _threshold => SwipeUpButton.threshold * (widget.compact ? .75 : 1);
+
+  Offset get _offset => _drag * _hold.value;
+
+  /// Only an upward-leaning drag arms, so a downward brush never fires.
+  bool _armedBy(Offset drag) => drag.distance >= _threshold && drag.dy < 0;
+
+  double _armedFraction(Offset drag) => drag.dy >= 0 ? 0 : (drag.distance / _threshold).clamp(0.0, 1.0);
+
+  @override
+  void initState() {
+    super.initState();
+    _hold.addListener(() {
+      if (!_dragging && !_fired) widget.onProgress?.call(_armedFraction(_offset));
+    });
+  }
 
   @override
   void didChangeDependencies() {
@@ -164,51 +241,65 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
     _fired = true;
     _syncHint();
     HapticFeedback.heavyImpact();
-    widget.onTriggered();
+    final box = _ball.currentContext?.findRenderObject() as RenderBox?;
+    final rect = box == null || !box.hasSize
+        ? Rect.zero
+        : MatrixUtils.transformRect(box.getTransformTo(null), Offset.zero & box.size);
+    widget.onTriggered(rect);
   }
 
   void _onStart(DragStartDetails _) {
     if (_fired) return;
-    _lift.stop();
+    _drag = _offset;
+    _hold
+      ..stop()
+      ..value = 1;
     setState(() => _dragging = true);
     _syncHint();
   }
 
   void _onUpdate(DragUpdateDetails d) {
     if (_fired) return;
-    final before = _lift.value;
-    final next = (before - d.delta.dy).clamp(0.0, _threshold * 1.3);
-    if ((before >= _threshold) != (next >= _threshold)) HapticFeedback.selectionClick();
-    _lift.value = next;
+    final next = _drag + d.delta;
+    // A long throw stops short of leaving the screen.
+    final max = _threshold * 2.2;
+    final limited = next.distance > max ? next / next.distance * max : next;
+    if (_armedBy(_drag) != _armedBy(limited)) HapticFeedback.selectionClick();
+    setState(() => _drag = limited);
+    widget.onProgress?.call(_armedFraction(_drag));
   }
 
   void _onEnd(DragEndDetails d) {
     if (_fired) return;
-    if (_lift.value >= _threshold) return _fire();
-    _springBack(-d.velocity.pixelsPerSecond.dy);
+    if (_armedBy(_drag)) return _fire();
+    _springBack(d.velocity.pixelsPerSecond);
   }
 
-  void _springBack([double velocity = 0]) {
+  void _springBack([Offset velocity = Offset.zero]) {
     setState(() => _dragging = false);
     _syncHint();
-    if (MediaQuery.disableAnimationsOf(context)) {
-      _lift.value = 0;
-    } else {
-      _lift.animateWith(
-        SpringSimulation(
-          SpringDescription.withDampingRatio(mass: 1, stiffness: 520, ratio: .62),
-          _lift.value,
-          0,
-          velocity,
-          snapToEnd: true,
-        ),
-      );
+    if (MediaQuery.disableAnimationsOf(context) || _drag == Offset.zero) {
+      _drag = Offset.zero;
+      _hold.value = 1;
+      widget.onProgress?.call(0);
+      return;
     }
+    // The fling's speed along the drag, as a rate of change of the 0-1 hold.
+    final along = (velocity.dx * _drag.dx + velocity.dy * _drag.dy) / (_drag.distance * _drag.distance);
+    _hold.animateWith(
+      SpringSimulation(
+        SpringDescription.withDampingRatio(mass: 1, stiffness: 520, ratio: .62),
+        _hold.value,
+        0,
+        along,
+        snapToEnd: true,
+      ),
+    );
   }
 
   @override
   void dispose() {
-    _lift.dispose();
+    _hold.dispose();
     _hint.dispose();
     super.dispose();
   }
@@ -226,30 +317,31 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onVerticalDragStart: _onStart,
-        onVerticalDragUpdate: _onUpdate,
-        onVerticalDragEnd: _onEnd,
-        onVerticalDragCancel: () {
+        onPanStart: _onStart,
+        onPanUpdate: _onUpdate,
+        onPanEnd: _onEnd,
+        onPanCancel: () {
           if (!_fired) _springBack();
         },
         child: Listener(
           // A cancelled accepted drag can be reported as a drag end by the recognizer.
-          // Reset the lift at the pointer layer so that end can't trigger anything.
+          // Reset the drag at the pointer layer so that end can't trigger anything.
           onPointerCancel: (_) {
-            if (!_fired) _lift.value = 0;
+            if (!_fired) _drag = Offset.zero;
           },
           child: SizedBox(
             width: size + 40,
             height: travel + size,
             child: AnimatedBuilder(
-              animation: Listenable.merge([_lift, _hint]),
+              animation: Listenable.merge([_hold, _hint]),
               builder: (context, _) {
-                final lift = _lift.value;
-                final armed = (lift / _threshold).clamp(0.0, 1.0);
+                final offset = _offset;
+                final armed = _armedFraction(offset);
                 // The dash drifts up 10 px and fades out, once per cycle.
                 final phase = (_hint.value + widget.hintPhase) % 1;
                 final rise = Curves.easeOut.transform((phase / .7).clamp(0.0, 1.0));
-                final dash = reduceMotion ? .6 : (_dragging || _fired || phase >= .7 ? 0.0 : .9 * (1 - rise));
+                final still = !_dragging && !_fired && offset == Offset.zero;
+                final dash = reduceMotion ? .6 : (!still || phase >= .7 ? 0.0 : .9 * (1 - rise));
                 return Stack(
                   clipBehavior: Clip.none,
                   alignment: Alignment.topCenter,
@@ -262,19 +354,30 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                       ),
                     ),
                     Positioned(
-                      top: travel - lift,
-                      child: Transform.scale(
-                        scale: 1 + .1 * armed,
-                        child: Container(
-                          key: ValueKey('swipe-${widget.label}'),
-                          width: size,
-                          height: size,
-                          decoration: BoxDecoration(
-                            color: widget.color,
-                            shape: BoxShape.circle,
-                            boxShadow: [BoxShadow(color: widget.color.withValues(alpha: .45 * armed), blurRadius: 28)],
+                      top: travel,
+                      child: Transform.translate(
+                        offset: offset,
+                        child: Transform.scale(
+                          scale: 1 + .1 * armed,
+                          child: Opacity(
+                            opacity: widget.hidden ? 0 : 1,
+                            child: KeyedSubtree(
+                              key: _ball,
+                              child: Container(
+                                key: ValueKey('swipe-${widget.label}'),
+                                width: size,
+                                height: size,
+                                decoration: BoxDecoration(
+                                  color: widget.color,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(color: widget.color.withValues(alpha: .45 * armed), blurRadius: 28),
+                                  ],
+                                ),
+                                child: Icon(widget.icon, color: Colors.white, size: size * .42),
+                              ),
+                            ),
                           ),
-                          child: Icon(widget.icon, color: Colors.white, size: size * .42),
                         ),
                       ),
                     ),
@@ -289,7 +392,7 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
   }
 }
 
-/// The ColorOS swipe hint: a shallow arc echoing the button's curve, with rounded ends.
+// The ColorOS swipe hint: a shallow arc echoing the button's curve, with rounded ends.
 class _ArcHint extends CustomPainter {
   const _ArcHint(this.color);
   final Color color;

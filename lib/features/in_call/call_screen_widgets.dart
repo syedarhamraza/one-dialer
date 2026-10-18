@@ -191,8 +191,13 @@ class CallHeader extends StatelessWidget {
     final contact = call.isPrivate || call.isConference ? null : ContactsRepository.instance.contactFor(number);
     final k = keypadProgress.clamp(0.0, 1.0);
     final fade = 1 - Curves.easeOut.transform(k);
-    final avatarSize = compact ? 84.0 : 120.0;
+    final avatarSize = compact ? 60.0 : 76.0;
     final showDigits = digits.isNotEmpty && k > .5;
+    // ColorOS 17: name, number and status on the left, photo on the right. With the keypad open
+    // the photo folds away and the typed digits take the title's place, centred.
+    final centred = k > .5;
+    final align = centred ? CrossAxisAlignment.center : CrossAxisAlignment.start;
+    final textAlign = centred ? TextAlign.center : TextAlign.start;
     final subtitle = showDigits
         ? name
         : [
@@ -201,27 +206,102 @@ class CallHeader extends StatelessWidget {
           ].join(' · ');
     final held = call.state == CallState.holding;
     final ended = call.state == CallState.disconnected || call.state == CallState.disconnecting;
-    Widget collapse(Widget child) => ClipRect(
-      child: Align(
-        alignment: Alignment.topCenter,
-        heightFactor: 1 - Curves.easeInOutCubic.transform(k),
-        child: Opacity(opacity: fade, child: child),
-      ),
-    );
+    final folded = Curves.easeInOutCubic.transform(k);
     return AnimatedOpacity(
       opacity: ended ? .6 : (held ? .55 : 1),
       duration: const Duration(milliseconds: 250),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: align,
         children: [
-          collapse(
-            Padding(
-              padding: EdgeInsets.only(bottom: compact ? 16 : 28),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Wrap(
-                    alignment: WrapAlignment.center,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: align,
+                  children: [
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 160),
+                      child: Text(
+                        showDigits ? _tail(digits) : name,
+                        key: ValueKey(showDigits),
+                        textAlign: textAlign,
+                        maxLines: showDigits ? 1 : 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: compact ? 26 : 30,
+                          height: 1.15,
+                          fontWeight: showDigits ? FontWeight.w400 : FontWeight.w600,
+                          letterSpacing: showDigits ? 2 : -0.4,
+                          color: Colors.white,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ),
+                    if (subtitle.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        subtitle,
+                        textAlign: textAlign,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 15, color: Colors.white.withValues(alpha: .72)),
+                      ),
+                    ],
+                    const SizedBox(height: 10),
+                    CallStatus(call: call, alignment: centred ? Alignment.center : AlignmentDirectional.centerStart),
+                  ],
+                ),
+              ),
+              // The photo folds away sideways as the keypad opens.
+              ClipRect(
+                child: Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  widthFactor: 1 - folded,
+                  child: Opacity(
+                    opacity: fade,
+                    child: Padding(
+                      padding: const EdgeInsetsDirectional.only(start: 16, top: 2),
+                      child: _RingingHalo(
+                        // Ripples while it rings, and more slowly while we're calling out.
+                        active: call.state == CallState.ringing || _calling(call.state),
+                        slow: call.state != CallState.ringing,
+                        size: avatarSize,
+                        child: call.isPrivate || call.isConference
+                            ? CircleAvatar(
+                                radius: avatarSize / 2,
+                                backgroundColor: Colors.white.withValues(alpha: 0.14),
+                                child: Icon(
+                                  call.isConference ? Icons.groups_rounded : Icons.person_rounded,
+                                  size: avatarSize * 0.48,
+                                  color: Colors.white70,
+                                ),
+                              )
+                            : FutureBuilder(
+                                future: contact?.thumbnail == null
+                                    ? null
+                                    : ContactsRepository.instance.fullPhoto(contact!.id),
+                                builder: (context, full) =>
+                                    LetterAvatar(name: name, photo: full.data ?? contact?.thumbnail, size: avatarSize),
+                              ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          ClipRect(
+            child: Align(
+              alignment: Alignment.topCenter,
+              heightFactor: 1 - folded,
+              child: Opacity(
+                opacity: fade,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Wrap(
                     spacing: 6,
                     runSpacing: 6,
                     children: [
@@ -230,72 +310,10 @@ class CallHeader extends StatelessWidget {
                       if (call.isWifi) const _Badge(icon: Icons.wifi_rounded, label: 'Wi-Fi Calling'),
                     ],
                   ),
-                  SizedBox(height: compact ? 16 : 28),
-                  _RingingHalo(
-                    // Ripples while it rings, and more slowly while we're calling out.
-                    active: call.state == CallState.ringing || _calling(call.state),
-                    slow: call.state != CallState.ringing,
-                    size: avatarSize + 5,
-                    child: Container(
-                      padding: const EdgeInsets.all(2.5),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0x38FFFFFF), width: 1.5),
-                        boxShadow: const [BoxShadow(color: Color(0x40000000), blurRadius: 32, offset: Offset(0, 6))],
-                      ),
-                      child: call.isPrivate || call.isConference
-                          ? CircleAvatar(
-                              radius: avatarSize / 2,
-                              backgroundColor: Colors.white.withValues(alpha: 0.14),
-                              child: Icon(
-                                call.isConference ? Icons.groups_rounded : Icons.person_rounded,
-                                size: avatarSize * 0.48,
-                                color: Colors.white70,
-                              ),
-                            )
-                          : FutureBuilder(
-                              future: contact?.thumbnail == null
-                                  ? null
-                                  : ContactsRepository.instance.fullPhoto(contact!.id),
-                              builder: (context, full) =>
-                                  LetterAvatar(name: name, photo: full.data ?? contact?.thumbnail, size: avatarSize),
-                            ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 160),
-            child: Text(
-              showDigits ? _tail(digits) : name,
-              key: ValueKey(showDigits),
-              textAlign: TextAlign.center,
-              maxLines: showDigits ? 1 : 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: compact ? 28 : 34,
-                height: 1.15,
-                fontWeight: showDigits ? FontWeight.w400 : FontWeight.w500,
-                letterSpacing: showDigits ? 2 : -0.4,
-                color: Colors.white,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
-            ),
-          ),
-          if (subtitle.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Text(
-              subtitle,
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 16, color: Colors.white.withValues(alpha: .72)),
-            ),
-          ],
-          const SizedBox(height: 8),
-          CallStatus(call: call),
           AnimatedSize(
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOutCubic,
@@ -441,8 +459,9 @@ class _Badge extends StatelessWidget {
 }
 
 class CallStatus extends StatefulWidget {
-  const CallStatus({super.key, required this.call});
+  const CallStatus({super.key, required this.call, this.alignment = Alignment.center});
   final CallInfo call;
+  final AlignmentGeometry alignment;
   @override
   State<CallStatus> createState() => _CallStatusState();
 }
@@ -560,7 +579,7 @@ class _CallStatusState extends State<CallStatus> with SingleTickerProviderStateM
             ),
             style: style,
           )
-        : Text(text, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: style);
+        : Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: style);
     return SizedBox(
       height: 28,
       child: AnimatedSwitcher(
@@ -569,7 +588,8 @@ class _CallStatusState extends State<CallStatus> with SingleTickerProviderStateM
         child: KeyedSubtree(
           key: ValueKey(_live ? 'timer' : call.state),
           child: _live
-              ? Center(
+              ? Align(
+                  alignment: widget.alignment,
                   child: Container(
                     padding: const EdgeInsets.fromLTRB(10, 3, 12, 3),
                     decoration: BoxDecoration(
@@ -593,7 +613,8 @@ class _CallStatusState extends State<CallStatus> with SingleTickerProviderStateM
                     ),
                   ),
                 )
-              : Center(
+              : Align(
+                  alignment: widget.alignment,
                   child: FadeTransition(opacity: _pulse, child: label),
                 ),
         ),

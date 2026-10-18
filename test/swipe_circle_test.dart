@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  Rect? released;
   // The idle hint loops forever, so these tests pump fixed durations instead of settling.
   Future<List<String>> pump(WidgetTester tester) async {
     final fired = <String>[];
@@ -13,7 +14,10 @@ void main() {
             color: Colors.green,
             icon: Icons.call,
             label: 'Answer',
-            onTriggered: () => fired.add('answer'),
+            onTriggered: (ball) {
+              fired.add('answer');
+              released = ball;
+            },
           ),
         ),
       ),
@@ -61,6 +65,22 @@ void main() {
     await gesture.up();
     await settle(tester);
     expect(fired, isEmpty);
+  });
+
+  testWidgets('a diagonal drag fires and reports where the ball was let go', (tester) async {
+    final fired = await pump(tester);
+    final start = tester.getRect(button());
+    final gesture = await tester.startGesture(start.center);
+    await gesture.moveBy(const Offset(-20, -20));
+    await gesture.moveBy(const Offset(-80, -80));
+    await tester.pump();
+    final held = tester.getRect(button());
+    await gesture.up();
+    await settle(tester);
+    expect(fired, ['answer']);
+    expect(released!.center.dx, closeTo(held.center.dx, 1));
+    expect(released!.center.dy, closeTo(held.center.dy, 1));
+    expect(held.center.dx, lessThan(start.center.dx - 80));
   });
 
   testWidgets('screen readers can activate it', (tester) async {

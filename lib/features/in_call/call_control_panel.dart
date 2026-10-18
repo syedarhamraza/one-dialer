@@ -3,6 +3,7 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
@@ -25,6 +26,8 @@ class CallControlPanel extends StatefulWidget {
     required this.onDigit,
     required this.onToggle,
     this.entrance = kAlwaysCompleteAnimation,
+    this.endKey,
+    this.hideEnd = false,
   });
   final CallInfo call;
   final AudioInfo audio;
@@ -40,6 +43,12 @@ class CallControlPanel extends StatefulWidget {
 
   /// Runs once when the controls first appear: rows fade and rise in, staggered.
   final Animation<double> entrance;
+
+  /// Locates the End pill, where an answered call's Answer ball lands.
+  final Key? endKey;
+
+  /// Hides the End pill while the Answer ball is still flying into its place.
+  final bool hideEnd;
 
   @override
   State<CallControlPanel> createState() => _CallControlPanelState();
@@ -136,23 +145,24 @@ class _CallControlPanelState extends State<CallControlPanel> {
     );
     final layoutProgress = const Interval(0, .65, curve: Curves.easeOutCubic).transform(p);
     final compact = widget.compact;
-    final circle = widget.landscape
-        ? 48.0
+    // ColorOS 17 keys are wide stadiums, three across.
+    final keyHeight = widget.landscape
+        ? 44.0
         : compact
-        ? 64.0
-        : 80.0;
+        ? 48.0
+        : 58.0;
     final actionSize = widget.landscape
         ? 48.0
         : compact
         ? 56.0
         : 76.0;
     final stride =
-        circle +
+        keyHeight +
         (widget.landscape
-            ? 4
-            : compact
             ? 6
-            : 8);
+            : compact
+            ? 8
+            : 12);
     final upperHeight = lerpDouble(
       widget.landscape
           ? 96
@@ -163,6 +173,7 @@ class _CallControlPanelState extends State<CallControlPanel> {
       layoutProgress,
     )!;
     final holding = widget.call.state == CallState.holding;
+    final canMerge = widget.callCount > 1 && widget.call.canMerge;
     final actions = <({IconData icon, String label, bool active, VoidCallback? tap})>[
       (
         icon: widget.audio.muted ? Icons.mic_off_rounded : Icons.mic_none_rounded,
@@ -178,9 +189,8 @@ class _CallControlPanelState extends State<CallControlPanel> {
             ? () => holding ? telecom.unhold(widget.call.id) : telecom.hold(widget.call.id)
             : null,
       ),
-      (icon: Icons.add_call, label: 'Add call', active: false, tap: telecom.openDialer),
       // Merge only matters with two calls; otherwise the slot holds a note, kept on screen.
-      if (widget.callCount > 1 && widget.call.canMerge)
+      if (canMerge)
         (icon: Icons.call_merge_rounded, label: 'Merge', active: false, tap: () => telecom.merge(widget.call.id))
       else
         (icon: Icons.edit_note_rounded, label: 'Note', active: _hasNote, tap: _editNote),
@@ -239,6 +249,12 @@ class _CallControlPanelState extends State<CallControlPanel> {
                                     ),
                                   ),
                                 ),
+                              Expanded(
+                                child: Opacity(
+                                  opacity: 1 - _outerOut.transform(p),
+                                  child: _moreMenu(actionSize, showNote: canMerge),
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -247,117 +263,154 @@ class _CallControlPanelState extends State<CallControlPanel> {
                   ),
                 ),
               if (p > 0)
-                for (var i = 0; i < 12; i++) _keypadKey(i, p, circle, stride, upperHeight),
+                for (var i = 0; i < 12; i++) _keypadKey(i, p, keyHeight, stride, upperHeight),
             ],
           ),
         ),
       ),
     );
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (widget.landscape) Expanded(child: SingleChildScrollView(reverse: true, child: upper)) else upper,
-        Padding(
-          padding: EdgeInsets.only(
-            // With the keypad open, the gap matches the key rows' (landscape drops the last row's own gap).
-            top: lerpDouble(compact ? 8 : 20, widget.landscape ? 4 : 0, layoutProgress)!,
-            bottom: widget.landscape
-                ? 8
-                : compact
-                ? 16
-                : 56,
-          ),
-          child: rise(
-            const Interval(.12, .74, curve: Curves.easeOutCubic),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: compact ? 72 : 92,
-                  child: CallAction(
-                    icon: switch (route) {
-                      AudioRoute.bluetooth => Icons.bluetooth_audio_rounded,
-                      AudioRoute.wiredHeadset => Icons.headset_rounded,
-                      _ => Icons.volume_up_rounded,
-                    },
-                    label: routeLabel,
-                    active: route != AudioRoute.earpiece,
-                    size: actionSize,
-                    onPressed: widget.audio.supportedRoutes.contains(AudioRoute.bluetooth)
-                        ? () => chooseCallAudioRoute(context, widget.audio)
-                        : () => telecom.setAudioRoute(
-                            route == AudioRoute.speaker ? AudioRoute.earpiece : AudioRoute.speaker,
-                          ),
+    return CallGlassLayer(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (widget.landscape) Expanded(child: SingleChildScrollView(reverse: true, child: upper)) else upper,
+          Padding(
+            padding: EdgeInsets.only(
+              // With the keypad open, the gap matches the key rows' (landscape drops the last row's own gap).
+              top: lerpDouble(compact ? 8 : 20, widget.landscape ? 4 : 0, layoutProgress)!,
+              bottom: widget.landscape
+                  ? 8
+                  : compact
+                  ? 16
+                  : 56,
+            ),
+            child: rise(
+              const Interval(.12, .74, curve: Curves.easeOutCubic),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: compact ? 72 : 92,
+                    child: CallAction(
+                      icon: switch (route) {
+                        AudioRoute.bluetooth => Icons.bluetooth_audio_rounded,
+                        AudioRoute.wiredHeadset => Icons.headset_rounded,
+                        _ => Icons.volume_up_rounded,
+                      },
+                      label: routeLabel,
+                      active: route != AudioRoute.earpiece,
+                      size: actionSize,
+                      onPressed: widget.audio.supportedRoutes.contains(AudioRoute.bluetooth)
+                          ? () => chooseCallAudioRoute(context, widget.audio)
+                          : () => telecom.setAudioRoute(
+                              route == AudioRoute.speaker ? AudioRoute.earpiece : AudioRoute.speaker,
+                            ),
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: PressScale(
-                      scale: .95,
-                      child: LayoutBuilder(
-                        builder: (context, box) => Align(
-                          alignment: Alignment.topCenter,
-                          child: AnimatedOpacity(
-                            opacity: _ending ? .55 : 1,
-                            duration: const Duration(milliseconds: 220),
-                            child: AnimatedContainer(
-                              // While ending, the pill draws in to a circle.
-                              duration: MediaQuery.disableAnimationsOf(context)
-                                  ? Duration.zero
-                                  : const Duration(milliseconds: 280),
-                              curve: Curves.easeInOutCubic,
-                              width: _ending ? actionSize : box.maxWidth,
-                              height: actionSize,
-                              decoration: ShapeDecoration(
-                                shape: const StadiumBorder(),
-                                gradient: const LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [Color(0xFFF26573), Color(0xFFE0465A)],
-                                ),
-                                shadows: [
-                                  BoxShadow(
-                                    color: const Color(0xFFE0465A).withValues(alpha: _ending ? 0 : .38),
-                                    blurRadius: 22,
-                                    offset: const Offset(0, 6),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Column(
+                        children: [
+                          PressScale(
+                            scale: .95,
+                            child: LayoutBuilder(
+                              builder: (context, box) => Align(
+                                alignment: Alignment.topCenter,
+                                child: AnimatedOpacity(
+                                  key: widget.endKey,
+                                  opacity: widget.hideEnd ? 0 : (_ending ? .55 : 1),
+                                  duration: widget.hideEnd ? Duration.zero : const Duration(milliseconds: 220),
+                                  child: AnimatedContainer(
+                                    // While ending, the pill draws in to a circle.
+                                    duration: MediaQuery.disableAnimationsOf(context)
+                                        ? Duration.zero
+                                        : const Duration(milliseconds: 280),
+                                    curve: Curves.easeInOutCubic,
+                                    width: _ending ? actionSize : box.maxWidth,
+                                    height: actionSize,
+                                    decoration: ShapeDecoration(
+                                      shape: const StadiumBorder(),
+                                      gradient: const LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                        colors: [Color(0xFFF26573), Color(0xFFE0465A)],
+                                      ),
+                                      shadows: [
+                                        BoxShadow(
+                                          color: const Color(0xFFE0465A).withValues(alpha: _ending ? 0 : .38),
+                                          blurRadius: 22,
+                                          offset: const Offset(0, 6),
+                                        ),
+                                      ],
+                                    ),
+                                    child: IconButton(
+                                      tooltip: 'End call',
+                                      iconSize: 32,
+                                      style: IconButton.styleFrom(
+                                        foregroundColor: Colors.white,
+                                        disabledForegroundColor: Colors.white,
+                                        shape: const StadiumBorder(),
+                                      ),
+                                      onPressed: _ending ? null : _endCall,
+                                      icon: const Icon(Icons.call_end_rounded),
+                                    ),
                                   ),
-                                ],
-                              ),
-                              child: IconButton(
-                                tooltip: 'End call',
-                                iconSize: 32,
-                                style: IconButton.styleFrom(
-                                  foregroundColor: Colors.white,
-                                  disabledForegroundColor: Colors.white,
-                                  shape: const StadiumBorder(),
                                 ),
-                                onPressed: _ending ? null : _endCall,
-                                icon: const Icon(Icons.call_end_rounded),
                               ),
                             ),
                           ),
-                        ),
+                          const SizedBox(height: 8),
+                          const ExcludeSemantics(
+                            child: Text('End', style: TextStyle(fontSize: 12, height: 1.1, color: Colors.white)),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                ),
-                SizedBox(
-                  width: compact ? 72 : 92,
-                  child: CallAction(
-                    icon: widget.keypadOpen ? Icons.keyboard_arrow_down_rounded : Icons.dialpad_rounded,
-                    label: widget.keypadOpen ? 'Hide keypad' : 'Keypad',
-                    size: actionSize,
-                    onPressed: widget.onToggle,
+                  SizedBox(
+                    width: compact ? 72 : 92,
+                    child: CallAction(
+                      icon: widget.keypadOpen ? Icons.keyboard_arrow_down_rounded : Icons.dialpad_rounded,
+                      label: widget.keypadOpen ? 'Hide keypad' : 'Keypad',
+                      size: actionSize,
+                      onPressed: widget.onToggle,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
+
+  /// ColorOS keeps the rarer actions behind More, in a glass menu that grows out of the button.
+  Widget _moreMenu(double size, {required bool showNote}) => GlassMenu(
+    menuAlignment: GlassMenuAlignment.bottomRight,
+    menuWidth: 210,
+    triggerBuilder: (context, toggle) =>
+        CallAction(icon: Icons.more_vert_rounded, label: 'More', size: size, onPressed: toggle),
+    items: [
+      GlassMenuItem(
+        icon: const Icon(Icons.add_call, color: Colors.white),
+        title: 'Add call',
+        onTap: TelecomBridge.instance.openDialer,
+      ),
+      if (showNote)
+        GlassMenuItem(
+          icon: const Icon(Icons.edit_note_rounded, color: Colors.white),
+          title: 'Note',
+          onTap: _editNote,
+        ),
+      GlassMenuItem(
+        icon: const Icon(Icons.volume_up_rounded, color: Colors.white),
+        title: 'Audio output',
+        onTap: () => chooseCallAudioRoute(context, widget.audio),
+      ),
+    ],
+  );
 
   // Room above the top row so its edge reveal reaches full opacity.
   static const double _keypadTop = 16;
@@ -384,11 +437,12 @@ class _CallControlPanelState extends State<CallControlPanel> {
     final top = upperHeight - fullHeight + _keypadTop + row * stride + (1 - spring) * 24;
     // Reveal whole circles as space opens, avoiding a sliced circle at either edge.
     final edgeReveal = (top / 16).clamp(0.0, 1.0) * ((upperHeight - top - size) / 4).clamp(0.0, 1.0);
+    final column = widget.width / 3;
     return Positioned(
       key: ValueKey('morph-key-$digit'),
-      left: (index % 3 + .5) * widget.width / 3 - size / 2,
+      left: (index % 3) * column + 6,
       top: top,
-      width: size,
+      width: column - 12,
       height: size,
       child: Opacity(
         opacity: const Interval(0, .6, curve: Curves.easeOut).transform(q) * edgeReveal,
@@ -410,31 +464,33 @@ class _CallControlPanelState extends State<CallControlPanel> {
                 onTapDown: (_) => _startTone(digit),
                 onTapUp: (_) => _releaseTone(),
                 onTapCancel: _releaseTone,
-                child: AnimatedContainer(
+                child: AnimatedScale(
                   duration: Duration(milliseconds: _tone == digit ? 40 : 220),
-                  width: size,
-                  height: size,
-                  transformAlignment: Alignment.center,
-                  transform: Matrix4.diagonal3Values(_tone == digit ? .94 : 1, _tone == digit ? .94 : 1, 1),
-                  decoration: callControlBody(pressed: _tone == digit),
-                  padding: const EdgeInsets.all(4),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(digit, style: const TextStyle(fontSize: 32, height: 1.05, color: Colors.white)),
-                        Text(
-                          letters.isEmpty ? ' ' : letters,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            height: 1.2,
-                            letterSpacing: 1.5,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white60,
-                          ),
+                  scale: _tone == digit ? .94 : 1,
+                  child: CallGlass(
+                    radius: size / 2,
+                    pressed: _tone == digit,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(digit, style: const TextStyle(fontSize: 30, height: 1.05, color: Colors.white)),
+                            Text(
+                              letters.isEmpty ? ' ' : letters,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                height: 1.2,
+                                letterSpacing: 1.5,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white60,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),

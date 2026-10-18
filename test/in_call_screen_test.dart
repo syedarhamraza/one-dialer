@@ -113,6 +113,53 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('a dragged Answer ball flies into the End pill once Telecom connects', (tester) async {
+    await open(tester);
+    await emit(tester, [call('ringing')]);
+    final gesture = await tester.startGesture(tester.getCenter(find.byKey(const ValueKey('swipe-Answer'))));
+    await gesture.moveBy(const Offset(-20, -20));
+    await gesture.moveBy(const Offset(-90, -90));
+    await gesture.up();
+    await tester.pump();
+    expect(nativeCalls.where((c) => c.method == 'answer'), hasLength(1));
+    final ball = find.byWidgetPredicate(
+      (w) => w is DecoratedBox && w.decoration is ShapeDecoration && (w.decoration as ShapeDecoration).color != null,
+    );
+    expect(ball, findsOneWidget);
+    final released = tester.getRect(ball);
+
+    tester.binding.defaultBinaryMessenger.handlePlatformMessage(
+      events,
+      codec.encodeSuccessEnvelope({
+        'calls': [call('active')],
+        'audio': {
+          'muted': false,
+          'route': 'earpiece',
+          'supportedRoutes': ['earpiece', 'speaker'],
+        },
+      }),
+      (_) {},
+    );
+    // Lay out the connected controls, then start the flight clock.
+    await tester.pump();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 280));
+    double endOpacity() => tester
+        .widget<AnimatedOpacity>(
+          find.ancestor(of: find.byTooltip('End call'), matching: find.byType(AnimatedOpacity)).first,
+        )
+        .opacity;
+    // Mid-flight: the ball has left where it was let go, and the real pill waits for it.
+    expect(tester.getRect(ball), isNot(released));
+    expect(endOpacity(), 0);
+
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(ball, findsNothing);
+    expect(endOpacity(), 1);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('formatted number, location and end reasons come from Telecom', (tester) async {
     await open(tester);
     await emit(tester, [
@@ -125,7 +172,12 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.textContaining('Line busy'), findsOneWidget);
     await emit(tester, [
-      {...call('disconnected', id: 'other'), 'disconnectCode': 'error', 'disconnectLabel': 'No service', 'connectTimeMillis': 0},
+      {
+        ...call('disconnected', id: 'other'),
+        'disconnectCode': 'error',
+        'disconnectLabel': 'No service',
+        'connectTimeMillis': 0,
+      },
     ]);
     expect(find.text('No service'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
@@ -178,7 +230,11 @@ void main() {
       'com.syedarhamraza.dialer/call_state',
       const StandardMethodCodec().encodeSuccessEnvelope({
         'calls': [call('dialing')],
-        'audio': {'muted': false, 'route': 'earpiece', 'supportedRoutes': ['earpiece']},
+        'audio': {
+          'muted': false,
+          'route': 'earpiece',
+          'supportedRoutes': ['earpiece'],
+        },
       }),
       (_) {},
     );
@@ -550,7 +606,12 @@ void main() {
         await capture(state, settle: state == 'active');
       }
       await emit(tester, [
-        {...call('ringing', id: 'foreign'), 'name': 'Priya Shah', 'formattedNumber': '+44 20 7183 8750', 'location': 'United Kingdom'},
+        {
+          ...call('ringing', id: 'foreign'),
+          'name': 'Priya Shah',
+          'formattedNumber': '+44 20 7183 8750',
+          'location': 'United Kingdom',
+        },
       ]);
       await tester.pump(const Duration(milliseconds: 600));
       await capture('ringing-tint', settle: false);

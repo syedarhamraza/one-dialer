@@ -1,23 +1,50 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/one_ui_floating_modal.dart';
 
-/// Glassy circle body for call actions and keypad keys: a soft top-lit gradient with a hairline
-/// highlight, translucent so the caller's backdrop shows through. Painted, never blurred.
-BoxDecoration callControlBody({bool pressed = false}) => BoxDecoration(
-  shape: BoxShape.circle,
-  gradient: LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: pressed ? const [Color(0x5CFFFFFF), Color(0x47FFFFFF)] : const [Color(0x2EFFFFFF), Color(0x1AFFFFFF)],
-  ),
-  border: Border.all(color: const Color(0x1AFFFFFF), width: .5),
-);
+/// Liquid glass shared by every call control. One layer refracts the caller's backdrop for all
+/// the circles and keys inside it, so the shapes cost a single pass together.
+class CallGlassLayer extends StatelessWidget {
+  const CallGlassLayer({super.key, required this.child});
+  final Widget child;
+
+  static const settings = LiquidGlassSettings(
+    glassColor: Color(0x1AFFFFFF),
+    thickness: 22,
+    blur: 6,
+    lightIntensity: .6,
+    saturation: 1.6,
+  );
+
+  @override
+  Widget build(BuildContext context) => AdaptiveLiquidGlassLayer(settings: settings, child: child);
+}
+
+/// A glass body inside [CallGlassLayer]: a circle, or a stadium when [radius] is given.
+/// [pressed] lays a white wash over it, like a key under the finger.
+class CallGlass extends StatelessWidget {
+  const CallGlass({super.key, this.radius, this.pressed = false, this.child = const SizedBox.expand()});
+  final double? radius;
+  final bool pressed;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => AdaptiveGlass.grouped(
+    shape: radius == null ? const LiquidOval() : LiquidRoundedRectangle(borderRadius: radius!),
+    isInteractive: true,
+    child: AnimatedContainer(
+      duration: Duration(milliseconds: pressed ? 40 : 220),
+      color: pressed ? const Color(0x47FFFFFF) : const Color(0x00FFFFFF),
+      child: child,
+    ),
+  );
+}
 
 /// An unavailable action: just an outline, so it reads as "not yet" rather than broken.
 const _outlined = BoxDecoration(
@@ -90,7 +117,7 @@ class CallAction extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                AnimatedContainer(duration: fast, decoration: enabled ? callControlBody() : _outlined),
+                enabled ? const CallGlass() : const DecoratedBox(decoration: _outlined),
                 AnimatedScale(
                   scale: active ? 1 : 0,
                   duration: still ? Duration.zero : const Duration(milliseconds: 220),

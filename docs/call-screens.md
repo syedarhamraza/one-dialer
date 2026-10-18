@@ -8,6 +8,13 @@ Private, conference and bare-number calls keep a neutral navy. Nothing is
 blurred per frame: there's no `BackdropFilter` or live blur. A fixed scrim keeps
 white text readable.
 
+The layout follows ColorOS 17. The name, number and status sit at the top on the
+left, with the photo in a circle on the right. The controls are liquid glass
+(`liquid_glass_widgets`, initialised in `inCallMain` only). One
+`CallGlassLayer` wraps the control panel, and every circle and key inside it is
+a grouped `CallGlass`, so they render in a single pass. The main app's floating
+chrome stays OneSpend's, without glass.
+
 `InCallScreen` subscribes to the existing Telecom snapshot stream. Presentation
 is split across four files:
 
@@ -17,7 +24,7 @@ is split across four files:
   `PressScale`.
 - `call_control_panel.dart`: the control/keypad morph, DTMF, and the fixed
   bottom row.
-- `incoming_controls.dart`: the slide-up answer handle, Message and Decline.
+- `incoming_controls.dart`: the draggable Answer and Decline balls and the message pill.
 
 ## Telecom fields
 
@@ -35,10 +42,18 @@ number geocoder isn't public API.
 
 ## Incoming
 
-ColorOS-style: Decline (left) and Answer (right) are each swiped up to act, with a
-"Decline with message" pill underneath. Each button follows the finger upward.
+ColorOS 17 style: Decline (left) and Answer (right) each follow the finger
+anywhere, with a "Decline with message" pill underneath. While one is dragged,
+the other button and the pill fade out as it arms.
 
-- Release past `threshold` (96 px) to act.
+- Release at least `threshold` (96 px) away, moving upward, to act. Downward drags never arm.
+- **Answer → End**: the released Answer ball stays where it was let go until
+  Telecom connects. Then the session flies it into the End pill (560 ms),
+  stretching from a circle to a stadium. Its colour goes from green through
+  orange to red, and the handset tips over into the hang-up glyph. The real pill
+  stays hidden until it lands. If the call never connects, the ball is dropped
+  after 4 s. Answering from the notification, or with reduced motion on, skips
+  the flight.
 - Anything shorter springs back (`SpringSimulation`).
 - Taps never answer or decline.
 - The button grows and glows as it arms.
@@ -60,7 +75,9 @@ The header sits slightly above the centre of the space the controls leave.
   - Turning an action on grows a white fill out from the icon. The icon colour animates and the icon crossfades.
   - Unavailable actions (Hold while dialing) show as an outline, not a dim fill.
   - Press scale.
-- **Fourth slot**: Note on a single call. It opens a floating sheet over the call that saves as you type, so the note survives the other side hanging up. Notes are stored in `DialerPrefs` as `call_note_<number>_<millis>`, and Recents call details show each note under the logged call it was taken during. The slot becomes Merge once two calls can merge.
+- **Row**: Mute, Hold, Note (or Merge), More. More opens a glass `GlassMenu`
+  with Add call, Audio output, and Note when Merge has taken its slot.
+- **Third slot**: Note on a single call. It opens a floating sheet over the call that saves as you type, so the note survives the other side hanging up. Notes are stored in `DialerPrefs` as `call_note_<number>_<millis>`, and Recents call details show each note under the logged call it was taken during. The slot becomes Merge once two calls can merge.
 - **End call**: a red gradient pill with a soft glow. Once tapped it draws in to a circle and dims. If Telecom hasn't ended the call within 3 s, it becomes tappable again.
 - **Entrance**: when the connected or dialing controls appear, the action row and the bottom row fade and rise 16 px, staggered (520 ms total). Reduced motion skips it.
 - **Header**:
@@ -75,7 +92,7 @@ The keypad morph runs on a critically damped spring (`SpringSimulation` with a
 
 - **Action row**: the four actions fade out middle pair first, with a gentle
   10% scale.
-- **Keys**: rows cascade bottom-up with the opening panel, rising 24 px from
+- **Keys**: glass stadiums, three across (ColorOS 17). Rows cascade bottom-up with the opening panel, rising 24 px from
   85% scale with a soft settle. Pressed keys brighten and shrink to 94%.
 - **Header**: the avatar and badges collapse away. Typed digits replace the
   caller name, and the name becomes the subtitle.
@@ -88,7 +105,7 @@ The keypad morph runs on a critically damped spring (`SpringSimulation` with a
 ## Verification
 
 - `flutter analyze`
-- `flutter test` (78 tests, including the call-screen and slide-handle cases)
+- `flutter test` (89 tests, including the call-screen and slide-handle cases)
 - `cd android && ./gradlew :app:testDebugUnitTest` (includes `NumberDisplayTest`)
 - Render previews with real fonts:
   `flutter test test/in_call_screen_test.dart --plain-name "render One UI call previews" --dart-define=PREVIEW_FONT=<path-to-roboto-regular.ttf>`.

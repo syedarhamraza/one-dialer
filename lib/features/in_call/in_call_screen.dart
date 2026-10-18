@@ -8,6 +8,7 @@ import '../../core/contacts/contacts_repository.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_scroll.dart';
+import '../../theme/one_ui_theme.dart';
 import 'call_control_panel.dart';
 import 'call_controls.dart';
 import 'call_screen_widgets.dart';
@@ -135,6 +136,79 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     slivers: [SliverFillRemaining(hasScrollBody: false, child: child)],
   );
 
+  /// Where the released Answer ball sits (global), while it waits for Telecom and then flies
+  /// into the End pill: green turning red, circle stretching to a stadium, as on ColorOS 17.
+  Rect? _ball;
+  Timer? _ballTimeout;
+  late final AnimationController _fly = AnimationController(vsync: this, duration: const Duration(milliseconds: 560))
+    ..addStatusListener((status) {
+      if (status == AnimationStatus.completed) _land();
+    });
+  final _endKey = GlobalKey();
+  final _stackKey = GlobalKey();
+
+  void _answered(Rect ball) {
+    TelecomBridge.instance.answer(widget.call.id);
+    if (MediaQuery.disableAnimationsOf(context) || ball.isEmpty) return;
+    setState(() => _ball = ball);
+    // If Telecom never connects, don't leave the ball hanging.
+    _ballTimeout = Timer(const Duration(seconds: 4), _land);
+  }
+
+  void _land() {
+    _ballTimeout?.cancel();
+    if (mounted && _ball != null) setState(() => _ball = null);
+  }
+
+  /// Starts the flight once the connected controls (and the End pill) are laid out.
+  void _launchBall() {
+    if (_ball == null || _fly.isAnimating) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _ball != null && !_fly.isAnimating) _fly.forward(from: 0);
+    });
+  }
+
+  Rect? _localRect(Rect global) {
+    final stack = _stackKey.currentContext?.findRenderObject() as RenderBox?;
+    if (stack == null || !stack.hasSize) return null;
+    return global.shift(-stack.localToGlobal(Offset.zero));
+  }
+
+  Widget _flyingBall() {
+    final from = _localRect(_ball!);
+    final endBox = _endKey.currentContext?.findRenderObject() as RenderBox?;
+    final to = endBox == null || !endBox.hasSize
+        ? null
+        : _localRect(MatrixUtils.transformRect(endBox.getTransformTo(null), Offset.zero & endBox.size));
+    if (from == null) return const SizedBox.shrink();
+    final t = to == null ? 0.0 : Curves.easeInOutCubic.transform(_fly.value);
+    final rect = to == null ? from : Rect.lerp(from, to, t)!;
+    return Positioned.fromRect(
+      rect: rect,
+      child: IgnorePointer(
+        child: DecoratedBox(
+          decoration: ShapeDecoration(shape: const StadiumBorder(), color: _ballColor.transform(t)),
+          // The handset tips over into the hang-up glyph as it lands.
+          child: Transform.rotate(
+            angle: 2.36 * t,
+            child: Icon(Icons.call_rounded, color: Colors.white, size: rect.shortestSide * .42),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static final _ballColor = TweenSequence<Color?>([
+    TweenSequenceItem(
+      tween: ColorTween(begin: OneUITheme.accentGreen, end: const Color(0xFFF5A04A)),
+      weight: 1,
+    ),
+    TweenSequenceItem(
+      tween: ColorTween(begin: const Color(0xFFF5A04A), end: const Color(0xFFE0465A)),
+      weight: 1,
+    ),
+  ]);
+
   void _toggleKeypad() {
     if (_keypadOpen) TelecomBridge.instance.stopDtmf(widget.call.id);
     setState(() => _keypadOpen = !_keypadOpen);
@@ -159,6 +233,12 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   void didUpdateWidget(_CallSession oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.call.state != CallState.ringing) _enter();
+    final state = widget.call.state;
+    if (state == CallState.disconnected || state == CallState.disconnecting) {
+      _land();
+    } else if (state != CallState.ringing) {
+      _launchBall();
+    }
     final route = widget.snapshot.audio.route;
     if (route != oldWidget.snapshot.audio.route) {
       _toastTimer?.cancel();
@@ -172,6 +252,8 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   @override
   void dispose() {
     _toastTimer?.cancel();
+    _ballTimeout?.cancel();
+    _fly.dispose();
     _morph.dispose();
     _entrance.dispose();
     super.dispose();
@@ -189,111 +271,124 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop && _keypadOpen) _toggleKeypad();
       },
-      child: AnimatedBuilder(
-        animation: _morph,
-        builder: (context, _) => LayoutBuilder(
-          builder: (context, constraints) {
-            final landscape = constraints.maxWidth > constraints.maxHeight;
-            final compact = landscape || constraints.maxHeight < 700;
-            final progress = Curves.easeInOutCubic.transform(_morph.value);
-            final Widget controls = ended
-                ? const SizedBox(key: ValueKey('ended'), width: double.infinity)
-                : ringing
-                ? IncomingControls(
-                    key: const ValueKey('incoming'),
-                    call: call,
-                    compact: compact,
-                    isCurrent: () => mounted && widget.call.state == CallState.ringing,
-                  )
-                : CallControlPanel(
-                    key: const ValueKey('connected'),
-                    call: call,
-                    audio: widget.snapshot.audio,
-                    callCount: widget.snapshot.calls.length,
-                    width: landscape ? (constraints.maxWidth - 56) / 2 : constraints.maxWidth - 32,
-                    compact: compact,
-                    landscape: landscape,
-                    progress: _morph.value,
-                    animating: _morph.isAnimating,
-                    keypadOpen: _keypadOpen,
-                    onDigit: (digit) => setState(() => _digits += digit),
-                    onToggle: _toggleKeypad,
-                    entrance: _entrance,
-                  );
-            final animatedControls = AnimatedSwitcher(
-              duration: switchDuration,
-              switchInCurve: Curves.easeOutCubic,
-              switchOutCurve: Curves.easeInCubic,
-              layoutBuilder: (current, previous) =>
-                  Stack(alignment: Alignment.bottomCenter, children: [...previous, ?current]),
-              transitionBuilder: (child, animation) => FadeTransition(
-                opacity: animation,
-                child: SlideTransition(
-                  position: Tween(begin: const Offset(0, .08), end: Offset.zero).animate(animation),
-                  child: child,
-                ),
-              ),
-              child: controls,
-            );
-            final header = Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CallHeader(
-                  call: call,
-                  sims: widget.sims,
-                  compact: compact,
-                  keypadProgress: progress,
-                  digits: _digits,
-                  chip: ringing || ended ? null : _routeToast ?? (widget.snapshot.audio.muted ? 'Muted' : null),
-                ),
-                if (held != null && !ringing && !ended) ...[
-                  const SizedBox(height: 16),
-                  HeldCallChip(call: held, onSwap: () => TelecomBridge.instance.unhold(held.id)),
-                ],
-              ],
-            );
-            if (landscape) {
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _scrollArea(Column(mainAxisAlignment: MainAxisAlignment.center, children: [header])),
-                    ),
-                    const SizedBox(width: 24),
-                    Expanded(
-                      child: ringing || ended
-                          ? _scrollArea(Column(mainAxisAlignment: MainAxisAlignment.end, children: [animatedControls]))
-                          : animatedControls,
-                    ),
-                  ],
-                ),
-              );
-            }
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: _scrollArea(
-                      Column(
-                        children: [
-                          SizedBox(height: compact ? 4 : 16),
-                          // Slightly above centre in the space the controls leave.
-                          const Spacer(flex: 2),
-                          header,
-                          const SizedBox(height: 16),
-                          const Spacer(flex: 3),
-                        ],
+      child: Stack(
+        key: _stackKey,
+        children: [
+          Positioned.fill(
+            child: AnimatedBuilder(
+              animation: _morph,
+              builder: (context, _) => LayoutBuilder(
+                builder: (context, constraints) {
+                  final landscape = constraints.maxWidth > constraints.maxHeight;
+                  final compact = landscape || constraints.maxHeight < 700;
+                  final progress = Curves.easeInOutCubic.transform(_morph.value);
+                  final Widget controls = ended
+                      ? const SizedBox(key: ValueKey('ended'), width: double.infinity)
+                      : ringing
+                      ? IncomingControls(
+                          key: const ValueKey('incoming'),
+                          call: call,
+                          compact: compact,
+                          isCurrent: () => mounted && widget.call.state == CallState.ringing,
+                          onAnswer: _answered,
+                          answerHidden: _ball != null,
+                        )
+                      : CallControlPanel(
+                          key: const ValueKey('connected'),
+                          call: call,
+                          audio: widget.snapshot.audio,
+                          callCount: widget.snapshot.calls.length,
+                          width: landscape ? (constraints.maxWidth - 56) / 2 : constraints.maxWidth - 32,
+                          compact: compact,
+                          landscape: landscape,
+                          progress: _morph.value,
+                          animating: _morph.isAnimating,
+                          keypadOpen: _keypadOpen,
+                          onDigit: (digit) => setState(() => _digits += digit),
+                          onToggle: _toggleKeypad,
+                          entrance: _entrance,
+                          endKey: _endKey,
+                          hideEnd: _ball != null,
+                        );
+                  final animatedControls = AnimatedSwitcher(
+                    duration: switchDuration,
+                    switchInCurve: Curves.easeOutCubic,
+                    switchOutCurve: Curves.easeInCubic,
+                    layoutBuilder: (current, previous) =>
+                        Stack(alignment: Alignment.bottomCenter, children: [...previous, ?current]),
+                    transitionBuilder: (child, animation) => FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(
+                        position: Tween(begin: const Offset(0, .08), end: Offset.zero).animate(animation),
+                        child: child,
                       ),
                     ),
-                  ),
-                  animatedControls,
-                ],
+                    child: controls,
+                  );
+                  final header = Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CallHeader(
+                        call: call,
+                        sims: widget.sims,
+                        compact: compact,
+                        keypadProgress: progress,
+                        digits: _digits,
+                        chip: ringing || ended ? null : _routeToast ?? (widget.snapshot.audio.muted ? 'Muted' : null),
+                      ),
+                      if (held != null && !ringing && !ended) ...[
+                        const SizedBox(height: 16),
+                        HeldCallChip(call: held, onSwap: () => TelecomBridge.instance.unhold(held.id)),
+                      ],
+                    ],
+                  );
+                  if (landscape) {
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _scrollArea(Column(mainAxisAlignment: MainAxisAlignment.center, children: [header])),
+                          ),
+                          const SizedBox(width: 24),
+                          Expanded(
+                            child: ringing || ended
+                                ? _scrollArea(
+                                    Column(mainAxisAlignment: MainAxisAlignment.end, children: [animatedControls]),
+                                  )
+                                : animatedControls,
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: _scrollArea(
+                            Column(
+                              children: [
+                                // ColorOS 17 keeps the caller at the top, left-aligned.
+                                SizedBox(height: compact ? 12 : 36),
+                                header,
+                                const SizedBox(height: 16),
+                                const Spacer(),
+                              ],
+                            ),
+                          ),
+                        ),
+                        animatedControls,
+                      ],
+                    ),
+                  );
+                },
               ),
-            );
-          },
-        ),
+            ),
+          ),
+          if (_ball != null) AnimatedBuilder(animation: _fly, builder: (context, _) => _flyingBall()),
+        ],
       ),
     );
   }
