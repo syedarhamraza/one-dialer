@@ -20,6 +20,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
+import android.os.SystemClock
 import android.provider.ContactsContract
 import android.telecom.Call
 import android.telecom.CallAudioState
@@ -247,9 +248,15 @@ object CallNotifications {
             if (key == islandKey) return
             val create = islandKey == null
             islandKey = key
+            // vivo's SuperXChronometer ticks text holding this JSON (read from its SystemUI plugin);
+            // base is on the elapsedRealtime clock like Chronometer's.
+            val timer = details.connectTimeMillis.takeIf { state == Call.STATE_ACTIVE && it > 0 }?.let {
+                val base = SystemClock.elapsedRealtime() - (System.currentTimeMillis() - it)
+                """{"base":$base,"started":true,"countDown":false}"""
+            }
             builder.addExtras(
                 vivoIslandExtras(
-                    create, caller, status,
+                    create, caller, timer ?: status,
                     callerIcon(context, details.handle?.schemeSpecificPart)
                         ?: Icon.createWithResource(context, R.drawable.island_caller),
                     open,
@@ -260,10 +267,11 @@ object CallNotifications {
                         Icon.createWithResource(context, R.drawable.island_decline) to hangUp,
                     ),
                     glyph = Icon.createWithResource(context, R.drawable.island_phone),
-                    rightTemplate = 1, // wave animation: the call is live (paused on hold)
+                    // Like vivo's own call island: green text, a live timer once the call connects.
+                    rightTemplate = 4, // text + image; text only here
                     rightInfo = Bundle().apply {
-                        putIntegerArrayList("island.superx.rightInfo.waveColor", arrayListOf(ANSWER_GREEN, ANSWER_GREEN))
-                        putInt("island.superx.rightInfo.waveState", if (state == Call.STATE_HOLDING) 0 else 1)
+                        val text = timer ?: if (state == Call.STATE_HOLDING) "On hold" else "Calling"
+                        putCharSequence("island.superx.rightInfo.content", green(text))
                     },
                 )
             )
