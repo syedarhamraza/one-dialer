@@ -54,7 +54,22 @@ class CallControlPanel extends StatefulWidget {
   State<CallControlPanel> createState() => _CallControlPanelState();
 }
 
-class _CallControlPanelState extends State<CallControlPanel> {
+class _CallControlPanelState extends State<CallControlPanel> with SingleTickerProviderStateMixin {
+  /// The keys' own steady clock for their cascade, so it plays out evenly rather than riding the
+  /// panel's spring, which does most of its travel at the start.
+  late final AnimationController _keysIn;
+
+  @override
+  void initState() {
+    super.initState();
+    // Created here, not lazily: a lazy field would first be read after the keypad opened.
+    _keysIn = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+      value: widget.keypadOpen ? 1 : 0,
+    );
+  }
+
   String? _tone;
   bool _ending = false;
   Timer? _endingTimeout;
@@ -117,10 +132,20 @@ class _CallControlPanelState extends State<CallControlPanel> {
     } else if (!widget.keypadOpen || widget.animating) {
       _stopTone();
     }
+    if (oldWidget.keypadOpen != widget.keypadOpen || oldWidget.call.id != widget.call.id) {
+      if (MediaQuery.disableAnimationsOf(context) || oldWidget.call.id != widget.call.id) {
+        _keysIn.value = widget.keypadOpen ? 1 : 0;
+      } else if (widget.keypadOpen) {
+        _keysIn.forward();
+      } else {
+        _keysIn.reverse();
+      }
+    }
   }
 
   @override
   void dispose() {
+    _keysIn.dispose();
     _stopTone();
     _endingTimeout?.cancel();
     super.dispose();
@@ -421,6 +446,9 @@ class _CallControlPanelState extends State<CallControlPanel> {
   // Room above the top row so its edge reveal reaches full opacity.
   static const double _keypadTop = 16;
 
+  /// Bouncier than the package's own bouncy preset, so a key visibly floats past its place.
+  static final _keyFloat = GlassSpringCurve(GlassSpring.bouncy(extraBounce: .2), const Duration(milliseconds: 800));
+
   /// The action row clears out quickly and all at once, as on ColorOS, before the keys rise.
   static const _actionsOut = Interval(0, .2, curve: Curves.easeOut);
 
@@ -437,10 +465,11 @@ class _CallControlPanelState extends State<CallControlPanel> {
   Widget _keypadKey(int index, double p, double size, double stride, double upperHeight) {
     final (digit, letters) = _keys[index];
     // ColorOS 17: every key has its own entrance. Rows arrive bottom-up a beat apart, and in each
-    // row the middle key leads its neighbours; each fades in, rises into place and grows to size.
+    // row the middle key leads its neighbours; each fades in and floats up, overshooting its place
+    // on the glass package's bouncy spring before settling into it.
     final row = index ~/ 3;
     final delay = (3 - row) * .09 + (index % 3 == 1 ? 0 : .05);
-    final q = Interval(.08 + delay, .52 + delay, curve: Curves.easeOutCubic).transform(p);
+    final interval = Interval(.06 + delay, .64 + delay);
     final fullHeight = _keypadTop + stride * 4 - (widget.landscape ? 4 : 0);
     final top = upperHeight - fullHeight + _keypadTop + row * stride;
     // Reveal whole circles as space opens, avoiding a sliced circle at either edge.
@@ -452,51 +481,60 @@ class _CallControlPanelState extends State<CallControlPanel> {
       top: top,
       width: column - 12,
       height: size,
-      child: Opacity(
-        key: ValueKey('keypad-fade-$digit'),
-        opacity: q * edgeReveal,
-        // Paint-only, so the key's hit area stays put.
-        child: Transform(
-          alignment: Alignment.center,
-          transform: Matrix4.translationValues(0, 30 * (1 - q), 0)..scaleByDouble(.86 + .14 * q, .86 + .14 * q, 1, 1),
-          child: ExcludeSemantics(
-            excluding: p < 1,
-            child: Semantics(
-              button: true,
-              label: digit,
-              excludeSemantics: true,
-              onTap: () {
-                _startTone(digit);
-                _releaseTone();
-              },
-              child: CallBody(
-                radius: size / 2,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTapDown: (_) => _startTone(digit),
-                  onTapUp: (_) => _releaseTone(),
-                  onTapCancel: _releaseTone,
-                  child: SizedBox.expand(
-                    child: Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(digit, style: const TextStyle(fontSize: 30, height: 1.05, color: Colors.white)),
-                            Text(
-                              letters.isEmpty ? ' ' : letters,
-                              style: const TextStyle(
-                                fontSize: 10,
-                                height: 1.2,
-                                letterSpacing: 1.5,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white60,
-                              ),
+      child: AnimatedBuilder(
+        animation: _keysIn,
+        builder: (context, child) {
+          final t = interval.transform(_keysIn.value);
+          final float = _keyFloat.transform(t);
+          return Opacity(
+            key: ValueKey('keypad-fade-$digit'),
+            opacity: Curves.easeOut.transform(t) * edgeReveal,
+            // Paint-only, so the key's hit area stays put.
+            child: Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.translationValues(0, 40 * (1 - float), 0)
+                ..scaleByDouble(.86 + .14 * float, .86 + .14 * float, 1, 1),
+              child: child,
+            ),
+          );
+        },
+        child: ExcludeSemantics(
+          excluding: p < 1,
+          child: Semantics(
+            button: true,
+            label: digit,
+            excludeSemantics: true,
+            onTap: () {
+              _startTone(digit);
+              _releaseTone();
+            },
+            child: CallBody(
+              radius: size / 2,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTapDown: (_) => _startTone(digit),
+                onTapUp: (_) => _releaseTone(),
+                onTapCancel: _releaseTone,
+                child: SizedBox.expand(
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(digit, style: const TextStyle(fontSize: 30, height: 1.05, color: Colors.white)),
+                          Text(
+                            letters.isEmpty ? ' ' : letters,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              height: 1.2,
+                              letterSpacing: 1.5,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white60,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

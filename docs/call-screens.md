@@ -104,11 +104,11 @@ The header sits slightly above the centre of the space the controls leave.
   - While dialing, the avatar ripples slowly and "Calling" fills in its dots.
 - **Status chip**: "Muted" shows under the timer. An audio route change shows a 1.5 s chip ("Speaker on", "Bluetooth"). Hold dims the header and pulses "On hold".
 
-The keypad morph runs on the glass package's smooth spring (`GlassSpring.smooth`,
+The keypad morph runs on the glass package's smooth spring (`GlassSpring.smooth`, 700 ms,
 no overshoot, 1% snap tolerance). Reversing mid-flight keeps its velocity.
 
 - **Action row**: all four actions fade out together and quickly (the first 20% of the morph), shrinking 6%.
-- **Keys**: squircle-ended keys (a superellipse, `bodyPath`, rather than true semicircle ends), three across (ColorOS 17). Each key has its own entrance, as in the ColorOS 17 video: rows arrive bottom-up a beat apart (`* 0 #` first, where the action row was), the middle key of each row leads its neighbours, and each key fades in, rises 30 px into place and grows from 86%. Closing plays it in reverse. Presses get the same `GlassButton` squeeze and glow.
+- **Keys**: squircle-ended keys (a superellipse, `bodyPath`, rather than true semicircle ends), three across (ColorOS 17). Each key has its own entrance, as in the ColorOS 17 video: rows arrive bottom-up a beat apart (`* 0 #` first, where the action row was), the middle key of each row leads its neighbours, and each key fades in and floats up 40 px, overshooting its place by about 16% on a bouncier glass spring (`GlassSpring.bouncy(extraBounce: .2)`) before settling, growing from 86%. The keys run on their own steady 650 ms clock (`_keysIn`), not the panel's spring, which does most of its travel at the start. Closing plays it in reverse. Presses get the same `GlassButton` squeeze and glow.
 - **Header**: the avatar and badges collapse away. Typed digits replace the
   caller name, and the name becomes the subtitle.
 - **Spacing**: with the keypad open, the gap above the bottom row is a little more than the gap between key rows (10 px more; 6 compact). Labels sit in a 32 px box, enough for two lines, so the rows stay close when the keypad is closed.

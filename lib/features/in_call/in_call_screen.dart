@@ -148,7 +148,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   }
 
   /// The glass package's smooth spring: no overshoot, so the panel never over-opens.
-  static final _spring = GlassSpring.smooth();
+  static final _spring = GlassSpring.smooth(duration: const Duration(milliseconds: 700));
 
   /// Snaps the last 1% so the keypad accepts touches quickly instead of waiting out the tail.
   static const _settled = Tolerance(distance: .01, velocity: .1);

@@ -442,7 +442,10 @@ void main() {
     // Actions fade out in place; keys fade in.
     expect(muteFade(), lessThan(1));
     double fade(String digit) => tester.widget<Opacity>(find.byKey(ValueKey('keypad-fade-$digit'))).opacity;
-    expect(fade('2'), inExclusiveRange(0, 1)); // The top row arrives last.
+    // Bottom row first, and in each row the middle key leads its neighbours.
+    expect(fade('0'), greaterThan(fade('2')));
+    expect(fade('0'), greaterThan(fade('*')));
+    expect(fade('0'), inExclusiveRange(0, 1));
     final middle = tester.getTopLeft(find.byKey(const ValueKey('morph-key-1')));
     expect(tester.getSize(panel).height, greaterThan(height));
     expect(tester.getRect(find.byTooltip('End call')), end);
