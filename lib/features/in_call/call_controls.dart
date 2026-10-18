@@ -11,7 +11,7 @@ import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/one_ui_floating_modal.dart';
 
 /// A ColorOS 17 call-control body, a circle or (with [radius]) a squircle-ended key: frosted (the backdrop blurred behind it), milky, glowing up
-/// from every edge (least along the top), with a lip along the top edge and a fainter one below. Needs a [BackdropGroup] above it. The glass package supplies the press: it squeezes, stretches toward
+/// from every edge (least along the top), with a lip along the top edge and a fainter one below. The glass package supplies the press: it squeezes, stretches toward
 /// the finger and glows, with no glass surface (`GlassButtonStyle.transparent`).
 /// Taps still belong to [child] (its IconButton or key detector); the glass button only reads
 /// raw pointer events for the effect. A circle, or a stadium when [radius] is given.
@@ -29,15 +29,9 @@ class CallBody extends StatelessWidget {
     excludeFromSemantics: true,
     canRequestFocus: false,
     shape: radius == null ? const LiquidOval() : LiquidRoundedSuperellipse(borderRadius: radius!),
-    child: ClipPath(
-      clipper: _BodyClip(radius),
-      // Frosted like ColorOS: what's behind is blurred away. Grouped, so all the controls under
-      // one BackdropGroup share a single backdrop read instead of a blur layer each.
-      child: BackdropFilter.grouped(
-        filter: ui.ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-        child: _BodyArtwork(radius: radius, child: child),
-      ),
-    ),
+    // No live backdrop blur: the call backdrop behind is already blurred, so a per-control blur
+    // looked the same but re-read the backdrop for every key on every frame of the keypad morph.
+    child: _BodyArtwork(radius: radius, child: child),
   );
 }
 
@@ -188,17 +182,6 @@ class _TintedBody extends CustomPainter {
 Path bodyPath(Rect rect, double? radius) => radius == null
     ? (Path()..addOval(rect))
     : (Path()..addRSuperellipse(RSuperellipse.fromRectAndRadius(rect, Radius.circular(radius))));
-
-class _BodyClip extends CustomClipper<Path> {
-  const _BodyClip(this.radius);
-  final double? radius;
-
-  @override
-  Path getClip(Size size) => bodyPath(Offset.zero & size, radius);
-
-  @override
-  bool shouldReclip(_BodyClip oldClipper) => oldClipper.radius != radius;
-}
 
 /// A [GlassSpring] as a curve, so implicit animations can move like the glass package.
 class GlassSpringCurve extends Curve {

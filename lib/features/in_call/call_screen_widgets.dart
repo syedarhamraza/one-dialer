@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:math' as math;
+import 'dart:ui' as ui;
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/foundation.dart';
@@ -121,27 +123,127 @@ class _PosterPhoto extends StatelessWidget {
   final ValueListenable<double>? blur;
 
   @override
+  Widget build(BuildContext context) => FutureBuilder(
+    future: contactId == null ? null : ContactsRepository.instance.fullPhoto(contactId!),
+    builder: (context, full) => LayoutBuilder(
+      builder: (context, box) => _BakedBlur(photo: full.data ?? thumbnail, size: box.biggest, blur: blur),
+    ),
+  );
+}
+
+/// The poster's blur, baked once: the photo is drawn small and blurred into two bitmaps (soft for
+/// the call screen, strong for behind the keypad) and the strong one fades in as [blur] rises.
+/// Scaled up, a heavily blurred small bitmap looks the same as a live full-screen blur, without
+/// re-blurring the whole screen on every frame of the keypad morph.
+class _BakedBlur extends StatefulWidget {
+  const _BakedBlur({required this.photo, required this.size, this.blur});
+  final Uint8List photo;
+  final Size size;
+  final ValueListenable<double>? blur;
+
+  /// Blur strengths in logical pixels: the call screen, and fully behind the keypad.
+  static const double soft = 12, strong = 28;
+
+  /// Width of the baked bitmaps; heavy blur leaves no detail a larger one would show.
+  static const int bakeWidth = 240;
+
+  @override
+  State<_BakedBlur> createState() => _BakedBlurState();
+}
+
+class _BakedBlurState extends State<_BakedBlur> {
+  ui.Image? _soft, _strong;
+
+  @override
+  void initState() {
+    super.initState();
+    _bake();
+  }
+
+  @override
+  void didUpdateWidget(_BakedBlur oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.photo != widget.photo || oldWidget.size != widget.size) _bake();
+  }
+
+  Future<void> _bake() async {
+    final bytes = widget.photo, size = widget.size;
+    if (size.isEmpty) return;
+    try {
+      final codec = await ui.instantiateImageCodec(bytes, targetWidth: _BakedBlur.bakeWidth * 2);
+      final source = (await codec.getNextFrame()).image;
+      codec.dispose();
+      final width = _BakedBlur.bakeWidth;
+      final height = (width * size.height / size.width).round();
+      // Logical blur scaled into the bitmap's pixels.
+      final perLogical = width / size.width;
+      Future<ui.Image> render(double sigma) {
+        final cover = math.max(width / source.width, height / source.height);
+        final recorder = ui.PictureRecorder();
+        Canvas(recorder).drawImageRect(
+          source,
+          Rect.fromLTWH(0, 0, source.width.toDouble(), source.height.toDouble()),
+          Rect.fromCenter(
+            center: Offset(width / 2, height / 2),
+            width: source.width * cover,
+            height: source.height * cover,
+          ),
+          Paint()
+            ..filterQuality = FilterQuality.medium
+            ..imageFilter = ImageFilter.blur(
+              sigmaX: sigma * perLogical,
+              sigmaY: sigma * perLogical,
+              tileMode: TileMode.clamp,
+            ),
+        );
+        return recorder.endRecording().toImage(width, height);
+      }
+
+      final soft = await render(_BakedBlur.soft);
+      final strong = await render(_BakedBlur.strong);
+      source.dispose();
+      if (!mounted || bytes != widget.photo || size != widget.size) {
+        soft.dispose();
+        strong.dispose();
+        return;
+      }
+      setState(() {
+        _soft?.dispose();
+        _strong?.dispose();
+        _soft = soft;
+        _strong = strong;
+      });
+    } on Object {
+      // A corrupt photo keeps the plain photo below.
+    }
+  }
+
+  @override
+  void dispose() {
+    _soft?.dispose();
+    _strong?.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final photo = FutureBuilder(
-      future: contactId == null ? null : ContactsRepository.instance.fullPhoto(contactId!),
-      builder: (context, full) => LayoutBuilder(
-        builder: (context, box) => Image.memory(
-          full.data ?? thumbnail,
-          fit: BoxFit.cover,
-          gaplessPlayback: true,
-          filterQuality: FilterQuality.medium,
-          // Decoded at screen size, not the camera's full resolution.
-          cacheHeight: (box.maxHeight * MediaQuery.devicePixelRatioOf(context)).round(),
-        ),
-      ),
-    );
-    return ValueListenableBuilder(
-      valueListenable: blur ?? const AlwaysStoppedAnimation(0.0),
-      child: photo,
-      builder: (context, t, child) => ImageFiltered(
-        imageFilter: ImageFilter.blur(sigmaX: 12 + 16 * t, sigmaY: 12 + 16 * t, tileMode: TileMode.clamp),
-        child: child!,
-      ),
+    if (_soft == null) {
+      // A moment before the first bake: the photo itself.
+      return Image.memory(widget.photo, fit: BoxFit.cover, gaplessPlayback: true);
+    }
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        RawImage(image: _soft, fit: BoxFit.cover, filterQuality: FilterQuality.medium),
+        if (widget.blur != null)
+          ValueListenableBuilder(
+            valueListenable: widget.blur!,
+            builder: (context, t, _) => Opacity(
+              opacity: t.clamp(0.0, 1.0),
+              child: RawImage(image: _strong, fit: BoxFit.cover, filterQuality: FilterQuality.medium),
+            ),
+          ),
+      ],
     );
   }
 }

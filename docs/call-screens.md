@@ -2,20 +2,23 @@
 
 Incoming, dialing, connected, held, conference, private, and ended calls share a
 photo-led backdrop. A contact with a photo gets the ColorOS 17 poster: the photo
-full-screen, softly blurred (sigma 12) and cover-fit (decoded at screen height; the thumbnail stands
-in until `ContactsRepository.fullPhoto` loads), under a shade at the top for the
-name and a dark band at the bottom behind the controls. As the keypad opens the
-poster blurs further (to sigma 28, driven by the keypad's morph) and the
+full-screen, softly blurred (sigma 12) and cover-fit, under a shade at the top for
+the name and a dark band at the bottom behind the controls. As the keypad opens
+the poster blurs further (to sigma 28, driven by the keypad's morph) and the
 shade eases from a dark bottom band to an even dim, as ColorOS does behind its
-dial pad. Callers without a photo
+dial pad. The blur is baked, not live (`_BakedBlur`): the photo (the thumbnail
+until `ContactsRepository.fullPhoto` loads) is drawn once into two 240 px-wide
+bitmaps blurred to those two strengths, and the strong one fades in over the soft
+one with the keypad. Scaled up, they look like a full-screen blur, but no frame
+re-blurs the screen. Callers without a photo
 get a static aurora: a dark base with soft colour blobs in hues around their
 avatar colour (`LetterAvatar.colorFor`). Private, conference and bare-number
 calls get a blue, teal and violet one.
 
 The layout follows ColorOS 17. The name, number and status sit at the top on the
-left, with the avatar in a circle on the right (contacts with a photo show it as the poster instead). The controls follow ColorOS 17: each is lightly frosted (the backdrop blurred behind it,
-sigma 6, with `BackdropFilter.grouped`, all sharing one read under the panel's
-`BackdropGroup`), milky, with a brighter glow right on the border and a wider soft
+left, with the avatar in a circle on the right (contacts with a photo show it as the poster instead). The controls follow ColorOS 17: each is milky over the
+already-blurred backdrop (no live blur of its own: a per-control `BackdropFilter`
+looked the same but re-read the backdrop for every key on every frame), with a brighter glow right on the border and a wider soft
 haze inside it (both least along the top, never reaching the centre), a 3D lip along the top edge and a fainter one
 along the bottom (`CallBody`). The End
 pill is a tomato red with a gloss across its top half. Labels are a soft
@@ -129,8 +132,9 @@ the reversed key cascade. Changing direction resumes the current geometry and pa
 
 The static control wash, glow and rim are rasterized once at device pixel ratio,
 then reused while the controls move and scale. Their image is regenerated when
-size, radius or pixel ratio changes and disposed with the control. The frosted
-backdrop stays live outside this cache; text, icons and press feedback remain live.
+size, radius or pixel ratio changes and disposed with the control. Text, icons and
+press feedback remain live. Nothing in the call screen blurs per frame any more:
+the per-control backdrop blur was removed and the poster blur is baked.
 
 On the V2413, the 2026-10-18 connected-keypad profile traces showed median
 `GPURasterizer::Draw` time dropping from 5.37 ms to 4.56 ms and P95 from 8.95 ms

@@ -143,21 +143,19 @@ class _IncomingControlsState extends State<IncomingControls> {
             Opacity(
               opacity: _opacityFor(null),
               // Frosted like the connected screen's buttons, with the same glass press.
-              child: BackdropGroup(
-                child: CallBody(
-                  radius: 22,
-                  child: TextButton.icon(
-                    onPressed: () => _declineWithMessage(context),
-                    icon: const Icon(Icons.chat_bubble_rounded, size: 18),
-                    label: const Text(
-                      'Decline with message',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                    ),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                      shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(22)),
-                    ),
+              child: CallBody(
+                radius: 22,
+                child: TextButton.icon(
+                  onPressed: () => _declineWithMessage(context),
+                  icon: const Icon(Icons.chat_bubble_rounded, size: 18),
+                  label: const Text(
+                    'Decline with message',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                    shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(22)),
                   ),
                 ),
               ),
