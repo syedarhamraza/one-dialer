@@ -217,7 +217,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
       rect = from;
     } else {
       // Bends only part way toward the corner below the ball, for a gentle arc.
-      final bend = Offset.lerp((from.center + to.center) / 2, Offset(from.center.dx, to.center.dy), .45)!;
+      final bend = Offset.lerp((from.center + to.center) / 2, Offset(from.center.dx, to.center.dy), .25)!;
       final u = 1 - t;
       final centre = from.center * (u * u) + bend * (2 * u * t) + to.center * (t * t);
       rect = Rect.fromCenter(
