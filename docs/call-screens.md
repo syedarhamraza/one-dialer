@@ -20,8 +20,9 @@ permission), or in hues around the caller's avatar colour if there are none. The
 fades ease to an even dim while the keypad is open. Contacts' photos only appear
 in the header circle.
 
-The layout follows ColorOS 17. The name, number and status sit at the top on the
-left, with the avatar (or the contact's photo) in a circle on the right. The controls follow ColorOS 17: each is milky over the
+The layout follows ColorOS 17. For a contact with a photo, the name, number and
+status sit at the top on the left with the photo in a plain circle on the right
+(no ring or ripple). Everyone else gets them centred, with no circle. The controls follow ColorOS 17: each is milky over the
 already-blurred backdrop (no live blur of its own: a per-control `BackdropFilter`
 looked the same but re-read the backdrop for every key on every frame), with a brighter glow right on the border and a wider soft
 haze inside it (both least along the top, never reaching the centre), a 3D lip along the top edge and a fainter one
@@ -40,8 +41,8 @@ chrome stays OneSpend's, without glass.
 `InCallScreen` subscribes to the existing Telecom snapshot stream. Presentation
 is split across four files:
 
-- `call_screen_widgets.dart`: the backdrop, caller header, status line, ringing
-  halo and held-call chip.
+- `call_screen_widgets.dart`: the backdrop, caller header, status line and
+  held-call chip.
 - `call_controls.dart`: solid action circles (`CallBody`) on the package's `GlassButton` press feel, the audio sheet, and
   `PressScale`.
 - `call_control_panel.dart`: the control/keypad morph, DTMF, and the fixed
@@ -53,7 +54,8 @@ is split across four files:
 `CallManager.serialize` adds four fields:
 
 - `formattedNumber` and `location`, from `NumberDisplay.kt`, which uses
-  libphonenumber. The location is the country, and only for foreign numbers.
+  libphonenumber. The location is the caller's country, for every number (domestic
+  too), since ColorOS shows a place for every caller.
 - `disconnectCode` and `disconnectLabel`, from `DisconnectCause`.
 
 When the last call is removed, its final snapshot stays in `snapshot()` for 2 s
@@ -90,8 +92,7 @@ the other button and the pill fade out as it arms.
 - The button grows and glows as it arms.
 - A haptic fires when you cross a threshold.
 - A cancelled pointer resets the offset before release handling runs.
-- While idle, a dash above each button drifts up and fades (staggered), and rings breathe around
-  the avatar. These loops stop while dragging and under reduced motion. Because
+- While idle, a dash above each button drifts up and fades (staggered). These loops stop while dragging and under reduced motion. Because
   they loop, widget tests pump fixed durations instead of `pumpAndSettle` while
   ringing (or use reduced motion).
 - Screen readers activate Answer and Decline directly.
@@ -114,8 +115,8 @@ The header sits slightly above the centre of the space the controls leave.
 - **Entrance**: when the connected or dialing controls appear, the action row and the bottom row fade and rise 16 px, staggered (520 ms total). Reduced motion skips it.
 - **Header** (ColorOS 17):
   - Name 32 px bold, then the number and the city on lines of their own.
-  - The status line: small glyphs (HD call, Wi-Fi calling, and on dual-SIM phones a SIM mark in the SIM's colour) followed by the timer or status as plain white text. No pill or live dot, and no chip row.
-  - While dialing, the avatar ripples slowly and "Calling" fills in its dots.
+  - The status line: small glyphs (HD call, Wi-Fi calling, and on dual-SIM phones a small white outlined SIM card with its slot number) followed by the timer or status as plain white text. No pill or live dot, and no chip row.
+  - While dialing, "Calling" fills in its dots.
 - **Status chip**: "Muted" shows under the timer. An audio route change shows a 1.5 s chip ("Speaker on", "Bluetooth"). Hold dims the header and pulses "On hold".
 
 The keypad opens on the glass package's smooth spring (`GlassSpring.smooth`, 700 ms,

@@ -7,7 +7,7 @@ import com.google.i18n.phonenumbers.PhoneNumberUtil
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat
 import java.util.Locale
 
-/** How the call screen shows a number: grouped digits, plus the country for a foreign caller. */
+/** How the call screen shows a number: grouped digits, plus the caller's country (as ColorOS shows a place). */
 data class NumberDisplay(val formatted: String?, val location: String?) {
     companion object {
         private val cache = HashMap<String, NumberDisplay>()
@@ -31,7 +31,7 @@ data class NumberDisplay(val formatted: String?, val location: String?) {
             val foreign = region != null && region != "ZZ" && region != home
             return NumberDisplay(
                 formatted = util.format(parsed, if (foreign) PhoneNumberFormat.INTERNATIONAL else PhoneNumberFormat.NATIONAL),
-                location = if (foreign) Locale("", region).displayCountry.takeIf { it.isNotBlank() } else null,
+                location = region?.takeIf { it != "ZZ" }?.let { Locale("", it).displayCountry }?.takeIf { it.isNotBlank() },
             )
         }
 

@@ -163,9 +163,11 @@ class CallHeader extends StatelessWidget {
     final fade = 1 - Curves.easeOut.transform(k);
     final avatarSize = compact ? 60.0 : 76.0;
     final showDigits = digits.isNotEmpty && k > .5;
-    // ColorOS 17: name, number and status on the left, photo on the right. With the keypad open
+    // ColorOS 17: a contact with a photo gets name, number and status on the left and the photo in
+    // a circle on the right; everyone else gets them centred with no circle. With the keypad open
     // the photo folds away and the typed digits take the title's place, centred.
-    final centred = k > .5;
+    final photo = contact?.thumbnail;
+    final centred = photo == null || k > .5;
     final align = centred ? CrossAxisAlignment.center : CrossAxisAlignment.start;
     final textAlign = centred ? TextAlign.center : TextAlign.start;
     // ColorOS puts the number and the city on lines of their own.
@@ -225,47 +227,32 @@ class CallHeader extends StatelessWidget {
                     CallStatus(
                       call: call,
                       sim: sims.length > 1 ? sim : null,
+                      simSlot: sim == null ? 0 : sims.indexOf(sim) + 1,
                       alignment: centred ? Alignment.center : AlignmentDirectional.centerStart,
                     ),
                   ],
                 ),
               ),
               // The photo folds away sideways as the keypad opens.
-              ClipRect(
-                child: Align(
-                  alignment: AlignmentDirectional.centerEnd,
-                  widthFactor: 1 - folded,
-                  child: Opacity(
-                    opacity: fade,
-                    child: Padding(
-                      padding: const EdgeInsetsDirectional.only(start: 16, top: 2),
-                      child: _RingingHalo(
-                        // Ripples while it rings, and more slowly while we're calling out.
-                        active: call.state == CallState.ringing || _calling(call.state),
-                        slow: call.state != CallState.ringing,
-                        size: avatarSize,
-                        child: call.isPrivate || call.isConference
-                            ? CircleAvatar(
-                                radius: avatarSize / 2,
-                                backgroundColor: Colors.white.withValues(alpha: 0.14),
-                                child: Icon(
-                                  call.isConference ? Icons.groups_rounded : Icons.person_rounded,
-                                  size: avatarSize * 0.48,
-                                  color: Colors.white70,
-                                ),
-                              )
-                            : FutureBuilder(
-                                future: contact?.thumbnail == null
-                                    ? null
-                                    : ContactsRepository.instance.fullPhoto(contact!.id),
-                                builder: (context, full) =>
-                                    LetterAvatar(name: name, photo: full.data ?? contact?.thumbnail, size: avatarSize),
-                              ),
+              if (photo != null)
+                ClipRect(
+                  child: Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    widthFactor: 1 - folded,
+                    child: Opacity(
+                      opacity: fade,
+                      child: Padding(
+                        padding: const EdgeInsetsDirectional.only(start: 16, top: 4),
+                        // Just the photo, as on ColorOS: no ring and no ripple.
+                        child: FutureBuilder(
+                          future: ContactsRepository.instance.fullPhoto(contact!.id),
+                          builder: (context, full) =>
+                              LetterAvatar(name: name, photo: full.data ?? photo, size: avatarSize),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
             ],
           ),
           AnimatedSize(
@@ -291,83 +278,8 @@ class CallHeader extends StatelessWidget {
   static String _tail(String digits) => digits.length > 18 ? '…${digits.substring(digits.length - 17)}' : digits;
 }
 
-/// Soft rings breathing out from the avatar while the phone rings.
 bool _calling(CallState state) =>
     state == CallState.dialing || state == CallState.connecting || state == CallState.newCall;
-
-class _RingingHalo extends StatefulWidget {
-  const _RingingHalo({required this.active, required this.size, required this.child, this.slow = false});
-  final bool active;
-  final bool slow;
-  final double size;
-  final Widget child;
-
-  @override
-  State<_RingingHalo> createState() => _RingingHaloState();
-}
-
-class _RingingHaloState extends State<_RingingHalo> with SingleTickerProviderStateMixin {
-  late final AnimationController _pulse = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 2400),
-  );
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _sync();
-  }
-
-  @override
-  void didUpdateWidget(_RingingHalo oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _sync();
-  }
-
-  void _sync() {
-    final run = widget.active && !MediaQuery.disableAnimationsOf(context);
-    _pulse.duration = Duration(milliseconds: widget.slow ? 3200 : 2400);
-    if (run && !_pulse.isAnimating) {
-      _pulse.repeat();
-    } else if (!run && _pulse.isAnimating) {
-      _pulse.stop();
-      _pulse.value = 0;
-    }
-  }
-
-  @override
-  void dispose() {
-    _pulse.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => SizedBox.square(
-    dimension: widget.size,
-    child: CustomPaint(painter: widget.active ? _HaloPainter(_pulse) : null, child: widget.child),
-  );
-}
-
-class _HaloPainter extends CustomPainter {
-  _HaloPainter(this.pulse) : super(repaint: pulse);
-  final Animation<double> pulse;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final radius = size.shortestSide / 2;
-    for (final offset in const [0.0, 0.5]) {
-      final t = (pulse.value + offset) % 1;
-      canvas.drawCircle(
-        size.center(Offset.zero),
-        radius * (1 + .45 * Curves.easeOut.transform(t)),
-        Paint()..color = Colors.white.withValues(alpha: .16 * (1 - t)),
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_HaloPainter oldDelegate) => oldDelegate.pulse != pulse;
-}
 
 /// The transient status toast under the timer ("Muted", "Speaker on").
 class _Badge extends StatelessWidget {
@@ -392,11 +304,14 @@ class _Badge extends StatelessWidget {
 }
 
 class CallStatus extends StatefulWidget {
-  const CallStatus({super.key, required this.call, this.sim, this.alignment = Alignment.center});
+  const CallStatus({super.key, required this.call, this.sim, this.simSlot = 0, this.alignment = Alignment.center});
   final CallInfo call;
 
-  /// Shown as a small SIM mark in its colour; only passed on dual-SIM phones, as on ColorOS.
+  /// Shown as a small numbered SIM mark; only passed on dual-SIM phones, as on ColorOS.
   final SimCard? sim;
+
+  /// The SIM's slot number (1-based) printed in the mark.
+  final int simSlot;
   final AlignmentGeometry alignment;
   @override
   State<CallStatus> createState() => _CallStatusState();
@@ -524,7 +439,7 @@ class _CallStatusState extends State<CallStatus> with SingleTickerProviderStateM
       if (widget.sim case final sim?)
         Semantics(
           label: sim.label,
-          child: Icon(Icons.sim_card_rounded, size: 16, color: sim.color),
+          child: ExcludeSemantics(child: _SimMark(slot: widget.simSlot)),
         ),
     ];
     return SizedBox(
@@ -559,6 +474,58 @@ class _CallStatusState extends State<CallStatus> with SingleTickerProviderStateM
     final rest = (seconds % 60).toString().padLeft(2, '0');
     return seconds >= 3600 ? '${seconds ~/ 3600}:$minutes:$rest' : '$minutes:$rest';
   }
+}
+
+/// ColorOS's SIM mark: a small outlined SIM card, clipped at one corner, with its slot number.
+class _SimMark extends StatelessWidget {
+  const _SimMark({required this.slot});
+  final int slot;
+
+  @override
+  Widget build(BuildContext context) => CustomPaint(
+    painter: const _SimOutline(),
+    child: SizedBox(
+      width: 12,
+      height: 15,
+      child: Center(
+        child: Text(
+          slot > 0 ? '$slot' : '',
+          style: const TextStyle(fontSize: 8.5, height: 1, fontWeight: FontWeight.w800, color: Colors.white70),
+        ),
+      ),
+    ),
+  );
+}
+
+class _SimOutline extends CustomPainter {
+  const _SimOutline();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const corner = 2.0, cut = 4.0;
+    final r = Offset.zero & size;
+    canvas.drawPath(
+      Path()
+        ..moveTo(r.left + corner, r.top)
+        ..lineTo(r.right - cut, r.top)
+        ..lineTo(r.right, r.top + cut)
+        ..lineTo(r.right, r.bottom - corner)
+        ..quadraticBezierTo(r.right, r.bottom, r.right - corner, r.bottom)
+        ..lineTo(r.left + corner, r.bottom)
+        ..quadraticBezierTo(r.left, r.bottom, r.left, r.bottom - corner)
+        ..lineTo(r.left, r.top + corner)
+        ..quadraticBezierTo(r.left, r.top, r.left + corner, r.top)
+        ..close(),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.3
+        ..strokeJoin = StrokeJoin.round
+        ..color = Colors.white70,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_SimOutline oldDelegate) => false;
 }
 
 /// ColorOS's HD call mark: a handset with a small "HD" beside its top.

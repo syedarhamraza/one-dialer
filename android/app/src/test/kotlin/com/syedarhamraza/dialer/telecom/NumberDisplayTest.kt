@@ -1,15 +1,15 @@
 package com.syedarhamraza.dialer.telecom
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Test
 
 class NumberDisplayTest {
     @Test
-    fun domesticNumberIsGroupedWithoutLocation() {
+    fun domesticNumberIsGroupedWithItsCountry() {
         val display = NumberDisplay.compute("PK", "03001234567")
         assertEquals("0300 1234567", display.formatted)
-        assertNull(display.location)
+        // A domestic caller gets their country too, as ColorOS shows a place for every number.
+        assertEquals(java.util.Locale("", "PK").displayCountry, display.location)
     }
 
     @Test
