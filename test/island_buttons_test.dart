@@ -32,11 +32,20 @@ void main() {
       foregroundDecoration: solidGlow(const CircleBorder()),
       child: Icon(icon, color: Colors.white, size: size * .46),
     );
+    Widget speaker(Color fill, Color glyph) => Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(shape: BoxShape.circle, color: fill),
+      child: Icon(Icons.volume_up_rounded, color: glyph, size: size * .46),
+    );
     for (final (name, widget) in [
       ('island_decline', ball(endRed, Icons.call_end_rounded)),
       ('island_answer', ball(answerGreen, Icons.call_rounded)),
       ('island_phone', const Icon(Icons.call_rounded, color: answerGreen, size: size)), // collapsed island
       ('island_caller', const LetterAvatar(name: '', size: size)), // card's caller when there's no photo
+      // CallControlButton's Speaker: frosted with a white glyph, or white with a dark glyph when on.
+      ('island_speaker', speaker(const Color(0x2EFFFFFF), Colors.white)),
+      ('island_speaker_on', speaker(const Color(0xEBFFFFFF), const Color(0xFF111418))),
     ]) {
       final boundary = GlobalKey();
       await tester.pumpWidget(
