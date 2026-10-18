@@ -27,7 +27,9 @@ already-blurred backdrop (no live blur of its own: a per-control `BackdropFilter
 looked the same but re-read the backdrop for every key on every frame), with a brighter glow right on the border and a wider soft
 haze inside it (both least along the top, never reaching the centre), a 3D lip along the top edge and a fainter one
 along the bottom (`CallBody`). The End
-pill is a tomato red with a gloss across its top half. Labels are a soft
+pill is a tomato red (`endRed`) lit from below like the other buttons: a shade
+deeper at the top, lighter toward the bottom, with a glow rising from its bottom
+edge (`solidBody` + `solidGlow`, shared with Decline, Answer and the Answer flight). Labels are a soft
 grey-white, 6 px under each circle. Mute always shows the slashed mic. Their motion comes from
 `liquid_glass_widgets` (initialised in `inCallMain` only): each sits in a
 `GlassButton.custom` with `GlassButtonStyle.transparent`, which gives the
@@ -68,8 +70,8 @@ number geocoder isn't public API.
 
 ColorOS 17 style: Decline (left) and Answer (right) each slide straight up to
 act, with a "Decline with message" pill underneath. They're finished like
-the connected screen: the balls take the End pill's look (top-lit gradient,
-glossy top half, light rim, a glow that brightens as the drag arms) in End's red
+the connected screen: the balls take the End pill's look (the shared bottom-lit
+`solidBody`/`solidGlow` finish, a glow that brightens as the drag arms) in End's red
 and `answerGreen`, and the pill is a frosted `CallBody` with the same glass
 press. While one is dragged,
 the other button and the pill fade out as it arms.
@@ -82,7 +84,7 @@ the other button and the pill fade out as it arms.
   25% of the way from the straight line toward the corner below the ball, level
   with End), fast at first, slowing into place,
   overshooting about 1% of the trip to the left and a little up, then gently back (850 ms, `Cubic(.2, 1, .25, 1.04)`, a long soft settle so it floats into place). The ball wears the End
-  pill's finish the whole way (gradient, gloss, rim, glow, squircle shape) while
+  pill's finish the whole way (the shared `solidBody`/`solidGlow`, squircle shape) while
   its colour morphs green → orange → End's red, its icon grows to End's size and
   tips over into the hang-up glyph. The real pill stays hidden until it lands. If
   the call never connects, the ball is dropped after 4 s. Answering from the
@@ -104,14 +106,14 @@ Controls crossfade between incoming, connected and ended (350 ms). The header fa
 The header sits slightly above the centre of the space the controls leave.
 
 - **Action circles** (`CallAction`):
-  - A painted top-lit gradient with a hairline highlight (`callControlBody`, shared with keypad keys). Nothing is blurred.
+  - The frosted `CallBody` finish (milky wash, edge glow lit from below, 3D lips along the top and bottom), shared with keypad keys. Nothing is blurred.
   - Turning an action on grows a white fill out from the icon on the bouncy glass spring (`GlassSpringCurve`). The icon colour animates and the icon crossfades.
   - Unavailable actions (Hold while dialing) show as an outline, not a dim fill.
   - Press feel from the package's `GlassButton.custom`: squeeze, stretch toward the finger and glow. It reads raw pointer events only, so taps, tooltips and semantics stay on the inner `IconButton`.
 - **Row**: Mute, Hold, Note (or Merge), Add call.
 - **Third slot**: Note on a single call. It opens a floating sheet over the call that saves as you type, so the note survives the other side hanging up. Notes are stored in `DialerPrefs` as `call_note_<number>_<millis>`, and Recents call details show each note under the logged call it was taken during. The slot becomes Merge once two calls can merge.
 - **Icons** are 46% of the circle. Dial pad uses `DialPadGlyph`, ColorOS's 3×4 grid of 12 dots (Material's dialpad has 10).
-- **End call**: a squircle-ended tomato-red gradient pill with a glossy rim and a soft glow. Its press comes from a `GlassButton.custom` in `GlassButtonStyle.transparent` (the package's glow and stretch, no glass body). Once tapped it draws in to a circle and dims. If Telecom hasn't ended the call within 3 s, it becomes tappable again.
+- **End call**: a squircle-ended tomato-red pill, lit from below (`solidBody`), with a soft glow. Its press comes from a `GlassButton.custom` in `GlassButtonStyle.transparent` (the package's glow and stretch, no glass body). Once tapped it draws in to a circle and dims. If Telecom hasn't ended the call within 3 s, it becomes tappable again.
 - **Entrance**: when the connected or dialing controls appear, the action row and the bottom row fade and rise 16 px, staggered (520 ms total). Reduced motion skips it.
 - **Header** (ColorOS 17):
   - Name 32 px bold, then the number and the city on lines of their own.

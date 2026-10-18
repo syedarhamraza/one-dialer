@@ -373,37 +373,15 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                                   curve: Curves.easeInOutCubic,
                                   width: _ending ? actionSize : box.maxWidth,
                                   height: actionSize,
-                                  // A gloss across the top half, as on ColorOS.
-                                  foregroundDecoration: ShapeDecoration(
-                                    shape: RoundedSuperellipseBorder(
-                                      borderRadius: BorderRadius.circular(actionSize / 2),
-                                    ),
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [Color(0x40FFFFFF), Color(0x0AFFFFFF), Color(0x00FFFFFF)],
-                                      stops: [0, .45, .55],
-                                    ),
+                                  // ColorOS 17's tomato red, lit from below like the other buttons, with
+                                  // squircle ends like the keys.
+                                  foregroundDecoration: solidGlow(
+                                    RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(actionSize / 2)),
                                   ),
-                                  decoration: ShapeDecoration(
-                                    // ColorOS 17's tomato red, with a glossy rim.
-                                    // Squircle ends, like the keys.
-                                    shape: RoundedSuperellipseBorder(
-                                      borderRadius: BorderRadius.circular(actionSize / 2),
-                                      side: const BorderSide(color: Color(0x40FFFFFF), width: .8),
-                                    ),
-                                    gradient: const LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [Color(0xFFE5604F), Color(0xFFC93D31)],
-                                    ),
-                                    shadows: [
-                                      BoxShadow(
-                                        color: const Color(0xFFC93D31).withValues(alpha: _ending ? 0 : .3),
-                                        blurRadius: 22,
-                                        offset: const Offset(0, 6),
-                                      ),
-                                    ],
+                                  decoration: solidBody(
+                                    endRed,
+                                    RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(actionSize / 2)),
+                                    glow: _ending ? 0 : .3,
                                   ),
                                   child: IconButton(
                                     tooltip: 'End call',

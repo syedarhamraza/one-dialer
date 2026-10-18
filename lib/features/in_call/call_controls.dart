@@ -476,3 +476,37 @@ class _DialPadDots extends CustomPainter {
   @override
   bool shouldRepaint(_DialPadDots oldDelegate) => oldDelegate.color != color;
 }
+
+/// End's red, shared by the End pill, Decline and the Answer flight's landing.
+const endRed = Color(0xFFD2463A);
+
+/// ColorOS 17's solid buttons (End, Decline, Answer), lit from below like the frosted ones: a
+/// shade deeper at the top, lighter toward the bottom, a light rim and a soft drop glow in their
+/// own colour. Pair with [solidGlow] as the foreground.
+ShapeDecoration solidBody(Color color, OutlinedBorder shape, {double glow = .3, double blur = 22}) => ShapeDecoration(
+  shape: shape.copyWith(side: const BorderSide(color: Color(0x2EFFFFFF), width: .8)),
+  gradient: LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color.lerp(color, Colors.black, .1)!, color, Color.lerp(color, Colors.white, .14)!],
+    stops: const [0, .55, 1],
+  ),
+  shadows: [
+    BoxShadow(
+      color: color.withValues(alpha: glow),
+      blurRadius: blur,
+      offset: const Offset(0, 6),
+    ),
+  ],
+);
+
+/// The glow rising from a solid button's bottom edge.
+ShapeDecoration solidGlow(OutlinedBorder shape) => ShapeDecoration(
+  shape: shape.copyWith(side: BorderSide.none),
+  gradient: const LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0x00FFFFFF), Color(0x00FFFFFF), Color(0x3DFFFFFF)],
+    stops: [0, .5, 1],
+  ),
+);

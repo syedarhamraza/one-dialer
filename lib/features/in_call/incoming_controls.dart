@@ -113,7 +113,7 @@ class _IncomingControlsState extends State<IncomingControls> {
                   opacity: _opacityFor('Decline'),
                   child: SwipeUpButton(
                     // The connected screen's End red.
-                    color: const Color(0xFFC93D31),
+                    color: endRed,
                     icon: Icons.call_end_rounded,
                     label: 'Decline',
                     compact: compact,
@@ -384,33 +384,15 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                                   key: ValueKey('swipe-${widget.label}'),
                                   width: size,
                                   height: size,
-                                  // The connected screen's End pill finish: top-lit, a glossy top half and
-                                  // a soft glow, brighter as the drag arms.
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: const Color(0x40FFFFFF), width: .8),
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [Color.lerp(widget.color, Colors.white, .16)!, widget.color],
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: widget.color.withValues(alpha: .3 + .25 * armed),
-                                        blurRadius: 22 + 10 * armed,
-                                        offset: const Offset(0, 6),
-                                      ),
-                                    ],
+                                  // The connected screen's End pill finish, lit from below, its glow
+                                  // brightening as the drag arms.
+                                  decoration: solidBody(
+                                    widget.color,
+                                    const CircleBorder(),
+                                    glow: .3 + .25 * armed,
+                                    blur: 22 + 10 * armed,
                                   ),
-                                  foregroundDecoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [Color(0x40FFFFFF), Color(0x0AFFFFFF), Color(0x00FFFFFF)],
-                                      stops: [0, .45, .55],
-                                    ),
-                                  ),
+                                  foregroundDecoration: solidGlow(const CircleBorder()),
                                   child: Icon(widget.icon, color: Colors.white, size: size * .46),
                                 ),
                               ),
