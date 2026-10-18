@@ -71,7 +71,7 @@ the other button and the pill fade out as it arms.
   on ColorOS: it drops first, then sweeps across (a quadratic Bezier bending
   25% of the way from the straight line toward the corner below the ball, level
   with End), fast at first, slowing into place,
-  overshooting about 2% of the trip to the left and a little up, then gently back (850 ms, `Cubic(.2, 1, .25, 1.07)`, a long soft settle so it floats into place). The ball wears the End
+  overshooting about 1% of the trip to the left and a little up, then gently back (850 ms, `Cubic(.2, 1, .25, 1.04)`, a long soft settle so it floats into place). The ball wears the End
   pill's finish the whole way (gradient, gloss, rim, glow, squircle shape) while
   its colour morphs green → orange → End's red, its icon grows to End's size and
   tips over into the hang-up glyph. The real pill stays hidden until it lands. If
