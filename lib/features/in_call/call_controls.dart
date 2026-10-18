@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
@@ -9,8 +10,8 @@ import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/one_ui_floating_modal.dart';
 
-/// A ColorOS 17 call-control body: a translucent disc that takes on the backdrop's colour, with a
-/// rim lit from the top left. The glass package supplies the press: it squeezes, stretches toward
+/// A ColorOS 17 call-control body: frosted (the backdrop blurred behind it), milky, glowing up
+/// from the bottom edge. Needs a [BackdropGroup] above it. The glass package supplies the press: it squeezes, stretches toward
 /// the finger and glows, with no glass surface (`GlassButtonStyle.transparent`).
 /// Taps still belong to [child] (its IconButton or key detector); the glass button only reads
 /// raw pointer events for the effect. A circle, or a stadium when [radius] is given.
@@ -28,11 +29,19 @@ class CallBody extends StatelessWidget {
     excludeFromSemantics: true,
     canRequestFocus: false,
     shape: radius == null ? const LiquidOval() : LiquidRoundedRectangle(borderRadius: radius!),
-    child: CustomPaint(painter: _TintedBody(radius), child: child),
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(radius ?? 999),
+      // Frosted like ColorOS: what's behind is blurred away. Grouped, so all the controls under
+      // one BackdropGroup share a single backdrop read instead of a blur layer each.
+      child: BackdropFilter.grouped(
+        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        child: CustomPaint(painter: _TintedBody(radius), child: child),
+      ),
+    ),
   );
 }
 
-/// Painted, never blurred: the backdrop is already smooth, so a tint reads the same as frost.
+/// The milky wash, bottom glow and rim drawn over each control's frosted blur.
 class _TintedBody extends CustomPainter {
   const _TintedBody(this.radius);
   final double? radius;
@@ -43,18 +52,28 @@ class _TintedBody extends CustomPainter {
     final shape = radius == null
         ? RRect.fromRectAndRadius(rect, Radius.circular(size.shortestSide / 2))
         : RRect.fromRectAndRadius(rect, Radius.circular(radius!));
-    // A puffy wash of whatever is behind: milky at the top, deeper toward the bottom.
+    // A milky wash over the blur, lifting toward the bottom.
     canvas.drawRRect(
       shape,
       Paint()
         ..shader = const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0x47FFFFFF), Color(0x24FFFFFF), Color(0x14FFFFFF)],
-          stops: [0, .45, 1],
+          colors: [Color(0x26FFFFFF), Color(0x1AFFFFFF), Color(0x33FFFFFF)],
+          stops: [0, .5, 1],
         ).createShader(rect),
     );
-    // The rim: a bright edge along the top that fades out down the sides.
+    // The ColorOS glow: a soft haze rising from the bottom edge.
+    canvas.drawRRect(
+      shape,
+      Paint()
+        ..shader = RadialGradient(
+          center: const Alignment(0, 1.5),
+          radius: size.width > size.height ? .9 : 1.1,
+          colors: const [Color(0x4DFFFFFF), Color(0x00FFFFFF)],
+        ).createShader(rect),
+    );
+    // The rim: brightest along the bottom, softer along the top.
     canvas.drawRRect(
       shape.deflate(.5),
       Paint()
@@ -63,7 +82,7 @@ class _TintedBody extends CustomPainter {
         ..shader = const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0x8CFFFFFF), Color(0x1FFFFFFF), Color(0x0DFFFFFF)],
+          colors: [Color(0x59FFFFFF), Color(0x14FFFFFF), Color(0x8CFFFFFF)],
           stops: [0, .5, 1],
         ).createShader(rect),
     );

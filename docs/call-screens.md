@@ -10,9 +10,10 @@ avatar colour (`LetterAvatar.colorFor`). Private, conference and bare-number
 calls get a blue, teal and violet one. Nothing is blurred or animated per frame.
 
 The layout follows ColorOS 17. The name, number and status sit at the top on the
-left, with the avatar in a circle on the right (contacts with a photo show it as the poster instead). The controls follow ColorOS 17: each is a translucent
-disc that takes on the backdrop's colour, milky at the top and deeper below, with
-a bright edge along the top (`CallBody`, painted, never blurred: the backdrop is already smooth). The End
+left, with the avatar in a circle on the right (contacts with a photo show it as the poster instead). The controls follow ColorOS 17: each is frosted (the backdrop blurred behind it
+with `BackdropFilter.grouped`, all sharing one read under the panel's
+`BackdropGroup`), milky, with a soft glow rising from the bottom edge and a rim
+brightest along the bottom (`CallBody`). The End
 pill is a tomato red with a gloss across its top half. Labels are a soft
 grey-white, 6 px under each circle. Mute always shows the slashed mic. Their motion comes from
 `liquid_glass_widgets` (initialised in `inCallMain` only): each sits in a
@@ -107,7 +108,7 @@ no overshoot, 1% snap tolerance). Reversing mid-flight keeps its velocity.
 - **Header**: the avatar and badges collapse away. Typed digits replace the
   caller name, and the name becomes the subtitle.
 - **Spacing**: with the keypad open, the gap above the bottom row equals the gap between key rows.
-- **Bottom row**: Speaker, End call and Keypad/Hide keypad never move. Upper
+- **Bottom row**: Speaker, End call and Dial pad never move. Dial pad lights white while the keypad is open, as on ColorOS. Upper
   input is blocked while the panel animates.
 - **Back** closes the keypad.
 - **Reduced motion** snaps every transition.

@@ -223,7 +223,7 @@ void main() {
     testWidgets('with the keypad open, the last row sits one row-gap above the bottom row at $size', (tester) async {
       await open(tester, size: size);
       await emit(tester, [call('active')]);
-      await tester.tap(find.byTooltip('Keypad'));
+      await tester.tap(find.byTooltip('Dial pad'));
       await tester.pumpAndSettle();
       Rect key(String digit) => tester.getRect(find.byKey(ValueKey('morph-key-$digit')));
       final rowGap = key('4').top - key('1').bottom;
@@ -261,7 +261,7 @@ void main() {
   testWidgets('typed digits replace the caller name while the keypad is open', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
-    await tester.tap(find.byTooltip('Keypad'));
+    await tester.tap(find.byTooltip('Dial pad'));
     await tester.pumpAndSettle();
     expect(find.text('Alex Morgan'), findsOneWidget);
     await tester.tap(find.bySemanticsLabel('4'));
@@ -401,7 +401,7 @@ void main() {
   testWidgets('DTMF stops on release and Back restores controls', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
-    await tester.tap(find.byTooltip('Keypad'));
+    await tester.tap(find.byTooltip('Dial pad'));
     await tester.pumpAndSettle();
     final key = find.bySemanticsLabel('5');
     final gesture = await tester.startGesture(tester.getCenter(key));
@@ -414,7 +414,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byTooltip('Mute'), findsOneWidget);
     await emit(tester, [call('active', id: 'new-call')]);
-    expect(find.byTooltip('Hide keypad'), findsNothing);
+    // The Dial pad toggle is back to unlit.
+    expect(
+      tester.widget<IconButton>(find.byWidgetPredicate((w) => w is IconButton && w.tooltip == 'Dial pad')).isSelected,
+      isFalse,
+    );
     expect(find.text('5'), findsNothing);
     await tester.pumpWidget(const SizedBox());
   });
@@ -430,7 +434,7 @@ void main() {
     final height = tester.getSize(panel).height;
     final end = tester.getRect(find.byTooltip('End call'));
     final speaker = tester.getRect(find.byTooltip('Speaker'));
-    await tester.tap(find.byTooltip('Keypad'));
+    await tester.tap(find.byTooltip('Dial pad'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 210));
     // Actions fade out in place; keys fade in.
@@ -469,11 +473,11 @@ void main() {
     await emit(tester, [call('active')]);
     final panel = find.byKey(const ValueKey('call-upper-panel'));
     final start = tester.getSize(panel).height;
-    await tester.tap(find.byTooltip('Keypad'));
+    await tester.tap(find.byTooltip('Dial pad'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 110));
     final before = tester.getSize(panel).height;
-    await tester.tap(find.byTooltip('Hide keypad'));
+    await tester.tap(find.byTooltip('Dial pad'));
     await tester.pump();
     expect(tester.getSize(panel).height, before);
     // The spring carries its momentum briefly, then heads back down.
@@ -482,7 +486,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 60));
     final reversing = tester.getSize(panel).height;
     expect(reversing, lessThan(before));
-    await tester.tap(find.byTooltip('Keypad'));
+    await tester.tap(find.byTooltip('Dial pad'));
     await tester.pump();
     expect(tester.getSize(panel).height, reversing);
     await tester.pumpAndSettle();
@@ -497,7 +501,7 @@ void main() {
   testWidgets('tones cancel on pointer cancellation, hiding, and changing calls', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
-    await tester.tap(find.byTooltip('Keypad'));
+    await tester.tap(find.byTooltip('Dial pad'));
     await tester.pumpAndSettle();
     Future<TestGesture> press() async {
       final gesture = await tester.startGesture(tester.getCenter(find.byKey(const ValueKey('morph-key-5'))));
@@ -517,7 +521,7 @@ void main() {
     expect(nativeCalls.last.method, 'stopDtmf');
     await hidden.up();
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Keypad'));
+    await tester.tap(find.byTooltip('Dial pad'));
     await tester.pumpAndSettle();
     final changed = await press();
     await emit(tester, [call('active', id: 'replacement')]);
@@ -550,7 +554,7 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(tester.getBottomLeft(find.byTooltip('End call')).dy, lessThan(size.height));
       final footerPosition = tester.getRect(find.byTooltip('End call'));
-      await tester.tap(find.byTooltip('Keypad'));
+      await tester.tap(find.byTooltip('Dial pad'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 140));
       // Within half a pixel: the glass press spring can still be settling.
@@ -566,7 +570,7 @@ void main() {
   testWidgets('reduced motion disables call transitions and ended calls have no actions', (tester) async {
     await open(tester, reduceMotion: true);
     await emit(tester, [call('active')]);
-    await tester.tap(find.byTooltip('Keypad'));
+    await tester.tap(find.byTooltip('Dial pad'));
     await tester.pump();
     expect(find.bySemanticsLabel('5'), findsOneWidget);
     await emit(tester, [call('disconnected')]);
@@ -628,18 +632,18 @@ void main() {
       await tester.pump(const Duration(milliseconds: 600));
       await capture('ringing-private', settle: false);
       await emit(tester, [call('active', id: 'call-1')]);
-      await tester.tap(find.byTooltip('Keypad'));
+      await tester.tap(find.byTooltip('Dial pad'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 210));
       await capture('midpoint', settle: false);
       await capture('keypad');
       await open(tester, boundary: boundary, size: const Size(320, 568), textScale: 1.5);
       await emit(tester, [call('active', id: 'compact')]);
-      await tester.tap(find.byTooltip('Keypad'));
+      await tester.tap(find.byTooltip('Dial pad'));
       await capture('compact-keypad');
       await open(tester, boundary: boundary, size: const Size(700, 360), textScale: 1.5);
       await emit(tester, [call('active', id: 'landscape')]);
-      await tester.tap(find.byTooltip('Keypad'));
+      await tester.tap(find.byTooltip('Dial pad'));
       await capture('landscape-keypad');
       await tester.pumpWidget(const SizedBox());
     });

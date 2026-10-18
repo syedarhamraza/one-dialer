@@ -261,135 +261,140 @@ class _CallControlPanelState extends State<CallControlPanel> {
         ),
       ),
     );
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (widget.landscape) Expanded(child: SingleChildScrollView(reverse: true, child: upper)) else upper,
-        Padding(
-          padding: EdgeInsets.only(
-            // With the keypad open, the gap matches the key rows' (landscape drops the last row's own gap).
-            top: lerpDouble(compact ? 2 : 6, widget.landscape ? 4 : 0, layoutProgress)!,
-            bottom: widget.landscape
-                ? 8
-                : compact
-                ? 16
-                : 56,
-          ),
-          child: rise(
-            const Interval(.12, .74, curve: Curves.easeOutCubic),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: compact ? 72 : 92,
-                  child: CallAction(
-                    icon: switch (route) {
-                      AudioRoute.bluetooth => Icons.bluetooth_audio_rounded,
-                      AudioRoute.wiredHeadset => Icons.headset_rounded,
-                      _ => Icons.volume_up_rounded,
-                    },
-                    label: routeLabel,
-                    active: route != AudioRoute.earpiece,
-                    size: actionSize,
-                    onPressed: widget.audio.supportedRoutes.contains(AudioRoute.bluetooth)
-                        ? () => chooseCallAudioRoute(context, widget.audio)
-                        : () => telecom.setAudioRoute(
-                            route == AudioRoute.speaker ? AudioRoute.earpiece : AudioRoute.speaker,
-                          ),
+    // Every control's frost shares one backdrop read.
+    return BackdropGroup(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (widget.landscape) Expanded(child: SingleChildScrollView(reverse: true, child: upper)) else upper,
+          Padding(
+            padding: EdgeInsets.only(
+              // With the keypad open, the gap matches the key rows' (landscape drops the last row's own gap).
+              top: lerpDouble(compact ? 2 : 6, widget.landscape ? 4 : 0, layoutProgress)!,
+              bottom: widget.landscape
+                  ? 8
+                  : compact
+                  ? 16
+                  : 56,
+            ),
+            child: rise(
+              const Interval(.12, .74, curve: Curves.easeOutCubic),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: compact ? 72 : 92,
+                    child: CallAction(
+                      icon: switch (route) {
+                        AudioRoute.bluetooth => Icons.bluetooth_audio_rounded,
+                        AudioRoute.wiredHeadset => Icons.headset_rounded,
+                        _ => Icons.volume_up_rounded,
+                      },
+                      label: routeLabel,
+                      active: route != AudioRoute.earpiece,
+                      size: actionSize,
+                      onPressed: widget.audio.supportedRoutes.contains(AudioRoute.bluetooth)
+                          ? () => chooseCallAudioRoute(context, widget.audio)
+                          : () => telecom.setAudioRoute(
+                              route == AudioRoute.speaker ? AudioRoute.earpiece : AudioRoute.speaker,
+                            ),
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Column(
-                      children: [
-                        LayoutBuilder(
-                          builder: (context, box) => Align(
-                            alignment: Alignment.topCenter,
-                            // Solid red, but with the glass package's press: glow and stretch, no glass body.
-                            child: GlassButton.custom(
-                              style: GlassButtonStyle.transparent,
-                              onTap: _noTap,
-                              excludeFromSemantics: true,
-                              canRequestFocus: false,
-                              shape: LiquidRoundedRectangle(borderRadius: actionSize / 2),
-                              child: AnimatedOpacity(
-                                key: widget.endKey,
-                                opacity: widget.hideEnd ? 0 : (_ending ? .55 : 1),
-                                // Only ending dims gradually; the pill appears at once when the Answer ball lands on it.
-                                duration: _ending ? const Duration(milliseconds: 220) : Duration.zero,
-                                child: AnimatedContainer(
-                                  // While ending, the pill draws in to a circle.
-                                  duration: MediaQuery.disableAnimationsOf(context)
-                                      ? Duration.zero
-                                      : const Duration(milliseconds: 280),
-                                  curve: Curves.easeInOutCubic,
-                                  width: _ending ? actionSize : box.maxWidth,
-                                  height: actionSize,
-                                  // A gloss across the top half, as on ColorOS.
-                                  foregroundDecoration: const ShapeDecoration(
-                                    shape: StadiumBorder(),
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [Color(0x40FFFFFF), Color(0x0AFFFFFF), Color(0x00FFFFFF)],
-                                      stops: [0, .45, .55],
-                                    ),
-                                  ),
-                                  decoration: ShapeDecoration(
-                                    // ColorOS 17's tomato red, with a glossy rim.
-                                    shape: const StadiumBorder(side: BorderSide(color: Color(0x40FFFFFF), width: .8)),
-                                    gradient: const LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [Color(0xFFE5604F), Color(0xFFC93D31)],
-                                    ),
-                                    shadows: [
-                                      BoxShadow(
-                                        color: const Color(0xFFC93D31).withValues(alpha: _ending ? 0 : .3),
-                                        blurRadius: 22,
-                                        offset: const Offset(0, 6),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Column(
+                        children: [
+                          LayoutBuilder(
+                            builder: (context, box) => Align(
+                              alignment: Alignment.topCenter,
+                              // Solid red, but with the glass package's press: glow and stretch, no glass body.
+                              child: GlassButton.custom(
+                                style: GlassButtonStyle.transparent,
+                                onTap: _noTap,
+                                excludeFromSemantics: true,
+                                canRequestFocus: false,
+                                shape: LiquidRoundedRectangle(borderRadius: actionSize / 2),
+                                child: AnimatedOpacity(
+                                  key: widget.endKey,
+                                  opacity: widget.hideEnd ? 0 : (_ending ? .55 : 1),
+                                  // Only ending dims gradually; the pill appears at once when the Answer ball lands on it.
+                                  duration: _ending ? const Duration(milliseconds: 220) : Duration.zero,
+                                  child: AnimatedContainer(
+                                    // While ending, the pill draws in to a circle.
+                                    duration: MediaQuery.disableAnimationsOf(context)
+                                        ? Duration.zero
+                                        : const Duration(milliseconds: 280),
+                                    curve: Curves.easeInOutCubic,
+                                    width: _ending ? actionSize : box.maxWidth,
+                                    height: actionSize,
+                                    // A gloss across the top half, as on ColorOS.
+                                    foregroundDecoration: const ShapeDecoration(
+                                      shape: StadiumBorder(),
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                        colors: [Color(0x40FFFFFF), Color(0x0AFFFFFF), Color(0x00FFFFFF)],
+                                        stops: [0, .45, .55],
                                       ),
-                                    ],
-                                  ),
-                                  child: IconButton(
-                                    tooltip: 'End call',
-                                    iconSize: 32,
-                                    style: IconButton.styleFrom(
-                                      foregroundColor: Colors.white,
-                                      disabledForegroundColor: Colors.white,
-                                      shape: const StadiumBorder(),
                                     ),
-                                    onPressed: _ending ? null : _endCall,
-                                    icon: const Icon(Icons.call_end_rounded),
+                                    decoration: ShapeDecoration(
+                                      // ColorOS 17's tomato red, with a glossy rim.
+                                      shape: const StadiumBorder(side: BorderSide(color: Color(0x40FFFFFF), width: .8)),
+                                      gradient: const LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                        colors: [Color(0xFFE5604F), Color(0xFFC93D31)],
+                                      ),
+                                      shadows: [
+                                        BoxShadow(
+                                          color: const Color(0xFFC93D31).withValues(alpha: _ending ? 0 : .3),
+                                          blurRadius: 22,
+                                          offset: const Offset(0, 6),
+                                        ),
+                                      ],
+                                    ),
+                                    child: IconButton(
+                                      tooltip: 'End call',
+                                      iconSize: 32,
+                                      style: IconButton.styleFrom(
+                                        foregroundColor: Colors.white,
+                                        disabledForegroundColor: Colors.white,
+                                        shape: const StadiumBorder(),
+                                      ),
+                                      onPressed: _ending ? null : _endCall,
+                                      icon: const Icon(Icons.call_end_rounded),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 6),
-                        const ExcludeSemantics(
-                          child: Text('End', style: TextStyle(fontSize: 12, height: 1.1, color: Color(0xC7FFFFFF))),
-                        ),
-                      ],
+                          const SizedBox(height: 6),
+                          const ExcludeSemantics(
+                            child: Text('End', style: TextStyle(fontSize: 12, height: 1.1, color: Color(0xC7FFFFFF))),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(
-                  width: compact ? 72 : 92,
-                  child: CallAction(
-                    icon: widget.keypadOpen ? Icons.keyboard_arrow_down_rounded : Icons.dialpad_rounded,
-                    label: widget.keypadOpen ? 'Hide keypad' : 'Keypad',
-                    size: actionSize,
-                    onPressed: widget.onToggle,
+                  SizedBox(
+                    width: compact ? 72 : 92,
+                    child: CallAction(
+                      // As on ColorOS: same button either way, lit white while the keypad is open.
+                      icon: Icons.dialpad_rounded,
+                      label: 'Dial pad',
+                      active: widget.keypadOpen,
+                      size: actionSize,
+                      onPressed: widget.onToggle,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
