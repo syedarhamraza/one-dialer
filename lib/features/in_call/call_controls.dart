@@ -15,9 +15,20 @@ class CallGlassLayer extends StatelessWidget {
   const CallGlassLayer({super.key, required this.child});
   final Widget child;
 
+  /// The package's dark-theme glass, turned down: thinner, softer highlight, less bend and
+  /// no colour fringing. (Premium quality snapshots the backdrop and blanks out mid-animation.)
+  static const settings = LiquidGlassSettings(
+    thickness: 6, // package: 10
+    blur: 3, // 4
+    glassColor: Color.fromRGBO(255, 255, 255, 0.06), // 0.08
+    lightIntensity: .4, // 0.7
+    refractiveIndex: 1.1, // 1.2
+    saturation: 1.1, // 1.2
+    chromaticAberration: 0, // 0.01
+  );
+
   @override
-  // The package's own glass. Premium snapshots the backdrop and blanks out mid-animation.
-  Widget build(BuildContext context) => AdaptiveLiquidGlassLayer(child: child);
+  Widget build(BuildContext context) => AdaptiveLiquidGlassLayer(settings: settings, child: child);
 }
 
 /// A glass body inside [CallGlassLayer] with the package's press feel: it squeezes, stretches
