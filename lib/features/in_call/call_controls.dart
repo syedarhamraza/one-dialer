@@ -80,7 +80,7 @@ class _TintedBody extends CustomPainter {
           ).createShader(rect),
       )
       ..restore();
-    // A brighter glow right on the border, all the way round and a little less along the top.
+    // A brighter glow right on the border, strongest along the bottom.
     canvas
       ..save()
       ..clipPath(shape)
@@ -93,8 +93,9 @@ class _TintedBody extends CustomPainter {
           ..shader = const LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0x38FFFFFF), Color(0x47FFFFFF), Color(0x5CFFFFFF)],
-            stops: [0, .5, 1],
+            // Top a little softer, the sides softer still, the bottom brightest.
+            colors: [Color(0x2BFFFFFF), Color(0x1FFFFFFF), Color(0x1FFFFFFF), Color(0x5CFFFFFF)],
+            stops: [0, .25, .75, 1],
           ).createShader(rect),
       )
       ..restore();
