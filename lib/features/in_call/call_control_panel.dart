@@ -313,11 +313,16 @@ class _CallControlPanelState extends State<CallControlPanel> {
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       child: Column(
                         children: [
-                          PressScale(
-                            scale: .95,
-                            child: LayoutBuilder(
-                              builder: (context, box) => Align(
-                                alignment: Alignment.topCenter,
+                          LayoutBuilder(
+                            builder: (context, box) => Align(
+                              alignment: Alignment.topCenter,
+                              // Solid red, but with the glass package's press: glow and stretch, no glass body.
+                              child: GlassButton.custom(
+                                style: GlassButtonStyle.transparent,
+                                onTap: _noTap,
+                                excludeFromSemantics: true,
+                                canRequestFocus: false,
+                                shape: LiquidRoundedRectangle(borderRadius: actionSize / 2),
                                 child: AnimatedOpacity(
                                   key: widget.endKey,
                                   opacity: widget.hideEnd ? 0 : (_ending ? .55 : 1),
@@ -387,6 +392,9 @@ class _CallControlPanelState extends State<CallControlPanel> {
       ],
     );
   }
+
+  /// The End pill's taps belong to its IconButton; the glass button only animates the press.
+  static void _noTap() {}
 
   /// ColorOS keeps the rarer actions behind More, in the package's glass menu that grows out
   /// of the More circle; the label stays put underneath.

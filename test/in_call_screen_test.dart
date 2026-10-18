@@ -463,9 +463,10 @@ void main() {
     expect(settled.dx, middle.dx);
     expect(actions, findsNothing);
     expect(fade('8'), 1);
-    // Once tapped, End call draws in to a circle around the same centre.
-    expect(tester.getCenter(find.byTooltip('End call')), endCenter);
-    expect(endCenter, end.center);
+    // Once tapped, End call draws in to a circle around the same centre (the glass press spring
+    // may still be a fraction of a pixel from rest).
+    expect(tester.getCenter(find.byTooltip('End call')), within(distance: .5, from: endCenter));
+    expect(endCenter, within(distance: .5, from: end.center));
     expect(tester.getRect(find.byTooltip('Speaker')), speaker);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());

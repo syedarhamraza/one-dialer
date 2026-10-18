@@ -78,38 +78,6 @@ const _outlined = BoxDecoration(
   border: Border.fromBorderSide(BorderSide(color: Color(0x2EFFFFFF))),
 );
 
-/// Shrinks slightly under the finger, like stock dialer buttons.
-class PressScale extends StatefulWidget {
-  const PressScale({super.key, required this.child, this.enabled = true, this.scale = .92});
-  final Widget child;
-  final bool enabled;
-  final double scale;
-
-  @override
-  State<PressScale> createState() => _PressScaleState();
-}
-
-class _PressScaleState extends State<PressScale> {
-  bool _down = false;
-
-  void _set(bool down) {
-    if (_down != down && mounted) setState(() => _down = down);
-  }
-
-  @override
-  Widget build(BuildContext context) => Listener(
-    onPointerDown: widget.enabled ? (_) => _set(true) : null,
-    onPointerUp: (_) => _set(false),
-    onPointerCancel: (_) => _set(false),
-    child: AnimatedScale(
-      scale: _down ? widget.scale : 1,
-      duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 120),
-      curve: Curves.easeOut,
-      child: widget.child,
-    ),
-  );
-}
-
 /// Shared round action for the call controls and the persistent bottom row. Turning it on
 /// grows a white fill out from the icon; unavailable actions show as an outline.
 class CallAction extends StatelessWidget {

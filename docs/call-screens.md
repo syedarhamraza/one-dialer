@@ -88,7 +88,7 @@ The header sits slightly above the centre of the space the controls leave.
   out of the More circle (its label stays below),
   with Add call, Audio output, and Note when Merge has taken its slot.
 - **Third slot**: Note on a single call. It opens a floating sheet over the call that saves as you type, so the note survives the other side hanging up. Notes are stored in `DialerPrefs` as `call_note_<number>_<millis>`, and Recents call details show each note under the logged call it was taken during. The slot becomes Merge once two calls can merge.
-- **End call**: a red gradient pill with a soft glow. Once tapped it draws in to a circle and dims. If Telecom hasn't ended the call within 3 s, it becomes tappable again.
+- **End call**: a solid red gradient pill with a soft glow, the one control that isn't glass. Its press comes from a `GlassButton.custom` in `GlassButtonStyle.transparent` (the package's glow and stretch, no glass body). Once tapped it draws in to a circle and dims. If Telecom hasn't ended the call within 3 s, it becomes tappable again.
 - **Entrance**: when the connected or dialing controls appear, the action row and the bottom row fade and rise 16 px, staggered (520 ms total). Reduced motion skips it.
 - **Header**:
   - A thin ring around the avatar.
