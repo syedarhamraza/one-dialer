@@ -70,12 +70,12 @@ class _TintedBody extends CustomPainter {
         shape,
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 7
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5)
+          ..strokeWidth = 12
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8)
           ..shader = const LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0x0FFFFFFF), Color(0x2BFFFFFF), Color(0x3DFFFFFF)],
+            colors: [Color(0x0DFFFFFF), Color(0x24FFFFFF), Color(0x33FFFFFF)],
             stops: [0, .5, 1],
           ).createShader(rect),
       )
