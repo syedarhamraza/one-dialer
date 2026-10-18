@@ -11,7 +11,7 @@ import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/one_ui_floating_modal.dart';
 
 /// A ColorOS 17 call-control body: frosted (the backdrop blurred behind it), milky, glowing up
-/// from every edge (least along the top), with only a hint of a lip along the top edge. Needs a [BackdropGroup] above it. The glass package supplies the press: it squeezes, stretches toward
+/// from every edge (least along the top), with a lip along the top edge and a fainter one below. Needs a [BackdropGroup] above it. The glass package supplies the press: it squeezes, stretches toward
 /// the finger and glows, with no glass surface (`GlassButtonStyle.transparent`).
 /// Taps still belong to [child] (its IconButton or key detector); the glass button only reads
 /// raw pointer events for the effect. A circle, or a stadium when [radius] is given.
@@ -41,7 +41,7 @@ class CallBody extends StatelessWidget {
   );
 }
 
-/// The milky wash, edge glow and top lip drawn over each control's frosted blur.
+/// The milky wash, edge glow and lips drawn over each control's frosted blur.
 class _TintedBody extends CustomPainter {
   const _TintedBody(this.radius);
   final double? radius;
@@ -82,17 +82,17 @@ class _TintedBody extends CustomPainter {
           ).createShader(rect),
       )
       ..restore();
-    // Just a hint of a lip along the top edge.
+    // The 3D lip: clearer along the top edge, fainter along the bottom.
     canvas.drawRRect(
       shape.deflate(.5),
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = .8
+        ..strokeWidth = 1
         ..shader = const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0x26FFFFFF), Color(0x00FFFFFF)],
-          stops: [0, .2],
+          colors: [Color(0x4DFFFFFF), Color(0x00FFFFFF), Color(0x00FFFFFF), Color(0x29FFFFFF)],
+          stops: [0, .3, .7, 1],
         ).createShader(rect),
     );
   }
