@@ -14,7 +14,7 @@ left, with the photo in a circle on the right. The controls are liquid glass
 (`liquid_glass_widgets`, initialised in `inCallMain` only). One
 `CallGlassLayer` wraps the control panel, and every circle and key inside it is
 a grouped `CallGlass`, so they render in a single pass. Like the old glass nav
-bar, it uses the package's dark glass turned down (thinner, softer light, less bend, no colour
+bar, it uses frosted glass: a heavy blur under a milky tint, with barely any bend (no colour
 fringing; `CallGlassLayer.settings`) at standard quality: premium looked too heavy and its
 backdrop snapshot blanked the controls mid-animation. The main app's floating
 chrome stays OneSpend's, without glass.

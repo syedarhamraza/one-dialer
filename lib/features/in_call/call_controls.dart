@@ -15,16 +15,16 @@ class CallGlassLayer extends StatelessWidget {
   const CallGlassLayer({super.key, required this.child});
   final Widget child;
 
-  /// The package's dark-theme glass, turned down: thinner, softer highlight, less bend and
-  /// no colour fringing. (Premium quality snapshots the backdrop and blanks out mid-animation.)
+  /// Frosted: a heavy blur under a milky tint, with barely any bend or highlight. (The package's
+  /// own frost only exists on the premium path, which blanks the controls mid-animation.)
   static const settings = LiquidGlassSettings(
-    thickness: 6, // package: 10
-    blur: 3, // 4
-    glassColor: Color.fromRGBO(255, 255, 255, 0.06), // 0.08
-    lightIntensity: .4, // 0.7
-    refractiveIndex: 1.1, // 1.2
-    saturation: 1.1, // 1.2
-    chromaticAberration: 0, // 0.01
+    thickness: 3,
+    blur: 12,
+    glassColor: Color.fromRGBO(255, 255, 255, 0.16),
+    lightIntensity: .3,
+    refractiveIndex: 1.05,
+    saturation: 1.0,
+    chromaticAberration: 0,
   );
 
   @override
