@@ -80,6 +80,24 @@ class _TintedBody extends CustomPainter {
           ).createShader(rect),
       )
       ..restore();
+    // A brighter glow right on the border, all the way round and a little less along the top.
+    canvas
+      ..save()
+      ..clipPath(shape)
+      ..drawPath(
+        shape,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5)
+          ..shader = const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0x38FFFFFF), Color(0x47FFFFFF), Color(0x5CFFFFFF)],
+            stops: [0, .5, 1],
+          ).createShader(rect),
+      )
+      ..restore();
     // The 3D lip: clearer along the top edge, fainter along the bottom.
     canvas.drawPath(
       bodyPath(rect.deflate(.5), radius == null ? null : radius! - .5),
