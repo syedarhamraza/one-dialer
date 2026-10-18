@@ -4,6 +4,7 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
@@ -29,7 +30,7 @@ class InCallScreen extends StatefulWidget {
 class _InCallScreenState extends State<InCallScreen> {
   List<SimCard> _sims = const [];
 
-  /// The keypad's open progress, which blurs the photo poster behind it.
+  /// The keypad's open progress, which dims the backdrop behind it.
   final _keypadBlur = ValueNotifier<double>(0);
 
   @override
@@ -44,6 +45,8 @@ class _InCallScreenState extends State<InCallScreen> {
     // Caller lookup must not prevent answering if a contacts provider is unavailable.
     ContactsRepository.instance.start().catchError((Object _) {});
     _loadSims();
+    // The backdrop works without it (the aurora), so a failure is only logged.
+    TelecomBridge.instance.loadWallpaperBackdrop().catchError((Object e) => debugPrint('Wallpaper backdrop: $e'));
   }
 
   Future<void> _loadSims() async {
@@ -57,22 +60,24 @@ class _InCallScreenState extends State<InCallScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: Colors.black,
+    // Transparent: the system-blurred wallpaper behind the window is the backdrop (CallBackdrop).
+    backgroundColor: Colors.transparent,
     body: StreamBuilder<CallSnapshot>(
       stream: TelecomBridge.instance.callState,
       builder: (context, snapshot) {
         final state = snapshot.data;
         final call = state?.primary;
-        return ValueListenableBuilder(
-          valueListenable: ContactsRepository.instance.contacts,
-          builder: (context, _, _) {
-            final contact = call == null || call.isPrivate || call.isConference
-                ? null
-                : ContactsRepository.instance.contactFor(call.number ?? '');
+        return ListenableBuilder(
+          // Contacts load in late (the aurora's tint follows the caller's name); the wallpaper's
+          // blur and colours change with the device.
+          listenable: Listenable.merge([
+            ContactsRepository.instance.contacts,
+            TelecomBridge.instance.wallpaperBackdrop,
+          ]),
+          builder: (context, _) {
             return CallBackdrop(
-              photo: contact?.thumbnail,
-              contactId: contact?.id,
-              blur: _keypadBlur,
+              wallpaper: TelecomBridge.instance.wallpaperBackdrop.value,
+              dim: _keypadBlur,
               seed: call == null ? null : backdropSeed(call),
               child: SafeArea(
                 child: switch ((state, call)) {
@@ -131,8 +136,19 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   Timer? _toastTimer;
 
   /// Keypad morph progress, spring-driven so a mid-flight reversal keeps its momentum.
-  late final AnimationController _morph = AnimationController(vsync: this)
-    ..addListener(() => widget.keypadBlur.value = _morph.value.clamp(0.0, 1.0));
+  late final AnimationController _morph = AnimationController(vsync: this)..addListener(_syncDim);
+
+  /// Feeds the backdrop's keypad dim. A snap during a build (reduced motion turned on mid-close)
+  /// waits for the frame to end, since the backdrop can't rebuild mid-build.
+  void _syncDim() {
+    if (SchedulerBinding.instance.schedulerPhase == SchedulerPhase.persistentCallbacks) {
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (mounted) widget.keypadBlur.value = _morph.value.clamp(0.0, 1.0);
+      });
+    } else {
+      widget.keypadBlur.value = _morph.value.clamp(0.0, 1.0);
+    }
+  }
 
   /// Plays once when the call's controls first appear (opened, or just answered).
   late final AnimationController _entrance = AnimationController(

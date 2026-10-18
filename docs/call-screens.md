@@ -1,22 +1,23 @@
 # Call screen presentation
 
 Incoming, dialing, connected, held, conference, private, and ended calls share a
-photo-led backdrop. A contact with a photo gets the ColorOS 17 poster: the photo
-full-screen, softly blurred (sigma 12) and cover-fit, under a shade at the top for
-the name and a dark band at the bottom behind the controls. As the keypad opens
-the poster blurs further (to sigma 28, driven by the keypad's morph) and the
-shade eases from a dark bottom band to an even dim, as ColorOS does behind its
-dial pad. The blur is baked, not live (`_BakedBlur`): the photo (the thumbnail
-until `ContactsRepository.fullPhoto` loads) is drawn once into two 240 px-wide
-bitmaps blurred to those two strengths, and the strong one fades in over the soft
-one with the keypad. Scaled up, they look like a full-screen blur, but no frame
-re-blurs the screen. Callers without a photo
-get a static aurora: a dark base with soft colour blobs in hues around their
-avatar colour (`LetterAvatar.colorFor`). Private, conference and bare-number
-calls get a blue, teal and violet one.
+backdrop, as on ColorOS 17: the phone's own wallpaper, blurred, under black fades
+at the top and bottom. The wallpaper bitmap is never read (that needs "All files
+access" on Android 13+). Instead `InCallTheme` shows the system wallpaper behind
+`InCallActivity`'s window (`windowShowWallpaper`, translucent), the activity runs
+Flutter transparent on a SurfaceView (not the slower TextureView), and on Android
+12+ it asks the compositor to blur what's behind (`setBackgroundBlurRadius`,
+following `addCrossWindowBlurEnabledListener`). `WallpaperBackdrop.kt` reports
+`{blur, colors}` over the bridge (`getWallpaperBackdrop`, pushed again as
+`onWallpaperBackdropChanged`). With blur on, `CallBackdrop` paints nothing opaque.
+With blur off (Android < 12, battery saver, unsupported devices) it paints an
+aurora in the wallpaper's own colours (`WallpaperManager.getWallpaperColors`, no
+permission), or in hues around the caller's avatar colour if there are none. The
+fades ease to an even dim while the keypad is open. Contacts' photos only appear
+in the header circle.
 
 The layout follows ColorOS 17. The name, number and status sit at the top on the
-left, with the avatar in a circle on the right (contacts with a photo show it as the poster instead). The controls follow ColorOS 17: each is milky over the
+left, with the avatar (or the contact's photo) in a circle on the right. The controls follow ColorOS 17: each is milky over the
 already-blurred backdrop (no live blur of its own: a per-control `BackdropFilter`
 looked the same but re-read the backdrop for every key on every frame), with a brighter glow right on the border and a wider soft
 haze inside it (both least along the top, never reaching the centre), a 3D lip along the top edge and a fainter one
@@ -107,10 +108,9 @@ The header sits slightly above the centre of the space the controls leave.
 - **Icons** are 46% of the circle. Dial pad uses `DialPadGlyph`, ColorOS's 3×4 grid of 12 dots (Material's dialpad has 10).
 - **End call**: a squircle-ended tomato-red gradient pill with a glossy rim and a soft glow. Its press comes from a `GlassButton.custom` in `GlassButtonStyle.transparent` (the package's glow and stretch, no glass body). Once tapped it draws in to a circle and dims. If Telecom hasn't ended the call within 3 s, it becomes tappable again.
 - **Entrance**: when the connected or dialing controls appear, the action row and the bottom row fade and rise 16 px, staggered (520 ms total). Reduced motion skips it.
-- **Header**:
-  - A thin ring around the avatar.
-  - The SIM badge carries the SIM's colour dot.
-  - The running timer sits in a pill with a static green live dot. It doesn't pulse, because calls can last an hour.
+- **Header** (ColorOS 17):
+  - Name 32 px bold, then the number and the city on lines of their own.
+  - The status line: small glyphs (HD call, Wi-Fi calling, and on dual-SIM phones a SIM mark in the SIM's colour) followed by the timer or status as plain white text. No pill or live dot, and no chip row.
   - While dialing, the avatar ripples slowly and "Calling" fills in its dots.
 - **Status chip**: "Muted" shows under the timer. An audio route change shows a 1.5 s chip ("Speaker on", "Bluetooth"). Hold dims the header and pulses "On hold".
 
@@ -120,7 +120,7 @@ the reversed key cascade. Changing direction resumes the current geometry and pa
 
 - **Action row**: all four actions fade out together over the first 20% of the keys' clock, shrinking 6%. Closing reverses that same fade and scale as the last keys leave. Opacity and scale update every frame from the shared key clock.
 - **Keys**: squircle-ended keys (a superellipse, `bodyPath`, rather than true semicircle ends), three across (ColorOS 17). Each key has its own entrance, as in the ColorOS 17 video: rows arrive bottom-up a beat apart (`* 0 #` first, where the action row was), the middle key of each row leads its neighbours, and each key fades in and floats up 40 px, overshooting its place by about 16% on a bouncier glass spring (`GlassSpring.bouncy(extraBounce: .2)`) before settling, growing from 86%. The keys run on their own steady 650 ms clock (`_keysIn`), not the panel's spring, which does most of its travel at the start. Closing runs the same animation backwards over 450 ms: upper rows leave first, sinking, shrinking and fading, then lower rows follow while the panel collapses smoothly. There is no separate fade or waiting phase. Interrupted transitions resume the current clock value without restarting or jumping. Presses get the same `GlassButton` squeeze and glow.
-- **Header**: the avatar and badges collapse away. Typed digits replace the
+- **Header**: the avatar folds away. Typed digits replace the
   caller name, and the name becomes the subtitle.
 - **Spacing**: with the keypad open, the gap above the bottom row is a little more than the gap between key rows (10 px more; 6 compact). Labels sit in a 32 px box, enough for two lines, so the rows stay close when the keypad is closed.
 - **Bottom row**: Speaker, End call and Dial pad never move. Dial pad lights white while the keypad is open, as on ColorOS. Upper
@@ -134,7 +134,8 @@ The static control wash, glow and rim are rasterized once at device pixel ratio,
 then reused while the controls move and scale. Their image is regenerated when
 size, radius or pixel ratio changes and disposed with the control. Text, icons and
 press feedback remain live. Nothing in the call screen blurs per frame any more:
-the per-control backdrop blur was removed and the poster blur is baked.
+the per-control backdrop blur was removed, and the wallpaper blur is done by the
+system compositor.
 
 On the V2413, the 2026-10-18 connected-keypad profile traces showed median
 `GPURasterizer::Draw` time dropping from 5.37 ms to 4.56 ms and P95 from 8.95 ms

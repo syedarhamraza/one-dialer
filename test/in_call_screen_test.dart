@@ -10,6 +10,8 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dialer/core/prefs/dialer_prefs.dart';
+import 'package:dialer/core/telecom/call_info.dart';
+import 'package:dialer/core/telecom/telecom_bridge.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
@@ -18,8 +20,11 @@ void main() {
   final nativeCalls = <MethodCall>[];
   const events = 'com.syedarhamraza.dialer/call_state';
   const codec = StandardMethodCodec();
+  Map<String, Object?>? wallpaper;
   setUp(() {
     nativeCalls.clear();
+    wallpaper = null;
+    TelecomBridge.instance.wallpaperBackdrop.value = null;
     SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.empty();
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     messenger.setMockMethodCallHandler(const MethodChannel(events), (_) async => null);
@@ -36,6 +41,7 @@ void main() {
         ];
       }
       if (call.method == 'getQuickReplies') return ["I'll call you back", "Can't talk right now"];
+      if (call.method == 'getWallpaperBackdrop') return wallpaper;
       return null;
     });
   });
@@ -170,12 +176,61 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('the status line shows HD and the SIM inline, with a plain timer and no chips', (tester) async {
+    final semantics = tester.ensureSemantics();
+    await open(tester);
+    await emit(tester, [call('active')]);
+    // Two SIMs (Personal, Work): the call's SIM shows as a mark beside HD and the timer.
+    expect(find.bySemanticsLabel('Work'), findsOneWidget);
+    expect(find.bySemanticsLabel('HD call'), findsOneWidget);
+    // No chip row and no green live dot.
+    expect(find.text('Phone call'), findsNothing);
+    expect(find.text('HD'), findsOneWidget); // only the glyph's superscript
+    expect(
+      find.byWidgetPredicate(
+        (w) =>
+            w is Container &&
+            w.decoration is BoxDecoration &&
+            (w.decoration! as BoxDecoration).color == const Color(0xFF5BD69A),
+      ),
+      findsNothing,
+    );
+    semantics.dispose();
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('the backdrop shows the blurred wallpaper when Android blurs, else its colours', (tester) async {
+    wallpaper = {'blur': true, 'colors': <int>[]};
+    await open(tester);
+    await emit(tester, [call('active')]);
+    expect(find.byKey(const ValueKey('wallpaper')), findsOneWidget);
+    expect(tester.widget<Scaffold>(find.byType(Scaffold).first).backgroundColor, Colors.transparent);
+
+    // Battery saver switches the blur off: a gradient in the wallpaper's colours stands in.
+    TelecomBridge.instance.wallpaperBackdrop.value = const WallpaperBackdrop(blur: false, colors: [Color(0xFF3355AA)]);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.byKey(const ValueKey('wallpaper')), findsNothing);
+    expect(
+      find.byWidgetPredicate(
+        (w) =>
+            w is DecoratedBox &&
+            w.decoration is BoxDecoration &&
+            (w.decoration as BoxDecoration).gradient is RadialGradient,
+      ),
+      findsWidgets,
+    );
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('formatted number, location and end reasons come from Telecom', (tester) async {
     await open(tester);
     await emit(tester, [
       {...call('active'), 'formattedNumber': '+44 20 7183 8750', 'location': 'United Kingdom'},
     ]);
-    expect(find.text('+44 20 7183 8750 · United Kingdom'), findsOneWidget);
+    // As on ColorOS, the number and the city sit on lines of their own.
+    expect(find.text('+44 20 7183 8750'), findsOneWidget);
+    expect(find.text('United Kingdom'), findsOneWidget);
     await emit(tester, [
       {...call('disconnected'), 'disconnectCode': 'busy'},
     ]);

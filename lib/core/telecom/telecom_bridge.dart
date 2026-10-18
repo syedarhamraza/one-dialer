@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'call_info.dart';
@@ -22,6 +23,14 @@ class TelecomBridge {
   /// Fires on every change to the system call log.
   VoidCallback? onCallLogChanged;
 
+  /// The call screen's backdrop; null until [loadWallpaperBackdrop] answers.
+  final wallpaperBackdrop = ValueNotifier<WallpaperBackdrop?>(null);
+
+  Future<void> loadWallpaperBackdrop() async {
+    final map = await _methods.invokeMapMethod<Object?, Object?>('getWallpaperBackdrop');
+    if (map != null) wallpaperBackdrop.value = WallpaperBackdrop.fromMap(map);
+  }
+
   late final Stream<CallSnapshot> callState = _events.receiveBroadcastStream().map(
     (e) => CallSnapshot.fromMap(e as Map<Object?, Object?>),
   );
@@ -34,6 +43,8 @@ class TelecomBridge {
         onOpenRecents?.call();
       case 'onCallLogChanged':
         onCallLogChanged?.call();
+      case 'onWallpaperBackdropChanged':
+        wallpaperBackdrop.value = WallpaperBackdrop.fromMap(call.arguments as Map<Object?, Object?>);
     }
   }
 
