@@ -70,8 +70,8 @@ the other button and the pill fade out as it arms.
   Telecom connects. Then the session flies it into the End pill along a curve, as
   on ColorOS: it drops first, then sweeps across (a quadratic Bezier bending
   25% of the way from the straight line toward the corner below the ball, level
-  with End), fast at first and slowing smoothly
-  into place with no overshoot (650 ms, `easeOutCubic`). The ball wears the End
+  with End), fast at first, slowing into place,
+  going about 2% past it and gently back (700 ms, `Cubic(.25, 1, .4, 1.08)`). The ball wears the End
   pill's finish the whole way (gradient, gloss, rim, glow, squircle shape) while
   its colour morphs green → orange → End's red, its icon grows to End's size and
   tips over into the hang-up glyph. The real pill stays hidden until it lands. If

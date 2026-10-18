@@ -189,8 +189,8 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     if (_ball == null || _fly.isAnimating) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && _ball != null && !_fly.isAnimating) {
-        // Fast at first, then slowing smoothly into place; no overshoot (ColorOS).
-        _fly.animateTo(1, duration: const Duration(milliseconds: 650), curve: Curves.easeOutCubic);
+        // Fast at first, slowing into place, a touch past it (~2%) and gently back (ColorOS).
+        _fly.animateTo(1, duration: const Duration(milliseconds: 700), curve: const Cubic(.25, 1, .4, 1.08));
       }
     });
   }
