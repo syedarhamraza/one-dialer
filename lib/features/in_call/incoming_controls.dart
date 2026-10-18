@@ -433,6 +433,3 @@ class _ArcHint extends CustomPainter {
   @override
   bool shouldRepaint(_ArcHint oldDelegate) => oldDelegate.color != color;
 }
-
-/// Answer's green, finished like the End pill (and where the flying Answer ball starts).
-const answerGreen = Color(0xFF2FAE52);

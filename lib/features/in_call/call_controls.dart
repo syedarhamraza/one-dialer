@@ -480,6 +480,9 @@ class _DialPadDots extends CustomPainter {
 /// End's red, shared by the End pill, Decline and the Answer flight's landing.
 const endRed = Color(0xFFD2463A);
 
+/// Answer's green, shared by Answer, the start of the Answer flight and the keypad's call button.
+const answerGreen = Color(0xFF2FAE52);
+
 /// ColorOS 17's solid buttons (End, Decline, Answer), lit from below like the frosted ones: a
 /// shade deeper at the top, lighter toward the bottom, a light rim and a soft drop glow in their
 /// own colour. Pair with [solidGlow] as the foreground.

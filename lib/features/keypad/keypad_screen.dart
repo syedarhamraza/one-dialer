@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:flutter/services.dart';
 
 import 'dart:math' as math;
@@ -18,6 +19,7 @@ import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/place_call.dart';
 import 't9.dart';
 import '../search/search_screen.dart';
+import '../in_call/call_controls.dart';
 
 /// Samsung-style dial pad: T9 contact search above, the typed number, the keypad and
 /// one call button, with SIM selection when required.
@@ -630,14 +632,23 @@ class _CallButton extends StatelessWidget {
     label: 'Call',
     enabled: onTap != null,
     excludeSemantics: true,
-    child: Material(
-      color: const Color(0xFF08AB60),
-      shape: const CircleBorder(),
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: const SizedBox(height: 72, width: 72, child: Icon(Icons.call_rounded, color: Colors.white, size: 38)),
+    // The call screen's Answer button: bottom-lit solid green with the glass package's press.
+    child: GlassButton.custom(
+      style: GlassButtonStyle.transparent,
+      onTap: onTap ?? _noTap,
+      enabled: onTap != null,
+      excludeFromSemantics: true,
+      canRequestFocus: false,
+      shape: const LiquidOval(),
+      child: Container(
+        height: 72,
+        width: 72,
+        decoration: solidBody(answerGreen, const CircleBorder()),
+        foregroundDecoration: solidGlow(const CircleBorder()),
+        child: const Icon(Icons.call_rounded, color: Colors.white, size: 38),
       ),
     ),
   );
+
+  static void _noTap() {}
 }
