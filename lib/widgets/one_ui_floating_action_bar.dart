@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/one_ui_theme.dart';
+import 'frosted_body.dart';
 import 'one_ui_glass_surface.dart';
 import 'one_ui_morph_switcher.dart';
 import '../core/haptics/haptics.dart';
@@ -47,12 +48,16 @@ class OneUIFloatingActionBar extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: RepaintBoundary(
-              child: OneUIGlassSurface(
-                borderRadius: const BorderRadius.all(Radius.circular(34)),
-                elevation: OneUIGlassElevation.navbar,
-                height: 60,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                child: _buildRow(),
+              // The whole bar presses as one; each action inside keeps its own tap.
+              child: GlassPress(
+                radius: 34,
+                child: OneUIGlassSurface(
+                  borderRadius: const BorderRadius.all(Radius.circular(34)),
+                  elevation: OneUIGlassElevation.navbar,
+                  height: 60,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  child: _buildRow(),
+                ),
               ),
             ),
           ),

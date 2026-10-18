@@ -12,6 +12,7 @@ import '../../theme/one_ui_theme.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_collapsible_header.dart';
 import '../../widgets/one_ui_floating_action_bar.dart';
+import '../../widgets/morph_menu_action.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_floating_modal.dart';
 import '../../widgets/one_ui_radio.dart';
@@ -100,21 +101,16 @@ class _RecentsScreenState extends State<RecentsScreen> {
     if (ok == true && mounted) setState(() => _filter = choice);
   }
 
-  void _openMenu() => OneUIFloatingMenu.show(
-    context: context,
-    anchorKey: _menuKey,
-    width: 250,
-    items: [
-      OneUIFloatingMenuItem(
-        label: _hideBlocked ? 'Show blocked calls' : 'Hide blocked calls',
-        onTap: () => DialerPrefs.instance.setHideBlockedCalls(!_hideBlocked),
-      ),
-      OneUIFloatingMenuItem(
-        label: 'Settings',
-        onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),
-      ),
-    ],
-  );
+  List<OneUIFloatingMenuItem> get _menuItems => [
+    OneUIFloatingMenuItem(
+      label: _hideBlocked ? 'Show blocked calls' : 'Hide blocked calls',
+      onTap: () => DialerPrefs.instance.setHideBlockedCalls(!_hideBlocked),
+    ),
+    OneUIFloatingMenuItem(
+      label: 'Settings',
+      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),
+    ),
+  ];
 
   void _toggle(CallGroup group) {
     final ids = group.calls.map((c) => c.id);
@@ -276,7 +272,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
                         tooltip: 'Search',
                         onTap: () => openSearch(context),
                       ),
-                      OneUIHeaderAction(icon: Icons.more_vert_rounded, tooltip: 'More options', onTap: _openMenu),
+                      MorphMenuAction(items: _menuItems),
                     ],
             ),
           ),
