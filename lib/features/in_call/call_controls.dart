@@ -9,8 +9,9 @@ import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/one_ui_floating_modal.dart';
 
-/// A solid call-control body, like the End pill, with the glass package's press: it squeezes,
-/// stretches toward the finger and glows, with no glass surface (`GlassButtonStyle.transparent`).
+/// A ColorOS 17 call-control body: a translucent disc that takes on the backdrop's colour, with a
+/// rim lit from the top left. The glass package supplies the press: it squeezes, stretches toward
+/// the finger and glows, with no glass surface (`GlassButtonStyle.transparent`).
 /// Taps still belong to [child] (its IconButton or key detector); the glass button only reads
 /// raw pointer events for the effect. A circle, or a stadium when [radius] is given.
 class CallBody extends StatelessWidget {
@@ -27,25 +28,49 @@ class CallBody extends StatelessWidget {
     excludeFromSemantics: true,
     canRequestFocus: false,
     shape: radius == null ? const LiquidOval() : LiquidRoundedRectangle(borderRadius: radius!),
-    child: DecoratedBox(
-      decoration: ShapeDecoration(
-        shape: radius == null
-            ? const CircleBorder(side: BorderSide(color: Color(0x1FFFFFFF), width: .5))
-            : RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(radius!),
-                side: const BorderSide(color: Color(0x1FFFFFFF), width: .5),
-              ),
-        // Top-lit like the red pill's gradient, opaque so the backdrop doesn't show through.
-        gradient: const LinearGradient(
+    child: CustomPaint(painter: _TintedBody(radius), child: child),
+  );
+}
+
+/// Painted, never blurred: the backdrop is already smooth, so a tint reads the same as frost.
+class _TintedBody extends CustomPainter {
+  const _TintedBody(this.radius);
+  final double? radius;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final shape = radius == null
+        ? RRect.fromRectAndRadius(rect, Radius.circular(size.shortestSide / 2))
+        : RRect.fromRectAndRadius(rect, Radius.circular(radius!));
+    // A puffy wash of whatever is behind: milky at the top, deeper toward the bottom.
+    canvas.drawRRect(
+      shape,
+      Paint()
+        ..shader = const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF3D434A), Color(0xFF2C3136)],
-        ),
-        shadows: const [BoxShadow(color: Color(0x40000000), blurRadius: 14, offset: Offset(0, 4))],
-      ),
-      child: child,
-    ),
-  );
+          colors: [Color(0x47FFFFFF), Color(0x24FFFFFF), Color(0x14FFFFFF)],
+          stops: [0, .45, 1],
+        ).createShader(rect),
+    );
+    // The rim: a bright edge along the top that fades out down the sides.
+    canvas.drawRRect(
+      shape.deflate(.5),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0x8CFFFFFF), Color(0x1FFFFFFF), Color(0x0DFFFFFF)],
+          stops: [0, .5, 1],
+        ).createShader(rect),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_TintedBody oldDelegate) => oldDelegate.radius != radius;
 }
 
 /// A [GlassSpring] as a curve, so implicit animations can move like the glass package.
@@ -80,17 +105,12 @@ class CallAction extends StatelessWidget {
     this.active = false,
     required this.onPressed,
     this.size = 60,
-    this.menu,
   });
   final IconData icon;
   final String label;
   final bool active;
   final VoidCallback? onPressed;
   final double size;
-
-  /// Wraps just the circle (not its label) in a menu, given a builder for the circle with
-  /// the menu's own toggle as its tap.
-  final Widget Function(Widget Function(VoidCallback toggle) circle)? menu;
 
   @override
   Widget build(BuildContext context) {
@@ -151,19 +171,26 @@ class CallAction extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        menu == null ? circle(onPressed) : menu!(circle),
-        const SizedBox(height: 8),
+        circle(onPressed),
+        const SizedBox(height: 6),
         SizedBox(
           height: 40,
           child: AnimatedSwitcher(
             duration: fast,
+            // Labels hang just under the circle, level with End's.
+            layoutBuilder: (current, previous) =>
+                Stack(alignment: Alignment.topCenter, children: [...previous, ?current]),
             child: Text(
               label,
               key: ValueKey(label),
               maxLines: 2,
               textAlign: TextAlign.center,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 12, height: 1.1, color: enabled ? Colors.white : const Color(0x73FFFFFF)),
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.1,
+                color: enabled ? const Color(0xC7FFFFFF) : const Color(0x66FFFFFF),
+              ),
             ),
           ),
         ),

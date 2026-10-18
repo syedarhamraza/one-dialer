@@ -174,7 +174,8 @@ class _CallControlPanelState extends State<CallControlPanel> {
     final canMerge = widget.callCount > 1 && widget.call.canMerge;
     final actions = <({IconData icon, String label, bool active, VoidCallback? tap})>[
       (
-        icon: widget.audio.muted ? Icons.mic_off_rounded : Icons.mic_none_rounded,
+        // ColorOS shows the slashed mic either way; muted fills the circle white.
+        icon: Icons.mic_off_rounded,
         label: 'Mute',
         active: widget.audio.muted,
         tap: () => telecom.setMuted(!widget.audio.muted),
@@ -192,6 +193,7 @@ class _CallControlPanelState extends State<CallControlPanel> {
         (icon: Icons.call_merge_rounded, label: 'Merge', active: false, tap: () => telecom.merge(widget.call.id))
       else
         (icon: Icons.edit_note_rounded, label: 'Note', active: _hasNote, tap: _editNote),
+      (icon: Icons.add_call, label: 'Add call', active: false, tap: telecom.openDialer),
     ];
     final route = widget.audio.route;
     final routeLabel = switch (route) {
@@ -245,12 +247,6 @@ class _CallControlPanelState extends State<CallControlPanel> {
                                     ),
                                   ),
                                 ),
-                              Expanded(
-                                child: Opacity(
-                                  opacity: 1 - _outerOut.transform(p),
-                                  child: _moreMenu(actionSize, showNote: canMerge),
-                                ),
-                              ),
                             ],
                           ),
                         ),
@@ -272,7 +268,7 @@ class _CallControlPanelState extends State<CallControlPanel> {
         Padding(
           padding: EdgeInsets.only(
             // With the keypad open, the gap matches the key rows' (landscape drops the last row's own gap).
-            top: lerpDouble(compact ? 8 : 20, widget.landscape ? 4 : 0, layoutProgress)!,
+            top: lerpDouble(compact ? 2 : 6, widget.landscape ? 4 : 0, layoutProgress)!,
             bottom: widget.landscape
                 ? 8
                 : compact
@@ -330,16 +326,27 @@ class _CallControlPanelState extends State<CallControlPanel> {
                                   curve: Curves.easeInOutCubic,
                                   width: _ending ? actionSize : box.maxWidth,
                                   height: actionSize,
+                                  // A gloss across the top half, as on ColorOS.
+                                  foregroundDecoration: const ShapeDecoration(
+                                    shape: StadiumBorder(),
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [Color(0x40FFFFFF), Color(0x0AFFFFFF), Color(0x00FFFFFF)],
+                                      stops: [0, .45, .55],
+                                    ),
+                                  ),
                                   decoration: ShapeDecoration(
-                                    shape: const StadiumBorder(),
+                                    // ColorOS 17's tomato red, with a glossy rim.
+                                    shape: const StadiumBorder(side: BorderSide(color: Color(0x40FFFFFF), width: .8)),
                                     gradient: const LinearGradient(
                                       begin: Alignment.topCenter,
                                       end: Alignment.bottomCenter,
-                                      colors: [Color(0xFFF26573), Color(0xFFE0465A)],
+                                      colors: [Color(0xFFE5604F), Color(0xFFC93D31)],
                                     ),
                                     shadows: [
                                       BoxShadow(
-                                        color: const Color(0xFFE0465A).withValues(alpha: _ending ? 0 : .38),
+                                        color: const Color(0xFFC93D31).withValues(alpha: _ending ? 0 : .3),
                                         blurRadius: 22,
                                         offset: const Offset(0, 6),
                                       ),
@@ -361,9 +368,9 @@ class _CallControlPanelState extends State<CallControlPanel> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         const ExcludeSemantics(
-                          child: Text('End', style: TextStyle(fontSize: 12, height: 1.1, color: Colors.white)),
+                          child: Text('End', style: TextStyle(fontSize: 12, height: 1.1, color: Color(0xC7FFFFFF))),
                         ),
                       ],
                     ),
@@ -388,38 +395,6 @@ class _CallControlPanelState extends State<CallControlPanel> {
 
   /// The End pill's taps belong to its IconButton; the glass button only animates the press.
   static void _noTap() {}
-
-  /// ColorOS keeps the rarer actions behind More, in the package's glass menu that grows out
-  /// of the More circle; the label stays put underneath.
-  Widget _moreMenu(double size, {required bool showNote}) => CallAction(
-    icon: Icons.more_vert_rounded,
-    label: 'More',
-    size: size,
-    onPressed: () {},
-    menu: (circle) => GlassMenu(
-      menuAlignment: GlassMenuAlignment.bottomRight,
-      menuWidth: 210,
-      triggerBuilder: (context, toggle) => circle(toggle),
-      items: [
-        GlassMenuItem(
-          icon: const Icon(Icons.add_call, color: Colors.white),
-          title: 'Add call',
-          onTap: TelecomBridge.instance.openDialer,
-        ),
-        if (showNote)
-          GlassMenuItem(
-            icon: const Icon(Icons.edit_note_rounded, color: Colors.white),
-            title: 'Note',
-            onTap: _editNote,
-          ),
-        GlassMenuItem(
-          icon: const Icon(Icons.volume_up_rounded, color: Colors.white),
-          title: 'Audio output',
-          onTap: () => chooseCallAudioRoute(context, widget.audio),
-        ),
-      ],
-    ),
-  );
 
   // Room above the top row so its edge reveal reaches full opacity.
   static const double _keypadTop = 16;

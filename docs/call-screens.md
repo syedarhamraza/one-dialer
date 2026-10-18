@@ -10,15 +10,18 @@ blurred per frame: there's no `BackdropFilter` or live blur. A fixed scrim keeps
 white text readable.
 
 The layout follows ColorOS 17. The name, number and status sit at the top on the
-left, with the photo in a circle on the right. The controls are solid: opaque, top-lit dark grey
-(`CallBody`), with the red End pill as the accent. Their motion comes from
-`liquid_glass_widgets` (initialised in `inCallMain` only): each one sits in a
+left, with the photo in a circle on the right. The controls follow ColorOS 17: each is a translucent
+disc that takes on the backdrop's colour, milky at the top and deeper below, with
+a bright edge along the top (`CallBody`, painted, never blurred: the backdrop is already smooth). The End
+pill is a tomato red with a gloss across its top half. Labels are a soft
+grey-white, 6 px under each circle. Mute always shows the slashed mic. Their motion comes from
+`liquid_glass_widgets` (initialised in `inCallMain` only): each sits in a
 `GlassButton.custom` with `GlassButtonStyle.transparent`, which gives the
-package's squeeze, stretch and glow without a glass surface. The More menu is
-the package's `GlassMenu`. Frosted and refractive glass bodies were tried and
-dropped; if they come back, note that premium glass paints nothing once a layer
-holds more than 16 shapes (`LiquidGlassBlendGroup.maxShapesPerLayer`), and
-mid-morph the panel holds 18 controls. The main app's floating
+package's squeeze, stretch and glow without a glass surface. Frosted and
+refractive glass bodies were tried and dropped; if they come back, note that
+premium glass paints nothing once a layer holds more than 16 shapes
+(`LiquidGlassBlendGroup.maxShapesPerLayer`), and mid-morph the panel holds 18
+controls. The main app's floating
 chrome stays OneSpend's, without glass.
 
 `InCallScreen` subscribes to the existing Telecom snapshot stream. Presentation
@@ -84,11 +87,9 @@ The header sits slightly above the centre of the space the controls leave.
   - Turning an action on grows a white fill out from the icon on the bouncy glass spring (`GlassSpringCurve`). The icon colour animates and the icon crossfades.
   - Unavailable actions (Hold while dialing) show as an outline, not a dim fill.
   - Press feel from the package's `GlassButton.custom`: squeeze, stretch toward the finger and glow. It reads raw pointer events only, so taps, tooltips and semantics stay on the inner `IconButton`.
-- **Row**: Mute, Hold, Note (or Merge), More. More opens the package's `GlassMenu`, which grows
-  out of the More circle (its label stays below),
-  with Add call, Audio output, and Note when Merge has taken its slot.
+- **Row**: Mute, Hold, Note (or Merge), Add call.
 - **Third slot**: Note on a single call. It opens a floating sheet over the call that saves as you type, so the note survives the other side hanging up. Notes are stored in `DialerPrefs` as `call_note_<number>_<millis>`, and Recents call details show each note under the logged call it was taken during. The slot becomes Merge once two calls can merge.
-- **End call**: a solid red gradient pill with a soft glow. Its press comes from a `GlassButton.custom` in `GlassButtonStyle.transparent` (the package's glow and stretch, no glass body). Once tapped it draws in to a circle and dims. If Telecom hasn't ended the call within 3 s, it becomes tappable again.
+- **End call**: a tomato-red gradient pill with a glossy rim and a soft glow. Its press comes from a `GlassButton.custom` in `GlassButtonStyle.transparent` (the package's glow and stretch, no glass body). Once tapped it draws in to a circle and dims. If Telecom hasn't ended the call within 3 s, it becomes tappable again.
 - **Entrance**: when the connected or dialing controls appear, the action row and the bottom row fade and rise 16 px, staggered (520 ms total). Reduced motion skips it.
 - **Header**:
   - A thin ring around the avatar.

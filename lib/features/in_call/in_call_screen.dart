@@ -211,7 +211,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
       weight: 1,
     ),
     TweenSequenceItem(
-      tween: ColorTween(begin: const Color(0xFFF5A04A), end: const Color(0xFFE0465A)),
+      tween: ColorTween(begin: const Color(0xFFF5A04A), end: const Color(0xFFD74B3E)),
       weight: 1,
     ),
   ]);
