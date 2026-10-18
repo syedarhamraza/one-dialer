@@ -70,8 +70,6 @@ class _CallControlPanelState extends State<CallControlPanel> {
     });
   }
 
-  /// A soft settle for keys: a little overshoot, much gentler than easeOutBack.
-  static const _settle = Cubic(.34, 1.3, .64, 1);
   static const _keys = [
     ('1', ''),
     ('2', 'ABC'),
@@ -228,10 +226,8 @@ class _CallControlPanelState extends State<CallControlPanel> {
                       excluding: p > 0,
                       child: rise(
                         const Interval(0, .62, curve: Curves.easeOutCubic),
-                        Transform.scale(
+                        KeyedSubtree(
                           key: const ValueKey('receding-call-actions'),
-                          scale: 1 - .10 * const Interval(0, .45, curve: Curves.easeOut).transform(p),
-                          alignment: Alignment.topCenter,
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -320,7 +316,8 @@ class _CallControlPanelState extends State<CallControlPanel> {
                                 child: AnimatedOpacity(
                                   key: widget.endKey,
                                   opacity: widget.hideEnd ? 0 : (_ending ? .55 : 1),
-                                  duration: widget.hideEnd ? Duration.zero : const Duration(milliseconds: 220),
+                                  // Only ending dims gradually; the pill appears at once when the Answer ball lands on it.
+                                  duration: _ending ? const Duration(milliseconds: 220) : Duration.zero,
                                   child: AnimatedContainer(
                                     // While ending, the pill draws in to a circle.
                                     duration: MediaQuery.disableAnimationsOf(context)
@@ -435,12 +432,11 @@ class _CallControlPanelState extends State<CallControlPanel> {
 
   Widget _keypadKey(int index, double p, double size, double stride, double upperHeight) {
     final (digit, letters) = _keys[index];
-    // The panel opens from the bottom, so rows cascade bottom-up with it; motion is paint-only.
+    // Keys fade in as the panel opens from the bottom, rows a beat apart bottom-up; paint-only.
     final row = index ~/ 3;
-    final q = Interval((3 - row) * .08, (3 - row) * .08 + .76).transform(p);
-    final spring = _settle.transform(q);
+    final q = Interval(.2 + (3 - row) * .06, .8 + (3 - row) * .06, curve: Curves.easeOut).transform(p);
     final fullHeight = _keypadTop + stride * 4 - (widget.landscape ? 4 : 0);
-    final top = upperHeight - fullHeight + _keypadTop + row * stride + (1 - spring) * 24;
+    final top = upperHeight - fullHeight + _keypadTop + row * stride;
     // Reveal whole circles as space opens, avoiding a sliced circle at either edge.
     final edgeReveal = (top / 16).clamp(0.0, 1.0) * ((upperHeight - top - size) / 4).clamp(0.0, 1.0);
     final column = widget.width / 3;
@@ -451,51 +447,45 @@ class _CallControlPanelState extends State<CallControlPanel> {
       width: column - 12,
       height: size,
       child: Opacity(
-        opacity: const Interval(0, .6, curve: Curves.easeOut).transform(q) * edgeReveal,
-        child: Transform.scale(
-          key: ValueKey('keypad-spring-$digit'),
-          scale: .85 + .15 * spring,
-          child: ExcludeSemantics(
-            excluding: p < 1,
-            child: Semantics(
-              button: true,
-              label: digit,
-              excludeSemantics: true,
-              onTap: () {
-                _startTone(digit);
-                _releaseTone();
-              },
+        key: ValueKey('keypad-fade-$digit'),
+        opacity: q * edgeReveal,
+        child: ExcludeSemantics(
+          excluding: p < 1,
+          child: Semantics(
+            button: true,
+            label: digit,
+            excludeSemantics: true,
+            onTap: () {
+              _startTone(digit);
+              _releaseTone();
+            },
+            child: CallGlass(
+              radius: size / 2,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTapDown: (_) => _startTone(digit),
                 onTapUp: (_) => _releaseTone(),
                 onTapCancel: _releaseTone,
-                child: AnimatedScale(
-                  duration: Duration(milliseconds: _tone == digit ? 40 : 220),
-                  scale: _tone == digit ? .94 : 1,
-                  child: CallGlass(
-                    radius: size / 2,
-                    pressed: _tone == digit,
-                    child: Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(digit, style: const TextStyle(fontSize: 30, height: 1.05, color: Colors.white)),
-                            Text(
-                              letters.isEmpty ? ' ' : letters,
-                              style: const TextStyle(
-                                fontSize: 10,
-                                height: 1.2,
-                                letterSpacing: 1.5,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white60,
-                              ),
+                child: SizedBox.expand(
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(digit, style: const TextStyle(fontSize: 30, height: 1.05, color: Colors.white)),
+                          Text(
+                            letters.isEmpty ? ' ' : letters,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              height: 1.2,
+                              letterSpacing: 1.5,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white60,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

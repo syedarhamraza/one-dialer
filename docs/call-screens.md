@@ -23,7 +23,7 @@ is split across four files:
 
 - `call_screen_widgets.dart`: the backdrop, caller header, status line, ringing
   halo and held-call chip.
-- `call_controls.dart`: action circles with press scale, the audio sheet, and
+- `call_controls.dart`: action circles on the package's `GlassButton` press feel, the audio sheet, and
   `PressScale`.
 - `call_control_panel.dart`: the control/keypad morph, DTMF, and the fixed
   bottom row.
@@ -51,13 +51,15 @@ the other button and the pill fade out as it arms.
 
 - Release at least `threshold` (96 px) away, moving upward, to act. Downward drags never arm.
 - **Answer → End**: the released Answer ball stays where it was let go until
-  Telecom connects. Then the session flies it into the End pill (560 ms),
+  Telecom connects. Then the session flies it into the End pill on `GlassSpring.snappy` (a slight overshoot),
   stretching from a circle to a stadium. Its colour goes from green through
   orange to red, and the handset tips over into the hang-up glyph. The real pill
   stays hidden until it lands. If the call never connects, the ball is dropped
   after 4 s. Answering from the notification, or with reduced motion on, skips
   the flight.
-- Anything shorter springs back (`SpringSimulation`).
+- While dragged, a ball stretches like jelly: it elongates along the drag and squashes
+  a third as much across it (up to 18%).
+- Anything shorter springs back on `GlassSpring.bouncy`.
 - Taps never answer or decline.
 - The button grows and glows as it arms.
 - A haptic fires when you cross a threshold.
@@ -70,14 +72,15 @@ the other button and the pill fade out as it arms.
 
 ## Connected and keypad
 
-Controls switch between incoming, connected and ended with a 300 ms fade-and-rise.
+Controls crossfade between incoming, connected and ended (350 ms). The header fades in
+(450 ms) when the call screen opens.
 The header sits slightly above the centre of the space the controls leave.
 
 - **Action circles** (`CallAction`):
   - A painted top-lit gradient with a hairline highlight (`callControlBody`, shared with keypad keys). Nothing is blurred.
-  - Turning an action on grows a white fill out from the icon. The icon colour animates and the icon crossfades.
+  - Turning an action on grows a white fill out from the icon on the bouncy glass spring (`GlassSpringCurve`). The icon colour animates and the icon crossfades.
   - Unavailable actions (Hold while dialing) show as an outline, not a dim fill.
-  - Press scale.
+  - Press feel from the package's `GlassButton.custom`: squeeze, stretch toward the finger and glow. It reads raw pointer events only, so taps, tooltips and semantics stay on the inner `IconButton`.
 - **Row**: Mute, Hold, Note (or Merge), More. More opens the package's `GlassMenu`, which grows
   out of the More circle (its label stays below),
   with Add call, Audio output, and Note when Merge has taken its slot.
@@ -91,13 +94,12 @@ The header sits slightly above the centre of the space the controls leave.
   - While dialing, the avatar ripples slowly and "Calling" fills in its dots.
 - **Status chip**: "Muted" shows under the timer. An audio route change shows a 1.5 s chip ("Speaker on", "Bluetooth"). Hold dims the header and pulses "On hold".
 
-The keypad morph runs on a critically damped spring (`SpringSimulation` with a
-1% snap tolerance). Reversing mid-flight keeps its velocity.
+The keypad morph runs on the glass package's smooth spring (`GlassSpring.smooth`,
+no overshoot, 1% snap tolerance). Reversing mid-flight keeps its velocity.
 
-- **Action row**: the four actions fade out middle pair first, with a gentle
-  10% scale.
-- **Keys**: glass stadiums, three across (ColorOS 17). Rows cascade bottom-up with the opening panel, rising 24 px from
-  85% scale with a soft settle. Pressed keys brighten and shrink to 94%.
+- **Action row**: the four actions fade out in place, middle pair first.
+- **Keys**: glass stadiums, three across (ColorOS 17). Keys fade in where they sit, rows a beat apart
+  bottom-up with the opening panel. Presses get the same `GlassButton` squeeze and glow.
 - **Header**: the avatar and badges collapse away. Typed digits replace the
   caller name, and the name becomes the subtitle.
 - **Spacing**: with the keypad open, the gap above the bottom row equals the gap between key rows.

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
@@ -286,15 +287,17 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
     }
     // The fling's speed along the drag, as a rate of change of the 0-1 hold.
     final along = (velocity.dx * _drag.dx + velocity.dy * _drag.dy) / (_drag.distance * _drag.distance);
-    _hold.animateWith(
-      SpringSimulation(
-        SpringDescription.withDampingRatio(mass: 1, stiffness: 520, ratio: .62),
-        _hold.value,
-        0,
-        along,
-        snapToEnd: true,
-      ),
-    );
+    _hold.animateWith(SpringSimulation(GlassSpring.bouncy(), _hold.value, 0, along, snapToEnd: true));
+  }
+
+  /// The glass package's anchor stretch on a free ball: it elongates along the drag and
+  /// squashes across it (a third as much), so it reads as jelly rather than a stiff disc.
+  Matrix4 _jelly(Offset offset, double scale) {
+    final stretch = (offset.distance / _threshold).clamp(0.0, 1.0) * .18;
+    final angle = offset.direction;
+    return Matrix4.rotationZ(angle)
+      ..scaleByDouble(scale * (1 + stretch), scale * (1 - stretch * .3), 1, 1)
+      ..rotateZ(-angle);
   }
 
   @override
@@ -357,8 +360,9 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                       top: travel,
                       child: Transform.translate(
                         offset: offset,
-                        child: Transform.scale(
-                          scale: 1 + .1 * armed,
+                        child: Transform(
+                          alignment: Alignment.center,
+                          transform: _jelly(offset, 1 + .1 * armed),
                           child: Opacity(
                             opacity: widget.hidden ? 0 : 1,
                             child: KeyedSubtree(

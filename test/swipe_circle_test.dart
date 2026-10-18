@@ -27,7 +27,8 @@ void main() {
 
   Finder button() => find.byKey(const ValueKey('swipe-Answer'));
   Future<void> settle(WidgetTester tester) async {
-    for (var i = 0; i < 10; i++) {
+    // The glass package's bouncy spring takes a little over a second to come to rest.
+    for (var i = 0; i < 15; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
   }

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../../core/prefs/dialer_prefs.dart';
@@ -19,25 +20,41 @@ class CallGlassLayer extends StatelessWidget {
   Widget build(BuildContext context) => AdaptiveLiquidGlassLayer(child: child);
 }
 
-/// A glass body inside [CallGlassLayer]: a circle, or a stadium when [radius] is given.
-/// [pressed] lays a white wash over it, like a key under the finger.
+/// A glass body inside [CallGlassLayer] with the package's press feel: it squeezes, stretches
+/// toward the finger and glows. Taps still belong to [child] (its IconButton or key detector);
+/// the glass button only reads raw pointer events for the effect.
 class CallGlass extends StatelessWidget {
-  const CallGlass({super.key, this.radius, this.pressed = false, this.child = const SizedBox.expand()});
+  const CallGlass({super.key, this.radius, required this.child});
   final double? radius;
-  final bool pressed;
   final Widget child;
 
+  static void _taps() {}
+
   @override
-  Widget build(BuildContext context) => AdaptiveGlass.grouped(
+  Widget build(BuildContext context) => GlassButton.custom(
+    onTap: _taps,
+    excludeFromSemantics: true,
+    canRequestFocus: false,
     shape: radius == null ? const LiquidOval() : LiquidRoundedRectangle(borderRadius: radius!),
-    isInteractive: true,
-    child: AnimatedContainer(
-      duration: Duration(milliseconds: pressed ? 40 : 220),
-      color: pressed ? const Color(0x47FFFFFF) : const Color(0x00FFFFFF),
-      child: child,
-    ),
+    child: child,
   );
 }
+
+/// A [GlassSpring] as a curve, so implicit animations can move like the glass package.
+class GlassSpringCurve extends Curve {
+  GlassSpringCurve(SpringDescription spring, Duration duration)
+    : _sim = SpringSimulation(spring, 0, 1, 0),
+      _seconds = duration.inMicroseconds / Duration.microsecondsPerSecond;
+  final SpringSimulation _sim;
+  final double _seconds;
+
+  @override
+  double transformInternal(double t) => _sim.x(t * _seconds);
+}
+
+/// The bouncy glass spring for on/off state changes, and how long it takes to settle.
+const springSettle = Duration(milliseconds: 700);
+final bouncySpring = GlassSpringCurve(GlassSpring.bouncy(), springSettle);
 
 /// An unavailable action: just an outline, so it reads as "not yet" rather than broken.
 const _outlined = BoxDecoration(
@@ -105,18 +122,17 @@ class CallAction extends StatelessWidget {
     final fast = still ? Duration.zero : const Duration(milliseconds: 180);
     final enabled = onPressed != null;
     final foreground = active ? const Color(0xFF111418) : (enabled ? Colors.white : const Color(0x73FFFFFF));
-    Widget circle(VoidCallback? onPressed) => PressScale(
-      enabled: enabled,
-      child: SizedBox.square(
+    Widget circle(VoidCallback? onPressed) {
+      final body = SizedBox.square(
         dimension: size,
         child: Stack(
           fit: StackFit.expand,
           children: [
-            enabled ? const CallGlass() : const DecoratedBox(decoration: _outlined),
+            if (!enabled) const DecoratedBox(decoration: _outlined),
             AnimatedScale(
               scale: active ? 1 : 0,
-              duration: still ? Duration.zero : const Duration(milliseconds: 220),
-              curve: active ? Curves.easeOutBack : Curves.easeInCubic,
+              duration: still ? Duration.zero : (active ? springSettle : const Duration(milliseconds: 220)),
+              curve: active ? bouncySpring : Curves.easeInCubic,
               child: const DecoratedBox(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
@@ -152,8 +168,10 @@ class CallAction extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
+      );
+      return enabled ? CallGlass(child: body) : body;
+    }
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [

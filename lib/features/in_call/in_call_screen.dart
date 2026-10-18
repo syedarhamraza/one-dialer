@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../../core/contacts/contacts_repository.dart';
 import '../../core/telecom/call_info.dart';
@@ -126,7 +127,8 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     }
   }
 
-  static final _spring = SpringDescription.withDampingRatio(mass: 1, stiffness: 300, ratio: 1);
+  /// The glass package's smooth spring: no overshoot, so the panel never over-opens.
+  static final _spring = GlassSpring.smooth();
 
   /// Snaps the last 1% so the keypad accepts touches quickly instead of waiting out the tail.
   static const _settled = Tolerance(distance: .01, velocity: .1);
@@ -140,7 +142,9 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   /// into the End pill: green turning red, circle stretching to a stadium, as on ColorOS 17.
   Rect? _ball;
   Timer? _ballTimeout;
-  late final AnimationController _fly = AnimationController(vsync: this, duration: const Duration(milliseconds: 560))
+
+  /// Runs the glass package's snappy spring, so the ball lands with a slight overshoot.
+  late final AnimationController _fly = AnimationController.unbounded(vsync: this)
     ..addStatusListener((status) {
       if (status == AnimationStatus.completed) _land();
     });
@@ -164,7 +168,9 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   void _launchBall() {
     if (_ball == null || _fly.isAnimating) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _ball != null && !_fly.isAnimating) _fly.forward(from: 0);
+      if (mounted && _ball != null && !_fly.isAnimating) {
+        _fly.animateWith(SpringSimulation(GlassSpring.snappy(), 0, 1, 0));
+      }
     });
   }
 
@@ -181,16 +187,17 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
         ? null
         : _localRect(MatrixUtils.transformRect(endBox.getTransformTo(null), Offset.zero & endBox.size));
     if (from == null) return const SizedBox.shrink();
-    final t = to == null ? 0.0 : Curves.easeInOutCubic.transform(_fly.value);
+    final t = to == null ? 0.0 : _fly.value;
+    final settled = t.clamp(0.0, 1.0);
     final rect = to == null ? from : Rect.lerp(from, to, t)!;
     return Positioned.fromRect(
       rect: rect,
       child: IgnorePointer(
         child: DecoratedBox(
-          decoration: ShapeDecoration(shape: const StadiumBorder(), color: _ballColor.transform(t)),
+          decoration: ShapeDecoration(shape: const StadiumBorder(), color: _ballColor.transform(settled)),
           // The handset tips over into the hang-up glyph as it lands.
           child: Transform.rotate(
-            angle: 2.36 * t,
+            angle: 2.36 * settled,
             child: Icon(Icons.call_rounded, color: Colors.white, size: rect.shortestSide * .42),
           ),
         ),
@@ -265,7 +272,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     final ringing = call.state == CallState.ringing;
     final ended = call.state == CallState.disconnected || call.state == CallState.disconnecting;
     final held = widget.snapshot.calls.where((c) => c.id != call.id && c.state == CallState.holding).firstOrNull;
-    final switchDuration = MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 300);
+    final switchDuration = MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 350);
     return PopScope(
       canPop: !_keypadOpen,
       onPopInvokedWithResult: (didPop, _) {
@@ -316,31 +323,28 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
                     switchOutCurve: Curves.easeInCubic,
                     layoutBuilder: (current, previous) =>
                         Stack(alignment: Alignment.bottomCenter, children: [...previous, ?current]),
-                    transitionBuilder: (child, animation) => FadeTransition(
-                      opacity: animation,
-                      child: SlideTransition(
-                        position: Tween(begin: const Offset(0, .08), end: Offset.zero).animate(animation),
-                        child: child,
-                      ),
-                    ),
+                    // Incoming, connected and ended crossfade in place.
+                    transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
                     child: controls,
                   );
-                  final header = Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CallHeader(
-                        call: call,
-                        sims: widget.sims,
-                        compact: compact,
-                        keypadProgress: progress,
-                        digits: _digits,
-                        chip: ringing || ended ? null : _routeToast ?? (widget.snapshot.audio.muted ? 'Muted' : null),
-                      ),
-                      if (held != null && !ringing && !ended) ...[
-                        const SizedBox(height: 16),
-                        HeldCallChip(call: held, onSwap: () => TelecomBridge.instance.unhold(held.id)),
+                  final header = _FadeIn(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CallHeader(
+                          call: call,
+                          sims: widget.sims,
+                          compact: compact,
+                          keypadProgress: progress,
+                          digits: _digits,
+                          chip: ringing || ended ? null : _routeToast ?? (widget.snapshot.audio.muted ? 'Muted' : null),
+                        ),
+                        if (held != null && !ringing && !ended) ...[
+                          const SizedBox(height: 16),
+                          HeldCallChip(call: held, onSwap: () => TelecomBridge.instance.unhold(held.id)),
+                        ],
                       ],
-                    ],
+                    ),
                   );
                   if (landscape) {
                     return Padding(
@@ -392,4 +396,19 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
       ),
     );
   }
+}
+
+/// Fades its child in once, when the call screen first shows it.
+class _FadeIn extends StatelessWidget {
+  const _FadeIn({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
+    tween: Tween(begin: 0, end: 1),
+    duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 450),
+    curve: Curves.easeOut,
+    child: child,
+    builder: (context, t, child) => Opacity(opacity: t, child: child),
+  );
 }

@@ -432,20 +432,18 @@ void main() {
     await emit(tester, [call('active')]);
     final panel = find.byKey(const ValueKey('call-upper-panel'));
     final actions = find.byKey(const ValueKey('receding-call-actions'));
-    expect(tester.widget<Transform>(actions).transform.storage[0], 1);
+    double muteFade() =>
+        tester.widget<Opacity>(find.ancestor(of: find.byTooltip('Mute'), matching: find.byType(Opacity)).first).opacity;
+    expect(muteFade(), 1);
     final height = tester.getSize(panel).height;
     final end = tester.getRect(find.byTooltip('End call'));
     final speaker = tester.getRect(find.byTooltip('Speaker'));
     await tester.tap(find.byTooltip('Keypad'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 210));
-    expect(tester.widget<Transform>(actions).transform.storage[0], lessThan(1));
-    final keySpring = find.byKey(const ValueKey('keypad-spring-8'));
-    double fade(String digit) => tester
-        .widget<Opacity>(
-          find.ancestor(of: find.byKey(ValueKey('keypad-spring-$digit')), matching: find.byType(Opacity)).first,
-        )
-        .opacity;
+    // Actions fade out in place; keys fade in.
+    expect(muteFade(), lessThan(1));
+    double fade(String digit) => tester.widget<Opacity>(find.byKey(ValueKey('keypad-fade-$digit'))).opacity;
     expect(fade('2'), inExclusiveRange(0, 1)); // The top row arrives last.
     final middle = tester.getTopLeft(find.byKey(const ValueKey('morph-key-1')));
     expect(tester.getSize(panel).height, greaterThan(height));
@@ -462,9 +460,9 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
     final settled = tester.getTopLeft(find.byKey(const ValueKey('morph-key-1')));
-    expect(settled.dy - middle.dy, inExclusiveRange(0, 8));
+    expect(settled.dx, middle.dx);
     expect(actions, findsNothing);
-    expect(tester.widget<Transform>(keySpring).transform.storage[0], 1);
+    expect(fade('8'), 1);
     // Once tapped, End call draws in to a circle around the same centre.
     expect(tester.getCenter(find.byTooltip('End call')), endCenter);
     expect(endCenter, end.center);
@@ -496,7 +494,7 @@ void main() {
     expect(tester.getSize(panel).height, reversing);
     await tester.pumpAndSettle();
     expect(find.bySemanticsLabel('5'), findsOneWidget);
-    expect(tester.widget<Transform>(find.byKey(const ValueKey('keypad-spring-5'))).transform.storage[0], 1);
+    expect(tester.widget<Opacity>(find.byKey(const ValueKey('keypad-fade-5'))).opacity, 1);
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(tester.getSize(panel).height, start);
