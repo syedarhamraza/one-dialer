@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../theme/one_ui_theme.dart';
+import 'frosted_body.dart';
 
 /// The one floating "glass" surface used by every piece of floating chrome: the nav
 /// bar, header buttons, search capsules, Cancel | Save pills, action bars, menus,
@@ -65,25 +66,31 @@ class OneUIGlassSurface extends StatelessWidget {
         final t = progress.clamp(0.0, 1.0);
         final isModal = elevation == OneUIGlassElevation.modal;
 
-        final body = AnimatedContainer(
+        Widget body = AnimatedContainer(
           duration: duration,
           curve: Curves.easeOutCubic,
           width: width,
           height: height,
           padding: padding,
           alignment: alignment,
-          decoration: t <= 0.05
-              ? null
-              : BoxDecoration(
-                  color: fx.floating3dEffect ? null : _fade(isModal ? fx.modalColor : fx.floatingColor, t),
-                  gradient: (isModal ? fx.modalGradient : fx.floatingGradient)?.scale(t),
-                  borderRadius: borderRadius,
-                ),
           child: child,
         );
 
         // Fully faded out: no blur, clip or shadow work at all.
         if (t <= 0.05) return body;
+
+        // ColorOS: pills and bars get the call screen's frosted body between the fill and the
+        // content; sheets and modals stay flat.
+        // shortcut: the frost doesn't follow [progress]; every caller passes 1 today.
+        if (!isModal) body = FrostedBody(radius: borderRadius.topLeft.x, child: body);
+        body = DecoratedBox(
+          decoration: BoxDecoration(
+            color: fx.floating3dEffect ? null : _fade(isModal ? fx.modalColor : fx.floatingColor, t),
+            gradient: (isModal ? fx.modalGradient : fx.floatingGradient)?.scale(t),
+            borderRadius: borderRadius,
+          ),
+          child: body,
+        );
 
         final rim = fx.floatingRimGradient;
         final shadows = [

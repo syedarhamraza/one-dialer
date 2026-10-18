@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/one_ui_theme.dart';
+import 'frosted_body.dart';
 import 'one_ui_glass_surface.dart';
 import 'one_ui_morph_switcher.dart';
 import '../core/haptics/haptics.dart';
@@ -81,32 +82,36 @@ class OneUIFloatingActionBar extends StatelessWidget {
                   }
                 : null,
             borderRadius: BorderRadius.circular(26),
-            splashColor: item.isEnabled ? Colors.white.withValues(alpha: 0.08) : Colors.transparent,
-            highlightColor: item.isEnabled ? Colors.white.withValues(alpha: 0.04) : Colors.transparent,
-            child: SizedBox(
-              width: 68,
-              // Cross-fades when an action changes in place (e.g. Renew → Undo).
-              child: OneUIMorphSwitcher(
-                animateSize: false,
-                child: Column(
-                  key: ValueKey(item.label),
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(item.icon, size: 21, color: itemColor),
-                    const SizedBox(height: 3),
-                    Text(
-                      item.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.2,
-                        color: itemColor,
+            // The glass press replaces the ripple.
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            child: GlassPress(
+              radius: 26,
+              child: SizedBox(
+                width: 68,
+                // Cross-fades when an action changes in place (e.g. Renew → Undo).
+                child: OneUIMorphSwitcher(
+                  animateSize: false,
+                  child: Column(
+                    key: ValueKey(item.label),
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(item.icon, size: 21, color: itemColor),
+                      const SizedBox(height: 3),
+                      Text(
+                        item.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -0.2,
+                          color: itemColor,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../theme/one_ui_theme.dart';
+import 'frosted_body.dart';
 import 'one_ui_glass_surface.dart';
 import 'one_ui_morph_switcher.dart';
 import 'one_ui_floating_menu.dart';
@@ -38,11 +39,13 @@ class OneUIHeaderAction extends StatelessWidget {
         key: actionKey,
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
-        child: Container(
-          width: width ?? 36,
-          height: height ?? 36,
-          alignment: Alignment.center,
-          child: Icon(icon, size: size ?? 21, color: OneUITheme.textPrimary),
+        child: GlassPress(
+          child: Container(
+            width: width ?? 36,
+            height: height ?? 36,
+            alignment: Alignment.center,
+            child: Icon(icon, size: size ?? 21, color: OneUITheme.textPrimary),
+          ),
         ),
       ),
     );
@@ -238,10 +241,12 @@ class _OneUIHeaderContentState extends State<_OneUIHeaderContent> {
         child: GestureDetector(
           onTap: widget.onBack ?? () => Navigator.maybePop(context),
           behavior: HitTestBehavior.opaque,
-          child: OneUIGlassSurface.circle(
-            size: 44,
-            progress: pillProgress,
-            child: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: OneUITheme.textPrimary),
+          child: GlassPress(
+            child: OneUIGlassSurface.circle(
+              size: 44,
+              progress: pillProgress,
+              child: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: OneUITheme.textPrimary),
+            ),
           ),
         ),
       ),
@@ -437,7 +442,8 @@ class _OneUIHeaderContentState extends State<_OneUIHeaderContent> {
 
     final double bigHeaderOpacity;
     final double smallTitleOpacity;
-    final double pillProgress;
+    // ColorOS: the back button and actions pill are always backed, not grown in on scroll.
+    const double pillProgress = 1.0;
 
     // Keep top space identical to before (~75dp below status bar), while bottom space is reduced
     const double bigHeaderHeight = 75.0;
@@ -461,25 +467,12 @@ class _OneUIHeaderContentState extends State<_OneUIHeaderContent> {
         // Hides instantly on deep scroll!
         smallTitleOpacity = 0.0;
       }
-
-      // 3. Floating 3D Pill Progress: appears smoothly with scroll as user scrolls deeper!
-      if (currentOffset <= 190.0) {
-        pillProgress = 0.0;
-      } else {
-        pillProgress = ((currentOffset - 190.0) / 60.0).clamp(0.0, 1.0);
-      }
     } else {
       // Sub setting pages: no big header, compact top bar from the start
       bigHeaderOpacity = 0.0;
 
       // Small title: visible at top (0 to 50px) -> hides INSTANTLY on deep scroll (> 50px)!
-      if (currentOffset <= 50.0) {
-        smallTitleOpacity = 1.0;
-        pillProgress = 0.0;
-      } else {
-        smallTitleOpacity = 0.0;
-        pillProgress = ((currentOffset - 50.0) / 50.0).clamp(0.0, 1.0);
-      }
+      smallTitleOpacity = currentOffset <= 50.0 ? 1.0 : 0.0;
     }
 
     return Stack(

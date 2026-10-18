@@ -38,7 +38,8 @@ refractive glass bodies were tried and dropped; if they come back, note that
 premium glass paints nothing once a layer holds more than 16 shapes
 (`LiquidGlassBlendGroup.maxShapesPerLayer`), and mid-morph the panel holds 18
 controls. The main app's floating
-chrome stays OneSpend's, without glass.
+chrome reuses the frosted body (`FrostedBody`) and press (`GlassPress`) from
+`lib/widgets/frosted_body.dart`, still without glass surfaces.
 
 `InCallScreen` subscribes to the existing Telecom snapshot stream. Presentation
 is split across four files:
