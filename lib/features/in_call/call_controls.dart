@@ -11,7 +11,7 @@ import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/one_ui_floating_modal.dart';
 
 /// A ColorOS 17 call-control body: frosted (the backdrop blurred behind it), milky, glowing up
-/// from the bottom edge. Needs a [BackdropGroup] above it. The glass package supplies the press: it squeezes, stretches toward
+/// from the bottom, with only a faint highlight along the top edge. Needs a [BackdropGroup] above it. The glass package supplies the press: it squeezes, stretches toward
 /// the finger and glows, with no glass surface (`GlassButtonStyle.transparent`).
 /// Taps still belong to [child] (its IconButton or key detector); the glass button only reads
 /// raw pointer events for the effect. A circle, or a stadium when [radius] is given.
@@ -41,7 +41,7 @@ class CallBody extends StatelessWidget {
   );
 }
 
-/// The milky wash, bottom glow and rim drawn over each control's frosted blur.
+/// The milky wash, bottom glow and top highlight drawn over each control's frosted blur.
 class _TintedBody extends CustomPainter {
   const _TintedBody(this.radius);
   final double? radius;
@@ -52,14 +52,14 @@ class _TintedBody extends CustomPainter {
     final shape = radius == null
         ? RRect.fromRectAndRadius(rect, Radius.circular(size.shortestSide / 2))
         : RRect.fromRectAndRadius(rect, Radius.circular(radius!));
-    // A milky wash over the blur, lifting toward the bottom.
+    // An even milky wash over the blur, a little lighter toward the bottom.
     canvas.drawRRect(
       shape,
       Paint()
         ..shader = const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0x26FFFFFF), Color(0x1AFFFFFF), Color(0x33FFFFFF)],
+          colors: [Color(0x33FFFFFF), Color(0x2BFFFFFF), Color(0x3DFFFFFF)],
           stops: [0, .5, 1],
         ).createShader(rect),
     );
@@ -70,10 +70,10 @@ class _TintedBody extends CustomPainter {
         ..shader = RadialGradient(
           center: const Alignment(0, 1.5),
           radius: size.width > size.height ? .9 : 1.1,
-          colors: const [Color(0x4DFFFFFF), Color(0x00FFFFFF)],
+          colors: const [Color(0x2EFFFFFF), Color(0x00FFFFFF)],
         ).createShader(rect),
     );
-    // The rim: brightest along the bottom, softer along the top.
+    // No 3D rim: just a faint highlight along the top edge, as on ColorOS.
     canvas.drawRRect(
       shape.deflate(.5),
       Paint()
@@ -82,8 +82,8 @@ class _TintedBody extends CustomPainter {
         ..shader = const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0x59FFFFFF), Color(0x14FFFFFF), Color(0x8CFFFFFF)],
-          stops: [0, .5, 1],
+          colors: [Color(0x40FFFFFF), Color(0x00FFFFFF)],
+          stops: [0, .3],
         ).createShader(rect),
     );
   }

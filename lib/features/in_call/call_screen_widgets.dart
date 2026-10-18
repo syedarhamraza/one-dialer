@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -11,12 +12,15 @@ import '../../widgets/letter_avatar.dart';
 /// with a dark band at the bottom behind the controls, else an aurora tinted from their avatar
 /// colour. Nothing is blurred or animated per frame.
 class CallBackdrop extends StatelessWidget {
-  const CallBackdrop({super.key, required this.child, this.photo, this.contactId, this.seed});
+  const CallBackdrop({super.key, required this.child, this.photo, this.contactId, this.seed, this.blur});
   final Widget child;
 
   /// The contact's thumbnail, shown at once while [contactId]'s full-size photo loads.
   final Uint8List? photo;
   final String? contactId;
+
+  /// How far the photo is blurred, 0 to 1: ColorOS blurs the poster while the keypad is open.
+  final ValueListenable<double>? blur;
 
   /// The caller's name; null keeps the neutral navy for private, conference and unknown calls.
   final String? seed;
@@ -30,34 +34,46 @@ class CallBackdrop extends StatelessWidget {
         layoutBuilder: (current, previous) => Stack(fit: StackFit.expand, children: [...previous, ?current]),
         child: KeyedSubtree(
           key: ValueKey<Object?>(photo ?? seed),
-          child: photo != null ? _PosterPhoto(thumbnail: photo!, contactId: contactId) : _tint(seed),
+          child: photo != null ? _PosterPhoto(thumbnail: photo!, contactId: contactId, blur: blur) : _tint(seed),
         ),
       ),
       // A photo keeps its face clear, with a shade at the top for the name and a dark band at the
-      // bottom behind the controls; the aurora only needs a light touch.
-      DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: photo != null
-              ? const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  stops: [0, .28, .5, .72, 1],
-                  colors: [
-                    Color(0x73000000),
-                    Color(0x0D000000),
-                    Color(0x0D000000),
-                    Color(0xC7000000),
-                    Color(0xF2000000),
-                  ],
-                )
-              : const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  stops: [0, .4, 1],
-                  colors: [Color(0x40000000), Color(0x14000000), Color(0x8C000000)],
-                ),
+      // bottom behind the controls; behind the keypad it eases to an even grey, as on ColorOS. The
+      // aurora only needs a light touch.
+      if (photo != null)
+        ValueListenableBuilder(
+          valueListenable: blur ?? const AlwaysStoppedAnimation(0.0),
+          builder: (context, t, _) => DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: const [0, .28, .5, .72, 1],
+                colors: [
+                  for (final (sharp, blurred) in const [
+                    (Color(0x73000000), Color(0x80000000)),
+                    (Color(0x0D000000), Color(0x73000000)),
+                    (Color(0x0D000000), Color(0x80000000)),
+                    (Color(0xC7000000), Color(0x8C000000)),
+                    (Color(0xF2000000), Color(0xA6000000)),
+                  ])
+                    Color.lerp(sharp, blurred, t)!,
+                ],
+              ),
+            ),
+          ),
+        )
+      else
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              stops: [0, .4, 1],
+              colors: [Color(0x40000000), Color(0x14000000), Color(0x8C000000)],
+            ),
+          ),
         ),
-      ),
       child,
     ],
   );
@@ -97,25 +113,39 @@ class CallBackdrop extends StatelessWidget {
 }
 
 /// The contact's photo, sharp and cover-fit; the thumbnail stands in until the full size loads.
+/// It blurs progressively as [blur] rises, the way ColorOS softens the poster behind its keypad.
 class _PosterPhoto extends StatelessWidget {
-  const _PosterPhoto({required this.thumbnail, this.contactId});
+  const _PosterPhoto({required this.thumbnail, this.contactId, this.blur});
   final Uint8List thumbnail;
   final String? contactId;
+  final ValueListenable<double>? blur;
 
   @override
-  Widget build(BuildContext context) => FutureBuilder(
-    future: contactId == null ? null : ContactsRepository.instance.fullPhoto(contactId!),
-    builder: (context, full) => LayoutBuilder(
-      builder: (context, box) => Image.memory(
-        full.data ?? thumbnail,
-        fit: BoxFit.cover,
-        gaplessPlayback: true,
-        filterQuality: FilterQuality.medium,
-        // Decoded at screen size, not the camera's full resolution.
-        cacheHeight: (box.maxHeight * MediaQuery.devicePixelRatioOf(context)).round(),
+  Widget build(BuildContext context) {
+    final photo = FutureBuilder(
+      future: contactId == null ? null : ContactsRepository.instance.fullPhoto(contactId!),
+      builder: (context, full) => LayoutBuilder(
+        builder: (context, box) => Image.memory(
+          full.data ?? thumbnail,
+          fit: BoxFit.cover,
+          gaplessPlayback: true,
+          filterQuality: FilterQuality.medium,
+          // Decoded at screen size, not the camera's full resolution.
+          cacheHeight: (box.maxHeight * MediaQuery.devicePixelRatioOf(context)).round(),
+        ),
       ),
-    ),
-  );
+    );
+    if (blur == null) return photo;
+    return ValueListenableBuilder(
+      valueListenable: blur!,
+      child: photo,
+      builder: (context, t, child) => ImageFiltered(
+        enabled: t > 0,
+        imageFilter: ImageFilter.blur(sigmaX: 28 * t, sigmaY: 28 * t, tileMode: TileMode.clamp),
+        child: child!,
+      ),
+    );
+  }
 }
 
 String callerName(CallInfo call) {

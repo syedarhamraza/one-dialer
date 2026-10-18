@@ -4,16 +4,19 @@ Incoming, dialing, connected, held, conference, private, and ended calls share a
 photo-led backdrop. A contact with a photo gets the ColorOS 17 poster: the photo
 full-screen, sharp and cover-fit (decoded at screen height; the thumbnail stands
 in until `ContactsRepository.fullPhoto` loads), under a shade at the top for the
-name and a dark band at the bottom behind the controls. Callers without a photo
+name and a dark band at the bottom behind the controls. As the keypad opens the
+poster blurs progressively (up to sigma 28, driven by the keypad's morph) and the
+shade eases from a dark bottom band to an even dim, as ColorOS does behind its
+dial pad. Callers without a photo
 get a static aurora: a dark base with soft colour blobs in hues around their
 avatar colour (`LetterAvatar.colorFor`). Private, conference and bare-number
-calls get a blue, teal and violet one. Nothing is blurred or animated per frame.
+calls get a blue, teal and violet one.
 
 The layout follows ColorOS 17. The name, number and status sit at the top on the
 left, with the avatar in a circle on the right (contacts with a photo show it as the poster instead). The controls follow ColorOS 17: each is frosted (the backdrop blurred behind it
 with `BackdropFilter.grouped`, all sharing one read under the panel's
-`BackdropGroup`), milky, with a soft glow rising from the bottom edge and a rim
-brightest along the bottom (`CallBody`). The End
+`BackdropGroup`), milky, with a soft glow rising from the bottom edge and only a
+faint highlight along the top edge, no 3D rim (`CallBody`). The End
 pill is a tomato red with a gloss across its top half. Labels are a soft
 grey-white, 6 px under each circle. Mute always shows the slashed mic. Their motion comes from
 `liquid_glass_widgets` (initialised in `inCallMain` only): each sits in a

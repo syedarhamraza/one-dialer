@@ -28,6 +28,15 @@ class InCallScreen extends StatefulWidget {
 class _InCallScreenState extends State<InCallScreen> {
   List<SimCard> _sims = const [];
 
+  /// The keypad's open progress, which blurs the photo poster behind it.
+  final _keypadBlur = ValueNotifier<double>(0);
+
+  @override
+  void dispose() {
+    _keypadBlur.dispose();
+    super.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -62,6 +71,7 @@ class _InCallScreenState extends State<InCallScreen> {
             return CallBackdrop(
               photo: contact?.thumbnail,
               contactId: contact?.id,
+              blur: _keypadBlur,
               seed: call == null ? null : backdropSeed(call),
               child: SafeArea(
                 child: switch ((state, call)) {
@@ -84,6 +94,7 @@ class _InCallScreenState extends State<InCallScreen> {
                     snapshot: state,
                     call: call,
                     sims: _sims,
+                    keypadBlur: _keypadBlur,
                   ),
                 },
               ),
@@ -96,10 +107,17 @@ class _InCallScreenState extends State<InCallScreen> {
 }
 
 class _CallSession extends StatefulWidget {
-  const _CallSession({super.key, required this.snapshot, required this.call, required this.sims});
+  const _CallSession({
+    super.key,
+    required this.snapshot,
+    required this.call,
+    required this.sims,
+    required this.keypadBlur,
+  });
   final CallSnapshot snapshot;
   final CallInfo call;
   final List<SimCard> sims;
+  final ValueNotifier<double> keypadBlur;
 
   @override
   State<_CallSession> createState() => _CallSessionState();
@@ -112,7 +130,8 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   Timer? _toastTimer;
 
   /// Keypad morph progress, spring-driven so a mid-flight reversal keeps its momentum.
-  late final AnimationController _morph = AnimationController(vsync: this);
+  late final AnimationController _morph = AnimationController(vsync: this)
+    ..addListener(() => widget.keypadBlur.value = _morph.value.clamp(0.0, 1.0));
 
   /// Plays once when the call's controls first appear (opened, or just answered).
   late final AnimationController _entrance = AnimationController(
