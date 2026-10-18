@@ -189,17 +189,8 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     if (_ball == null || _fly.isAnimating) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && _ball != null && !_fly.isAnimating) {
-        // Launches fast, slows into place, overshoots a little and eases back (ColorOS).
-        _fly.animateWith(
-          SpringSimulation(
-            _flight,
-            0,
-            1,
-            3,
-            tolerance: const Tolerance(distance: .003, velocity: .05),
-            snapToEnd: true,
-          ),
-        );
+        // Fast at first, then slowing smoothly into place; no overshoot (ColorOS).
+        _fly.animateTo(1, duration: const Duration(milliseconds: 650), curve: Curves.easeOutCubic);
       }
     });
   }
@@ -219,7 +210,21 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     if (from == null) return const SizedBox.shrink();
     final t = to == null ? 0.0 : _fly.value;
     final settled = t.clamp(0.0, 1.0);
-    final rect = to == null ? from : Rect.lerp(from, to, t)!;
+    // ColorOS's path curves: the ball drops first, then sweeps across into the pill (a quadratic
+    // Bezier bending at the point below the ball, level with End).
+    final Rect rect;
+    if (to == null) {
+      rect = from;
+    } else {
+      final bend = Offset(from.center.dx, to.center.dy);
+      final u = 1 - t;
+      final centre = from.center * (u * u) + bend * (2 * u * t) + to.center * (t * t);
+      rect = Rect.fromCenter(
+        center: centre,
+        width: lerpDouble(from.width, to.width, t)!,
+        height: lerpDouble(from.height, to.height, t)!,
+      );
+    }
     // The ball wears the End pill's finish the whole way, its colour morphing from Answer's green
     // through orange to End's red, so it lands as the pill itself.
     final color = _ballColor.transform(settled)!;
@@ -274,12 +279,6 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
       ),
     );
   }
-
-  /// Fast launch (with a push), a slow approach, about 4-5% overshoot, settled in ~0.75 s.
-  static final _flight = SpringDescription.withDurationAndBounce(
-    duration: const Duration(milliseconds: 700),
-    bounce: .28,
-  );
 
   static final _ballColor = TweenSequence<Color?>([
     TweenSequenceItem(

@@ -67,9 +67,10 @@ the other button and the pill fade out as it arms.
 - Release at least `threshold` (96 px) up to act. The ball moves only vertically (sideways is ignored), up to 1.3× the threshold, and grows and glows as it arms.
 - Touching a ball grows it to 108% (a glass-button press); it settles back on release. Taps never act.
 - **Answer → End**: the released Answer ball stays where it was let go until
-  Telecom connects. Then the session flies it into the End pill on a spring that
-  launches fast (an initial push), slows into place, overshoots about 4-5% and
-  eases back (700 ms, bounce 0.28, settled in ~0.75 s). The ball wears the End
+  Telecom connects. Then the session flies it into the End pill along a curve, as
+  on ColorOS: it drops first, then sweeps across (a quadratic Bezier bending at
+  the point below the ball, level with End), fast at first and slowing smoothly
+  into place with no overshoot (650 ms, `easeOutCubic`). The ball wears the End
   pill's finish the whole way (gradient, gloss, rim, glow, squircle shape) while
   its colour morphs green → orange → End's red, its icon grows to End's size and
   tips over into the hang-up glyph. The real pill stays hidden until it lands. If
