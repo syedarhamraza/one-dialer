@@ -15,9 +15,6 @@ import '../settings/settings_screen.dart';
 import 'speed_dial_screen.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_collapsible_header.dart';
-import '../../widgets/frosted_body.dart';
-import '../../widgets/one_ui_glass_surface.dart';
-import '../../widgets/morph_menu_action.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/place_call.dart';
 import 't9.dart';
@@ -42,6 +39,7 @@ const keypadBackground = Color(0xFF161616);
 
 class _KeypadScreenState extends State<KeypadScreen> {
   final _telecom = TelecomBridge.instance;
+  final _menuKey = GlobalKey();
   bool _collapsed = false;
   bool _calling = false;
 
@@ -143,24 +141,29 @@ class _KeypadScreenState extends State<KeypadScreen> {
     }
   }
 
-  List<OneUIFloatingMenuItem> get _menuItems {
+  void _openMenu() {
     final typing = widget.input.value.isNotEmpty;
-    return [
-      if (typing) ...[
+    OneUIFloatingMenu.show(
+      context: context,
+      anchorKey: _menuKey,
+      width: 250,
+      items: [
+        if (typing) ...[
+          OneUIFloatingMenuItem(
+            label: _collapsed ? 'Show keypad' : 'Hide keypad',
+            onTap: () => setState(() => _collapsed = !_collapsed),
+          ),
+          OneUIFloatingMenuItem(label: 'Add 2-sec pause', onTap: () => widget.input.value += ','),
+          OneUIFloatingMenuItem(label: 'Add wait', onTap: () => widget.input.value += ';'),
+          OneUIFloatingMenuItem(label: 'Send message', onTap: () => _telecom.sendSms(widget.input.value)),
+        ],
+        OneUIFloatingMenuItem(label: 'Speed dial numbers', onTap: _openSpeedDial),
         OneUIFloatingMenuItem(
-          label: _collapsed ? 'Show keypad' : 'Hide keypad',
-          onTap: () => setState(() => _collapsed = !_collapsed),
+          label: 'Settings',
+          onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),
         ),
-        OneUIFloatingMenuItem(label: 'Add 2-sec pause', onTap: () => widget.input.value += ','),
-        OneUIFloatingMenuItem(label: 'Add wait', onTap: () => widget.input.value += ';'),
-        OneUIFloatingMenuItem(label: 'Send message', onTap: () => _telecom.sendSms(widget.input.value)),
       ],
-      OneUIFloatingMenuItem(label: 'Speed dial numbers', onTap: _openSpeedDial),
-      OneUIFloatingMenuItem(
-        label: 'Settings',
-        onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),
-      ),
-    ];
+    );
   }
 
   @override
@@ -201,38 +204,31 @@ class _KeypadScreenState extends State<KeypadScreen> {
                               children: [
                                 Padding(
                                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                                  // ColorOS: the keypad's actions share one frosted pill.
-                                  child: Align(
-                                    alignment: Alignment.centerRight,
-                                    // The whole pill presses as one; each action keeps its tap.
-                                    child: GlassPress(
-                                      radius: 24,
-                                      child: OneUIGlassSurface(
-                                        height: 44,
-                                        borderRadius: const BorderRadius.all(Radius.circular(24)),
-                                        padding: const EdgeInsets.symmetric(horizontal: 6),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          spacing: 4,
-                                          children: [
-                                            if (number.isNotEmpty)
-                                              OneUIHeaderAction(
-                                                icon: Icons.add_rounded,
-                                                size: 28,
-                                                tooltip: 'Add to Contacts',
-                                                onTap: () => showAddToContacts(context, number),
-                                              ),
-                                            OneUIHeaderAction(
-                                              icon: Icons.search_rounded,
-                                              size: 26,
-                                              tooltip: 'Search',
-                                              onTap: () => openSearch(context),
-                                            ),
-                                            MorphMenuAction(items: _menuItems, iconSize: 26),
-                                          ],
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    spacing: 16,
+                                    children: [
+                                      if (number.isNotEmpty)
+                                        OneUIHeaderAction(
+                                          icon: Icons.add_rounded,
+                                          size: 28,
+                                          tooltip: 'Add to Contacts',
+                                          onTap: () => showAddToContacts(context, number),
                                         ),
+                                      OneUIHeaderAction(
+                                        icon: Icons.search_rounded,
+                                        size: 26,
+                                        tooltip: 'Search',
+                                        onTap: () => openSearch(context),
                                       ),
-                                    ),
+                                      OneUIHeaderAction(
+                                        actionKey: _menuKey,
+                                        icon: Icons.more_vert_rounded,
+                                        size: 26,
+                                        tooltip: 'More options',
+                                        onTap: _openMenu,
+                                      ),
+                                    ],
                                   ),
                                 ),
                                 Expanded(
