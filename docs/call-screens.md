@@ -4,21 +4,21 @@ Incoming, dialing, connected, held, conference, private, and ended calls share a
 photo-led backdrop. A contact photo is decoded small and blurred once into a
 90×200 bitmap, which is then scaled to fill the screen. Callers without a photo
 get a static aurora: a dark base with soft colour blobs in hues around their
-avatar colour (`LetterAvatar.colorFor`), so the glass controls have light to bend.
+avatar colour (`LetterAvatar.colorFor`).
 Private, conference and bare-number calls get a blue, teal and violet one. Nothing is
 blurred per frame: there's no `BackdropFilter` or live blur. A fixed scrim keeps
 white text readable.
 
 The layout follows ColorOS 17. The name, number and status sit at the top on the
-left, with the photo in a circle on the right. The controls are liquid glass
-(`liquid_glass_widgets`, initialised in `inCallMain` only) at `GlassQuality.premium`
-with the package's native frost, tuned to its dark-material values
-(`CallGlassLayer.settings`). Premium draws at most 16 shapes per layer
-(`LiquidGlassBlendGroup.maxShapesPerLayer`) and paints nothing above that, which
-showed as the controls blanking mid-morph. So the upper panel (4 actions + 12
-keys, exactly 16) and the bottom row (Speaker, Keypad) each get their own
-`CallGlassLayer`, and every circle and key is a grouped `CallGlass` inside one.
-Keep any new glass control under that limit. The main app's floating
+left, with the photo in a circle on the right. The controls are solid: opaque, top-lit dark grey
+(`CallBody`), with the red End pill as the accent. Their motion comes from
+`liquid_glass_widgets` (initialised in `inCallMain` only): each one sits in a
+`GlassButton.custom` with `GlassButtonStyle.transparent`, which gives the
+package's squeeze, stretch and glow without a glass surface. The More menu is
+the package's `GlassMenu`. Frosted and refractive glass bodies were tried and
+dropped; if they come back, note that premium glass paints nothing once a layer
+holds more than 16 shapes (`LiquidGlassBlendGroup.maxShapesPerLayer`), and
+mid-morph the panel holds 18 controls. The main app's floating
 chrome stays OneSpend's, without glass.
 
 `InCallScreen` subscribes to the existing Telecom snapshot stream. Presentation
@@ -26,7 +26,7 @@ is split across four files:
 
 - `call_screen_widgets.dart`: the backdrop, caller header, status line, ringing
   halo and held-call chip.
-- `call_controls.dart`: action circles on the package's `GlassButton` press feel, the audio sheet, and
+- `call_controls.dart`: solid action circles (`CallBody`) on the package's `GlassButton` press feel, the audio sheet, and
   `PressScale`.
 - `call_control_panel.dart`: the control/keypad morph, DTMF, and the fixed
   bottom row.
@@ -88,7 +88,7 @@ The header sits slightly above the centre of the space the controls leave.
   out of the More circle (its label stays below),
   with Add call, Audio output, and Note when Merge has taken its slot.
 - **Third slot**: Note on a single call. It opens a floating sheet over the call that saves as you type, so the note survives the other side hanging up. Notes are stored in `DialerPrefs` as `call_note_<number>_<millis>`, and Recents call details show each note under the logged call it was taken during. The slot becomes Merge once two calls can merge.
-- **End call**: a solid red gradient pill with a soft glow, the one control that isn't glass. Its press comes from a `GlassButton.custom` in `GlassButtonStyle.transparent` (the package's glow and stretch, no glass body). Once tapped it draws in to a circle and dims. If Telecom hasn't ended the call within 3 s, it becomes tappable again.
+- **End call**: a solid red gradient pill with a soft glow. Its press comes from a `GlassButton.custom` in `GlassButtonStyle.transparent` (the package's glow and stretch, no glass body). Once tapped it draws in to a circle and dims. If Telecom hasn't ended the call within 3 s, it becomes tappable again.
 - **Entrance**: when the connected or dialing controls appear, the action row and the bottom row fade and rise 16 px, staggered (520 ms total). Reduced motion skips it.
 - **Header**:
   - A thin ring around the avatar.
@@ -101,7 +101,7 @@ The keypad morph runs on the glass package's smooth spring (`GlassSpring.smooth`
 no overshoot, 1% snap tolerance). Reversing mid-flight keeps its velocity.
 
 - **Action row**: the four actions fade out in place, middle pair first.
-- **Keys**: glass stadiums, three across (ColorOS 17). Keys fade in where they sit, rows a beat apart
+- **Keys**: solid stadiums, three across (ColorOS 17). Keys fade in where they sit, rows a beat apart
   bottom-up with the opening panel. Presses get the same `GlassButton` squeeze and glow.
 - **Header**: the avatar and badges collapse away. Typed digits replace the
   caller name, and the name becomes the subtitle.

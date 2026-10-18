@@ -199,73 +199,68 @@ class _CallControlPanelState extends State<CallControlPanel> {
       AudioRoute.wiredHeadset => 'Headset',
       _ => 'Speaker',
     };
-    // Premium glass draws at most 16 shapes per layer (LiquidGlassBlendGroup.maxShapesPerLayer)
-    // and paints nothing above that. Mid-morph the upper panel holds 4 actions + 12 keys, so the
-    // bottom row gets a layer of its own.
-    final upper = CallGlassLayer(
-      child: IgnorePointer(
-        ignoring: widget.animating,
-        child: ExcludeSemantics(
-          excluding: widget.animating,
-          child: SizedBox(
-            key: const ValueKey('call-upper-panel'),
-            height: upperHeight,
-            width: widget.width,
-            child: Stack(
-              clipBehavior: Clip.hardEdge,
-              children: [
-                if (p < 1)
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    height: widget.landscape
-                        ? 96
-                        : compact
-                        ? 112
-                        : 128,
-                    child: IgnorePointer(
-                      ignoring: p > 0,
-                      child: ExcludeSemantics(
-                        excluding: p > 0,
-                        child: rise(
-                          const Interval(0, .62, curve: Curves.easeOutCubic),
-                          KeyedSubtree(
-                            key: const ValueKey('receding-call-actions'),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                for (final (i, action) in actions.indexed)
-                                  Expanded(
-                                    // The middle pair leaves first, then the outer pair.
-                                    child: Opacity(
-                                      opacity: 1 - (i == 1 || i == 2 ? _innerOut : _outerOut).transform(p),
-                                      child: CallAction(
-                                        icon: action.icon,
-                                        label: action.label,
-                                        active: action.active,
-                                        onPressed: action.tap,
-                                        size: actionSize,
-                                      ),
+    final upper = IgnorePointer(
+      ignoring: widget.animating,
+      child: ExcludeSemantics(
+        excluding: widget.animating,
+        child: SizedBox(
+          key: const ValueKey('call-upper-panel'),
+          height: upperHeight,
+          width: widget.width,
+          child: Stack(
+            clipBehavior: Clip.hardEdge,
+            children: [
+              if (p < 1)
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: widget.landscape
+                      ? 96
+                      : compact
+                      ? 112
+                      : 128,
+                  child: IgnorePointer(
+                    ignoring: p > 0,
+                    child: ExcludeSemantics(
+                      excluding: p > 0,
+                      child: rise(
+                        const Interval(0, .62, curve: Curves.easeOutCubic),
+                        KeyedSubtree(
+                          key: const ValueKey('receding-call-actions'),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              for (final (i, action) in actions.indexed)
+                                Expanded(
+                                  // The middle pair leaves first, then the outer pair.
+                                  child: Opacity(
+                                    opacity: 1 - (i == 1 || i == 2 ? _innerOut : _outerOut).transform(p),
+                                    child: CallAction(
+                                      icon: action.icon,
+                                      label: action.label,
+                                      active: action.active,
+                                      onPressed: action.tap,
+                                      size: actionSize,
                                     ),
                                   ),
-                                Expanded(
-                                  child: Opacity(
-                                    opacity: 1 - _outerOut.transform(p),
-                                    child: _moreMenu(actionSize, showNote: canMerge),
-                                  ),
                                 ),
-                              ],
-                            ),
+                              Expanded(
+                                child: Opacity(
+                                  opacity: 1 - _outerOut.transform(p),
+                                  child: _moreMenu(actionSize, showNote: canMerge),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
                     ),
                   ),
-                if (p > 0)
-                  for (var i = 0; i < 12; i++) _keypadKey(i, p, keyHeight, stride, upperHeight),
-              ],
-            ),
+                ),
+              if (p > 0)
+                for (var i = 0; i < 12; i++) _keypadKey(i, p, keyHeight, stride, upperHeight),
+            ],
           ),
         ),
       ),
@@ -284,108 +279,106 @@ class _CallControlPanelState extends State<CallControlPanel> {
                 ? 16
                 : 56,
           ),
-          child: CallGlassLayer(
-            child: rise(
-              const Interval(.12, .74, curve: Curves.easeOutCubic),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: compact ? 72 : 92,
-                    child: CallAction(
-                      icon: switch (route) {
-                        AudioRoute.bluetooth => Icons.bluetooth_audio_rounded,
-                        AudioRoute.wiredHeadset => Icons.headset_rounded,
-                        _ => Icons.volume_up_rounded,
-                      },
-                      label: routeLabel,
-                      active: route != AudioRoute.earpiece,
-                      size: actionSize,
-                      onPressed: widget.audio.supportedRoutes.contains(AudioRoute.bluetooth)
-                          ? () => chooseCallAudioRoute(context, widget.audio)
-                          : () => telecom.setAudioRoute(
-                              route == AudioRoute.speaker ? AudioRoute.earpiece : AudioRoute.speaker,
-                            ),
-                    ),
+          child: rise(
+            const Interval(.12, .74, curve: Curves.easeOutCubic),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: compact ? 72 : 92,
+                  child: CallAction(
+                    icon: switch (route) {
+                      AudioRoute.bluetooth => Icons.bluetooth_audio_rounded,
+                      AudioRoute.wiredHeadset => Icons.headset_rounded,
+                      _ => Icons.volume_up_rounded,
+                    },
+                    label: routeLabel,
+                    active: route != AudioRoute.earpiece,
+                    size: actionSize,
+                    onPressed: widget.audio.supportedRoutes.contains(AudioRoute.bluetooth)
+                        ? () => chooseCallAudioRoute(context, widget.audio)
+                        : () => telecom.setAudioRoute(
+                            route == AudioRoute.speaker ? AudioRoute.earpiece : AudioRoute.speaker,
+                          ),
                   ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Column(
-                        children: [
-                          LayoutBuilder(
-                            builder: (context, box) => Align(
-                              alignment: Alignment.topCenter,
-                              // Solid red, but with the glass package's press: glow and stretch, no glass body.
-                              child: GlassButton.custom(
-                                style: GlassButtonStyle.transparent,
-                                onTap: _noTap,
-                                excludeFromSemantics: true,
-                                canRequestFocus: false,
-                                shape: LiquidRoundedRectangle(borderRadius: actionSize / 2),
-                                child: AnimatedOpacity(
-                                  key: widget.endKey,
-                                  opacity: widget.hideEnd ? 0 : (_ending ? .55 : 1),
-                                  // Only ending dims gradually; the pill appears at once when the Answer ball lands on it.
-                                  duration: _ending ? const Duration(milliseconds: 220) : Duration.zero,
-                                  child: AnimatedContainer(
-                                    // While ending, the pill draws in to a circle.
-                                    duration: MediaQuery.disableAnimationsOf(context)
-                                        ? Duration.zero
-                                        : const Duration(milliseconds: 280),
-                                    curve: Curves.easeInOutCubic,
-                                    width: _ending ? actionSize : box.maxWidth,
-                                    height: actionSize,
-                                    decoration: ShapeDecoration(
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Column(
+                      children: [
+                        LayoutBuilder(
+                          builder: (context, box) => Align(
+                            alignment: Alignment.topCenter,
+                            // Solid red, but with the glass package's press: glow and stretch, no glass body.
+                            child: GlassButton.custom(
+                              style: GlassButtonStyle.transparent,
+                              onTap: _noTap,
+                              excludeFromSemantics: true,
+                              canRequestFocus: false,
+                              shape: LiquidRoundedRectangle(borderRadius: actionSize / 2),
+                              child: AnimatedOpacity(
+                                key: widget.endKey,
+                                opacity: widget.hideEnd ? 0 : (_ending ? .55 : 1),
+                                // Only ending dims gradually; the pill appears at once when the Answer ball lands on it.
+                                duration: _ending ? const Duration(milliseconds: 220) : Duration.zero,
+                                child: AnimatedContainer(
+                                  // While ending, the pill draws in to a circle.
+                                  duration: MediaQuery.disableAnimationsOf(context)
+                                      ? Duration.zero
+                                      : const Duration(milliseconds: 280),
+                                  curve: Curves.easeInOutCubic,
+                                  width: _ending ? actionSize : box.maxWidth,
+                                  height: actionSize,
+                                  decoration: ShapeDecoration(
+                                    shape: const StadiumBorder(),
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [Color(0xFFF26573), Color(0xFFE0465A)],
+                                    ),
+                                    shadows: [
+                                      BoxShadow(
+                                        color: const Color(0xFFE0465A).withValues(alpha: _ending ? 0 : .38),
+                                        blurRadius: 22,
+                                        offset: const Offset(0, 6),
+                                      ),
+                                    ],
+                                  ),
+                                  child: IconButton(
+                                    tooltip: 'End call',
+                                    iconSize: 32,
+                                    style: IconButton.styleFrom(
+                                      foregroundColor: Colors.white,
+                                      disabledForegroundColor: Colors.white,
                                       shape: const StadiumBorder(),
-                                      gradient: const LinearGradient(
-                                        begin: Alignment.topCenter,
-                                        end: Alignment.bottomCenter,
-                                        colors: [Color(0xFFF26573), Color(0xFFE0465A)],
-                                      ),
-                                      shadows: [
-                                        BoxShadow(
-                                          color: const Color(0xFFE0465A).withValues(alpha: _ending ? 0 : .38),
-                                          blurRadius: 22,
-                                          offset: const Offset(0, 6),
-                                        ),
-                                      ],
                                     ),
-                                    child: IconButton(
-                                      tooltip: 'End call',
-                                      iconSize: 32,
-                                      style: IconButton.styleFrom(
-                                        foregroundColor: Colors.white,
-                                        disabledForegroundColor: Colors.white,
-                                        shape: const StadiumBorder(),
-                                      ),
-                                      onPressed: _ending ? null : _endCall,
-                                      icon: const Icon(Icons.call_end_rounded),
-                                    ),
+                                    onPressed: _ending ? null : _endCall,
+                                    icon: const Icon(Icons.call_end_rounded),
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          const ExcludeSemantics(
-                            child: Text('End', style: TextStyle(fontSize: 12, height: 1.1, color: Colors.white)),
-                          ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 8),
+                        const ExcludeSemantics(
+                          child: Text('End', style: TextStyle(fontSize: 12, height: 1.1, color: Colors.white)),
+                        ),
+                      ],
                     ),
                   ),
-                  SizedBox(
-                    width: compact ? 72 : 92,
-                    child: CallAction(
-                      icon: widget.keypadOpen ? Icons.keyboard_arrow_down_rounded : Icons.dialpad_rounded,
-                      label: widget.keypadOpen ? 'Hide keypad' : 'Keypad',
-                      size: actionSize,
-                      onPressed: widget.onToggle,
-                    ),
+                ),
+                SizedBox(
+                  width: compact ? 72 : 92,
+                  child: CallAction(
+                    icon: widget.keypadOpen ? Icons.keyboard_arrow_down_rounded : Icons.dialpad_rounded,
+                    label: widget.keypadOpen ? 'Hide keypad' : 'Keypad',
+                    size: actionSize,
+                    onPressed: widget.onToggle,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -472,7 +465,7 @@ class _CallControlPanelState extends State<CallControlPanel> {
               _startTone(digit);
               _releaseTone();
             },
-            child: CallGlass(
+            child: CallBody(
               radius: size / 2,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,

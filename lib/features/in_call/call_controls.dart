@@ -9,37 +9,12 @@ import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/one_ui_floating_modal.dart';
 
-/// Liquid glass shared by every call control. One layer refracts the caller's backdrop for all
-/// the circles and keys inside it, so the shapes cost a single pass together.
-class CallGlassLayer extends StatelessWidget {
-  const CallGlassLayer({super.key, required this.child});
-  final Widget child;
-
-  /// Premium frosted glass: the package's native frost, tuned to its dark-material values.
-  static const settings = LiquidGlassSettings(
-    thickness: 10,
-    blur: 8,
-    frost: .6,
-    frostOpacity: .85,
-    frostClamp: -.45,
-    frostWeight: .5,
-    glassColor: Color.fromRGBO(255, 255, 255, 0.08),
-    lightIntensity: .5,
-    refractiveIndex: 1.15,
-    saturation: 1.2,
-    chromaticAberration: 0,
-  );
-
-  @override
-  Widget build(BuildContext context) =>
-      AdaptiveLiquidGlassLayer(settings: settings, quality: GlassQuality.premium, child: child);
-}
-
-/// A glass body inside [CallGlassLayer] with the package's press feel: it squeezes, stretches
-/// toward the finger and glows. Taps still belong to [child] (its IconButton or key detector);
-/// the glass button only reads raw pointer events for the effect.
-class CallGlass extends StatelessWidget {
-  const CallGlass({super.key, this.radius, required this.child});
+/// A solid call-control body, like the End pill, with the glass package's press: it squeezes,
+/// stretches toward the finger and glows, with no glass surface (`GlassButtonStyle.transparent`).
+/// Taps still belong to [child] (its IconButton or key detector); the glass button only reads
+/// raw pointer events for the effect. A circle, or a stadium when [radius] is given.
+class CallBody extends StatelessWidget {
+  const CallBody({super.key, this.radius, required this.child});
   final double? radius;
   final Widget child;
 
@@ -47,12 +22,29 @@ class CallGlass extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GlassButton.custom(
+    style: GlassButtonStyle.transparent,
     onTap: _taps,
     excludeFromSemantics: true,
     canRequestFocus: false,
-    quality: GlassQuality.premium,
     shape: radius == null ? const LiquidOval() : LiquidRoundedRectangle(borderRadius: radius!),
-    child: child,
+    child: DecoratedBox(
+      decoration: ShapeDecoration(
+        shape: radius == null
+            ? const CircleBorder(side: BorderSide(color: Color(0x1FFFFFFF), width: .5))
+            : RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(radius!),
+                side: const BorderSide(color: Color(0x1FFFFFFF), width: .5),
+              ),
+        // Top-lit like the red pill's gradient, opaque so the backdrop doesn't show through.
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF3D434A), Color(0xFF2C3136)],
+        ),
+        shadows: const [BoxShadow(color: Color(0x40000000), blurRadius: 14, offset: Offset(0, 4))],
+      ),
+      child: child,
+    ),
   );
 }
 
@@ -153,7 +145,7 @@ class CallAction extends StatelessWidget {
           ],
         ),
       );
-      return enabled ? CallGlass(child: body) : body;
+      return enabled ? CallBody(child: body) : body;
     }
 
     return Column(
