@@ -1,16 +1,16 @@
 # Call screen presentation
 
 Incoming, dialing, connected, held, conference, private, and ended calls share a
-photo-led backdrop. A contact photo is decoded small and blurred once into a
-90×200 bitmap, which is then scaled to fill the screen. Callers without a photo
+photo-led backdrop. A contact with a photo gets the ColorOS 17 poster: the photo
+full-screen, sharp and cover-fit (decoded at screen height; the thumbnail stands
+in until `ContactsRepository.fullPhoto` loads), under a shade at the top for the
+name and a dark band at the bottom behind the controls. Callers without a photo
 get a static aurora: a dark base with soft colour blobs in hues around their
-avatar colour (`LetterAvatar.colorFor`).
-Private, conference and bare-number calls get a blue, teal and violet one. Nothing is
-blurred per frame: there's no `BackdropFilter` or live blur. A fixed scrim keeps
-white text readable.
+avatar colour (`LetterAvatar.colorFor`). Private, conference and bare-number
+calls get a blue, teal and violet one. Nothing is blurred or animated per frame.
 
 The layout follows ColorOS 17. The name, number and status sit at the top on the
-left, with the photo in a circle on the right. The controls follow ColorOS 17: each is a translucent
+left, with the avatar in a circle on the right (contacts with a photo show it as the poster instead). The controls follow ColorOS 17: each is a translucent
 disc that takes on the backdrop's colour, milky at the top and deeper below, with
 a bright edge along the top (`CallBody`, painted, never blurred: the backdrop is already smooth). The End
 pill is a tomato red with a gloss across its top half. Labels are a soft

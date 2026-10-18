@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
-import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -9,12 +7,16 @@ import '../../core/contacts/contacts_repository.dart';
 import '../../core/telecom/call_info.dart';
 import '../../widgets/letter_avatar.dart';
 
-/// Photo-led call backdrop: the caller's photo blurred once into a small bitmap, else a
-/// tint of their avatar colour. Nothing is blurred or animated per frame.
+/// Photo-led call backdrop, ColorOS 17 poster style: the caller's photo full-screen and sharp
+/// with a dark band at the bottom behind the controls, else an aurora tinted from their avatar
+/// colour. Nothing is blurred or animated per frame.
 class CallBackdrop extends StatelessWidget {
-  const CallBackdrop({super.key, required this.child, this.photo, this.seed});
+  const CallBackdrop({super.key, required this.child, this.photo, this.contactId, this.seed});
   final Widget child;
+
+  /// The contact's thumbnail, shown at once while [contactId]'s full-size photo loads.
   final Uint8List? photo;
+  final String? contactId;
 
   /// The caller's name; null keeps the neutral navy for private, conference and unknown calls.
   final String? seed;
@@ -28,18 +30,32 @@ class CallBackdrop extends StatelessWidget {
         layoutBuilder: (current, previous) => Stack(fit: StackFit.expand, children: [...previous, ?current]),
         child: KeyedSubtree(
           key: ValueKey<Object?>(photo ?? seed),
-          child: photo != null ? _BlurredPhoto(photo: photo!, fallback: _tint(seed)) : _tint(seed),
+          child: photo != null ? _PosterPhoto(thumbnail: photo!, contactId: contactId) : _tint(seed),
         ),
       ),
-      // Keeps white text readable on any photo, light enough low down for the glass to show colour.
-      const DecoratedBox(
+      // A photo keeps its face clear, with a shade at the top for the name and a dark band at the
+      // bottom behind the controls; the aurora only needs a light touch.
+      DecoratedBox(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            stops: [0, .4, 1],
-            colors: [Color(0x40000000), Color(0x14000000), Color(0x8C000000)],
-          ),
+          gradient: photo != null
+              ? const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  stops: [0, .28, .5, .72, 1],
+                  colors: [
+                    Color(0x73000000),
+                    Color(0x0D000000),
+                    Color(0x0D000000),
+                    Color(0xC7000000),
+                    Color(0xF2000000),
+                  ],
+                )
+              : const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  stops: [0, .4, 1],
+                  colors: [Color(0x40000000), Color(0x14000000), Color(0x8C000000)],
+                ),
         ),
       ),
       child,
@@ -80,75 +96,26 @@ class CallBackdrop extends StatelessWidget {
   }
 }
 
-class _BlurredPhoto extends StatefulWidget {
-  const _BlurredPhoto({required this.photo, required this.fallback});
-  final Uint8List photo;
-  final Widget fallback;
+/// The contact's photo, sharp and cover-fit; the thumbnail stands in until the full size loads.
+class _PosterPhoto extends StatelessWidget {
+  const _PosterPhoto({required this.thumbnail, this.contactId});
+  final Uint8List thumbnail;
+  final String? contactId;
 
   @override
-  State<_BlurredPhoto> createState() => _BlurredPhotoState();
-}
-
-class _BlurredPhotoState extends State<_BlurredPhoto> {
-  ui.Image? _image;
-
-  @override
-  void initState() {
-    super.initState();
-    _render();
-  }
-
-  @override
-  void didUpdateWidget(_BlurredPhoto oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.photo != widget.photo) _render();
-  }
-
-  /// Blurs a tiny copy once; scaled up, it reads as a full-screen blur for free.
-  Future<void> _render() async {
-    final bytes = widget.photo;
-    try {
-      final codec = await ui.instantiateImageCodec(bytes, targetWidth: 64);
-      final source = (await codec.getNextFrame()).image;
-      codec.dispose();
-      const width = 90, height = 200;
-      final scale = math.max(width / source.width, height / source.height);
-      final recorder = ui.PictureRecorder();
-      Canvas(recorder).drawImageRect(
-        source,
-        Rect.fromLTWH(0, 0, source.width.toDouble(), source.height.toDouble()),
-        Rect.fromCenter(
-          center: const Offset(width / 2, height / 2),
-          width: source.width * scale,
-          height: source.height * scale,
-        ),
-        Paint()
-          ..filterQuality = FilterQuality.medium
-          ..imageFilter = ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10, tileMode: TileMode.clamp)
-          ..colorFilter = const ColorFilter.mode(Color(0x59000000), BlendMode.srcATop),
-      );
-      final image = await recorder.endRecording().toImage(width, height);
-      source.dispose();
-      if (!mounted || bytes != widget.photo) return image.dispose();
-      setState(() {
-        _image?.dispose();
-        _image = image;
-      });
-    } on Object {
-      // A corrupt photo keeps the tinted fallback.
-    }
-  }
-
-  @override
-  void dispose() {
-    _image?.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => _image == null
-      ? widget.fallback
-      : RawImage(image: _image, fit: BoxFit.cover, filterQuality: FilterQuality.medium);
+  Widget build(BuildContext context) => FutureBuilder(
+    future: contactId == null ? null : ContactsRepository.instance.fullPhoto(contactId!),
+    builder: (context, full) => LayoutBuilder(
+      builder: (context, box) => Image.memory(
+        full.data ?? thumbnail,
+        fit: BoxFit.cover,
+        gaplessPlayback: true,
+        filterQuality: FilterQuality.medium,
+        // Decoded at screen size, not the camera's full resolution.
+        cacheHeight: (box.maxHeight * MediaQuery.devicePixelRatioOf(context)).round(),
+      ),
+    ),
+  );
 }
 
 String callerName(CallInfo call) {
@@ -262,42 +229,38 @@ class CallHeader extends StatelessWidget {
                   ],
                 ),
               ),
-              // The photo folds away sideways as the keypad opens.
-              ClipRect(
-                child: Align(
-                  alignment: AlignmentDirectional.centerEnd,
-                  widthFactor: 1 - folded,
-                  child: Opacity(
-                    opacity: fade,
-                    child: Padding(
-                      padding: const EdgeInsetsDirectional.only(start: 16, top: 2),
-                      child: _RingingHalo(
-                        // Ripples while it rings, and more slowly while we're calling out.
-                        active: call.state == CallState.ringing || _calling(call.state),
-                        slow: call.state != CallState.ringing,
-                        size: avatarSize,
-                        child: call.isPrivate || call.isConference
-                            ? CircleAvatar(
-                                radius: avatarSize / 2,
-                                backgroundColor: Colors.white.withValues(alpha: 0.14),
-                                child: Icon(
-                                  call.isConference ? Icons.groups_rounded : Icons.person_rounded,
-                                  size: avatarSize * 0.48,
-                                  color: Colors.white70,
-                                ),
-                              )
-                            : FutureBuilder(
-                                future: contact?.thumbnail == null
-                                    ? null
-                                    : ContactsRepository.instance.fullPhoto(contact!.id),
-                                builder: (context, full) =>
-                                    LetterAvatar(name: name, photo: full.data ?? contact?.thumbnail, size: avatarSize),
-                              ),
+              // The photo folds away sideways as the keypad opens. A contact photo is already the
+              // full-screen poster behind, so the circle only shows for everyone else.
+              if (contact?.thumbnail == null)
+                ClipRect(
+                  child: Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    widthFactor: 1 - folded,
+                    child: Opacity(
+                      opacity: fade,
+                      child: Padding(
+                        padding: const EdgeInsetsDirectional.only(start: 16, top: 2),
+                        child: _RingingHalo(
+                          // Ripples while it rings, and more slowly while we're calling out.
+                          active: call.state == CallState.ringing || _calling(call.state),
+                          slow: call.state != CallState.ringing,
+                          size: avatarSize,
+                          child: call.isPrivate || call.isConference
+                              ? CircleAvatar(
+                                  radius: avatarSize / 2,
+                                  backgroundColor: Colors.white.withValues(alpha: 0.14),
+                                  child: Icon(
+                                    call.isConference ? Icons.groups_rounded : Icons.person_rounded,
+                                    size: avatarSize * 0.48,
+                                    color: Colors.white70,
+                                  ),
+                                )
+                              : LetterAvatar(name: name, size: avatarSize),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
             ],
           ),
           ClipRect(

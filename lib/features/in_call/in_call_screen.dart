@@ -61,6 +61,7 @@ class _InCallScreenState extends State<InCallScreen> {
                 : ContactsRepository.instance.contactFor(call.number ?? '');
             return CallBackdrop(
               photo: contact?.thumbnail,
+              contactId: contact?.id,
               seed: call == null ? null : backdropSeed(call),
               child: SafeArea(
                 child: switch ((state, call)) {
