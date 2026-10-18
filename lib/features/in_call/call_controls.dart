@@ -130,12 +130,12 @@ class _TintedBody extends CustomPainter {
         shape,
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 9
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6)
+          ..strokeWidth = 10.5
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7)
           ..shader = const LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0x0DFFFFFF), Color(0x24FFFFFF), Color(0x33FFFFFF)],
+            colors: [Color(0x10FFFFFF), Color(0x2BFFFFFF), Color(0x3DFFFFFF)],
             stops: [0, .5, 1],
           ).createShader(rect),
       )
@@ -154,7 +154,7 @@ class _TintedBody extends CustomPainter {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             // Top a little softer, the sides softer still, the bottom brightest.
-            colors: [Color(0x2BFFFFFF), Color(0x1FFFFFFF), Color(0x1FFFFFFF), Color(0x5CFFFFFF)],
+            colors: [Color(0x33FFFFFF), Color(0x26FFFFFF), Color(0x26FFFFFF), Color(0x6EFFFFFF)],
             stops: [0, .25, .75, 1],
           ).createShader(rect),
       )
