@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:ui' show ImageFilter;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
@@ -34,11 +34,77 @@ class CallBody extends StatelessWidget {
       // Frosted like ColorOS: what's behind is blurred away. Grouped, so all the controls under
       // one BackdropGroup share a single backdrop read instead of a blur layer each.
       child: BackdropFilter.grouped(
-        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-        child: CustomPaint(painter: _TintedBody(radius), child: child),
+        filter: ui.ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+        child: _BodyArtwork(radius: radius, child: child),
       ),
     ),
   );
+}
+
+/// The frosted backdrop stays live; only the static glow and rim are rasterized once.
+/// A fixed-resolution image remains reusable while the glass press and keypad scale it.
+class _BodyArtwork extends StatefulWidget {
+  const _BodyArtwork({required this.radius, required this.child});
+  final double? radius;
+  final Widget child;
+
+  @override
+  State<_BodyArtwork> createState() => _BodyArtworkState();
+}
+
+class _BodyArtworkState extends State<_BodyArtwork> {
+  _CachedBodyPainter? _painter;
+
+  @override
+  Widget build(BuildContext context) {
+    final ratio = MediaQuery.devicePixelRatioOf(context);
+    if (_painter == null || _painter!.radius != widget.radius || _painter!.ratio != ratio) {
+      _painter?.dispose();
+      _painter = _CachedBodyPainter(widget.radius, ratio);
+    }
+    return CustomPaint(painter: _painter, child: widget.child);
+  }
+
+  @override
+  void dispose() {
+    _painter?.dispose();
+    super.dispose();
+  }
+}
+
+class _CachedBodyPainter extends CustomPainter {
+  _CachedBodyPainter(this.radius, this.ratio);
+  final double? radius;
+  final double ratio;
+  ui.Image? _image;
+  Size? _size;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.isEmpty) return;
+    if (_image == null || _size != size) {
+      final recorder = ui.PictureRecorder();
+      final recording = Canvas(recorder)..scale(ratio);
+      _TintedBody(radius).paint(recording, size);
+      final picture = recorder.endRecording();
+      final image = picture.toImageSync((size.width * ratio).ceil(), (size.height * ratio).ceil());
+      picture.dispose();
+      _image?.dispose();
+      _image = image;
+      _size = size;
+    }
+    canvas.drawImageRect(
+      _image!,
+      Rect.fromLTWH(0, 0, size.width * ratio, size.height * ratio),
+      Offset.zero & size,
+      Paint()..filterQuality = FilterQuality.low,
+    );
+  }
+
+  void dispose() => _image?.dispose();
+
+  @override
+  bool shouldRepaint(_CachedBodyPainter oldDelegate) => radius != oldDelegate.radius || ratio != oldDelegate.ratio;
 }
 
 /// The milky wash, edge glow and lips drawn over each control's frosted blur.

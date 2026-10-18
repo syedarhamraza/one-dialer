@@ -236,23 +236,15 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     ),
   ]);
 
-  /// Holds the panel open while the keys fade out, so they aren't clipped away as it collapses.
-  Timer? _collapseAfterFade;
-
   void _toggleKeypad() {
     if (_keypadOpen) TelecomBridge.instance.stopDtmf(widget.call.id);
     setState(() => _keypadOpen = !_keypadOpen);
     final target = _keypadOpen ? 1.0 : 0.0;
-    _collapseAfterFade?.cancel();
     if (MediaQuery.disableAnimationsOf(context)) {
       _morph.value = target;
-    } else if (!_keypadOpen && _morph.value > 0) {
-      // As on ColorOS: the keys fade where they are (CallControlPanel, ~180 ms), then the layout
-      // settles.
-      _morph.stop();
-      _collapseAfterFade = Timer(const Duration(milliseconds: 180), () {
-        if (mounted && !_keypadOpen) _springTo(0);
-      });
+    } else if (!_keypadOpen) {
+      // Collapse alongside the reversed key cascade, without a separate fade-and-wait phase.
+      _morph.animateTo(0, duration: const Duration(milliseconds: 450), curve: Curves.easeInOutCubic);
     } else {
       _springTo(target);
     }
@@ -265,7 +257,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (MediaQuery.disableAnimationsOf(context) && _morph.isAnimating) _morph.value = _keypadOpen ? 1 : 0;
+    if (MediaQuery.disableAnimationsOf(context)) _morph.value = _keypadOpen ? 1 : 0;
     if (widget.call.state != CallState.ringing) _enter();
   }
 
@@ -292,7 +284,6 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   @override
   void dispose() {
     _toastTimer?.cancel();
-    _collapseAfterFade?.cancel();
     _ballTimeout?.cancel();
     _fly.dispose();
     _morph.dispose();

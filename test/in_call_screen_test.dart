@@ -473,6 +473,92 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  for (final size in [const Size(412, 915), const Size(320, 568), const Size(700, 360)]) {
+    testWidgets('closing reverses the key cascade and restores actions at $size', (tester) async {
+      await open(tester, size: size);
+      await emit(tester, [call('active')]);
+      final panel = find.byKey(const ValueKey('call-upper-panel'));
+      await tester.tap(find.byTooltip('Dial pad'));
+      await tester.pumpAndSettle();
+      final height = tester.getSize(panel).height;
+      final end = tester.getRect(find.byTooltip('End call'));
+      final speaker = tester.getRect(find.byTooltip('Speaker'));
+      await tester.tap(find.byTooltip('Dial pad'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 220));
+      double fade(String digit) => tester.widget<Opacity>(find.byKey(ValueKey('keypad-fade-$digit'))).opacity;
+      // Reverse the opening order: top row leaves before the bottom row.
+      expect(fade('2'), lessThan(fade('0')));
+      expect(fade('0'), inExclusiveRange(0, 1));
+      expect(tester.widget<CallHeader>(find.byType(CallHeader)).keypadProgress, lessThan(1));
+      // Closing must block DTMF throughout the reversed cascade.
+      await tester.tapAt(tester.getCenter(find.byKey(const ValueKey('morph-key-5'))));
+      expect(nativeCalls.where((c) => c.method == 'playDtmf'), isEmpty);
+      await tester.pump(const Duration(milliseconds: 160));
+      final muteOpacity = find.ancestor(of: find.byTooltip('Mute'), matching: find.byType(Opacity)).first;
+      final opacity = tester.widget<Opacity>(muteOpacity).opacity;
+      expect(opacity, inExclusiveRange(0, 1));
+      await tester.pump(const Duration(milliseconds: 32));
+      expect(tester.widget<Opacity>(muteOpacity).opacity, greaterThan(opacity));
+      expect(tester.getRect(find.byTooltip('End call')), end);
+      expect(tester.getRect(find.byTooltip('Speaker')), speaker);
+      await tester.pumpAndSettle();
+      expect(tester.getSize(panel).height, lessThan(height));
+      expect(tester.widget<Opacity>(muteOpacity).opacity, 1);
+      await tester.tap(find.byTooltip('Mute'));
+      expect(nativeCalls.last.method, 'setMuted');
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+    });
+  }
+
+  testWidgets('call controls survive density and orientation changes with the keypad open', (tester) async {
+    await open(tester);
+    await emit(tester, [call('active')]);
+    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.pumpAndSettle();
+    tester.view.physicalSize = const Size(1400, 720);
+    tester.view.devicePixelRatio = 2;
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('End call'), findsOneWidget);
+    expect(find.byKey(const ValueKey('morph-key-5')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    tester.view.physicalSize = const Size(412, 915);
+    tester.view.devicePixelRatio = 1;
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Mute'));
+    expect(nativeCalls.last.method, 'setMuted');
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('reopening during the fade preserves key opacity and transform', (tester) async {
+    await open(tester);
+    await emit(tester, [call('active')]);
+    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    final key = find.byKey(const ValueKey('keypad-fade-5'));
+    final opacity = tester.widget<Opacity>(key).opacity;
+    final transform = tester
+        .widget<Transform>(find.descendant(of: key, matching: find.byType(Transform)).first)
+        .transform;
+    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.pump();
+    expect(tester.widget<Opacity>(key).opacity, opacity);
+    expect(
+      tester.widget<Transform>(find.descendant(of: key, matching: find.byType(Transform)).first).transform,
+      transform,
+    );
+    await tester.pumpAndSettle();
+    expect(tester.widget<Opacity>(key).opacity, 1);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('closing mid-entrance fades the keys out instead of dropping them', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
@@ -481,12 +567,14 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     final shown = fade('0');
+    final progress = tester.widget<CallHeader>(find.byType(CallHeader)).keypadProgress;
     expect(shown, greaterThan(.5));
     await tester.tap(find.byTooltip('Dial pad'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 60));
     // Still on its way out, not gone in a frame.
     expect(fade('0'), inExclusiveRange(.3, shown + .01));
+    expect(tester.widget<CallHeader>(find.byType(CallHeader)).keypadProgress, lessThan(progress));
     await tester.pumpAndSettle();
     expect(find.byTooltip('Mute'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
@@ -504,13 +592,9 @@ void main() {
     await tester.tap(find.byTooltip('Dial pad'));
     await tester.pump();
     expect(tester.getSize(panel).height, before);
-    // The panel holds while the keys fade (180 ms), then the spring heads back down.
+    // Closing starts immediately and stays continuous when reversed again.
     await tester.pump(const Duration(milliseconds: 60));
-    expect(tester.getSize(panel).height, before);
-    await tester.pump(const Duration(milliseconds: 60));
-    await tester.pump(const Duration(milliseconds: 60));
-    await tester.pump(const Duration(milliseconds: 60));
-    await tester.pump(const Duration(milliseconds: 60));
+    await tester.pump(const Duration(milliseconds: 140));
     final reversing = tester.getSize(panel).height;
     expect(reversing, lessThan(before));
     await tester.tap(find.byTooltip('Dial pad'));
@@ -555,6 +639,24 @@ void main() {
     expect(nativeCalls.last.method, 'stopDtmf');
     expect(nativeCalls.last.arguments['id'], 'call-1');
     await changed.up();
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('enabling reduced motion during closing immediately restores controls', (tester) async {
+    await open(tester);
+    await emit(tester, [call('active')]);
+    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    await open(tester, reduceMotion: true);
+    expect(tester.widget<CallHeader>(find.byType(CallHeader)).keypadProgress, 0);
+    expect(find.byKey(const ValueKey('morph-key-5')), findsNothing);
+    final opacity = find.ancestor(of: find.byTooltip('Mute'), matching: find.byType(Opacity)).first;
+    expect(tester.widget<Opacity>(opacity).opacity, 1);
+    await tester.tap(find.byTooltip('Mute'));
+    expect(nativeCalls.last.method, 'setMuted');
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -639,6 +741,18 @@ void main() {
         });
       }
 
+      Future<void> captureClose(String name) async {
+        await tester.tap(find.byTooltip('Dial pad'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 220));
+        await capture('$name-close-fade', settle: false);
+        await tester.pump(const Duration(milliseconds: 160));
+        final actions = find.ancestor(of: find.byTooltip('Mute'), matching: find.byType(Opacity)).first;
+        expect(tester.widget<Opacity>(actions).opacity, inExclusiveRange(0, 1));
+        await capture('$name-close-actions', settle: false);
+        await capture('$name-closed');
+      }
+
       for (final state in ['ringing', 'dialing', 'active']) {
         await emit(tester, [call(state)]);
         // Ringing and dialing loop their hints, so capture them mid-animation.
@@ -664,14 +778,17 @@ void main() {
       await tester.pump(const Duration(milliseconds: 210));
       await capture('midpoint', settle: false);
       await capture('keypad');
+      await captureClose('normal');
       await open(tester, boundary: boundary, size: const Size(320, 568), textScale: 1.5);
       await emit(tester, [call('active', id: 'compact')]);
       await tester.tap(find.byTooltip('Dial pad'));
       await capture('compact-keypad');
+      await captureClose('compact');
       await open(tester, boundary: boundary, size: const Size(700, 360), textScale: 1.5);
       await emit(tester, [call('active', id: 'landscape')]);
       await tester.tap(find.byTooltip('Dial pad'));
       await capture('landscape-keypad');
+      await captureClose('landscape');
       await tester.pumpWidget(const SizedBox());
     });
   }

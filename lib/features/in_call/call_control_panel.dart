@@ -59,10 +59,6 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
   /// panel's spring, which does most of its travel at the start.
   late final AnimationController _keysIn;
 
-  /// Closing's own clock (1 shown, 0 gone), so a close always plays its full soft fade from
-  /// wherever the keys are, even one that interrupts the entrance.
-  late final AnimationController _keysShown;
-
   @override
   void initState() {
     super.initState();
@@ -70,11 +66,7 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
     _keysIn = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 650),
-      value: widget.keypadOpen ? 1 : 0,
-    );
-    _keysShown = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 420),
+      reverseDuration: const Duration(milliseconds: 450),
       value: widget.keypadOpen ? 1 : 0,
     );
   }
@@ -129,6 +121,14 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _keysIn.value = widget.keypadOpen ? 1 : 0;
+    }
+  }
+
+  @override
   void didUpdateWidget(CallControlPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.call.id != widget.call.id) {
@@ -144,13 +144,10 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
     if (oldWidget.keypadOpen != widget.keypadOpen || oldWidget.call.id != widget.call.id) {
       if (MediaQuery.disableAnimationsOf(context) || oldWidget.call.id != widget.call.id) {
         _keysIn.value = widget.keypadOpen ? 1 : 0;
-        _keysShown.value = widget.keypadOpen ? 1 : 0;
       } else if (widget.keypadOpen) {
-        _keysShown.value = 1;
-        _keysIn.forward(from: 0);
+        _keysIn.forward();
       } else {
-        _keysIn.stop();
-        _keysShown.reverse(from: 1);
+        _keysIn.reverse();
       }
     }
   }
@@ -158,7 +155,6 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
   @override
   void dispose() {
     _keysIn.dispose();
-    _keysShown.dispose();
     _stopTone();
     _endingTimeout?.cancel();
     super.dispose();
@@ -168,10 +164,6 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
   Widget build(BuildContext context) {
     final telecom = TelecomBridge.instance;
     final p = widget.progress;
-    // On the keys' clock, not the panel spring's slow tail.
-    final actionsGone = widget.keypadOpen
-        ? _actionsOut.transform(_keysIn.value)
-        : _actionsBack.transform(_keysShown.value);
     Widget rise(Interval interval, Widget child) => AnimatedBuilder(
       animation: widget.entrance,
       child: child,
@@ -244,9 +236,9 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
       _ => 'Speaker',
     };
     final upper = IgnorePointer(
-      ignoring: widget.animating,
+      ignoring: widget.animating || (!widget.keypadOpen && p > 0),
       child: ExcludeSemantics(
-        excluding: widget.animating,
+        excluding: widget.animating || (!widget.keypadOpen && p > 0),
         child: SizedBox(
           key: const ValueKey('call-upper-panel'),
           height: upperHeight,
@@ -254,7 +246,7 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
           child: Stack(
             clipBehavior: Clip.hardEdge,
             children: [
-              if (p < 1)
+              if (p < 1 || !widget.keypadOpen)
                 Positioned(
                   bottom: 0,
                   left: 0,
@@ -270,24 +262,27 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                       excluding: p > 0,
                       child: rise(
                         const Interval(0, .62, curve: Curves.easeOutCubic),
-                        Transform.scale(
+                        AnimatedBuilder(
+                          animation: _keysIn,
+                          builder: (context, child) {
+                            final hidden = _actionsOut.transform(_keysIn.value);
+                            return Transform.scale(
+                              scale: 1 - .06 * hidden,
+                              child: Opacity(opacity: 1 - hidden, child: child),
+                            );
+                          },
                           key: const ValueKey('receding-call-actions'),
-                          // A slight shrink as the row clears out.
-                          scale: 1 - .06 * actionsGone,
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               for (final action in actions)
                                 Expanded(
-                                  child: Opacity(
-                                    opacity: 1 - actionsGone,
-                                    child: CallAction(
-                                      icon: action.icon,
-                                      label: action.label,
-                                      active: action.active,
-                                      onPressed: action.tap,
-                                      size: actionSize,
-                                    ),
+                                  child: CallAction(
+                                    icon: action.icon,
+                                    label: action.label,
+                                    active: action.active,
+                                    onPressed: action.tap,
+                                    size: actionSize,
                                   ),
                                 ),
                             ],
@@ -466,13 +461,7 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
   /// Bouncier than the package's own bouncy preset, so a key visibly floats past its place.
   static final _keyFloat = GlassSpringCurve(GlassSpring.bouncy(extraBounce: .2), const Duration(milliseconds: 800));
 
-  /// On closing the keys ease out over the first 55% of the 420 ms close (about 230 ms).
-  static const _keysOut = Interval(.45, 1);
-
-  /// The action row clears out quickly and all at once as the keys rise, and on closing comes
-  /// back over the last half of the close, just as the keys finish going (as on ColorOS).
   static const _actionsOut = Interval(0, .2, curve: Curves.easeOut);
-  static const _actionsBack = Interval(0, .5, curve: Curves.easeInOutSine);
 
   /// When this call's note was first opened; the note's identity for Recents.
   DateTime? _noteAt;
@@ -504,17 +493,15 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
       width: column - 12,
       height: size,
       child: AnimatedBuilder(
-        animation: Listenable.merge([_keysIn, _keysShown]),
+        animation: _keysIn,
         builder: (context, child) {
-          // The entrance: staggered, floating up with a bounce.
+          // The same stagger and paint values run backwards on close. Resuming either
+          // direction from the current clock avoids opacity, scale and position jumps.
           final t = interval.transform(_keysIn.value);
           final float = _keyFloat.transform(t);
-          // Closing isn't the entrance reversed: on ColorOS the whole keypad fades out at once from
-          // wherever it is, sinking and shrinking a touch, with no stagger or bounce.
-          final k = Curves.easeInOutSine.transform(_keysOut.transform(_keysShown.value));
-          final opacity = Curves.easeOut.transform(t) * k;
-          final rise = 40 * (1 - float) + 8 * (1 - k);
-          final scale = (.86 + .14 * float) * (.96 + .04 * k);
+          final opacity = Curves.easeOut.transform(t);
+          final rise = 40 * (1 - float);
+          final scale = .86 + .14 * float;
           return Opacity(
             key: ValueKey('keypad-fade-$digit'),
             opacity: opacity * edgeReveal,

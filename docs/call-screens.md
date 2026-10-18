@@ -104,20 +104,35 @@ The header sits slightly above the centre of the space the controls leave.
   - While dialing, the avatar ripples slowly and "Calling" fills in its dots.
 - **Status chip**: "Muted" shows under the timer. An audio route change shows a 1.5 s chip ("Speaker on", "Bluetooth"). Hold dims the header and pulses "On hold".
 
-The keypad morph runs on the glass package's smooth spring (`GlassSpring.smooth`, 700 ms,
-no overshoot, 1% snap tolerance). Reversing mid-flight keeps its velocity.
+The keypad opens on the glass package's smooth spring (`GlassSpring.smooth`, 700 ms,
+no overshoot, 1% snap tolerance). Closing uses a 450 ms ease-in-out collapse alongside
+the reversed key cascade. Changing direction resumes the current geometry and paint values.
 
-- **Action row**: all four actions fade out together and quickly as the keys rise (the first 20% of the keys' clock), shrinking 6%. On closing they come back over the last half of the 420 ms close, just as the keys finish going.
-- **Keys**: squircle-ended keys (a superellipse, `bodyPath`, rather than true semicircle ends), three across (ColorOS 17). Each key has its own entrance, as in the ColorOS 17 video: rows arrive bottom-up a beat apart (`* 0 #` first, where the action row was), the middle key of each row leads its neighbours, and each key fades in and floats up 40 px, overshooting its place by about 16% on a bouncier glass spring (`GlassSpring.bouncy(extraBounce: .2)`) before settling, growing from 86%. The keys run on their own steady 650 ms clock (`_keysIn`), not the panel's spring, which does most of its travel at the start. Closing isn't the entrance reversed: as on ColorOS, every key fades out at once over about 230 ms (the first 55% of its own 420 ms close clock, `_keysShown`, so a close that interrupts the entrance still fades from wherever the keys are), sinking 8 px and shrinking to 96%, with no stagger or bounce. The panel holds its height for those 180 ms before collapsing, so the keys aren't clipped away mid-fade. Presses get the same `GlassButton` squeeze and glow.
+- **Action row**: all four actions fade out together over the first 20% of the keys' clock, shrinking 6%. Closing reverses that same fade and scale as the last keys leave. Opacity and scale update every frame from the shared key clock.
+- **Keys**: squircle-ended keys (a superellipse, `bodyPath`, rather than true semicircle ends), three across (ColorOS 17). Each key has its own entrance, as in the ColorOS 17 video: rows arrive bottom-up a beat apart (`* 0 #` first, where the action row was), the middle key of each row leads its neighbours, and each key fades in and floats up 40 px, overshooting its place by about 16% on a bouncier glass spring (`GlassSpring.bouncy(extraBounce: .2)`) before settling, growing from 86%. The keys run on their own steady 650 ms clock (`_keysIn`), not the panel's spring, which does most of its travel at the start. Closing runs the same animation backwards over 450 ms: upper rows leave first, sinking, shrinking and fading, then lower rows follow while the panel collapses smoothly. There is no separate fade or waiting phase. Interrupted transitions resume the current clock value without restarting or jumping. Presses get the same `GlassButton` squeeze and glow.
 - **Header**: the avatar and badges collapse away. Typed digits replace the
   caller name, and the name becomes the subtitle.
 - **Spacing**: with the keypad open, the gap above the bottom row is a little more than the gap between key rows (10 px more; 6 compact). Labels sit in a 32 px box, enough for two lines, so the rows stay close when the keypad is closed.
 - **Bottom row**: Speaker, End call and Dial pad never move. Dial pad lights white while the keypad is open, as on ColorOS. Upper
-  input is blocked while the panel animates.
+  input is blocked while the panel animates in either direction.
 - **Back** closes the keypad.
 - **Reduced motion** snaps every transition.
 
 ## Verification
+
+The static control wash, glow and rim are rasterized once at device pixel ratio,
+then reused while the controls move and scale. Their image is regenerated when
+size, radius or pixel ratio changes and disposed with the control. The frosted
+backdrop stays live outside this cache; text, icons and press feedback remain live.
+
+On the V2413, the 2026-10-18 connected-keypad profile traces showed median
+`GPURasterizer::Draw` time dropping from 5.37 ms to 4.56 ms and P95 from 8.95 ms
+to 8.34 ms. The user also reported smoother toggles. These are individual-device
+comparisons, not a guarantee that every frame stays within the 8.33 ms budget.
+
+Profile builds save their VM-service URI to `dialer-vm-service.txt` in the app's
+temporary directory, allowing local USB attachment when log discovery fails.
+Release builds omit this diagnostic path.
 
 - `flutter analyze`
 - `flutter test` (89 tests, including the call-screen and slide-handle cases)
