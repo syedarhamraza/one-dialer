@@ -108,7 +108,7 @@ class _TintedBody extends CustomPainter {
         ..shader = const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0x4DFFFFFF), Color(0x00FFFFFF), Color(0x00FFFFFF), Color(0x29FFFFFF)],
+          colors: [Color(0x3BFFFFFF), Color(0x00FFFFFF), Color(0x00FFFFFF), Color(0x1FFFFFFF)],
           stops: [0, .3, .7, 1],
         ).createShader(rect),
     );
