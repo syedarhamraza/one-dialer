@@ -199,7 +199,8 @@ object CallNotifications {
         val hangUp = CallActionReceiver.pendingIntent(context, CallActionReceiver.ACTION_HANG_UP, callId)
 
         val builder = Notification.Builder(context, CHANNEL_ONGOING)
-            .setSmallIcon(android.R.drawable.sym_action_call)
+            // vivo's call island shows this as-is: the same green glyph as the incoming island.
+            .setSmallIcon(R.drawable.island_phone)
             .setContentTitle(caller)
             .setContentText(
                 when (state) {
