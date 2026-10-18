@@ -3,8 +3,9 @@
 Incoming, dialing, connected, held, conference, private, and ended calls share a
 photo-led backdrop. A contact photo is decoded small and blurred once into a
 90×200 bitmap, which is then scaled to fill the screen. Callers without a photo
-get a dark gradient tinted from their avatar colour (`LetterAvatar.colorFor`).
-Private, conference and bare-number calls keep a neutral navy. Nothing is
+get a static aurora: a dark base with soft colour blobs in hues around their
+avatar colour (`LetterAvatar.colorFor`), so the glass controls have light to bend.
+Private, conference and bare-number calls get a blue, teal and violet one. Nothing is
 blurred per frame: there's no `BackdropFilter` or live blur. A fixed scrim keeps
 white text readable.
 

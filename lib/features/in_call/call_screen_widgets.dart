@@ -31,14 +31,14 @@ class CallBackdrop extends StatelessWidget {
           child: photo != null ? _BlurredPhoto(photo: photo!, fallback: _tint(seed)) : _tint(seed),
         ),
       ),
-      // Keeps white text readable on any photo and grounds the controls.
+      // Keeps white text readable on any photo, light enough low down for the glass to show colour.
       const DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             stops: [0, .4, 1],
-            colors: [Color(0x40000000), Color(0x14000000), Color(0xD9000000)],
+            colors: [Color(0x40000000), Color(0x14000000), Color(0x8C000000)],
           ),
         ),
       ),
@@ -46,28 +46,35 @@ class CallBackdrop extends StatelessWidget {
     ],
   );
 
+  /// A soft aurora: a dark base with three blurred-looking blobs in neighbouring hues, so the
+  /// glass controls have colour and light to bend. Painted once; nothing animates.
   static Widget _tint(String? seed) {
-    if (seed == null) {
-      return const DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF202638), Color(0xFF1C3A40), Color(0xFF0E1A21)],
-          ),
-        ),
-      );
-    }
-    final hsl = HSLColor.fromColor(LetterAvatar.colorFor(seed));
-    final top = hsl.withLightness(.30).withSaturation(math.min(hsl.saturation, .55)).toColor();
-    final mid = hsl.withLightness(.16).withSaturation(math.min(hsl.saturation, .45)).toColor();
-    return DecoratedBox(
+    final hue = seed == null ? 200.0 : HSLColor.fromColor(LetterAvatar.colorFor(seed)).hue;
+    Color tone(double shift, double lightness, [double saturation = .62]) =>
+        HSLColor.fromAHSL(1, (hue + shift) % 360, saturation, lightness).toColor();
+    Widget blob(Alignment centre, double radius, Color color) => DecoratedBox(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [top, mid, const Color(0xFF07090C)],
-        ),
+        gradient: RadialGradient(center: centre, radius: radius, colors: [color, color.withValues(alpha: 0)]),
+      ),
+    );
+    return RepaintBoundary(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [tone(0, .20, .45), tone(-30, .12, .40), const Color(0xFF06080B)],
+              ),
+            ),
+          ),
+          blob(const Alignment(-.9, -.75), .95, tone(0, .42).withValues(alpha: .75)),
+          blob(const Alignment(1, -.1), .85, tone(45, .38).withValues(alpha: .6)),
+          blob(const Alignment(-.5, .7), .9, tone(-50, .42).withValues(alpha: .7)),
+          blob(const Alignment(.8, .95), .75, tone(20, .40).withValues(alpha: .6)),
+        ],
       ),
     );
   }
