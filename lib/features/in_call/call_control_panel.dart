@@ -535,7 +535,11 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(digit, style: const TextStyle(fontSize: 30, height: 1.05, color: Colors.white)),
+                          // The font sets "*" high, like a superscript; lower it to sit centred.
+                          Transform.translate(
+                            offset: Offset(0, digit == '*' ? 7 : 0),
+                            child: Text(digit, style: const TextStyle(fontSize: 30, height: 1.05, color: Colors.white)),
+                          ),
                           // Keys without letters (1, *, #) centre their digit rather than leaving
                           // room for an empty line.
                           if (letters.isNotEmpty)
