@@ -54,10 +54,14 @@ class CallControlPanel extends StatefulWidget {
   State<CallControlPanel> createState() => _CallControlPanelState();
 }
 
-class _CallControlPanelState extends State<CallControlPanel> with SingleTickerProviderStateMixin {
+class _CallControlPanelState extends State<CallControlPanel> with TickerProviderStateMixin {
   /// The keys' own steady clock for their cascade, so it plays out evenly rather than riding the
   /// panel's spring, which does most of its travel at the start.
   late final AnimationController _keysIn;
+
+  /// Closing's own clock (1 shown, 0 gone), so a close always plays its full soft fade from
+  /// wherever the keys are, even one that interrupts the entrance.
+  late final AnimationController _keysShown;
 
   @override
   void initState() {
@@ -66,7 +70,11 @@ class _CallControlPanelState extends State<CallControlPanel> with SingleTickerPr
     _keysIn = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 650),
-      reverseDuration: const Duration(milliseconds: 300),
+      value: widget.keypadOpen ? 1 : 0,
+    );
+    _keysShown = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 420),
       value: widget.keypadOpen ? 1 : 0,
     );
   }
@@ -136,10 +144,13 @@ class _CallControlPanelState extends State<CallControlPanel> with SingleTickerPr
     if (oldWidget.keypadOpen != widget.keypadOpen || oldWidget.call.id != widget.call.id) {
       if (MediaQuery.disableAnimationsOf(context) || oldWidget.call.id != widget.call.id) {
         _keysIn.value = widget.keypadOpen ? 1 : 0;
+        _keysShown.value = widget.keypadOpen ? 1 : 0;
       } else if (widget.keypadOpen) {
-        _keysIn.forward();
+        _keysShown.value = 1;
+        _keysIn.forward(from: 0);
       } else {
-        _keysIn.reverse();
+        _keysIn.stop();
+        _keysShown.reverse(from: 1);
       }
     }
   }
@@ -147,6 +158,7 @@ class _CallControlPanelState extends State<CallControlPanel> with SingleTickerPr
   @override
   void dispose() {
     _keysIn.dispose();
+    _keysShown.dispose();
     _stopTone();
     _endingTimeout?.cancel();
     super.dispose();
@@ -157,7 +169,9 @@ class _CallControlPanelState extends State<CallControlPanel> with SingleTickerPr
     final telecom = TelecomBridge.instance;
     final p = widget.progress;
     // On the keys' clock, not the panel spring's slow tail.
-    final actionsGone = (widget.keypadOpen ? _actionsOut : _actionsBack).transform(_keysIn.value);
+    final actionsGone = widget.keypadOpen
+        ? _actionsOut.transform(_keysIn.value)
+        : _actionsBack.transform(_keysShown.value);
     Widget rise(Interval interval, Widget child) => AnimatedBuilder(
       animation: widget.entrance,
       child: child,
@@ -452,13 +466,13 @@ class _CallControlPanelState extends State<CallControlPanel> with SingleTickerPr
   /// Bouncier than the package's own bouncy preset, so a key visibly floats past its place.
   static final _keyFloat = GlassSpringCurve(GlassSpring.bouncy(extraBounce: .2), const Duration(milliseconds: 800));
 
-  /// On closing the keys are gone within the first 40% of their 300 ms reverse.
-  static const _keysOut = Interval(.6, 1);
+  /// On closing the keys ease out over the first 55% of the 420 ms close (about 230 ms).
+  static const _keysOut = Interval(.45, 1);
 
   /// The action row clears out quickly and all at once as the keys rise, and on closing comes
-  /// back in the last third of the keys' reverse, a beat after they have gone (as on ColorOS).
+  /// back over the last half of the close, just as the keys finish going (as on ColorOS).
   static const _actionsOut = Interval(0, .2, curve: Curves.easeOut);
-  static const _actionsBack = Interval(0, .35, curve: Curves.easeOut);
+  static const _actionsBack = Interval(0, .5, curve: Curves.easeInOutSine);
 
   /// When this call's note was first opened; the note's identity for Recents.
   DateTime? _noteAt;
@@ -490,23 +504,17 @@ class _CallControlPanelState extends State<CallControlPanel> with SingleTickerPr
       width: column - 12,
       height: size,
       child: AnimatedBuilder(
-        animation: _keysIn,
+        animation: Listenable.merge([_keysIn, _keysShown]),
         builder: (context, child) {
-          // Closing isn't the entrance reversed: on ColorOS the whole keypad fades out at once,
-          // sinking and shrinking a touch, with no stagger or bounce.
-          final double opacity, rise, scale;
-          if (widget.keypadOpen) {
-            final t = interval.transform(_keysIn.value);
-            final float = _keyFloat.transform(t);
-            opacity = Curves.easeOut.transform(t);
-            rise = 40 * (1 - float);
-            scale = .86 + .14 * float;
-          } else {
-            final k = Curves.easeIn.transform(_keysOut.transform(_keysIn.value));
-            opacity = k;
-            rise = 14 * (1 - k);
-            scale = .94 + .06 * k;
-          }
+          // The entrance: staggered, floating up with a bounce.
+          final t = interval.transform(_keysIn.value);
+          final float = _keyFloat.transform(t);
+          // Closing isn't the entrance reversed: on ColorOS the whole keypad fades out at once from
+          // wherever it is, sinking and shrinking a touch, with no stagger or bounce.
+          final k = Curves.easeInOutSine.transform(_keysOut.transform(_keysShown.value));
+          final opacity = Curves.easeOut.transform(t) * k;
+          final rise = 40 * (1 - float) + 8 * (1 - k);
+          final scale = (.86 + .14 * float) * (.96 + .04 * k);
           return Opacity(
             key: ValueKey('keypad-fade-$digit'),
             opacity: opacity * edgeReveal,

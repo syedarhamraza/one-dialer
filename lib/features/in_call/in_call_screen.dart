@@ -236,18 +236,31 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     ),
   ]);
 
+  /// Holds the panel open while the keys fade out, so they aren't clipped away as it collapses.
+  Timer? _collapseAfterFade;
+
   void _toggleKeypad() {
     if (_keypadOpen) TelecomBridge.instance.stopDtmf(widget.call.id);
     setState(() => _keypadOpen = !_keypadOpen);
     final target = _keypadOpen ? 1.0 : 0.0;
+    _collapseAfterFade?.cancel();
     if (MediaQuery.disableAnimationsOf(context)) {
       _morph.value = target;
+    } else if (!_keypadOpen && _morph.value > 0) {
+      // As on ColorOS: the keys fade where they are (CallControlPanel, ~180 ms), then the layout
+      // settles.
+      _morph.stop();
+      _collapseAfterFade = Timer(const Duration(milliseconds: 180), () {
+        if (mounted && !_keypadOpen) _springTo(0);
+      });
     } else {
-      _morph.animateWith(
-        SpringSimulation(_spring, _morph.value, target, _morph.velocity, tolerance: _settled, snapToEnd: true),
-      );
+      _springTo(target);
     }
   }
+
+  void _springTo(double target) => _morph.animateWith(
+    SpringSimulation(_spring, _morph.value, target, _morph.velocity, tolerance: _settled, snapToEnd: true),
+  );
 
   @override
   void didChangeDependencies() {
@@ -279,6 +292,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   @override
   void dispose() {
     _toastTimer?.cancel();
+    _collapseAfterFade?.cancel();
     _ballTimeout?.cancel();
     _fly.dispose();
     _morph.dispose();

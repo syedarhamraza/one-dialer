@@ -473,6 +473,25 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('closing mid-entrance fades the keys out instead of dropping them', (tester) async {
+    await open(tester);
+    await emit(tester, [call('active')]);
+    double fade(String digit) => tester.widget<Opacity>(find.byKey(ValueKey('keypad-fade-$digit'))).opacity;
+    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    final shown = fade('0');
+    expect(shown, greaterThan(.5));
+    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
+    // Still on its way out, not gone in a frame.
+    expect(fade('0'), inExclusiveRange(.3, shown + .01));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Mute'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('rapid toggles reverse from the current geometry without a jump', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
@@ -485,7 +504,10 @@ void main() {
     await tester.tap(find.byTooltip('Dial pad'));
     await tester.pump();
     expect(tester.getSize(panel).height, before);
-    // The spring carries its momentum briefly, then heads back down.
+    // The panel holds while the keys fade (180 ms), then the spring heads back down.
+    await tester.pump(const Duration(milliseconds: 60));
+    expect(tester.getSize(panel).height, before);
+    await tester.pump(const Duration(milliseconds: 60));
     await tester.pump(const Duration(milliseconds: 60));
     await tester.pump(const Duration(milliseconds: 60));
     await tester.pump(const Duration(milliseconds: 60));
