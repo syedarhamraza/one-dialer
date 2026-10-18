@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
@@ -218,12 +219,16 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     } else {
       // Bends only part way toward the corner below the ball, for a gentle arc.
       final bend = Offset.lerp((from.center + to.center) / 2, Offset(from.center.dx, to.center.dy), .25)!;
-      final u = 1 - t;
-      final centre = from.center * (u * u) + bend * (2 * u * t) + to.center * (t * t);
+      // The path itself stops on End; the curve's small overshoot carries the ball on to the left
+      // and a little up past it (as on ColorOS), then back into place.
+      final p = settled;
+      final u = 1 - p;
+      final centre = from.center * (u * u) + bend * (2 * u * p) + to.center * (p * p);
+      final past = math.max(0.0, t - 1) * (to.center - from.center).distance;
       rect = Rect.fromCenter(
-        center: centre,
-        width: lerpDouble(from.width, to.width, t)!,
-        height: lerpDouble(from.height, to.height, t)!,
+        center: centre + _overshoot * past,
+        width: lerpDouble(from.width, to.width, p)!,
+        height: lerpDouble(from.height, to.height, p)!,
       );
     }
     // The ball wears the End pill's finish the whole way, its colour morphing from Answer's green
@@ -278,6 +283,9 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
       ),
     );
   }
+
+  /// Which way the landing overshoots: left, lifting slightly (a unit vector).
+  static final _overshoot = const Offset(-1, -.3) / const Offset(-1, -.3).distance;
 
   static final _ballColor = TweenSequence<Color?>([
     TweenSequenceItem(
