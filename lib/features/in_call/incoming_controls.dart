@@ -5,8 +5,8 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
-import '../../theme/one_ui_theme.dart';
 import '../../widgets/one_ui_floating_modal.dart';
+import 'call_controls.dart';
 
 /// Incoming call, ColorOS 17 style: Decline and Answer side by side, each dragged away to act,
 /// with a "Decline with message" pill underneath. Dragging one fades out everything else.
@@ -110,7 +110,8 @@ class _IncomingControlsState extends State<IncomingControls> {
                 Opacity(
                   opacity: _opacityFor('Decline'),
                   child: SwipeUpButton(
-                    color: OneUITheme.accentRed,
+                    // The connected screen's End red.
+                    color: const Color(0xFFC93D31),
                     icon: Icons.call_end_rounded,
                     label: 'Decline',
                     compact: compact,
@@ -121,7 +122,7 @@ class _IncomingControlsState extends State<IncomingControls> {
                 Opacity(
                   opacity: _opacityFor('Answer'),
                   child: SwipeUpButton(
-                    color: OneUITheme.accentGreen,
+                    color: answerGreen,
                     icon: Icons.call_rounded,
                     label: 'Answer',
                     compact: compact,
@@ -139,15 +140,23 @@ class _IncomingControlsState extends State<IncomingControls> {
           if (canText)
             Opacity(
               opacity: _opacityFor(null),
-              child: TextButton.icon(
-                onPressed: () => _declineWithMessage(context),
-                icon: const Icon(Icons.chat_bubble_rounded, size: 18),
-                label: const Text('Decline with message', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  backgroundColor: Colors.white.withValues(alpha: .16),
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                  shape: const StadiumBorder(),
+              // Frosted like the connected screen's buttons, with the same glass press.
+              child: BackdropGroup(
+                child: CallBody(
+                  radius: 22,
+                  child: TextButton.icon(
+                    onPressed: () => _declineWithMessage(context),
+                    icon: const Icon(Icons.chat_bubble_rounded, size: 18),
+                    label: const Text(
+                      'Decline with message',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                    ),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                      shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(22)),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -157,7 +166,7 @@ class _IncomingControlsState extends State<IncomingControls> {
   }
 }
 
-//// A call button that follows the finger anywhere and acts when released at least [threshold]
+/// A call button that follows the finger anywhere and acts when released at least [threshold]
 /// away and above where it started; shorter or downward drags spring back and taps do nothing,
 /// so pocket touches can't answer or decline. A dash above it rises and fades to show the
 /// gesture. Screen readers can activate it directly.
@@ -371,14 +380,34 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                                 key: ValueKey('swipe-${widget.label}'),
                                 width: size,
                                 height: size,
+                                // The connected screen's End pill finish: top-lit, a glossy top half and
+                                // a soft glow, brighter as the drag arms.
                                 decoration: BoxDecoration(
-                                  color: widget.color,
                                   shape: BoxShape.circle,
+                                  border: Border.all(color: const Color(0x40FFFFFF), width: .8),
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [Color.lerp(widget.color, Colors.white, .16)!, widget.color],
+                                  ),
                                   boxShadow: [
-                                    BoxShadow(color: widget.color.withValues(alpha: .45 * armed), blurRadius: 28),
+                                    BoxShadow(
+                                      color: widget.color.withValues(alpha: .3 + .25 * armed),
+                                      blurRadius: 22 + 10 * armed,
+                                      offset: const Offset(0, 6),
+                                    ),
                                   ],
                                 ),
-                                child: Icon(widget.icon, color: Colors.white, size: size * .42),
+                                foregroundDecoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [Color(0x40FFFFFF), Color(0x0AFFFFFF), Color(0x00FFFFFF)],
+                                    stops: [0, .45, .55],
+                                  ),
+                                ),
+                                child: Icon(widget.icon, color: Colors.white, size: size * .46),
                               ),
                             ),
                           ),
@@ -417,3 +446,6 @@ class _ArcHint extends CustomPainter {
   @override
   bool shouldRepaint(_ArcHint oldDelegate) => oldDelegate.color != color;
 }
+
+/// Answer's green, finished like the End pill (and where the flying Answer ball starts).
+const answerGreen = Color(0xFF2FAE52);

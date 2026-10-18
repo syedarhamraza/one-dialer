@@ -57,7 +57,11 @@ number geocoder isn't public API.
 ## Incoming
 
 ColorOS 17 style: Decline (left) and Answer (right) each follow the finger
-anywhere, with a "Decline with message" pill underneath. While one is dragged,
+anywhere, with a "Decline with message" pill underneath. They're finished like
+the connected screen: the balls take the End pill's look (top-lit gradient,
+glossy top half, light rim, a glow that brightens as the drag arms) in End's red
+and `answerGreen`, and the pill is a frosted `CallBody` with the same glass
+press. While one is dragged,
 the other button and the pill fade out as it arms.
 
 - Release at least `threshold` (96 px) away, moving upward, to act. Downward drags never arm.

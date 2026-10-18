@@ -9,7 +9,6 @@ import '../../core/contacts/contacts_repository.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_scroll.dart';
-import '../../theme/one_ui_theme.dart';
 import 'call_control_panel.dart';
 import 'call_controls.dart';
 import 'call_screen_widgets.dart';
@@ -227,7 +226,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
 
   static final _ballColor = TweenSequence<Color?>([
     TweenSequenceItem(
-      tween: ColorTween(begin: OneUITheme.accentGreen, end: const Color(0xFFF5A04A)),
+      tween: ColorTween(begin: answerGreen, end: const Color(0xFFF5A04A)),
       weight: 1,
     ),
     TweenSequenceItem(
