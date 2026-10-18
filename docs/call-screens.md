@@ -7,7 +7,11 @@ access" on Android 13+). Instead `InCallTheme` shows the system wallpaper behind
 `InCallActivity`'s window (`windowShowWallpaper`, translucent), the activity runs
 Flutter transparent on a SurfaceView (not the slower TextureView), and on Android
 12+ it asks the compositor to blur what's behind (`setBackgroundBlurRadius`,
-following `addCrossWindowBlurEnabledListener`). `WallpaperBackdrop.kt` reports
+following `addCrossWindowBlurEnabledListener`). Over the lock screen Android puts
+the lock-screen wallpaper behind; so that an unlocked phone shows the home one,
+the activity only asks to show when locked while the keyguard is up: it sets
+`setShowWhenLocked(true)` on screen-off (before the keyguard returns) and
+`false` on unlock (`USER_PRESENT`) and when it opens unlocked. `WallpaperBackdrop.kt` reports
 `{blur, colors}` over the bridge (`getWallpaperBackdrop`, pushed again as
 `onWallpaperBackdropChanged`). With blur on, `CallBackdrop` paints nothing opaque.
 With blur off (Android < 12, battery saver, unsupported devices) it paints an

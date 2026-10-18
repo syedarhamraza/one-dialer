@@ -1,6 +1,9 @@
 package com.syedarhamraza.dialer
 
+import android.app.KeyguardManager
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.IntentFilter
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -29,16 +32,41 @@ class InCallActivity : FlutterActivity() {
         WallpaperBackdrop.setBlur(enabled)
     }
 
+    /**
+     * Over the lock screen Android shows the lock-screen wallpaper behind us; unlocked, we want
+     * the home one. So the window only asks to show when locked while the phone is locked: it asks
+     * again the moment the screen goes off (before the keyguard comes up) and lets go on unlock.
+     */
+    private val lockChanges = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) =
+            setShowWhenLocked(intent.action == Intent.ACTION_SCREEN_OFF)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         CallManager.addListener(closeWhenIdle)
+        if (!getSystemService(KeyguardManager::class.java).isKeyguardLocked) setShowWhenLocked(false)
+        registerReceiver(
+            lockChanges,
+            IntentFilter().apply {
+                addAction(Intent.ACTION_SCREEN_OFF)
+                addAction(Intent.ACTION_USER_PRESENT)
+            },
+        )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             // Called right away with the current state, then on every change.
             windowManager.addCrossWindowBlurEnabledListener(blurListener)
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Unlocked again (after a screen-off): back to the home wallpaper.
+        if (!getSystemService(KeyguardManager::class.java).isKeyguardLocked) setShowWhenLocked(false)
+    }
+
     override fun onDestroy() {
+        unregisterReceiver(lockChanges)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             windowManager.removeCrossWindowBlurEnabledListener(blurListener)
         }
