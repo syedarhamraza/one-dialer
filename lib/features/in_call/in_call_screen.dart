@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
@@ -188,7 +189,17 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     if (_ball == null || _fly.isAnimating) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && _ball != null && !_fly.isAnimating) {
-        _fly.animateWith(SpringSimulation(GlassSpring.snappy(), 0, 1, 0));
+        // Launches fast, slows into place, overshoots a little and eases back (ColorOS).
+        _fly.animateWith(
+          SpringSimulation(
+            _flight,
+            0,
+            1,
+            3,
+            tolerance: const Tolerance(distance: .003, velocity: .05),
+            snapToEnd: true,
+          ),
+        );
       }
     });
   }
@@ -209,20 +220,66 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     final t = to == null ? 0.0 : _fly.value;
     final settled = t.clamp(0.0, 1.0);
     final rect = to == null ? from : Rect.lerp(from, to, t)!;
+    // The ball wears the End pill's finish the whole way, its colour morphing from Answer's green
+    // through orange to End's red, so it lands as the pill itself.
+    final color = _ballColor.transform(settled)!;
+    final shape = RoundedSuperellipseBorder(
+      borderRadius: BorderRadius.circular(rect.shortestSide / 2),
+      side: const BorderSide(color: Color(0x40FFFFFF), width: .8),
+    );
+    final iconSize = lerpDouble(from.shortestSide * .46, 41, settled)!;
+    // The handset tips over and hands off to the hang-up glyph as it lands.
+    final handoff = const Interval(.6, 1).transform(settled);
     return Positioned.fromRect(
       rect: rect,
       child: IgnorePointer(
-        child: DecoratedBox(
-          decoration: ShapeDecoration(shape: const StadiumBorder(), color: _ballColor.transform(settled)),
-          // The handset tips over into the hang-up glyph as it lands.
-          child: Transform.rotate(
-            angle: 2.36 * settled,
-            child: Icon(Icons.call_rounded, color: Colors.white, size: rect.shortestSide * .42),
+        child: Container(
+          key: const ValueKey('answer-flight'),
+          decoration: ShapeDecoration(
+            shape: shape,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color.lerp(color, Colors.white, .16)!, color],
+            ),
+            shadows: [BoxShadow(color: color.withValues(alpha: .35), blurRadius: 22, offset: const Offset(0, 6))],
+          ),
+          foregroundDecoration: ShapeDecoration(
+            shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(rect.shortestSide / 2)),
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0x40FFFFFF), Color(0x0AFFFFFF), Color(0x00FFFFFF)],
+              stops: [0, .45, .55],
+            ),
+          ),
+          alignment: Alignment.center,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Opacity(
+                opacity: 1 - handoff,
+                child: Transform.rotate(
+                  angle: 2.36 * settled,
+                  child: Icon(Icons.call_rounded, color: Colors.white, size: iconSize),
+                ),
+              ),
+              Opacity(
+                opacity: handoff,
+                child: Icon(Icons.call_end_rounded, color: Colors.white, size: iconSize),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
+
+  /// Fast launch (with a push), a slow approach, about 4-5% overshoot, settled in ~0.75 s.
+  static final _flight = SpringDescription.withDurationAndBounce(
+    duration: const Duration(milliseconds: 700),
+    bounce: .28,
+  );
 
   static final _ballColor = TweenSequence<Color?>([
     TweenSequenceItem(
@@ -230,7 +287,8 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
       weight: 1,
     ),
     TweenSequenceItem(
-      tween: ColorTween(begin: const Color(0xFFF5A04A), end: const Color(0xFFD74B3E)),
+      // End's red, so the hand-off to the real pill is seamless.
+      tween: ColorTween(begin: const Color(0xFFF5A04A), end: const Color(0xFFC93D31)),
       weight: 1,
     ),
   ]);

@@ -122,9 +122,7 @@ void main() {
     await gesture.up();
     await tester.pump();
     expect(nativeCalls.where((c) => c.method == 'answer'), hasLength(1));
-    final ball = find.byWidgetPredicate(
-      (w) => w is DecoratedBox && w.decoration is ShapeDecoration && (w.decoration as ShapeDecoration).color != null,
-    );
+    final ball = find.byKey(const ValueKey('answer-flight'));
     expect(ball, findsOneWidget);
     final released = tester.getRect(ball);
 
@@ -153,7 +151,10 @@ void main() {
     expect(tester.getRect(ball), isNot(released));
     expect(endOpacity(), 0);
 
-    await tester.pump(const Duration(milliseconds: 600));
+    // The flight overshoots a little and eases back; it has landed well within a second.
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
     expect(ball, findsNothing);
     expect(endOpacity(), 1);
     expect(tester.takeException(), isNull);
