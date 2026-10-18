@@ -536,16 +536,19 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(digit, style: const TextStyle(fontSize: 30, height: 1.05, color: Colors.white)),
-                          Text(
-                            letters.isEmpty ? ' ' : letters,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              height: 1.2,
-                              letterSpacing: 1.5,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white60,
+                          // Keys without letters (1, *, #) centre their digit rather than leaving
+                          // room for an empty line.
+                          if (letters.isNotEmpty)
+                            Text(
+                              letters,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                height: 1.2,
+                                letterSpacing: 1.5,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white60,
+                              ),
                             ),
-                          ),
                         ],
                       ),
                     ),
