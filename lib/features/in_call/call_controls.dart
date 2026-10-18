@@ -14,16 +14,9 @@ class CallGlassLayer extends StatelessWidget {
   const CallGlassLayer({super.key, required this.child});
   final Widget child;
 
-  static const settings = LiquidGlassSettings(
-    glassColor: Color(0x1AFFFFFF),
-    thickness: 22,
-    blur: 6,
-    lightIntensity: .6,
-    saturation: 1.6,
-  );
-
   @override
-  Widget build(BuildContext context) => AdaptiveLiquidGlassLayer(settings: settings, child: child);
+  // The package's own glass at its top tier, like the old glass nav bar.
+  Widget build(BuildContext context) => AdaptiveLiquidGlassLayer(quality: GlassQuality.premium, child: child);
 }
 
 /// A glass body inside [CallGlassLayer]: a circle, or a stadium when [radius] is given.
@@ -37,6 +30,7 @@ class CallGlass extends StatelessWidget {
   @override
   Widget build(BuildContext context) => AdaptiveGlass.grouped(
     shape: radius == null ? const LiquidOval() : LiquidRoundedRectangle(borderRadius: radius!),
+    quality: GlassQuality.premium,
     isInteractive: true,
     child: AnimatedContainer(
       duration: Duration(milliseconds: pressed ? 40 : 220),
@@ -94,6 +88,7 @@ class CallAction extends StatelessWidget {
     this.active = false,
     required this.onPressed,
     this.size = 60,
+    this.menu,
   });
   final IconData icon;
   final String label;
@@ -101,64 +96,69 @@ class CallAction extends StatelessWidget {
   final VoidCallback? onPressed;
   final double size;
 
+  /// Wraps just the circle (not its label) in a menu, given a builder for the circle with
+  /// the menu's own toggle as its tap.
+  final Widget Function(Widget Function(VoidCallback toggle) circle)? menu;
+
   @override
   Widget build(BuildContext context) {
     final still = MediaQuery.disableAnimationsOf(context);
     final fast = still ? Duration.zero : const Duration(milliseconds: 180);
     final enabled = onPressed != null;
     final foreground = active ? const Color(0xFF111418) : (enabled ? Colors.white : const Color(0x73FFFFFF));
+    Widget circle(VoidCallback? onPressed) => PressScale(
+      enabled: enabled,
+      child: SizedBox.square(
+        dimension: size,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            enabled ? const CallGlass() : const DecoratedBox(decoration: _outlined),
+            AnimatedScale(
+              scale: active ? 1 : 0,
+              duration: still ? Duration.zero : const Duration(milliseconds: 220),
+              curve: active ? Curves.easeOutBack : Curves.easeInCubic,
+              child: const DecoratedBox(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Color(0xEBFFFFFF),
+                  boxShadow: [BoxShadow(color: Color(0x40FFFFFF), blurRadius: 18)],
+                ),
+              ),
+            ),
+            IconButton(
+              tooltip: label,
+              isSelected: active,
+              iconSize: size * .36,
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                disabledBackgroundColor: Colors.transparent,
+                shape: const CircleBorder(),
+                side: BorderSide.none,
+                elevation: 0,
+              ),
+              onPressed: onPressed,
+              icon: TweenAnimationBuilder<Color?>(
+                tween: ColorTween(end: foreground),
+                duration: fast,
+                builder: (context, color, _) => AnimatedSwitcher(
+                  duration: fast,
+                  transitionBuilder: (child, animation) => FadeTransition(
+                    opacity: animation,
+                    child: ScaleTransition(scale: Tween(begin: .6, end: 1.0).animate(animation), child: child),
+                  ),
+                  child: Icon(icon, key: ValueKey(icon), color: color),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        PressScale(
-          enabled: enabled,
-          child: SizedBox.square(
-            dimension: size,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                enabled ? const CallGlass() : const DecoratedBox(decoration: _outlined),
-                AnimatedScale(
-                  scale: active ? 1 : 0,
-                  duration: still ? Duration.zero : const Duration(milliseconds: 220),
-                  curve: active ? Curves.easeOutBack : Curves.easeInCubic,
-                  child: const DecoratedBox(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Color(0xEBFFFFFF),
-                      boxShadow: [BoxShadow(color: Color(0x40FFFFFF), blurRadius: 18)],
-                    ),
-                  ),
-                ),
-                IconButton(
-                  tooltip: label,
-                  isSelected: active,
-                  iconSize: size * .36,
-                  style: IconButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    disabledBackgroundColor: Colors.transparent,
-                    shape: const CircleBorder(),
-                    side: BorderSide.none,
-                    elevation: 0,
-                  ),
-                  onPressed: onPressed,
-                  icon: TweenAnimationBuilder<Color?>(
-                    tween: ColorTween(end: foreground),
-                    duration: fast,
-                    builder: (context, color, _) => AnimatedSwitcher(
-                      duration: fast,
-                      transitionBuilder: (child, animation) => FadeTransition(
-                        opacity: animation,
-                        child: ScaleTransition(scale: Tween(begin: .6, end: 1.0).animate(animation), child: child),
-                      ),
-                      child: Icon(icon, key: ValueKey(icon), color: color),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+        menu == null ? circle(onPressed) : menu!(circle),
         const SizedBox(height: 8),
         SizedBox(
           height: 40,
