@@ -160,6 +160,31 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('More pops a menu above the row without covering it', (tester) async {
+    await open(tester);
+    await emit(tester, [call('active')]);
+    final more = tester.getRect(find.byTooltip('More'));
+    final note = tester.getRect(find.byTooltip('Note'));
+    await tester.tap(find.byTooltip('More'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    final addCall = tester.getRect(find.text('Add call'));
+    expect(addCall.bottom, lessThan(more.top));
+    expect(find.text('Audio output'), findsOneWidget);
+    // The row stays visible and More shows as on while its menu is open.
+    expect(tester.getRect(find.byTooltip('Note')), note);
+    expect(
+      tester.widget<IconButton>(find.byWidgetPredicate((w) => w is IconButton && w.tooltip == 'More')).isSelected,
+      isTrue,
+    );
+    await tester.tap(find.text('Add call'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Audio output'), findsNothing);
+    expect(nativeCalls.where((c) => c.method == 'openDialer'), hasLength(1));
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('formatted number, location and end reasons come from Telecom', (tester) async {
     await open(tester);
     await emit(tester, [

@@ -386,31 +386,102 @@ class _CallControlPanelState extends State<CallControlPanel> {
     );
   }
 
-  /// ColorOS keeps the rarer actions behind More, in a glass menu that grows out of the button.
-  Widget _moreMenu(double size, {required bool showNote}) => GlassMenu(
-    menuAlignment: GlassMenuAlignment.bottomRight,
-    menuWidth: 210,
-    triggerBuilder: (context, toggle) =>
-        CallAction(icon: Icons.more_vert_rounded, label: 'More', size: size, onPressed: toggle),
-    items: [
-      GlassMenuItem(
-        icon: const Icon(Icons.add_call, color: Colors.white),
-        title: 'Add call',
-        onTap: TelecomBridge.instance.openDialer,
-      ),
-      if (showNote)
-        GlassMenuItem(
-          icon: const Icon(Icons.edit_note_rounded, color: Colors.white),
-          title: 'Note',
-          onTap: _editNote,
-        ),
-      GlassMenuItem(
-        icon: const Icon(Icons.volume_up_rounded, color: Colors.white),
-        title: 'Audio output',
-        onTap: () => chooseCallAudioRoute(context, widget.audio),
-      ),
-    ],
+  /// ColorOS keeps the rarer actions behind More: a small glass card pops up above the button,
+  /// right-aligned to it, while the button stays put and lights up.
+  Widget _moreMenu(double size, {required bool showNote}) => Builder(
+    builder: (context) => CallAction(
+      icon: Icons.more_vert_rounded,
+      label: 'More',
+      size: size,
+      active: _menuOpen,
+      onPressed: () => _openMore(context, size, showNote: showNote),
+    ),
   );
+
+  bool _menuOpen = false;
+
+  Future<void> _openMore(BuildContext anchor, double size, {required bool showNote}) async {
+    final box = anchor.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) return;
+    // The circle sits centred at the top of the action (its label is below).
+    final centre = box.localToGlobal(Offset(box.size.width / 2, size / 2));
+    final screen = MediaQuery.sizeOf(context);
+    final items = [
+      (icon: Icons.add_call, label: 'Add call', tap: TelecomBridge.instance.openDialer),
+      if (showNote) (icon: Icons.edit_note_rounded, label: 'Note', tap: _editNote),
+      (icon: Icons.volume_up_rounded, label: 'Audio output', tap: () => chooseCallAudioRoute(context, widget.audio)),
+    ];
+    setState(() => _menuOpen = true);
+    final picked = await showGeneralDialog<VoidCallback>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Close menu',
+      barrierColor: Colors.transparent,
+      transitionDuration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 220),
+      pageBuilder: (context, _, _) => Stack(
+        children: [
+          Positioned(
+            right: (screen.width - centre.dx - size / 2).clamp(8.0, screen.width),
+            bottom: screen.height - centre.dy + size / 2 + 12,
+            width: 210,
+            child: AdaptiveGlass(
+              shape: const LiquidRoundedSuperellipse(borderRadius: 24),
+              settings: CallGlassLayer.settings.copyWith(glassColor: const Color(0x33141A1A)),
+              child: Material(
+                type: MaterialType.transparency,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final item in items)
+                        InkWell(
+                          onTap: () => Navigator.of(context).pop(item.tap),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                            child: Row(
+                              children: [
+                                Icon(item.icon, color: Colors.white, size: 20),
+                                const SizedBox(width: 14),
+                                Flexible(
+                                  child: Text(
+                                    item.label,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 15, color: Colors.white),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      // Grows out of the corner nearest the button.
+      transitionBuilder: (context, animation, _, child) {
+        final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic, reverseCurve: Curves.easeInCubic);
+        return FadeTransition(
+          opacity: curved,
+          child: ScaleTransition(
+            scale: Tween(begin: .85, end: 1.0).animate(curved),
+            alignment: Alignment(
+              ((centre.dx / screen.width) * 2 - 1).clamp(-1.0, 1.0),
+              ((centre.dy - size / 2) / screen.height * 2 - 1).clamp(-1.0, 1.0),
+            ),
+            child: child,
+          ),
+        );
+      },
+    );
+    if (!mounted) return;
+    setState(() => _menuOpen = false);
+    picked?.call();
+  }
 
   // Room above the top row so its edge reveal reaches full opacity.
   static const double _keypadTop = 16;
