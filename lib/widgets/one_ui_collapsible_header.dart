@@ -39,13 +39,11 @@ class OneUIHeaderAction extends StatelessWidget {
         key: actionKey,
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
-        child: GlassPress(
-          child: Container(
-            width: width ?? 36,
-            height: height ?? 36,
-            alignment: Alignment.center,
-            child: Icon(icon, size: size ?? 21, color: OneUITheme.textPrimary),
-          ),
+        child: Container(
+          width: width ?? 36,
+          height: height ?? 36,
+          alignment: Alignment.center,
+          child: Icon(icon, size: size ?? 21, color: OneUITheme.textPrimary),
         ),
       ),
     );
@@ -235,13 +233,14 @@ class _OneUIHeaderContentState extends State<_OneUIHeaderContent> {
     if (!widget.showBackButton) return const SizedBox.shrink();
 
     return RepaintBoundary(
-      child: Semantics(
-        button: true,
-        label: 'Back',
-        child: GestureDetector(
-          onTap: widget.onBack ?? () => Navigator.maybePop(context),
-          behavior: HitTestBehavior.opaque,
-          child: GlassPress(
+      // The glass press goes outside the tap handler: its own tap recognizer would win the tap.
+      child: GlassPress(
+        child: Semantics(
+          button: true,
+          label: 'Back',
+          child: GestureDetector(
+            onTap: widget.onBack ?? () => Navigator.maybePop(context),
+            behavior: HitTestBehavior.opaque,
             child: OneUIGlassSurface.circle(
               size: 44,
               progress: pillProgress,
@@ -321,14 +320,18 @@ class _OneUIHeaderContentState extends State<_OneUIHeaderContent> {
       return null;
     }
 
-    final pill = OneUIGlassSurface(
-      key: widget.actionsPillKey,
-      height: 44,
-      borderRadius: const BorderRadius.all(Radius.circular(24)),
-      progress: math.max(pillProgress, selectionT),
-      // The capsule stretches leftwards from its right edge while its content
-      // fades through (see OneUIMorphSwitcher).
-      child: OneUIMorphSwitcher(alignment: Alignment.centerRight, child: content),
+    // The whole pill presses as one; each action inside keeps its own tap.
+    final pill = GlassPress(
+      radius: 24,
+      child: OneUIGlassSurface(
+        key: widget.actionsPillKey,
+        height: 44,
+        borderRadius: const BorderRadius.all(Radius.circular(24)),
+        progress: math.max(pillProgress, selectionT),
+        // The capsule stretches leftwards from its right edge while its content
+        // fades through (see OneUIMorphSwitcher).
+        child: OneUIMorphSwitcher(alignment: Alignment.centerRight, child: content),
+      ),
     );
 
     return RepaintBoundary(

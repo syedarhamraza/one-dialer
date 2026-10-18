@@ -15,6 +15,7 @@ import '../settings/settings_screen.dart';
 import 'speed_dial_screen.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_collapsible_header.dart';
+import '../../widgets/frosted_body.dart';
 import '../../widgets/one_ui_glass_surface.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/place_call.dart';
@@ -208,35 +209,39 @@ class _KeypadScreenState extends State<KeypadScreen> {
                                   // ColorOS: the keypad's actions share one frosted pill.
                                   child: Align(
                                     alignment: Alignment.centerRight,
-                                    child: OneUIGlassSurface(
-                                      height: 44,
-                                      borderRadius: const BorderRadius.all(Radius.circular(24)),
-                                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        spacing: 4,
-                                        children: [
-                                          if (number.isNotEmpty)
+                                    // The whole pill presses as one; each action keeps its tap.
+                                    child: GlassPress(
+                                      radius: 24,
+                                      child: OneUIGlassSurface(
+                                        height: 44,
+                                        borderRadius: const BorderRadius.all(Radius.circular(24)),
+                                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          spacing: 4,
+                                          children: [
+                                            if (number.isNotEmpty)
+                                              OneUIHeaderAction(
+                                                icon: Icons.add_rounded,
+                                                size: 28,
+                                                tooltip: 'Add to Contacts',
+                                                onTap: () => showAddToContacts(context, number),
+                                              ),
                                             OneUIHeaderAction(
-                                              icon: Icons.add_rounded,
-                                              size: 28,
-                                              tooltip: 'Add to Contacts',
-                                              onTap: () => showAddToContacts(context, number),
+                                              icon: Icons.search_rounded,
+                                              size: 26,
+                                              tooltip: 'Search',
+                                              onTap: () => openSearch(context),
                                             ),
-                                          OneUIHeaderAction(
-                                            icon: Icons.search_rounded,
-                                            size: 26,
-                                            tooltip: 'Search',
-                                            onTap: () => openSearch(context),
-                                          ),
-                                          OneUIHeaderAction(
-                                            actionKey: _menuKey,
-                                            icon: Icons.more_vert_rounded,
-                                            size: 26,
-                                            tooltip: 'More options',
-                                            onTap: _openMenu,
-                                          ),
-                                        ],
+                                            OneUIHeaderAction(
+                                              actionKey: _menuKey,
+                                              icon: Icons.more_vert_rounded,
+                                              size: 26,
+                                              tooltip: 'More options',
+                                              onTap: _openMenu,
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),

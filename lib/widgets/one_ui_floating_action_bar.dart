@@ -48,12 +48,16 @@ class OneUIFloatingActionBar extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: RepaintBoundary(
-              child: OneUIGlassSurface(
-                borderRadius: const BorderRadius.all(Radius.circular(34)),
-                elevation: OneUIGlassElevation.navbar,
-                height: 60,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                child: _buildRow(),
+              // The whole bar presses as one; each action inside keeps its own tap.
+              child: GlassPress(
+                radius: 34,
+                child: OneUIGlassSurface(
+                  borderRadius: const BorderRadius.all(Radius.circular(34)),
+                  elevation: OneUIGlassElevation.navbar,
+                  height: 60,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  child: _buildRow(),
+                ),
               ),
             ),
           ),
@@ -82,36 +86,32 @@ class OneUIFloatingActionBar extends StatelessWidget {
                   }
                 : null,
             borderRadius: BorderRadius.circular(26),
-            // The glass press replaces the ripple.
-            splashColor: Colors.transparent,
-            highlightColor: Colors.transparent,
-            child: GlassPress(
-              radius: 26,
-              child: SizedBox(
-                width: 68,
-                // Cross-fades when an action changes in place (e.g. Renew → Undo).
-                child: OneUIMorphSwitcher(
-                  animateSize: false,
-                  child: Column(
-                    key: ValueKey(item.label),
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(item.icon, size: 21, color: itemColor),
-                      const SizedBox(height: 3),
-                      Text(
-                        item.label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -0.2,
-                          color: itemColor,
-                        ),
+            splashColor: item.isEnabled ? Colors.white.withValues(alpha: 0.08) : Colors.transparent,
+            highlightColor: item.isEnabled ? Colors.white.withValues(alpha: 0.04) : Colors.transparent,
+            child: SizedBox(
+              width: 68,
+              // Cross-fades when an action changes in place (e.g. Renew → Undo).
+              child: OneUIMorphSwitcher(
+                animateSize: false,
+                child: Column(
+                  key: ValueKey(item.label),
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(item.icon, size: 21, color: itemColor),
+                    const SizedBox(height: 3),
+                    Text(
+                      item.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.2,
+                        color: itemColor,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
