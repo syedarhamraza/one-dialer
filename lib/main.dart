@@ -9,10 +9,12 @@ import 'app/dialer_app.dart';
 import 'app/in_call_app.dart';
 
 /// Main UI: dial pad, recents, contacts.
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   _profileServiceAddress();
-  runApp(const DialerApp());
+  // The nav bar uses the glass package's tab bar (motion only), which needs its shaders warmed.
+  await LiquidGlassWidgets.initialize();
+  runApp(LiquidGlassWidgets.wrap(brightnessResolver: Theme.maybeBrightnessOf, child: const DialerApp()));
 }
 
 void _profileServiceAddress() {

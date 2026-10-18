@@ -60,7 +60,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Recents'));
+    await tester.tap(find.text('Recents').first);
     await tester.pumpAndSettle();
     expect(tapped, 1);
   });
