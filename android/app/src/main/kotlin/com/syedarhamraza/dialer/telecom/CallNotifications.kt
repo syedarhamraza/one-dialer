@@ -1,5 +1,6 @@
 package com.syedarhamraza.dialer.telecom
 
+import android.app.KeyguardManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -17,18 +18,35 @@ import android.graphics.Shader
 import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
+import android.os.PowerManager
 import android.provider.ContactsContract
 import android.telecom.Call
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import com.syedarhamraza.dialer.InCallActivity
+import com.syedarhamraza.dialer.R
 
 object CallNotifications {
     private const val CHANNEL_INCOMING = "incoming_calls"
+    private const val CHANNEL_INCOMING_ISLAND = "incoming_calls_island"
+    // shortcut: vivo has no call scene (sic "METTING" = meetings); switch if vivo adds one.
+    private const val VIVO_SCENE = "METTING"
     private const val ID_INCOMING = 1
 
     fun showIncoming(context: Context, callId: String, call: Call) {
         val manager = context.getSystemService(NotificationManager::class.java)
+        // On an unlocked vivo the Atomic Island card is the pop-up; a heads-up banner would double it.
+        val island = vivoIsland &&
+            context.getSystemService(PowerManager::class.java).isInteractive &&
+            !context.getSystemService(KeyguardManager::class.java).isKeyguardLocked
+        val channel = if (island) CHANNEL_INCOMING_ISLAND else CHANNEL_INCOMING
         manager.createNotificationChannel(
-            NotificationChannel(CHANNEL_INCOMING, "Incoming calls", NotificationManager.IMPORTANCE_HIGH).apply {
+            NotificationChannel(
+                channel,
+                if (island) "Incoming calls (Origin Island)" else "Incoming calls",
+                if (island) NotificationManager.IMPORTANCE_DEFAULT else NotificationManager.IMPORTANCE_HIGH,
+            ).apply {
                 // Telecom plays the ringtone; the notification itself stays silent.
                 setSound(null, null)
                 enableVibration(false)
@@ -49,14 +67,15 @@ object CallNotifications {
         val answer = CallActionReceiver.pendingIntent(context, CallActionReceiver.ACTION_ANSWER, callId)
         val decline = CallActionReceiver.pendingIntent(context, CallActionReceiver.ACTION_DECLINE, callId)
 
-        val builder = Notification.Builder(context, CHANNEL_INCOMING)
+        val builder = Notification.Builder(context, channel)
             .setSmallIcon(android.R.drawable.sym_call_incoming)
             .setContentTitle(caller)
             .setContentText("Incoming call")
             .setCategory(Notification.CATEGORY_CALL)
             .setOngoing(true)
             .setContentIntent(fullScreen)
-            .setFullScreenIntent(fullScreen, true)
+            // CallStyle still needs a full-screen intent; not high priority when the island pops up instead.
+            .setFullScreenIntent(fullScreen, !island)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val person = Person.Builder().setName(caller).setIcon(callerIcon(context, details.handle?.schemeSpecificPart))
@@ -66,12 +85,88 @@ object CallNotifications {
             builder.addAction(Notification.Action.Builder(null, "Decline", decline).build())
             builder.addAction(Notification.Action.Builder(null, "Answer", answer).build())
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA && !vivoIsland) {
+            // Asks for a Live Update (status bar chip); on vivo it'd be a second island next to the card.
+            builder.addExtras(Bundle().apply { putBoolean(Notification.EXTRA_REQUEST_PROMOTED_ONGOING, true) })
+        }
+        val icon = callerIcon(context, details.handle?.schemeSpecificPart)
+            ?: Icon.createWithResource(context, R.drawable.island_caller) // LetterAvatar's no-photo person
+        if (vivoIsland) builder.addExtras(vivoIslandExtras(context, caller, icon, fullScreen, answer, decline))
 
         manager.notify(ID_INCOMING, builder.build())
     }
 
+    /**
+     * vivo's Atomic Island extras (dev.vivo.com.cn/documentCenter/doc/896): the expanded island card
+     * is vivo's basic template with Decline and Answer as its tappable images; the collapsed island
+     * reads like vivo's connected-call one. vivo collapses the card after a few seconds itself.
+     */
+    private fun vivoIslandExtras(
+        context: Context, caller: String, icon: Icon,
+        open: PendingIntent, answer: PendingIntent, decline: PendingIntent,
+    ) = Bundle().apply {
+        // The call screen's balls, exported by test/island_buttons_test.dart.
+        val answerIcon = Icon.createWithResource(context, R.drawable.island_answer)
+        val declineIcon = Icon.createWithResource(context, R.drawable.island_decline)
+        putInt("notification.superx.operation", 0) // create
+        putBoolean("notification.superx.showNotify", true)
+        putBoolean("notification.superx.sound", false) // Telecom rings
+        putInt("notification.superx.template", 4) // basic card: the only one with several tappable images
+        putString("notification.superx.scene", VIVO_SCENE)
+        putParcelable("notification.superx.clickResp", open)
+        putBundle("notification.superx.baseInfos", Bundle().apply {
+            putParcelable("notification.superx.baseInfos.icon", icon)
+            putCharSequence("notification.superx.baseInfos.title", caller)
+            putCharSequence("notification.superx.baseInfos.content", "Incoming call")
+            putInt("notification.superx.baseInfos.subInfo", 4) // image list, each with its own tap
+            putParcelableArrayList("notification.superx.baseInfos.subImageList", arrayListOf(declineIcon, answerIcon))
+            putParcelableArrayList("notification.superx.baseInfos.subInfoClickRespList", arrayListOf(decline, answer))
+        })
+        putBundle("notification.superx.shortInfos", Bundle().apply {
+            putParcelable("notification.superx.shortInfos.image", icon)
+            putParcelable("notification.superx.shortInfos.imageClickResp", open)
+            putString("notification.superx.shortInfos.describeShort", "Incoming call")
+            putString("notification.superx.shortInfos.coreInfoShort", caller)
+        })
+        putBundle("notification.superx.capsule", Bundle().apply {
+            putInt("notification.superx.capsule.state", 1)
+            putParcelable("notification.superx.capsule.icon", icon)
+            putString("notification.superx.capsule.content", caller)
+        })
+        putBundle("notification.superx.island", Bundle().apply {
+            putInt("island.superx.leftTemplate", 1) // image + text
+            putBundle("island.superx.leftInfo", Bundle().apply {
+                putParcelable("island.superx.leftInfo.icon", Icon.createWithResource(context, R.drawable.island_phone))
+            })
+            // Like vivo's connected-call island: green glyph left, green text (its timer) right.
+            putInt("island.superx.rightTemplate", 4) // text + image; text only here
+            putBundle("island.superx.rightInfo", Bundle().apply {
+                putCharSequence(
+                    "island.superx.rightInfo.content",
+                    SpannableString("Incoming").apply {
+                        setSpan(ForegroundColorSpan(0xFF2FAE52.toInt()), 0, length, 0) // answerGreen
+                    },
+                )
+            })
+            putInt("island.superx.islandClick", 0) // tap opens the card
+            putInt("island.superx.template", 4) // supports the large card
+            putBoolean("island.superx.forceShowCard", true) // push API's "show card now"; undocumented locally
+        })
+    }
+
+    /**
+     * A vivo with Atomic Island (its NotificationManager has vivo's island API). vivo's own
+     * getSceneStatus says false for unapproved apps even though the card shows, so it isn't used.
+     */
+    private val vivoIsland: Boolean by lazy {
+        Build.MANUFACTURER.equals("vivo", ignoreCase = true) &&
+            NotificationManager::class.java.declaredMethods.any { it.name == "getSceneStatus" }
+    }
+
     fun cancelIncoming(context: Context) {
-        context.getSystemService(NotificationManager::class.java).cancel(ID_INCOMING)
+        val manager = context.getSystemService(NotificationManager::class.java)
+        manager.cancel(ID_INCOMING)
+        manager.cancel("VIVO_SUPERX_TAG", ID_INCOMING) // vivo's tag for ending an atomic notification
     }
 
     /**
