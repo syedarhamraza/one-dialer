@@ -75,7 +75,7 @@ The header sits slightly above the centre of the space the controls leave.
   - Turning an action on grows a white fill out from the icon. The icon colour animates and the icon crossfades.
   - Unavailable actions (Hold while dialing) show as an outline, not a dim fill.
   - Press scale.
-- **Row**: Mute, Hold, Note (or Merge), More. More opens a glass `GlassMenu`
+- **Row**: Mute, Hold, Note (or Merge), More. More lights up and pops a glass card above itself
   with Add call, Audio output, and Note when Merge has taken its slot.
 - **Third slot**: Note on a single call. It opens a floating sheet over the call that saves as you type, so the note survives the other side hanging up. Notes are stored in `DialerPrefs` as `call_note_<number>_<millis>`, and Recents call details show each note under the logged call it was taken during. The slot becomes Merge once two calls can merge.
 - **End call**: a red gradient pill with a soft glow. Once tapped it draws in to a circle and dims. If Telecom hasn't ended the call within 3 s, it becomes tappable again.
