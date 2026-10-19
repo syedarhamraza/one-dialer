@@ -637,12 +637,17 @@ class _CallRow extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: _Pill(
-              height: keyHeight,
-              label: 'Call',
-              color: answerGreen,
-              onTap: onCall,
-              child: const Icon(Icons.call_rounded, color: Colors.white, size: 30),
+            // Lit like the call screen's End button: shaded body, coloured glow, light from below.
+            child: Container(
+              decoration: solidBody(answerGreen, const StadiumBorder()),
+              foregroundDecoration: solidGlow(const StadiumBorder()),
+              child: _Pill(
+                height: keyHeight,
+                label: 'Call',
+                color: Colors.transparent,
+                onTap: onCall,
+                child: const Icon(Icons.call_rounded, color: Colors.white, size: 30),
+              ),
             ),
           ),
           Expanded(
