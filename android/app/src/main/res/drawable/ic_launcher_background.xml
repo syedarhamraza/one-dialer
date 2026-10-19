@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The call screen's lit Answer green (solidBody + solidGlow in call_controls.dart). -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape>
+            <gradient android:angle="270" android:startColor="#FF2A9D4A" android:centerColor="#FF2FAE52"
+                android:centerY="0.55" android:endColor="#FF4CB96A" />
+        </shape>
+    </item>
+    <item>
+        <shape>
+            <gradient android:angle="270" android:startColor="#00FFFFFF" android:centerColor="#00FFFFFF"
+                android:centerY="0.5" android:endColor="#3DFFFFFF" />
+        </shape>
+    </item>
+</layer-list>

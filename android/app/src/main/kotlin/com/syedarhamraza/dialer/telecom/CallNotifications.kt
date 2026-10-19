@@ -71,7 +71,7 @@ object CallNotifications {
         val decline = CallActionReceiver.pendingIntent(context, CallActionReceiver.ACTION_DECLINE, callId)
 
         val builder = Notification.Builder(context, channel)
-            .setSmallIcon(android.R.drawable.sym_call_incoming)
+            .setSmallIcon(R.drawable.ic_stat_call)
             .setContentTitle(caller)
             .setContentText("Incoming call")
             .setCategory(Notification.CATEGORY_CALL)

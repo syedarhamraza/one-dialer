@@ -1,0 +1,8 @@
+<!-- Material Icons' phone_missed_rounded, the same glyph the app draws (Flutter's Icons.phone_missed_rounded). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path android:fillColor="#FFFFFFFF" android:pathData="M23.11 16.22C16.78 10.59 7.22 10.59 0.89 16.22C0.05 16.92 0.05 18.23 0.84 19.03L2.06 20.25C2.77 20.95 3.89 21 4.69 20.39L6.66 18.8C7.12 18.47 7.41 17.86 7.41 17.25V14.72C10.36 13.73 13.59 13.73 16.59 14.72V17.3C16.59 17.86 16.88 18.47 17.34 18.84L19.31 20.39C20.11 21 21.23 20.95 21.94 20.25L23.11 19.03C23.95 18.23 23.91 16.92 23.11 16.22ZM6 9C6.56 9 6.98 8.53 6.98 8.02V6.42L11.25 10.69C11.62 11.06 12.28 11.06 12.66 10.69L18.33 5.02C18.7 4.64 18.7 3.98 18.33 3.61C17.91 3.19 17.3 3.19 16.92 3.61L11.95 8.53L8.39 5.02H9.98C10.55 5.02 11.02 4.55 11.02 3.98C11.02 3.47 10.55 3 9.98 3H6C5.44 3 5.02 3.47 5.02 3.98V8.02C5.02 8.53 5.44 9 6 9Z" />
+</vector>

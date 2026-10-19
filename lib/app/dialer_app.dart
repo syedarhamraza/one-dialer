@@ -23,7 +23,7 @@ class DialerApp extends StatelessWidget {
   }
 }
 
-/// Shows [SetupScreen] until the app is the default phone app (or the user skips it).
+/// Shows [SetupScreen] until the app is the default phone app.
 class _SetupGate extends StatefulWidget {
   const _SetupGate();
 
@@ -33,7 +33,6 @@ class _SetupGate extends StatefulWidget {
 
 class _SetupGateState extends State<_SetupGate> with WidgetsBindingObserver {
   bool? _isDefault; // null while checking
-  bool _skipped = false;
 
   @override
   void initState() {
@@ -69,8 +68,7 @@ class _SetupGateState extends State<_SetupGate> with WidgetsBindingObserver {
     return switch (_isDefault) {
       null => const Scaffold(),
       true => const MainShell(),
-      false when _skipped => const MainShell(),
-      false => SetupScreen(onDone: _check, onSkip: () => setState(() => _skipped = true)),
+      false => SetupScreen(onDone: _check),
     };
   }
 }
