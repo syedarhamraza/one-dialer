@@ -75,6 +75,7 @@ Declare **"Calling"**: the full-screen intent shows incoming calls over the lock
 ### Other
 
 - Category: Communication. Ads: none. Target audience: 13+.
+- App icon (512 × 512): `docs/play-icon.png`, exported by `test/play_icon_test.dart` (see the file for the command); re-run it after changing the launcher icon.
 - `targetSdk` follows Flutter's default (`flutter.targetSdkVersion`); Play requires the current year's level for new apps and updates.
 
 ## Not in this app (by design)
