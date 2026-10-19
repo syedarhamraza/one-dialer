@@ -103,7 +103,7 @@ class _AppIcon extends StatelessWidget {
       height: 96,
       decoration: solidBody(answerGreen, shape, glow: .45, blur: 40),
       foregroundDecoration: solidGlow(shape),
-      child: const Icon(Icons.call_rounded, color: Colors.white, size: 48),
+      child: const Icon(Icons.call_rounded, color: Colors.white, size: 76),
     );
   }
 }

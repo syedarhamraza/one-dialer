@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import com.syedarhamraza.dialer.MainActivity
+import com.syedarhamraza.dialer.R
 
 /**
  * Telecom asks the default dialer to show missed-call notifications (and to restore them
@@ -51,7 +52,7 @@ object MissedCallNotifier {
         )
 
         val builder = Notification.Builder(context, CHANNEL)
-            .setSmallIcon(android.R.drawable.stat_notify_missed_call)
+            .setSmallIcon(R.drawable.ic_stat_missed_call)
             .setCategory(Notification.CATEGORY_MISSED_CALL)
             .setContentIntent(open)
             .setAutoCancel(true)

@@ -1,0 +1,10 @@
+<!-- Icons.call_rounded, as big in the icon as vivo's Phone glyph (about 60% of the visible tile). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group android:scaleX="2.4" android:scaleY="2.4" android:translateX="25.2" android:translateY="25.2">
+        <path android:fillColor="#FFFFFFFF" android:pathData="M19.22 15.28 16.69 14.95C16.08 14.91 15.47 15.09 15.05 15.56L13.22 17.39C10.36 15.94 8.06 13.64 6.61 10.78L8.48 8.95C8.91 8.53 9.09 7.92 9.05 7.31L8.77 4.78C8.62 3.75 7.78 3 6.75 3H5.02C3.89 3 2.95 3.94 3.05 5.06C3.56 13.64 10.41 20.44 18.94 20.95C20.06 21.05 21 20.11 21 18.98V17.25C21 16.22 20.25 15.38 19.22 15.28Z" />
+    </group>
+</vector>
