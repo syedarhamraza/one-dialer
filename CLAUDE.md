@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A custom Android default phone app (dialer). The UI is Flutter; a Kotlin layer under `android/` talks to Android's Telecom framework. Android-only (`--platforms android`); `minSdk 29` (needs `RoleManager.ROLE_DIALER`), `compileSdk 37` (required by `permission_handler_android`).
+A custom Android default phone app, **One Dialer** (application id `com.syedarhamraza.onedialer`; the Kotlin namespace and channel names stay `com.syedarhamraza.dialer`). The UI is Flutter; a Kotlin layer under `android/` talks to Android's Telecom framework. Android-only (`--platforms android`); `minSdk 29` (needs `RoleManager.ROLE_DIALER`), `compileSdk 37` (required by `permission_handler_android`).
 
 The UI design is ported from the sibling app OneSpend at `D:\one-spend` (pitch-black Samsung One UI); the reference screenshots of Samsung's Phone app are in `Images/` (local only, git-ignored). OneSpend widgets are copied **verbatim** into `lib/widgets/` (reformatted only) and compile against three stand-ins at the same import paths: `lib/theme/one_ui_effects.dart` (`OneUIEffectsController` returning OneSpend's flat-look values, re-exported by `one_ui_theme.dart`), `lib/core/haptics/haptics.dart`, and `lib/core/speech/voice_input.dart` (no mic yet). To add another OneSpend widget, copy it the same way; don't hand-rewrite.
 
@@ -39,8 +39,8 @@ Performance rules that keep the lists smooth: list content goes in lazy slivers 
 Incoming calls can be tested without a second phone: debug builds include a fake "Test line" (`android/app/src/debug/.../FakeCalls.kt`, never in release). Enable it once, then ring the phone (add `--ez private true` for a hidden number):
 
 ```bash
-adb shell telecom set-phone-account-enabled com.syedarhamraza.dialer/com.syedarhamraza.dialer.debug.FakeCallService fake 0
-adb shell am broadcast -n com.syedarhamraza.dialer/.debug.FakeCallReceiver --es number 03001234567
+adb shell telecom set-phone-account-enabled com.syedarhamraza.onedialer/com.syedarhamraza.dialer.debug.FakeCallService fake 0
+adb shell am broadcast -n com.syedarhamraza.onedialer/com.syedarhamraza.dialer.debug.FakeCallReceiver --es number 03001234567
 ```
 
 Call flows only work after the app is set as the default phone app (the home screen's "Set" button). Emulators can only fake calls (`adb emu gsm call <number>`).

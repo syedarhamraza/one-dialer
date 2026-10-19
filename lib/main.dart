@@ -7,12 +7,19 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import 'app/dialer_app.dart';
 import 'app/in_call_app.dart';
+import 'core/crash_reporting.dart';
+import 'features/updates/presentation/update_controller.dart';
 
 /// Main UI: dial pad, recents, contacts.
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   _profileServiceAddress();
+  await initCrashReporting();
   runApp(const DialerApp());
+  // Play's update API needs a foreground activity, so ask after the first frame.
+  WidgetsBinding.instance.addPostFrameCallback(
+    (_) => UpdateController.instance.loadPreferences().then((_) => UpdateController.instance.autoCheck()),
+  );
 }
 
 void _profileServiceAddress() {
@@ -31,6 +38,7 @@ void _profileServiceAddress() {
 Future<void> inCallMain() async {
   WidgetsFlutterBinding.ensureInitialized();
   _profileServiceAddress();
+  await initCrashReporting();
   // Pre-warms the call screen's glass shaders so its first frame doesn't flash.
   await LiquidGlassWidgets.initialize();
   runApp(LiquidGlassWidgets.wrap(brightnessResolver: Theme.maybeBrightnessOf, child: const InCallApp()));

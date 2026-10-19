@@ -6,6 +6,13 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Crashlytics: needs android/app/google-services.json from the Firebase console. Without it the
+// app builds and runs with crash reporting off (Firebase.initializeApp fails and is skipped).
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.crashlytics")
+}
+
 // Release signing: android/key.properties (never committed) points at the upload keystore.
 // Without it, release builds fall back to the debug key, which Google Play rejects.
 val keystoreProperties = Properties().apply {
@@ -25,7 +32,8 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.syedarhamraza.dialer"
+        // Play listing id; differs from the Kotlin namespace, which stays com.syedarhamraza.dialer.
+        applicationId = "com.syedarhamraza.onedialer"
         // 29 = Android 10: RoleManager.ROLE_DIALER and the modern Telecom APIs.
         minSdk = 29
         targetSdk = flutter.targetSdkVersion

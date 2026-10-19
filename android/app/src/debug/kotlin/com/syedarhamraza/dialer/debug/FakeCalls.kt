@@ -21,9 +21,9 @@ import android.util.Log
  * notifications); there's just no audio.
  *
  * Ring the phone:
- *   adb shell am broadcast -n com.syedarhamraza.dialer/.debug.FakeCallReceiver --es number 03001234567
+ *   adb shell am broadcast -n com.syedarhamraza.onedialer/com.syedarhamraza.dialer.debug.FakeCallReceiver --es number 03001234567
  * (`--ez private true` for a hidden number.) The first broadcast registers the line; enable it once with
- *   adb shell telecom set-phone-account-enabled com.syedarhamraza.dialer/com.syedarhamraza.dialer.debug.FakeCallService fake 0
+ *   adb shell telecom set-phone-account-enabled com.syedarhamraza.onedialer/com.syedarhamraza.dialer.debug.FakeCallService fake 0
  */
 class FakeCallService : ConnectionService() {
 

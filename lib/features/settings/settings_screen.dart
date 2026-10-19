@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/app_info.dart';
+import '../../core/config/app_version.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/one_ui_subpage.dart';
@@ -8,7 +9,10 @@ import '../../widgets/one_ui_group_card.dart';
 import '../blocking/blocking_repository.dart';
 import '../blocking/blocking_screen.dart';
 import '../keypad/speed_dial_screen.dart';
+import '../updates/presentation/update_controller.dart';
+import 'changelog_screen.dart';
 import 'quick_replies_screen.dart';
+import 'software_update_screen.dart';
 
 /// Call settings, plus a health check of everything incoming calls depend on.
 class SettingsScreen extends StatefulWidget {
@@ -21,12 +25,16 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObserver {
   final _telecom = TelecomBridge.instance;
   Map<Object?, Object?> _health = const {};
+  AppVersion? _version;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _refresh();
+    AppVersion.current().then((v) {
+      if (mounted) setState(() => _version = v);
+    });
   }
 
   @override
@@ -89,7 +97,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   @override
   Widget build(BuildContext context) {
     final problems = _problems;
-    final version = _health['version'];
     return OneUISubpage(
       title: 'Call settings',
       builder: (context) => [
@@ -132,10 +139,22 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           headerTitle: 'About',
           items: [
             OneUIGroupItem(
-              title: 'Version',
-              subtitle: version == null ? null : '$version (${_health['build']})',
-              trailing: const SizedBox.shrink(),
+              title: 'Software update',
+              subtitle: _version?.label,
+              trailing: ListenableBuilder(
+                listenable: UpdateController.instance,
+                builder: (context, _) => UpdateController.instance.updateAvailable
+                    ? const SizedBox.square(
+                        dimension: 8,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(color: OneUITheme.accentOrange, shape: BoxShape.circle),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+              onTap: () => SoftwareUpdateScreen.open(context),
             ),
+            OneUIGroupItem(title: "What's new", onTap: () => ChangelogScreen.open(context)),
             OneUIGroupItem(
               title: 'Privacy policy',
               onTap: () => _telecom.openSystemSettings('url:${AppInfo.privacyPolicyUrl}'),

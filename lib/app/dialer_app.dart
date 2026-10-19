@@ -14,7 +14,7 @@ class DialerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Dialer',
+      title: 'One Dialer',
       debugShowCheckedModeBanner: false,
       theme: OneUITheme.darkTheme,
       scrollBehavior: OneUITheme.scrollBehavior,
