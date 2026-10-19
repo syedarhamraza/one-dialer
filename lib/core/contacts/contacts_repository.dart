@@ -102,6 +102,14 @@ class ContactsRepository {
             primaryIndex: phones.indexWhere((p) => p.isPrimary ?? false),
           ),
     ]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    _publish(entries);
+  }
+
+  /// Shows [entries] (sorted by name) without reading the device, e.g. demo data for store screenshots.
+  @visibleForTesting
+  void debugSetContacts(List<DialerContact> entries) => _publish(entries);
+
+  void _publish(List<DialerContact> entries) {
     // Several contacts can share a number (duplicates across accounts); prefer one with a photo,
     // else the first by name, so the call screen shows the photo when any copy has one.
     final byNumber = <String, DialerContact>{};
