@@ -47,6 +47,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
             methods.invokeMethod("onCallLogChanged", null)
         }
     }
+    private var watchingCallLog = false
 
     /** Tells Flutter when the call backdrop changes: blur switched on/off or a new wallpaper. */
     private val backdropListener: () -> Unit = {
@@ -72,7 +73,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
     init {
         methods.setMethodCallHandler(this)
         events.setStreamHandler(this)
-        context.contentResolver.registerContentObserver(CallLog.Calls.CONTENT_URI, true, callLogObserver)
+        watchCallLog()
         WallpaperBackdrop.addListener(backdropListener)
         WallpaperManager.getInstance(context).addOnColorsChangedListener(wallpaperColorsListener, main)
     }
@@ -81,11 +82,19 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
         onCancel(null)
         toneGenerator?.release()
         toneGenerator = null
-        context.contentResolver.unregisterContentObserver(callLogObserver)
+        if (watchingCallLog) context.contentResolver.unregisterContentObserver(callLogObserver)
         WallpaperBackdrop.removeListener(backdropListener)
         WallpaperManager.getInstance(context).removeOnColorsChangedListener(wallpaperColorsListener)
         methods.setMethodCallHandler(null)
         events.setStreamHandler(null)
+    }
+
+    /** The call log needs READ_CALL_LOG, which comes with the dialer role: watch it once that's granted. */
+    private fun watchCallLog() {
+        if (watchingCallLog) return
+        if (context.checkSelfPermission(Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED) return
+        context.contentResolver.registerContentObserver(CallLog.Calls.CONTENT_URI, true, callLogObserver)
+        watchingCallLog = true
     }
 
     fun sendDialNumber(number: String) = methods.invokeMethod("onDialIntent", number)
@@ -103,7 +112,10 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
             )
             "consumeDialNumber" -> result.success(pendingDialNumber).also { pendingDialNumber = null }
             "consumeOpenRecents" -> result.success(pendingOpenRecents).also { pendingOpenRecents = false }
-            "getCallLog" -> inBackground(result) { CallLogSource.query(context) }
+            "getCallLog" -> {
+                watchCallLog()
+                inBackground(result) { CallLogSource.query(context) }
+            }
             "deleteCalls" -> {
                 val ids = call.argument<List<Number>>("ids").orEmpty().map(Number::toLong)
                 inBackground(result) { CallLogSource.delete(context, ids) }
