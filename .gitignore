@@ -57,3 +57,6 @@ app.*.map.json
 *.iml
 .idea/
 /.github/modernize/
+
+# Dart symbols from obfuscated release builds (tool/release.ps1), one folder per version
+/symbols/

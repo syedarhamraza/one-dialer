@@ -1,12 +1,12 @@
-# Dialer — Privacy Policy
+# One Dialer — Privacy Policy
 
 _Last updated: 17 October 2026_
 
-Dialer is a phone app for Android made by Syed Arham Raza. This policy explains what the app accesses and what it does with it.
+One Dialer is a phone app for Android made by Syed Arham Raza. This policy explains what the app accesses and what it does with it.
 
-## What Dialer accesses, and why
+## What One Dialer accesses, and why
 
-When you make Dialer your default phone app, Android gives it access to:
+When you make One Dialer your default phone app, Android gives it access to:
 
 | Data | Used for |
 | --- | --- |
@@ -18,7 +18,7 @@ When you make Dialer your default phone app, Android gives it access to:
 
 ## Where your data goes
 
-**Your calls, call history and contacts never leave your phone.** Dialer has no account and no servers, and it doesn't sell, share or upload any of this data. Settings you choose in the app (speed dial, blocking rules, quick decline messages, the SIM to use for a contact) are stored only on your phone.
+**Your calls, call history and contacts never leave your phone.** One Dialer has no account and no servers, and it doesn't sell, share or upload any of this data. Settings you choose in the app (speed dial, blocking rules, quick decline messages, the SIM to use for a contact) are stored only on your phone.
 
 "Decline with message" sends the text you pick as an SMS to the caller, through your carrier, only when you choose to.
 
@@ -28,7 +28,7 @@ If the app crashes, it sends a crash report to Firebase Crashlytics (Google) so 
 
 ## Children
 
-Dialer is not directed at children under 13.
+One Dialer is not directed at children under 13.
 
 ## Changes
 

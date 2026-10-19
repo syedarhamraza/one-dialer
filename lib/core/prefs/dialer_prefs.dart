@@ -106,4 +106,9 @@ class DialerPrefs {
     }
     changes.value++;
   }
+
+  /// Settings › Software update › Auto download (an `AutoUpdateCheck` name); null = never.
+  Future<String?> getAutoUpdateCheck() => _prefs.getString('auto_update_check');
+
+  Future<void> setAutoUpdateCheck(String mode) => _prefs.setString('auto_update_check', mode);
 }
