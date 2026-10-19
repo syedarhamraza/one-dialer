@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../theme/one_ui_theme.dart';
-import 'frosted_body.dart';
 import 'one_ui_glass_surface.dart';
 
 /// Floating scroll-to-top circular button matching Screenshot 2.
@@ -108,16 +107,14 @@ class _OneUIScrollToTopButtonState extends State<OneUIScrollToTopButton> {
         child: AnimatedOpacity(
           opacity: _isVisible ? 1.0 : 0.0,
           duration: const Duration(milliseconds: 180),
-          child: GlassPress(
-            child: Semantics(
-              button: true,
-              label: 'Scroll to top',
-              child: GestureDetector(
-                onTap: _scrollToTop,
-                child: const OneUIGlassSurface.circle(
-                  size: 46,
-                  child: Icon(Icons.keyboard_arrow_up_rounded, color: OneUITheme.textPrimary, size: 26),
-                ),
+          child: Semantics(
+            button: true,
+            label: 'Scroll to top',
+            child: GestureDetector(
+              onTap: _scrollToTop,
+              child: const OneUIGlassSurface.circle(
+                size: 46,
+                child: Icon(Icons.keyboard_arrow_up_rounded, color: OneUITheme.textPrimary, size: 26),
               ),
             ),
           ),
