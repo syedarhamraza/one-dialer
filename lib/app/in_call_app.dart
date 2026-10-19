@@ -18,26 +18,28 @@ class InCallApp extends StatelessWidget {
   }
 }
 
-/// Lays the call screen out at the width it was designed on (a vivo at 420 dp) and scales it
-/// down on narrower screens, so a 360 dp phone shows the same proportions, only smaller.
-/// Wider screens lay out normally.
+/// Lays the call screen out at the width it was designed on (a vivo at 420 dp) and scales it to
+/// the screen, so every phone shows the same proportions: a 360 dp phone smaller, a 448 dp one
+/// larger. Scaling up stops at [maxScale], so tablets and open foldables get sensible sizes and
+/// more room instead of giant buttons; landscape never scales.
 class DesignWidth extends StatelessWidget {
   const DesignWidth({super.key, required this.child});
 
   static const width = 420.0;
+  static const maxScale = 1.15;
 
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
-    final scale = media.size.width / width;
-    // Landscape is wider than 420 dp, so it never scales.
-    if (scale >= 1) return child;
+    if (media.size.width > media.size.height) return child;
+    final scale = (media.size.width / width).clamp(0.0, maxScale);
+    if (scale == 1) return child;
     return FittedBox(
       alignment: Alignment.topLeft,
       child: SizedBox(
-        width: width,
+        width: media.size.width / scale,
         height: media.size.height / scale,
         child: MediaQuery(
           data: media.copyWith(

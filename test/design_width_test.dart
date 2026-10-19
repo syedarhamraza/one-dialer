@@ -32,9 +32,25 @@ void main() {
     expect(drawn, size); // laid out at 420 wide; FittedBox shrinks it onto the 360 screen
   });
 
-  testWidgets('the design width and wider screens lay out unscaled', (tester) async {
+  testWidgets('the design width lays out unscaled', (tester) async {
     final (size, padding, _) = await layOut(tester, const Size(420, 933));
     expect(size, const Size(420, 933));
+    expect(padding.top, 36);
+  });
+
+  testWidgets('a wider phone scales up to the design width', (tester) async {
+    final (size, _, _) = await layOut(tester, const Size(448, 998));
+    expect(size.width, closeTo(DesignWidth.width, .01));
+  });
+
+  testWidgets('tablets stop scaling up at the cap and get more room instead', (tester) async {
+    final (size, _, _) = await layOut(tester, const Size(800, 1280));
+    expect(size.width, closeTo(800 / DesignWidth.maxScale, .01));
+  });
+
+  testWidgets('landscape never scales', (tester) async {
+    final (size, padding, _) = await layOut(tester, const Size(780, 360));
+    expect(size, const Size(780, 360));
     expect(padding.top, 36);
   });
 }

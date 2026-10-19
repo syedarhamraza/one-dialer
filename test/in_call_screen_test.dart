@@ -95,10 +95,16 @@ void main() {
       MaterialApp(
         theme: OneUITheme.darkTheme,
         scrollBehavior: OneUITheme.scrollBehavior,
-        builder: scaled ? (context, child) => DesignWidth(child: child!) : null,
+        // Scaled previews capture the whole screen, so the boundary goes above the scaling.
+        builder: scaled
+            ? (context, child) => RepaintBoundary(
+                key: boundary,
+                child: DesignWidth(child: child!),
+              )
+            : null,
         home: Builder(
           builder: (context) => RepaintBoundary(
-            key: boundary,
+            key: scaled ? null : boundary,
             child: MediaQuery(
               data: MediaQuery.of(context)
                   .copyWith(textScaler: TextScaler.linear(textScale), disableAnimations: reduceMotion),
@@ -186,6 +192,63 @@ void main() {
     expect(flight.center.dy, closeTo(letGo.center.dy, 2));
     expect(flight.width, closeTo(letGo.width, 2));
     await tester.pumpWidget(const SizedBox());
+  });
+
+  // Common phone widths (dp), a tablet and landscape. Portrait phones up to the scale-up cap keep the
+  // vivo's proportions; everything must lay out without overflow, ringing and connected.
+  const sizes = [
+    Size(320, 640), Size(360, 780), Size(384, 854), Size(393, 873), Size(412, 915), //
+    Size(420, 933), Size(448, 998), Size(480, 1040), Size(800, 1280), Size(780, 360),
+  ];
+  testWidgets('the call screen keeps the vivo proportions across screen sizes', (tester) async {
+    const fontPath = String.fromEnvironment('PREVIEW_FONT');
+    if (fontPath.isNotEmpty) {
+      await tester.runAsync(() async {
+        await (FontLoader('Roboto')..addFont(File(fontPath).readAsBytes().then(ByteData.sublistView))).load();
+        await (FontLoader('MaterialIcons')..addFont(
+              File('${File(fontPath).parent.path}/materialicons-regular.otf').readAsBytes().then(ByteData.sublistView),
+            ))
+            .load();
+      });
+    }
+    double? vivoRatio;
+    for (final size in sizes) {
+      final boundary = GlobalKey();
+      await open(tester, size: size, scaled: true, boundary: boundary);
+      await emit(tester, [call('ringing')]);
+      await tester.pump(const Duration(milliseconds: 900));
+      expect(tester.takeException(), isNull, reason: 'ringing at $size');
+      await emit(tester, [call('active')]);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: 'connected at $size');
+      final ratio = tester.getRect(find.byTooltip('End call')).width / size.width;
+      if (size.width == DesignWidth.width) vivoRatio = ratio;
+      if (fontPath.isNotEmpty) {
+        await tester.runAsync(() async {
+          final image = await (boundary.currentContext!.findRenderObject() as RenderRepaintBoundary).toImage(
+            pixelRatio: 2,
+          );
+          final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+          final file = File('build/call-previews/sizes/${size.width.toInt()}x${size.height.toInt()}.png');
+          await file.parent.create(recursive: true);
+          await file.writeAsBytes(bytes!.buffer.asUint8List());
+          image.dispose();
+        });
+      }
+      await tester.pumpWidget(const SizedBox());
+      final portraitPhone = size.height > size.width && size.width <= DesignWidth.width * DesignWidth.maxScale;
+      if (portraitPhone && vivoRatio != null) {
+        expect(ratio, closeTo(vivoRatio, .005), reason: 'End keeps the vivo proportion at $size');
+      }
+    }
+    // Phones narrower than the vivo come first in the list; check them against its ratio too.
+    for (final size in sizes.where((s) => s.width < DesignWidth.width)) {
+      await open(tester, size: size, scaled: true);
+      await emit(tester, [call('active')]);
+      await tester.pumpAndSettle();
+      expect(tester.getRect(find.byTooltip('End call')).width / size.width, closeTo(vivoRatio!, .005), reason: '$size');
+      await tester.pumpWidget(const SizedBox());
+    }
   });
 
   testWidgets('Add call takes the fourth slot and opens the dialer', (tester) async {
