@@ -227,6 +227,9 @@ class _KeypadScreenState extends State<KeypadScreen> {
                       ),
                     ),
                   Positioned(
+                    // Keyed so the results appearing above it on the first digit don't rebuild the
+                    // sheet, which would cut off the tapped key's press.
+                    key: const ValueKey('keypad-sheet'),
                     left: 0,
                     right: 0,
                     bottom: 0,
