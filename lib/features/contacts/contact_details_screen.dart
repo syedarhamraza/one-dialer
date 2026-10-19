@@ -18,6 +18,7 @@ import '../../widgets/one_ui_floating_modal.dart';
 import '../../widgets/one_ui_group_card.dart';
 import '../../widgets/one_ui_radio.dart';
 import '../../widgets/place_call.dart';
+import '../../widgets/press_glow.dart';
 import '../blocking/blocking_repository.dart';
 import 'contact_actions.dart';
 import 'contact_subpages.dart';
@@ -534,14 +535,16 @@ class _PillButton extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Center(
-        child: FilledButton(
-          onPressed: onTap,
-          style: FilledButton.styleFrom(
-            backgroundColor: OneUITheme.surfacePill,
-            foregroundColor: OneUITheme.textPrimary,
-            minimumSize: const Size(230, 52),
+        child: PressGlow(
+          child: FilledButton(
+            onPressed: onTap,
+            style: FilledButton.styleFrom(
+              backgroundColor: OneUITheme.surfacePill,
+              foregroundColor: OneUITheme.textPrimary,
+              minimumSize: const Size(230, 52),
+            ),
+            child: Text(label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
           ),
-          child: Text(label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
         ),
       ),
     );

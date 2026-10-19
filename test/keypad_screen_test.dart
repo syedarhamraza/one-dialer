@@ -57,6 +57,20 @@ void main() {
     expect(input.value, '0333');
   });
 
+  testWidgets('the first digit keeps the keypad sheet, so a key press is not cut off', (tester) async {
+    final input = ValueNotifier('');
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: OneUITheme.darkTheme,
+        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: input)),
+      ),
+    );
+    final sheet = tester.element(find.byKey(const ValueKey('keypad-panel')));
+    input.value = '5';
+    await tester.pump();
+    expect(tester.element(find.byKey(const ValueKey('keypad-panel'))), same(sheet));
+  });
+
   // Optional real-font render for visual review, without a connected Android device.
   const fontPath = String.fromEnvironment('PREVIEW_FONT');
   if (fontPath.isNotEmpty) {

@@ -5,6 +5,7 @@ import '../../theme/one_ui_theme.dart';
 import '../../widgets/one_ui_floating_modal.dart';
 import '../../widgets/one_ui_radio.dart';
 import '../../widgets/place_call.dart';
+import '../../widgets/press_glow.dart';
 
 /// Calls [contact]: its default (or only) number straight away, otherwise after Samsung's
 /// chooser, whose "Set as default" remembers the pick as Android's default number.
@@ -82,12 +83,14 @@ class _FooterButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextButton(
-      onPressed: onTap,
-      style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
-      child: Text(
-        label,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+    return PressGlow(
+      child: TextButton(
+        onPressed: onTap,
+        style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
+        child: Text(
+          label,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+        ),
       ),
     );
   }
