@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../../app/layout.dart';
 import '../../core/contacts/contacts_repository.dart';
@@ -15,6 +14,7 @@ import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_collapsible_header.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/place_call.dart';
+import '../../widgets/press_glow.dart';
 import 't9.dart';
 import '../search/search_screen.dart';
 import '../in_call/call_controls.dart';
@@ -280,14 +280,22 @@ class _KeypadScreenState extends State<KeypadScreen> {
                       bottom: MediaQuery.paddingOf(context).bottom + kNavBarVerticalPadding,
                       child: SizedBox.square(
                         dimension: kFloatingNavBarHeight,
-                        child: FloatingActionButton(
-                          tooltip: 'Show keypad',
-                          backgroundColor: const Color(0xFF08AB60),
-                          foregroundColor: Colors.white,
-                          shape: const CircleBorder(),
-                          elevation: 0,
-                          onPressed: _show,
-                          child: const Icon(Icons.dialpad_rounded),
+                        child: PressGlow(
+                          glowColor: const Color(0xFF08AB60),
+                          child: Container(
+                            decoration: solidBody(const Color(0xFF08AB60), const CircleBorder()),
+                            foregroundDecoration: solidGlow(const CircleBorder()),
+                            child: FloatingActionButton(
+                              tooltip: 'Show keypad',
+                              backgroundColor: Colors.transparent,
+                              foregroundColor: Colors.white,
+                              shape: const CircleBorder(),
+                              elevation: 0,
+                              highlightElevation: 0,
+                              onPressed: _show,
+                              child: const Icon(Icons.dialpad_rounded),
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -572,6 +580,7 @@ class _Pill extends StatelessWidget {
     required this.child,
     this.onLongPress,
     this.color = OneUITheme.surfacePill,
+    this.lit = false,
   });
 
   final double height;
@@ -579,6 +588,9 @@ class _Pill extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final Color color;
+
+  /// Lit like the call screen's solid buttons: shaded body, coloured glow, light from below.
+  final bool lit;
   final Widget child;
 
   @override
@@ -587,20 +599,29 @@ class _Pill extends StatelessWidget {
     label: label,
     enabled: onTap != null,
     excludeSemantics: true,
-    child: Material(
-      color: color,
-      shape: const StadiumBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        onLongPress: onLongPress,
-        splashColor: Colors.white.withValues(alpha: 0.08),
-        highlightColor: Colors.white.withValues(alpha: 0.15),
-        child: SizedBox(
-          height: height,
-          child: Center(
-            child: FittedBox(fit: BoxFit.scaleDown, child: child),
-          ),
+    child: PressGlow(
+      glowColor: lit ? color : null,
+      child: Container(
+        decoration: lit ? solidBody(color, const StadiumBorder()) : null,
+        foregroundDecoration: lit ? solidGlow(const StadiumBorder()) : null,
+        child: _ink(),
+      ),
+    ),
+  );
+
+  Widget _ink() => Material(
+    color: lit ? Colors.transparent : color,
+    shape: const StadiumBorder(),
+    clipBehavior: Clip.antiAlias,
+    child: InkWell(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      splashColor: Colors.white.withValues(alpha: 0.08),
+      highlightColor: Colors.white.withValues(alpha: 0.15),
+      child: SizedBox(
+        height: height,
+        child: Center(
+          child: FittedBox(fit: BoxFit.scaleDown, child: child),
         ),
       ),
     ),
@@ -622,9 +643,6 @@ class _CallRow extends StatelessWidget {
   final VoidCallback onBackspace;
   final VoidCallback onClear;
 
-  // Taps go to the pill inside; the glass button only draws the press.
-  static void _noTap() {}
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -641,25 +659,13 @@ class _CallRow extends StatelessWidget {
             ),
           ),
           Expanded(
-            // Lit and pressed like the call screen's End button: shaded body, coloured glow, light
-            // from below, and the glass package's press glow and stretch (no glass body).
-            child: GlassButton.custom(
-              style: GlassButtonStyle.transparent,
-              onTap: _noTap,
-              excludeFromSemantics: true,
-              canRequestFocus: false,
-              shape: LiquidRoundedRectangle(borderRadius: keyHeight / 2),
-              child: Container(
-                decoration: solidBody(answerGreen, const StadiumBorder()),
-                foregroundDecoration: solidGlow(const StadiumBorder()),
-                child: _Pill(
-                  height: keyHeight,
-                  label: 'Call',
-                  color: Colors.transparent,
-                  onTap: onCall,
-                  child: const Icon(Icons.call_rounded, color: Colors.white, size: 30),
-                ),
-              ),
+            child: _Pill(
+              height: keyHeight,
+              label: 'Call',
+              color: answerGreen,
+              lit: true,
+              onTap: onCall,
+              child: const Icon(Icons.call_rounded, color: Colors.white, size: 30),
             ),
           ),
           Expanded(
