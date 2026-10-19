@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:dialer/app/in_call_app.dart';
 import 'package:dialer/features/in_call/in_call_screen.dart';
 import 'package:dialer/features/in_call/call_screen_widgets.dart';
 import 'package:dialer/widgets/one_ui_floating_modal.dart';
@@ -83,6 +84,7 @@ void main() {
     Size size = const Size(412, 915),
     double textScale = 1,
     bool reduceMotion = false,
+    bool scaled = false,
     GlobalKey? boundary,
   }) async {
     tester.view.physicalSize = size;
@@ -93,6 +95,7 @@ void main() {
       MaterialApp(
         theme: OneUITheme.darkTheme,
         scrollBehavior: OneUITheme.scrollBehavior,
+        builder: scaled ? (context, child) => DesignWidth(child: child!) : null,
         home: Builder(
           builder: (context) => RepaintBoundary(
             key: boundary,
@@ -164,6 +167,24 @@ void main() {
     expect(ball, findsNothing);
     expect(endOpacity(), 1);
     expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('on a scaled narrow phone the Answer ball starts its flight where it was let go', (tester) async {
+    await open(tester, size: const Size(360, 780), scaled: true);
+    await emit(tester, [call('ringing')]);
+    final answer = find.byKey(const ValueKey('swipe-Answer'));
+    final gesture = await tester.startGesture(tester.getCenter(answer));
+    await gesture.moveBy(const Offset(-20, -20));
+    await gesture.moveBy(const Offset(-90, -90));
+    await tester.pump();
+    final letGo = tester.getRect(answer);
+    await gesture.up();
+    await tester.pump();
+    final flight = tester.getRect(find.byKey(const ValueKey('answer-flight')));
+    expect(flight.center.dx, closeTo(letGo.center.dx, 2));
+    expect(flight.center.dy, closeTo(letGo.center.dy, 2));
+    expect(flight.width, closeTo(letGo.width, 2));
     await tester.pumpWidget(const SizedBox());
   });
 

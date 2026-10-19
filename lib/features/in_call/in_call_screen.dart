@@ -215,7 +215,8 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   Rect? _localRect(Rect global) {
     final stack = _stackKey.currentContext?.findRenderObject() as RenderBox?;
     if (stack == null || !stack.hasSize) return null;
-    return global.shift(-stack.localToGlobal(Offset.zero));
+    // A full inverse, not just a shift: on narrow phones `DesignWidth` scales the whole screen.
+    return MatrixUtils.transformRect(stack.getTransformTo(null)..invert(), global);
   }
 
   Widget _flyingBall() {
