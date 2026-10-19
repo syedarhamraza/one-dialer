@@ -253,7 +253,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
           builder: (context, _, _) => SliverPersistentHeader(
             pinned: true,
             delegate: OneUICollapsibleHeaderDelegate(
-              title: selecting ? '$_selectedRows selected' : 'Phone',
+              title: selecting ? '$_selectedRows selected' : 'Calls',
               subtitle: selecting
                   ? (_selectedRows == _rows.length ? 'All selected • Tap (O) to deselect' : 'Tap (O) to select all')
                   : (_filter == CallFilter.all ? null : _filter.label),

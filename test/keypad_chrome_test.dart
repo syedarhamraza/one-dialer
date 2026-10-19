@@ -37,55 +37,24 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  double opacity(WidgetTester tester, Finder target) {
-    final transition = find.ancestor(of: target, matching: find.byType(FadeTransition)).first;
-    return tester.widget<FadeTransition>(transition).opacity.value;
-  }
-
-  testWidgets('navigation and Delete fade both ways without moving the controls', (tester) async {
-    final semantics = tester.ensureSemantics();
-    try {
-      await open(tester);
-      final nav = find.byType(OneUIFloatingNavBar);
-      final delete = find.byIcon(Icons.backspace_rounded);
-      final navPosition = tester.getBottomLeft(nav);
-      final callPosition = tester.getCenter(find.bySemanticsLabel('Call'));
-      final input = tester.widget<KeypadScreen>(find.byType(KeypadScreen)).input;
-      input.value = '5';
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
-      expect(tester.getBottomLeft(nav), navPosition);
-      expect(opacity(tester, nav), allOf(greaterThan(0), lessThan(1)));
-      expect(opacity(tester, delete), allOf(greaterThan(0), lessThan(1)));
-      expect(tester.getCenter(find.bySemanticsLabel('Call')), callPosition);
-      await tester.pumpAndSettle();
-      expect(opacity(tester, nav), 0);
-      expect(opacity(tester, delete), 1);
-      input.value = '';
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
-      expect(opacity(tester, nav), allOf(greaterThan(0), lessThan(1)));
-      expect(opacity(tester, delete), allOf(greaterThan(0), lessThan(1)));
-      expect(tester.getBottomLeft(nav), navPosition);
-      await tester.pumpAndSettle();
-      expect(opacity(tester, nav), 1);
-      expect(opacity(tester, delete), 0);
-      expect(
-        tester.getSemantics(find.byType(MainShell)).toStringDeep(),
-        isNot(contains('Delete, long-press to clear')),
-      );
-    } finally {
-      semantics.dispose();
-    }
-  });
-
-  testWidgets('reduced motion skips both fades', (tester) async {
-    await open(tester, reduceMotion: true);
+  testWidgets('nav bar stays while typing and the keypad only shows on Calls', (tester) async {
+    await open(tester);
+    final nav = find.byType(OneUIFloatingNavBar);
+    expect(find.text('Calls'), findsWidgets);
+    expect(find.text('Contacts'), findsWidgets);
+    expect(find.text('Keypad'), findsNothing);
+    final navPosition = tester.getBottomLeft(nav);
     final input = tester.widget<KeypadScreen>(find.byType(KeypadScreen)).input;
     input.value = '5';
-    await tester.pump();
-    await tester.pump();
-    expect(opacity(tester, find.byType(OneUIFloatingNavBar)), 0);
-    expect(opacity(tester, find.byIcon(Icons.backspace_rounded)), 1);
+    await tester.pumpAndSettle();
+    expect(tester.getBottomLeft(nav), navPosition);
+    expect(find.descendant(of: nav, matching: find.text('Contacts')).hitTestable(), findsOneWidget);
+    await tester.tap(find.descendant(of: nav, matching: find.text('Contacts')));
+    await tester.pumpAndSettle();
+    expect(find.bySemanticsLabel('Call'), findsNothing);
+    await tester.tap(find.descendant(of: nav, matching: find.text('Calls')));
+    await tester.pumpAndSettle();
+    expect(find.bySemanticsLabel('Call'), findsOneWidget);
+    expect(input.value, '5');
   });
 }

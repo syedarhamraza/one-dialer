@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:flutter/services.dart';
-
-import 'dart:math' as math;
 
 import '../../app/layout.dart';
 import '../../core/contacts/contacts_repository.dart';
@@ -21,14 +18,18 @@ import 't9.dart';
 import '../search/search_screen.dart';
 import '../in_call/call_controls.dart';
 
-/// Samsung-style dial pad: T9 contact search above, the typed number, the keypad and
-/// one call button, with SIM selection when required.
+/// Samsung-style dial pad as a sheet over Calls: T9 contact search above while
+/// typing, then the typed number, pill keys and one call button. Hidden, it leaves a
+/// green dialpad button beside the nav bar.
 class KeypadScreen extends StatefulWidget {
-  const KeypadScreen({super.key, required this.input, this.isActive = true});
+  const KeypadScreen({super.key, required this.input, required this.open, this.isActive = true});
   final bool isActive;
 
   /// The typed number; the shell also writes `tel:` links into it.
   final ValueNotifier<String> input;
+
+  /// Whether the sheet is up; the shell opens it for `tel:` links.
+  final ValueNotifier<bool> open;
 
   @override
   State<KeypadScreen> createState() => _KeypadScreenState();
@@ -37,39 +38,20 @@ class KeypadScreen extends StatefulWidget {
 /// Samsung's keypad sits on charcoal, not the pure black of the other tabs.
 const keypadBackground = Color(0xFF161616);
 
+const double _gap = 10;
+
 class _KeypadScreenState extends State<KeypadScreen> {
   final _telecom = TelecomBridge.instance;
   final _menuKey = GlobalKey();
-  bool _collapsed = false;
   bool _calling = false;
 
+  void _show() => widget.open.value = true;
+
+  void _hide() => widget.open.value = false;
+
+  /// Scrolling the results drops the keys so the whole list shows.
   void _collapse() {
-    if (!_collapsed && widget.input.value.isNotEmpty && mounted) setState(() => _collapsed = true);
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    widget.input.addListener(_inputChanged);
-  }
-
-  void _inputChanged() {
-    if (_collapsed && mounted) setState(() => _collapsed = false);
-  }
-
-  @override
-  void didUpdateWidget(covariant KeypadScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.input != widget.input) {
-      oldWidget.input.removeListener(_inputChanged);
-      widget.input.addListener(_inputChanged);
-    }
-  }
-
-  @override
-  void dispose() {
-    widget.input.removeListener(_inputChanged);
-    super.dispose();
+    if (widget.input.value.isNotEmpty && mounted) _hide();
   }
 
   void _type(String key) {
@@ -150,8 +132,8 @@ class _KeypadScreenState extends State<KeypadScreen> {
       items: [
         if (typing) ...[
           OneUIFloatingMenuItem(
-            label: _collapsed ? 'Show keypad' : 'Hide keypad',
-            onTap: () => setState(() => _collapsed = !_collapsed),
+            label: widget.open.value ? 'Hide keypad' : 'Show keypad',
+            onTap: () => widget.open.value = !widget.open.value,
           ),
           OneUIFloatingMenuItem(label: 'Add 2-sec pause', onTap: () => widget.input.value += ','),
           OneUIFloatingMenuItem(label: 'Add wait', onTap: () => widget.input.value += ';'),
@@ -168,152 +150,170 @@ class _KeypadScreenState extends State<KeypadScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
-      color: keypadBackground,
-      child: SafeArea(
-        bottom: false,
-        child: ValueListenableBuilder<String>(
-          valueListenable: widget.input,
-          builder: (context, number, _) {
-            // Reserve the same space whether the navigation bar is visible or hidden.
-            final bottomSpace = navBarClearance(context) + 8;
-            final collapsed = _collapsed && number.isNotEmpty;
-            return PopScope(
-              canPop: !collapsed || !widget.isActive,
-              onPopInvokedWithResult: (didPop, result) {
-                if (!didPop && collapsed && widget.isActive) setState(() => _collapsed = false);
-              },
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final height = math.max(constraints.maxHeight, bottomSpace + 480);
-                  final keyHeight = ((height - bottomSpace - 220) / 5).clamp(56.0, 84.0);
-                  final panelHeight = 88 + keyHeight * 4 + 8 + 72 + bottomSpace;
-                  return TweenAnimationBuilder<double>(
-                    tween: Tween(end: collapsed ? 1.0 : 0.0),
-                    duration: MediaQuery.disableAnimationsOf(context)
-                        ? Duration.zero
-                        : const Duration(milliseconds: 300),
-                    curve: Curves.easeInOutCubic,
-                    builder: (context, progress, child) => SingleChildScrollView(
-                      physics: collapsed ? const NeverScrollableScrollPhysics() : null,
-                      child: SizedBox(
-                        height: height - (height - constraints.maxHeight) * progress,
-                        child: Stack(
-                          children: [
-                            Column(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    spacing: 16,
-                                    children: [
-                                      if (number.isNotEmpty)
-                                        OneUIHeaderAction(
-                                          icon: Icons.add_rounded,
-                                          size: 28,
-                                          tooltip: 'Add to Contacts',
-                                          onTap: () => showAddToContacts(context, number),
-                                        ),
-                                      OneUIHeaderAction(
-                                        icon: Icons.search_rounded,
-                                        size: 26,
-                                        tooltip: 'Search',
-                                        onTap: () => openSearch(context),
-                                      ),
-                                      OneUIHeaderAction(
-                                        actionKey: _menuKey,
-                                        icon: Icons.more_vert_rounded,
-                                        size: 26,
-                                        tooltip: 'More options',
-                                        onTap: _openMenu,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Expanded(
-                                  child: ValueListenableBuilder<List<DialerContact>>(
-                                    valueListenable: ContactsRepository.instance.contacts,
-                                    builder: (context, contacts, _) => _Results(
-                                      matches: number.isEmpty ? const [] : t9Search(number, contacts),
-                                      expanded: collapsed,
-                                      onScroll: _collapse,
-                                      onPick: (m) {
-                                        setState(() => _collapsed = false);
-                                        widget.input.value = m.number;
-                                      },
+    return ListenableBuilder(
+      listenable: Listenable.merge([widget.input, widget.open]),
+      builder: (context, _) {
+        final number = widget.input.value;
+        final open = widget.open.value;
+        return PopScope(
+          canPop: !open || !widget.isActive,
+          onPopInvokedWithResult: (didPop, result) {
+            if (!didPop && open && widget.isActive) _hide();
+          },
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final clearance = navBarClearance(context);
+              final keyHeight = ((constraints.maxHeight - clearance) * 0.08).clamp(44.0, 60.0);
+              // Handle, number, five rows of keys and their gaps, then the nav bar.
+              final sheetHeight = 24 + (number.isEmpty ? 0 : 64) + keyHeight * 5 + _gap * 4 + 12 + clearance;
+              return Stack(
+                children: [
+                  // Nothing typed: no backdrop, so Calls shows and takes taps.
+                  if (number.isNotEmpty)
+                    Positioned.fill(
+                      child: ColoredBox(
+                        color: keypadBackground,
+                        child: SafeArea(
+                          bottom: false,
+                          child: Column(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  spacing: 16,
+                                  children: [
+                                    OneUIHeaderAction(
+                                      icon: Icons.add_rounded,
+                                      size: 28,
+                                      tooltip: 'Add to Contacts',
+                                      onTap: () => showAddToContacts(context, number),
                                     ),
-                                  ),
-                                ),
-                                SizedBox(height: panelHeight * (1 - progress)),
-                              ],
-                            ),
-                            Positioned(
-                              left: 0,
-                              right: 0,
-                              bottom: -panelHeight * progress,
-                              child: IgnorePointer(
-                                ignoring: collapsed,
-                                child: ExcludeSemantics(
-                                  excluding: collapsed,
-                                  child: ColoredBox(
-                                    color: keypadBackground,
-                                    child: Column(
-                                      key: const ValueKey('keypad-panel'),
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        _NumberDisplay(number: number, onPaste: _paste),
-                                        _Keypad(onKey: _type, onLongPress: _longPress, keyHeight: keyHeight),
-                                        const SizedBox(height: 8),
-                                        _CallRow(
-                                          showBackspace: number.isNotEmpty,
-                                          onCall: _calling ? null : _call,
-                                          onBackspace: _backspace,
-                                          onClear: () => widget.input.value = '',
-                                        ),
-                                        SizedBox(height: bottomSpace),
-                                      ],
+                                    OneUIHeaderAction(
+                                      icon: Icons.search_rounded,
+                                      size: 26,
+                                      tooltip: 'Search',
+                                      onTap: () => openSearch(context),
                                     ),
+                                    OneUIHeaderAction(
+                                      actionKey: _menuKey,
+                                      icon: Icons.more_vert_rounded,
+                                      size: 26,
+                                      tooltip: 'More options',
+                                      onTap: _openMenu,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                child: ValueListenableBuilder<List<DialerContact>>(
+                                  valueListenable: ContactsRepository.instance.contacts,
+                                  builder: (context, contacts, _) => _Results(
+                                    matches: t9Search(number, contacts),
+                                    expanded: !open,
+                                    bottomPadding: open ? sheetHeight : clearance,
+                                    onScroll: _collapse,
+                                    onPick: (m) {
+                                      widget.input.value = m.number;
+                                      _show();
+                                    },
                                   ),
                                 ),
                               ),
-                            ),
-                            if (collapsed)
-                              Positioned(
-                                right: 24,
-                                bottom: MediaQuery.paddingOf(context).bottom + 16,
-                                child: FloatingActionButton(
-                                  tooltip: 'Show keypad',
-                                  backgroundColor: const Color(0xFF08AB60),
-                                  foregroundColor: Colors.black,
-                                  shape: const CircleBorder(),
-                                  elevation: 0,
-                                  onPressed: () => setState(() => _collapsed = false),
-                                  child: const Icon(Icons.dialpad_rounded),
-                                ),
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  );
-                },
-              ),
-            );
-          },
-        ),
-      ),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: AnimatedSlide(
+                      offset: Offset(0, open ? 0 : 1),
+                      duration: MediaQuery.disableAnimationsOf(context)
+                          ? Duration.zero
+                          : const Duration(milliseconds: 300),
+                      curve: Curves.easeInOutCubic,
+                      child: IgnorePointer(
+                        ignoring: !open,
+                        child: ExcludeSemantics(
+                          excluding: !open,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(maxHeight: constraints.maxHeight),
+                            child: DecoratedBox(
+                              key: const ValueKey('keypad-panel'),
+                              decoration: const BoxDecoration(
+                                color: OneUITheme.surfaceCard,
+                                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                              ),
+                              // Scrolls only when a small or landscape screen can't fit it.
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    _Handle(onHide: _hide),
+                                    if (number.isNotEmpty) _NumberDisplay(number: number, onPaste: _paste),
+                                    _Keypad(onKey: _type, onLongPress: _longPress, keyHeight: keyHeight),
+                                    const SizedBox(height: _gap),
+                                    _CallRow(
+                                      keyHeight: keyHeight,
+                                      onHide: _hide,
+                                      onCall: _calling ? null : _call,
+                                      onBackspace: _backspace,
+                                      onClear: () => widget.input.value = '',
+                                    ),
+                                    SizedBox(height: 12 + clearance),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (!open)
+                    Positioned(
+                      right: 16,
+                      bottom: MediaQuery.paddingOf(context).bottom + kNavBarVerticalPadding,
+                      child: SizedBox.square(
+                        dimension: kFloatingNavBarHeight,
+                        child: FloatingActionButton(
+                          tooltip: 'Show keypad',
+                          backgroundColor: const Color(0xFF08AB60),
+                          foregroundColor: Colors.white,
+                          shape: const CircleBorder(),
+                          elevation: 0,
+                          onPressed: _show,
+                          child: const Icon(Icons.dialpad_rounded),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
 
 class _Results extends StatelessWidget {
-  const _Results({required this.matches, required this.onPick, required this.onScroll, required this.expanded});
+  const _Results({
+    required this.matches,
+    required this.onPick,
+    required this.onScroll,
+    required this.expanded,
+    required this.bottomPadding,
+  });
 
   final List<T9Match> matches;
   final ValueChanged<T9Match> onPick;
   final VoidCallback onScroll;
   final bool expanded;
+  final double bottomPadding;
 
   @override
   Widget build(BuildContext context) {
@@ -326,7 +326,7 @@ class _Results extends StatelessWidget {
       },
       child: ListView.builder(
         key: ValueKey(expanded),
-        padding: EdgeInsets.fromLTRB(24, 12, 24, expanded ? 88 : 0),
+        padding: EdgeInsets.fromLTRB(24, 12, 24, bottomPadding),
         itemCount: matches.length,
         itemBuilder: (context, i) => _ResultTile(match: matches[i], onTap: () => onPick(matches[i])),
       ),
@@ -430,7 +430,7 @@ class _NumberDisplay extends StatelessWidget {
         onLongPress: onPaste,
         behavior: HitTestBehavior.opaque,
         child: SizedBox(
-          height: 88,
+          height: 64,
           width: double.infinity,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -442,7 +442,7 @@ class _NumberDisplay extends StatelessWidget {
                     number,
                     maxLines: 1,
                     style: const TextStyle(
-                      fontSize: 44,
+                      fontSize: 36,
                       fontWeight: FontWeight.w400,
                       letterSpacing: 0.5,
                       color: OneUITheme.textPrimary,
@@ -456,6 +456,38 @@ class _NumberDisplay extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The sheet's grab handle: tap or drag down to hide the keys.
+class _Handle extends StatelessWidget {
+  const _Handle({required this.onHide});
+  final VoidCallback onHide;
+
+  @override
+  Widget build(BuildContext context) => ExcludeSemantics(
+    // The dialpad pill is the accessible way to hide the keys.
+    child: GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onHide,
+      onVerticalDragEnd: (d) {
+        if ((d.primaryVelocity ?? 0) > 0) onHide();
+      },
+      child: SizedBox(
+        height: 24,
+        width: double.infinity,
+        child: Center(
+          child: Container(
+            width: 36,
+            height: 4,
+            decoration: BoxDecoration(
+              color: OneUITheme.textSecondary.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 class _Keypad extends StatelessWidget {
@@ -483,20 +515,43 @@ class _Keypad extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
+        spacing: _gap,
         children: [
           for (var row = 0; row < 4; row++)
             Row(
+              spacing: _gap,
               children: [
                 for (final (digit, letters) in _keys.sublist(row * 3, row * 3 + 3))
                   Expanded(
-                    child: _Key(
-                      digit: digit,
-                      keyHeight: keyHeight,
-                      letters: letters,
+                    child: _Pill(
+                      height: keyHeight,
+                      label: switch (digit) {
+                        '0' => '0, long-press for plus',
+                        '2' || '3' || '4' || '5' || '6' || '7' || '8' || '9' => '$digit, long-press for speed dial',
+                        _ => digit,
+                      },
                       onTap: () => onKey(digit),
                       onLongPress: () => onLongPress(digit),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            digit,
+                            style: TextStyle(
+                              fontSize: digit == '*' ? 30 : 26,
+                              height: 1.1,
+                              fontWeight: FontWeight.w500,
+                              color: OneUITheme.textPrimary,
+                            ),
+                          ),
+                          if (letters == 'VM')
+                            const Icon(Icons.voicemail_rounded, size: 12, color: OneUITheme.textSecondary)
+                          else if (letters.isNotEmpty)
+                            Text(letters, style: const TextStyle(fontSize: 10, color: OneUITheme.textSecondary)),
+                        ],
+                      ),
                     ),
                   ),
               ],
@@ -507,74 +562,61 @@ class _Keypad extends StatelessWidget {
   }
 }
 
-class _Key extends StatelessWidget {
-  const _Key({
-    required this.digit,
-    required this.letters,
+/// One flat stadium key; the digits and the dialpad, call and delete buttons all use it.
+class _Pill extends StatelessWidget {
+  const _Pill({
+    required this.height,
+    required this.label,
     required this.onTap,
-    required this.keyHeight,
+    required this.child,
     this.onLongPress,
+    this.color = OneUITheme.surfacePill,
   });
-  final double keyHeight;
 
-  final String digit;
-  final String letters;
-  final VoidCallback onTap;
+  final double height;
+  final String label;
+  final VoidCallback? onTap;
   final VoidCallback? onLongPress;
+  final Color color;
+  final Widget child;
 
   @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: switch (digit) {
-        '0' => '0, long-press for plus',
-        '2' || '3' || '4' || '5' || '6' || '7' || '8' || '9' => '$digit, long-press for speed dial',
-        _ => digit,
-      },
-      excludeSemantics: true,
-      child: InkResponse(
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    label: label,
+    enabled: onTap != null,
+    excludeSemantics: true,
+    child: Material(
+      color: color,
+      shape: const StadiumBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
         onTap: onTap,
         onLongPress: onLongPress,
-        radius: 44,
-        highlightShape: BoxShape.circle,
         splashColor: Colors.white.withValues(alpha: 0.08),
         highlightColor: Colors.white.withValues(alpha: 0.15),
         child: SizedBox(
-          height: keyHeight,
+          height: height,
           child: Center(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    digit,
-                    style: TextStyle(
-                      fontSize: digit == '*' ? 44 : 38,
-                      height: 1.1,
-                      fontWeight: FontWeight.w400,
-                      color: OneUITheme.textPrimary,
-                    ),
-                  ),
-                  if (letters == 'VM')
-                    const Icon(Icons.voicemail_rounded, size: 18, color: OneUITheme.textSecondary)
-                  else if (letters.isNotEmpty)
-                    Text(letters, style: const TextStyle(fontSize: 13, color: OneUITheme.textSecondary)),
-                ],
-              ),
-            ),
+            child: FittedBox(fit: BoxFit.scaleDown, child: child),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
 }
 
 class _CallRow extends StatelessWidget {
-  const _CallRow({required this.showBackspace, required this.onCall, required this.onBackspace, required this.onClear});
+  const _CallRow({
+    required this.keyHeight,
+    required this.onHide,
+    required this.onCall,
+    required this.onBackspace,
+    required this.onClear,
+  });
 
-  final bool showBackspace;
+  final double keyHeight;
+  final VoidCallback onHide;
   final VoidCallback? onCall;
   final VoidCallback onBackspace;
   final VoidCallback onClear;
@@ -582,73 +624,38 @@ class _CallRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
+        spacing: _gap,
         children: [
-          const Spacer(),
           Expanded(
-            child: Center(child: _CallButton(onTap: onCall)),
+            child: _Pill(
+              height: keyHeight,
+              label: 'Hide keypad',
+              onTap: onHide,
+              child: const Icon(Icons.dialpad_rounded, color: OneUITheme.textPrimary, size: 26),
+            ),
           ),
           Expanded(
-            child: IgnorePointer(
-              ignoring: !showBackspace,
-              child: ExcludeSemantics(
-                excluding: !showBackspace,
-                child: AnimatedOpacity(
-                  opacity: showBackspace ? 1 : 0,
-                  duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 200),
-                  curve: Curves.easeInOutCubic,
-                  child: Semantics(
-                    button: true,
-                    label: 'Delete, long-press to clear',
-                    excludeSemantics: true,
-                    child: InkResponse(
-                      onTap: onBackspace,
-                      onLongPress: onClear,
-                      radius: 28,
-                      child: const SizedBox(
-                        height: 64,
-                        child: Icon(Icons.backspace_rounded, color: OneUITheme.textSecondary, size: 30),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+            child: _Pill(
+              height: keyHeight,
+              label: 'Call',
+              color: answerGreen,
+              onTap: onCall,
+              child: const Icon(Icons.call_rounded, color: Colors.white, size: 30),
+            ),
+          ),
+          Expanded(
+            child: _Pill(
+              height: keyHeight,
+              label: 'Delete, long-press to clear',
+              onTap: onBackspace,
+              onLongPress: onClear,
+              child: const Icon(Icons.backspace_rounded, color: OneUITheme.textSecondary, size: 26),
             ),
           ),
         ],
       ),
     );
   }
-}
-
-class _CallButton extends StatelessWidget {
-  const _CallButton({required this.onTap});
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    button: true,
-    label: 'Call',
-    enabled: onTap != null,
-    excludeSemantics: true,
-    // The call screen's Answer button: bottom-lit solid green with the glass package's press.
-    child: GlassButton.custom(
-      style: GlassButtonStyle.transparent,
-      onTap: onTap ?? _noTap,
-      enabled: onTap != null,
-      excludeFromSemantics: true,
-      canRequestFocus: false,
-      shape: const LiquidOval(),
-      child: Container(
-        height: 72,
-        width: 72,
-        decoration: solidBody(answerGreen, const CircleBorder()),
-        foregroundDecoration: solidGlow(const CircleBorder()),
-        child: const Icon(Icons.call_rounded, color: Colors.white, size: 38),
-      ),
-    ),
-  );
-
-  static void _noTap() {}
 }
