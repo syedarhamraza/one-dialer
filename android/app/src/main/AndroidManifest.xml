@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Placing and managing calls -->
     <uses-permission android:name="android.permission.CALL_PHONE" />
@@ -16,11 +17,14 @@
     <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
     <!-- Proximity sensor turns the screen off at the ear during calls -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- No ads: drop the Advertising ID permissions Firebase merges in -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_AD_ID" tools:node="remove" />
 
     <uses-feature android:name="android.hardware.telephony" android:required="true" />
 
     <application
-        android:label="Dialer"
+        android:label="One Dialer"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 
