@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../../app/layout.dart';
 import '../../core/contacts/contacts_repository.dart';
@@ -621,6 +622,9 @@ class _CallRow extends StatelessWidget {
   final VoidCallback onBackspace;
   final VoidCallback onClear;
 
+  // Taps go to the pill inside; the glass button only draws the press.
+  static void _noTap() {}
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -637,16 +641,24 @@ class _CallRow extends StatelessWidget {
             ),
           ),
           Expanded(
-            // Lit like the call screen's End button: shaded body, coloured glow, light from below.
-            child: Container(
-              decoration: solidBody(answerGreen, const StadiumBorder()),
-              foregroundDecoration: solidGlow(const StadiumBorder()),
-              child: _Pill(
-                height: keyHeight,
-                label: 'Call',
-                color: Colors.transparent,
-                onTap: onCall,
-                child: const Icon(Icons.call_rounded, color: Colors.white, size: 30),
+            // Lit and pressed like the call screen's End button: shaded body, coloured glow, light
+            // from below, and the glass package's press glow and stretch (no glass body).
+            child: GlassButton.custom(
+              style: GlassButtonStyle.transparent,
+              onTap: _noTap,
+              excludeFromSemantics: true,
+              canRequestFocus: false,
+              shape: LiquidRoundedRectangle(borderRadius: keyHeight / 2),
+              child: Container(
+                decoration: solidBody(answerGreen, const StadiumBorder()),
+                foregroundDecoration: solidGlow(const StadiumBorder()),
+                child: _Pill(
+                  height: keyHeight,
+                  label: 'Call',
+                  color: Colors.transparent,
+                  onTap: onCall,
+                  child: const Icon(Icons.call_rounded, color: Colors.white, size: 30),
+                ),
               ),
             ),
           ),
