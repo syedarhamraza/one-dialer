@@ -34,26 +34,26 @@ void main() {
   });
   tearDown(() => ContactsRepository.instance.contacts.value = []);
 
-  testWidgets('floating button and Android Back restore the typed number', (tester) async {
+  testWidgets('Back and the dialpad pill hide the keys; the floating button restores them', (tester) async {
     final input = ValueNotifier('0333');
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(body: KeypadScreen(input: input)),
+        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: input)),
       ),
     );
     await tester.pumpAndSettle();
-    await tester.drag(find.byType(ListView), const Offset(0, -80));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Show keypad'));
-    await tester.pumpAndSettle();
-    expect(input.value, '0333');
-    expect(find.byTooltip('Show keypad'), findsNothing);
-    await tester.drag(find.byType(ListView), const Offset(0, -80));
-    await tester.pumpAndSettle();
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
+    expect(find.byTooltip('Show keypad'), findsOneWidget);
+    await tester.tap(find.byTooltip('Show keypad'));
+    await tester.pumpAndSettle();
     expect(find.byTooltip('Show keypad'), findsNothing);
+    await tester.tap(find.bySemanticsLabel('Hide keypad'));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Show keypad'), findsOneWidget);
+    await tester.tap(find.byTooltip('Show keypad'));
+    await tester.pumpAndSettle();
     expect(input.value, '0333');
   });
 
@@ -86,7 +86,7 @@ void main() {
             key: boundary,
             child: MediaQuery(
               data: const MediaQueryData(size: Size(393, 852), padding: EdgeInsets.only(top: 24, bottom: 16)),
-              child: Scaffold(body: KeypadScreen(input: input)),
+              child: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: input)),
             ),
           ),
         ),
@@ -106,7 +106,7 @@ void main() {
       await capture('keypad-preview');
       input.value = '0333';
       await tester.pumpAndSettle();
-      await tester.drag(find.byType(ListView), const Offset(0, -80));
+      await tester.drag(find.text('Contact 0'), const Offset(0, -80));
       await tester.pumpAndSettle();
       await capture('keypad-results-preview');
       expect(tester.takeException(), isNull);
@@ -118,11 +118,11 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(body: KeypadScreen(input: input)),
+        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: input)),
       ),
     );
     await tester.pumpAndSettle();
-    await tester.drag(find.byType(ListView), const Offset(0, -80));
+    await tester.drag(find.text('Contact 0'), const Offset(0, -80));
     await tester.pumpAndSettle();
     expect(find.byTooltip('Show keypad'), findsOneWidget);
     expect(input.value, '0333');
@@ -135,22 +135,23 @@ void main() {
     expect(nativeCalls.where((call) => call.method == 'placeCall'), isEmpty);
   });
 
-  testWidgets('typing and clearing leave keypad at the same position', (tester) async {
+  testWidgets('typing and clearing leave the keys at the same position', (tester) async {
     final input = ValueNotifier('');
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(body: KeypadScreen(input: input)),
+        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: input)),
       ),
     );
     await tester.pumpAndSettle();
-    final before = tester.getTopLeft(find.byKey(const ValueKey('keypad-panel')));
+    final call = find.bySemanticsLabel('Call');
+    final before = tester.getCenter(call);
     input.value = '0333';
     await tester.pumpAndSettle();
-    expect(tester.getTopLeft(find.byKey(const ValueKey('keypad-panel'))), before);
+    expect(tester.getCenter(call), before);
     input.value = '';
     await tester.pumpAndSettle();
-    expect(tester.getTopLeft(find.byKey(const ValueKey('keypad-panel'))), before);
+    expect(tester.getCenter(call), before);
     expect(find.byTooltip('WhatsApp voice call'), findsNothing);
   });
 
@@ -158,13 +159,13 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(body: KeypadScreen(input: ValueNotifier('0333'))),
+        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('0333'))),
       ),
     );
     await tester.pumpAndSettle();
     final panel = find.byKey(const ValueKey('keypad-panel'));
     final opened = tester.getTopLeft(panel).dy;
-    await tester.drag(find.byType(ListView), const Offset(0, -40));
+    await tester.drag(find.text('Contact 0'), const Offset(0, -40));
     await tester.pump();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 120));
@@ -183,8 +184,8 @@ void main() {
     expect(tester.getTopLeft(panel).dy, opened);
   });
 
-  testWidgets('inactive collapsed keypad does not block route back', (tester) async {
-    final input = ValueNotifier('0333');
+  testWidgets('inactive keypad does not block route back', (tester) async {
+    final open = ValueNotifier(true);
     final active = ValueNotifier(true);
     await tester.pumpWidget(
       MaterialApp(
@@ -192,21 +193,21 @@ void main() {
         home: ValueListenableBuilder<bool>(
           valueListenable: active,
           builder: (_, isActive, child) => Scaffold(
-            body: KeypadScreen(input: input, isActive: isActive),
+            body: KeypadScreen(open: open, input: ValueNotifier(''), isActive: isActive),
           ),
         ),
       ),
     );
     await tester.pumpAndSettle();
-    await tester.drag(find.byType(ListView), const Offset(0, -80));
-    await tester.pumpAndSettle();
-    expect(tester.widget<PopScope>(find.byWidgetPredicate((w) => w is PopScope)).canPop, isFalse);
+    PopScope<Object?> scope() => tester.widget<PopScope<Object?>>(find.byWidgetPredicate((w) => w is PopScope));
+    expect(scope().canPop, isFalse);
     active.value = false;
     await tester.pumpAndSettle();
-    expect(tester.widget<PopScope>(find.byWidgetPredicate((w) => w is PopScope)).canPop, isTrue);
-    input.value = '+923331234567';
+    expect(scope().canPop, isTrue);
+    active.value = true;
+    open.value = false;
     await tester.pumpAndSettle();
-    expect(find.byTooltip('Show keypad'), findsNothing);
+    expect(scope().canPop, isTrue);
   });
 
   testWidgets('one call button offers both SIMs and routes the selected SIM', (tester) async {
@@ -227,7 +228,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(body: KeypadScreen(input: ValueNotifier('03331234567'))),
+        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('03331234567'))),
       ),
     );
     await tester.pumpAndSettle();
@@ -260,7 +261,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(body: KeypadScreen(input: input)),
+        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: input)),
       ),
     );
     await tester.pumpAndSettle();
@@ -286,7 +287,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(body: KeypadScreen(input: ValueNotifier('5551234567'))),
+        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('5551234567'))),
       ),
     );
     await tester.pumpAndSettle();
@@ -304,11 +305,12 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(body: KeypadScreen(input: ValueNotifier('0333'))),
+        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('0333'))),
       ),
     );
     await tester.pumpAndSettle();
-    await tester.drag(find.byType(ListView), const Offset(0, -40));
+    expect(tester.takeException(), isNull);
+    await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(tester.getBottomRight(find.byTooltip('Show keypad')).dy, lessThanOrEqualTo(360));
     await tester.tap(find.byTooltip('Show keypad'));
@@ -327,7 +329,7 @@ void main() {
         theme: OneUITheme.darkTheme,
         home: MediaQuery(
           data: const MediaQueryData(size: Size(320, 568), textScaler: TextScaler.linear(1.5)),
-          child: Scaffold(body: KeypadScreen(input: ValueNotifier('0333'))),
+          child: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('0333'))),
         ),
       ),
     );

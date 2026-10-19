@@ -14,7 +14,8 @@ import 'return_to_call_banner.dart';
 /// bar morphs into them (OneSpend's `dockedContent`).
 final ValueNotifier<Widget?> navDock = ValueNotifier(null);
 
-/// The three Samsung tabs under the floating nav bar. Tabs stay alive (IndexedStack)
+/// Calls and Contacts under the floating nav bar, with the keypad as a sheet over
+/// Calls. Tabs stay alive (IndexedStack) and the keypad stays offstage on Contacts,
 /// so a half-typed number survives switching tabs.
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -25,11 +26,11 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   final _input = ValueNotifier('');
+  final _keypadOpen = ValueNotifier(true);
   int _tab = 0;
 
   static const _items = [
-    OneUINavItem(activeIcon: Icons.dialpad_rounded, inactiveIcon: Icons.dialpad_rounded, label: 'Keypad'),
-    OneUINavItem(activeIcon: Icons.watch_later_rounded, inactiveIcon: Icons.watch_later_outlined, label: 'Recents'),
+    OneUINavItem(activeIcon: Icons.call_rounded, inactiveIcon: Icons.call_outlined, label: 'Calls'),
     OneUINavItem(activeIcon: Icons.person_rounded, inactiveIcon: Icons.person_outline_rounded, label: 'Contacts'),
   ];
 
@@ -42,27 +43,33 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     TelecomBridge.instance.consumeDialNumber().then((n) {
       if (n != null) _dial(n);
     });
-    // The missed-call notification opens Recents.
-    TelecomBridge.instance.onOpenRecents = () => _select(1);
+    // The missed-call notification opens Calls with the keypad down.
+    TelecomBridge.instance.onOpenRecents = _openRecents;
     TelecomBridge.instance.consumeOpenRecents().then((open) {
-      if (open) _select(1);
+      if (open) _openRecents();
     });
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && _tab == 1) CallLogRepository.instance.markMissedSeen();
+    if (state == AppLifecycleState.resumed && _tab == 0) CallLogRepository.instance.markMissedSeen();
   }
 
   void _select(int tab) {
     if (!mounted) return;
     setState(() => _tab = tab);
-    if (tab == 1) CallLogRepository.instance.markMissedSeen();
+    if (tab == 0) CallLogRepository.instance.markMissedSeen();
+  }
+
+  void _openRecents() {
+    _keypadOpen.value = false;
+    _select(0);
   }
 
   void _dial(String number) {
     if (!mounted) return;
     _input.value = number;
+    _keypadOpen.value = true;
     _select(0);
   }
 
@@ -72,63 +79,42 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     TelecomBridge.instance.onDialIntent = null;
     TelecomBridge.instance.onOpenRecents = null;
     _input.dispose();
+    _keypadOpen.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     // Hosted like OneSpend's home shell: the bar floats over the tabs in a Stack (it
-    // fills its parent's height), under a top status-bar scrim, and fades away while
-    // a number is being typed on the keypad. Tabs pad themselves with navBarClearance().
+    // fills its parent's height), under a top status-bar scrim. The keypad sheet sits
+    // over Calls, above the bar's baseline. Tabs pad themselves with navBarClearance().
     return Scaffold(
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
-          IndexedStack(
-            index: _tab,
-            children: [
-              KeypadScreen(input: _input, isActive: _tab == 0),
-              const RecentsScreen(),
-              const ContactsScreen(),
-            ],
+          IndexedStack(index: _tab, children: const [RecentsScreen(), ContactsScreen()]),
+          Offstage(
+            offstage: _tab != 0,
+            child: KeypadScreen(input: _input, open: _keypadOpen, isActive: _tab == 0),
           ),
           const Positioned(top: 0, left: 0, right: 0, child: OneUIStatusBarScrim()),
           const Positioned(top: 0, left: 0, right: 0, child: ReturnToCallBanner()),
-          ValueListenableBuilder<String>(
-            valueListenable: _input,
-            builder: (context, number, _) {
-              final isNavHidden = _tab == 0 && number.isNotEmpty;
-              return Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: IgnorePointer(
-                  ignoring: isNavHidden,
-                  child: ExcludeSemantics(
-                    excluding: isNavHidden,
-                    child: AnimatedOpacity(
-                      duration: MediaQuery.disableAnimationsOf(context)
-                          ? Duration.zero
-                          : const Duration(milliseconds: 200),
-                      curve: Curves.easeInOutCubic,
-                      opacity: isNavHidden ? 0.0 : 1.0,
-                      child: ValueListenableBuilder<Widget?>(
-                        valueListenable: navDock,
-                        builder: (context, dock, _) => OneUIFloatingNavBar(
-                          currentIndex: _tab,
-                          dockedContent: dock,
-                          onTap: (index) {
-                            Haptics.tap();
-                            _select(index);
-                          },
-                          items: _items,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: ValueListenableBuilder<Widget?>(
+              valueListenable: navDock,
+              builder: (context, dock, _) => OneUIFloatingNavBar(
+                currentIndex: _tab,
+                dockedContent: dock,
+                onTap: (index) {
+                  Haptics.tap();
+                  _select(index);
+                },
+                items: _items,
+              ),
+            ),
           ),
         ],
       ),
