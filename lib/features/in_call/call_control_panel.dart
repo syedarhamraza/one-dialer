@@ -353,46 +353,61 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                         LayoutBuilder(
                           builder: (context, box) => Align(
                             alignment: Alignment.topCenter,
-                            // Solid red, but with the glass package's press: glow and stretch, no glass body.
-                            child: GlassButton.custom(
-                              style: GlassButtonStyle.transparent,
-                              onTap: _noTap,
-                              excludeFromSemantics: true,
-                              canRequestFocus: false,
-                              shape: LiquidRoundedRectangle(borderRadius: actionSize / 2),
-                              child: AnimatedOpacity(
-                                key: widget.endKey,
-                                opacity: widget.hideEnd ? 0 : (_ending ? .55 : 1),
-                                // Only ending dims gradually; the pill appears at once when the Answer ball lands on it.
-                                duration: _ending ? const Duration(milliseconds: 220) : Duration.zero,
-                                child: AnimatedContainer(
-                                  // While ending, the pill draws in to a circle.
-                                  duration: MediaQuery.disableAnimationsOf(context)
-                                      ? Duration.zero
-                                      : const Duration(milliseconds: 280),
-                                  curve: Curves.easeInOutCubic,
-                                  width: _ending ? actionSize : box.maxWidth,
-                                  height: actionSize,
-                                  // ColorOS 17's tomato red, lit from below like the other buttons, with
-                                  // squircle ends like the keys.
-                                  foregroundDecoration: solidGlow(
-                                    RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(actionSize / 2)),
-                                  ),
-                                  decoration: solidBody(
+                            child: AnimatedOpacity(
+                              key: widget.endKey,
+                              opacity: widget.hideEnd ? 0 : (_ending ? .55 : 1),
+                              // Only ending dims gradually; the pill appears at once when the Answer ball lands on it.
+                              duration: _ending ? const Duration(milliseconds: 220) : Duration.zero,
+                              // The red glow sits outside the press below, whose clip would cut it off.
+                              child: AnimatedContainer(
+                                duration: MediaQuery.disableAnimationsOf(context)
+                                    ? Duration.zero
+                                    : const Duration(milliseconds: 280),
+                                curve: Curves.easeInOutCubic,
+                                decoration: ShapeDecoration(
+                                  shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(actionSize / 2)),
+                                  shadows: solidBody(
                                     endRed,
                                     RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(actionSize / 2)),
                                     glow: _ending ? 0 : .3,
-                                  ),
-                                  child: IconButton(
-                                    tooltip: 'End call',
-                                    iconSize: 41,
-                                    style: IconButton.styleFrom(
-                                      foregroundColor: Colors.white,
-                                      disabledForegroundColor: Colors.white,
-                                      shape: const StadiumBorder(),
+                                  ).shadows,
+                                ),
+                                // Solid red, but with the glass package's press: glow and stretch, no glass body.
+                                child: GlassButton.custom(
+                                  style: GlassButtonStyle.transparent,
+                                  onTap: _noTap,
+                                  excludeFromSemantics: true,
+                                  canRequestFocus: false,
+                                  shape: LiquidRoundedRectangle(borderRadius: actionSize / 2),
+                                  child: AnimatedContainer(
+                                    // While ending, the pill draws in to a circle.
+                                    duration: MediaQuery.disableAnimationsOf(context)
+                                        ? Duration.zero
+                                        : const Duration(milliseconds: 280),
+                                    curve: Curves.easeInOutCubic,
+                                    width: _ending ? actionSize : box.maxWidth,
+                                    height: actionSize,
+                                    // ColorOS 17's tomato red, lit from below like the other buttons, with
+                                    // squircle ends like the keys.
+                                    foregroundDecoration: solidGlow(
+                                      RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(actionSize / 2)),
                                     ),
-                                    onPressed: _ending ? null : _endCall,
-                                    icon: const Icon(Icons.call_end_rounded),
+                                    decoration: solidBody(
+                                      endRed,
+                                      RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(actionSize / 2)),
+                                      glow: 0,
+                                    ),
+                                    child: IconButton(
+                                      tooltip: 'End call',
+                                      iconSize: 41,
+                                      style: IconButton.styleFrom(
+                                        foregroundColor: Colors.white,
+                                        disabledForegroundColor: Colors.white,
+                                        shape: const StadiumBorder(),
+                                      ),
+                                      onPressed: _ending ? null : _endCall,
+                                      icon: const Icon(Icons.call_end_rounded),
+                                    ),
                                   ),
                                 ),
                               ),
