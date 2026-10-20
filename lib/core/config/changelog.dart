@@ -26,7 +26,7 @@ class Changelog {
   static const List<ChangelogEntry> entries = [
     ChangelogEntry(
       version: '1.0.0-beta.1',
-      date: 'In development',
+      date: 'Oct 2026',
       changes: [
         'One Dialer is now in open beta. Thank you for testing!',
         'A new look: frosted glass buttons, nav bar and menus, styled like the call screen',
