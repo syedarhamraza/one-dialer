@@ -3,11 +3,15 @@ import 'package:flutter/material.dart';
 import '../core/haptics/haptics.dart';
 import '../core/telecom/telecom_bridge.dart';
 import '../features/contacts/contacts_screen.dart';
+import '../features/contacts/editor/contact_editor_screen.dart';
+import '../features/in_call/call_controls.dart';
 import '../features/keypad/keypad_screen.dart';
 import '../features/recents/call_log_repository.dart';
 import '../features/recents/recents_screen.dart';
 import '../widgets/one_ui_floating_nav_bar.dart';
 import '../widgets/one_ui_status_bar_scrim.dart';
+import '../widgets/press_glow.dart';
+import 'layout.dart';
 import 'return_to_call_banner.dart';
 
 /// A tab's selection actions (a docked `OneUIFloatingActionBar`). While set, the nav
@@ -31,7 +35,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
 
   static const _items = [
     OneUINavItem(activeIcon: Icons.call_rounded, inactiveIcon: Icons.call_outlined, label: 'Calls'),
-    OneUINavItem(activeIcon: Icons.person_rounded, inactiveIcon: Icons.person_outline_rounded, label: 'Contacts'),
+    OneUINavItem(activeIcon: Icons.people_alt_rounded, inactiveIcon: Icons.people_alt_outlined, label: 'Contacts'),
   ];
 
   @override
@@ -92,7 +96,20 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
-          IndexedStack(index: _tab, children: const [RecentsScreen(), ContactsScreen()]),
+          IndexedStack(
+            index: _tab,
+            children: [
+              // Scrolling Calls by hand drops the keypad so the list has the screen.
+              NotificationListener<ScrollStartNotification>(
+                onNotification: (n) {
+                  if (n.dragDetails != null) _keypadOpen.value = false;
+                  return false;
+                },
+                child: RecentsScreen(dialInput: _input, keypadOpen: _keypadOpen),
+              ),
+              const ContactsScreen(),
+            ],
+          ),
           Offstage(
             offstage: _tab != 0,
             child: KeypadScreen(input: _input, open: _keypadOpen, isActive: _tab == 0),
@@ -103,20 +120,76 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
             left: 0,
             right: 0,
             bottom: 0,
-            child: ValueListenableBuilder<Widget?>(
-              valueListenable: navDock,
-              builder: (context, dock, _) => OneUIFloatingNavBar(
+            child: ListenableBuilder(
+              listenable: Listenable.merge([navDock, _keypadOpen]),
+              builder: (context, _) => OneUIFloatingNavBar(
                 currentIndex: _tab,
-                dockedContent: dock,
+                dockedContent: navDock.value,
                 onTap: (index) {
                   Haptics.tap();
                   _select(index);
                 },
                 items: _items,
+                trailing: navDock.value != null
+                    ? null
+                    : _tab == 1
+                    ? _RoundAction(
+                        key: const ValueKey('action'),
+                        icon: Icons.add_rounded,
+                        tooltip: 'Create contact',
+                        onPressed: () => openContactEditor(context),
+                      )
+                    : _keypadOpen.value
+                    ? null
+                    : _RoundAction(
+                        key: const ValueKey('action'),
+                        icon: Icons.dialpad_rounded,
+                        tooltip: 'Show keypad',
+                        onPressed: () => _keypadOpen.value = true,
+                      ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// The green round button beside the nav bar, lit like the keypad's Call button.
+class _RoundAction extends StatelessWidget {
+  const _RoundAction({super.key, required this.icon, required this.tooltip, required this.onPressed});
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  static const _green = Color(0xFF5BB450);
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.square(
+      dimension: kFloatingNavBarHeight,
+      child: PressGlow(
+        glowColor: _green,
+        child: Container(
+          decoration: solidBody(_green, const CircleBorder()),
+          foregroundDecoration: solidGlow(const CircleBorder()),
+          child: FloatingActionButton(
+            heroTag: null,
+            tooltip: tooltip,
+            backgroundColor: Colors.transparent,
+            foregroundColor: Colors.white,
+            shape: const CircleBorder(),
+            elevation: 0,
+            highlightElevation: 0,
+            onPressed: onPressed,
+            // Switching tabs keeps the button and cross-fades its icon.
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: Icon(icon, key: ValueKey(icon), size: 34, weight: 300),
+            ),
+          ),
+        ),
       ),
     );
   }

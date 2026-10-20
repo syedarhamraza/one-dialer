@@ -7,21 +7,18 @@ import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../core/prefs/dialer_prefs.dart';
 import '../recents/call_log_repository.dart';
-import '../contacts/editor/add_to_contacts.dart';
 import '../settings/settings_screen.dart';
 import 'speed_dial_screen.dart';
 import '../../widgets/letter_avatar.dart';
-import '../../widgets/one_ui_collapsible_header.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/place_call.dart';
 import '../../widgets/press_glow.dart';
 import 't9.dart';
-import '../search/search_screen.dart';
 import '../in_call/call_controls.dart';
 
 /// Samsung-style dial pad as a sheet over Calls: T9 contact search above while
-/// typing, then the typed number, pill keys and one call button. Hidden, it leaves a
-/// green dialpad button beside the nav bar.
+/// typing, then the typed number, pill keys and one call button. Hidden, the shell
+/// shows a green dialpad button beside the nav bar.
 class KeypadScreen extends StatefulWidget {
   const KeypadScreen({super.key, required this.input, required this.open, this.isActive = true});
   final bool isActive;
@@ -36,14 +33,18 @@ class KeypadScreen extends StatefulWidget {
   State<KeypadScreen> createState() => _KeypadScreenState();
 }
 
-/// Samsung's keypad sits on charcoal, not the pure black of the other tabs.
-const keypadBackground = Color(0xFF161616);
-
 const double _gap = 10;
+
+final _riseSpring = GlassSpringCurve(
+  SpringDescription.withDampingRatio(mass: 1, stiffness: 300, ratio: .85),
+  const Duration(milliseconds: 450),
+);
+
+/// Material's emphasized accelerate, for leaving.
+const _dropCurve = Cubic(0.3, 0, 0.8, 0.15);
 
 class _KeypadScreenState extends State<KeypadScreen> {
   final _telecom = TelecomBridge.instance;
-  final _menuKey = GlobalKey();
   bool _calling = false;
 
   void _show() => widget.open.value = true;
@@ -124,31 +125,6 @@ class _KeypadScreenState extends State<KeypadScreen> {
     }
   }
 
-  void _openMenu() {
-    final typing = widget.input.value.isNotEmpty;
-    OneUIFloatingMenu.show(
-      context: context,
-      anchorKey: _menuKey,
-      width: 250,
-      items: [
-        if (typing) ...[
-          OneUIFloatingMenuItem(
-            label: widget.open.value ? 'Hide keypad' : 'Show keypad',
-            onTap: () => widget.open.value = !widget.open.value,
-          ),
-          OneUIFloatingMenuItem(label: 'Add 2-sec pause', onTap: () => widget.input.value += ','),
-          OneUIFloatingMenuItem(label: 'Add wait', onTap: () => widget.input.value += ';'),
-          OneUIFloatingMenuItem(label: 'Send message', onTap: () => _telecom.sendSms(widget.input.value)),
-        ],
-        OneUIFloatingMenuItem(label: 'Speed dial numbers', onTap: _openSpeedDial),
-        OneUIFloatingMenuItem(
-          label: 'Settings',
-          onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -169,63 +145,45 @@ class _KeypadScreenState extends State<KeypadScreen> {
               final sheetHeight = 24 + (number.isEmpty ? 0 : 64) + keyHeight * 5 + _gap * 4 + 12 + clearance;
               return Stack(
                 children: [
-                  // Nothing typed: no backdrop, so Calls shows and takes taps.
-                  if (number.isNotEmpty)
-                    Positioned.fill(
-                      child: ColoredBox(
-                        color: keypadBackground,
-                        child: SafeArea(
-                          bottom: false,
-                          child: Column(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  spacing: 16,
-                                  children: [
-                                    OneUIHeaderAction(
-                                      icon: Icons.add_rounded,
-                                      size: 28,
-                                      tooltip: 'Add to Contacts',
-                                      onTap: () => showAddToContacts(context, number),
-                                    ),
-                                    OneUIHeaderAction(
-                                      icon: Icons.search_rounded,
-                                      size: 26,
-                                      tooltip: 'Search',
-                                      onTap: () => openSearch(context),
-                                    ),
-                                    OneUIHeaderAction(
-                                      actionKey: _menuKey,
-                                      icon: Icons.more_vert_rounded,
-                                      size: 26,
-                                      tooltip: 'More options',
-                                      onTap: _openMenu,
-                                    ),
-                                  ],
+                  // Nothing typed: no backdrop, so Calls shows and takes taps. The results start
+                  // under the Calls header bar, whose All | Missed pill morphs into Add to
+                  // Contacts while typing. They fade in on the first digit and out when the
+                  // number is cleared; the outgoing one keeps its last number while it fades.
+                  Positioned(
+                    top: MediaQuery.paddingOf(context).top + kHeaderBarHeight,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: AnimatedSwitcher(
+                      duration: MediaQuery.disableAnimationsOf(context)
+                          ? Duration.zero
+                          : const Duration(milliseconds: 220),
+                      switchInCurve: Curves.easeOut,
+                      switchOutCurve: Curves.easeIn,
+                      layoutBuilder: (current, previous) =>
+                          Stack(fit: StackFit.expand, children: [...previous, ?current]),
+                      child: number.isNotEmpty
+                          // Clear backdrop: Calls fades its list out underneath, and the header's
+                          // press can stretch down over this space without being covered.
+                          ? KeyedSubtree(
+                              key: const ValueKey('results'),
+                              child: ValueListenableBuilder<List<DialerContact>>(
+                                valueListenable: ContactsRepository.instance.contacts,
+                                builder: (context, contacts, _) => _Results(
+                                  matches: t9Search(number, contacts),
+                                  expanded: !open,
+                                  bottomPadding: open ? sheetHeight : clearance,
+                                  onScroll: _collapse,
+                                  onPick: (m) {
+                                    widget.input.value = m.number;
+                                    _show();
+                                  },
                                 ),
                               ),
-                              Expanded(
-                                child: ValueListenableBuilder<List<DialerContact>>(
-                                  valueListenable: ContactsRepository.instance.contacts,
-                                  builder: (context, contacts, _) => _Results(
-                                    matches: t9Search(number, contacts),
-                                    expanded: !open,
-                                    bottomPadding: open ? sheetHeight : clearance,
-                                    onScroll: _collapse,
-                                    onPick: (m) {
-                                      widget.input.value = m.number;
-                                      _show();
-                                    },
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                            )
+                          : const SizedBox.shrink(),
                     ),
+                  ),
                   Positioned(
                     // Keyed so the results appearing above it on the first digit don't rebuild the
                     // sheet, which would cut off the tapped key's press.
@@ -233,12 +191,14 @@ class _KeypadScreenState extends State<KeypadScreen> {
                     left: 0,
                     right: 0,
                     bottom: 0,
+                    // Rises on a soft spring that settles without a bounce, and drops away
+                    // quickly, speeding up as it goes.
                     child: AnimatedSlide(
                       offset: Offset(0, open ? 0 : 1),
                       duration: MediaQuery.disableAnimationsOf(context)
                           ? Duration.zero
-                          : const Duration(milliseconds: 300),
-                      curve: Curves.easeInOutCubic,
+                          : Duration(milliseconds: open ? 450 : 240),
+                      curve: open ? _riseSpring : _dropCurve,
                       child: IgnorePointer(
                         ignoring: !open,
                         child: ExcludeSemantics(
@@ -277,31 +237,6 @@ class _KeypadScreenState extends State<KeypadScreen> {
                       ),
                     ),
                   ),
-                  if (!open)
-                    Positioned(
-                      right: 16,
-                      bottom: MediaQuery.paddingOf(context).bottom + kNavBarVerticalPadding,
-                      child: SizedBox.square(
-                        dimension: kFloatingNavBarHeight,
-                        child: PressGlow(
-                          glowColor: const Color(0xFF08AB60),
-                          child: Container(
-                            decoration: solidBody(const Color(0xFF08AB60), const CircleBorder()),
-                            foregroundDecoration: solidGlow(const CircleBorder()),
-                            child: FloatingActionButton(
-                              tooltip: 'Show keypad',
-                              backgroundColor: Colors.transparent,
-                              foregroundColor: Colors.white,
-                              shape: const CircleBorder(),
-                              elevation: 0,
-                              highlightElevation: 0,
-                              onPressed: _show,
-                              child: const Icon(Icons.dialpad_rounded),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
                 ],
               );
             },
@@ -338,15 +273,22 @@ class _Results extends StatelessWidget {
       },
       child: ListView.builder(
         key: ValueKey(expanded),
-        padding: EdgeInsets.fromLTRB(24, 12, 24, bottomPadding),
+        padding: EdgeInsets.only(top: 4, bottom: bottomPadding),
         itemCount: matches.length,
-        itemBuilder: (context, i) => _ResultTile(match: matches[i], onTap: () => onPick(matches[i])),
+        itemBuilder: (context, i) => Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (i > 0) Divider(height: 1, indent: 76, color: Colors.white.withValues(alpha: 0.1)),
+            _ResultTile(match: matches[i], onTap: () => onPick(matches[i])),
+          ],
+        ),
       ),
     );
   }
 }
 
-/// Samsung's T9 row: avatar and name on the left, the number on the right, matched part in blue.
+/// A T9 match laid out like a Calls row: avatar, name, and the number below, with the
+/// matched part in blue.
 class _ResultTile extends StatelessWidget {
   const _ResultTile({required this.match, required this.onTap});
 
@@ -356,11 +298,18 @@ class _ResultTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final name = match.entry.name;
+    const nameStyle = TextStyle(
+      fontSize: 18,
+      fontWeight: FontWeight.w500,
+      letterSpacing: -0.2,
+      color: OneUITheme.textPrimary,
+    );
     return InkWell(
       onTap: onTap,
-      borderRadius: OneUITheme.cardBorderRadius,
+      splashColor: Colors.white.withValues(alpha: 0.06),
+      highlightColor: Colors.white.withValues(alpha: 0.03),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
+        padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
         child: Row(
           children: [
             LetterAvatar(
@@ -369,38 +318,27 @@ class _ResultTile extends StatelessWidget {
                 DialerContact(:final thumbnail) => thumbnail,
                 _ => null,
               },
-              size: 40,
             ),
-            const SizedBox(width: 16),
-            // Unsaved numbers (from Recents) are named by their number; show it once.
-            if (name == match.number)
-              Expanded(
-                child: _highlighted(
-                  name,
-                  match.numberRange,
-                  const TextStyle(fontSize: 18, color: OneUITheme.textPrimary),
-                ),
-              )
-            else ...[
-              Expanded(
-                child: _highlighted(
-                  name,
-                  match.nameRange,
-                  const TextStyle(fontSize: 18, color: OneUITheme.textPrimary),
-                ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Unsaved numbers (from Recents) are named by their number; show it once.
+                  if (name == match.number)
+                    _highlighted(name, match.numberRange, nameStyle)
+                  else ...[
+                    _highlighted(name, match.nameRange, nameStyle),
+                    const SizedBox(height: 2),
+                    _highlighted(
+                      match.number,
+                      match.numberRange,
+                      const TextStyle(fontSize: 14, color: OneUITheme.textSecondary),
+                    ),
+                  ],
+                ],
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: _highlighted(
-                    match.number,
-                    match.numberRange,
-                    const TextStyle(fontSize: 15, color: OneUITheme.textSecondary),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ],
         ),
       ),
@@ -684,4 +622,42 @@ class _CallRow extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The keypad's menu: typing actions while a number is entered, then speed dial and
+/// settings. Shown from the Calls header's menu button while typing.
+/// The keypad's menu items: typing actions while a number is entered, then speed dial
+/// and settings. Shown from the Calls header's menu while typing.
+List<OneUIFloatingMenuItem> keypadMenuItems(
+  BuildContext context, {
+  required ValueNotifier<String> input,
+  required ValueNotifier<bool> open,
+}) {
+  final typing = input.value.isNotEmpty;
+  return [
+    if (typing) ...[
+      OneUIFloatingMenuItem(
+        label: open.value ? 'Hide keypad' : 'Show keypad',
+        icon: Icons.dialpad_rounded,
+        onTap: () => open.value = !open.value,
+      ),
+      OneUIFloatingMenuItem(label: 'Add 2-sec pause', icon: Icons.pause_rounded, onTap: () => input.value += ','),
+      OneUIFloatingMenuItem(label: 'Add wait', icon: Icons.hourglass_empty_rounded, onTap: () => input.value += ';'),
+      OneUIFloatingMenuItem(
+        label: 'Send message',
+        icon: Icons.message_outlined,
+        onTap: () => TelecomBridge.instance.sendSms(input.value),
+      ),
+    ],
+    OneUIFloatingMenuItem(
+      label: 'Speed dial numbers',
+      icon: Icons.speed_rounded,
+      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SpeedDialScreen())),
+    ),
+    OneUIFloatingMenuItem(
+      label: 'Settings',
+      icon: Icons.settings_outlined,
+      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),
+    ),
+  ];
 }

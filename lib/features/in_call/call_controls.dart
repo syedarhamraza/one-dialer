@@ -79,7 +79,7 @@ class _CachedBodyPainter extends CustomPainter {
     if (_image == null || _size != size) {
       final recorder = ui.PictureRecorder();
       final recording = Canvas(recorder)..scale(ratio);
-      _TintedBody(radius).paint(recording, size);
+      TintedCallBody(radius).paint(recording, size);
       final picture = recorder.endRecording();
       final image = picture.toImageSync((size.width * ratio).ceil(), (size.height * ratio).ceil());
       picture.dispose();
@@ -102,8 +102,8 @@ class _CachedBodyPainter extends CustomPainter {
 }
 
 /// The milky wash, edge glow and lips drawn over each control's frosted blur.
-class _TintedBody extends CustomPainter {
-  const _TintedBody(this.radius);
+class TintedCallBody extends CustomPainter {
+  const TintedCallBody(this.radius);
   final double? radius;
 
   @override
@@ -188,7 +188,7 @@ class _TintedBody extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_TintedBody oldDelegate) => oldDelegate.radius != radius;
+  bool shouldRepaint(TintedCallBody oldDelegate) => oldDelegate.radius != radius;
 }
 
 /// A circle, or a superellipse whose ends are ColorOS's soft oval rather than a true semicircle.

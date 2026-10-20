@@ -1,0 +1,147 @@
+import 'package:flutter/material.dart';
+
+import '../features/in_call/call_controls.dart';
+import '../theme/one_ui_theme.dart';
+import 'call_glass.dart';
+
+/// A header icon on its own round grey background (search, menu, cancel).
+class RoundIconButton extends StatelessWidget {
+  const RoundIconButton({super.key, required this.icon, required this.tooltip, required this.onTap});
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return CallGlass(
+      child: IconButton(
+        tooltip: tooltip,
+        onPressed: onTap,
+        // Exactly 48: Material would pad a smaller one to a 48 dp tap target anyway.
+        style: IconButton.styleFrom(
+          foregroundColor: OneUITheme.textPrimary,
+          fixedSize: const Size.square(48),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        icon: Icon(icon, size: 24),
+      ),
+    );
+  }
+}
+
+/// Segmented tabs in a grey pill (All | Missed), the selected one on a lighter thumb
+/// that slides between them.
+class FilterTabs extends StatefulWidget {
+  const FilterTabs({super.key, required this.labels, required this.index, required this.onChanged, this.bare = false});
+
+  final List<String> labels;
+  final int index;
+  final ValueChanged<int> onChanged;
+
+  /// Without its own glass body, for a parent that draws one (the Calls header morph).
+  final bool bare;
+
+  /// The pill's size for [count] tabs.
+  static Size sizeFor(int count) =>
+      Size(count * _FilterTabsState._tabWidth + 2 * _FilterTabsState._inset, _FilterTabsState._height);
+
+  @override
+  State<FilterTabs> createState() => _FilterTabsState();
+}
+
+class _FilterTabsState extends State<FilterTabs> {
+  late int _index = widget.index;
+
+  @override
+  void didUpdateWidget(FilterTabs oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.index != oldWidget.index) _index = widget.index;
+  }
+
+  /// Moves the highlight this frame and hands the (heavier) list change to the next,
+  /// so the slide starts without waiting on the rebuild.
+  void _select(int i) {
+    if (i == _index) return;
+    setState(() => _index = i);
+    WidgetsBinding.instance.addPostFrameCallback((_) => widget.onChanged(i));
+  }
+
+  static const double _tabWidth = 74;
+  static const double _height = 48; // as tall as the round buttons
+  static const double _inset = 4;
+
+  /// Springier than the call screen's toggle: it swings past the tab and settles back.
+  static final _thumbSpring = GlassSpringCurve(
+    SpringDescription.withDampingRatio(mass: 1, stiffness: 260, ratio: .6),
+    const Duration(milliseconds: 600),
+  );
+
+  static const _thumb = RoundedSuperellipseBorder(
+    borderRadius: BorderRadius.all(Radius.circular(_height / 2 - _inset)),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final content = Container(
+      height: _height,
+      padding: const EdgeInsets.all(_inset),
+      child: SizedBox(
+        width: _tabWidth * widget.labels.length,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // Slid by a paint-only transform on its own layer, so the move doesn't
+            // re-lay out the pill or repaint the blur behind it each frame.
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: _tabWidth,
+              child: RepaintBoundary(
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(end: _index * _tabWidth),
+                  duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 600),
+                  curve: _thumbSpring,
+                  builder: (context, x, child) => Transform.translate(offset: Offset(x, 0), child: child),
+                  child: const DecoratedBox(
+                    decoration: ShapeDecoration(color: Color(0x3DFFFFFF), shape: _thumb),
+                  ),
+                ),
+              ),
+            ),
+            Row(
+              children: [
+                for (var i = 0; i < widget.labels.length; i++)
+                  Semantics(
+                    button: true,
+                    selected: i == _index,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _select(i),
+                      child: SizedBox(
+                        width: _tabWidth,
+                        child: Center(
+                          child: AnimatedDefaultTextStyle(
+                            duration: const Duration(milliseconds: 200),
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: i == _index ? OneUITheme.textPrimary : OneUITheme.textSecondary,
+                            ),
+                            child: Text(widget.labels[i]),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+    return widget.bare ? content : CallGlass(radius: _height / 2, child: content);
+  }
+}
