@@ -31,6 +31,10 @@ class OneUIFloatingMenu {
   static const double _edge = 16;
   static const double _gap = 10;
 
+  /// A squircle like the app's pills: the row highlight, inset by [_padding], is a
+  /// full pill of the same superellipse.
+  static const double _radius = _rowHeight / 2 + _padding;
+
   static Future<void> show({
     required BuildContext context,
     required List<OneUIFloatingMenuItem> items,
@@ -116,13 +120,7 @@ class _PopoverMenu extends StatelessWidget {
     final pivotX = button.center.dx.clamp(menu.left, menu.right);
     final pivot = Alignment((pivotX - menu.left) / menu.width * 2 - 1, upwards ? 1 : -1);
     // Built once; only the glass around it animates.
-    final items = Material(
-      type: MaterialType.transparency,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: OneUIFloatingMenu._padding, horizontal: 6),
-        child: Column(children: [for (final item in this.items) _MenuRow(item: item)]),
-      ),
-    );
+    final items = _MenuItems(items: this.items);
     return AnimatedBuilder(
       animation: animation,
       builder: (context, items) {
@@ -141,9 +139,9 @@ class _PopoverMenu extends StatelessWidget {
                 scale: scale,
                 alignment: pivot,
                 child: PressGlow(
-                  radius: 22,
+                  radius: OneUIFloatingMenu._radius,
                   child: ClipRSuperellipse(
-                    borderRadius: const BorderRadius.all(Radius.circular(22)),
+                    borderRadius: const BorderRadius.all(Radius.circular(OneUIFloatingMenu._radius)),
                     // The fade goes inside the blur (an Opacity around a BackdropFilter
                     // would cut it off from the backdrop); the blur itself ramps with it.
                     child: BackdropFilter(
@@ -154,7 +152,7 @@ class _PopoverMenu extends StatelessWidget {
                         // wash, edge glow and lip go on top, as on the header buttons.
                         child: ColoredBox(
                           color: const Color(0xB3141416),
-                          child: CustomPaint(painter: const TintedCallBody(22), child: items),
+                          child: CustomPaint(painter: const TintedCallBody(OneUIFloatingMenu._radius), child: items),
                         ),
                       ),
                     ),
@@ -170,48 +168,144 @@ class _PopoverMenu extends StatelessWidget {
   }
 }
 
+/// The menu's rows with ColorOS-style press-and-drag picking: touching the card shows
+/// a squircle highlight (like the selected All | Missed thumb) under the finger, which
+/// follows it freely while it slides; lifting picks the row under the finger, and
+/// lifting off the card picks nothing.
+class _MenuItems extends StatefulWidget {
+  const _MenuItems({required this.items});
+
+  final List<OneUIFloatingMenuItem> items;
+
+  @override
+  State<_MenuItems> createState() => _MenuItemsState();
+}
+
+class _MenuItemsState extends State<_MenuItems> {
+  /// The finger's y within the rows, or null when not touching.
+  final _finger = ValueNotifier<double?>(null);
+  bool _picked = false;
+
+  static const double _row = OneUIFloatingMenu._rowHeight;
+  static const double _pad = OneUIFloatingMenu._padding;
+
+  double get _height => widget.items.length * _row;
+
+  /// The row under [y], or null when the finger is off the rows.
+  int? _rowAt(double y, double x, double width) => x < 0 || x > width || y < -_pad || y > _height + _pad
+      ? null
+      : (y / _row).floor().clamp(0, widget.items.length - 1);
+
+  void _release(PointerUpEvent e, double width) {
+    final y = _finger.value;
+    _finger.value = null;
+    if (y == null || _picked) return;
+    final i = _rowAt(e.localPosition.dy - _pad, e.localPosition.dx, width);
+    if (i == null) return;
+    _picked = true;
+    Haptics.tap();
+    Navigator.pop(context);
+    widget.items[i].onTap();
+  }
+
+  @override
+  void dispose() {
+    _finger.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, box) => Listener(
+        behavior: HitTestBehavior.opaque,
+        onPointerDown: (e) => _finger.value = e.localPosition.dy - _pad,
+        onPointerMove: (e) => _finger.value = e.localPosition.dy - _pad,
+        onPointerUp: (e) => _release(e, box.maxWidth),
+        onPointerCancel: (_) => _finger.value = null,
+        child: Material(
+          type: MaterialType.transparency,
+          child: Padding(
+            padding: const EdgeInsets.all(_pad),
+            child: Stack(
+              children: [
+                ValueListenableBuilder<double?>(
+                  valueListenable: _finger,
+                  builder: (context, y, _) {
+                    final on = y != null && y > -_pad && y < _height + _pad;
+                    // Follows the finger freely, kept within the rows.
+                    final top = ((y ?? 0) - _row / 2).clamp(0.0, _height - _row);
+                    return Positioned(
+                      left: 0,
+                      right: 0,
+                      top: top,
+                      height: _row,
+                      child: AnimatedOpacity(
+                        opacity: on ? 1 : 0,
+                        duration: const Duration(milliseconds: 120),
+                        child: const DecoratedBox(
+                          decoration: ShapeDecoration(
+                            color: Color(0x3DFFFFFF),
+                            shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.all(Radius.circular(_row / 2))),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                Column(
+                  children: [
+                    for (final item in widget.items)
+                      Semantics(
+                        button: true,
+                        onTap: () {
+                          Navigator.pop(context);
+                          item.onTap();
+                        },
+                        child: _MenuRow(item: item),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _MenuRow extends StatelessWidget {
   const _MenuRow({required this.item});
 
   final OneUIFloatingMenuItem item;
 
-  static const _shape = RoundedSuperellipseBorder(borderRadius: BorderRadius.all(Radius.circular(16)));
-
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        Navigator.pop(context);
-        item.onTap();
-      },
-      customBorder: _shape,
-      splashColor: Colors.white.withValues(alpha: 0.08),
-      highlightColor: Colors.white.withValues(alpha: 0.05),
-      child: SizedBox(
-        height: OneUIFloatingMenu._rowHeight,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          child: Row(
-            children: [
-              if (item.icon != null) ...[
-                Icon(item.icon, size: 20, color: OneUITheme.textPrimary),
-                const SizedBox(width: 14),
-              ],
-              Expanded(
-                child: Text(
-                  item.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: -0.2,
-                    color: OneUITheme.textPrimary,
-                  ),
+    return SizedBox(
+      height: OneUIFloatingMenu._rowHeight,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: [
+            if (item.icon != null) ...[
+              Icon(item.icon, size: 20, color: OneUITheme.textPrimary),
+              const SizedBox(width: 14),
+            ],
+            Expanded(
+              child: Text(
+                item.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: -0.2,
+                  color: OneUITheme.textPrimary,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

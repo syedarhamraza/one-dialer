@@ -82,12 +82,10 @@ class _RecentsScreenState extends State<RecentsScreen> {
   List<OneUIFloatingMenuItem> _menuItems() => [
     OneUIFloatingMenuItem(
       label: _hideBlocked ? 'Show blocked calls' : 'Hide blocked calls',
-      icon: Icons.block_rounded,
       onTap: () => DialerPrefs.instance.setHideBlockedCalls(!_hideBlocked),
     ),
     OneUIFloatingMenuItem(
       label: 'Settings',
-      icon: Icons.settings_outlined,
       onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),
     ),
   ];

@@ -123,4 +123,19 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Settings'), findsNothing);
   });
+
+  testWidgets('dragging across the menu picks the row the finger is lifted on', (tester) async {
+    await open(tester);
+    final before = await DialerPrefs.instance.hideBlockedCalls();
+    await tester.tap(find.byTooltip('More options'));
+    await tester.pumpAndSettle();
+    final gesture = await tester.startGesture(tester.getCenter(find.text('Settings')));
+    await tester.pump();
+    await gesture.moveTo(tester.getCenter(find.textContaining('blocked calls')));
+    await tester.pump();
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(find.text('Settings'), findsNothing);
+    expect(await DialerPrefs.instance.hideBlockedCalls(), !before);
+  });
 }
