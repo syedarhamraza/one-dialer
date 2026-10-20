@@ -217,7 +217,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
                               // blur only on frames where something animates.
                               child: ClipRRect(
                                 borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                                child: BackdropFilter(
+                                child: BackdropFilter.grouped(
                                   filter: ImageFilter.blur(sigmaX: _blur, sigmaY: _blur),
                                   child: DecoratedBox(
                                     key: const ValueKey('keypad-panel'),

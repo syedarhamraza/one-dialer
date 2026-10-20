@@ -33,6 +33,17 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   final _input = ValueNotifier('');
   final _keypadOpen = ValueNotifier(true);
   int _tab = 0;
+  final _backdrop = BackdropKey();
+
+  /// Built once, so switching tabs (a rebuild of this shell) doesn't rebuild the Calls list.
+  // Scrolling Calls by hand drops the keypad so the list has the screen.
+  late final Widget _calls = NotificationListener<ScrollStartNotification>(
+    onNotification: (n) {
+      if (n.dragDetails != null) _keypadOpen.value = false;
+      return false;
+    },
+    child: RecentsScreen(dialInput: _input, keypadOpen: _keypadOpen),
+  );
 
   static const _items = [
     OneUINavItem(activeIcon: Icons.call_rounded, inactiveIcon: Icons.call_outlined, label: 'Calls'),
@@ -97,23 +108,20 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
-          IndexedStack(
-            index: _tab,
-            children: [
-              // Scrolling Calls by hand drops the keypad so the list has the screen.
-              NotificationListener<ScrollStartNotification>(
-                onNotification: (n) {
-                  if (n.dragDetails != null) _keypadOpen.value = false;
-                  return false;
-                },
-                child: RecentsScreen(dialInput: _input, keypadOpen: _keypadOpen),
-              ),
-              const ContactsScreen(),
-            ],
-          ),
-          Offstage(
-            offstage: _tab != 0,
-            child: KeypadScreen(input: _input, open: _keypadOpen, isActive: _tab == 0),
+          // The tabs' glass controls and the keypad sheet don't overlap, so their blurs share
+          // one backdrop read instead of one each. The nav bar, drawn over the keypad, keeps
+          // its own (it must blur the sheet too).
+          BackdropGroup(
+            backdropKey: _backdrop,
+            child: Stack(
+              children: [
+                IndexedStack(index: _tab, children: [_calls, const ContactsScreen()]),
+                Offstage(
+                  offstage: _tab != 0,
+                  child: KeypadScreen(input: _input, open: _keypadOpen, isActive: _tab == 0),
+                ),
+              ],
+            ),
           ),
           const Positioned(top: 0, left: 0, right: 0, child: OneUIStatusBarScrim()),
           const Positioned(top: 0, left: 0, right: 0, child: ReturnToCallBanner()),

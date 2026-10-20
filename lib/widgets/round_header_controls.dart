@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/haptics/haptics.dart';
 import '../features/in_call/call_controls.dart';
 import '../theme/one_ui_theme.dart';
 import 'call_glass.dart';
@@ -143,5 +144,60 @@ class _FilterTabsState extends State<FilterTabs> {
       ),
     );
     return widget.bare ? content : CallGlass(radius: _height / 2, child: content);
+  }
+}
+
+/// Select all, inside the lead pill: a check circle (filled blue when every row is
+/// selected) and "All". The count itself is the big "N selected" title.
+class SelectAllCount extends StatelessWidget {
+  const SelectAllCount({super.key, required this.allSelected, required this.onTap});
+
+  final bool allSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: allSelected ? 'Deselect all' : 'Select all',
+      excludeSemantics: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          Haptics.select();
+          onTap();
+        },
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOutCubic,
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: allSelected ? const Color(0xFF2C69FF) : Colors.transparent,
+                border: Border.all(
+                  color: allSelected ? const Color(0xFF2C69FF) : Colors.white.withValues(alpha: 0.55),
+                  width: 2,
+                ),
+              ),
+              child: allSelected ? const Icon(Icons.check_rounded, size: 15, color: Colors.white) : null,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'All',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.2,
+                color: OneUITheme.textPrimary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

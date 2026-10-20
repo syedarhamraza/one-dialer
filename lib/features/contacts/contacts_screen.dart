@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 
@@ -7,27 +5,26 @@ import '../../app/layout.dart';
 import '../../app/main_shell.dart' show navDock;
 import '../../core/contacts/contacts_repository.dart';
 import '../../core/haptics/haptics.dart';
-import '../../core/prefs/dialer_prefs.dart';
 import '../../theme/one_ui_scroll.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/letter_avatar.dart';
-import '../../widgets/one_ui_collapsible_header.dart';
 import '../../widgets/one_ui_floating_action_bar.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_floating_modal.dart';
-import '../../widgets/one_ui_scroll_to_top_button.dart';
+import '../../widgets/call_glass.dart';
+import '../../widgets/round_header_controls.dart';
+import '../../widgets/select_mark.dart';
+import '../search/search_screen.dart';
 import '../settings/settings_screen.dart';
+import 'contact_actions.dart';
 import 'contact_details_screen.dart';
 import 'contact_sections.dart';
 import 'contacts_widgets.dart';
-import 'editor/contact_editor_screen.dart';
 import 'groups_screen.dart';
-import '../search/search_screen.dart';
-import 'contact_actions.dart';
-import '../../widgets/one_ui_selection_header_pills.dart';
 
-/// Samsung-style Contacts tab: favourite tiles, My profile, Groups, A–Z section cards
-/// with an inline quick card on tap, a dotted fast scroller and multi-select delete.
+/// The Contacts tab in the Calls tab's style (ColorOS layout): glass search and menu,
+/// a big title, a card with My contact card and Groups, favourites under a star, then
+/// A–Z rows with a letter index. Tap opens the contact; long-press selects.
 class ContactsScreen extends StatefulWidget {
   const ContactsScreen({super.key});
 
@@ -39,28 +36,22 @@ class _ContactsScreenState extends State<ContactsScreen> {
   final _scroll = ScrollController();
   final _menuKey = GlobalKey();
   final _currentLetter = ValueNotifier<String?>(null);
-  final _showLetterPill = ValueNotifier(false);
-  final _showScroller = ValueNotifier(false);
-  Timer? _pillTimer;
-
-  String? _expandedId;
-  Set<String>? _selected; // null when not selecting
-  bool _favoritesAsList = false;
   Contact? _profile;
+  Set<String>? _selected; // null when not selecting
 
-  // Fixed heights, so section offsets are known without building the slivers.
-  static const double _cardGap = 14;
-  static const double _tileSpacing = 10;
-  static const double _tileAspect = 0.86;
-  static const double _headerScroll = OneUIScrollPhysics.bigHeaderCollapse;
-  Map<String, double> _offsets = const {};
+  /// Bumped when the selection changes but selection mode doesn't, so only the header
+  /// and the visible rows' circles rebuild.
+  final _selectionChanged = ValueNotifier(0);
+
+  // Fixed heights, so each section's scroll offset is known without building it.
+  static const double _titleHeight = 92;
+  static const double _cardRowHeight = 60;
+  static const double _cardBottom = 8;
 
   @override
   void initState() {
     super.initState();
     _scroll.addListener(_onScroll);
-    DialerPrefs.instance.changes.addListener(_loadPrefs);
-    _loadPrefs();
     FlutterContacts.profile
         .get(properties: {ContactProperty.name, ContactProperty.photoThumbnail})
         .then((p) {
@@ -71,60 +62,64 @@ class _ContactsScreenState extends State<ContactsScreen> {
 
   @override
   void dispose() {
-    DialerPrefs.instance.changes.removeListener(_loadPrefs);
-    _pillTimer?.cancel();
     _scroll.dispose();
+    _currentLetter.dispose();
+    _selectionChanged.dispose();
     super.dispose();
   }
 
-  Future<void> _loadPrefs() async {
-    final asList = await DialerPrefs.instance.favoritesAsList();
-    if (mounted && asList != _favoritesAsList) setState(() => _favoritesAsList = asList);
+  // --- Sections, recomputed only when the contacts or the profile row change -------
+
+  (List<DialerContact>, bool)? _builtFor;
+  List<DialerContact> _favourites = const [];
+  List<(String, List<DialerContact>)> _sections = const [];
+  Map<String, double> _offsets = const {};
+
+  void _section(List<DialerContact> all) {
+    final key = (all, _profile != null);
+    if (_builtFor case (final list, final profile) when identical(list, all) && profile == key.$2) return;
+    _builtFor = key;
+    _favourites = [
+      for (final c in all)
+        if (c.isFavorite) c,
+    ];
+    _sections = [if (_favourites.isNotEmpty) (kFavoritesMark, _favourites), ...sectionContacts(all)];
+    // Offsets are measured below the pinned header, which is what `jumpTo` scrolls under.
+    var y = _titleHeight + _topCardHeight;
+    final offsets = <String, double>{};
+    for (final (letter, list) in _sections) {
+      offsets[letter] = y;
+      y += ContactsSectionHeader.height + list.length * ContactRow.height;
+    }
+    _offsets = offsets;
   }
 
+  double get _topCardHeight => (_profile == null ? 1 : 2) * _cardRowHeight + _cardBottom;
+
   void _onScroll() {
-    // The section under the pinned top bar is the current one.
-    final y = _scroll.offset + 100;
-    // Like Samsung, the fast scroller appears once the A–Z list is on screen.
-    final firstSection = _offsets.values.firstOrNull;
-    _showScroller.value = firstSection != null && _scroll.offset > firstSection - 600;
+    final y = _scroll.offset + 8;
     String? current;
     for (final MapEntry(key: letter, value: offset) in _offsets.entries) {
       if (offset <= y) current = letter;
     }
     _currentLetter.value = current;
-    // Small letter pill under the status bar while scrolling the list, like Samsung.
-    if (current != null) {
-      _showLetterPill.value = true;
-      _pillTimer?.cancel();
-      _pillTimer = Timer(const Duration(milliseconds: 900), () => _showLetterPill.value = false);
-    }
   }
 
   void _open(DialerContact c) =>
       Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ContactDetailsScreen(contactId: c.id)));
 
-  void _toggleExpanded(DialerContact c) {
-    Haptics.tap();
-    setState(() => _expandedId = _expandedId == c.id ? null : c.id);
-  }
-
   // --- Selection ---------------------------------------------------------------
 
   void _startSelection([DialerContact? first]) {
     Haptics.longPress();
-    setState(() {
-      _expandedId = null;
-      _selected = {?first?.id};
-    });
+    setState(() => _selected = {?first?.id});
     _updateDock();
   }
 
   void _toggleSelected(DialerContact c) {
-    setState(() {
-      final s = _selected!;
-      s.contains(c.id) ? s.remove(c.id) : s.add(c.id);
-    });
+    final s = _selected!;
+    s.contains(c.id) ? s.remove(c.id) : s.add(c.id);
+    _selectionChanged.value++;
     _updateDock();
   }
 
@@ -133,8 +128,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
     navDock.value = null;
   }
 
-  /// OneSpend's selection mode: All and Cancel live in the header pills; a glass bar
-  /// of these actions springs in over the tab bar.
+  /// OneSpend's selection mode: a glass bar of these actions springs in over the tab bar.
   void _updateDock() {
     final count = _selected?.length ?? 0;
     navDock.value = OneUIFloatingActionBar(
@@ -157,9 +151,12 @@ class _ContactsScreenState extends State<ContactsScreen> {
     );
   }
 
+  bool get _allSelected => _selected?.length == ContactsRepository.instance.contacts.value.length;
+
   void _toggleSelectAll() {
     final all = ContactsRepository.instance.contacts.value;
-    setState(() => _selected = _selected?.length == all.length ? {} : {for (final c in all) c.id});
+    _selected = _allSelected ? {} : {for (final c in all) c.id};
+    _selectionChanged.value++;
     _updateDock();
   }
 
@@ -184,18 +181,12 @@ class _ContactsScreenState extends State<ContactsScreen> {
     _endSelection();
   }
 
-  // --- Menu and search ---------------------------------------------------------
-
   void _openMenu() => OneUIFloatingMenu.show(
     context: context,
     anchorKey: _menuKey,
     width: 250,
     items: [
       OneUIFloatingMenuItem(label: 'Select', onTap: _startSelection),
-      OneUIFloatingMenuItem(
-        label: _favoritesAsList ? 'View favorites as tiles' : 'View favorites as list',
-        onTap: () => DialerPrefs.instance.setFavoritesAsList(!_favoritesAsList),
-      ),
       OneUIFloatingMenuItem(
         label: 'Settings',
         onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),
@@ -214,82 +205,68 @@ class _ContactsScreenState extends State<ContactsScreen> {
       },
       child: ListenableBuilder(
         listenable: Listenable.merge([ContactsRepository.instance.contacts, ContactsRepository.instance.hasAccess]),
-        builder: (context, _) => LayoutBuilder(builder: (context, size) => _build(context, size.maxWidth)),
+        builder: (context, _) => _build(context),
       ),
     );
   }
 
-  Widget _build(BuildContext context, double width) {
+  Widget _build(BuildContext context) {
     final repo = ContactsRepository.instance;
     final all = repo.contacts.value;
-    final favourites = [
-      for (final c in all)
-        if (c.isFavorite) c,
-    ];
-    final sections = sectionContacts(all);
+    _section(all);
     final selecting = _selected != null;
-
-    // Heights of the blocks above the A–Z list.
-    final tileHeight = (width - 20 - _tileSpacing * 2) / 3 / _tileAspect;
-    final favHeight = favourites.isEmpty
-        ? 0.0
-        : ContactsSectionHeader.height +
-              (_favoritesAsList
-                  ? favourites.length * ContactRow.height
-                  : (favourites.length / 3).ceil() * (tileHeight + _tileSpacing) - _tileSpacing);
-    final profileHeight = _profile == null ? 0.0 : ContactsSectionHeader.height + ContactRow.height;
-    const groupsHeight = _cardGap + ContactRow.height;
-
-    double rowExtent(DialerContact c) => c.id == _expandedId ? ContactQuickCard.height : ContactRow.height;
-
-    // Scroll offset where each letter section starts, for the fast scroller.
-    final offsets = <String, double>{};
-    var y = _headerScroll + favHeight + profileHeight + groupsHeight;
-    for (final (letter, list) in sections) {
-      offsets[letter] = y;
-      y += ContactsSectionHeader.height + list.fold(0.0, (sum, c) => sum + rowExtent(c));
-    }
-    _offsets = offsets;
-
     final top = MediaQuery.paddingOf(context).top;
     return Stack(
       children: [
         CustomScrollView(
           controller: _scroll,
-          physics: OneUIScrollPhysics.bigHeader,
+          physics: const OneUIScrollPhysics(),
           slivers: [
-            SliverPersistentHeader(
+            SliverAppBar(
               pinned: true,
-              delegate: OneUICollapsibleHeaderDelegate(
-                title: selecting ? '${_selected!.length} selected' : 'Phone',
-                subtitle: selecting
-                    ? (_selected!.length == all.length ? 'All selected • Tap (O) to deselect' : 'Tap (O) to select all')
-                    : '${all.length} contacts',
-                isSelectionMode: selecting,
-                selectionLeading: selecting
-                    ? OneUISelectionCountPill(
-                        selectedCount: _selected!.length,
-                        totalCount: all.length,
-                        onToggleSelectAll: _toggleSelectAll,
-                      )
-                    : null,
-                onSelectionCancel: selecting ? _endSelection : null,
-                actionsPillKey: _menuKey,
-                actions: selecting
-                    ? null
-                    : [
-                        OneUIHeaderAction(
-                          icon: Icons.add_rounded,
-                          tooltip: 'Create contact',
-                          onTap: () => openContactEditor(context),
+              automaticallyImplyLeading: false,
+              backgroundColor: Colors.black,
+              surfaceTintColor: Colors.transparent,
+              scrolledUnderElevation: 0,
+              toolbarHeight: kHeaderBarHeight,
+              // The glass press stretches the buttons past the bar; don't cut it off.
+              clipBehavior: Clip.none,
+              titleSpacing: 0,
+              title: ValueListenableBuilder(
+                valueListenable: _selectionChanged,
+                builder: (context, _, _) => _Header(
+                  selecting: selecting,
+                  allSelected: _allSelected,
+                  onToggleSelectAll: _toggleSelectAll,
+                  onCancel: _endSelection,
+                  menuKey: _menuKey,
+                  onMenu: _openMenu,
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: _titleHeight,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                  child: ValueListenableBuilder(
+                    valueListenable: _selectionChanged,
+                    builder: (context, _, _) => Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          selecting ? '${_selected!.length} selected' : 'Contacts',
+                          style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w700, letterSpacing: -0.5),
                         ),
-                        OneUIHeaderAction(
-                          icon: Icons.search_rounded,
-                          tooltip: 'Search',
-                          onTap: () => openSearch(context),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${all.length} contacts',
+                          style: const TextStyle(fontSize: 15, color: OneUITheme.textSecondary),
                         ),
-                        OneUIHeaderAction(icon: Icons.more_vert_rounded, tooltip: 'More options', onTap: _openMenu),
                       ],
+                    ),
+                  ),
+                ),
               ),
             ),
             if (!repo.hasAccess.value)
@@ -308,177 +285,167 @@ class _ContactsScreenState extends State<ContactsScreen> {
                     ],
                   ),
                 ),
-              ),
-            if (favourites.isNotEmpty) ...[
-              const SliverToBoxAdapter(
-                child: ContactsSectionHeader(title: 'Favorites', icon: Icons.star_rounded),
-              ),
-              if (_favoritesAsList)
-                _rows(favourites, selecting)
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  sliver: SliverGrid.builder(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      mainAxisSpacing: _tileSpacing,
-                      crossAxisSpacing: _tileSpacing,
-                      childAspectRatio: _tileAspect,
-                    ),
-                    itemCount: favourites.length,
-                    itemBuilder: (context, i) => FavoriteTile(
-                      contact: favourites[i],
-                      onTap: () => selecting ? _toggleSelected(favourites[i]) : _open(favourites[i]),
-                      onLongPress: () => _startSelection(favourites[i]),
-                    ),
+              )
+            else ...[
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: _topCardHeight,
+                  child: _TopCard(
+                    profile: _profile,
+                    onGroups: () =>
+                        Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const GroupsScreen())),
                   ),
                 ),
-            ],
-            if (_profile case final profile?) ...[
-              const SliverToBoxAdapter(child: ContactsSectionHeader(title: 'My profile')),
-              SliverToBoxAdapter(child: _ProfileRow(profile: profile)),
-            ],
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.only(top: _cardGap),
-                child: _GroupsRow(
-                  onTap: () =>
-                      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const GroupsScreen())),
-                ),
               ),
-            ),
-            for (final (letter, list) in sections) ...[
-              SliverToBoxAdapter(child: ContactsSectionHeader(title: letter)),
-              _rows(list, selecting),
+              for (final (letter, list) in _sections) ...[
+                SliverToBoxAdapter(child: ContactsSectionHeader(title: letter)),
+                // Lazy, fixed-extent rows: only the ones on screen are built.
+                SliverFixedExtentList.builder(
+                  itemExtent: ContactRow.height,
+                  itemCount: list.length,
+                  itemBuilder: (context, i) {
+                    final c = list[i];
+                    return ContactRow(
+                      contact: c,
+                      isLast: i == list.length - 1,
+                      selecting: selecting,
+                      selectMark: ValueListenableBuilder(
+                        valueListenable: _selectionChanged,
+                        builder: (context, _, _) => SelectMark(selected: _selected?.contains(c.id), gap: 12),
+                      ),
+                      onTap: () => _selected != null ? _toggleSelected(c) : _open(c),
+                      onLongPress: () => _selected != null ? _toggleSelected(c) : _startSelection(c),
+                    );
+                  },
+                ),
+              ],
             ],
-            SliverToBoxAdapter(child: SizedBox(height: navBarClearance(context) + 40)),
+            SliverToBoxAdapter(child: SizedBox(height: navBarClearance(context) + 8)),
           ],
         ),
-        if (sections.length > 1)
+        if (_sections.length > 1)
           Positioned(
-            right: 0,
-            top: top + 110,
+            right: 4,
+            top: top + kHeaderBarHeight + _titleHeight + _topCardHeight,
             bottom: navBarClearance(context),
-            width: 160,
-            child: ValueListenableBuilder<bool>(
-              valueListenable: _showScroller,
-              builder: (context, show, child) => IgnorePointer(
-                ignoring: !show,
-                child: AnimatedOpacity(
-                  opacity: show ? 1 : 0,
-                  duration: const Duration(milliseconds: 200),
-                  child: child,
-                ),
-              ),
-              child: FastScroller(
-                letters: [for (final (l, _) in sections) l],
-                current: _currentLetter,
-                onLetter: (l) => _scroll.jumpTo(offsets[l]!.clamp(0, _scroll.position.maxScrollExtent)),
-              ),
+            width: 140,
+            child: FastScroller(
+              letters: [for (final (l, _) in _sections) l],
+              current: _currentLetter,
+              onLetter: (l) => _scroll.jumpTo(_offsets[l]!.clamp(0, _scroll.position.maxScrollExtent)),
             ),
           ),
-        // The current letter while scrolling, once the big header has collapsed.
-        Positioned(
-          top: top + 70,
-          left: 0,
-          right: 0,
-          child: IgnorePointer(
-            child: ListenableBuilder(
-              listenable: Listenable.merge([_showLetterPill, _currentLetter]),
-              builder: (context, _) {
-                final visible =
-                    _showLetterPill.value &&
-                    _currentLetter.value != null &&
-                    _scroll.hasClients &&
-                    _scroll.offset > _headerScroll + 40;
-                return AnimatedOpacity(
-                  opacity: visible ? 1 : 0,
-                  duration: const Duration(milliseconds: 180),
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: OneUITheme.surfacePill,
-                        borderRadius: OneUITheme.pillBorderRadius,
-                      ),
-                      child: Text(_currentLetter.value ?? '', style: const TextStyle(fontSize: 16)),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: navBarClearance(context) - 8,
-          child: Center(child: OneUIScrollToTopButton(scrollController: _scroll)),
-        ),
       ],
     );
   }
-
-  /// A section card of contact rows; the tapped contact opens as a quick card in place.
-  Widget _rows(List<DialerContact> list, bool selecting) {
-    return SliverVariedExtentList.builder(
-      itemCount: list.length,
-      itemExtentBuilder: (i, _) => list[i].id == _expandedId ? ContactQuickCard.height : ContactRow.height,
-      itemBuilder: (context, i) {
-        final c = list[i];
-        if (c.id == _expandedId) return ContactQuickCard(contact: c, onInfo: () => _open(c));
-        // The card breaks around an open quick card, like Samsung.
-        final isFirst = i == 0 || list[i - 1].id == _expandedId;
-        final isLast = i == list.length - 1 || list[i + 1].id == _expandedId;
-        return ContactRow(
-          contact: c,
-          isFirst: isFirst,
-          isLast: isLast,
-          selected: selecting ? _selected!.contains(c.id) : null,
-          onTap: () => selecting ? _toggleSelected(c) : _toggleExpanded(c),
-          onLongPress: () => selecting ? _toggleSelected(c) : _startSelection(c),
-        );
-      },
-    );
-  }
 }
 
-class _ProfileRow extends StatelessWidget {
-  const _ProfileRow({required this.profile});
+/// The Calls header's controls: glass search and menu; while selecting, a select-all
+/// pill on the left and Cancel on the right.
+class _Header extends StatelessWidget {
+  const _Header({
+    required this.selecting,
+    required this.allSelected,
+    required this.onToggleSelectAll,
+    required this.onCancel,
+    required this.menuKey,
+    required this.onMenu,
+  });
 
-  final Contact profile;
+  final bool selecting;
+  final bool allSelected;
+  final VoidCallback onToggleSelectAll;
+  final VoidCallback onCancel;
+  final GlobalKey menuKey;
+  final VoidCallback onMenu;
 
   @override
   Widget build(BuildContext context) {
-    final name = (profile.displayName?.trim().isNotEmpty ?? false) ? profile.displayName!.trim() : 'Me';
-    return _CardRow(
-      leading: LetterAvatar(name: name, photo: profile.photo?.thumbnail, size: 36),
-      title: name,
-    );
-  }
-}
-
-class _GroupsRow extends StatelessWidget {
-  const _GroupsRow({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return _CardRow(
-      onTap: onTap,
-      leading: Container(
-        width: 36,
-        height: 36,
-        decoration: const BoxDecoration(color: Color(0xFFD9D9DE), shape: BoxShape.circle),
-        child: const Icon(Icons.group_rounded, color: Colors.white, size: 20),
+    return AnimatedSwitcher(
+      duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 220),
+      child: Padding(
+        key: ValueKey(selecting),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: selecting
+              ? [
+                  CallGlass(
+                    radius: 24,
+                    child: SizedBox(
+                      width: 100,
+                      height: 48,
+                      child: SelectAllCount(allSelected: allSelected, onTap: onToggleSelectAll),
+                    ),
+                  ),
+                  const Spacer(),
+                  RoundIconButton(icon: Icons.close_rounded, tooltip: 'Cancel', onTap: onCancel),
+                ]
+              : [
+                  const Spacer(),
+                  RoundIconButton(icon: Icons.search_rounded, tooltip: 'Search', onTap: () => openSearch(context)),
+                  const SizedBox(width: 8),
+                  // The menu measures this wrapper, outside the glass press, so holding the
+                  // button doesn't shift where the menu opens.
+                  KeyedSubtree(
+                    key: menuKey,
+                    child: RoundIconButton(icon: Icons.more_vert_rounded, tooltip: 'More options', onTap: onMenu),
+                  ),
+                ],
+        ),
       ),
-      title: 'Groups',
     );
   }
 }
 
-/// A single-row rounded card (My profile, Groups).
+/// My contact card (when the phone has a profile) and Groups, in one card.
+class _TopCard extends StatelessWidget {
+  const _TopCard({required this.profile, required this.onGroups});
+
+  final Contact? profile;
+  final VoidCallback onGroups;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = profile;
+    final photo = p?.photo?.thumbnail;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, _ContactsScreenState._cardBottom),
+      child: Material(
+        color: OneUITheme.surfaceCard,
+        borderRadius: OneUITheme.cardBorderRadius,
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          children: [
+            if (p != null) ...[
+              _CardRow(
+                leading: photo != null
+                    ? LetterAvatar(name: p.displayName ?? '', photo: photo, size: 40)
+                    : const _GreenIcon(Icons.person_rounded),
+                title: 'My contact card',
+              ),
+              Divider(height: 1, indent: 70, color: Colors.white.withValues(alpha: 0.1)),
+            ],
+            _CardRow(leading: const _GreenIcon(Icons.group_rounded), title: 'My groups', onTap: onGroups),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GreenIcon extends StatelessWidget {
+  const _GreenIcon(this.icon);
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 40,
+    height: 40,
+    decoration: const BoxDecoration(color: OneUITheme.dialGreen, shape: BoxShape.circle),
+    child: Icon(icon, color: Colors.white, size: 22),
+  );
+}
+
 class _CardRow extends StatelessWidget {
   const _CardRow({required this.leading, required this.title, this.onTap});
 
@@ -488,25 +455,24 @@ class _CardRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      child: Material(
-        color: OneUITheme.surfaceCard,
-        borderRadius: OneUITheme.cardBorderRadius,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: OneUITheme.cardBorderRadius,
-          child: SizedBox(
-            height: ContactRow.height,
-            child: Row(
-              children: [
-                const SizedBox(width: 18),
-                leading,
-                const SizedBox(width: 14),
-                Expanded(child: Text(title, style: const TextStyle(fontSize: 18))),
-              ],
+    return InkWell(
+      onTap: onTap,
+      child: SizedBox(
+        height: _ContactsScreenState._cardRowHeight - 0.5,
+        child: Row(
+          children: [
+            const SizedBox(width: 16),
+            leading,
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
