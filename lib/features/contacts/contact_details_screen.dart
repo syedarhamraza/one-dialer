@@ -10,23 +10,28 @@ import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_scroll.dart';
 import '../../theme/one_ui_theme.dart';
+import '../../widgets/call_glass.dart';
 import '../../widgets/letter_avatar.dart';
-import '../../widgets/one_ui_bottom_vignette.dart';
-import '../../widgets/one_ui_floating_action_bar.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_floating_modal.dart';
 import '../../widgets/one_ui_group_card.dart';
 import '../../widgets/one_ui_radio.dart';
+import '../../widgets/one_ui_status_bar_scrim.dart';
 import '../../widgets/place_call.dart';
 import '../../widgets/press_glow.dart';
+import '../../widgets/round_header_controls.dart';
 import '../blocking/blocking_repository.dart';
+import '../recents/call_log.dart';
+import '../recents/call_log_repository.dart';
+import '../recents/recents_screen.dart' show CallTypeIcon, SimBadge, callTypeLabel;
 import 'contact_actions.dart';
 import 'contact_subpages.dart';
 import 'editor/contact_editor_screen.dart';
 import 'editor/contact_form.dart' show labelDisplay, labelText;
 
-/// Samsung-style contact page: hero card, numbers, details, messaging apps, History and
-/// Storage locations, and a floating Favorites / Edit / Share / More bar.
+/// ColorOS-style contact page in the Calls look: round glass Back / Favourite / Edit / More
+/// buttons over a big avatar and name, Call and Message tiles, the numbers and ringtone,
+/// details, messaging apps and the latest calls.
 class ContactDetailsScreen extends StatefulWidget {
   const ContactDetailsScreen({super.key, required this.contactId});
 
@@ -38,7 +43,6 @@ class ContactDetailsScreen extends StatefulWidget {
 
 class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   final _bridge = TelecomBridge.instance;
-  final _shareKey = GlobalKey();
   final _moreKey = GlobalKey();
   Contact? _full; // every field, for details, Share and QR
   List<Map<Object?, Object?>> _apps = const [];
@@ -83,7 +87,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
   void _share(DialerContact contact) => OneUIFloatingMenu.show(
     context: context,
-    anchorKey: _shareKey,
+    anchorKey: _moreKey,
     width: 230,
     items: [
       OneUIFloatingMenuItem(
@@ -93,6 +97,12 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         },
       ),
       OneUIFloatingMenuItem(label: 'Text', onTap: () => ContactActions.shareText(contact)),
+      OneUIFloatingMenuItem(
+        label: 'QR code',
+        onTap: () {
+          if (_full != null) ContactActions.showQr(context, _full!);
+        },
+      ),
     ],
   );
 
@@ -104,18 +114,14 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       anchorKey: _moreKey,
       width: 270,
       items: [
+        OneUIFloatingMenuItem(label: 'Share', onTap: () => _share(contact)),
         OneUIFloatingMenuItem(
-          label: 'Delete',
-          onTap: () async {
-            if (await ContactActions.delete(context, contact.id, contact.name) && mounted) Navigator.of(context).pop();
-          },
+          label: 'Storage locations',
+          onTap: () =>
+              Navigator.of(context)
+                  .push(MaterialPageRoute<void>(builder: (_) => StorageLocationsScreen(contact: contact))),
         ),
-        OneUIFloatingMenuItem(
-          label: 'QR code',
-          onTap: () {
-            if (_full != null) ContactActions.showQr(context, _full!);
-          },
-        ),
+        OneUIFloatingMenuItem(label: 'SIM card for calls', onTap: _chooseSim),
         OneUIFloatingMenuItem(
           label: blocked ? 'Unblock contact' : 'Block contact',
           onTap: () async {
@@ -124,8 +130,12 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             }
           },
         ),
-        OneUIFloatingMenuItem(label: 'SIM card for calls', onTap: _chooseSim),
-        OneUIFloatingMenuItem(label: 'Change ringtone', onTap: () => ContactActions.changeRingtone(contact.id)),
+        OneUIFloatingMenuItem(
+          label: 'Delete',
+          onTap: () async {
+            if (await ContactActions.delete(context, contact.id, contact.name) && mounted) Navigator.of(context).pop();
+          },
+        ),
       ],
     );
   }
@@ -164,6 +174,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
   // --- Build ---------------------------------------------------------------------
 
+  static const double _button = 48;
+
   @override
   Widget build(BuildContext context) {
     final repo = ContactsRepository.instance;
@@ -180,77 +192,101 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             ),
           );
         }
+        final padding = MediaQuery.paddingOf(context);
+        final primary = contact.numbers[contact.primaryIndex >= 0 ? contact.primaryIndex : 0];
         return Scaffold(
           body: Stack(
             children: [
               ListView(
                 physics: const OneUIScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(10, MediaQuery.paddingOf(context).top + 4, 10, 140),
+                padding: EdgeInsets.fromLTRB(16, padding.top + 8 + _button + 16, 16, padding.bottom + 32),
                 children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: IconButton(
-                      tooltip: 'Back',
-                      onPressed: () => Navigator.of(context).maybePop(),
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 26),
+                  Center(
+                    child: LetterAvatar(
+                      name: contact.name,
+                      // Full resolution once loaded; the thumbnail is soft at this size.
+                      photo: _full?.photo?.fullSize ?? contact.thumbnail,
+                      size: 112,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  _Hero(contact: contact, photo: _full?.photo?.fullSize, onCall: _call, simLabel: _simLabel),
-                  if (contact.numbers.length > 1 || contact.primaryIndex > 0) _numbersCard(contact),
-                  if (_full case final full?) ..._detailCards(full),
-                  if (_apps.isNotEmpty) _appsCard(),
-                  const SizedBox(height: 8),
-                  _PillButton(
-                    label: 'History',
-                    onTap: () =>
-                        Navigator.of(context)
-                            .push(MaterialPageRoute<void>(builder: (_) => ContactHistoryScreen(contact: contact))),
+                  const SizedBox(height: 16),
+                  Text(
+                    contact.name,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w600, letterSpacing: -0.4),
                   ),
-                  _PillButton(
-                    label: 'Storage locations',
-                    onTap: () =>
-                        Navigator.of(context)
-                            .push(MaterialPageRoute<void>(builder: (_) => StorageLocationsScreen(contact: contact))),
-                  ),
-                ],
-              ),
-              // Same placement as OneSpend's detail screens: a bottom vignette, and the bar
-              // centred at its own (content) width, with its own safe area and padding.
-              const Positioned(left: 0, right: 0, bottom: 0, child: OneUIBottomVignette()),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: OneUIFloatingActionBar(
-                    items: [
-                      OneUIFloatingActionBarItem(
-                        icon: contact.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
-                        label: 'Favorites',
-                        color: contact.isFavorite ? const Color(0xFFF7A93B) : null,
-                        onTap: () => repo.setFavorite(contact.id, !contact.isFavorite),
+                  const SizedBox(height: 28),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _ActionTile(
+                          icon: Icons.call_rounded,
+                          color: OneUITheme.accentGreen,
+                          label: 'Call',
+                          onTap: () => _call(primary),
+                        ),
                       ),
-                      OneUIFloatingActionBarItem(
-                        icon: Icons.edit_outlined,
-                        label: 'Edit',
-                        onTap: () => openContactEditor(context, contactId: contact.id),
-                      ),
-                      OneUIFloatingActionBarItem(
-                        key: _shareKey,
-                        icon: Icons.share_outlined,
-                        label: 'Share',
-                        onTap: () => _share(contact),
-                      ),
-                      OneUIFloatingActionBarItem(
-                        key: _moreKey,
-                        icon: Icons.more_vert_rounded,
-                        label: 'More',
-                        onTap: () => _more(contact),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _ActionTile(
+                          icon: Icons.chat_bubble_rounded,
+                          color: const Color(0xFF3E9BFF),
+                          label: 'Message',
+                          onTap: () => _bridge.sendSms(primary),
+                        ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 20),
+                  _numbersCard(contact),
+                  if (_full case final full?) ..._detailCards(full),
+                  if (_apps.isNotEmpty) _appsCard(),
+                  _callLogs(contact),
+                ],
+              ),
+              const Positioned(left: 0, right: 0, top: 0, child: OneUIStatusBarScrim()),
+              Positioned(
+                left: 16,
+                right: 16,
+                top: padding.top + 8,
+                child: Row(
+                  children: [
+                    RoundIconButton(
+                      icon: Icons.arrow_back_rounded,
+                      tooltip: 'Back',
+                      onTap: () => Navigator.of(context).maybePop(),
+                    ),
+                    const Spacer(),
+                    // RoundIconButton with an orange star when it's a favourite.
+                    CallGlass(
+                      child: IconButton(
+                        tooltip: contact.isFavorite ? 'Remove from favourites' : 'Add to favourites',
+                        onPressed: () => repo.setFavorite(contact.id, !contact.isFavorite),
+                        style: IconButton.styleFrom(
+                          foregroundColor: contact.isFavorite ? const Color(0xFFF7A93B) : OneUITheme.textPrimary,
+                          fixedSize: const Size.square(_button),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        icon: Icon(contact.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded, size: 24),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    RoundIconButton(
+                      icon: Icons.edit_outlined,
+                      tooltip: 'Edit',
+                      onTap: () => openContactEditor(context, contactId: contact.id),
+                    ),
+                    const SizedBox(width: 8),
+                    // The menu measures this wrapper, outside the glass press, like Calls' menu.
+                    KeyedSubtree(
+                      key: _moreKey,
+                      child: RoundIconButton(
+                        icon: Icons.more_vert_rounded,
+                        tooltip: 'More options',
+                        onTap: () => _more(contact),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -262,29 +298,39 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
   String? get _simLabel => _sims.length < 2 ? null : _sims.where((s) => s.id == _simId).map((s) => s.label).firstOrNull;
 
-  /// Every number with its own call and message buttons (Samsung lists the extra numbers here).
+  /// "1"/"2" badge, only on dual-SIM phones (as in Calls).
+  (String, Color)? _simBadge(String? simId) {
+    if (_sims.length < 2 || simId == null) return null;
+    final i = _sims.indexWhere((s) => s.id == simId);
+    return i < 0 ? null : ('${i + 1}', _sims[i].color);
+  }
+
+  /// Every number (tap to call, message on the right), then the contact's ringtone.
   Widget _numbersCard(DialerContact contact) {
+    final simLabel = _simLabel;
     return _Card(
       children: [
         for (final (i, n) in contact.numbers.indexed)
           _ValueRow(
-            label: contact.labels[i] + (i == contact.primaryIndex ? ' · Default' : ''),
+            icon: i == 0 ? Icons.call_outlined : null,
+            label: [
+              contact.labels[i],
+              if (contact.numbers.length > 1 && i == contact.primaryIndex) 'Default',
+              ?simLabel,
+            ].join(' · '),
             value: n,
-            actions: [
-              _RowAction(
-                icon: Icons.call_rounded,
-                color: OneUITheme.accentGreen,
-                tooltip: 'Call',
-                onTap: () => _call(n),
-              ),
-              _RowAction(
-                icon: Icons.chat_bubble_rounded,
-                color: const Color(0xFF3E9BFF),
-                tooltip: 'Message',
-                onTap: () => _bridge.sendSms(n),
-              ),
-            ],
+            onTap: () => _call(n),
+            action: IconButton(
+              tooltip: 'Message',
+              onPressed: () => _bridge.sendSms(n),
+              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 24),
+            ),
           ),
+        _ValueRow(
+          icon: Icons.notifications_none_rounded,
+          value: 'Ringtone',
+          onTap: () => ContactActions.changeRingtone(contact.id),
+        ),
       ],
     );
   }
@@ -355,76 +401,129 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       ],
     );
   }
-}
 
-/// Name, default number, photo and the Call / Message buttons.
-class _Hero extends StatelessWidget {
-  const _Hero({required this.contact, required this.onCall, required this.simLabel, this.photo});
-
-  final DialerContact contact;
-
-  /// Full-resolution photo once loaded; the thumbnail is soft at this size.
-  final Uint8List? photo;
-  final Future<void> Function(String) onCall;
-  final String? simLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    final i = contact.primaryIndex >= 0 ? contact.primaryIndex : 0;
-    final number = contact.numbers[i];
-    return _Card(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 22),
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  /// The latest calls with this contact's numbers, hidden until there are any.
+  Widget _callLogs(DialerContact contact) {
+    final repo = CallLogRepository.instance;
+    final keys = {for (final n in contact.numbers) numberKey(n)};
+    return ListenableBuilder(
+      listenable: repo.calls,
+      builder: (context, _) {
+        final calls = repo.calls.value.where((c) => keys.contains(numberKey(c.number))).take(3).toList();
+        if (calls.isEmpty) return const SizedBox.shrink();
+        final now = DateTime.now();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            Padding(
+              padding: const EdgeInsets.only(left: 18),
+              child: Row(
                 children: [
-                  Text(
-                    contact.name,
-                    style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w700, letterSpacing: -0.6),
+                  const Expanded(
+                    child: Text('Call logs', style: TextStyle(fontSize: 15, color: OneUITheme.textSecondary)),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${contact.labels[i]} $number',
-                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-                  ),
-                  if (simLabel != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        'Calls with $simLabel',
-                        style: const TextStyle(fontSize: 14, color: OneUITheme.textSecondary),
-                      ),
+                  TextButton(
+                    onPressed: () =>
+                        Navigator.of(context)
+                            .push(MaterialPageRoute<void>(builder: (_) => ContactHistoryScreen(contact: contact))),
+                    child: const Text(
+                      'View all',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: OneUITheme.accentGreen),
                     ),
+                  ),
                 ],
               ),
             ),
-            const SizedBox(width: 12),
-            LetterAvatar(name: contact.name, photo: photo ?? contact.thumbnail, size: 52),
-          ],
-        ),
-        const SizedBox(height: 28),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _BigAction(
-              icon: Icons.call_rounded,
-              color: OneUITheme.accentGreen,
-              label: 'Call',
-              onTap: () => onCall(number),
+            _Card(
+              padding: const EdgeInsets.fromLTRB(18, 6, 18, 6),
+              children: [
+                for (final c in calls)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Row(
+                      children: [
+                        SizedBox(width: 40, child: CallTypeIcon(type: c.type, muted: true)),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${dayLabel(c.date, now)}, ${timeLabel(c.date)}',
+                                style: const TextStyle(fontSize: 17),
+                              ),
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  if (_simBadge(c.simId) case final badge?) ...[
+                                    SimBadge(badge: badge),
+                                    const SizedBox(width: 6),
+                                  ],
+                                  Flexible(
+                                    child: Text(
+                                      c.number,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 13, color: OneUITheme.textSecondary),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          c.type != CallType.missed && c.duration > Duration.zero
+                              ? durationLabel(c.duration)
+                              : callTypeLabel(c.type),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: c.type == CallType.missed ? OneUITheme.accentRed : OneUITheme.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
             ),
-            _BigAction(
-              icon: Icons.chat_bubble_rounded,
-              color: const Color(0xFF3E9BFF),
-              label: 'Message',
-              onTap: () => TelecomBridge.instance.sendSms(number),
-            ),
           ],
+        );
+      },
+    );
+  }
+}
+
+/// Call / Message tile: icon over label on a flat card (no glass: it scrolls).
+class _ActionTile extends StatelessWidget {
+  const _ActionTile({required this.icon, required this.color, required this.label, required this.onTap});
+
+  final IconData icon;
+  final Color color;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return PressGlow(
+      radius: OneUITheme.radiusCard,
+      child: Material(
+        color: OneUITheme.surfaceCard,
+        borderRadius: OneUITheme.cardBorderRadius,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: OneUITheme.cardBorderRadius,
+          // Full width: the glass press hands its child loose constraints.
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Column(
+              children: [
+                Icon(icon, color: color, size: 26),
+                const SizedBox(height: 6),
+                Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+              ],
+            ),
+          ),
         ),
-      ],
+      ),
     );
   }
 }
@@ -446,17 +545,23 @@ class _Card extends StatelessWidget {
   }
 }
 
-/// "Mobile / 0336…" with optional buttons on the right; tappable when [onTap] is set.
+/// A value with its label; tappable when [onTap] is set. Detail rows put the label above
+/// the value, number rows (with an [icon] column or an [action]) put it below.
 class _ValueRow extends StatelessWidget {
-  const _ValueRow({required this.label, required this.value, this.actions = const [], this.onTap});
+  const _ValueRow({this.icon, this.label = '', required this.value, this.action, this.onTap});
 
+  final IconData? icon;
   final String label;
   final String value;
-  final List<Widget> actions;
+  final Widget? action;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final caption = label.isEmpty
+        ? null
+        : Text(label, style: const TextStyle(fontSize: 13, color: OneUITheme.textSecondary));
+    final numberRow = icon != null || action != null;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -464,87 +569,19 @@ class _ValueRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
           children: [
+            if (numberRow) SizedBox(width: 40, child: icon == null ? null : Icon(icon, size: 24)),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: const TextStyle(fontSize: 13, color: OneUITheme.textSecondary)),
-                  const SizedBox(height: 2),
+                  if (!numberRow && caption != null) ...[caption, const SizedBox(height: 2)],
                   Text(value, style: const TextStyle(fontSize: 19)),
+                  if (numberRow && caption != null) ...[const SizedBox(height: 2), caption],
                 ],
               ),
             ),
-            ...actions,
+            ?action,
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RowAction extends StatelessWidget {
-  const _RowAction({required this.icon, required this.color, required this.tooltip, required this.onTap});
-
-  final IconData icon;
-  final Color color;
-  final String tooltip;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      tooltip: tooltip,
-      onPressed: onTap,
-      icon: Icon(icon, color: color, size: 24),
-    );
-  }
-}
-
-class _BigAction extends StatelessWidget {
-  const _BigAction({required this.icon, required this.color, required this.label, required this.onTap});
-
-  final IconData icon;
-  final Color color;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox.square(
-      dimension: 44,
-      child: IconButton(
-        tooltip: label,
-        onPressed: onTap,
-        padding: EdgeInsets.zero,
-        style: IconButton.styleFrom(backgroundColor: OneUITheme.surfacePill),
-        icon: Icon(icon, color: color, size: 20),
-      ),
-    );
-  }
-}
-
-/// Samsung's wide grey pill buttons (History, Storage locations).
-class _PillButton extends StatelessWidget {
-  const _PillButton({required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Center(
-        child: PressGlow(
-          child: FilledButton(
-            onPressed: onTap,
-            style: FilledButton.styleFrom(
-              backgroundColor: OneUITheme.surfacePill,
-              foregroundColor: OneUITheme.textPrimary,
-              minimumSize: const Size(230, 52),
-            ),
-            child: Text(label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-          ),
         ),
       ),
     );
