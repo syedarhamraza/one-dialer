@@ -48,9 +48,78 @@ final _riseSpring = GlassSpringCurve(
 /// Material's emphasized accelerate, for leaving.
 const _dropCurve = Cubic(0.3, 0, 0.8, 0.15);
 
-class _KeypadScreenState extends State<KeypadScreen> {
+class _KeypadScreenState extends State<KeypadScreen> with SingleTickerProviderStateMixin {
   final _telecom = TelecomBridge.instance;
   bool _calling = false;
+
+  /// How far the sheet has slid away: 0 up, 1 hidden. Follows the finger while dragged.
+  late final _slide = AnimationController(vsync: this, value: widget.open.value ? 0 : 1);
+  late final _offset = _slide.drive(Tween(begin: Offset.zero, end: const Offset(0, 1)));
+  final _panel = GlobalKey();
+  bool _dragging = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.open.addListener(_settle);
+  }
+
+  @override
+  void didUpdateWidget(KeypadScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.open != widget.open) {
+      oldWidget.open.removeListener(_settle);
+      widget.open.addListener(_settle);
+      _settle();
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.open.removeListener(_settle);
+    _slide.dispose();
+    super.dispose();
+  }
+
+  /// Rises on a soft spring that settles without a bounce and drops away quickly, speeding up as
+  /// it goes; from wherever a drag let go, for the part of the way that's left.
+  void _settle() {
+    if (_dragging) return;
+    final open = widget.open.value;
+    final target = open ? 0.0 : 1.0;
+    final left = (target - _slide.value).abs();
+    if (MediaQuery.disableAnimationsOf(context) || left == 0) {
+      _slide.value = target;
+      return;
+    }
+    _slide.animateTo(
+      target,
+      duration: Duration(milliseconds: open ? 450 : 240) * left,
+      curve: open ? _riseSpring : _dropCurve,
+    );
+  }
+
+  void _dragStart(DragStartDetails _) {
+    _dragging = true;
+    _slide.stop();
+  }
+
+  void _dragUpdate(DragUpdateDetails d) {
+    final height = _panel.currentContext?.size?.height ?? 1;
+    _slide.value += d.primaryDelta! / height;
+  }
+
+  /// A flick decides by its direction; a slow release by whether the sheet is past halfway.
+  void _dragEnd(DragEndDetails d) {
+    _dragging = false;
+    final velocity = d.primaryVelocity ?? 0;
+    final open = velocity.abs() > 700 ? velocity < 0 : _slide.value < .5;
+    if (open == widget.open.value) {
+      _settle();
+    } else {
+      widget.open.value = open;
+    }
+  }
 
   void _show() => widget.open.value = true;
 
@@ -196,53 +265,58 @@ class _KeypadScreenState extends State<KeypadScreen> {
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    // Rises on a soft spring that settles without a bounce, and drops away
-                    // quickly, speeding up as it goes.
-                    child: AnimatedSlide(
-                      offset: Offset(0, open ? 0 : 1),
-                      duration: MediaQuery.disableAnimationsOf(context)
-                          ? Duration.zero
-                          : Duration(milliseconds: open ? 450 : 240),
-                      curve: open ? _riseSpring : _dropCurve,
-                      child: IgnorePointer(
-                        ignoring: !open,
-                        child: ExcludeSemantics(
-                          excluding: !open,
-                          // Its own layer, so the slide and the results changing while typing
-                          // don't repaint the keys.
-                          child: RepaintBoundary(
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(maxHeight: constraints.maxHeight),
-                              // Frosted like the nav bar: Calls shows blurred behind the keys. Costs a
-                              // blur only on frames where something animates.
-                              child: ClipRRect(
-                                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                                child: BackdropFilter(
-                                  filter: ImageFilter.blur(sigmaX: _blur, sigmaY: _blur),
-                                  child: DecoratedBox(
-                                    key: const ValueKey('keypad-panel'),
-                                    decoration: BoxDecoration(
-                                      color: OneUITheme.surfaceCard.withValues(alpha: .75),
-                                      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-                                    ),
-                                    // Scrolls only when a small or landscape screen can't fit it.
-                                    child: SingleChildScrollView(
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          _Handle(onHide: _hide),
-                                          if (number.isNotEmpty) _NumberDisplay(number: number, onPaste: _paste),
-                                          _Keypad(onKey: _type, onLongPress: _longPress, keyHeight: keyHeight),
-                                          const SizedBox(height: _gap),
-                                          _CallRow(
-                                            keyHeight: keyHeight,
-                                            onHide: _hide,
-                                            onCall: _calling ? null : _call,
-                                            onBackspace: _backspace,
-                                            onClear: () => widget.input.value = '',
-                                          ),
-                                          SizedBox(height: 12 + clearance),
-                                        ],
+                    child: SlideTransition(
+                      position: _offset,
+                      // Hold anywhere on the sheet, keys included, and slide it down or back up; a
+                      // drag cancels the key's tap, so nothing is typed.
+                      child: GestureDetector(
+                        onVerticalDragStart: _dragStart,
+                        onVerticalDragUpdate: _dragUpdate,
+                        onVerticalDragEnd: _dragEnd,
+                        onVerticalDragCancel: () {
+                          if (_dragging) _dragEnd(DragEndDetails());
+                        },
+                        child: IgnorePointer(
+                          ignoring: !open,
+                          child: ExcludeSemantics(
+                            excluding: !open,
+                            // Its own layer, so the slide and the results changing while typing
+                            // don't repaint the keys.
+                            child: RepaintBoundary(
+                              key: _panel,
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(maxHeight: constraints.maxHeight),
+                                // Frosted like the nav bar: Calls shows blurred behind the keys. Costs a
+                                // blur only on frames where something animates.
+                                child: ClipRRect(
+                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                                  child: BackdropFilter(
+                                    filter: ImageFilter.blur(sigmaX: _blur, sigmaY: _blur),
+                                    child: DecoratedBox(
+                                      key: const ValueKey('keypad-panel'),
+                                      decoration: BoxDecoration(
+                                        color: OneUITheme.surfaceCard.withValues(alpha: .75),
+                                        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                                      ),
+                                      // Scrolls only when a small or landscape screen can't fit it.
+                                      child: SingleChildScrollView(
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            _Handle(onHide: _hide),
+                                            if (number.isNotEmpty) _NumberDisplay(number: number, onPaste: _paste),
+                                            _Keypad(onKey: _type, onLongPress: _longPress, keyHeight: keyHeight),
+                                            const SizedBox(height: _gap),
+                                            _CallRow(
+                                              keyHeight: keyHeight,
+                                              onHide: _hide,
+                                              onCall: _calling ? null : _call,
+                                              onBackspace: _backspace,
+                                              onClear: () => widget.input.value = '',
+                                            ),
+                                            SizedBox(height: 12 + clearance),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -425,7 +499,7 @@ class _NumberDisplay extends StatelessWidget {
   }
 }
 
-/// The sheet's grab handle: tap or drag down to hide the keys.
+/// The sheet's grab handle: tap to hide the keys (dragging is handled by the whole sheet).
 class _Handle extends StatelessWidget {
   const _Handle({required this.onHide});
   final VoidCallback onHide;
@@ -436,9 +510,6 @@ class _Handle extends StatelessWidget {
     child: GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onHide,
-      onVerticalDragEnd: (d) {
-        if ((d.primaryVelocity ?? 0) > 0) onHide();
-      },
       child: SizedBox(
         height: 24,
         width: double.infinity,
