@@ -49,6 +49,32 @@ void main() {
     expect(size.width, closeTo(800 / DesignWidth.maxScale, .01));
   });
 
+  testWidgets('the pixel ratio follows the scale, so cached images stay sharp', (tester) async {
+    Future<double> ratioAt(Size dp) async {
+      tester.view.physicalSize = dp * 3;
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      late double ratio;
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (context, child) => DesignWidth(child: child!),
+          home: Builder(
+            builder: (context) {
+              ratio = MediaQuery.devicePixelRatioOf(context);
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+      return ratio;
+    }
+
+    expect(await ratioAt(const Size(360, 780)), closeTo(3 * 360 / 420, .001));
+    expect(await ratioAt(const Size(420, 933)), 3);
+    expect(await ratioAt(const Size(800, 1280)), closeTo(3 * DesignWidth.maxScale, .001));
+    expect(await ratioAt(const Size(780, 360)), 3);
+  });
+
   testWidgets('landscape never scales', (tester) async {
     final (size, padding, _) = await layOut(tester, const Size(780, 360));
     expect(size, const Size(780, 360));
