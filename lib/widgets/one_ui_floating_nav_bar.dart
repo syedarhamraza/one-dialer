@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 
 import '../theme/one_ui_theme.dart';
-import 'one_ui_glass_surface.dart';
+import 'call_glass.dart';
 import 'one_ui_morph_switcher.dart';
 
 class OneUINavItem {
@@ -22,34 +23,30 @@ class OneUIFloatingNavBar extends StatefulWidget {
   /// replacing this one; clearing it morphs back to the tabs.
   final Widget? dockedContent;
 
+  /// A round action beside the bar (the dialpad or create-contact button); the bar
+  /// and it centre together as one group.
+  final Widget? trailing;
+
   const OneUIFloatingNavBar({
     super.key,
     required this.currentIndex,
     required this.onTap,
     required this.items,
     this.dockedContent,
+    this.trailing,
   });
 
-  /// Width of each tab's tap target; the gap between tabs never changes.
-  static const double itemWidth = 74;
-
-  /// How far the selected capsule reaches past its own slot on each side. Only one
-  /// tab is selected at a time, so it can borrow a little of its neighbours' space
-  /// (like One UI 8.5) without widening the bar's item spacing.
-  static const double pillOverhang = 6;
-
-  static const double _barHeight = 60;
-  static const double _verticalInset = 4;
-
-  /// Edge padding: the first/last capsule's overhang plus the same gap the capsule
-  /// keeps above and below, so it sits evenly inset at the ends of the bar.
-  static const double _horizontalInset = pillOverhang + _verticalInset;
+  /// Matches `kFloatingNavBarHeight` (lib/app/layout.dart).
+  static const double _barHeight = 58;
 
   @override
   State<OneUIFloatingNavBar> createState() => _OneUIFloatingNavBarState();
 }
 
 class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
+  /// Room for the trailing action (as wide as the bar is tall) plus its gap.
+  static const double _slot = OneUIFloatingNavBar._barHeight + 10;
+
   @override
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
@@ -60,126 +57,137 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
         padding: const EdgeInsets.only(bottom: 8),
         child: Align(
           alignment: Alignment.bottomCenter,
-          child: RepaintBoundary(
-            child: OneUIGlassSurface(
-              elevation: OneUIGlassElevation.navbar,
-              height: OneUIFloatingNavBar._barHeight,
-              // One glass bar that stretches between the tabs and a tab's docked
-              // actions, fading through its content (see OneUIMorphSwitcher).
-              child: OneUIMorphSwitcher(
-                child: docked != null
-                    ? KeyedSubtree(key: const ValueKey('docked'), child: docked)
-                    : KeyedSubtree(key: const ValueKey('tabs'), child: _buildTabs(context, reduceMotion)),
+          // Equal slots either side keep the bar centred on screen. Laid out right to
+          // left so the action's slot paints first, under the bar it slides out from.
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            textDirection: TextDirection.rtl,
+            children: [
+              SizedBox(
+                width: _slot,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: AnimatedSwitcher(
+                    duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 550),
+                    reverseDuration: reduceMotion ? Duration.zero : const Duration(milliseconds: 220),
+                    switchInCurve: const _SpringCurve(),
+                    switchOutCurve: Curves.easeOutCubic,
+                    transitionBuilder: _pop,
+                    child: widget.trailing ?? const SizedBox.shrink(),
+                  ),
+                ),
               ),
-            ),
+              RepaintBoundary(child: _pill(docked, reduceMotion)),
+              const SizedBox(width: _slot),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildTabs(BuildContext context, bool reduceMotion) {
+  Widget _pill(Widget? docked, bool reduceMotion) {
+    // Styled and pressed exactly like the connected call screen's controls.
+    return CallGlass(
+      radius: OneUIFloatingNavBar._barHeight / 2,
+      child: SizedBox(
+        height: OneUIFloatingNavBar._barHeight,
+        // One bar that stretches between the tabs and a tab's docked actions,
+        // fading through its content (see OneUIMorphSwitcher).
+        child: OneUIMorphSwitcher(
+          child: docked != null
+              ? KeyedSubtree(key: const ValueKey('docked'), child: docked)
+              : KeyedSubtree(key: const ValueKey('tabs'), child: _buildTabs(context, reduceMotion)),
+        ),
+      ),
+    );
+  }
+
+  /// ColorOS-style pop: the action grows out from behind the bar's edge on a spring
+  /// that overshoots once and settles; leaving shrinks it back under the bar.
+  static Widget _pop(Widget child, Animation<double> animation) {
     return AnimatedBuilder(
-      animation: OneUIEffectsController.instance,
-      builder: (context, _) {
-        final fx = OneUIEffectsController.instance;
-        final is3d = fx.floating3dEffect;
-        const itemWidth = OneUIFloatingNavBar.itemWidth;
-        const pillOverhang = OneUIFloatingNavBar.pillOverhang;
-        const pillWidth = itemWidth + pillOverhang * 2;
-        const pillRadius = BorderRadius.all(
-          Radius.circular((OneUIFloatingNavBar._barHeight - OneUIFloatingNavBar._verticalInset * 2) / 2),
-        );
-        final pillGradient = fx.activePillGradient;
-        final pillRim = fx.activePillRimGradient;
-        final items = widget.items;
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: OneUIFloatingNavBar._horizontalInset,
-            vertical: OneUIFloatingNavBar._verticalInset,
-          ),
-          child: SizedBox(
-            width: itemWidth * items.length,
-            child: Stack(
-              // Expand so the tab row fills the bar's height and its labels
-              // centre vertically (a loose Stack pins them to the top).
-              fit: StackFit.expand,
-              clipBehavior: Clip.none,
-              children: [
-                // One sliding capsule behind the row, so switching tabs glides
-                // it across instead of fading one out and another in.
-                AnimatedPositioned(
-                  duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 320),
-                  curve: Curves.easeOutCubic,
-                  top: 0,
-                  bottom: 0,
-                  left: widget.currentIndex * itemWidth - pillOverhang,
-                  width: pillWidth,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: pillGradient == null ? fx.activePillColor : null,
-                      gradient: pillGradient,
-                      borderRadius: pillRadius,
-                    ),
-                    child: pillRim == null
-                        ? const SizedBox.expand()
-                        : CustomPaint(
-                            painter: OneUIRimPainter(gradient: pillRim, borderRadius: pillRadius),
-                            child: const SizedBox.expand(),
-                          ),
-                  ),
-                ),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: List.generate(items.length, (index) {
-                    final item = items[index];
-                    final isSelected = index == widget.currentIndex;
-                    final inactiveColor = is3d ? OneUITheme.navbar3dInactiveIcon : OneUITheme.textSecondary;
-                    final inactiveText = is3d ? OneUITheme.navbar3dInactiveText : OneUITheme.textSecondary;
-
-                    return SizedBox(
-                      width: itemWidth,
-                      child: Semantics(
-                        selected: isSelected,
-                        button: true,
-                        label: item.label,
-                        excludeSemantics: true,
-                        child: GestureDetector(
-                          onTap: () => widget.onTap(index),
-                          behavior: HitTestBehavior.opaque,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                isSelected ? item.activeIcon : item.inactiveIcon,
-                                size: 21,
-                                color: isSelected ? OneUITheme.textPrimary : inactiveColor,
-                              ),
-                              const SizedBox(height: 3),
-                              AnimatedDefaultTextStyle(
-                                duration: const Duration(milliseconds: 200),
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                                  letterSpacing: -0.2,
-                                  color: isSelected ? OneUITheme.textPrimary : inactiveText,
-                                ),
-                                child: Text(item.label, maxLines: 1, overflow: TextOverflow.ellipsis),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-              ],
-            ),
-          ),
+      animation: animation,
+      child: child,
+      builder: (context, child) {
+        final v = animation.value;
+        return Transform.translate(
+          offset: Offset(-_slot * 0.6 * (1 - v), 0),
+          child: Transform.scale(scale: (0.3 + 0.7 * v).clamp(0.0, 1.2), child: child),
         );
       },
     );
   }
+
+  // Flat take on the reference: no selected capsule, the tab shows as a filled white
+  // icon and label, the others as grey outlines.
+  Widget _buildTabs(BuildContext context, bool reduceMotion) {
+    final items = widget.items;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: List.generate(items.length, (index) {
+          final item = items[index];
+          final isSelected = index == widget.currentIndex;
+          final color = isSelected ? OneUITheme.textPrimary : OneUITheme.textSecondary;
+          final duration = reduceMotion ? Duration.zero : const Duration(milliseconds: 220);
+          // Each tab is as wide as its label (with a minimum), so the bar fits its tabs.
+          return ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 72),
+            child: Semantics(
+              selected: isSelected,
+              button: true,
+              label: item.label,
+              excludeSemantics: true,
+              child: GestureDetector(
+                onTap: () => widget.onTap(index),
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Cross-fades the outline and filled icons instead of swapping them.
+                      AnimatedSwitcher(
+                        duration: duration,
+                        child: Icon(
+                          isSelected ? item.activeIcon : item.inactiveIcon,
+                          key: ValueKey(isSelected),
+                          size: 26,
+                          color: color,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      AnimatedDefaultTextStyle(
+                        duration: duration,
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: color),
+                        child: Text(item.label, maxLines: 1),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+/// A gentle under-damped spring (one soft overshoot) as a curve over the switch's duration.
+class _SpringCurve extends Curve {
+  const _SpringCurve();
+
+  static final _spring = SpringSimulation(
+    SpringDescription.withDampingRatio(mass: 1, stiffness: 160, ratio: 0.65),
+    0,
+    1,
+    0,
+  );
+
+  @override
+  double transformInternal(double t) => _spring.x(t * 0.55);
 }

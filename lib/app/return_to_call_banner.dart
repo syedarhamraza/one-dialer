@@ -53,7 +53,7 @@ class _Pill extends StatelessWidget {
           child: PressGlow(
             glowColor: OneUITheme.accentGreen,
             child: Container(
-              decoration: solidBody(OneUITheme.accentGreen, const StadiumBorder()),
+              decoration: solidBody(OneUITheme.accentGreen, const StadiumBorder(), glow: 0),
               foregroundDecoration: solidGlow(const StadiumBorder()),
               child: Material(
                 color: Colors.transparent,

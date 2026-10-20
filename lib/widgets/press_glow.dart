@@ -12,8 +12,9 @@ class PressGlow extends StatelessWidget {
   /// Corner radius; the default is clamped to a pill at any height.
   final double radius;
 
-  /// A lit button's colour (see [solidBody]): its glow is drawn here, outside the press's clip,
-  /// which would otherwise cut it off.
+  /// A lit button's colour (see [solidBody]): its glow is drawn here (the button's own body
+  /// draws none), outside the press's clip, which would otherwise cut it off. Softer than
+  /// the call screen's, to match the main app's gentler glass glow.
   final Color? glowColor;
   final Widget child;
 
@@ -33,7 +34,7 @@ class PressGlow extends StatelessWidget {
     if (color == null) return press;
     final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius));
     return DecoratedBox(
-      decoration: ShapeDecoration(shape: shape, shadows: solidBody(color, shape).shadows),
+      decoration: ShapeDecoration(shape: shape, shadows: solidBody(color, shape, glow: .22).shadows),
       child: press,
     );
   }

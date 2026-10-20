@@ -34,25 +34,25 @@ void main() {
   });
   tearDown(() => ContactsRepository.instance.contacts.value = []);
 
-  testWidgets('Back and the dialpad pill hide the keys; the floating button restores them', (tester) async {
+  testWidgets('Back and the dialpad pill hide the keys; reopening keeps the number', (tester) async {
     final input = ValueNotifier('0333');
+    final open = ValueNotifier(true);
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: input)),
+        home: Scaffold(body: KeypadScreen(open: open, input: input)),
       ),
     );
     await tester.pumpAndSettle();
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
-    expect(find.byTooltip('Show keypad'), findsOneWidget);
-    await tester.tap(find.byTooltip('Show keypad'));
+    expect(open.value, isFalse);
+    open.value = true;
     await tester.pumpAndSettle();
-    expect(find.byTooltip('Show keypad'), findsNothing);
     await tester.tap(find.bySemanticsLabel('Hide keypad'));
     await tester.pumpAndSettle();
-    expect(find.byTooltip('Show keypad'), findsOneWidget);
-    await tester.tap(find.byTooltip('Show keypad'));
+    expect(open.value, isFalse);
+    open.value = true;
     await tester.pumpAndSettle();
     expect(input.value, '0333');
   });
@@ -129,21 +129,22 @@ void main() {
 
   testWidgets('scrolling expands results; selecting restores keypad without calling', (tester) async {
     final input = ValueNotifier('0333');
+    final open = ValueNotifier(true);
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: input)),
+        home: Scaffold(body: KeypadScreen(open: open, input: input)),
       ),
     );
     await tester.pumpAndSettle();
     await tester.drag(find.text('Contact 0'), const Offset(0, -80));
     await tester.pumpAndSettle();
-    expect(find.byTooltip('Show keypad'), findsOneWidget);
+    expect(open.value, isFalse);
     expect(input.value, '0333');
     await tester.tap(find.text('Contact 0'));
     await tester.pumpAndSettle();
     expect(input.value, '03331234500');
-    expect(find.byTooltip('Show keypad'), findsNothing);
+    expect(open.value, isTrue);
     expect(find.byTooltip('WhatsApp voice call'), findsNothing);
     expect(find.bySemanticsLabel('Call'), findsOneWidget);
     expect(nativeCalls.where((call) => call.method == 'placeCall'), isEmpty);
@@ -170,10 +171,11 @@ void main() {
   });
 
   testWidgets('keypad slides down and back up through intermediate positions', (tester) async {
+    final open = ValueNotifier(true);
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('0333'))),
+        home: Scaffold(body: KeypadScreen(open: open, input: ValueNotifier('0333'))),
       ),
     );
     await tester.pumpAndSettle();
@@ -188,7 +190,7 @@ void main() {
     await tester.pumpAndSettle();
     final closed = tester.getTopLeft(panel).dy;
     expect(closed, greaterThan(closing));
-    await tester.tap(find.byTooltip('Show keypad'));
+    open.value = true;
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 120));
     final opening = tester.getTopLeft(panel).dy;
@@ -311,7 +313,8 @@ void main() {
     expect(nativeCalls.singleWhere((call) => call.method == 'placeCall').arguments['number'], '5551234567');
   });
 
-  testWidgets('collapsed keypad restore button stays reachable in landscape', (tester) async {
+  testWidgets('keypad hides and reopens cleanly in landscape', (tester) async {
+    final open = ValueNotifier(true);
     tester.view.physicalSize = const Size(700, 360);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -319,17 +322,16 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('0333'))),
+        home: Scaffold(body: KeypadScreen(open: open, input: ValueNotifier('0333'))),
       ),
     );
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
-    expect(tester.getBottomRight(find.byTooltip('Show keypad')).dy, lessThanOrEqualTo(360));
-    await tester.tap(find.byTooltip('Show keypad'));
+    expect(open.value, isFalse);
+    open.value = true;
     await tester.pumpAndSettle();
-    expect(find.byTooltip('Show keypad'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

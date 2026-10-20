@@ -7,7 +7,14 @@ import 'place_call.dart';
 
 /// Samsung's list-row swipe: right to call, left to message. The row snaps back.
 class SwipeToCallOrMessage extends StatelessWidget {
-  const SwipeToCallOrMessage({super.key, required this.number, required this.child, this.simId, this.enabled = true});
+  const SwipeToCallOrMessage({
+    super.key,
+    required this.number,
+    required this.child,
+    this.simId,
+    this.enabled = true,
+    this.color = OneUITheme.surfaceCard,
+  });
 
   final String number;
 
@@ -18,6 +25,9 @@ class SwipeToCallOrMessage extends StatelessWidget {
   /// Off while selecting. The wrapper stays in the tree, so toggling selection mode
   /// doesn't rebuild the row from scratch.
   final bool enabled;
+
+  /// Fill behind the row, covering the swipe backgrounds while it rests.
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +49,7 @@ class SwipeToCallOrMessage extends StatelessWidget {
         }
         return false;
       },
-      child: ColoredBox(color: OneUITheme.surfaceCard, child: child),
+      child: ColoredBox(color: color, child: child),
     );
   }
 }
