@@ -25,6 +25,19 @@ class Changelog {
 
   static const List<ChangelogEntry> entries = [
     ChangelogEntry(
+      version: '1.0.0-beta.1',
+      date: 'In development',
+      changes: [
+        'One Dialer is now in open beta. Thank you for testing!',
+        'A new look: frosted glass buttons, nav bar and menus, styled like the call screen',
+        'Calls: All and Missed tabs, a big title and flat rows; tap a call to call back, ⓘ for details',
+        'Buttons morph smoothly: All | Missed becomes Add to contact while you type, and Select all while selecting',
+        'Menus pop open beside their button; slide your finger across and lift to pick',
+        'Scrolling Calls tucks the keypad away, and it springs back up from the dialpad button',
+        'Typed-number matches now look like your call list',
+      ],
+    ),
+    ChangelogEntry(
       version: '1.0.0-alpha.1',
       date: 'Oct 2026',
       changes: [

@@ -60,3 +60,5 @@ app.*.map.json
 
 # Dart symbols from obfuscated release builds (tool/release.ps1), one folder per version
 /symbols/
+# Firebase CLI's Crashlytics symbol tool (dump_syms), downloaded by the symbol upload
+/.crashlytics/
