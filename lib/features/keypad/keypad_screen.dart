@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -9,6 +11,7 @@ import '../../core/prefs/dialer_prefs.dart';
 import '../recents/call_log_repository.dart';
 import '../settings/settings_screen.dart';
 import 'speed_dial_screen.dart';
+import '../../widgets/call_glass.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/place_call.dart';
@@ -34,6 +37,8 @@ class KeypadScreen extends StatefulWidget {
 }
 
 const double _gap = 10;
+
+final double _blur = OneUIEffectsController.instance.blurSigma;
 
 final _riseSpring = GlassSpringCurve(
   SpringDescription.withDampingRatio(mass: 1, stiffness: 300, ratio: .85),
@@ -203,32 +208,44 @@ class _KeypadScreenState extends State<KeypadScreen> {
                         ignoring: !open,
                         child: ExcludeSemantics(
                           excluding: !open,
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(maxHeight: constraints.maxHeight),
-                            child: DecoratedBox(
-                              key: const ValueKey('keypad-panel'),
-                              decoration: const BoxDecoration(
-                                color: OneUITheme.surfaceCard,
-                                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-                              ),
-                              // Scrolls only when a small or landscape screen can't fit it.
-                              child: SingleChildScrollView(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    _Handle(onHide: _hide),
-                                    if (number.isNotEmpty) _NumberDisplay(number: number, onPaste: _paste),
-                                    _Keypad(onKey: _type, onLongPress: _longPress, keyHeight: keyHeight),
-                                    const SizedBox(height: _gap),
-                                    _CallRow(
-                                      keyHeight: keyHeight,
-                                      onHide: _hide,
-                                      onCall: _calling ? null : _call,
-                                      onBackspace: _backspace,
-                                      onClear: () => widget.input.value = '',
+                          // Its own layer, so the slide and the results changing while typing
+                          // don't repaint the keys.
+                          child: RepaintBoundary(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(maxHeight: constraints.maxHeight),
+                              // Frosted like the nav bar: Calls shows blurred behind the keys. Costs a
+                              // blur only on frames where something animates.
+                              child: ClipRRect(
+                                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(sigmaX: _blur, sigmaY: _blur),
+                                  child: DecoratedBox(
+                                    key: const ValueKey('keypad-panel'),
+                                    decoration: BoxDecoration(
+                                      color: OneUITheme.surfaceCard.withValues(alpha: .75),
+                                      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
                                     ),
-                                    SizedBox(height: 12 + clearance),
-                                  ],
+                                    // Scrolls only when a small or landscape screen can't fit it.
+                                    child: SingleChildScrollView(
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          _Handle(onHide: _hide),
+                                          if (number.isNotEmpty) _NumberDisplay(number: number, onPaste: _paste),
+                                          _Keypad(onKey: _type, onLongPress: _longPress, keyHeight: keyHeight),
+                                          const SizedBox(height: _gap),
+                                          _CallRow(
+                                            keyHeight: keyHeight,
+                                            onHide: _hide,
+                                            onCall: _calling ? null : _call,
+                                            onBackspace: _backspace,
+                                            onClear: () => widget.input.value = '',
+                                          ),
+                                          SizedBox(height: 12 + clearance),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
@@ -545,13 +562,15 @@ class _Pill extends StatelessWidget {
       child: Container(
         decoration: lit ? solidBody(color, const StadiumBorder(), glow: 0) : null,
         foregroundDecoration: lit ? solidGlow(const StadiumBorder()) : null,
-        child: _ink(),
+        // The nav bar's call glass without its backdrop blur (a save layer per key), rasterized
+        // once so presses and the sheet's slide only draw an image.
+        child: lit ? _ink() : CallBodyArtwork(radius: height / 2, glow: kMainGlassGlow, opacity: .75, child: _ink()),
       ),
     ),
   );
 
   Widget _ink() => Material(
-    color: lit ? Colors.transparent : color,
+    color: Colors.transparent,
     shape: const StadiumBorder(),
     clipBehavior: Clip.antiAlias,
     child: InkWell(

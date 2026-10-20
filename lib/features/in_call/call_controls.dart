@@ -31,30 +31,39 @@ class CallBody extends StatelessWidget {
     shape: radius == null ? const LiquidOval() : LiquidRoundedSuperellipse(borderRadius: radius!),
     // No live backdrop blur: the call backdrop behind is already blurred, so a per-control blur
     // looked the same but re-read the backdrop for every key on every frame of the keypad morph.
-    child: _BodyArtwork(radius: radius, child: child),
+    child: CallBodyArtwork(radius: radius, child: child),
   );
 }
 
 /// The frosted backdrop stays live; only the static glow and rim are rasterized once.
 /// A fixed-resolution image remains reusable while the glass press and keypad scale it.
-class _BodyArtwork extends StatefulWidget {
-  const _BodyArtwork({required this.radius, required this.child});
+/// The main app's keypad keys use it too, with their softer [glow] and [opacity].
+class CallBodyArtwork extends StatefulWidget {
+  const CallBodyArtwork({super.key, required this.radius, this.glow = 1, this.opacity = 1, required this.child});
   final double? radius;
+  final double glow;
+
+  /// How strongly the whole body (wash, glow and lips) is drawn.
+  final double opacity;
   final Widget child;
 
   @override
-  State<_BodyArtwork> createState() => _BodyArtworkState();
+  State<CallBodyArtwork> createState() => _CallBodyArtworkState();
 }
 
-class _BodyArtworkState extends State<_BodyArtwork> {
+class _CallBodyArtworkState extends State<CallBodyArtwork> {
   _CachedBodyPainter? _painter;
 
   @override
   Widget build(BuildContext context) {
     final ratio = MediaQuery.devicePixelRatioOf(context);
-    if (_painter == null || _painter!.radius != widget.radius || _painter!.ratio != ratio) {
+    if (_painter == null ||
+        _painter!.radius != widget.radius ||
+        _painter!.ratio != ratio ||
+        _painter!.glow != widget.glow ||
+        _painter!.opacity != widget.opacity) {
       _painter?.dispose();
-      _painter = _CachedBodyPainter(widget.radius, ratio);
+      _painter = _CachedBodyPainter(widget.radius, ratio, widget.glow, widget.opacity);
     }
     return CustomPaint(painter: _painter, child: widget.child);
   }
@@ -67,9 +76,11 @@ class _BodyArtworkState extends State<_BodyArtwork> {
 }
 
 class _CachedBodyPainter extends CustomPainter {
-  _CachedBodyPainter(this.radius, this.ratio);
+  _CachedBodyPainter(this.radius, this.ratio, this.glow, this.opacity);
   final double? radius;
   final double ratio;
+  final double glow;
+  final double opacity;
   ui.Image? _image;
   Size? _size;
 
@@ -79,7 +90,7 @@ class _CachedBodyPainter extends CustomPainter {
     if (_image == null || _size != size) {
       final recorder = ui.PictureRecorder();
       final recording = Canvas(recorder)..scale(ratio);
-      TintedCallBody(radius).paint(recording, size);
+      TintedCallBody(radius, glow: glow).paint(recording, size);
       final picture = recorder.endRecording();
       final image = picture.toImageSync((size.width * ratio).ceil(), (size.height * ratio).ceil());
       picture.dispose();
@@ -91,14 +102,20 @@ class _CachedBodyPainter extends CustomPainter {
       _image!,
       Rect.fromLTWH(0, 0, size.width * ratio, size.height * ratio),
       Offset.zero & size,
-      Paint()..filterQuality = FilterQuality.low,
+      Paint()
+        ..filterQuality = FilterQuality.low
+        ..color = Color.fromRGBO(0, 0, 0, opacity),
     );
   }
 
   void dispose() => _image?.dispose();
 
   @override
-  bool shouldRepaint(_CachedBodyPainter oldDelegate) => radius != oldDelegate.radius || ratio != oldDelegate.ratio;
+  bool shouldRepaint(_CachedBodyPainter oldDelegate) =>
+      radius != oldDelegate.radius ||
+      ratio != oldDelegate.ratio ||
+      glow != oldDelegate.glow ||
+      opacity != oldDelegate.opacity;
 }
 
 /// The milky wash, edge glow and lips drawn over each control's frosted blur.

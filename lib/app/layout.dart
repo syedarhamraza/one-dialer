@@ -39,6 +39,8 @@ class DesignWidth extends StatelessWidget {
         child: MediaQuery(
           data: media.copyWith(
             size: media.size / scale,
+            // One layout dp covers this many real pixels, so images rasterize sharp.
+            devicePixelRatio: media.devicePixelRatio * scale,
             padding: media.padding / scale,
             viewPadding: media.viewPadding / scale,
             viewInsets: media.viewInsets / scale,
