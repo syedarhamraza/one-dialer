@@ -154,7 +154,9 @@ class _PopoverMenu extends StatelessWidget {
                         child: ColoredBox(
                           color: const Color(0xB3141416),
                           child: CustomPaint(
-                            painter: const TintedCallBody(OneUIFloatingMenu._radius, glow: kMainGlassGlow),
+                            // The glow runs along much longer edges than on a button, so it's weaker here
+                            // to look as subtle.
+                            painter: const TintedCallBody(OneUIFloatingMenu._radius, glow: kMainGlassGlow * .55),
                             child: items,
                           ),
                         ),
