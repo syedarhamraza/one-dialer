@@ -9,6 +9,7 @@ import '../../core/prefs/dialer_prefs.dart';
 import '../recents/call_log_repository.dart';
 import '../settings/settings_screen.dart';
 import 'speed_dial_screen.dart';
+import '../../widgets/call_glass.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/place_call.dart';
@@ -545,13 +546,15 @@ class _Pill extends StatelessWidget {
       child: Container(
         decoration: lit ? solidBody(color, const StadiumBorder(), glow: 0) : null,
         foregroundDecoration: lit ? solidGlow(const StadiumBorder()) : null,
-        child: _ink(),
+        // The nav bar's call glass minus its backdrop blur: the sheet behind is opaque, so a blur
+        // would only cost a save layer per key.
+        child: lit ? _ink() : CustomPaint(painter: TintedCallBody(height / 2, glow: kMainGlassGlow), child: _ink()),
       ),
     ),
   );
 
   Widget _ink() => Material(
-    color: lit ? Colors.transparent : color,
+    color: Colors.transparent,
     shape: const StadiumBorder(),
     clipBehavior: Clip.antiAlias,
     child: InkWell(
