@@ -37,11 +37,14 @@ class CallBody extends StatelessWidget {
 
 /// The frosted backdrop stays live; only the static glow and rim are rasterized once.
 /// A fixed-resolution image remains reusable while the glass press and keypad scale it.
-/// The main app's keypad keys use it too, with their softer [glow].
+/// The main app's keypad keys use it too, with their softer [glow] and [opacity].
 class CallBodyArtwork extends StatefulWidget {
-  const CallBodyArtwork({super.key, required this.radius, this.glow = 1, required this.child});
+  const CallBodyArtwork({super.key, required this.radius, this.glow = 1, this.opacity = 1, required this.child});
   final double? radius;
   final double glow;
+
+  /// How strongly the whole body (wash, glow and lips) is drawn.
+  final double opacity;
   final Widget child;
 
   @override
@@ -57,9 +60,10 @@ class _CallBodyArtworkState extends State<CallBodyArtwork> {
     if (_painter == null ||
         _painter!.radius != widget.radius ||
         _painter!.ratio != ratio ||
-        _painter!.glow != widget.glow) {
+        _painter!.glow != widget.glow ||
+        _painter!.opacity != widget.opacity) {
       _painter?.dispose();
-      _painter = _CachedBodyPainter(widget.radius, ratio, widget.glow);
+      _painter = _CachedBodyPainter(widget.radius, ratio, widget.glow, widget.opacity);
     }
     return CustomPaint(painter: _painter, child: widget.child);
   }
@@ -72,10 +76,11 @@ class _CallBodyArtworkState extends State<CallBodyArtwork> {
 }
 
 class _CachedBodyPainter extends CustomPainter {
-  _CachedBodyPainter(this.radius, this.ratio, this.glow);
+  _CachedBodyPainter(this.radius, this.ratio, this.glow, this.opacity);
   final double? radius;
   final double ratio;
   final double glow;
+  final double opacity;
   ui.Image? _image;
   Size? _size;
 
@@ -97,7 +102,9 @@ class _CachedBodyPainter extends CustomPainter {
       _image!,
       Rect.fromLTWH(0, 0, size.width * ratio, size.height * ratio),
       Offset.zero & size,
-      Paint()..filterQuality = FilterQuality.low,
+      Paint()
+        ..filterQuality = FilterQuality.low
+        ..color = Color.fromRGBO(0, 0, 0, opacity),
     );
   }
 
@@ -105,7 +112,10 @@ class _CachedBodyPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_CachedBodyPainter oldDelegate) =>
-      radius != oldDelegate.radius || ratio != oldDelegate.ratio || glow != oldDelegate.glow;
+      radius != oldDelegate.radius ||
+      ratio != oldDelegate.ratio ||
+      glow != oldDelegate.glow ||
+      opacity != oldDelegate.opacity;
 }
 
 /// The milky wash, edge glow and lips drawn over each control's frosted blur.

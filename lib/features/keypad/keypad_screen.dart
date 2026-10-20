@@ -564,7 +564,7 @@ class _Pill extends StatelessWidget {
         foregroundDecoration: lit ? solidGlow(const StadiumBorder()) : null,
         // The nav bar's call glass without its backdrop blur (a save layer per key), rasterized
         // once so presses and the sheet's slide only draw an image.
-        child: lit ? _ink() : CallBodyArtwork(radius: height / 2, glow: kMainGlassGlow, child: _ink()),
+        child: lit ? _ink() : CallBodyArtwork(radius: height / 2, glow: kMainGlassGlow, opacity: .75, child: _ink()),
       ),
     ),
   );
