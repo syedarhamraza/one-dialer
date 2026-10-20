@@ -5,7 +5,7 @@ import '../../../widgets/one_ui_floating_menu.dart';
 import '../../../widgets/one_ui_floating_modal.dart';
 import 'contact_form.dart';
 
-/// Rounded One UI card holding editor rows.
+/// ColorOS's rounded flat card holding editor rows.
 class EditorCard extends StatelessWidget {
   const EditorCard({super.key, required this.children});
 
@@ -14,15 +14,15 @@ class EditorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.fromLTRB(4, 8, 8, 8),
-      decoration: BoxDecoration(color: OneUITheme.surfaceCard, borderRadius: OneUITheme.cardBorderRadius),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.fromLTRB(0, 4, 4, 4),
+      decoration: BoxDecoration(color: OneUITheme.surfaceCard, borderRadius: BorderRadius.circular(20)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
     );
   }
 }
 
-/// Icon column + content + optional trailing control, like Samsung's editor rows.
+/// Icon on the left + content + optional trailing control, ColorOS's editor rows.
 class EditorRow extends StatelessWidget {
   const EditorRow({super.key, this.icon, this.iconColor, required this.child, this.trailing});
 
@@ -33,16 +33,19 @@ class EditorRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        SizedBox(
-          width: 52,
-          child: icon == null ? null : Icon(icon, size: 26, color: iconColor ?? OneUITheme.textSecondary),
-        ),
-        Expanded(child: child),
-        SizedBox(width: 48, child: trailing),
-      ],
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 60),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 56,
+            child: icon == null ? null : Icon(icon, size: 24, color: iconColor ?? OneUITheme.textSecondary),
+          ),
+          Expanded(child: child),
+          SizedBox(width: 48, child: trailing),
+        ],
+      ),
     );
   }
 }
@@ -83,8 +86,6 @@ class EditorField extends StatelessWidget {
       textCapitalization: capitalization,
       style: const TextStyle(fontSize: 18, color: OneUITheme.textPrimary),
       cursorColor: OneUITheme.accentBlue,
-      // Keep the focused field clear of the floating Cancel | Save pill.
-      scrollPadding: const EdgeInsets.only(bottom: 140),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(fontSize: 18, color: OneUITheme.textTertiary),
