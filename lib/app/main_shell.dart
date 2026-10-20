@@ -10,6 +10,7 @@ import '../features/recents/call_log_repository.dart';
 import '../features/recents/recents_screen.dart';
 import '../widgets/one_ui_floating_nav_bar.dart';
 import '../widgets/one_ui_status_bar_scrim.dart';
+import '../theme/one_ui_theme.dart';
 import '../widgets/press_glow.dart';
 import 'layout.dart';
 import 'return_to_call_banner.dart';
@@ -163,7 +164,7 @@ class _RoundAction extends StatelessWidget {
   final String tooltip;
   final VoidCallback onPressed;
 
-  static const _green = Color(0xFF5BB450);
+  static const _green = OneUITheme.dialGreen;
 
   @override
   Widget build(BuildContext context) {

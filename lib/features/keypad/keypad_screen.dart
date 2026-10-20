@@ -603,7 +603,7 @@ class _CallRow extends StatelessWidget {
             child: _Pill(
               height: keyHeight,
               label: 'Call',
-              color: answerGreen,
+              color: OneUITheme.dialGreen,
               lit: true,
               onTap: onCall,
               child: const Icon(Icons.call_rounded, color: Colors.white, size: 30),

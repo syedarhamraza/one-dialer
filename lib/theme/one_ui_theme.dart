@@ -18,6 +18,9 @@ class OneUITheme {
 
   // --- One UI Accent Palette ---
   static const Color accentGreen = Color(0xFF00C05A); // One UI Phone green
+
+  /// The main app's call green: the round dialpad button and the keypad's Call button.
+  static const Color dialGreen = Color(0xFF5BB450);
   static const Color accentBlue = Color(0xFF5390F5);
   static const Color accentRed = Color(0xFFF07167);
   static const Color accentTeal = Color(0xFF48B5A0);
