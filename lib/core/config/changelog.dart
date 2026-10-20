@@ -26,7 +26,7 @@ class Changelog {
   static const List<ChangelogEntry> entries = [
     ChangelogEntry(
       version: '1.0.0-beta.2',
-      date: 'In development',
+      date: 'Oct 2026',
       changes: [
         'Contacts redesigned: favourites under a star, My contact card and My groups, an A–Z index, and tap to open a contact',
         'A new contact page: big photo, Call and Message buttons, all numbers, ringtone and your recent calls with this contact',
