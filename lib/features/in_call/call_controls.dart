@@ -103,11 +103,14 @@ class _CachedBodyPainter extends CustomPainter {
 
 /// The milky wash, edge glow and lips drawn over each control's frosted blur.
 class TintedCallBody extends CustomPainter {
-  const TintedCallBody(this.radius, {this.glow = 1});
+  const TintedCallBody(this.radius, {this.glow = 1, this.spread = 1});
   final double? radius;
 
   /// Strength of the edge glow and the brighter border glow (1 = the call screen's).
   final double glow;
+
+  /// How far the soft edge glow reaches in from the edge (1 = the call screen's).
+  final double spread;
 
   Color _g(int argb) {
     final c = Color(argb);
@@ -138,8 +141,8 @@ class TintedCallBody extends CustomPainter {
         shape,
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 10.5
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7)
+          ..strokeWidth = 10.5 * spread
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, 7 * spread)
           ..shader = LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -196,7 +199,8 @@ class TintedCallBody extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(TintedCallBody oldDelegate) => oldDelegate.radius != radius || oldDelegate.glow != glow;
+  bool shouldRepaint(TintedCallBody oldDelegate) =>
+      oldDelegate.radius != radius || oldDelegate.glow != glow || oldDelegate.spread != spread;
 }
 
 /// A circle, or a superellipse whose ends are ColorOS's soft oval rather than a true semicircle.
