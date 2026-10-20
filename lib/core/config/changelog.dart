@@ -25,6 +25,19 @@ class Changelog {
 
   static const List<ChangelogEntry> entries = [
     ChangelogEntry(
+      version: '1.0.0-beta.2',
+      date: 'Oct 2026',
+      changes: [
+        'Contacts redesigned: favourites under a star, My contact card and My groups, an A–Z index, and tap to open a contact',
+        'A new contact page: big photo, Call and Message buttons, all numbers, ringtone and your recent calls with this contact',
+        'A new contact editor: Cancel and Done at the top, pick where to save, and Show more for extra fields',
+        'The keypad is now frosted glass, with glass keys that match the rest of the app',
+        'The app now looks the same on every phone, scaling to your screen size',
+        'Smoother switching between Calls and Contacts',
+        'Fixed menus opening in the wrong place on smaller phones',
+      ],
+    ),
+    ChangelogEntry(
       version: '1.0.0-beta.1',
       date: 'Oct 2026',
       changes: [
