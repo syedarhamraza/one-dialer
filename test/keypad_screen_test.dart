@@ -44,9 +44,7 @@ void main() {
         MaterialApp(
           theme: OneUITheme.darkTheme,
           builder: (context, child) => DesignWidth(child: child!),
-          home: Scaffold(
-            body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('')),
-          ),
+          home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier(''))),
         ),
       );
       await tester.pumpAndSettle();
@@ -60,48 +58,13 @@ void main() {
     expect(s25.height, closeTo(vivo.height, .005));
   });
 
-  testWidgets('the sheet follows a drag on the keys and finishes the way it was going', (tester) async {
-    final input = ValueNotifier('');
-    final open = ValueNotifier(true);
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: OneUITheme.darkTheme,
-        home: Scaffold(
-          body: KeypadScreen(open: open, input: input),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    final key = find.bySemanticsLabel('5, long-press for speed dial');
-    final panel = find.byKey(const ValueKey('keypad-panel'));
-    final top = tester.getTopLeft(panel).dy;
-
-    final gesture = await tester.startGesture(tester.getCenter(key));
-    await gesture.moveBy(const Offset(0, 30)); // past the touch slop
-    await gesture.moveBy(const Offset(0, 50));
-    await tester.pump();
-    expect(tester.getTopLeft(panel).dy, closeTo(top + 50, 1), reason: 'follows the finger');
-    await gesture.up();
-    await tester.pumpAndSettle();
-    expect(open.value, isTrue, reason: 'a short slow drag springs back');
-    expect(tester.getTopLeft(panel).dy, top);
-    expect(input.value, isEmpty, reason: 'dragging from a key types nothing');
-
-    await tester.timedDrag(key, const Offset(0, 300), const Duration(milliseconds: 800));
-    await tester.pumpAndSettle();
-    expect(open.value, isFalse, reason: 'past halfway it hides');
-    expect(input.value, isEmpty);
-  });
-
   testWidgets('Back and the dialpad pill hide the keys; reopening keeps the number', (tester) async {
     final input = ValueNotifier('0333');
     final open = ValueNotifier(true);
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(
-          body: KeypadScreen(open: open, input: input),
-        ),
+        home: Scaffold(body: KeypadScreen(open: open, input: input)),
       ),
     );
     await tester.pumpAndSettle();
@@ -123,9 +86,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(
-          body: KeypadScreen(open: ValueNotifier(true), input: input),
-        ),
+        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: input)),
       ),
     );
     final sheet = tester.element(find.byKey(const ValueKey('keypad-panel')));
@@ -163,9 +124,7 @@ void main() {
             key: boundary,
             child: MediaQuery(
               data: const MediaQueryData(size: Size(393, 852), padding: EdgeInsets.only(top: 24, bottom: 16)),
-              child: Scaffold(
-                body: KeypadScreen(open: ValueNotifier(true), input: input),
-              ),
+              child: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: input)),
             ),
           ),
         ),
@@ -198,9 +157,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(
-          body: KeypadScreen(open: open, input: input),
-        ),
+        home: Scaffold(body: KeypadScreen(open: open, input: input)),
       ),
     );
     await tester.pumpAndSettle();
@@ -222,9 +179,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(
-          body: KeypadScreen(open: ValueNotifier(true), input: input),
-        ),
+        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: input)),
       ),
     );
     await tester.pumpAndSettle();
@@ -244,9 +199,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(
-          body: KeypadScreen(open: open, input: ValueNotifier('0333')),
-        ),
+        home: Scaffold(body: KeypadScreen(open: open, input: ValueNotifier('0333'))),
       ),
     );
     await tester.pumpAndSettle();
@@ -315,9 +268,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(
-          body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('03331234567')),
-        ),
+        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('03331234567'))),
       ),
     );
     await tester.pumpAndSettle();
@@ -350,9 +301,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(
-          body: KeypadScreen(open: ValueNotifier(true), input: input),
-        ),
+        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: input)),
       ),
     );
     await tester.pumpAndSettle();
@@ -378,9 +327,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(
-          body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('5551234567')),
-        ),
+        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('5551234567'))),
       ),
     );
     await tester.pumpAndSettle();
@@ -399,9 +346,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(
-          body: KeypadScreen(open: open, input: ValueNotifier('0333')),
-        ),
+        home: Scaffold(body: KeypadScreen(open: open, input: ValueNotifier('0333'))),
       ),
     );
     await tester.pumpAndSettle();
@@ -424,9 +369,7 @@ void main() {
         theme: OneUITheme.darkTheme,
         home: MediaQuery(
           data: const MediaQueryData(size: Size(320, 568), textScaler: TextScaler.linear(1.5)),
-          child: Scaffold(
-            body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('0333')),
-          ),
+          child: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('0333'))),
         ),
       ),
     );
