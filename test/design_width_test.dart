@@ -1,4 +1,5 @@
 import 'package:dialer/app/layout.dart';
+import 'package:dialer/widgets/one_ui_floating_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -52,5 +53,45 @@ void main() {
     final (size, padding, _) = await layOut(tester, const Size(780, 360));
     expect(size, const Size(780, 360));
     expect(padding.top, 36);
+  });
+
+  testWidgets('a floating menu opens beside its button on a scaled phone', (tester) async {
+    Future<Rect> menuItem(Size screen) async {
+      tester.view.physicalSize = screen;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final button = GlobalKey();
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (context, child) => DesignWidth(child: child!),
+          home: Builder(
+            builder: (context) => Align(
+              alignment: const Alignment(.9, -.8),
+              child: SizedBox.square(
+                key: button,
+                dimension: 48,
+                child: GestureDetector(
+                  onTap: () => OneUIFloatingMenu.show(
+                    context: context,
+                    anchorKey: button,
+                    items: [OneUIFloatingMenuItem(label: 'Item', onTap: () {})],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.byKey(button));
+      await tester.pumpAndSettle();
+      final item = tester.getRect(find.text('Item'));
+      await tester.pumpWidget(const SizedBox()); // drops the open menu route before the next size
+      return Rect.fromLTRB(item.left / screen.width, item.top / screen.width, 0, 0);
+    }
+
+    final vivo = await menuItem(const Size(420, 933));
+    final s25 = await menuItem(const Size(360, 800)); // same aspect, so the button lands at the same spot
+    expect(s25.left, closeTo(vivo.left, .005));
+    expect(s25.top, closeTo(vivo.top, .005));
   });
 }
