@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:dialer/features/contacts/editor/contact_editor_screen.dart';
 import 'package:dialer/theme/one_ui_theme.dart';
-import 'package:dialer/widgets/one_ui_cancel_save_pill.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -76,18 +75,22 @@ void main() {
   }
 
   Finder nameField() => find.byType(TextFormField).first;
+  // The header pills; the confirmation dialog's own Cancel comes later in the tree.
+  Finder cancelPill() => find.widgetWithText(TextButton, 'Cancel').first;
+  bool canSave(WidgetTester tester) =>
+      tester.widget<TextButton>(find.widgetWithText(TextButton, 'Done')).onPressed != null;
 
   testWidgets('Add renders immediately and preserves typing while accounts load', (tester) async {
     await open(tester);
     expect(nameField(), findsOneWidget);
     await tester.enterText(nameField(), 'Typed while loading');
-    expect(tester.widget<OneUIFloatingCancelSavePill>(find.byType(OneUIFloatingCancelSavePill)).canSave, isFalse);
+    expect(canSave(tester), isFalse);
     accounts.complete(<Object?>[]);
     await tester.pump();
     await tester.pump();
     await tester.pumpAndSettle();
     expect(find.text('Typed while loading'), findsOneWidget);
-    expect(tester.widget<OneUIFloatingCancelSavePill>(find.byType(OneUIFloatingCancelSavePill)).canSave, isTrue);
+    expect(canSave(tester), isTrue);
   });
 
   testWidgets('Add waits for entry animation before focusing Name', (tester) async {
@@ -128,7 +131,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('5550100'), findsOneWidget);
     expect(tester.testTextInput.isVisible, isFalse);
-    await tester.tap(find.text('Cancel'));
+    await tester.tap(cancelPill());
     await tester.pumpAndSettle();
     expect(find.text('Save your changes or discard them?'), findsOneWidget);
     await tester.tap(find.text('Discard'));
@@ -147,7 +150,7 @@ void main() {
   testWidgets('confirmation Save becomes available when pending accounts resolve', (tester) async {
     await open(tester, number: '5550100');
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Cancel'));
+    await tester.tap(cancelPill());
     await tester.pumpAndSettle();
     final save = find.widgetWithText(TextButton, 'Save');
     expect(tester.widget<TextButton>(save).onPressed, isNull);
@@ -194,13 +197,13 @@ void main() {
     tester.view.viewInsets = const FakeViewPadding(bottom: 200);
     addTearDown(tester.view.resetViewInsets);
     await tester.pumpAndSettle();
-    final pill = find.byType(OneUIFloatingCancelSavePill);
-    final before = tester.getBottomLeft(pill).dy;
-    tester.widget<OneUIFloatingCancelSavePill>(pill).onCancel();
+    final form = find.byType(ListView);
+    final before = tester.getBottomLeft(form).dy;
+    tester.widget<TextButton>(cancelPill()).onPressed!();
     await tester.pump();
     tester.view.viewInsets = FakeViewPadding.zero;
     await tester.pump(const Duration(milliseconds: 50));
-    expect(tester.getBottomLeft(pill).dy, before);
+    expect(tester.getBottomLeft(form).dy, before);
     await tester.pumpAndSettle();
     expect(find.byType(ContactEditorScreen), findsNothing);
     expect(tester.testTextInput.isVisible, isFalse);
@@ -211,12 +214,12 @@ void main() {
     await open(tester);
     await tester.pumpAndSettle();
     await tester.enterText(nameField(), 'Keep these edits');
-    final pill = tester.widget<OneUIFloatingCancelSavePill>(find.byType(OneUIFloatingCancelSavePill));
-    pill.onCancel();
-    pill.onCancel();
+    final cancel = tester.widget<TextButton>(cancelPill()).onPressed!;
+    cancel();
+    cancel();
     await tester.pumpAndSettle();
     expect(find.text('Save your changes or discard them?'), findsOneWidget);
-    await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+    await tester.tap(find.widgetWithText(TextButton, 'Cancel').last);
     await tester.pumpAndSettle();
     expect(find.text('Keep these edits'), findsOneWidget);
     expect(writes, isEmpty);
@@ -228,9 +231,9 @@ void main() {
     ]);
     await open(tester, number: '5550100');
     await tester.pumpAndSettle();
-    final pill = tester.widget<OneUIFloatingCancelSavePill>(find.byType(OneUIFloatingCancelSavePill));
-    pill.onSave!();
-    pill.onSave!();
+    final save = tester.widget<TextButton>(find.widgetWithText(TextButton, 'Done')).onPressed!;
+    save();
+    save();
     await tester.pumpAndSettle();
     expect(find.byType(ContactEditorScreen), findsNothing);
     expect(find.text('saved-contact'), findsOneWidget);
@@ -242,7 +245,7 @@ void main() {
     await open(tester, contactId: '7');
     await tester.pumpAndSettle();
     await tester.enterText(nameField(), 'Changed name');
-    await tester.tap(find.text('Cancel'));
+    await tester.tap(cancelPill());
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(TextButton, 'Save'));
     await tester.pumpAndSettle();
@@ -256,12 +259,12 @@ void main() {
     await open(tester, number: '5550100');
     await tester.pumpAndSettle();
     expect(find.text("Couldn't load accounts"), findsOneWidget);
-    expect(tester.widget<OneUIFloatingCancelSavePill>(find.byType(OneUIFloatingCancelSavePill)).canSave, isFalse);
+    expect(canSave(tester), isFalse);
     accounts = Completer<Object?>.sync()..complete(<Object?>[]);
     failAccounts = false;
     await tester.tap(find.text("Couldn't load accounts"));
     await tester.pumpAndSettle();
     expect(find.text('5550100'), findsOneWidget);
-    expect(tester.widget<OneUIFloatingCancelSavePill>(find.byType(OneUIFloatingCancelSavePill)).canSave, isTrue);
+    expect(canSave(tester), isTrue);
   });
 }

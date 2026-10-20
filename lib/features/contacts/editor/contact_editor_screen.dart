@@ -2,8 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../../app/layout.dart';
-
 import 'package:flutter/services.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:intl/intl.dart';
@@ -12,10 +10,11 @@ import '../../../core/telecom/telecom_bridge.dart';
 import '../../../theme/one_ui_scroll.dart';
 import '../../../theme/one_ui_theme.dart';
 import '../../../widgets/letter_avatar.dart';
-import '../../../widgets/one_ui_cancel_save_pill.dart';
+import '../../../widgets/call_glass.dart';
 import '../../../widgets/one_ui_date_wheel.dart';
 import '../../../widgets/one_ui_floating_menu.dart';
 import '../../../widgets/one_ui_floating_modal.dart';
+import '../../../widgets/press_glow.dart';
 import '../groups_screen.dart' show hiddenGroupNames;
 import 'contact_form.dart';
 import 'editor_widgets.dart';
@@ -191,7 +190,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
   void _close([String? result]) {
     if (!_active) return;
     // Freeze the outgoing layout while Android dismisses the keyboard. The route
-    // can slide out immediately without resizing its form and floating pill.
+    // can slide out immediately without resizing its form.
     setState(() {
       _exitMediaQuery = MediaQuery.of(context);
       _closing = true;
@@ -245,7 +244,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
   (bool, String)? _shown;
 
   /// Text edits only rebuild the screen when something drawn from the text changes:
-  /// the Save pill (empty or not) and the photo's initials.
+  /// the Done pill (empty or not) and the photo's initials.
   void _edited() {
     final form = _form!;
     final shown = (form.isEmpty, LetterAvatar.initials(_avatarName(form)));
@@ -309,154 +308,164 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
         _requestLeave();
       },
       child: Scaffold(
-        body: form == null
-            ? Center(
-                child: _loadFailed
-                    ? TextButton(onPressed: _retryLoad, child: const Text("Couldn't load the contact. Retry"))
-                    : const CircularProgressIndicator(),
-              )
-            : Stack(
-                children: [
-                  ListView(
-                    physics: const OneUIScrollPhysics(),
-                    padding: EdgeInsets.fromLTRB(16, MediaQuery.paddingOf(context).top + 16, 16, 140),
-                    children: [
-                      if (_isNew) _accountRow(),
-                      _photo(form),
-                      const SizedBox(height: 24),
-                      _mainCard(form),
-                      _listCard(
-                        icon: Icons.mail_outline_rounded,
-                        title: 'Email',
-                        addLabel: 'Add email',
-                        rows: form.emails,
-                        options: EditorLabels.email,
-                        keyboard: TextInputType.emailAddress,
-                        newLabel: 'home',
-                      ),
-                      _addressCard(form),
-                      if (_more) ...[
-                        _datesCard(form),
-                        _groupsCard(form),
+        body: Column(
+          children: [
+            _header(canSave: form != null && _ready && !form.isEmpty && !_saving && !_closing),
+            Expanded(
+              child: form == null
+                  ? Center(
+                      child: _loadFailed
+                          ? TextButton(onPressed: _retryLoad, child: const Text("Couldn't load the contact. Retry"))
+                          : const CircularProgressIndicator(),
+                    )
+                  : ListView(
+                      physics: const OneUIScrollPhysics(),
+                      padding: EdgeInsets.fromLTRB(16, 8, 16, MediaQuery.paddingOf(context).bottom + 24),
+                      children: [
+                        _photo(form),
+                        if (_isNew) _accountRow(),
+                        const SizedBox(height: 24),
+                        _mainCard(form),
                         _listCard(
-                          icon: Icons.language_rounded,
-                          title: 'Website',
-                          addLabel: 'Add website',
-                          rows: form.websites,
-                          options: EditorLabels.website,
-                          keyboard: TextInputType.url,
-                          newLabel: 'homepage',
+                          icon: Icons.mail_outline_rounded,
+                          title: 'Email',
+                          addLabel: 'Add email',
+                          rows: form.emails,
+                          options: EditorLabels.email,
+                          keyboard: TextInputType.emailAddress,
+                          newLabel: 'home',
                         ),
-                        _listCard(
-                          icon: Icons.diversity_3_outlined,
-                          title: 'Relationships',
-                          addLabel: 'Add relationship',
-                          rows: form.relations,
-                          options: EditorLabels.relation,
-                          newLabel: 'friend',
-                          capitalization: TextCapitalization.words,
-                        ),
-                        EditorCard(
-                          children: [
-                            EditorRow(
-                              icon: Icons.sticky_note_2_outlined,
-                              child: EditorField(
-                                hint: 'Notes',
-                                value: form.notes,
-                                maxLines: null,
-                                onChanged: (v) {
-                                  form.notes = v;
-                                  _edited();
-                                },
+                        _addressCard(form),
+                        if (_more) ...[
+                          _datesCard(form),
+                          _groupsCard(form),
+                          _listCard(
+                            icon: Icons.language_rounded,
+                            title: 'Website',
+                            addLabel: 'Add website',
+                            rows: form.websites,
+                            options: EditorLabels.website,
+                            keyboard: TextInputType.url,
+                            newLabel: 'homepage',
+                          ),
+                          _listCard(
+                            icon: Icons.diversity_3_outlined,
+                            title: 'Relationships',
+                            addLabel: 'Add relationship',
+                            rows: form.relations,
+                            options: EditorLabels.relation,
+                            newLabel: 'friend',
+                            capitalization: TextCapitalization.words,
+                          ),
+                          EditorCard(
+                            children: [
+                              EditorRow(
+                                icon: Icons.sticky_note_2_outlined,
+                                child: EditorField(
+                                  hint: 'Notes',
+                                  value: form.notes,
+                                  maxLines: null,
+                                  onChanged: (v) {
+                                    form.notes = v;
+                                    _edited();
+                                  },
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                        ],
+                        Center(
+                          child: TextButton.icon(
+                            onPressed: () => setState(() => _more = !_more),
+                            iconAlignment: IconAlignment.end,
+                            icon: Icon(_more ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded),
+                            label: Text(_more ? 'Show less' : 'Show more', style: const TextStyle(fontSize: 17)),
+                            style: TextButton.styleFrom(foregroundColor: OneUITheme.textPrimary),
+                          ),
                         ),
                       ],
-                      Center(
-                        child: TextButton.icon(
-                          onPressed: () => setState(() => _more = !_more),
-                          icon: Icon(_more ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded),
-                          label: Text(_more ? 'View less' : 'View more', style: const TextStyle(fontSize: 17)),
-                          style: TextButton.styleFrom(foregroundColor: OneUITheme.textPrimary),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: SafeArea(
-                      top: false,
-                      child: Padding(
-                        // Same baseline as every bottom floating bar.
-                        padding: const EdgeInsets.only(bottom: kNavBarVerticalPadding),
-                        child: OneUIFloatingCancelSavePill(
-                          onCancel: () => Navigator.of(context).maybePop(),
-                          onSave: _save,
-                          canSave: _ready && !form.isEmpty && !_saving && !_closing,
-                        ),
-                      ),
                     ),
-                  ),
-                ],
-              ),
+            ),
+          ],
+        ),
       ),
     );
     return MediaQuery(data: _exitMediaQuery ?? MediaQuery.of(context), child: screen);
+  }
+
+  // --- Header --------------------------------------------------------------
+
+  /// ColorOS's top bar: Cancel | title | Done, the two as call-glass pills.
+  Widget _header({required bool canSave}) {
+    Widget pill(String label, VoidCallback? onPressed, Color color) => CallGlass(
+      radius: 24,
+      child: TextButton(
+        onPressed: onPressed,
+        style: TextButton.styleFrom(
+          foregroundColor: color,
+          disabledForegroundColor: OneUITheme.textTertiary,
+          minimumSize: const Size(0, 48),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          shape: const StadiumBorder(),
+        ),
+        child: Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+      ),
+    );
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, MediaQuery.paddingOf(context).top + 8, 16, 8),
+      child: SizedBox(
+        height: 48,
+        child: NavigationToolbar(
+          leading: pill('Cancel', () => Navigator.of(context).maybePop(), OneUITheme.accentGreen),
+          middle: Text(
+            _isNew ? 'New contact' : 'Edit contact',
+            style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: OneUITheme.textPrimary),
+          ),
+          trailing: pill('Done', canSave ? _save : null, OneUITheme.accentGreen),
+          middleSpacing: 12,
+        ),
+      ),
+    );
   }
 
   // --- Account ---------------------------------------------------------------
 
   final _accountKey = GlobalKey();
 
+  /// ColorOS's centred "Save to (account) ▾".
   Widget _accountRow() {
     final account = _account;
-    return InkWell(
-      key: _accountKey,
-      borderRadius: OneUITheme.pillBorderRadius,
-      onTap: _loadFailed
-          ? _retryLoad
-          : _ready
-          ? _chooseAccount
-          : null,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        child: Row(
-          children: [
-            _accountIcon(account),
-            const SizedBox(width: 14),
-            Flexible(
-              child: Text(
-                !_ready
-                    ? (_loadFailed ? "Couldn't load accounts" : 'Loading accounts…')
-                    : account == null || account.type.contains('phone')
-                    ? 'Phone'
-                    : account.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 18),
+    return Center(
+      child: InkWell(
+        key: _accountKey,
+        borderRadius: OneUITheme.pillBorderRadius,
+        onTap: _loadFailed
+            ? _retryLoad
+            : _ready
+            ? _chooseAccount
+            : null,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  !_ready
+                      ? (_loadFailed ? "Couldn't load accounts" : 'Loading accounts…')
+                      : 'Save to ${account == null || account.type.contains('phone') ? 'Phone' : account.name}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 16, color: OneUITheme.textSecondary),
+                ),
               ),
-            ),
-            const Icon(Icons.arrow_drop_down_rounded, size: 30),
-          ],
+              const Icon(Icons.keyboard_arrow_down_rounded, size: 22, color: OneUITheme.textSecondary),
+            ],
+          ),
         ),
       ),
-    );
-  }
-
-  Widget _accountIcon(Account? a) {
-    final google = a?.type.contains('google') ?? false;
-    return CircleAvatar(
-      radius: 16,
-      backgroundColor: google ? Colors.white : OneUITheme.surfacePill,
-      child: google
-          ? const Text(
-              'G',
-              style: TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF4285F4)),
-            )
-          : const Icon(Icons.smartphone_rounded, size: 18, color: OneUITheme.textSecondary),
     );
   }
 
@@ -532,16 +541,19 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
     final photo = form.newPhoto ?? existing;
     return Column(
       children: [
-        LetterAvatar(name: _avatarName(form), photo: photo, size: 98),
+        LetterAvatar(name: _avatarName(form), photo: photo, size: 120),
         const SizedBox(height: 14),
-        FilledButton.tonal(
-          onPressed: () => _photoMenu(hasPhoto: photo != null),
-          style: FilledButton.styleFrom(
-            backgroundColor: OneUITheme.surfacePill,
-            foregroundColor: OneUITheme.textPrimary,
-            padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 14),
+        PressGlow(
+          child: FilledButton(
+            onPressed: () => _photoMenu(hasPhoto: photo != null),
+            style: FilledButton.styleFrom(
+              backgroundColor: OneUITheme.surfacePill,
+              foregroundColor: OneUITheme.textPrimary,
+              minimumSize: const Size(88, 40),
+              padding: const EdgeInsets.symmetric(horizontal: 22),
+            ),
+            child: const Text('Edit', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
           ),
-          child: const Text('Picture', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
         ),
       ],
     );
