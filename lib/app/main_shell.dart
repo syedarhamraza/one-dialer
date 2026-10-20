@@ -172,7 +172,7 @@ class _RoundAction extends StatelessWidget {
       child: PressGlow(
         glowColor: _green,
         child: Container(
-          decoration: solidBody(_green, const CircleBorder()),
+          decoration: solidBody(_green, const CircleBorder(), glow: 0),
           foregroundDecoration: solidGlow(const CircleBorder()),
           child: FloatingActionButton(
             heroTag: null,

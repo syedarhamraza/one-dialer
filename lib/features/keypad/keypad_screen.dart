@@ -543,7 +543,7 @@ class _Pill extends StatelessWidget {
     child: PressGlow(
       glowColor: lit ? color : null,
       child: Container(
-        decoration: lit ? solidBody(color, const StadiumBorder()) : null,
+        decoration: lit ? solidBody(color, const StadiumBorder(), glow: 0) : null,
         foregroundDecoration: lit ? solidGlow(const StadiumBorder()) : null,
         child: _ink(),
       ),

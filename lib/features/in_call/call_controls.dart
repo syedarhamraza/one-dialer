@@ -103,8 +103,16 @@ class _CachedBodyPainter extends CustomPainter {
 
 /// The milky wash, edge glow and lips drawn over each control's frosted blur.
 class TintedCallBody extends CustomPainter {
-  const TintedCallBody(this.radius);
+  const TintedCallBody(this.radius, {this.glow = 1});
   final double? radius;
+
+  /// Strength of the edge glow and the brighter border glow (1 = the call screen's).
+  final double glow;
+
+  Color _g(int argb) {
+    final c = Color(argb);
+    return c.withValues(alpha: c.a * glow);
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -132,11 +140,11 @@ class TintedCallBody extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 10.5
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7)
-          ..shader = const LinearGradient(
+          ..shader = LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0x10FFFFFF), Color(0x2BFFFFFF), Color(0x3DFFFFFF)],
-            stops: [0, .5, 1],
+            colors: [_g(0x10FFFFFF), _g(0x2BFFFFFF), _g(0x3DFFFFFF)],
+            stops: const [0, .5, 1],
           ).createShader(rect),
       )
       ..restore();
@@ -150,12 +158,12 @@ class TintedCallBody extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 3
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5)
-          ..shader = const LinearGradient(
+          ..shader = LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             // Top a little softer, the sides softer still, the bottom brightest.
-            colors: [Color(0x33FFFFFF), Color(0x26FFFFFF), Color(0x26FFFFFF), Color(0x6EFFFFFF)],
-            stops: [0, .25, .75, 1],
+            colors: [_g(0x33FFFFFF), _g(0x26FFFFFF), _g(0x26FFFFFF), _g(0x6EFFFFFF)],
+            stops: const [0, .25, .75, 1],
           ).createShader(rect),
       )
       ..restore();
@@ -188,7 +196,7 @@ class TintedCallBody extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(TintedCallBody oldDelegate) => oldDelegate.radius != radius;
+  bool shouldRepaint(TintedCallBody oldDelegate) => oldDelegate.radius != radius || oldDelegate.glow != glow;
 }
 
 /// A circle, or a superellipse whose ends are ColorOS's soft oval rather than a true semicircle.

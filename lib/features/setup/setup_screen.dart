@@ -125,7 +125,7 @@ class _SetButton extends StatelessWidget {
       child: PressGlow(
         glowColor: answerGreen,
         child: Container(
-          decoration: solidBody(answerGreen, const StadiumBorder()),
+          decoration: solidBody(answerGreen, const StadiumBorder(), glow: 0),
           foregroundDecoration: solidGlow(const StadiumBorder()),
           child: Material(
             color: Colors.transparent,

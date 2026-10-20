@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../core/haptics/haptics.dart';
 import '../features/in_call/call_controls.dart';
 import '../theme/one_ui_theme.dart';
+import 'call_glass.dart';
 import 'press_glow.dart';
 
 /// Item definition for the floating menu.
@@ -152,7 +153,10 @@ class _PopoverMenu extends StatelessWidget {
                         // wash, edge glow and lip go on top, as on the header buttons.
                         child: ColoredBox(
                           color: const Color(0xB3141416),
-                          child: CustomPaint(painter: const TintedCallBody(OneUIFloatingMenu._radius), child: items),
+                          child: CustomPaint(
+                            painter: const TintedCallBody(OneUIFloatingMenu._radius, glow: kMainGlassGlow),
+                            child: items,
+                          ),
                         ),
                       ),
                     ),
