@@ -456,36 +456,40 @@ class _HeaderControls extends StatelessWidget {
                 // Menu, which becomes Cancel while selecting.
                 Positioned(
                   left: menuLeft,
-                  child: CallGlass(
-                    child: SizedBox.square(
-                      dimension: _button,
-                      child: Stack(
-                        children: [
-                          IgnorePointer(
-                            ignoring: selecting,
-                            child: Opacity(
-                              opacity: _out(sel),
-                              child: _glassIcon(
-                                key: menuKey,
-                                icon: Icons.more_vert_rounded,
-                                tooltip: 'More options',
-                                onTap: () => OneUIFloatingMenu.show(
-                                  context: context,
-                                  anchorKey: menuKey,
-                                  width: 250,
-                                  items: menuItems(),
+                  // The menu measures this wrapper, outside the glass press, so holding the
+                  // button (which squeezes and stretches it) doesn't shift where the menu opens.
+                  child: KeyedSubtree(
+                    key: menuKey,
+                    child: CallGlass(
+                      child: SizedBox.square(
+                        dimension: _button,
+                        child: Stack(
+                          children: [
+                            IgnorePointer(
+                              ignoring: selecting,
+                              child: Opacity(
+                                opacity: _out(sel),
+                                child: _glassIcon(
+                                  icon: Icons.more_vert_rounded,
+                                  tooltip: 'More options',
+                                  onTap: () => OneUIFloatingMenu.show(
+                                    context: context,
+                                    anchorKey: menuKey,
+                                    width: 250,
+                                    items: menuItems(),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          IgnorePointer(
-                            ignoring: !selecting,
-                            child: Opacity(
-                              opacity: _in(sel),
-                              child: _glassIcon(icon: Icons.close_rounded, tooltip: 'Cancel', onTap: onCancel),
+                            IgnorePointer(
+                              ignoring: !selecting,
+                              child: Opacity(
+                                opacity: _in(sel),
+                                child: _glassIcon(icon: Icons.close_rounded, tooltip: 'Cancel', onTap: onCancel),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
