@@ -22,7 +22,9 @@ class CallGlass extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sigma = OneUIEffectsController.instance.blurSigma;
-    final body = BackdropFilter(
+    // Grouped: inside the shell's tabs, every glass control shares one backdrop read (see
+    // MainShell); elsewhere (the nav bar, pushed pages) it blurs on its own.
+    final body = BackdropFilter.grouped(
       filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
       child: CustomPaint(
         painter: TintedCallBody(radius, glow: kMainGlassGlow),

@@ -53,14 +53,6 @@ class DialerPrefs {
 
   Future<void> clearRecentSearches() => _prefs.remove('recent_searches');
 
-  /// Contacts › "View favorites as list" (Samsung shows tiles by default).
-  Future<bool> favoritesAsList() async => await _prefs.getBool('favorites_as_list') ?? false;
-
-  Future<void> setFavoritesAsList(bool value) async {
-    await _prefs.setBool('favorites_as_list', value);
-    changes.value++;
-  }
-
   /// Notes taken during calls live under `call_note_<number>_<millis>`, where millis is when the
   /// call's first note was saved; Recents matches them to the logged call by time.
   static String _notePrefix(String number) {
