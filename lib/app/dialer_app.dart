@@ -6,6 +6,7 @@ import '../features/blocking/blocking_repository.dart';
 import '../features/recents/call_log_repository.dart';
 import '../features/setup/setup_screen.dart';
 import '../theme/one_ui_theme.dart';
+import 'layout.dart';
 import 'main_shell.dart';
 
 class DialerApp extends StatelessWidget {
@@ -18,6 +19,7 @@ class DialerApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: OneUITheme.darkTheme,
       scrollBehavior: OneUITheme.scrollBehavior,
+      builder: (context, child) => DesignWidth(child: child!),
       home: const _SetupGate(),
     );
   }

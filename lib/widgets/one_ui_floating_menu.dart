@@ -52,7 +52,9 @@ class OneUIFloatingMenu {
     // The button the menu separates from, or a button-sized spot at the fallback corner.
     Rect? anchor;
     final box = anchorKey?.currentContext?.findRenderObject() as RenderBox?;
-    if (box != null && box.hasSize) anchor = box.localToGlobal(Offset.zero) & box.size;
+    // Relative to the navigator, not the screen: `DesignWidth` scales the app, so screen pixels aren't layout pixels.
+    final navigator = Navigator.of(context).context.findRenderObject();
+    if (box != null && box.hasSize) anchor = box.localToGlobal(Offset.zero, ancestor: navigator) & box.size;
     anchor ??= fallbackBottom != null
         ? Rect.fromLTWH(screen.width - fallbackRight - 48, screen.height - fallbackBottom - 48, 48, 48)
         : Rect.fromLTWH(screen.width - fallbackRight - 48, fallbackTop, 48, 48);

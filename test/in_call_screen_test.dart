@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
-import 'package:dialer/app/in_call_app.dart';
+import 'package:dialer/app/layout.dart';
 import 'package:dialer/features/in_call/in_call_screen.dart';
 import 'package:dialer/features/in_call/call_screen_widgets.dart';
 import 'package:dialer/widgets/one_ui_floating_modal.dart';

@@ -1,3 +1,4 @@
+import 'package:dialer/app/layout.dart';
 import 'package:dialer/core/contacts/contacts_repository.dart';
 import 'package:dialer/features/keypad/keypad_screen.dart';
 import 'package:dialer/theme/one_ui_theme.dart';
@@ -33,6 +34,29 @@ void main() {
     );
   });
   tearDown(() => ContactsRepository.instance.contacts.value = []);
+
+  testWidgets('keys keep the vivo proportions on a narrower phone', (tester) async {
+    Future<Size> keyRatio(Size screen) async {
+      tester.view.physicalSize = screen;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: OneUITheme.darkTheme,
+          builder: (context, child) => DesignWidth(child: child!),
+          home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier(''))),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final key = tester.getRect(find.bySemanticsLabel('5, long-press for speed dial'));
+      return Size(key.width / screen.width, key.height / screen.width);
+    }
+
+    final vivo = await keyRatio(const Size(420, 933));
+    final s25 = await keyRatio(const Size(360, 780));
+    expect(s25.width, closeTo(vivo.width, .005));
+    expect(s25.height, closeTo(vivo.height, .005));
+  });
 
   testWidgets('Back and the dialpad pill hide the keys; reopening keeps the number', (tester) async {
     final input = ValueNotifier('0333');
