@@ -146,7 +146,8 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
                         key: const ValueKey('action'),
                         icon: Icons.add_rounded,
                         tooltip: 'Create contact',
-                        onPressed: () => openContactEditor(context),
+                        // New contact grows out of this button.
+                        onPressed: (button) => openContactEditor(context, from: button),
                       )
                     : _keypadOpen.value
                     ? null
@@ -154,7 +155,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
                         key: const ValueKey('action'),
                         icon: Icons.dialpad_rounded,
                         tooltip: 'Show keypad',
-                        onPressed: () => _keypadOpen.value = true,
+                        onPressed: (_) => _keypadOpen.value = true,
                       ),
               ),
             ),
@@ -170,7 +171,9 @@ class _RoundAction extends StatelessWidget {
   const _RoundAction({super.key, required this.icon, required this.tooltip, required this.onPressed});
   final IconData icon;
   final String tooltip;
-  final VoidCallback onPressed;
+
+  /// Gets the button's own context, for a page that opens out of it.
+  final ValueChanged<BuildContext> onPressed;
 
   static const _green = OneUITheme.dialGreen;
 
@@ -191,7 +194,7 @@ class _RoundAction extends StatelessWidget {
             shape: const CircleBorder(),
             elevation: 0,
             highlightElevation: 0,
-            onPressed: onPressed,
+            onPressed: () => onPressed(context),
             // Switching tabs keeps the button and cross-fades its icon.
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),

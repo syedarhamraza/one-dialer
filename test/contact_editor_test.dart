@@ -100,6 +100,30 @@ void main() {
     expect(canSave(tester), isTrue);
   });
 
+  testWidgets('Add morphing out of a button focuses Name once it has grown', (tester) async {
+    accounts.complete(<Object?>[]);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: OneUITheme.darkTheme.copyWith(platform: TargetPlatform.android),
+        home: Scaffold(
+          body: Builder(
+            builder: (button) => TextButton(
+              onPressed: () => openContactEditor(button, from: button),
+              child: const Text('Open editor'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open editor'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(tester.testTextInput.isVisible, isFalse);
+    await tester.pumpAndSettle();
+    expect(find.byType(ContactEditorScreen), findsOneWidget);
+    expect(tester.testTextInput.isVisible, isTrue);
+  });
+
   testWidgets('Add waits for entry animation before focusing Name', (tester) async {
     accounts.complete(<Object?>[]);
     await open(tester);

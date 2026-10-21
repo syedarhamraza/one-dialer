@@ -11,6 +11,7 @@ import '../../../theme/one_ui_scroll.dart';
 import '../../../theme/one_ui_theme.dart';
 import '../../../widgets/cos_dialog.dart';
 import '../../../widgets/letter_avatar.dart';
+import '../../../widgets/morph_route.dart';
 import '../../../widgets/one_ui_toast.dart';
 import '../../../widgets/call_glass.dart';
 import '../../../widgets/one_ui_date_wheel.dart';
@@ -22,13 +23,16 @@ import 'contact_form.dart';
 import 'editor_widgets.dart';
 
 /// Opens the editor: a new contact (optionally with [number]) or [contactId] (optionally
-/// adding [number] to it). Returns the saved contact's id, or null if cancelled.
-Future<String?> openContactEditor(BuildContext context, {String? contactId, String? number}) => Navigator.of(context)
-    .push<String>(
-      MaterialPageRoute(
-        builder: (_) => ContactEditorScreen(contactId: contactId, initialNumber: number),
-      ),
-    );
+/// adding [number] to it). Returns the saved contact's id, or null if cancelled. With
+/// [from] (a green button's context) the editor morphs out of that button.
+Future<String?> openContactEditor(BuildContext context, {String? contactId, String? number, BuildContext? from}) {
+  Widget page(BuildContext _) => ContactEditorScreen(contactId: contactId, initialNumber: number);
+  return Navigator.of(context).push<String>(
+    from == null
+        ? MaterialPageRoute(builder: page)
+        : MorphPageRoute(builder: page, source: from, color: OneUITheme.dialGreen),
+  );
+}
 
 /// Samsung-style add/edit contact screen (replaces Android's contact editor).
 class ContactEditorScreen extends StatefulWidget {
