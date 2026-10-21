@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 
 import '../core/contacts/contacts_repository.dart';
@@ -17,12 +18,35 @@ class DialerApp extends StatelessWidget {
     return MaterialApp(
       title: 'One Dialer',
       debugShowCheckedModeBanner: false,
-      theme: OneUITheme.darkTheme,
+      theme: OneUITheme.darkTheme.copyWith(
+        pageTransitionsTheme: const PageTransitionsTheme(builders: {TargetPlatform.android: _GroupedSlide()}),
+      ),
       scrollBehavior: OneUITheme.scrollBehavior,
       builder: (context, child) => DesignWidth(child: child!),
       home: const _SetupGate(),
     );
   }
+}
+
+/// The theme's slide, with each page's glass controls (`CallGlass`) sharing one backdrop
+/// read, as the shell's tabs do: a separate read per button splits the GPU pass every frame.
+class _GroupedSlide extends PageTransitionsBuilder {
+  const _GroupedSlide();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) => const CupertinoPageTransitionsBuilder().buildTransitions(
+    route,
+    context,
+    animation,
+    secondaryAnimation,
+    BackdropGroup(child: child),
+  );
 }
 
 /// Shows [SetupScreen] until the app is the default phone app.

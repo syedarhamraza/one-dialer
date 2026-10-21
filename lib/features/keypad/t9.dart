@@ -55,17 +55,22 @@ const _keys = {
   'z': '9',
 };
 
+// Built once: these run per character of every contact on each keypad digit.
+final _digit = RegExp(r'[0-9]');
+final _allDigits = RegExp(r'^[0-9]+$');
+final _dialChar = RegExp(r'[0-9+*#]');
+
 String? _digitOf(String ch) {
   final c = ch.toLowerCase();
   if (_keys[c] case final d?) return d;
-  return RegExp(r'[0-9]').hasMatch(c) ? c : null;
+  return _digit.hasMatch(c) ? c : null;
 }
 
 /// Returns matches for [query] (keypad digits, may include `*`, `#`, `+`), best first:
 /// names matched at the first word, then names matched later or by initials, then numbers.
 List<T9Match> t9Search(String query, Iterable<T9Entry> entries, {int limit = 50}) {
   if (query.isEmpty) return const [];
-  final digitsOnly = RegExp(r'^[0-9]+$').hasMatch(query);
+  final digitsOnly = _allDigits.hasMatch(query);
   final first = <T9Match>[];
   final other = <T9Match>[];
   final byNumber = <T9Match>[];
@@ -135,7 +140,7 @@ List<(int, String, bool)> _letters(String name) {
   final kept = <int>[]; // index in number of each kept char
   final buf = StringBuffer();
   for (var i = 0; i < number.length; i++) {
-    if (RegExp(r'[0-9+*#]').hasMatch(number[i])) {
+    if (_dialChar.hasMatch(number[i])) {
       kept.add(i);
       buf.write(number[i]);
     }

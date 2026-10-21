@@ -28,6 +28,14 @@ class PressGlow extends StatelessWidget {
       excludeFromSemantics: true,
       canRequestFocus: false,
       shape: LiquidRoundedRectangle(borderRadius: radius),
+      // The package's own finger glow (radius 1.6, its dark/light colour), minus its sigma-16
+      // mask blur: on a gradient this wide the blur changes under 1/255, but it blurred a
+      // circle 1.6× the button offscreen on every pointer move (~30 ms a frame on the menu card).
+      glowRadius: 1.6,
+      glowBlurRadius: 0,
+      glowColor: GlassTheme.brightnessOf(context) == Brightness.dark
+          ? const Color(0x12FFFFFF)
+          : const Color(0x1AFFFFFF),
       child: child,
     );
     final color = glowColor;
