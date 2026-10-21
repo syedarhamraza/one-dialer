@@ -39,8 +39,13 @@ class ContactsRepository {
 
   static final ContactsRepository instance = ContactsRepository._();
 
-  /// Sorted by name.
+  /// Sorted by name. Notifies only when a listed contact changed (Android fires database
+  /// changes after every call, and each one rebuilt Recents, Contacts and the keypad results).
   final ValueNotifier<List<DialerContact>> contacts = ValueNotifier(const []);
+
+  /// Bumps on every reload of the contacts database, for screens that show fields [contacts]
+  /// doesn't hold (emails, addresses, notes).
+  final ValueNotifier<int> revision = ValueNotifier(0);
   StreamSubscription<void>? _changes;
   Map<String, DialerContact> _byNumber = const {};
 
@@ -101,8 +106,31 @@ class ContactsRepository {
             isFavorite: c.android?.isFavorite ?? false,
             primaryIndex: phones.indexWhere((p) => p.isPrimary ?? false),
           ),
-    ]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-    _publish(entries);
+    ];
+    // Lowercased once per contact, not twice per comparison.
+    final keyed = [for (final e in entries) (e.name.toLowerCase(), e)]..sort((a, b) => a.$1.compareTo(b.$1));
+    final sorted = [for (final (_, e) in keyed) e];
+    if (!sameContacts(sorted, contacts.value)) _publish(sorted);
+    revision.value++;
+  }
+
+  /// Whether [a] and [b] list the same contacts, field for field (thumbnails by content).
+  @visibleForTesting
+  static bool sameContacts(List<DialerContact> a, List<DialerContact> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      final x = a[i], y = b[i];
+      if (x.id != y.id ||
+          x.name != y.name ||
+          x.isFavorite != y.isFavorite ||
+          x.primaryIndex != y.primaryIndex ||
+          !listEquals(x.numbers, y.numbers) ||
+          !listEquals(x.labels, y.labels) ||
+          !listEquals(x.thumbnail, y.thumbnail)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /// Shows [entries] (sorted by name) without reading the device, e.g. demo data for store screenshots.
