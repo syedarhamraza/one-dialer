@@ -104,6 +104,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
 
   /// A row whose current choice shows on the right; tapping it opens the choices from there.
   OneUIGroupItem _choice({
+    required Widget leading,
     required String title,
     String? subtitle,
     required GlobalKey anchor,
@@ -111,6 +112,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     required Map<String, String> labels,
     required ValueChanged<String> onPick,
   }) => OneUIGroupItem(
+    leading: leading,
     title: title,
     subtitle: subtitle,
     trailing: ValueListenableBuilder(
@@ -165,6 +167,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         OneUIGroupCard(
           items: [
             _choice(
+              leading: const Icon(Icons.touch_app_outlined, color: OneUITheme.accentBlue),
               title: 'Tap a recent call',
               anchor: _tapKey,
               value: DialerPrefs.instance.recentTap,
@@ -172,6 +175,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               onPick: DialerPrefs.instance.setRecentTap,
             ),
             _choice(
+              leading: const Icon(Icons.sim_card_outlined, color: OneUITheme.accentGreen),
               title: 'Choose SIM for calls',
               subtitle: 'Dual SIM with no default SIM',
               anchor: _simKey,

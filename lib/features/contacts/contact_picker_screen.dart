@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import '../../core/contacts/contacts_repository.dart';
 import '../../theme/one_ui_scroll.dart';
 import '../../theme/one_ui_theme.dart';
-import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_collapsible_header.dart';
 import '../../widgets/one_ui_floating_modal.dart';
 import 'contact_sections.dart';
+import 'contacts_widgets.dart';
 
 /// Picks a contact from our own list (instead of Android's picker). Returns the contact.
 Future<DialerContact?> pickContact(BuildContext context, {String title = 'Select contact'}) =>
@@ -26,12 +26,29 @@ Future<(DialerContact, String)?> pickContactNumber(BuildContext context, {String
       children: [
         Text(contact.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
+        // Rows like the contact page's number rows: the number, its label below.
         for (final (i, n) in contact.numbers.indexed)
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(n, style: const TextStyle(fontSize: 18)),
-            subtitle: Text(contact.labels[i], style: const TextStyle(color: OneUITheme.textSecondary)),
+          InkWell(
+            borderRadius: BorderRadius.circular(16),
             onTap: () => Navigator.pop(ctx, n),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                children: [
+                  const SizedBox(width: 40, child: Icon(Icons.call_outlined, size: 24)),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(n, style: const TextStyle(fontSize: 19)),
+                        const SizedBox(height: 2),
+                        Text(contact.labels[i], style: const TextStyle(fontSize: 13, color: OneUITheme.textSecondary)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
       ],
     ),
@@ -53,7 +70,7 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final contacts = searchContacts(ContactsRepository.instance.contacts.value, _query);
+    final sections = sectionContacts(searchContacts(ContactsRepository.instance.contacts.value, _query));
     return Scaffold(
       body: CustomScrollView(
         physics: const OneUIScrollPhysics(),
@@ -84,24 +101,24 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
               ),
             ),
           ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-            sliver: DecoratedSliver(
-              decoration: BoxDecoration(color: OneUITheme.surfaceCard, borderRadius: OneUITheme.cardBorderRadius),
-              sliver: SliverList.builder(
-                itemCount: contacts.length,
-                itemBuilder: (context, i) {
-                  final c = contacts[i];
-                  return ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    leading: LetterAvatar(name: c.name, photo: c.thumbnail),
-                    title: Text(c.name, style: const TextStyle(fontSize: 17)),
-                    onTap: () => Navigator.of(context).pop(c),
-                  );
-                },
+          // The Contacts tab's A–Z sections and flat rows.
+          for (final (letter, list) in sections) ...[
+            SliverToBoxAdapter(child: ContactsSectionHeader(title: letter)),
+            SliverFixedExtentList.builder(
+              itemExtent: ContactRow.height,
+              itemCount: list.length,
+              itemBuilder: (context, i) => ContactRow(
+                contact: list[i],
+                isLast: i == list.length - 1,
+                // Turns off the row's swipe to call: picking must never place a call.
+                selecting: true,
+                selectMark: const SizedBox.shrink(),
+                onTap: () => Navigator.of(context).pop(list[i]),
+                onLongPress: () => Navigator.of(context).pop(list[i]),
               ),
             ),
-          ),
+          ],
+          const SliverToBoxAdapter(child: SizedBox(height: 32)),
         ],
       ),
     );

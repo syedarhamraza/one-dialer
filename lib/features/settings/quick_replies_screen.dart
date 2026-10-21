@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
+import '../../widgets/one_ui_floating_modal.dart';
 import '../../widgets/one_ui_subpage.dart';
 import '../../widgets/one_ui_group_card.dart';
 
@@ -34,11 +35,15 @@ class _QuickRepliesScreenState extends State<QuickRepliesScreen> {
 
   Future<void> _edit(int? index) async {
     final replies = _replies!;
-    final text = await showDialog<String>(
+    final typed = await OneUIFloatingModal.showTextInputDialog(
       context: context,
-      builder: (_) => _ReplyDialog(initial: index == null ? '' : replies[index]),
+      title: 'Quick decline message',
+      initialValue: index == null ? '' : replies[index],
     );
-    if (text == null || text.isEmpty) return;
+    if (typed == null || typed.isEmpty) return;
+    // One SMS. shortcut: the shared input modal (verbatim OneSpend) has no counter, so longer
+    // text is cut here; give the modal a maxLength if people hit it.
+    final text = typed.length > 160 ? typed.substring(0, 160) : typed;
     final next = [...replies];
     index == null ? next.add(text) : next[index] = text;
     await _save(next);
@@ -79,43 +84,6 @@ class _QuickRepliesScreenState extends State<QuickRepliesScreen> {
                 ),
             ],
           ),
-      ],
-    );
-  }
-}
-
-/// Owns its text controller so it outlives the close animation.
-class _ReplyDialog extends StatefulWidget {
-  const _ReplyDialog({required this.initial});
-
-  final String initial;
-
-  @override
-  State<_ReplyDialog> createState() => _ReplyDialogState();
-}
-
-class _ReplyDialogState extends State<_ReplyDialog> {
-  late final _controller = TextEditingController(text: widget.initial);
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Quick decline message'),
-      content: TextField(
-        controller: _controller,
-        autofocus: true,
-        maxLength: 160, // one SMS
-        textCapitalization: TextCapitalization.sentences,
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-        TextButton(onPressed: () => Navigator.of(context).pop(_controller.text.trim()), child: const Text('Save')),
       ],
     );
   }
