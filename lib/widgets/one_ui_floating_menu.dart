@@ -61,16 +61,29 @@ class OneUIFloatingMenu {
         ? Rect.fromLTWH(screen.width - fallbackRight - 48, screen.height - fallbackBottom - 48, 48, 48)
         : Rect.fromLTWH(screen.width - fallbackRight - 48, fallbackTop, 48, 48);
 
-    // Below the button, unless it sits low or there's no room; then above.
-    final roomBelow = screen.height - anchor.bottom - _gap - _edge >= height;
-    final upwards = anchor.center.dy > screen.height / 2 || !roomBelow;
+    // Kept clear of the status bar and the gesture bar.
+    final insets = MediaQuery.paddingOf(context);
+    final minTop = insets.top + _edge;
+    final maxBottom = screen.height - insets.bottom - _edge;
+    // Below the button, or above when it sits low; but on the side it fits, and when it
+    // fits neither (a long menu mid-screen), the side with more room.
+    final roomAbove = anchor.top - _gap - minTop;
+    final roomBelow = maxBottom - anchor.bottom - _gap;
+    final upwards = anchor.center.dy > screen.height / 2
+        ? roomAbove >= height || roomAbove >= roomBelow
+        : roomBelow < height && roomAbove > roomBelow;
     // Lined up with the button's right edge, or ([centered]) right over its middle.
     final right = (centered ? anchor.center.dx + menuWidth / 2 : anchor.right).clamp(
       _edge + menuWidth,
       screen.width - _edge,
     );
     final top = upwards ? anchor.top - _gap - height : anchor.bottom + _gap;
-    final menu = Rect.fromLTWH(right - menuWidth, top.clamp(_edge, screen.height - _edge - height), menuWidth, height);
+    final menu = Rect.fromLTWH(
+      right - menuWidth,
+      top.clamp(minTop, math.max(minTop, maxBottom - height)),
+      menuWidth,
+      height,
+    );
 
     Haptics.tap();
     isOpen.value = true;
