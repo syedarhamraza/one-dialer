@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../app/app_info.dart';
 import '../../core/config/app_version.dart';
@@ -6,6 +7,7 @@ import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/one_ui_subpage.dart';
+import '../../widgets/one_ui_toast.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_group_card.dart';
 import '../blocking/blocking_repository.dart';
@@ -53,6 +55,15 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   Future<void> _refresh() async {
     final health = await _telecom.getCallHealth();
     if (mounted) setState(() => _health = health);
+  }
+
+  /// A system screen that not every phone has (Contacts storage, Google's sync).
+  Future<void> _openSystem(String page) async {
+    try {
+      await _telecom.openSystemSettings(page);
+    } on PlatformException {
+      if (mounted) OneUIToast.show(context, "This phone doesn't have that setting");
+    }
   }
 
   void _push(Widget page) => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
@@ -182,6 +193,23 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               value: DialerPrefs.instance.simChoice,
               labels: _simLabels,
               onPick: DialerPrefs.instance.setSimChoice,
+            ),
+          ],
+        ),
+        OneUIGroupCard(
+          headerTitle: 'Contacts',
+          items: [
+            OneUIGroupItem(
+              leading: const Icon(Icons.inventory_2_outlined, color: OneUITheme.accentBlue),
+              title: 'Default account for new contacts',
+              subtitle: 'Phone, SIM or Google',
+              onTap: () => _openSystem('contactsStorage'),
+            ),
+            OneUIGroupItem(
+              leading: const Icon(Icons.sync_rounded, color: OneUITheme.accentGreen),
+              title: 'Google Contacts sync',
+              subtitle: 'Which accounts sync, and backing up phone contacts',
+              onTap: () => _openSystem('googleContactsSync'),
             ),
           ],
         ),

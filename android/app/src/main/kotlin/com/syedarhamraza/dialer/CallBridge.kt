@@ -280,6 +280,10 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
             page == "fullScreen" && android.os.Build.VERSION.SDK_INT >= 34 ->
                 android.content.Intent(android.provider.Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:$pkg"))
             page == "defaultApps" -> android.content.Intent(android.provider.Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
+            // Android's "Contacts storage": the default account for new contacts (vivo hides it from its menus).
+            page == "contactsStorage" -> android.content.Intent("android.provider.action.SET_DEFAULT_ACCOUNT")
+            page == "googleContactsSync" -> android.content.Intent("com.google.android.gms.people.sync.CONTACTS_SYNC_SETTINGS")
+                .setPackage("com.google.android.gms")
             page != null && page.startsWith("url:") -> android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(page.removePrefix("url:")))
             else -> android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$pkg"))
         }.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)

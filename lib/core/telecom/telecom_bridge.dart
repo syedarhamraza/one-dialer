@@ -107,7 +107,8 @@ class TelecomBridge {
   Future<Map<Object?, Object?>> getCallHealth() async =>
       await _methods.invokeMapMethod<Object?, Object?>('getCallHealth') ?? const {};
 
-  /// `notifications`, `fullScreen`, `defaultApps`, `app`, or `url:https://…`.
+  /// `notifications`, `fullScreen`, `defaultApps`, `contactsStorage`, `googleContactsSync`, `app`,
+  /// or `url:https://…`. Throws `NO_ACTIVITY` when the phone has no such screen.
   Future<void> openSystemSettings(String page) => _methods.invokeMethod('openSystemSettings', {'page': page});
 
   // Blocking rules (read by DialerScreeningService.kt)
