@@ -100,6 +100,42 @@ void main() {
     expect(canSave(tester), isTrue);
   });
 
+  testWidgets('Add rising like the keypad slides up, focuses Name, and slides back down', (tester) async {
+    accounts.complete(<Object?>[]);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: OneUITheme.darkTheme.copyWith(platform: TargetPlatform.android),
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => openContactEditor(context, rise: true),
+              child: const Text('Open editor'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open editor'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    final screenHeight = tester.view.physicalSize.height / tester.view.devicePixelRatio;
+    final rising = tester.getTopLeft(find.byType(ContactEditorScreen)).dy;
+    expect(rising, greaterThan(0)); // still on its way up from below
+    expect(rising, lessThan(screenHeight));
+    expect(tester.testTextInput.isVisible, isFalse);
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(find.byType(ContactEditorScreen)).dy, 0);
+    expect(tester.testTextInput.isVisible, isTrue);
+
+    tester.widget<TextButton>(cancelPill()).onPressed!();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 20)); // the drop starts on this frame
+    await tester.pump(const Duration(milliseconds: 120));
+    expect(tester.getTopLeft(find.byType(ContactEditorScreen)).dy, greaterThan(0)); // going back down
+    await tester.pumpAndSettle();
+    expect(find.byType(ContactEditorScreen), findsNothing);
+  });
+
   testWidgets('Add waits for entry animation before focusing Name', (tester) async {
     accounts.complete(<Object?>[]);
     await open(tester);

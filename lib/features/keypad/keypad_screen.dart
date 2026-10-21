@@ -19,6 +19,7 @@ import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/place_call.dart';
 import '../../widgets/press_glow.dart';
+import '../../widgets/rise_route.dart';
 import 't9.dart';
 import '../in_call/call_controls.dart';
 
@@ -42,14 +43,6 @@ class KeypadScreen extends StatefulWidget {
 const double _gap = 10;
 
 final double _blur = OneUIEffectsController.instance.blurSigma;
-
-final _riseSpring = GlassSpringCurve(
-  SpringDescription.withDampingRatio(mass: 1, stiffness: 300, ratio: .85),
-  const Duration(milliseconds: 450),
-);
-
-/// Material's emphasized accelerate, for leaving.
-const _dropCurve = Cubic(0.3, 0, 0.8, 0.15);
 
 class _KeypadScreenState extends State<KeypadScreen> {
   final _telecom = TelecomBridge.instance;
@@ -214,7 +207,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
                       duration: MediaQuery.disableAnimationsOf(context)
                           ? Duration.zero
                           : Duration(milliseconds: open ? 450 : 240),
-                      curve: open ? _riseSpring : _dropCurve,
+                      curve: open ? kSheetRise : kSheetDrop,
                       child: IgnorePointer(
                         ignoring: !open,
                         child: ExcludeSemantics(

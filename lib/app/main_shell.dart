@@ -146,7 +146,8 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
                         key: const ValueKey('action'),
                         icon: Icons.add_rounded,
                         tooltip: 'Create contact',
-                        onPressed: () => openContactEditor(context),
+                        // New contact rises from the bottom, like the keypad sheet.
+                        onPressed: () => openContactEditor(context, rise: true),
                       )
                     : _keypadOpen.value
                     ? null
