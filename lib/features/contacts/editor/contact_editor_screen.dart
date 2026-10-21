@@ -10,6 +10,7 @@ import '../../../core/telecom/telecom_bridge.dart';
 import '../../../theme/one_ui_scroll.dart';
 import '../../../theme/one_ui_theme.dart';
 import '../../../widgets/letter_avatar.dart';
+import '../../../widgets/one_ui_toast.dart';
 import '../../../widgets/call_glass.dart';
 import '../../../widgets/one_ui_date_wheel.dart';
 import '../../../widgets/one_ui_floating_menu.dart';
@@ -226,14 +227,12 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
     } on PlatformException catch (e) {
       if (!mounted || _closing) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            e.code == 'read_only_contact'
-                ? "This contact's account is read-only, so it can't be changed here"
-                : "Couldn't save the contact",
-          ),
-        ),
+      OneUIToast.show(
+        context,
+        e.code == 'read_only_contact'
+            ? "This contact's account is read-only, so it can't be changed here"
+            : "Couldn't save the contact",
+        long: true,
       );
     }
   }

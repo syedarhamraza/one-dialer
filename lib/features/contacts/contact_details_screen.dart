@@ -186,9 +186,21 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         if (contact == null) {
           // Deleted, unlinked into another contact, or lost its numbers.
           return Scaffold(
-            appBar: AppBar(),
-            body: const Center(
-              child: Text('Contact not found', style: TextStyle(color: OneUITheme.textSecondary)),
+            body: Stack(
+              children: [
+                const Center(
+                  child: Text('Contact not found', style: TextStyle(color: OneUITheme.textSecondary)),
+                ),
+                Positioned(
+                  left: 16,
+                  top: MediaQuery.paddingOf(context).top + 8,
+                  child: RoundIconButton(
+                    icon: Icons.arrow_back_rounded,
+                    tooltip: 'Back',
+                    onTap: () => Navigator.of(context).maybePop(),
+                  ),
+                ),
+              ],
             ),
           );
         }

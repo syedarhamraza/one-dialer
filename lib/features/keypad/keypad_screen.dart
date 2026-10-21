@@ -7,6 +7,7 @@ import '../../app/layout.dart';
 import '../../core/contacts/contacts_repository.dart';
 import '../../core/telecom/call_info.dart';
 import '../../widgets/one_ui_floating_modal.dart';
+import '../../widgets/one_ui_toast.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../core/prefs/dialer_prefs.dart';
@@ -134,7 +135,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
       if (called && widget.input.value == number) widget.input.value = '';
     } on PlatformException {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not place the call.')));
+        OneUIToast.show(context, "Couldn't place the call");
       }
     } finally {
       if (mounted) setState(() => _calling = false);

@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../core/contacts/contacts_repository.dart';
 import '../../theme/one_ui_theme.dart';
+import '../../widgets/one_ui_floating_menu.dart';
+import '../../widgets/one_ui_floating_modal.dart';
 import '../../widgets/one_ui_subpage.dart';
+import '../../widgets/one_ui_switch.dart';
+import '../../widgets/one_ui_toast.dart';
 import '../../widgets/one_ui_group_card.dart';
 import '../contacts/contact_picker_screen.dart';
 import '../recents/call_details_screen.dart';
@@ -27,30 +31,23 @@ class _BlockingScreenState extends State<BlockingScreen> {
     _repo.load();
   }
 
+  /// The + of "Add number": the menu pops from it.
+  final _addKey = GlobalKey();
+
   Future<void> _add() async {
-    final choice = await showModalBottomSheet<String>(
+    String? choice;
+    await OneUIFloatingMenu.show(
       context: context,
-      backgroundColor: OneUITheme.surfaceCard,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(OneUITheme.radiusCard)),
-      ),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.dialpad_rounded),
-              title: const Text('Enter number'),
-              onTap: () => Navigator.of(context).pop('type'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.person_outline_rounded),
-              title: const Text('Choose from contacts'),
-              onTap: () => Navigator.of(context).pop('contact'),
-            ),
-          ],
+      anchorKey: _addKey,
+      width: 250,
+      items: [
+        OneUIFloatingMenuItem(label: 'Enter number', icon: Icons.dialpad_rounded, onTap: () => choice = 'type'),
+        OneUIFloatingMenuItem(
+          label: 'Choose from contacts',
+          icon: Icons.person_outline_rounded,
+          onTap: () => choice = 'contact',
         ),
-      ),
+      ],
     );
     if (!mounted || choice == null) return;
     final numbers = choice == 'type' ? [?await _typeNumber()] : (await pickContact(context, title: 'Block contact'))?.numbers;
@@ -62,14 +59,18 @@ class _BlockingScreenState extends State<BlockingScreen> {
   Future<void> _setRules({required bool blockHidden, required bool blockNonContacts}) async {
     final saved = await _repo.setRules(blockHidden: blockHidden, blockNonContacts: blockNonContacts);
     if (!saved && mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Set Dialer as your caller ID & spam app to block these calls')));
+      OneUIToast.show(context, 'Set Dialer as your caller ID & spam app to block these calls', long: true);
     }
   }
 
   Future<String?> _typeNumber() async {
-    final number = await showDialog<String>(context: context, builder: (_) => const _NumberDialog());
-    return (number != null && numberKey(number).isNotEmpty) ? number : null;
+    final number = await OneUIFloatingModal.showTextInputDialog(
+      context: context,
+      title: 'Block number',
+      keyboardType: TextInputType.phone,
+      confirmLabel: 'Block',
+    );
+    return (number != null && numberKey(number).isNotEmpty) ? number.trim() : null;
   }
 
   @override
@@ -121,7 +122,7 @@ class _BlockingScreenState extends State<BlockingScreen> {
             headerTitle: 'Blocked numbers',
             items: [
               OneUIGroupItem(
-                leading: const Icon(Icons.add_rounded, color: OneUITheme.accentBlue),
+                leading: Icon(Icons.add_rounded, key: _addKey, color: OneUITheme.accentBlue),
                 title: 'Add number',
                 onTap: _add,
                 trailing: const SizedBox.shrink(),
@@ -166,42 +167,6 @@ class _BlockingScreenState extends State<BlockingScreen> {
     title: title,
     subtitle: subtitle,
     onTap: () => onChanged(!value),
-    trailing: Switch(value: value, onChanged: onChanged, activeTrackColor: OneUITheme.accentBlue),
+    trailing: OneUISwitch(value: value, onChanged: onChanged),
   );
-}
-
-/// Owns its text controller, so it lives until the dialog's close animation has finished.
-class _NumberDialog extends StatefulWidget {
-  const _NumberDialog();
-
-  @override
-  State<_NumberDialog> createState() => _NumberDialogState();
-}
-
-class _NumberDialogState extends State<_NumberDialog> {
-  final _controller = TextEditingController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Block number'),
-      content: TextField(
-        controller: _controller,
-        autofocus: true,
-        keyboardType: TextInputType.phone,
-        decoration: const InputDecoration(hintText: 'Phone number'),
-        onSubmitted: (v) => Navigator.of(context).pop(v.trim()),
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-        TextButton(onPressed: () => Navigator.of(context).pop(_controller.text.trim()), child: const Text('Block')),
-      ],
-    );
-  }
 }

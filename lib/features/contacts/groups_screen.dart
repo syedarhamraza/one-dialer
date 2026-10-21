@@ -43,10 +43,18 @@ class _GroupsScreenState extends State<GroupsScreen> {
       title: 'Groups',
       builder: (context) => [
         if (groups != null && groups.isEmpty)
+          // Laid out like Calls' empty state: a large grey icon over the text.
           const Padding(
-            padding: EdgeInsets.only(top: 80),
+            padding: EdgeInsets.fromLTRB(32, 80, 32, 0),
             child: Center(
-              child: Text('No groups', style: TextStyle(color: OneUITheme.textSecondary)),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.groups_outlined, size: 40, color: OneUITheme.textSecondary),
+                  SizedBox(height: 12),
+                  Text('No groups', style: TextStyle(color: OneUITheme.textSecondary)),
+                ],
+              ),
             ),
           ),
         if (groups != null && groups.isNotEmpty)
@@ -54,9 +62,12 @@ class _GroupsScreenState extends State<GroupsScreen> {
             items: [
               for (final g in groups)
                 OneUIGroupItem(
-                  leading: const CircleAvatar(
-                    backgroundColor: Color(0xFFD9D9DE),
-                    child: Icon(Icons.group_rounded, color: Colors.white),
+                  // The green circle of the Contacts tab's "My groups" row.
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(color: OneUITheme.dialGreen, shape: BoxShape.circle),
+                    child: const Icon(Icons.group_rounded, color: Colors.white, size: 22),
                   ),
                   title: g.name,
                   subtitle: '${g.contactCount ?? 0} contacts',
