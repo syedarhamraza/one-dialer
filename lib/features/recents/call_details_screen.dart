@@ -41,6 +41,8 @@ class CallDetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final repo = CallLogRepository.instance;
     final key = numberKey(call.number);
+    // Built here, above the list's listener, so its rebuilds keep the same key.
+    final callTileKey = GlobalKey();
     final padding = MediaQuery.paddingOf(context);
     return Scaffold(
       body: Stack(
@@ -83,9 +85,11 @@ class CallDetailsScreen extends StatelessWidget {
                       children: [
                         Expanded(
                           child: DetailsActionTile(
+                            key: callTileKey,
                             icon: Icons.call_rounded,
                             label: 'Call',
-                            onTap: () => placeCall(context, call.number, simId: call.simId),
+                            // The SIM menu (no SIM logged for this call) pops from the tile.
+                            onTap: () => placeCall(context, call.number, simId: call.simId, anchorKey: callTileKey),
                           ),
                         ),
                         Expanded(

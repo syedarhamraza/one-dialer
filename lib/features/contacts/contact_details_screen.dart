@@ -92,7 +92,11 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     if (mounted) setState(() => _full = full);
   }
 
-  Future<void> _call(String number) => placeCall(context, number, simId: _simId);
+  /// The SIM menu pops from what was tapped: the Call tile, or that number's row.
+  final _callTileKey = GlobalKey();
+  final _numberKeys = <String, GlobalKey>{};
+
+  Future<void> _call(String number, GlobalKey anchor) => placeCall(context, number, simId: _simId, anchorKey: anchor);
 
   // --- Share / More --------------------------------------------------------------
 
@@ -236,7 +240,12 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                     spacing: 12,
                     children: [
                       Expanded(
-                        child: DetailsActionTile(icon: Icons.call_rounded, label: 'Call', onTap: () => _call(primary)),
+                        child: DetailsActionTile(
+                          key: _callTileKey,
+                          icon: Icons.call_rounded,
+                          label: 'Call',
+                          onTap: () => _call(primary, _callTileKey),
+                        ),
                       ),
                       Expanded(
                         child: DetailsActionTile(
@@ -333,16 +342,19 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     return DetailsCard(
       children: [
         for (final (i, n) in contact.numbers.indexed)
-          _ValueRow(
-            icon: Icons.call_outlined,
-            showIcon: i == 0,
-            label: [
-              contact.labels[i],
-              if (contact.numbers.length > 1 && i == contact.primaryIndex) 'Default',
-              ?simLabel,
-            ].join(' · '),
-            value: n,
-            onTap: () => _call(n),
+          KeyedSubtree(
+            key: _numberKeys.putIfAbsent(n, GlobalKey.new),
+            child: _ValueRow(
+              icon: Icons.call_outlined,
+              showIcon: i == 0,
+              label: [
+                contact.labels[i],
+                if (contact.numbers.length > 1 && i == contact.primaryIndex) 'Default',
+                ?simLabel,
+              ].join(' · '),
+              value: n,
+              onTap: () => _call(n, _numberKeys[n]!),
+            ),
           ),
         _ValueRow(
           icon: Icons.notifications_none_rounded,
