@@ -1,18 +1,15 @@
-import 'dart:ui' show ImageFilter;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../features/in_call/call_controls.dart';
 import '../theme/one_ui_theme.dart';
 import 'call_glass.dart';
-import 'press_glow.dart';
 
 /// One button of a [showCosActions] dialog.
 typedef CosAction<T> = ({String label, T value, bool destructive});
 
-/// ColorOS 17's alert: a frosted call-glass card floating above the bottom edge, the
-/// message centred, and the choices as pills. Two choices sit side by side (Cancel first),
+/// ColorOS 17's alert: a flat card floating above the bottom edge, the
+/// message centred, and the choices as call-glass pills. Two choices sit side by side (Cancel first),
 /// more stack. Back or a tap outside returns null. Choosers (SIM, numbers) are not alerts:
 /// they keep their own sheets.
 Future<T?> showCosActions<T>(
@@ -123,7 +120,6 @@ class _Frame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sigma = OneUIEffectsController.instance.blurSigma;
     final still = MediaQuery.disableAnimationsOf(context);
     return Padding(
       // Rides above the keyboard while typing.
@@ -146,21 +142,15 @@ class _Frame extends StatelessWidget {
                   child: Opacity(opacity: fade, child: child),
                 );
               },
-              child: ClipRSuperellipse(
-                borderRadius: const BorderRadius.all(Radius.circular(_radius)),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
-                  // The floating menu's body: a dark base for legibility, the call-glass wash on top.
-                  child: ColoredBox(
-                    color: const Color(0xB3141416),
-                    child: CustomPaint(
-                      painter: const TintedCallBody(_radius, glow: kMainGlassGlow, spread: .5),
-                      child: Material(
-                        type: MaterialType.transparency,
-                        child: Padding(padding: const EdgeInsets.fromLTRB(20, 28, 20, 20), child: child),
-                      ),
-                    ),
-                  ),
+              // A flat card, as ColorOS draws it; the glass is on the buttons.
+              child: DecoratedBox(
+                decoration: const ShapeDecoration(
+                  color: OneUITheme.surfaceCard,
+                  shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.all(Radius.circular(_radius))),
+                ),
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: Padding(padding: const EdgeInsets.fromLTRB(20, 28, 20, 20), child: child),
                 ),
               ),
             ),
@@ -201,8 +191,8 @@ class _Texts extends StatelessWidget {
   );
 }
 
-/// A ColorOS alert button: a flat grey stadium with the glass press; red text when it
-/// destroys something.
+/// An alert button in the app's own style: a frosted call-glass pill like the header and
+/// nav buttons (it carries the press); red text when it destroys something.
 class _Pill extends StatelessWidget {
   const _Pill({required this.label, required this.onTap, this.destructive = false});
 
@@ -211,9 +201,10 @@ class _Pill extends StatelessWidget {
   final bool destructive;
 
   @override
-  Widget build(BuildContext context) => PressGlow(
+  Widget build(BuildContext context) => CallGlass(
+    radius: 26,
     child: Material(
-      color: OneUITheme.surfacePill,
+      type: MaterialType.transparency,
       shape: const StadiumBorder(),
       clipBehavior: Clip.antiAlias,
       child: InkWell(

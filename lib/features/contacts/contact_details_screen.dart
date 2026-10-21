@@ -13,8 +13,6 @@ import '../../theme/one_ui_theme.dart';
 import '../../widgets/call_glass.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_floating_menu.dart';
-import '../../widgets/one_ui_floating_modal.dart';
-import '../../widgets/one_ui_radio.dart';
 import '../../widgets/one_ui_status_bar_scrim.dart';
 import '../../widgets/place_call.dart';
 import '../../widgets/press_glow.dart';
@@ -148,36 +146,28 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     );
   }
 
+  /// The "SIM card for calls" row: its choices pop from it.
+  final _simRowKey = GlobalKey();
+
   Future<void> _chooseSim() async {
-    final picked = await OneUIFloatingModal.show<(String?,)>(
+    (String?,)? picked;
+    await OneUIFloatingMenu.show(
       context: context,
-      builder: (ctx) => Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Call this contact using', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 8),
-          for (final (id, label) in [(null, 'Ask every time'), for (final s in _sims) (s.id, s.label)])
-            InkWell(
-              borderRadius: BorderRadius.circular(16),
-              onTap: () => Navigator.pop(ctx, (id,)),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                child: Row(
-                  children: [
-                    OneUIRadio(isSelected: id == _simId),
-                    const SizedBox(width: 20),
-                    Text(label, style: const TextStyle(fontSize: 18)),
-                  ],
-                ),
-              ),
-            ),
-        ],
-      ),
+      anchorKey: _simRowKey,
+      width: 240,
+      items: [
+        for (final (id, label) in [(null, 'Ask every time'), for (final s in _sims) (s.id, s.label)])
+          OneUIFloatingMenuItem(
+            label: label,
+            icon: id == _simId ? Icons.radio_button_checked_rounded : Icons.radio_button_unchecked_rounded,
+            onTap: () => picked = (id,),
+          ),
+      ],
     );
-    if (picked == null) return;
-    await DialerPrefs.instance.setContactSim(widget.contactId, picked.$1);
-    if (mounted) setState(() => _simId = picked.$1);
+    final choice = picked; // set from the menu's callback
+    if (choice == null) return;
+    await DialerPrefs.instance.setContactSim(widget.contactId, choice.$1);
+    if (mounted) setState(() => _simId = choice.$1);
   }
 
   // --- Build ---------------------------------------------------------------------
@@ -441,11 +431,14 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     return DetailsCard(
       children: [
         if (_sims.length > 1)
-          _ValueRow(
-            icon: Icons.sim_card_outlined,
-            value: 'SIM card for calls',
-            label: _sims.where((s) => s.id == _simId).map((s) => s.label).firstOrNull ?? 'Ask every time',
-            onTap: _chooseSim,
+          KeyedSubtree(
+            key: _simRowKey,
+            child: _ValueRow(
+              icon: Icons.sim_card_outlined,
+              value: 'SIM card for calls',
+              label: _sims.where((s) => s.id == _simId).map((s) => s.label).firstOrNull ?? 'Ask every time',
+              onTap: _chooseSim,
+            ),
           ),
         _ValueRow(
           icon: Icons.inventory_2_outlined,
