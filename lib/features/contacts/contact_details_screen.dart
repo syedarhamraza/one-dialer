@@ -50,13 +50,13 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    ContactsRepository.instance.contacts.addListener(_loadFull);
+    ContactsRepository.instance.revision.addListener(_loadFull);
     _load();
   }
 
   @override
   void dispose() {
-    ContactsRepository.instance.contacts.removeListener(_loadFull);
+    ContactsRepository.instance.revision.removeListener(_loadFull);
     super.dispose();
   }
 
