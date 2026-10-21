@@ -1,15 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../core/contacts/contacts_repository.dart';
 import '../core/prefs/dialer_prefs.dart';
 import '../core/telecom/call_info.dart';
 import '../core/telecom/telecom_bridge.dart';
-import '../theme/one_ui_theme.dart';
-import 'one_ui_floating_modal.dart';
+import 'one_ui_floating_menu.dart';
 
 /// Calls [number] the way Samsung does: on [simId] if given, else on the contact's chosen
-/// SIM, else (dual SIM with "Ask every time") after asking with our own SIM sheet.
-Future<bool> placeCall(BuildContext context, String number, {String? simId}) async {
+/// SIM, else (dual SIM with "Ask every time") after asking with our SIM menu, which pops
+/// from [anchorKey]'s button when given.
+Future<bool> placeCall(BuildContext context, String number, {String? simId, GlobalKey? anchorKey}) async {
   final telecom = TelecomBridge.instance;
   if (simId == null) {
     final contact = ContactsRepository.instance.contactFor(number);
@@ -19,7 +21,7 @@ Future<bool> placeCall(BuildContext context, String number, {String? simId}) asy
     final sims = await telecom.getSims();
     if (sims.length > 1 && !sims.any((s) => s.isDefault)) {
       if (!context.mounted) return false;
-      final sim = await _pickSim(context, sims);
+      final sim = await _pickSim(context, sims, anchorKey);
       if (sim == null) return false;
       simId = sim.id;
     }
@@ -28,34 +30,24 @@ Future<bool> placeCall(BuildContext context, String number, {String? simId}) asy
   return true;
 }
 
-Future<SimCard?> _pickSim(BuildContext context, List<SimCard> sims) => OneUIFloatingModal.show<SimCard>(
-  context: context,
-  builder: (context) => Column(
-    mainAxisSize: MainAxisSize.min,
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      const Text('Call using', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-      const SizedBox(height: 16),
-      Row(
-        children: [
-          for (final sim in sims)
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: OneUITheme.accentGreen,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size.fromHeight(56),
-                  ),
-                  onPressed: () => Navigator.of(context).pop(sim),
-                  icon: const Icon(Icons.call_rounded),
-                  label: Text(sim.label, maxLines: 1, overflow: TextOverflow.ellipsis),
-                ),
-              ),
-            ),
-        ],
-      ),
+Future<SimCard?> _pickSim(BuildContext context, List<SimCard> sims, GlobalKey? anchorKey) async {
+  final picked = Completer<SimCard?>();
+  await OneUIFloatingMenu.show(
+    context: context,
+    anchorKey: anchorKey,
+    centered: true,
+    fallbackBottom: 120,
+    width: 220,
+    items: [
+      for (final (i, sim) in sims.indexed)
+        OneUIFloatingMenuItem(
+          // Carrier names get the slot in front; SIMs already named "SIM n" don't repeat it.
+          label: sim.label == 'SIM ${i + 1}' ? sim.label : 'SIM ${i + 1} · ${sim.label}',
+          icon: Icons.sim_card_rounded,
+          onTap: () => picked.complete(sim),
+        ),
     ],
-  ),
-);
+  );
+  // The menu calls the item's onTap right after it closes, so a pick has landed by now.
+  return picked.isCompleted ? picked.future : null;
+}

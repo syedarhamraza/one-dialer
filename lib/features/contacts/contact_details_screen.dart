@@ -219,7 +219,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   Row(
                     children: [
                       Expanded(
-                        child: _ActionTile(
+                        child: DetailsActionTile(
                           icon: Icons.call_rounded,
                           color: OneUITheme.accentGreen,
                           label: 'Call',
@@ -228,7 +228,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: _ActionTile(
+                        child: DetailsActionTile(
                           icon: Icons.chat_bubble_rounded,
                           color: const Color(0xFF3E9BFF),
                           label: 'Message',
@@ -308,7 +308,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   /// Every number (tap to call, message on the right), then the contact's ringtone.
   Widget _numbersCard(DialerContact contact) {
     final simLabel = _simLabel;
-    return _Card(
+    return DetailsCard(
       children: [
         for (final (i, n) in contact.numbers.indexed)
           _ValueRow(
@@ -381,7 +381,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       for (final n in c.notes)
         if (n.note.trim().isNotEmpty) _ValueRow(label: 'Notes', value: n.note.trim()),
     ];
-    return rows.isEmpty ? const [] : [_Card(children: rows)];
+    return rows.isEmpty ? const [] : [DetailsCard(children: rows)];
   }
 
   Widget _appsCard() {
@@ -434,7 +434,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 ],
               ),
             ),
-            _Card(
+            DetailsCard(
               padding: const EdgeInsets.fromLTRB(18, 6, 18, 6),
               children: [
                 for (final c in calls)
@@ -491,9 +491,10 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   }
 }
 
-/// Call / Message tile: icon over label on a flat card (no glass: it scrolls).
-class _ActionTile extends StatelessWidget {
-  const _ActionTile({required this.icon, required this.color, required this.label, required this.onTap});
+/// Call / Message tile: icon over label on a flat card (no glass: it scrolls). Shared with
+/// the unsaved-number page (CallDetailsScreen).
+class DetailsActionTile extends StatelessWidget {
+  const DetailsActionTile({super.key, required this.icon, required this.color, required this.label, required this.onTap});
 
   final IconData icon;
   final Color color;
@@ -528,8 +529,8 @@ class _ActionTile extends StatelessWidget {
   }
 }
 
-class _Card extends StatelessWidget {
-  const _Card({required this.children, this.padding = const EdgeInsets.fromLTRB(18, 8, 12, 8)});
+class DetailsCard extends StatelessWidget {
+  const DetailsCard({super.key, required this.children, this.padding = const EdgeInsets.fromLTRB(18, 8, 12, 8)});
 
   final List<Widget> children;
   final EdgeInsets padding;

@@ -8,6 +8,7 @@ import '../features/in_call/call_controls.dart';
 import '../theme/one_ui_theme.dart';
 import 'call_glass.dart';
 import 'press_glow.dart';
+import 'round_header_controls.dart';
 
 /// Item definition for the floating menu.
 class OneUIFloatingMenuItem {
@@ -44,6 +45,7 @@ class OneUIFloatingMenu {
     double? fallbackBottom,
     double fallbackRight = 16.0,
     double width = 200.0,
+    bool centered = false,
   }) async {
     final screen = MediaQuery.sizeOf(context);
     final height = items.length * _rowHeight + _padding * 2;
@@ -62,7 +64,11 @@ class OneUIFloatingMenu {
     // Below the button, unless it sits low or there's no room; then above.
     final roomBelow = screen.height - anchor.bottom - _gap - _edge >= height;
     final upwards = anchor.center.dy > screen.height / 2 || !roomBelow;
-    final right = anchor.right.clamp(_edge + menuWidth, screen.width - _edge);
+    // Lined up with the button's right edge, or ([centered]) right over its middle.
+    final right = (centered ? anchor.center.dx + menuWidth / 2 : anchor.right).clamp(
+      _edge + menuWidth,
+      screen.width - _edge,
+    );
     final top = upwards ? anchor.top - _gap - height : anchor.bottom + _gap;
     final menu = Rect.fromLTWH(right - menuWidth, top.clamp(_edge, screen.height - _edge - height), menuWidth, height);
 
@@ -177,9 +183,9 @@ class _PopoverMenu extends StatelessWidget {
 }
 
 /// The menu's rows with ColorOS-style press-and-drag picking: touching the card shows
-/// a squircle highlight (like the selected All | Missed thumb) under the finger, which
-/// follows it freely while it slides; lifting picks the row under the finger, and
-/// lifting off the card picks nothing.
+/// a squircle highlight (like the selected All | Missed thumb) on the row under the finger,
+/// which springs row to row as it slides and stays on the nearest row off the card;
+/// lifting picks the row under the finger, and lifting off the card picks nothing.
 class _MenuItems extends StatefulWidget {
   const _MenuItems({required this.items});
 
@@ -193,6 +199,10 @@ class _MenuItemsState extends State<_MenuItems> {
   /// The finger's y within the rows, or null when not touching.
   final _finger = ValueNotifier<double?>(null);
   bool _picked = false;
+
+  /// The highlighted row, and whether the highlight showed last frame.
+  int _row0 = 0;
+  bool _shown = false;
 
   static const double _row = OneUIFloatingMenu._rowHeight;
   static const double _pad = OneUIFloatingMenu._padding;
@@ -240,21 +250,34 @@ class _MenuItemsState extends State<_MenuItems> {
                 ValueListenableBuilder<double?>(
                   valueListenable: _finger,
                   builder: (context, y, _) {
-                    final on = y != null && y > -_pad && y < _height + _pad;
-                    // Follows the finger freely, kept within the rows.
-                    final top = ((y ?? 0) - _row / 2).clamp(0.0, _height - _row);
+                    // Shown for as long as the finger is down, even off the card (it parks on the
+                    // nearest row and finishes its spring); lifting off the card still picks nothing.
+                    final on = y != null;
+                    if (y != null) _row0 = (y / _row).floor().clamp(0, widget.items.length - 1);
+                    // The first touch puts it straight under the finger; after that it springs
+                    // between rows like the All | Missed thumb, swinging past and settling back.
+                    final jump = !_shown || MediaQuery.disableAnimationsOf(context);
+                    _shown = on;
                     return Positioned(
                       left: 0,
                       right: 0,
-                      top: top,
+                      top: 0,
                       height: _row,
-                      child: AnimatedOpacity(
-                        opacity: on ? 1 : 0,
-                        duration: const Duration(milliseconds: 120),
-                        child: const DecoratedBox(
-                          decoration: ShapeDecoration(
-                            color: Color(0x3DFFFFFF),
-                            shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.all(Radius.circular(_row / 2))),
+                      child: TweenAnimationBuilder<double>(
+                        tween: Tween(end: _row0 * _row),
+                        duration: jump ? Duration.zero : const Duration(milliseconds: 600),
+                        curve: FilterTabs.thumbSpring,
+                        builder: (context, top, child) => Transform.translate(offset: Offset(0, top), child: child),
+                        child: AnimatedOpacity(
+                          opacity: on ? 1 : 0,
+                          duration: const Duration(milliseconds: 120),
+                          child: const DecoratedBox(
+                            decoration: ShapeDecoration(
+                              color: Color(0x3DFFFFFF),
+                              shape: RoundedSuperellipseBorder(
+                                borderRadius: BorderRadius.all(Radius.circular(_row / 2)),
+                              ),
+                            ),
                           ),
                         ),
                       ),

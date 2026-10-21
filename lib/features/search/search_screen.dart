@@ -217,7 +217,10 @@ class _SearchScreenState extends State<SearchScreen> {
                       ],
                     ),
                     divider: i > 0,
-                    onTap: () => _open(CallDetailsScreen(call: c)),
+                    onTap: () {
+                      _remember();
+                      openCallDetails(context, c);
+                    },
                   ),
               ],
             ),

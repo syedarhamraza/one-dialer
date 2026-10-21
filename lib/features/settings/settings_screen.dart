@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../app/app_info.dart';
 import '../../core/config/app_version.dart';
+import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/one_ui_subpage.dart';
+import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_group_card.dart';
 import '../blocking/blocking_repository.dart';
 import '../blocking/blocking_screen.dart';
@@ -94,6 +96,46 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     ),
   );
 
+  final _tapKey = GlobalKey();
+  final _simKey = GlobalKey();
+
+  static const _tapLabels = {'details': 'Open details', 'dial': 'Write in keypad'};
+  static const _simLabels = {'buttons': 'Two Call buttons', 'menu': 'Ask every time'};
+
+  /// A row whose current choice shows on the right; tapping it opens the choices from there.
+  OneUIGroupItem _choice({
+    required String title,
+    String? subtitle,
+    required GlobalKey anchor,
+    required ValueNotifier<String> value,
+    required Map<String, String> labels,
+    required ValueChanged<String> onPick,
+  }) => OneUIGroupItem(
+    title: title,
+    subtitle: subtitle,
+    trailing: ValueListenableBuilder(
+      valueListenable: value,
+      builder: (context, v, _) => Text(
+        labels[v] ?? '',
+        key: anchor,
+        style: const TextStyle(color: OneUITheme.accentBlue, fontWeight: FontWeight.w600),
+      ),
+    ),
+    onTap: () => OneUIFloatingMenu.show(
+      context: context,
+      anchorKey: anchor,
+      width: 220,
+      items: [
+        for (final MapEntry(:key, value: label) in labels.entries)
+          OneUIFloatingMenuItem(
+            label: label,
+            icon: key == value.value ? Icons.radio_button_checked_rounded : Icons.radio_button_unchecked_rounded,
+            onTap: () => onPick(key),
+          ),
+      ],
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final problems = _problems;
@@ -117,6 +159,25 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               leading: const Icon(Icons.speed_rounded, color: OneUITheme.accentGreen),
               title: 'Speed dial numbers',
               onTap: () => _push(const SpeedDialScreen()),
+            ),
+          ],
+        ),
+        OneUIGroupCard(
+          items: [
+            _choice(
+              title: 'Tap a recent call',
+              anchor: _tapKey,
+              value: DialerPrefs.instance.recentTap,
+              labels: _tapLabels,
+              onPick: DialerPrefs.instance.setRecentTap,
+            ),
+            _choice(
+              title: 'Choose SIM for calls',
+              subtitle: 'Dual SIM with no default SIM',
+              anchor: _simKey,
+              value: DialerPrefs.instance.simChoice,
+              labels: _simLabels,
+              onPick: DialerPrefs.instance.setSimChoice,
             ),
           ],
         ),

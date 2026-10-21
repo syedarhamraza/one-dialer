@@ -8,6 +8,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'app/dialer_app.dart';
 import 'app/in_call_app.dart';
 import 'core/crash_reporting.dart';
+import 'core/prefs/dialer_prefs.dart';
 import 'features/updates/presentation/update_controller.dart';
 
 /// Main UI: dial pad, recents, contacts.
@@ -15,6 +16,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   _profileServiceAddress();
   await initCrashReporting();
+  // Not awaited: rows use the defaults until the saved choices arrive a moment later.
+  DialerPrefs.instance.loadChoices();
   runApp(const DialerApp());
   // Play's update API needs a foreground activity, so ask after the first frame.
   WidgetsBinding.instance.addPostFrameCallback(
