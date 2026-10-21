@@ -2,7 +2,6 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
 
-import '../features/in_call/call_controls.dart';
 
 /// Opens a page by morphing it out of the button that opened it, ColorOS style: the
 /// button's coloured shape grows into the full page (handing over to the page as it
@@ -21,17 +20,17 @@ class MorphPageRoute<T> extends PageRoute<T> {
 
   Rect? _sourceRect;
 
-  /// Soft settle, no bounce: the floating menu's family of springs.
-  static final _spring = GlassSpringCurve(
-    SpringDescription.withDampingRatio(mass: 1, stiffness: 260, ratio: .85),
-    const Duration(milliseconds: 450),
-  );
+  /// Material's emphasized curves: opening eases out of the button and slows gently into
+  /// place (a spring, or the decelerate curve, did most of its moving in the first ~100 ms);
+  /// closing speeds up into the button.
+  static const _open = Cubic(0.2, 0, 0, 1);
+  static const _close = Cubic(0.3, 0, 0.8, 0.15);
 
   @override
-  Duration get transitionDuration => const Duration(milliseconds: 450);
+  Duration get transitionDuration => const Duration(milliseconds: 600);
 
   @override
-  Duration get reverseTransitionDuration => const Duration(milliseconds: 300);
+  Duration get reverseTransitionDuration => const Duration(milliseconds: 400);
 
   // See-through while it morphs, so the page below shows around the shape; opaque once
   // open, so that page stops painting under it.
@@ -88,14 +87,18 @@ class MorphPageRoute<T> extends PageRoute<T> {
           child: child,
           builder: (context, child) {
             final closing = animation.status == AnimationStatus.reverse;
+            // v is time (0 → 1 opening, 1 → 0 closing); t is how far the shape has grown.
             final v = animation.value;
-            // Closing shrinks slowly at first, then speeds up into the button.
-            final t = (closing ? 1 - Curves.easeInCubic.transform(1 - v) : _spring.transform(v)).clamp(0.0, 1.0);
+            final t = (closing ? 1 - _close.transform(1 - v) : _open.transform(v)).clamp(0.0, 1.0);
             // The same tree on every frame, open or not: changing it would rebuild the page's state.
             final from = _measure() ?? Rect.fromCenter(center: full.center, width: 56, height: 56);
             final rect = Rect.lerp(from, full, t)!;
-            final radius = lerpDouble(from.shortestSide / 2, 0, t)!;
-            double phase(double from, double to) => ((t - from) / (to - from)).clamp(0.0, 1.0);
+            // A card's rounded corners until the very end, then square with the screen.
+            final radius = t < .85
+                ? lerpDouble(from.shortestSide / 2, 28, t / .85)!
+                : lerpDouble(28, 0, (t - .85) / .15)!;
+            // Fades run on time, not on the decelerating growth (which is mostly done early).
+            double phase(double from, double to) => ((v - from) / (to - from)).clamp(0.0, 1.0);
             return Stack(
               children: [
                 // The page below recedes a little.
@@ -123,13 +126,13 @@ class MorphPageRoute<T> extends PageRoute<T> {
                           child: Transform.scale(
                             scale: rect.width / full.width,
                             alignment: Alignment.topLeft,
-                            child: Opacity(opacity: phase(.2, .6), child: child),
+                            child: Opacity(opacity: phase(.08, .35), child: child),
                           ),
                         ),
                         // The button's colour, handing over to the page as it grows.
                         IgnorePointer(
                           child: Opacity(
-                            opacity: 1 - phase(.15, .5),
+                            opacity: 1 - phase(0, .25),
                             child: ColoredBox(color: color),
                           ),
                         ),
