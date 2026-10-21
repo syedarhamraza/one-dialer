@@ -21,7 +21,11 @@ object ContactExtras {
         // (label, package, mimetype of the "Message" row)
         Triple("WhatsApp", "com.whatsapp", "vnd.android.cursor.item/vnd.com.whatsapp.profile"),
         Triple("WhatsApp Business", "com.whatsapp.w4b", "vnd.android.cursor.item/vnd.com.whatsapp.w4b.profile"),
+        // Google Meet's video-call row: the contact page shows it as the Video tile, not a chat app.
+        Triple("Meet", "com.google.android.apps.tachyon", MEET_VIDEO),
     )
+
+    const val MEET_VIDEO = "vnd.android.cursor.item/com.google.android.apps.tachyon.phone.meet"
 
     /** One row per installed app with a chat entry for this contact: label, dataId, mimeType, icon (PNG). */
     fun messagingApps(context: Context, contactId: String): List<Map<String, Any?>> {
@@ -75,6 +79,42 @@ object ContactExtras {
                 .build()
         }
         if (ops.isNotEmpty()) context.contentResolver.applyBatch(android.provider.ContactsContract.AUTHORITY, ops)
+    }
+
+    /**
+     * Where a new contact can be saved, as ColorOS offers: the phone itself (the NULL account,
+     * type and name null), SIM accounts, and Google accounts. Read from the accounts contacts
+     * already use plus the signed-in Google accounts; app accounts (WhatsApp, Meet) are left out.
+     */
+    fun contactAccounts(context: Context): List<Map<String, String?>> {
+        val seen = linkedSetOf<Pair<String?, String?>>(null to null) // the phone, always first
+        context.contentResolver.query(
+            RawContacts.CONTENT_URI, arrayOf(RawContacts.ACCOUNT_TYPE, RawContacts.ACCOUNT_NAME),
+            "${RawContacts.DELETED} = 0", null, null,
+        )?.use { c -> while (c.moveToNext()) seen += c.getString(0) to c.getString(1) }
+        for (a in android.accounts.AccountManager.get(context).getAccountsByType("com.google")) seen += a.type to a.name
+        return seen.filter { (type, _) -> isSaveTarget(type) }.map { (type, name) -> mapOf("type" to type, "name" to name) }
+    }
+
+    /** A contact can be saved to the phone (null or an OEM local type), a SIM, or Google; not app accounts. */
+    fun isSaveTarget(type: String?): Boolean {
+        val t = type?.lowercase() ?: return true
+        if ("sdn" in t) return false // the carrier's read-only service numbers
+        return t == "com.google" || "sim" in t || "local" in t || "phone" in t
+    }
+
+    /**
+     * An empty contact on the phone itself (the NULL account), which the contacts package can't
+     * create; it then fills it in with update. Returns the contact id.
+     */
+    fun createLocalContact(context: Context): String {
+        val values = ContentValues().apply {
+            putNull(RawContacts.ACCOUNT_TYPE)
+            putNull(RawContacts.ACCOUNT_NAME)
+        }
+        val raw = context.contentResolver.insert(RawContacts.CONTENT_URI, values)!!
+        return context.contentResolver.query(raw, arrayOf(RawContacts.CONTACT_ID), null, null, null)!!
+            .use { c -> c.moveToFirst(); c.getLong(0).toString() }
     }
 
     fun ringtone(context: Context, contactId: String): String? =

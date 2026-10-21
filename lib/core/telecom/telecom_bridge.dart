@@ -77,6 +77,13 @@ class TelecomBridge {
   Future<List<Map<Object?, Object?>>> getRawContacts(String contactId) async =>
       await _methods.invokeListMethod<Map<Object?, Object?>>('getRawContacts', {'contactId': contactId}) ?? const [];
 
+  /// Where a new contact can be saved: {type, name}; null type and name is the phone itself.
+  Future<List<Map<Object?, Object?>>> getContactAccounts() async =>
+      await _methods.invokeListMethod<Map<Object?, Object?>>('getContactAccounts') ?? const [];
+
+  /// An empty contact on the phone itself (no account), to fill in with update; its id.
+  Future<String> createLocalContact() async => (await _methods.invokeMethod<String>('createLocalContact'))!;
+
   Future<void> unlinkRawContacts(String contactId, List<int> rawIds) =>
       _methods.invokeMethod('unlinkRawContacts', {'contactId': contactId, 'rawIds': rawIds});
 
@@ -100,7 +107,8 @@ class TelecomBridge {
   Future<Map<Object?, Object?>> getCallHealth() async =>
       await _methods.invokeMapMethod<Object?, Object?>('getCallHealth') ?? const {};
 
-  /// `notifications`, `fullScreen`, `defaultApps`, `app`, or `url:https://…`.
+  /// `notifications`, `fullScreen`, `defaultApps`, `contactsStorage`, `googleContactsSync`, `app`,
+  /// or `url:https://…`. Throws `NO_ACTIVITY` when the phone has no such screen.
   Future<void> openSystemSettings(String page) => _methods.invokeMethod('openSystemSettings', {'page': page});
 
   // Blocking rules (read by DialerScreeningService.kt)

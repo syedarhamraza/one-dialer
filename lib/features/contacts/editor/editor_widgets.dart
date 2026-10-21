@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../theme/one_ui_theme.dart';
+import '../../../widgets/cos_dialog.dart';
 import '../../../widgets/one_ui_floating_menu.dart';
-import '../../../widgets/one_ui_floating_modal.dart';
 import 'contact_form.dart';
 
 /// ColorOS's rounded flat card holding editor rows.
@@ -40,7 +40,7 @@ class EditorRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 56,
-            child: icon == null ? null : Icon(icon, size: 24, color: iconColor ?? OneUITheme.textSecondary),
+            child: icon == null ? null : Icon(icon, size: 24, color: iconColor ?? OneUITheme.textPrimary),
           ),
           Expanded(child: child),
           SizedBox(width: 48, child: trailing),
@@ -50,7 +50,8 @@ class EditorRow extends StatelessWidget {
   }
 }
 
-/// Underlined text field (white underline when focused), stateless over [value].
+/// ColorOS's borderless field (placeholder only), stateless over [value]. [divider] draws a
+/// hairline under it, between stacked fields in one card (Company / Job title).
 class EditorField extends StatelessWidget {
   const EditorField({
     super.key,
@@ -62,6 +63,7 @@ class EditorField extends StatelessWidget {
     this.autofocus = false,
     this.focusNode,
     this.capitalization = TextCapitalization.sentences,
+    this.divider = false,
   });
 
   final String hint;
@@ -72,6 +74,9 @@ class EditorField extends StatelessWidget {
   final bool autofocus;
   final FocusNode? focusNode;
   final TextCapitalization capitalization;
+  final bool divider;
+
+  static final _hairline = UnderlineInputBorder(borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)));
 
   @override
   Widget build(BuildContext context) {
@@ -85,20 +90,20 @@ class EditorField extends StatelessWidget {
       minLines: 1,
       textCapitalization: capitalization,
       style: const TextStyle(fontSize: 18, color: OneUITheme.textPrimary),
-      cursorColor: OneUITheme.accentBlue,
+      cursorColor: OneUITheme.accentGreen,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(fontSize: 18, color: OneUITheme.textTertiary),
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(vertical: 14),
-        enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.25))),
-        focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: OneUITheme.textPrimary, width: 2)),
+        enabledBorder: divider ? _hairline : InputBorder.none,
+        focusedBorder: divider ? _hairline : InputBorder.none,
       ),
     );
   }
 }
 
-/// Blue "Mobile ˅" label above a field; opens the label menu (with "Custom").
+/// Green "Mobile ˅" label above a field; opens the label menu (with "Custom").
 class LabelButton extends StatefulWidget {
   const LabelButton({super.key, required this.label, required this.options, required this.onChanged});
 
@@ -114,8 +119,8 @@ class _LabelButtonState extends State<LabelButton> {
   final _anchor = GlobalKey();
 
   Future<void> _custom() async {
-    final text = await OneUIFloatingModal.showTextInputDialog(
-      context: context,
+    final text = await showCosTextInput(
+      context,
       title: 'Custom label',
       initialValue: widget.options.contains(widget.label) ? '' : widget.label,
       confirmLabel: 'OK',
@@ -146,10 +151,10 @@ class _LabelButtonState extends State<LabelButton> {
             children: [
               Text(
                 labelDisplay(widget.label),
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: OneUITheme.accentBlue),
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: OneUITheme.accentGreen),
               ),
               const SizedBox(width: 4),
-              const Icon(Icons.keyboard_arrow_down_rounded, size: 20, color: OneUITheme.accentBlue),
+              const Icon(Icons.keyboard_arrow_down_rounded, size: 20, color: OneUITheme.accentGreen),
             ],
           ),
         ),

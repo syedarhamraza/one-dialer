@@ -7,10 +7,10 @@ import '../../core/contacts/contacts_repository.dart';
 import '../../core/haptics/haptics.dart';
 import '../../theme/one_ui_scroll.dart';
 import '../../theme/one_ui_theme.dart';
+import '../../widgets/cos_dialog.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_floating_action_bar.dart';
 import '../../widgets/one_ui_floating_menu.dart';
-import '../../widgets/one_ui_floating_modal.dart';
 import '../../widgets/call_glass.dart';
 import '../../widgets/round_header_controls.dart';
 import '../../widgets/select_mark.dart';
@@ -170,13 +170,14 @@ class _ContactsScreenState extends State<ContactsScreen> {
   Future<void> _deleteSelected() async {
     final ids = _selected?.toList() ?? const <String>[];
     if (ids.isEmpty) return;
-    final ok = await OneUIFloatingModal.showConfirmationDialog(
-      context: context,
+    final ok = await showCosConfirm(
+      context,
       title: ids.length == 1 ? 'Delete contact?' : 'Delete ${ids.length} contacts?',
       message: 'They will be removed from this phone and from their accounts.',
-      confirmTextColor: OneUITheme.accentRed,
+      confirmLabel: 'Delete',
+      destructive: true,
     );
-    if (ok != true) return;
+    if (!ok) return;
     await ContactsRepository.instance.delete(ids);
     _endSelection();
   }
