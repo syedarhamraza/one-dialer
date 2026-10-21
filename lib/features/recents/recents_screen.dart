@@ -14,7 +14,6 @@ import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_floating_action_bar.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_floating_modal.dart';
-import '../../widgets/place_call.dart';
 import '../../widgets/round_header_controls.dart';
 import '../../widgets/swipe_to_call.dart';
 import '../contacts/editor/add_to_contacts.dart';
@@ -317,8 +316,21 @@ class _RecentsScreenState extends State<RecentsScreen> {
     final group = groups[i];
     final call = group.latest;
     final day = dayLabel(call.date, now);
-    void details() =>
-        Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => CallDetailsScreen(call: call)));
+    void details() => openCallDetails(context, call);
+    // What a tap does is the Settings choice (DialerPrefs.recentTap): open the details page,
+    // or write the number in the keypad so the call is one more, deliberate tap.
+    void tap() {
+      if (_selected != null) return _toggle(group);
+      final dial = DialerPrefs.instance.recentTap.value == 'dial' && !call.isPrivate && call.number.isNotEmpty;
+      if (dial && widget.dialInput != null) {
+        widget.dialInput!.value = call.number;
+        widget.keypadOpen?.value = true;
+      } else {
+        widget.keypadOpen?.value = false;
+        details();
+      }
+    }
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -333,12 +345,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
             valueListenable: _selectionChanged,
             builder: (context, _, _) => SelectMark(selected: _selected?.contains(call.id), gap: 12),
           ),
-          // Tapping a row calls back on the SIM the call used, like ColorOS; (i) opens details.
-          onTap: () => _selected != null
-              ? _toggle(group)
-              : call.isPrivate || call.number.isEmpty
-              ? details()
-              : placeCall(context, call.number, simId: call.simId),
+          onTap: tap,
           onInfo: details,
           onLongPress: () {
             HapticFeedback.mediumImpact();

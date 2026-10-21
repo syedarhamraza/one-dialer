@@ -43,6 +43,9 @@ class FilterTabs extends StatefulWidget {
   /// Without its own glass body, for a parent that draws one (the Calls header morph).
   final bool bare;
 
+  /// The thumb's spring; the floating menu's highlight moves on it too.
+  static Curve get thumbSpring => _FilterTabsState.thumbSpring;
+
   /// The pill's size for [count] tabs.
   static Size sizeFor(int count) =>
       Size(count * _FilterTabsState._tabWidth + 2 * _FilterTabsState._inset, _FilterTabsState._height);
@@ -73,7 +76,7 @@ class _FilterTabsState extends State<FilterTabs> {
   static const double _inset = 4;
 
   /// Springier than the call screen's toggle: it swings past the tab and settles back.
-  static final _thumbSpring = GlassSpringCurve(
+  static final thumbSpring = GlassSpringCurve(
     SpringDescription.withDampingRatio(mass: 1, stiffness: 260, ratio: .6),
     const Duration(milliseconds: 600),
   );
@@ -104,7 +107,7 @@ class _FilterTabsState extends State<FilterTabs> {
                 child: TweenAnimationBuilder<double>(
                   tween: Tween(end: _index * _tabWidth),
                   duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 600),
-                  curve: _thumbSpring,
+                  curve: thumbSpring,
                   builder: (context, x, child) => Transform.translate(offset: Offset(x, 0), child: child),
                   child: const DecoratedBox(
                     decoration: ShapeDecoration(color: Color(0x3DFFFFFF), shape: _thumb),

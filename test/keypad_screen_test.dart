@@ -2,10 +2,12 @@ import 'package:dialer/app/layout.dart';
 import 'package:dialer/core/contacts/contacts_repository.dart';
 import 'package:dialer/features/keypad/keypad_screen.dart';
 import 'package:dialer/theme/one_ui_theme.dart';
-import 'package:dialer/widgets/one_ui_floating_modal.dart';
+import 'package:dialer/core/prefs/dialer_prefs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
 import 'dart:io';
 import 'dart:ui' as ui;
@@ -17,6 +19,7 @@ void main() {
   const channel = MethodChannel('com.syedarhamraza.dialer/telecom');
   final nativeCalls = <MethodCall>[];
   setUp(() {
+    SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.empty();
     nativeCalls.clear();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
       nativeCalls.add(call);
@@ -33,7 +36,10 @@ void main() {
       ),
     );
   });
-  tearDown(() => ContactsRepository.instance.contacts.value = []);
+  tearDown(() {
+    ContactsRepository.instance.contacts.value = [];
+    DialerPrefs.instance.simChoice.value = 'buttons';
+  });
 
   testWidgets('keys keep the vivo proportions on a narrower phone', (tester) async {
     Future<Size> keyRatio(Size screen) async {
@@ -250,7 +256,8 @@ void main() {
     expect(scope().canPop, isTrue);
   });
 
-  testWidgets('one call button offers both SIMs and routes the selected SIM', (tester) async {
+  testWidgets('ask mode: one call button offers both SIMs and routes the selected SIM', (tester) async {
+    DialerPrefs.instance.simChoice.value = 'menu';
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
       nativeCalls.add(call);
       if (call.method == 'getSims') {
@@ -277,16 +284,14 @@ void main() {
     expect(find.text('Work'), findsNothing);
     await tester.tap(find.bySemanticsLabel('Call'));
     await tester.pumpAndSettle();
-    expect(find.text('Call using'), findsOneWidget);
-    expect(find.byType(OneUIFloatingModal), findsOneWidget);
-    final modalBounds = tester.getRect(find.byType(OneUIFloatingModal));
-    expect(modalBounds.height, lessThan(568));
-    await tester.tap(find.text('Work'));
+    expect(find.text('SIM 1 · Personal'), findsOneWidget);
+    await tester.tap(find.text('SIM 2 · Work'));
     await tester.pumpAndSettle();
     expect(nativeCalls.singleWhere((call) => call.method == 'placeCall').arguments['simId'], 'sim2');
   });
 
   testWidgets('cancelling SIM selection preserves the number and places no call', (tester) async {
+    DialerPrefs.instance.simChoice.value = 'menu';
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
       nativeCalls.add(call);
       if (call.method == 'getSims') {
@@ -313,8 +318,37 @@ void main() {
     expect(nativeCalls.where((call) => call.method == 'placeCall'), isEmpty);
   });
 
-  testWidgets('system default SIM calls without showing a chooser', (tester) async {
+  testWidgets('two Call buttons call on their own SIM without asking', (tester) async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
+      nativeCalls.add(call);
+      if (call.method == 'getSims') {
+        return [
+          {'id': 'sim1', 'label': 'Personal', 'isDefault': false},
+          {'id': 'sim2', 'label': 'Work', 'isDefault': false},
+        ];
+      }
+      return null;
+    });
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: OneUITheme.darkTheme,
+        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('03331234567'))),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.bySemanticsLabel('Call with SIM 1, Personal'), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel('Call with SIM 2, Work'));
+    await tester.pumpAndSettle();
+    expect(find.text('SIM 1 · Personal'), findsNothing);
+    expect(nativeCalls.singleWhere((call) => call.method == 'placeCall').arguments['simId'], 'sim2');
+  });
+
+  testWidgets('system default SIM calls without showing a chooser', (tester) async {    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
       nativeCalls.add(call);
       if (call.method == 'getSims') {
         return [
@@ -333,7 +367,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.bySemanticsLabel('Call'));
     await tester.pumpAndSettle();
-    expect(find.text('Call using'), findsNothing);
+    expect(find.text('SIM 2 · Work'), findsNothing);
     expect(nativeCalls.singleWhere((call) => call.method == 'placeCall').arguments['number'], '5551234567');
   });
 

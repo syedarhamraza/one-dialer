@@ -5,168 +5,182 @@ import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_scroll.dart';
 import '../../theme/one_ui_theme.dart';
+import '../../widgets/call_glass.dart';
 import '../../widgets/letter_avatar.dart';
+import '../../widgets/one_ui_status_bar_scrim.dart';
 import '../../widgets/place_call.dart';
+import '../../widgets/round_header_controls.dart';
 import '../blocking/blocking_repository.dart';
+import '../contacts/contact_details_screen.dart';
 import '../contacts/editor/add_to_contacts.dart';
 import 'call_log.dart';
 import 'call_log_repository.dart';
 import 'recents_screen.dart';
 
-/// One caller: Call / Message / Add to contacts, and every logged call with that number.
+/// (i) on a call: a saved contact's own page, else this number's page.
+void openCallDetails(BuildContext context, CallLogEntry call) {
+  final contact = call.isPrivate ? null : ContactsRepository.instance.contactFor(call.number);
+  Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => contact != null ? ContactDetailsScreen(contactId: contact.id) : CallDetailsScreen(call: call),
+    ),
+  );
+}
+
+/// An unsaved number's page in the contact page's look: round glass Back / Block / Delete
+/// buttons over a big avatar and the number, Call / Message / Add tiles, and every logged
+/// call with that number (with the notes taken during them).
 class CallDetailsScreen extends StatelessWidget {
   const CallDetailsScreen({super.key, required this.call});
 
   final CallLogEntry call;
 
+  static const double _button = 48;
+
   @override
   Widget build(BuildContext context) {
     final repo = CallLogRepository.instance;
     final key = numberKey(call.number);
+    final padding = MediaQuery.paddingOf(context);
     return Scaffold(
-      appBar: AppBar(
-        actions: [
-          if (!call.isPrivate)
-            ValueListenableBuilder(
-              valueListenable: BlockingRepository.instance.numbers,
-              builder: (context, _, _) {
-                final blocked = BlockingRepository.instance.isBlocked(call.number);
-                return IconButton(
-                  tooltip: blocked ? 'Unblock' : 'Block',
-                  icon: Icon(
-                    blocked ? Icons.block_rounded : Icons.block_outlined,
-                    color: blocked ? OneUITheme.accentRed : null,
+      body: Stack(
+        children: [
+          ListenableBuilder(
+            listenable: Listenable.merge([repo.calls, ContactsRepository.instance.contacts]),
+            builder: (context, _) {
+              // Private calls have no number to match on; show just this one.
+              final history = call.isPrivate
+                  ? [call]
+                  : [
+                      for (final c in repo.calls.value)
+                        if (numberKey(c.number) == key) c,
+                    ];
+              final name = callerName(call);
+              final isContact = ContactsRepository.instance.nameFor(call.number) != null;
+              return ListView(
+                physics: const OneUIScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(16, padding.top + 8 + _button + 16, 16, padding.bottom + 32),
+                children: [
+                  Center(child: LetterAvatar(name: call.isPrivate ? '' : name, size: 112)),
+                  const SizedBox(height: 16),
+                  Text(
+                    name,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w600, letterSpacing: -0.4),
                   ),
-                  onPressed: () => BlockingRepository.instance.setBlocked(call.number, !blocked),
-                );
-              },
-            ),
-          if (!call.isPrivate)
-            IconButton(
-              tooltip: 'Delete call history',
-              icon: const Icon(Icons.delete_outline_rounded),
-              onPressed: () async {
-                final ids = [
-                  for (final c in repo.calls.value)
-                    if (numberKey(c.number) == key) c.id,
-                ];
-                await repo.delete(ids);
-                if (context.mounted) Navigator.of(context).pop();
-              },
-            ),
-        ],
-      ),
-      body: ListenableBuilder(
-        listenable: Listenable.merge([repo.calls, ContactsRepository.instance.contacts]),
-        builder: (context, _) {
-          // Private calls have no number to match on; show just this one.
-          final history = call.isPrivate
-              ? [call]
-              : [
-                  for (final c in repo.calls.value)
-                    if (numberKey(c.number) == key) c,
-                ];
-          final name = callerName(call);
-          final isContact = ContactsRepository.instance.nameFor(call.number) != null;
-          return ListView(
-            physics: const OneUIScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            children: [
-              const SizedBox(height: 8),
-              Center(child: LetterAvatar(name: call.isPrivate ? '' : name, size: 96)),
-              const SizedBox(height: 16),
-              Text(
-                name,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700, letterSpacing: -0.5),
-              ),
-              if (name != call.number && !call.isPrivate) ...[
-                const SizedBox(height: 4),
-                Text(
-                  call.number,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 15, color: OneUITheme.textSecondary),
-                ),
-              ],
-              const SizedBox(height: 24),
-              if (!call.isPrivate)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _Action(
-                      icon: Icons.call_rounded,
-                      label: 'Call',
-                      color: OneUITheme.accentGreen,
-                      onTap: () => placeCall(context, call.number, simId: call.simId),
+                  if (name != call.number && !call.isPrivate) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      call.number,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 15, color: OneUITheme.textSecondary),
                     ),
-                    _Action(
-                      icon: Icons.message_rounded,
-                      label: 'Message',
-                      color: OneUITheme.accentBlue,
-                      onTap: () => TelecomBridge.instance.sendSms(call.number),
-                    ),
-                    if (!isContact)
-                      _Action(
-                        icon: Icons.person_add_alt_1_rounded,
-                        label: 'Add',
-                        color: OneUITheme.textPrimary,
-                        onTap: () => showAddToContacts(context, call.number),
-                      ),
                   ],
-                ),
-              const SizedBox(height: 24),
-              ValueListenableBuilder(
-                valueListenable: DialerPrefs.instance.changes,
-                builder: (context, _, _) => FutureBuilder(
-                  future: DialerPrefs.instance.callNotes(call.number),
-                  builder: (context, notes) => Container(
-                    decoration: BoxDecoration(color: OneUITheme.surfaceCard, borderRadius: OneUITheme.cardBorderRadius),
-                    child: Column(
+                  const SizedBox(height: 28),
+                  if (!call.isPrivate) ...[
+                    Row(
+                      spacing: 12,
                       children: [
-                        for (var i = 0; i < history.length; i++) ...[
-                          if (i > 0)
-                            Divider(height: 1, indent: 16, endIndent: 16, color: Colors.white.withValues(alpha: 0.08)),
-                          _HistoryRow(call: history[i], notes: notesFor(history[i], history, notes.data ?? const [])),
-                        ],
+                        Expanded(
+                          child: DetailsActionTile(
+                            icon: Icons.call_rounded,
+                            color: OneUITheme.accentGreen,
+                            label: 'Call',
+                            onTap: () => placeCall(context, call.number, simId: call.simId),
+                          ),
+                        ),
+                        Expanded(
+                          child: DetailsActionTile(
+                            icon: Icons.chat_bubble_rounded,
+                            color: const Color(0xFF3E9BFF),
+                            label: 'Message',
+                            onTap: () => TelecomBridge.instance.sendSms(call.number),
+                          ),
+                        ),
+                        if (!isContact)
+                          Expanded(
+                            child: DetailsActionTile(
+                              icon: Icons.person_add_alt_1_rounded,
+                              color: OneUITheme.textPrimary,
+                              label: 'Add',
+                              onTap: () => showAddToContacts(context, call.number),
+                            ),
+                          ),
                       ],
                     ),
+                    const SizedBox(height: 20),
+                  ],
+                  const Padding(
+                    padding: EdgeInsets.only(left: 18, bottom: 8),
+                    child: Text('Call logs', style: TextStyle(fontSize: 15, color: OneUITheme.textSecondary)),
                   ),
+                  ValueListenableBuilder(
+                    valueListenable: DialerPrefs.instance.changes,
+                    builder: (context, _, _) => FutureBuilder(
+                      future: DialerPrefs.instance.callNotes(call.number),
+                      builder: (context, notes) => DetailsCard(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        children: [
+                          for (final c in history)
+                            _HistoryRow(call: c, notes: notesFor(c, history, notes.data ?? const [])),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          const Positioned(left: 0, right: 0, top: 0, child: OneUIStatusBarScrim()),
+          Positioned(
+            left: 16,
+            right: 16,
+            top: padding.top + 8,
+            child: Row(
+              spacing: 8,
+              children: [
+                RoundIconButton(
+                  icon: Icons.arrow_back_rounded,
+                  tooltip: 'Back',
+                  onTap: () => Navigator.of(context).maybePop(),
                 ),
-              ),
-              const SizedBox(height: 32),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _Action extends StatelessWidget {
-  const _Action({required this.icon, required this.label, required this.color, required this.onTap});
-
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: Column(
-        children: [
-          SizedBox.square(
-            dimension: 56,
-            child: IconButton(
-              tooltip: label,
-              style: IconButton.styleFrom(backgroundColor: OneUITheme.surfacePill, foregroundColor: color),
-              onPressed: onTap,
-              icon: Icon(icon),
+                const Spacer(),
+                if (!call.isPrivate) ...[
+                  // RoundIconButton in red while the number is blocked.
+                  ValueListenableBuilder(
+                    valueListenable: BlockingRepository.instance.numbers,
+                    builder: (context, _, _) {
+                      final blocked = BlockingRepository.instance.isBlocked(call.number);
+                      return CallGlass(
+                        child: IconButton(
+                          tooltip: blocked ? 'Unblock' : 'Block',
+                          onPressed: () => BlockingRepository.instance.setBlocked(call.number, !blocked),
+                          style: IconButton.styleFrom(
+                            foregroundColor: blocked ? OneUITheme.accentRed : OneUITheme.textPrimary,
+                            fixedSize: const Size.square(_button),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          icon: const Icon(Icons.block_rounded, size: 24),
+                        ),
+                      );
+                    },
+                  ),
+                  RoundIconButton(
+                    icon: Icons.delete_outline_rounded,
+                    tooltip: 'Delete call history',
+                    onTap: () async {
+                      final ids = [
+                        for (final c in repo.calls.value)
+                          if (numberKey(c.number) == key) c.id,
+                      ];
+                      await repo.delete(ids);
+                      if (context.mounted) Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              ],
             ),
           ),
-          const SizedBox(height: 6),
-          Text(label, style: const TextStyle(fontSize: 12.5, color: OneUITheme.textSecondary)),
         ],
       ),
     );
@@ -196,21 +210,19 @@ class _HistoryRow extends StatelessWidget {
     // Missed and rejected calls log ring time as duration; only talk time is shown.
     final answered =
         (call.type == CallType.incoming || call.type == CallType.outgoing) && call.duration > Duration.zero;
+    // Laid out like the contact page's call logs: grey arrow, the time, then talk time or type.
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.fromLTRB(18, 10, 18, 10),
       child: Row(
         children: [
-          CallTypeIcon(type: call.type),
-          const SizedBox(width: 12),
+          SizedBox(width: 40, child: CallTypeIcon(type: call.type, muted: true)),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(callTypeLabel(call.type), style: const TextStyle(fontSize: 15.5)),
-                const SizedBox(height: 2),
                 Text(
                   '${dayLabel(call.date, DateTime.now())}, ${timeLabel(call.date)}',
-                  style: const TextStyle(fontSize: 13, color: OneUITheme.textSecondary),
+                  style: const TextStyle(fontSize: 17),
                 ),
                 for (final note in notes)
                   Padding(
@@ -227,8 +239,13 @@ class _HistoryRow extends StatelessWidget {
               ],
             ),
           ),
-          if (answered)
-            Text(durationLabel(call.duration), style: const TextStyle(fontSize: 13, color: OneUITheme.textSecondary)),
+          Text(
+            answered ? durationLabel(call.duration) : callTypeLabel(call.type),
+            style: TextStyle(
+              fontSize: 13,
+              color: call.type == CallType.missed ? OneUITheme.accentRed : OneUITheme.textSecondary,
+            ),
+          ),
         ],
       ),
     );

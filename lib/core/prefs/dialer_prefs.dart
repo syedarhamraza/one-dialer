@@ -99,6 +99,32 @@ class DialerPrefs {
     changes.value++;
   }
 
+  /// Settings › "Tap a recent call": `details` (open its page) or `dial` (write the number
+  /// in the keypad). Notifiers so rows read it synchronously; [loadChoices] fills them at startup.
+  final recentTap = ValueNotifier('details');
+
+  /// Settings › "Choose SIM for calls" (dual SIM, no default): `buttons` (two Call keys)
+  /// or `menu` (ask on every call).
+  final simChoice = ValueNotifier('buttons');
+
+  Future<void> loadChoices() async {
+    // Ignores values from earlier test builds that no longer exist.
+    final tap = await _prefs.getString('recent_tap');
+    if (tap == 'details' || tap == 'dial') recentTap.value = tap!;
+    final sim = await _prefs.getString('sim_choice');
+    if (sim == 'buttons' || sim == 'menu') simChoice.value = sim!;
+  }
+
+  Future<void> setRecentTap(String value) async {
+    recentTap.value = value;
+    await _prefs.setString('recent_tap', value);
+  }
+
+  Future<void> setSimChoice(String value) async {
+    simChoice.value = value;
+    await _prefs.setString('sim_choice', value);
+  }
+
   /// Settings › Software update › Auto download (an `AutoUpdateCheck` name); null = never.
   Future<String?> getAutoUpdateCheck() => _prefs.getString('auto_update_check');
 

@@ -107,6 +107,40 @@ void main() {
     expect(find.byTooltip('Search').hitTestable(), findsOneWidget);
   });
 
+  testWidgets('tapping a call opens its page or writes it in the keypad, never calls', (tester) async {
+    final native = <MethodCall>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+      const MethodChannel('com.syedarhamraza.dialer/telecom'),
+      (call) async {
+        native.add(call);
+        return null;
+      },
+    );
+    CallLogRepository.instance.calls.value = [
+      CallLogEntry(id: 1, number: '03001234567', type: CallType.incoming, date: DateTime.now()),
+    ];
+    addTearDown(() {
+      CallLogRepository.instance.calls.value = const [];
+      DialerPrefs.instance.recentTap.value = 'details';
+    });
+    await open(tester);
+    final keypad = tester.widget<KeypadScreen>(find.byType(KeypadScreen));
+    expect(keypad.open.value, isTrue);
+    await tester.tap(find.text('03001234567'));
+    await tester.pumpAndSettle();
+    expect(keypad.open.value, isFalse);
+    expect(find.text('Call logs'), findsOneWidget);
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+
+    DialerPrefs.instance.recentTap.value = 'dial';
+    await tester.tap(find.text('03001234567'));
+    await tester.pumpAndSettle();
+    expect(keypad.input.value, '03001234567');
+    expect(keypad.open.value, isTrue);
+    expect(native.where((c) => c.method == 'placeCall'), isEmpty);
+  });
+
   testWidgets('the menu grows from its button, runs an item, and closes on Back', (tester) async {
     await open(tester);
     await tester.tap(find.byTooltip('More options'));

@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 
 import '../../app/layout.dart';
 import '../../core/contacts/contacts_repository.dart';
+import '../../core/telecom/call_info.dart';
+import '../../widgets/one_ui_floating_modal.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../core/prefs/dialer_prefs.dart';
@@ -50,7 +52,20 @@ const _dropCurve = Cubic(0.3, 0, 0.8, 0.15);
 
 class _KeypadScreenState extends State<KeypadScreen> {
   final _telecom = TelecomBridge.instance;
+  final _callKey = GlobalKey();
   bool _calling = false;
+
+  /// Only set on dual SIM with no default SIM, where the SIM choice applies.
+  // shortcut: read once per launch; re-read on resume if SIM hot-swap matters.
+  List<SimCard> _askSims = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _telecom.getSims().then((sims) {
+      if (mounted && sims.length > 1 && !sims.any((s) => s.isDefault)) setState(() => _askSims = sims);
+    });
+  }
 
   void _show() => widget.open.value = true;
 
@@ -81,16 +96,12 @@ class _KeypadScreenState extends State<KeypadScreen> {
       return;
     }
     if (!mounted) return;
-    final assign = await showDialog<bool>(
+    final assign = await OneUIFloatingModal.showConfirmationDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('No speed dial number'),
-        content: Text('Assign a contact to key $digit?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Assign')),
-        ],
-      ),
+      title: 'No speed dial number',
+      message: 'Assign a contact to key $digit?',
+      confirmLabel: 'Assign',
+      confirmTextColor: OneUITheme.accentBlue,
     );
     if (assign == true && mounted) _openSpeedDial();
   }
@@ -108,7 +119,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
     if (digits.isNotEmpty) widget.input.value += digits;
   }
 
-  Future<void> _call() async {
+  Future<void> _call([String? simId]) async {
     if (_calling) return;
     final number = widget.input.value;
     if (number.isEmpty) {
@@ -119,7 +130,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
     HapticFeedback.mediumImpact();
     setState(() => _calling = true);
     try {
-      final called = await placeCall(context, number);
+      final called = await placeCall(context, number, simId: simId, anchorKey: _callKey);
       if (called && widget.input.value == number) widget.input.value = '';
     } on PlatformException {
       if (mounted) {
@@ -133,7 +144,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge([widget.input, widget.open]),
+      listenable: Listenable.merge([widget.input, widget.open, DialerPrefs.instance.simChoice]),
       builder: (context, _) {
         final number = widget.input.value;
         final open = widget.open.value;
@@ -236,6 +247,10 @@ class _KeypadScreenState extends State<KeypadScreen> {
                                           const SizedBox(height: _gap),
                                           _CallRow(
                                             keyHeight: keyHeight,
+                                            callKey: _callKey,
+                                            sims: DialerPrefs.instance.simChoice.value == 'buttons'
+                                                ? _askSims
+                                                : const [],
                                             onHide: _hide,
                                             onCall: _calling ? null : _call,
                                             onBackspace: _backspace,
@@ -507,16 +522,16 @@ class _Keypad extends StatelessWidget {
                           Text(
                             digit,
                             style: TextStyle(
-                              fontSize: digit == '*' ? 30 : 26,
+                              fontSize: digit == '*' ? 34 : 30,
                               height: 1.1,
                               fontWeight: FontWeight.w500,
                               color: OneUITheme.textPrimary,
                             ),
                           ),
                           if (letters == 'VM')
-                            const Icon(Icons.voicemail_rounded, size: 12, color: OneUITheme.textSecondary)
+                            const Icon(Icons.voicemail_rounded, size: 14, color: OneUITheme.textSecondary)
                           else if (letters.isNotEmpty)
-                            Text(letters, style: const TextStyle(fontSize: 10, color: OneUITheme.textSecondary)),
+                            Text(letters, style: const TextStyle(fontSize: 11, color: OneUITheme.textSecondary)),
                         ],
                       ),
                     ),
@@ -532,6 +547,7 @@ class _Keypad extends StatelessWidget {
 /// One flat stadium key; the digits and the dialpad, call and delete buttons all use it.
 class _Pill extends StatelessWidget {
   const _Pill({
+    super.key,
     required this.height,
     required this.label,
     required this.onTap,
@@ -591,6 +607,8 @@ class _Pill extends StatelessWidget {
 class _CallRow extends StatelessWidget {
   const _CallRow({
     required this.keyHeight,
+    required this.callKey,
+    required this.sims,
     required this.onHide,
     required this.onCall,
     required this.onBackspace,
@@ -598,8 +616,12 @@ class _CallRow extends StatelessWidget {
   });
 
   final double keyHeight;
+  final GlobalKey callKey;
+
+  /// One Call key per SIM (the `buttons` SIM choice); empty for a single Call key.
+  final List<SimCard> sims;
   final VoidCallback onHide;
-  final VoidCallback? onCall;
+  final void Function([String? simId])? onCall;
   final VoidCallback onBackspace;
   final VoidCallback onClear;
 
@@ -615,26 +637,60 @@ class _CallRow extends StatelessWidget {
               height: keyHeight,
               label: 'Hide keypad',
               onTap: onHide,
-              child: const Icon(Icons.dialpad_rounded, color: OneUITheme.textPrimary, size: 26),
+              child: const Icon(Icons.dialpad_rounded, color: OneUITheme.textPrimary, size: 30),
             ),
           ),
-          Expanded(
-            child: _Pill(
-              height: keyHeight,
-              label: 'Call',
-              color: OneUITheme.dialGreen,
-              lit: true,
-              onTap: onCall,
-              child: const Icon(Icons.call_rounded, color: Colors.white, size: 30),
+          if (sims.isEmpty)
+            Expanded(
+              child: _Pill(
+                key: callKey,
+                height: keyHeight,
+                label: 'Call',
+                color: OneUITheme.dialGreen,
+                lit: true,
+                onTap: onCall,
+                child: const Icon(Icons.call_rounded, color: Colors.white, size: 38),
+              ),
+            )
+          else
+            // Samsung's dual-SIM keys, numbered by slot: twice the Call key's room, so the
+            // bottom row is four equal pills instead of two squeezed into one.
+            Expanded(
+              flex: 2,
+              child: Row(
+                spacing: _gap,
+                children: [
+                  for (final (i, sim) in sims.take(2).indexed)
+                    Expanded(
+                      child: _Pill(
+                        height: keyHeight,
+                        label: 'Call with SIM ${i + 1}, ${sim.label}',
+                        color: OneUITheme.dialGreen,
+                        lit: true,
+                        onTap: onCall == null ? null : () => onCall!(sim.id),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.call_rounded, color: Colors.white, size: 34),
+                            const SizedBox(width: 2),
+                            Text(
+                              '${i + 1}',
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
           Expanded(
             child: _Pill(
               height: keyHeight,
               label: 'Delete, long-press to clear',
               onTap: onBackspace,
               onLongPress: onClear,
-              child: const Icon(Icons.backspace_rounded, color: OneUITheme.textSecondary, size: 26),
+              child: const Icon(Icons.backspace_rounded, color: OneUITheme.textSecondary, size: 30),
             ),
           ),
         ],
