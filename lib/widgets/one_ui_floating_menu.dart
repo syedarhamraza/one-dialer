@@ -141,8 +141,8 @@ class _PopoverMenu extends StatelessWidget {
     // nearest the button.
     final pivotX = button.center.dx.clamp(menu.left, menu.right);
     final pivot = Alignment((pivotX - menu.left) / menu.width * 2 - 1, upwards ? 1 : -1);
-    // Built once; only the glass around it animates.
-    final items = _MenuItems(items: this.items);
+    // Built once, on its own layer; only the glass around it animates.
+    final items = RepaintBoundary(child: _MenuItems(items: this.items));
     return AnimatedBuilder(
       animation: animation,
       builder: (context, items) {
@@ -153,37 +153,66 @@ class _PopoverMenu extends StatelessWidget {
         // In fast at the start of opening; out over most of the close.
         final fade = (closing ? Curves.easeOut.transform(v) : Curves.easeOut.transform((v / .28).clamp(0.0, 1.0)))
             .clamp(0.0, 1.0);
+        // The card scaled about the pivot, in its own coordinates. The glass is laid out at
+        // this size instead of scaled by a Transform: a blur under a scale reads its backdrop
+        // magnified by 1/scale, which dropped frames on Adreno. Radius and sigma scale as the
+        // Transform scaled them, so it looks the same.
+        final origin = pivot.alongSize(menu.size);
+        final glass = Rect.fromLTWH(
+          origin.dx * (1 - scale),
+          origin.dy * (1 - scale),
+          menu.width * scale,
+          menu.height * scale,
+        );
         return Stack(
           children: [
             Positioned.fromRect(
               rect: menu,
-              child: Transform.scale(
-                scale: scale,
-                alignment: pivot,
-                child: PressGlow(
-                  radius: OneUIFloatingMenu._radius,
-                  child: ClipRSuperellipse(
-                    borderRadius: const BorderRadius.all(Radius.circular(OneUIFloatingMenu._radius)),
-                    // The fade goes inside the blur (an Opacity around a BackdropFilter
-                    // would cut it off from the backdrop); the blur itself ramps with it.
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: sigma * fade, sigmaY: sigma * fade),
-                      child: Opacity(
-                        opacity: fade,
-                        // A dark base keeps the items legible over list text; the call-glass
-                        // wash, edge glow and lip go on top, as on the header buttons.
-                        child: ColoredBox(
-                          color: const Color(0xB3141416),
-                          child: CustomPaint(
-                            // The same glow as the buttons, but reaching less far in: across a card
-                            // this much bigger the button's spread reads as a wide haze.
-                            painter: const TintedCallBody(OneUIFloatingMenu._radius, glow: kMainGlassGlow, spread: .5),
-                            child: items,
+              child: PressGlow(
+                radius: OneUIFloatingMenu._radius,
+                child: Stack(
+                  children: [
+                    Positioned.fromRect(
+                      rect: glass,
+                      child: ClipRSuperellipse(
+                        borderRadius: BorderRadius.all(Radius.circular(OneUIFloatingMenu._radius * scale)),
+                        // The fade goes inside the blur (an Opacity around a BackdropFilter
+                        // would cut it off from the backdrop); the blur itself ramps with it.
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: sigma * fade * scale, sigmaY: sigma * fade * scale),
+                          child: Opacity(
+                            opacity: fade,
+                            child: OverflowBox(
+                              alignment: Alignment.topLeft,
+                              minWidth: menu.width,
+                              maxWidth: menu.width,
+                              minHeight: menu.height,
+                              maxHeight: menu.height,
+                              child: Transform.scale(
+                                scale: scale,
+                                alignment: Alignment.topLeft,
+                                // A dark base keeps the items legible over list text; the call-glass
+                                // wash, edge glow and lip go on top, as on the header buttons.
+                                child: ColoredBox(
+                                  color: const Color(0xB3141416),
+                                  // The same glow as the buttons, but reaching less far in: across a card
+                                  // this much bigger the button's spread reads as a wide haze. From a cached
+                                  // image: drawn live, its blurred strokes were re-rendered every frame of a
+                                  // press (~10 ms on a Galaxy S25).
+                                  child: CallBodyArtwork(
+                                    radius: OneUIFloatingMenu._radius,
+                                    glow: kMainGlassGlow,
+                                    spread: .5,
+                                    child: items!,
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),

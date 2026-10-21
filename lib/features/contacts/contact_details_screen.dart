@@ -61,10 +61,13 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   }
 
   Future<void> _load() async {
-    final sims = await _bridge.getSims();
-    final simId = await DialerPrefs.instance.contactSim(widget.contactId);
-    final apps = await _bridge.getMessagingApps(widget.contactId);
-    final raw = await _bridge.getRawContacts(widget.contactId);
+    // Together, so the page rebuilds once, early in its slide-in.
+    final (sims, simId, apps, raw) = await (
+      _bridge.getSims(),
+      DialerPrefs.instance.contactSim(widget.contactId),
+      _bridge.getMessagingApps(widget.contactId),
+      _bridge.getRawContacts(widget.contactId),
+    ).wait;
     if (!mounted) return;
     setState(() {
       _sims = sims;

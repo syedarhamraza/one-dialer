@@ -61,6 +61,19 @@ class _KeypadScreenState extends State<KeypadScreen> {
     });
   }
 
+  /// The last search, so showing/hiding the sheet or opening a menu doesn't search again.
+  (String, List<DialerContact>, List<T9Match>)? _search;
+
+  List<T9Match> _matches(String number, List<DialerContact> contacts) {
+    if (_search case (final n, final c, final m) when n == number && identical(c, contacts)) return m;
+    final matches = t9Search(number, contacts);
+    _search = (number, contacts, matches);
+    return matches;
+  }
+
+  /// The keys don't depend on the number; one instance per key height lets each digit skip rebuilding them.
+  _Keypad? _keys;
+
   void _show() => widget.open.value = true;
 
   void _hide() => widget.open.value = false;
@@ -179,7 +192,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
                               child: ValueListenableBuilder<List<DialerContact>>(
                                 valueListenable: ContactsRepository.instance.contacts,
                                 builder: (context, contacts, _) => _Results(
-                                  matches: t9Search(number, contacts),
+                                  matches: _matches(number, contacts),
                                   expanded: !open,
                                   bottomPadding: open ? sheetHeight : clearance,
                                   onScroll: _collapse,
@@ -236,7 +249,9 @@ class _KeypadScreenState extends State<KeypadScreen> {
                                         children: [
                                           _Handle(onHide: _hide),
                                           if (number.isNotEmpty) _NumberDisplay(number: number, onPaste: _paste),
-                                          _Keypad(onKey: _type, onLongPress: _longPress, keyHeight: keyHeight),
+                                          _keys = _keys?.keyHeight == keyHeight
+                                              ? _keys!
+                                              : _Keypad(onKey: _type, onLongPress: _longPress, keyHeight: keyHeight),
                                           const SizedBox(height: _gap),
                                           _CallRow(
                                             keyHeight: keyHeight,

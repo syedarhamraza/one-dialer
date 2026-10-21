@@ -23,13 +23,12 @@ class CallGlass extends StatelessWidget {
   Widget build(BuildContext context) {
     final sigma = OneUIEffectsController.instance.blurSigma;
     // Grouped: inside the shell's tabs, every glass control shares one backdrop read (see
-    // MainShell); elsewhere (the nav bar, pushed pages) it blurs on its own.
+    // MainShell), as do a pushed page's (DialerApp's page transition); the nav bar blurs on its own.
     final body = BackdropFilter.grouped(
       filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
-      child: CustomPaint(
-        painter: TintedCallBody(radius, glow: kMainGlassGlow),
-        child: const SizedBox.expand(),
-      ),
+      // From a cached image, like the keypad keys: drawn live, its blurred strokes were
+      // re-rendered every frame of a press (the press scales them).
+      child: CallBodyArtwork(radius: radius, glow: kMainGlassGlow, child: const SizedBox.expand()),
     );
     // Claims vertical drags that start on it, so holding and moving a pill inside a
     // scrolling page plays the press instead of scrolling the page.

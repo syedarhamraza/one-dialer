@@ -40,7 +40,8 @@ class RisePageRoute<T> extends PageRoute<T> {
 
   @override
   Widget buildPage(BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation) =>
-      builder(context);
+      // Its glass pills share one backdrop read, like pages on the theme's slide.
+      BackdropGroup(child: builder(context));
 
   @override
   Widget buildTransitions(

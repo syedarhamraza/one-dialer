@@ -39,9 +39,19 @@ class CallBody extends StatelessWidget {
 /// A fixed-resolution image remains reusable while the glass press and keypad scale it.
 /// The main app's keypad keys use it too, with their softer [glow] and [opacity].
 class CallBodyArtwork extends StatefulWidget {
-  const CallBodyArtwork({super.key, required this.radius, this.glow = 1, this.opacity = 1, required this.child});
+  const CallBodyArtwork({
+    super.key,
+    required this.radius,
+    this.glow = 1,
+    this.spread = 1,
+    this.opacity = 1,
+    required this.child,
+  });
   final double? radius;
   final double glow;
+
+  /// How far the edge glow reaches in (see [TintedCallBody.spread]).
+  final double spread;
 
   /// How strongly the whole body (wash, glow and lips) is drawn.
   final double opacity;
@@ -61,9 +71,10 @@ class _CallBodyArtworkState extends State<CallBodyArtwork> {
         _painter!.radius != widget.radius ||
         _painter!.ratio != ratio ||
         _painter!.glow != widget.glow ||
+        _painter!.spread != widget.spread ||
         _painter!.opacity != widget.opacity) {
       _painter?.dispose();
-      _painter = _CachedBodyPainter(widget.radius, ratio, widget.glow, widget.opacity);
+      _painter = _CachedBodyPainter(widget.radius, ratio, widget.glow, widget.spread, widget.opacity);
     }
     return CustomPaint(painter: _painter, child: widget.child);
   }
@@ -76,10 +87,11 @@ class _CallBodyArtworkState extends State<CallBodyArtwork> {
 }
 
 class _CachedBodyPainter extends CustomPainter {
-  _CachedBodyPainter(this.radius, this.ratio, this.glow, this.opacity);
+  _CachedBodyPainter(this.radius, this.ratio, this.glow, this.spread, this.opacity);
   final double? radius;
   final double ratio;
   final double glow;
+  final double spread;
   final double opacity;
   ui.Image? _image;
   Size? _size;
@@ -90,7 +102,7 @@ class _CachedBodyPainter extends CustomPainter {
     if (_image == null || _size != size) {
       final recorder = ui.PictureRecorder();
       final recording = Canvas(recorder)..scale(ratio);
-      TintedCallBody(radius, glow: glow).paint(recording, size);
+      TintedCallBody(radius, glow: glow, spread: spread).paint(recording, size);
       final picture = recorder.endRecording();
       final image = picture.toImageSync((size.width * ratio).ceil(), (size.height * ratio).ceil());
       picture.dispose();
@@ -115,6 +127,7 @@ class _CachedBodyPainter extends CustomPainter {
       radius != oldDelegate.radius ||
       ratio != oldDelegate.ratio ||
       glow != oldDelegate.glow ||
+      spread != oldDelegate.spread ||
       opacity != oldDelegate.opacity;
 }
 

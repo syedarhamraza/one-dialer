@@ -61,10 +61,12 @@ class CallGroup {
   CallLogEntry get latest => calls.first;
 }
 
+final _nonDigits = RegExp(r'[^0-9]');
+
 /// Digits only, last 10: matches "+92 300 1234567" with "03001234567".
 /// shortcut: suffix matching, not libphonenumber; upgrade if short codes collide.
 String numberKey(String number) {
-  final digits = number.replaceAll(RegExp(r'[^0-9]'), '');
+  final digits = number.replaceAll(_nonDigits, '');
   return digits.length > 10 ? digits.substring(digits.length - 10) : digits;
 }
 
