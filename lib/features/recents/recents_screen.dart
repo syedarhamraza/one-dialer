@@ -9,11 +9,11 @@ import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 
+import '../../widgets/cos_dialog.dart';
 import '../../widgets/call_glass.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_floating_action_bar.dart';
 import '../../widgets/one_ui_floating_menu.dart';
-import '../../widgets/one_ui_floating_modal.dart';
 import '../../widgets/round_header_controls.dart';
 import '../../widgets/swipe_to_call.dart';
 import '../contacts/editor/add_to_contacts.dart';
@@ -158,14 +158,14 @@ class _RecentsScreenState extends State<RecentsScreen> {
         if (ids.contains(g.latest.id) && !g.latest.isPrivate && g.latest.number.isNotEmpty) g.latest.number,
     };
     if (numbers.isEmpty) return;
-    final ok = await OneUIFloatingModal.showConfirmationDialog(
-      context: context,
+    final ok = await showCosConfirm(
+      context,
       title: numbers.length == 1 ? 'Block ${numbers.single}?' : 'Block ${numbers.length} numbers?',
       message: "You won't get calls from blocked numbers.",
       confirmLabel: 'Block',
-      confirmTextColor: OneUITheme.accentRed,
+      destructive: true,
     );
-    if (ok != true) return;
+    if (!ok) return;
     for (final n in numbers) {
       await BlockingRepository.instance.setBlocked(n, true);
     }

@@ -53,7 +53,35 @@ void main() {
     expect(find.text('03111234567'), findsOneWidget);
     expect(find.text('03001234567'), findsOneWidget);
     expect(find.text('Ringtone'), findsOneWidget);
+    expect(find.text('Storage locations'), findsOneWidget); // on the page, not in More
     expect(find.text('Call logs'), findsNothing); // no calls yet
+  });
+
+  testWidgets('Video is greyed out without Meet and opens Meet when the contact has it', (tester) async {
+    await pump(tester);
+    final video = find.widgetWithText(DetailsActionTile, 'Video');
+    expect(tester.widget<DetailsActionTile>(video).onTap, isNull);
+
+    final opened = <MethodCall>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+      const MethodChannel('com.syedarhamraza.dialer/telecom'),
+      (call) async {
+        opened.add(call);
+        return switch (call.method) {
+          'getMessagingApps' => [
+            {'label': 'Meet', 'dataId': 5, 'mimeType': 'vnd.android.cursor.item/com.google.android.apps.tachyon.phone.meet'},
+          ],
+          'getSims' => [],
+          _ => null,
+        };
+      },
+    );
+    await pump(tester);
+    await tester.pumpWidget(const SizedBox()); // a fresh page loads the new apps
+    await pump(tester);
+    await tester.tap(video);
+    expect(opened.where((c) => c.method == 'openContactData').single.arguments['dataId'], 5);
+    expect(find.text('Meet'), findsNothing); // the Video tile, not a chat-app row
   });
 
   testWidgets('lists the latest three calls with View all', (tester) async {
@@ -63,6 +91,7 @@ void main() {
       CallLogEntry(id: 9, number: '0399999999', type: CallType.missed, date: DateTime(2026, 10, 9)),
     ];
     await pump(tester);
+    await tester.scrollUntilVisible(find.text('View all'), 200);
     expect(find.text('Call logs'), findsOneWidget);
     expect(find.text('View all'), findsOneWidget);
     expect(find.text('+92 311 1234567'), findsNWidgets(3));

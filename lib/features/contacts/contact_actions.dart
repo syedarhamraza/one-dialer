@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../core/contacts/contacts_repository.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
+import '../../widgets/cos_dialog.dart';
 import '../../widgets/one_ui_floating_modal.dart';
 
 /// Contact-page actions behind Share and More.
@@ -76,13 +77,14 @@ abstract final class ContactActions {
 
   /// More › Delete. Returns whether it was deleted.
   static Future<bool> delete(BuildContext context, String contactId, String name) async {
-    final ok = await OneUIFloatingModal.showConfirmationDialog(
-      context: context,
+    final ok = await showCosConfirm(
+      context,
       title: 'Delete $name?',
       message: 'This contact will be removed from this phone and from its accounts.',
-      confirmTextColor: OneUITheme.accentRed,
+      confirmLabel: 'Delete',
+      destructive: true,
     );
-    if (ok != true) return false;
+    if (!ok) return false;
     await ContactsRepository.instance.delete([contactId]);
     return true;
   }

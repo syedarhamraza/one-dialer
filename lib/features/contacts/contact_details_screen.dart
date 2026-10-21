@@ -14,7 +14,6 @@ import '../../widgets/call_glass.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_floating_modal.dart';
-import '../../widgets/one_ui_group_card.dart';
 import '../../widgets/one_ui_radio.dart';
 import '../../widgets/one_ui_status_bar_scrim.dart';
 import '../../widgets/place_call.dart';
@@ -48,6 +47,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   List<Map<Object?, Object?>> _apps = const [];
   List<SimCard> _sims = const [];
   String? _simId;
+  String _storage = '';
 
   @override
   void initState() {
@@ -66,14 +66,25 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     final sims = await _bridge.getSims();
     final simId = await DialerPrefs.instance.contactSim(widget.contactId);
     final apps = await _bridge.getMessagingApps(widget.contactId);
+    final raw = await _bridge.getRawContacts(widget.contactId);
     if (!mounted) return;
     setState(() {
       _sims = sims;
       _simId = simId;
       _apps = apps;
+      // Where it's stored, e.g. "Google · WhatsApp".
+      _storage = {for (final r in raw) accountApp(r['accountType'] as String?)}.join(' · ');
     });
     await _loadFull();
   }
+
+  /// Meet's video row (the Video tile) and the chat apps (their own card).
+  Map<Object?, Object?>? get _meet => _apps.where(_isMeet).firstOrNull;
+  Iterable<Map<Object?, Object?>> get _chatApps => _apps.where((a) => !_isMeet(a));
+  static bool _isMeet(Map<Object?, Object?> app) => (app['mimeType'] as String?)?.contains('tachyon') ?? false;
+
+  Future<void> _openApp(Map<Object?, Object?> app) =>
+      _bridge.openContactData(app['dataId']! as int, app['mimeType']! as String);
 
   /// Reloads all fields (after editing, the repository notifies).
   Future<void> _loadFull() async {
@@ -115,13 +126,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       width: 270,
       items: [
         OneUIFloatingMenuItem(label: 'Share', onTap: () => _share(contact)),
-        OneUIFloatingMenuItem(
-          label: 'Storage locations',
-          onTap: () =>
-              Navigator.of(context)
-                  .push(MaterialPageRoute<void>(builder: (_) => StorageLocationsScreen(contact: contact))),
-        ),
-        OneUIFloatingMenuItem(label: 'SIM card for calls', onTap: _chooseSim),
         OneUIFloatingMenuItem(
           label: blocked ? 'Unblock contact' : 'Block contact',
           onTap: () async {
@@ -229,30 +233,36 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   ),
                   const SizedBox(height: 28),
                   Row(
+                    spacing: 12,
                     children: [
                       Expanded(
-                        child: DetailsActionTile(
-                          icon: Icons.call_rounded,
-                          color: OneUITheme.accentGreen,
-                          label: 'Call',
-                          onTap: () => _call(primary),
-                        ),
+                        child: DetailsActionTile(icon: Icons.call_rounded, label: 'Call', onTap: () => _call(primary)),
                       ),
-                      const SizedBox(width: 12),
                       Expanded(
                         child: DetailsActionTile(
                           icon: Icons.chat_bubble_rounded,
-                          color: const Color(0xFF3E9BFF),
                           label: 'Message',
                           onTap: () => _bridge.sendSms(primary),
+                        ),
+                      ),
+                      // Google Meet, when the contact has a Meet video row; greyed out otherwise.
+                      Expanded(
+                        child: DetailsActionTile(
+                          icon: Icons.videocam_rounded,
+                          label: 'Video',
+                          onTap: switch (_meet) {
+                            final meet? => () => _openApp(meet),
+                            null => null,
+                          },
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 20),
                   _numbersCard(contact),
+                  _settingsCard(contact),
                   if (_full case final full?) ..._detailCards(full),
-                  if (_apps.isNotEmpty) _appsCard(),
+                  if (_chatApps.isNotEmpty) _appsCard(),
                   _callLogs(contact),
                 ],
               ),
@@ -317,14 +327,15 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     return i < 0 ? null : ('${i + 1}', _sims[i].color);
   }
 
-  /// Every number (tap to call, message on the right), then the contact's ringtone.
+  /// Every number (tap to call; Message is the tile above), then the contact's ringtone.
   Widget _numbersCard(DialerContact contact) {
     final simLabel = _simLabel;
     return DetailsCard(
       children: [
         for (final (i, n) in contact.numbers.indexed)
           _ValueRow(
-            icon: i == 0 ? Icons.call_outlined : null,
+            icon: Icons.call_outlined,
+            showIcon: i == 0,
             label: [
               contact.labels[i],
               if (contact.numbers.length > 1 && i == contact.primaryIndex) 'Default',
@@ -332,11 +343,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             ].join(' · '),
             value: n,
             onTap: () => _call(n),
-            action: IconButton(
-              tooltip: 'Message',
-              onPressed: () => _bridge.sendSms(n),
-              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 24),
-            ),
           ),
         _ValueRow(
           icon: Icons.notifications_none_rounded,
@@ -396,20 +402,49 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     return rows.isEmpty ? const [] : [DetailsCard(children: rows)];
   }
 
+  /// Chat apps (WhatsApp...) as the details card's rows, the app's icon in the icon column.
   Widget _appsCard() {
-    return OneUIGroupCard(
-      items: [
-        for (final app in _apps)
-          OneUIGroupItem(
-            title: app['label']! as String,
-            trailing: app['icon'] is Uint8List
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.memory(app['icon']! as Uint8List, width: 28, height: 28),
-                  )
-                : const Icon(Icons.chat_rounded),
-            onTap: () => _bridge.openContactData(app['dataId']! as int, app['mimeType']! as String),
+    return DetailsCard(
+      children: [
+        for (final app in _chatApps)
+          _ValueRow(
+            leading: Align(
+              alignment: Alignment.centerLeft,
+              child: app['icon'] is Uint8List
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(7),
+                      child: Image.memory(app['icon']! as Uint8List, width: 26, height: 26),
+                    )
+                  : const Icon(Icons.chat_outlined, size: 24),
+            ),
+            value: app['label']! as String,
+            onTap: () => _openApp(app),
           ),
+      ],
+    );
+  }
+
+  /// SIM card for calls and Storage locations, on the page as on ColorOS (not in More).
+  Widget _settingsCard(DialerContact contact) {
+    return DetailsCard(
+      children: [
+        if (_sims.length > 1)
+          _ValueRow(
+            icon: Icons.sim_card_outlined,
+            value: 'SIM card for calls',
+            label: _sims.where((s) => s.id == _simId).map((s) => s.label).firstOrNull ?? 'Ask every time',
+            onTap: _chooseSim,
+          ),
+        _ValueRow(
+          icon: Icons.inventory_2_outlined,
+          value: 'Storage locations',
+          label: _storage,
+          onTap: () async {
+            await Navigator.of(context)
+                .push(MaterialPageRoute<void>(builder: (_) => StorageLocationsScreen(contact: contact)));
+            _load(); // unlinking changes where it's stored
+          },
+        ),
       ],
     );
   }
@@ -448,53 +483,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             ),
             DetailsCard(
               padding: const EdgeInsets.fromLTRB(18, 6, 18, 6),
-              children: [
-                for (final c in calls)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    child: Row(
-                      children: [
-                        SizedBox(width: 40, child: CallTypeIcon(type: c.type, muted: true)),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${dayLabel(c.date, now)}, ${timeLabel(c.date)}',
-                                style: const TextStyle(fontSize: 17),
-                              ),
-                              const SizedBox(height: 2),
-                              Row(
-                                children: [
-                                  if (_simBadge(c.simId) case final badge?) ...[
-                                    SimBadge(badge: badge),
-                                    const SizedBox(width: 6),
-                                  ],
-                                  Flexible(
-                                    child: Text(
-                                      c.number,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontSize: 13, color: OneUITheme.textSecondary),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        Text(
-                          c.type != CallType.missed && c.duration > Duration.zero
-                              ? durationLabel(c.duration)
-                              : callTypeLabel(c.type),
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: c.type == CallType.missed ? OneUITheme.accentRed : OneUITheme.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
+              children: [for (final c in calls) ContactCallLogRow(call: c, simBadge: _simBadge(c.simId), now: now)],
             ),
           ],
         );
@@ -503,15 +492,14 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   }
 }
 
-/// Call / Message tile: icon over label on a flat card (no glass: it scrolls). Shared with
-/// the unsaved-number page (CallDetailsScreen).
+/// Call / Message / Video tile, ColorOS style: a mono icon over its label on a flat card (no
+/// glass: it scrolls); greyed out without [onTap]. Shared with the unsaved-number page.
 class DetailsActionTile extends StatelessWidget {
-  const DetailsActionTile({super.key, required this.icon, required this.color, required this.label, required this.onTap});
+  const DetailsActionTile({super.key, required this.icon, required this.label, required this.onTap});
 
   final IconData icon;
-  final Color color;
   final String label;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -529,9 +517,16 @@ class DetailsActionTile extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 16),
             child: Column(
               children: [
-                Icon(icon, color: color, size: 26),
+                Icon(icon, color: onTap == null ? OneUITheme.textTertiary : OneUITheme.textPrimary, size: 26),
                 const SizedBox(height: 6),
-                Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: onTap == null ? OneUITheme.textTertiary : OneUITheme.textPrimary,
+                  ),
+                ),
               ],
             ),
           ),
@@ -559,14 +554,17 @@ class DetailsCard extends StatelessWidget {
 }
 
 /// A value with its label; tappable when [onTap] is set. Detail rows put the label above
-/// the value, number rows (with an [icon] column or an [action]) put it below.
+/// the value; rows with an icon column ([icon] or [leading]) put it below. [showIcon] false
+/// keeps the column empty, so a contact's later numbers line up under the first.
 class _ValueRow extends StatelessWidget {
-  const _ValueRow({this.icon, this.label = '', required this.value, this.action, this.onTap});
+  const _ValueRow({this.icon, this.leading, this.showIcon = true, this.label = '', required this.value, this.onTap});
 
   final IconData? icon;
+  final Widget? leading;
+  final bool showIcon;
   final String label;
   final String value;
-  final Widget? action;
+
   final VoidCallback? onTap;
 
   @override
@@ -574,7 +572,7 @@ class _ValueRow extends StatelessWidget {
     final caption = label.isEmpty
         ? null
         : Text(label, style: const TextStyle(fontSize: 13, color: OneUITheme.textSecondary));
-    final numberRow = icon != null || action != null;
+    final numberRow = icon != null || leading != null;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -582,7 +580,8 @@ class _ValueRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
           children: [
-            if (numberRow) SizedBox(width: 40, child: icon == null ? null : Icon(icon, size: 24)),
+            if (numberRow)
+              SizedBox(width: 40, child: !showIcon ? null : leading ?? (icon == null ? null : Icon(icon, size: 24))),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -593,9 +592,59 @@ class _ValueRow extends StatelessWidget {
                 ],
               ),
             ),
-            ?action,
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// One logged call on the contact page and its Call logs page: muted arrow, when, SIM badge
+/// and number, then talk time (or the type when there was none).
+class ContactCallLogRow extends StatelessWidget {
+  const ContactCallLogRow({super.key, required this.call, required this.simBadge, required this.now});
+
+  final CallLogEntry call;
+  final (String, Color)? simBadge;
+  final DateTime now;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = call;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          SizedBox(width: 40, child: CallTypeIcon(type: c.type, muted: true)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('${dayLabel(c.date, now)}, ${timeLabel(c.date)}', style: const TextStyle(fontSize: 17)),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    if (simBadge case final badge?) ...[SimBadge(badge: badge), const SizedBox(width: 6)],
+                    Flexible(
+                      child: Text(
+                        c.number,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 13, color: OneUITheme.textSecondary),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Text(
+            c.type != CallType.missed && c.duration > Duration.zero ? durationLabel(c.duration) : callTypeLabel(c.type),
+            style: TextStyle(
+              fontSize: 13,
+              color: c.type == CallType.missed ? OneUITheme.accentRed : OneUITheme.textSecondary,
+            ),
+          ),
+        ],
       ),
     );
   }

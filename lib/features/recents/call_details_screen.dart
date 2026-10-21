@@ -84,7 +84,6 @@ class CallDetailsScreen extends StatelessWidget {
                         Expanded(
                           child: DetailsActionTile(
                             icon: Icons.call_rounded,
-                            color: OneUITheme.accentGreen,
                             label: 'Call',
                             onTap: () => placeCall(context, call.number, simId: call.simId),
                           ),
@@ -92,7 +91,6 @@ class CallDetailsScreen extends StatelessWidget {
                         Expanded(
                           child: DetailsActionTile(
                             icon: Icons.chat_bubble_rounded,
-                            color: const Color(0xFF3E9BFF),
                             label: 'Message',
                             onTap: () => TelecomBridge.instance.sendSms(call.number),
                           ),
@@ -101,7 +99,6 @@ class CallDetailsScreen extends StatelessWidget {
                           Expanded(
                             child: DetailsActionTile(
                               icon: Icons.person_add_alt_1_rounded,
-                              color: OneUITheme.textPrimary,
                               label: 'Add',
                               onTap: () => showAddToContacts(context, call.number),
                             ),

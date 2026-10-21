@@ -9,10 +9,12 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const channel = MethodChannel('flutter_contacts');
+  const telecom = MethodChannel('com.syedarhamraza.dialer/telecom');
   late Completer<Object?> accounts;
   late Object? contactResult;
   late List<MethodCall> writes;
   var failAccounts = false;
+  Object? defaultAccount;
 
   setUp(() {
     accounts = Completer<Object?>.sync();
@@ -22,13 +24,17 @@ void main() {
     };
     writes = [];
     failAccounts = false;
+    defaultAccount = null;
+    // Where a new contact can be saved comes from our own bridge (the phone, SIMs, Google).
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(telecom, (call) async {
+      if (call.method != 'getContactAccounts') return null;
+      if (failAccounts) throw PlatformException(code: 'unavailable');
+      return accounts.future;
+    });
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
       switch (call.method) {
-        case 'accounts.getAll':
-          if (failAccounts) throw PlatformException(code: 'unavailable');
-          return accounts.future;
         case 'accounts.getDefault':
-          return null;
+          return defaultAccount;
         case 'groups.getAll':
         case 'groups.getOf':
           return <Object?>[];
@@ -48,6 +54,7 @@ void main() {
 
   tearDown(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, null);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(telecom, null);
   });
 
   Future<void> open(WidgetTester tester, {String? contactId, String? number}) async {
@@ -147,17 +154,20 @@ void main() {
     expect(tester.testTextInput.isVisible, isTrue);
   });
 
-  testWidgets('confirmation Save becomes available when pending accounts resolve', (tester) async {
+  testWidgets('confirmation offers Save only once accounts have loaded', (tester) async {
     await open(tester, number: '5550100');
     await tester.pumpAndSettle();
     await tester.tap(cancelPill());
     await tester.pumpAndSettle();
-    final save = find.widgetWithText(TextButton, 'Save');
-    expect(tester.widget<TextButton>(save).onPressed, isNull);
+    expect(find.text('Discard'), findsOneWidget);
+    expect(find.text('Save'), findsNothing);
+    await tester.binding.handlePopRoute(); // closes the dialog
+    await tester.pumpAndSettle();
     accounts.complete(<Object?>[]);
     await tester.pumpAndSettle();
-    expect(tester.widget<TextButton>(save).onPressed, isNotNull);
-    await tester.tap(save);
+    await tester.tap(cancelPill());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
     expect(find.text('saved-contact'), findsOneWidget);
   });
@@ -219,7 +229,7 @@ void main() {
     cancel();
     await tester.pumpAndSettle();
     expect(find.text('Save your changes or discard them?'), findsOneWidget);
-    await tester.tap(find.widgetWithText(TextButton, 'Cancel').last);
+    await tester.tap(find.text('Cancel').last);
     await tester.pumpAndSettle();
     expect(find.text('Keep these edits'), findsOneWidget);
     expect(writes, isEmpty);
@@ -227,7 +237,7 @@ void main() {
 
   testWidgets('Save returns the created id and uses the resolved account once', (tester) async {
     accounts.complete([
-      {'id': '', 'name': 'test@example.com', 'type': 'com.google'},
+      {'name': 'test@example.com', 'type': 'com.google'},
     ]);
     await open(tester, number: '5550100');
     await tester.pumpAndSettle();
@@ -247,12 +257,30 @@ void main() {
     await tester.enterText(nameField(), 'Changed name');
     await tester.tap(cancelPill());
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(TextButton, 'Save'));
+    await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
     expect(find.byType(ContactEditorScreen), findsNothing);
     expect(find.text('7'), findsOneWidget);
     expect(writes.single.method, 'crud.update');
   });
+
+  for (final cloud in [true, false]) {
+    testWidgets('Save to offers This device and SIM only without a cloud default (cloud: $cloud)', (tester) async {
+      if (cloud) defaultAccount = {'id': '', 'name': 'test@example.com', 'type': 'com.google'};
+      accounts.complete([
+        {'name': null, 'type': null},
+        {'name': 'USIM4', 'type': 'USIM Account'},
+        {'name': 'test@example.com', 'type': 'com.google'},
+      ]);
+      await open(tester);
+      await tester.pumpAndSettle();
+      expect(find.text('Save to test@example.com'), findsOneWidget);
+      await tester.tap(find.text('Save to test@example.com'));
+      await tester.pumpAndSettle();
+      expect(find.text('This device'), cloud ? findsNothing : findsOneWidget);
+      expect(find.text('SIM card'), cloud ? findsNothing : findsOneWidget);
+    });
+  }
 
   testWidgets('failed account loading keeps Save disabled and allows retry', (tester) async {
     failAccounts = true;

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../core/contacts/contacts_repository.dart';
 import '../../theme/one_ui_theme.dart';
+import '../../widgets/cos_dialog.dart';
 import '../../widgets/one_ui_floating_menu.dart';
-import '../../widgets/one_ui_floating_modal.dart';
 import '../../widgets/one_ui_subpage.dart';
 import '../../widgets/one_ui_switch.dart';
 import '../../widgets/one_ui_toast.dart';
@@ -64,9 +64,10 @@ class _BlockingScreenState extends State<BlockingScreen> {
   }
 
   Future<String?> _typeNumber() async {
-    final number = await OneUIFloatingModal.showTextInputDialog(
-      context: context,
+    final number = await showCosTextInput(
+      context,
       title: 'Block number',
+      hint: 'Phone number',
       keyboardType: TextInputType.phone,
       confirmLabel: 'Block',
     );

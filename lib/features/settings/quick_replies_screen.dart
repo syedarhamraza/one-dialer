@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
-import '../../widgets/one_ui_floating_modal.dart';
+import '../../widgets/cos_dialog.dart';
 import '../../widgets/one_ui_subpage.dart';
 import '../../widgets/one_ui_group_card.dart';
 
@@ -35,15 +35,13 @@ class _QuickRepliesScreenState extends State<QuickRepliesScreen> {
 
   Future<void> _edit(int? index) async {
     final replies = _replies!;
-    final typed = await OneUIFloatingModal.showTextInputDialog(
-      context: context,
+    final text = await showCosTextInput(
+      context,
       title: 'Quick decline message',
       initialValue: index == null ? '' : replies[index],
+      maxLength: 160, // one SMS
     );
-    if (typed == null || typed.isEmpty) return;
-    // One SMS. shortcut: the shared input modal (verbatim OneSpend) has no counter, so longer
-    // text is cut here; give the modal a maxLength if people hit it.
-    final text = typed.length > 160 ? typed.substring(0, 160) : typed;
+    if (text == null || text.isEmpty) return;
     final next = [...replies];
     index == null ? next.add(text) : next[index] = text;
     await _save(next);

@@ -139,6 +139,8 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
                 }.onSuccess { result.success(null) }.onFailure { result.error("NO_APP", it.message, null) }
             }
             "getRawContacts" -> inBackground(result) { ContactExtras.rawContacts(context, call.argument<String>("contactId")!!) }
+            "getContactAccounts" -> inBackground(result) { ContactExtras.contactAccounts(context) }
+            "createLocalContact" -> inBackground(result) { ContactExtras.createLocalContact(context) }
             "unlinkRawContacts" -> inBackground(result) {
                 ContactExtras.unlink(
                     context,
@@ -241,6 +243,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
                 outcome.fold(
                     onSuccess = { result.success(if (it is Unit) null else it) },
                     onFailure = {
+                        android.util.Log.w("CallBridge", "Background call failed", it)
                         if (it is SecurityException) result.error("NO_PERMISSION", it.message, null)
                         else result.error("FAILED", it.message, null)
                     },

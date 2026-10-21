@@ -77,6 +77,13 @@ class TelecomBridge {
   Future<List<Map<Object?, Object?>>> getRawContacts(String contactId) async =>
       await _methods.invokeListMethod<Map<Object?, Object?>>('getRawContacts', {'contactId': contactId}) ?? const [];
 
+  /// Where a new contact can be saved: {type, name}; null type and name is the phone itself.
+  Future<List<Map<Object?, Object?>>> getContactAccounts() async =>
+      await _methods.invokeListMethod<Map<Object?, Object?>>('getContactAccounts') ?? const [];
+
+  /// An empty contact on the phone itself (no account), to fill in with update; its id.
+  Future<String> createLocalContact() async => (await _methods.invokeMethod<String>('createLocalContact'))!;
+
   Future<void> unlinkRawContacts(String contactId, List<int> rawIds) =>
       _methods.invokeMethod('unlinkRawContacts', {'contactId': contactId, 'rawIds': rawIds});
 

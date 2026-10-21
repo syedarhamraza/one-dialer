@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import '../../app/layout.dart';
 import '../../core/contacts/contacts_repository.dart';
 import '../../core/telecom/call_info.dart';
-import '../../widgets/one_ui_floating_modal.dart';
+import '../../widgets/cos_dialog.dart';
 import '../../widgets/one_ui_toast.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
@@ -97,14 +97,13 @@ class _KeypadScreenState extends State<KeypadScreen> {
       return;
     }
     if (!mounted) return;
-    final assign = await OneUIFloatingModal.showConfirmationDialog(
-      context: context,
+    final assign = await showCosConfirm(
+      context,
       title: 'No speed dial number',
       message: 'Assign a contact to key $digit?',
       confirmLabel: 'Assign',
-      confirmTextColor: OneUITheme.accentBlue,
     );
-    if (assign == true && mounted) _openSpeedDial();
+    if (assign && mounted) _openSpeedDial();
   }
 
   void _openSpeedDial() => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SpeedDialScreen()));

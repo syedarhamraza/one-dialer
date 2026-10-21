@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import '../../../core/telecom/telecom_bridge.dart';
 import '../../../theme/one_ui_scroll.dart';
 import '../../../theme/one_ui_theme.dart';
+import '../../../widgets/cos_dialog.dart';
 import '../../../widgets/letter_avatar.dart';
 import '../../../widgets/one_ui_toast.dart';
 import '../../../widgets/call_glass.dart';
@@ -159,14 +160,25 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
         _loadReady.value = true;
       });
     } else {
-      final (all, fallback) = await (FlutterContacts.accounts.getAll(), FlutterContacts.accounts.getDefault()).wait;
+      final (all, fallback) = await (
+        TelecomBridge.instance.getContactAccounts(),
+        FlutterContacts.accounts.getDefault(),
+      ).wait;
       if (!_active) return;
-      final accounts = _contactAccounts(all);
+      // Android 16 refuses phone and SIM saves while the default contacts account is a cloud
+      // one ("Cannot add contacts to local or SIM accounts when default account is set to
+      // cloud"), so only offer them when it isn't.
+      final cloudDefault = fallback != null && fallback.type == 'com.google';
+      final accounts = [
+        for (final a in all)
+          if (!cloudDefault || a['type'] == 'com.google')
+            Account(id: '', name: (a['name'] as String?) ?? '', type: (a['type'] as String?) ?? ''),
+      ];
       final account =
           accounts.where((a) => a.type == fallback?.type && a.name == fallback?.name).firstOrNull ??
           accounts.where((a) => a.type == 'com.google').firstOrNull ??
           accounts.firstOrNull;
-      final groups = await FlutterContacts.groups.getAll(accounts: account == null ? null : [account]);
+      final groups = await _accountGroups(account);
       await _entered.future;
       if (!_active) return;
       setState(() {
@@ -211,7 +223,17 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
     setState(() => _saving = true);
     try {
       final String id;
-      if (_base == null) {
+      if (_base == null && _isDevice(_account)) {
+        // The contacts package can't create a no-account contact (it falls back to the default
+        // account), so make an empty one natively and fill it in.
+        id = await TelecomBridge.instance.createLocalContact();
+        try {
+          await FlutterContacts.update(form.applyTo(Contact(id: id)));
+        } catch (_) {
+          await FlutterContacts.delete(id);
+          rethrow;
+        }
+      } else if (_base == null) {
         id = await FlutterContacts.create(form.applyTo(const Contact()), account: _account);
       } else {
         await FlutterContacts.update(form.applyTo(_base!));
@@ -225,6 +247,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
       }
       if (_active) _close(id);
     } on PlatformException catch (e) {
+      debugPrint('Saving the contact failed: ${e.code} ${e.message}');
       if (!mounted || _closing) return;
       setState(() => _saving = false);
       OneUIToast.show(
@@ -253,39 +276,15 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
   /// "Save your changes or discard them?" on back with unsaved changes.
   Future<void> _confirmLeave() async {
     _confirming = true;
-    final choice = await OneUIFloatingModal.show<String>(
-      context: context,
-      builder: (ctx) => ValueListenableBuilder(
-        valueListenable: _loadReady,
-        builder: (ctx, ready, _) => Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Save your changes or discard them?', style: TextStyle(fontSize: 16.5, color: Colors.white)),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                for (final (i, (label, value)) in [
-                  ('Cancel', null),
-                  ('Discard', 'discard'),
-                  ('Save', 'save'),
-                ].indexed) ...[
-                  if (i > 0) Container(width: 1, height: 18, color: Colors.white.withValues(alpha: 0.10)),
-                  Expanded(
-                    child: TextButton(
-                      onPressed: value == 'save' && !ready ? null : () => Navigator.pop(ctx, value),
-                      child: Text(
-                        label,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ],
-        ),
-      ),
+    final choice = await showCosActions<String?>(
+      context,
+      message: 'Save your changes or discard them?',
+      actions: [
+        // Saving needs the form loaded; until then only Discard and Cancel make sense.
+        if (_loadReady.value) (label: 'Save', value: 'save', destructive: false),
+        (label: 'Discard', value: 'discard', destructive: true),
+        (label: 'Cancel', value: null, destructive: false),
+      ],
     );
     _confirming = false;
     if (!_active) return;
@@ -324,7 +323,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                         _photo(form),
                         if (_isNew) _accountRow(),
                         const SizedBox(height: 24),
-                        _mainCard(form),
+                        ..._mainCards(form),
                         _listCard(
                           icon: Icons.mail_outline_rounded,
                           title: 'Email',
@@ -394,21 +393,28 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
 
   // --- Header --------------------------------------------------------------
 
-  /// ColorOS's top bar: Cancel | title | Done, the two as call-glass pills.
+  /// ColorOS's top bar: Cancel | title | Done, as call-glass pills tinted red and green
+  /// (a wash through the glass, white text); a disabled Done is plain glass.
   Widget _header({required bool canSave}) {
-    Widget pill(String label, VoidCallback? onPressed, Color color) => CallGlass(
+    Widget pill(String label, VoidCallback? onPressed, Color tint) => CallGlass(
       radius: 24,
-      child: TextButton(
-        onPressed: onPressed,
-        style: TextButton.styleFrom(
-          foregroundColor: color,
-          disabledForegroundColor: OneUITheme.textTertiary,
-          minimumSize: const Size(0, 48),
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      child: DecoratedBox(
+        decoration: ShapeDecoration(
+          color: onPressed == null ? null : tint.withValues(alpha: .28),
           shape: const StadiumBorder(),
         ),
-        child: Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+        child: TextButton(
+          onPressed: onPressed,
+          style: TextButton.styleFrom(
+            foregroundColor: OneUITheme.textPrimary,
+            disabledForegroundColor: OneUITheme.textTertiary,
+            minimumSize: const Size(0, 48),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            shape: const StadiumBorder(),
+          ),
+          child: Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+        ),
       ),
     );
 
@@ -417,7 +423,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
       child: SizedBox(
         height: 48,
         child: NavigationToolbar(
-          leading: pill('Cancel', () => Navigator.of(context).maybePop(), OneUITheme.accentGreen),
+          leading: pill('Cancel', () => Navigator.of(context).maybePop(), OneUITheme.accentRed),
           middle: Text(
             _isNew ? 'New contact' : 'Edit contact',
             style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: OneUITheme.textPrimary),
@@ -454,7 +460,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                 child: Text(
                   !_ready
                       ? (_loadFailed ? "Couldn't load accounts" : 'Loading accounts…')
-                      : 'Save to ${account == null || account.type.contains('phone') ? 'Phone' : account.name}',
+                      : 'Save to ${account == null ? 'This device' : _accountName(account)}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontSize: 16, color: OneUITheme.textSecondary),
@@ -478,15 +484,19 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
       items: [
         for (final a in _accounts)
           OneUIFloatingMenuItem(
-            icon: a.type == _account?.type && a.name == _account?.name ? Icons.check_circle_rounded : null,
-            label: a.type.contains('phone') ? 'Phone' : '${_accountTypeName(a)}\n${a.name}',
+            // Radio marks on every row keep the names lined up; menu rows are one line, so a
+            // Google account is named by its email.
+            icon: a.type == _account?.type && a.name == _account?.name
+                ? Icons.radio_button_checked_rounded
+                : Icons.radio_button_unchecked_rounded,
+            label: _accountName(a),
             onTap: () => picked = a,
           ),
       ],
     );
     final account = picked;
     if (account == null || !_active) return;
-    final groups = _userGroups(await FlutterContacts.groups.getAll(accounts: [account]));
+    final groups = await _accountGroups(account);
     if (!_active) return;
     setState(() {
       _account = account;
@@ -495,43 +505,24 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
     });
   }
 
-  /// Samsung's "Save contact to" choices: Samsung account, Phone and Google accounts,
-  /// not every app that syncs contacts (WhatsApp, Meet, a second Samsung service, ...).
-  static List<Account> _contactAccounts(List<Account> all) {
-    final seen = <String>{};
-    final keep = [
-      for (final a in all)
-        if ((a.type == 'com.google' ||
-                a.type == 'com.osp.app.signin' ||
-                a.type.contains('phone') ||
-                a.type.contains('local')) &&
-            seen.add('${a.type}|${a.name}'))
-          a,
-    ];
-    // shortcut: flutter_contacts doesn't report the two accounts Samsung Contacts saves to
-    // (Samsung account `com.osp.app.signin` and the on-device `vnd.sec.contact.phone`), only
-    // Samsung's other services (`com.samsung.*`). On Samsung phones add those two, in Samsung's
-    // order; other phones keep their own list.
-    final samsung = all.where((a) => a.type.startsWith('com.samsung') || a.type == 'com.osp.app.signin').firstOrNull;
-    if (samsung != null) {
-      final extra = [
-        Account(id: '', name: samsung.name, type: 'com.osp.app.signin'),
-        const Account(id: '', name: 'vnd.sec.contact.phone', type: 'vnd.sec.contact.phone'),
-      ];
-      keep.removeWhere((a) => a.type == 'com.osp.app.signin');
-      keep.insertAll(0, extra);
-    }
-    return keep;
-  }
+  /// Only Google accounts have contact groups; the phone and SIMs don't.
+  Future<List<Group>> _accountGroups(Account? account) async =>
+      account?.type == 'com.google' ? _userGroups(await FlutterContacts.groups.getAll(accounts: [account!])) : const [];
 
-  static String _accountTypeName(Account a) => switch (a.type) {
-    final t when t.contains('google') => 'Google',
-    'com.osp.app.signin' => 'Samsung account',
-    final t when t.contains('samsung') => 'Samsung account',
-    final t when t.contains('whatsapp') => 'WhatsApp',
-    final t when t.contains('sim') => 'SIM',
-    _ => 'Phone',
-  };
+  /// The phone's own storage: the NULL account, or an OEM's local account type.
+  static bool _isDevice(Account? a) =>
+      a != null && (a.type.isEmpty || a.type.toLowerCase().contains('local') || a.type.toLowerCase().contains('phone'));
+
+  /// "This device", "SIM card", or the Google account's email.
+  String _accountName(Account a) {
+    if (_isDevice(a)) return 'This device';
+    if (a.type.toLowerCase().contains('sim')) {
+      // Dual SIM: tell the cards apart by their account name.
+      final sims = _accounts.where((x) => x.type.toLowerCase().contains('sim')).length;
+      return sims > 1 ? 'SIM card (${a.name})' : 'SIM card';
+    }
+    return a.name;
+  }
 
   // --- Photo -----------------------------------------------------------------
 
@@ -592,121 +583,132 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
 
   // --- Name, phones, work ----------------------------------------------------
 
-  Widget _mainCard(ContactForm form) {
-    return EditorCard(
-      children: [
-        EditorRow(
-          icon: Icons.person_outline_rounded,
-          iconColor: OneUITheme.accentBlue,
-          trailing: IconButton(
-            tooltip: _nameExpanded ? 'Fewer name fields' : 'More name fields',
-            onPressed: () => setState(() => _nameExpanded = !_nameExpanded),
-            icon: Icon(_nameExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded, size: 30),
-          ),
-          child: _nameExpanded
-              ? Column(
-                  key: const ValueKey('name-parts'),
-                  children: [
-                    for (final (hint, get, set) in <(String, String Function(), void Function(String))>[
-                      ('Name prefix', () => form.prefix, (v) => form.prefix = v),
-                      ('First name', () => form.first, (v) => form.first = v),
-                      ('Middle name', () => form.middle, (v) => form.middle = v),
-                      ('Last name', () => form.last, (v) => form.last = v),
-                      ('Name suffix', () => form.suffix, (v) => form.suffix = v),
-                    ])
-                      EditorField(
-                        hint: hint,
-                        value: get(),
-                        capitalization: TextCapitalization.words,
-                        onChanged: (v) {
-                          set(v);
-                          _edited();
-                        },
-                      ),
-                  ],
-                )
-              : EditorField(
-                  key: const ValueKey('name-full'),
-                  hint: 'Name',
-                  value: form.fullName,
-                  focusNode: _nameFocus,
-                  capitalization: TextCapitalization.words,
-                  onChanged: (v) {
-                    form.fullName = v;
-                    _edited();
-                  },
-                ),
-        ),
-        for (final (i, phone) in form.phones.indexed)
+  List<Widget> _mainCards(ContactForm form) {
+    return [
+      EditorCard(
+        children: [
           EditorRow(
-            key: ObjectKey(phone),
-            icon: i == 0 ? Icons.call_outlined : null,
-            iconColor: OneUITheme.accentBlue,
-            trailing: RemoveButton(onPressed: () => setState(() => form.phones.remove(phone))),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                LabelButton(
-                  label: phone.label,
-                  options: EditorLabels.phone,
-                  onChanged: (l) => setState(() => phone.label = l),
-                ),
-                EditorField(
-                  hint: 'Phone',
-                  value: phone.value,
-                  keyboardType: TextInputType.phone,
-                  onChanged: (v) {
-                    phone.value = v;
-                    _edited();
-                  },
-                ),
-              ],
+            icon: Icons.person_outline_rounded,
+            trailing: IconButton(
+              tooltip: _nameExpanded ? 'Fewer name fields' : 'More name fields',
+              onPressed: () => setState(() => _nameExpanded = !_nameExpanded),
+              icon: Icon(_nameExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded, size: 30),
             ),
+            child: _nameExpanded
+                ? Column(
+                    key: const ValueKey('name-parts'),
+                    children: [
+                      for (final (hint, get, set) in <(String, String Function(), void Function(String))>[
+                        ('Name prefix', () => form.prefix, (v) => form.prefix = v),
+                        ('First name', () => form.first, (v) => form.first = v),
+                        ('Middle name', () => form.middle, (v) => form.middle = v),
+                        ('Last name', () => form.last, (v) => form.last = v),
+                        ('Name suffix', () => form.suffix, (v) => form.suffix = v),
+                      ])
+                        EditorField(
+                          divider: hint != 'Name suffix',
+                          hint: hint,
+                          value: get(),
+                          capitalization: TextCapitalization.words,
+                          onChanged: (v) {
+                            set(v);
+                            _edited();
+                          },
+                        ),
+                    ],
+                  )
+                : EditorField(
+                    key: const ValueKey('name-full'),
+                    hint: 'Name',
+                    value: form.fullName,
+                    focusNode: _nameFocus,
+                    capitalization: TextCapitalization.words,
+                    onChanged: (v) {
+                      form.fullName = v;
+                      _edited();
+                    },
+                  ),
           ),
-        AddRow(
-          label: 'Add phone number',
-          onTap: () => setState(() => form.phones.add(LabeledValue(label: 'mobile'))),
-        ),
-        if (!_workOpen)
-          PlaceholderRow(
-            icon: Icons.work_outline_rounded,
-            label: 'Work info',
-            onTap: () => setState(() => _workOpen = true),
-          )
-        else
-          EditorRow(
-            icon: Icons.work_outline_rounded,
-            child: Column(
-              children: [
-                EditorField(
-                  hint: 'Company',
-                  value: form.company,
-                  onChanged: (v) {
-                    form.company = v;
-                    _edited();
-                  },
-                ),
-                EditorField(
-                  hint: 'Job title',
-                  value: form.jobTitle,
-                  onChanged: (v) {
-                    form.jobTitle = v;
-                    _edited();
-                  },
-                ),
-                EditorField(
-                  hint: 'Department',
-                  value: form.department,
-                  onChanged: (v) {
-                    form.department = v;
-                    _edited();
-                  },
-                ),
-              ],
+        ],
+      ),
+      EditorCard(
+        children: [
+          for (final (i, phone) in form.phones.indexed)
+            EditorRow(
+              key: ObjectKey(phone),
+              icon: i == 0 ? Icons.call_outlined : null,
+              trailing: RemoveButton(onPressed: () => setState(() => form.phones.remove(phone))),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  LabelButton(
+                    label: phone.label,
+                    options: EditorLabels.phone,
+                    onChanged: (l) => setState(() => phone.label = l),
+                  ),
+                  EditorField(
+                    hint: 'Phone',
+                    value: phone.value,
+                    keyboardType: TextInputType.phone,
+                    onChanged: (v) {
+                      phone.value = v;
+                      _edited();
+                    },
+                  ),
+                ],
+              ),
             ),
+          AddRow(
+            label: 'Add phone number',
+            onTap: () => setState(() => form.phones.add(LabeledValue(label: 'mobile'))),
           ),
-      ],
-    );
+        ],
+      ),
+      EditorCard(
+        children: [
+          if (!_workOpen)
+            PlaceholderRow(
+              icon: Icons.work_outline_rounded,
+              label: 'Work info',
+              onTap: () => setState(() => _workOpen = true),
+            )
+          else
+            EditorRow(
+              icon: Icons.work_outline_rounded,
+              child: Column(
+                children: [
+                  EditorField(
+                    divider: true,
+                    hint: 'Company',
+                    value: form.company,
+                    onChanged: (v) {
+                      form.company = v;
+                      _edited();
+                    },
+                  ),
+                  EditorField(
+                    divider: true,
+                    hint: 'Job title',
+                    value: form.jobTitle,
+                    onChanged: (v) {
+                      form.jobTitle = v;
+                      _edited();
+                    },
+                  ),
+                  EditorField(
+                    hint: 'Department',
+                    value: form.department,
+                    onChanged: (v) {
+                      form.department = v;
+                      _edited();
+                    },
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    ];
   }
 
   // --- Emails, websites, relationships --------------------------------------
