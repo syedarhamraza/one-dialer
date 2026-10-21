@@ -43,7 +43,7 @@ void main() {
     await tester.pump();
   }
 
-  Rect clip(WidgetTester tester) => tester.getRect(find.byType(ClipRSuperellipse).last);
+  Rect clip(WidgetTester tester) => tester.getRect(find.byType(ClipRRect).last);
 
   testWidgets('grows out of the button, fills the screen, and shrinks back into it', (tester) async {
     await open(tester);
@@ -63,7 +63,12 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
     final closing = clip(tester);
     expect(closing.width, lessThan(screen.width));
-    expect(closing.contains(buttonRect.center), isTrue);
+    // Mid-way, the bubble has moved from the screen's centre toward the button.
+    final screenCenter = (Offset.zero & screen).center;
+    expect(
+      (closing.center - buttonRect.center).distance,
+      lessThan((screenCenter - buttonRect.center).distance),
+    );
     await tester.pumpAndSettle();
     expect(find.byType(TextField), findsNothing);
     expect(find.text('+'), findsOneWidget);
@@ -72,7 +77,7 @@ void main() {
   testWidgets('reduced motion just fades, without the morph', (tester) async {
     await open(tester, reduceMotion: true);
     await tester.pump(const Duration(milliseconds: 100));
-    expect(find.byType(ClipRSuperellipse), findsNothing);
+    expect(find.byType(ClipRRect), findsNothing);
     await tester.pumpAndSettle();
     expect(find.byType(TextField), findsOneWidget);
   });

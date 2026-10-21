@@ -2,10 +2,9 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
 
-
 /// Opens a page by morphing it out of the button that opened it, ColorOS style: the
-/// button's coloured shape grows into the full page (handing over to the page as it
-/// grows), and closing shrinks the page back into the button.
+/// button's coloured circle swells into a round bubble, then fills the screen (handing over
+/// to the page as it grows), and closing shrinks the page back into the button.
 class MorphPageRoute<T> extends PageRoute<T> {
   MorphPageRoute({required this.builder, required this.source, required this.color});
 
@@ -20,20 +19,20 @@ class MorphPageRoute<T> extends PageRoute<T> {
 
   Rect? _sourceRect;
 
-  /// Material's emphasized curves: opening eases out of the button and slows gently into
-  /// place (a spring, or the decelerate curve, did most of its moving in the first ~100 ms);
-  /// closing speeds up into the button.
-  static const _open = Cubic(0.2, 0, 0, 1);
-  static const _close = Cubic(0.3, 0, 0.8, 0.15);
+  /// An even glide: speeds up out of the button and slows into place symmetrically, with no
+  /// long tail where it seems to stall (Material's emphasized curve spent its last ~40%
+  /// barely moving).
+  static const _glide = Curves.easeInOutCubic;
 
   @override
-  Duration get transitionDuration => const Duration(milliseconds: 600);
+  Duration get transitionDuration => const Duration(milliseconds: 500);
 
   @override
-  Duration get reverseTransitionDuration => const Duration(milliseconds: 400);
+  Duration get reverseTransitionDuration => const Duration(milliseconds: 420);
 
-  // See-through while it morphs, so the page below shows around the shape; opaque once
-  // open, so that page stops painting under it.
+  // See-through, so the page below shows around the shape. Kept see-through once open too:
+  // making it opaque stopped painting the page below, and bringing it back when closing
+  // cost a ~200 ms frame right as the shrink began.
   @override
   bool get opaque => false;
 
@@ -45,15 +44,6 @@ class MorphPageRoute<T> extends PageRoute<T> {
 
   @override
   bool get maintainState => true;
-
-  @override
-  void install() {
-    super.install();
-    animation!.addStatusListener((status) {
-      if (overlayEntries.isEmpty) return;
-      overlayEntries.last.opaque = status == AnimationStatus.completed;
-    });
-  }
 
   /// Where the button is, relative to the navigator (`DesignWidth` scales the app, so
   /// screen pixels aren't layout pixels); the last known spot if it's gone.
@@ -86,19 +76,19 @@ class MorphPageRoute<T> extends PageRoute<T> {
           animation: animation,
           child: child,
           builder: (context, child) {
-            final closing = animation.status == AnimationStatus.reverse;
-            // v is time (0 → 1 opening, 1 → 0 closing); t is how far the shape has grown.
-            final v = animation.value;
-            final t = (closing ? 1 - _close.transform(1 - v) : _open.transform(v)).clamp(0.0, 1.0);
+            // The same curve both ways, so closing is opening played back.
+            final t = _glide.transform(animation.value);
             // The same tree on every frame, open or not: changing it would rebuild the page's state.
             final from = _measure() ?? Rect.fromCenter(center: full.center, width: 56, height: 56);
-            final rect = Rect.lerp(from, full, t)!;
-            // A card's rounded corners until the very end, then square with the screen.
-            final radius = t < .85
-                ? lerpDouble(from.shortestSide / 2, 28, t / .85)!
-                : lerpDouble(28, 0, (t - .85) / .15)!;
-            // Fades run on time, not on the decelerating growth (which is mostly done early).
-            double phase(double from, double to) => ((v - from) / (to - from)).clamp(0.0, 1.0);
+            // Width leads and height follows, so it swells as a round bubble before it
+            // stretches to fill the screen.
+            final width = lerpDouble(from.width, full.width, t)!;
+            final height = lerpDouble(from.height, full.height, Curves.easeInQuad.transform(t))!;
+            final center = Offset.lerp(from.center, full.center, t)!;
+            final rect = Rect.fromCenter(center: center, width: width, height: height);
+            // As round as the shape allows for most of the way, squaring off with the screen
+            // only at the very end.
+            final radius = (rect.shortestSide / 2) * (1 - Curves.easeInQuart.transform(t));
             return Stack(
               children: [
                 // The page below recedes a little.
@@ -110,30 +100,26 @@ class MorphPageRoute<T> extends PageRoute<T> {
                 ),
                 Positioned.fromRect(
                   rect: rect,
-                  child: ClipRSuperellipse(
+                  child: ClipRRect(
                     borderRadius: BorderRadius.circular(radius),
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
                         ColoredBox(color: background),
-                        // Laid out at full size and only scaled, so its layout never changes mid-morph.
+                        // Laid out at full size and only scaled, so its layout never changes
+                        // mid-morph; never faded (a full-page fade is a costly layer every frame).
                         OverflowBox(
                           alignment: Alignment.topLeft,
                           minWidth: full.width,
                           maxWidth: full.width,
                           minHeight: full.height,
                           maxHeight: full.height,
-                          child: Transform.scale(
-                            scale: rect.width / full.width,
-                            alignment: Alignment.topLeft,
-                            child: Opacity(opacity: phase(.08, .35), child: child),
-                          ),
+                          child: Transform.scale(scale: width / full.width, alignment: Alignment.topLeft, child: child),
                         ),
-                        // The button's colour, handing over to the page as it grows.
+                        // The button's colour over it, clearing as it grows: a cheap colour change.
                         IgnorePointer(
-                          child: Opacity(
-                            opacity: 1 - phase(0, .25),
-                            child: ColoredBox(color: color),
+                          child: ColoredBox(
+                            color: color.withValues(alpha: 1 - Curves.easeOut.transform((t / .45).clamp(0.0, 1.0))),
                           ),
                         ),
                       ],
