@@ -1,4 +1,5 @@
 import 'package:dialer/features/recents/call_log.dart';
+import 'package:dialer/features/recents/call_log_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 CallLogEntry call(int id, String number, DateTime date, {CallType type = CallType.incoming, bool private = false}) =>
@@ -66,5 +67,13 @@ void main() {
     expect(shown(CallFilter.outgoing), [CallType.outgoing]);
     expect(shown(CallFilter.incoming), [CallType.incoming]);
     expect(shown(CallFilter.missed, hideBlocked: false), [CallType.missed]); // blocked only under All
+  });
+
+  test('a reload with the same rows is skipped; any changed field is not', () {
+    final rows = [call(1, '0300', now), call(2, '0301', now, type: CallType.missed)];
+    final same = [call(1, '0300', now), call(2, '0301', now, type: CallType.missed)];
+    expect(CallLogRepository.sameCalls(rows, same), isTrue);
+    expect(CallLogRepository.sameCalls(rows, [same.first]), isFalse);
+    expect(CallLogRepository.sameCalls(rows, [same.first, call(2, '0301', now)]), isFalse);
   });
 }

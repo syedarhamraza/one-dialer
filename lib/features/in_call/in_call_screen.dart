@@ -43,7 +43,7 @@ class _InCallScreenState extends State<InCallScreen> {
   void initState() {
     super.initState();
     // Caller lookup must not prevent answering if a contacts provider is unavailable.
-    ContactsRepository.instance.start().catchError((Object _) {});
+    ContactsRepository.instance.start(preloadPhotos: true).catchError((Object _) {});
     _loadSims();
     // The backdrop works without it (the aurora), so a failure is only logged.
     TelecomBridge.instance.loadWallpaperBackdrop().catchError((Object e) => debugPrint('Wallpaper backdrop: $e'));

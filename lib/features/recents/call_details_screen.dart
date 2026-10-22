@@ -59,73 +59,86 @@ class CallDetailsScreen extends StatelessWidget {
                     ];
               final name = callerName(call);
               final isContact = ContactsRepository.instance.nameFor(call.number) != null;
-              return ListView(
+              return CustomScrollView(
                 physics: const OneUIScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(16, padding.top + 8 + _button + 16, 16, padding.bottom + 32),
-                children: [
-                  Center(child: LetterAvatar(name: call.isPrivate ? '' : name, size: 112)),
-                  const SizedBox(height: 16),
-                  Text(
-                    name,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w600, letterSpacing: -0.4),
-                  ),
-                  if (name != call.number && !call.isPrivate) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      call.number,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 15, color: OneUITheme.textSecondary),
-                    ),
-                  ],
-                  const SizedBox(height: 28),
-                  if (!call.isPrivate) ...[
-                    Row(
-                      spacing: 12,
-                      children: [
-                        Expanded(
-                          child: DetailsActionTile(
-                            key: callTileKey,
-                            icon: Icons.call_rounded,
-                            label: 'Call',
-                            // The SIM menu (no SIM logged for this call) pops from the tile.
-                            onTap: () => placeCall(context, call.number, simId: call.simId, anchorKey: callTileKey),
-                          ),
+                slivers: [
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(16, padding.top + 8 + _button + 16, 16, padding.bottom + 32),
+                    sliver: SliverMainAxisGroup(
+                      slivers: [
+                        SliverList.list(
+                          children: [
+                            Center(child: LetterAvatar(name: call.isPrivate ? '' : name, size: 112)),
+                            const SizedBox(height: 16),
+                            Text(
+                              name,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w600, letterSpacing: -0.4),
+                            ),
+                            if (name != call.number && !call.isPrivate) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                call.number,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(fontSize: 15, color: OneUITheme.textSecondary),
+                              ),
+                            ],
+                            const SizedBox(height: 28),
+                            if (!call.isPrivate) ...[
+                              Row(
+                                spacing: 12,
+                                children: [
+                                  Expanded(
+                                    child: DetailsActionTile(
+                                      key: callTileKey,
+                                      icon: Icons.call_rounded,
+                                      label: 'Call',
+                                      // The SIM menu (no SIM logged for this call) pops from the tile.
+                                      onTap: () =>
+                                          placeCall(context, call.number, simId: call.simId, anchorKey: callTileKey),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: DetailsActionTile(
+                                      icon: Icons.chat_bubble_rounded,
+                                      label: 'Message',
+                                      onTap: () => TelecomBridge.instance.sendSms(call.number),
+                                    ),
+                                  ),
+                                  if (!isContact)
+                                    Expanded(
+                                      child: DetailsActionTile(
+                                        icon: Icons.person_add_alt_1_rounded,
+                                        label: 'Add',
+                                        onTap: () => showAddToContacts(context, call.number),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                            ],
+                            const Padding(
+                              padding: EdgeInsets.only(left: 18, bottom: 8),
+                              child: Text('Call logs', style: TextStyle(fontSize: 15, color: OneUITheme.textSecondary)),
+                            ),
+                          ],
                         ),
-                        Expanded(
-                          child: DetailsActionTile(
-                            icon: Icons.chat_bubble_rounded,
-                            label: 'Message',
-                            onTap: () => TelecomBridge.instance.sendSms(call.number),
-                          ),
-                        ),
-                        if (!isContact)
-                          Expanded(
-                            child: DetailsActionTile(
-                              icon: Icons.person_add_alt_1_rounded,
-                              label: 'Add',
-                              onTap: () => showAddToContacts(context, call.number),
+                        // Lazy: a number called every day has hundreds of rows.
+                        ValueListenableBuilder(
+                          valueListenable: DialerPrefs.instance.changes,
+                          builder: (context, _, _) => FutureBuilder(
+                            future: DialerPrefs.instance.callNotes(call.number),
+                            builder: (context, notes) => DetailsCardSliver(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              itemCount: history.length,
+                              itemBuilder: (context, i) => _HistoryRow(
+                                call: history[i],
+                                notes: notesFor(history[i], history, notes.data ?? const []),
+                              ),
                             ),
                           ),
+                        ),
                       ],
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                  const Padding(
-                    padding: EdgeInsets.only(left: 18, bottom: 8),
-                    child: Text('Call logs', style: TextStyle(fontSize: 15, color: OneUITheme.textSecondary)),
-                  ),
-                  ValueListenableBuilder(
-                    valueListenable: DialerPrefs.instance.changes,
-                    builder: (context, _, _) => FutureBuilder(
-                      future: DialerPrefs.instance.callNotes(call.number),
-                      builder: (context, notes) => DetailsCard(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        children: [
-                          for (final c in history)
-                            _HistoryRow(call: c, notes: notesFor(c, history, notes.data ?? const [])),
-                        ],
-                      ),
                     ),
                   ),
                 ],

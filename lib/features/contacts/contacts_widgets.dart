@@ -71,7 +71,7 @@ class ContactRow extends StatelessWidget {
         child: Row(
           children: [
             selectMark,
-            LetterAvatar(name: contact.name, photo: contact.thumbnail),
+            ContactAvatar(id: contact.id, name: contact.name),
             const SizedBox(width: 14),
             Expanded(
               child: Container(

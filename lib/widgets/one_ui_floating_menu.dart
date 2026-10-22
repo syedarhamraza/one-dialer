@@ -91,6 +91,9 @@ class OneUIFloatingMenu {
       await Navigator.of(context).push(
         PageRouteBuilder<void>(
           opaque: false,
+          // Leaves focus where it is: taking it would close the keyboard under the menu (and
+          // reopen it after), relaying out the page behind every frame of both animations.
+          requestFocus: false,
           barrierDismissible: true,
           barrierColor: Colors.transparent,
           barrierLabel: 'Dismiss menu',

@@ -352,13 +352,10 @@ class _ResultTile extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
         child: Row(
           children: [
-            LetterAvatar(
-              name: name,
-              photo: switch (match.entry) {
-                DialerContact(:final thumbnail) => thumbnail,
-                _ => null,
-              },
-            ),
+            switch (match.entry) {
+              DialerContact(:final id) => ContactAvatar(id: id, name: name),
+              _ => LetterAvatar(name: name),
+            },
             const SizedBox(width: 14),
             Expanded(
               child: Column(

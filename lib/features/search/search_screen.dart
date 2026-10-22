@@ -184,7 +184,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 children: [
                   for (final (i, h) in list.indexed)
                     _ResultRow(
-                      avatar: LetterAvatar(name: h.contact.name, photo: h.contact.thumbnail, size: 36),
+                      avatar: ContactAvatar(id: h.contact.id, name: h.contact.name, size: 36),
                       title: _highlighted(h.contact.name, h.nameRange, 19),
                       subtitle: _highlighted(h.number, h.numberRange, 15, color: OneUITheme.textSecondary),
                       divider: i > 0,

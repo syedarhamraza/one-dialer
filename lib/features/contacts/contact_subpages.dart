@@ -5,6 +5,7 @@ import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/cos_subpage.dart';
+import '../../widgets/one_ui_subpage.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/press_glow.dart';
 import '../recents/call_log.dart';
@@ -63,28 +64,32 @@ class _ContactHistoryScreenState extends State<ContactHistoryScreen> {
             if (keys.contains(numberKey(c.number))) c,
         ];
         final now = DateTime.now();
-        return CosSubpage(
+        return OneUISubpage(
           title: 'Call logs',
-          children: [
+          slivers: (context) => [
             if (calls.isEmpty)
-              const Padding(
-                padding: EdgeInsets.fromLTRB(32, 120, 32, 0),
-                child: Column(
-                  children: [
-                    Icon(Icons.watch_later_outlined, size: 40, color: OneUITheme.textSecondary),
-                    SizedBox(height: 12),
-                    Text(
-                      'No calls with this contact yet',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: OneUITheme.textSecondary),
-                    ),
-                  ],
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(32, 120, 32, 0),
+                  child: Column(
+                    children: [
+                      Icon(Icons.watch_later_outlined, size: 40, color: OneUITheme.textSecondary),
+                      SizedBox(height: 12),
+                      Text(
+                        'No calls with this contact yet',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: OneUITheme.textSecondary),
+                      ),
+                    ],
+                  ),
                 ),
               )
             else
-              DetailsCard(
+              DetailsCardSliver(
                 padding: const EdgeInsets.fromLTRB(18, 6, 18, 6),
-                children: [for (final c in calls) ContactCallLogRow(call: c, simBadge: _simBadge(c.simId), now: now)],
+                itemCount: calls.length,
+                itemBuilder: (context, i) =>
+                    ContactCallLogRow(call: calls[i], simBadge: _simBadge(calls[i].simId), now: now),
               ),
           ],
         );
