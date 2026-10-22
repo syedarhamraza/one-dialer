@@ -177,9 +177,10 @@ class _PopoverMenu extends StatelessWidget {
                       child: ClipRSuperellipse(
                         borderRadius: BorderRadius.all(Radius.circular(OneUIFloatingMenu._radius * scale)),
                         // The fade goes inside the blur (an Opacity around a BackdropFilter
-                        // would cut it off from the backdrop); the blur itself ramps with it.
+                        // would cut it off from the backdrop); the blur is at full strength from
+                        // the first frame, so its filter doesn't change every frame.
                         child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: sigma * fade * scale, sigmaY: sigma * fade * scale),
+                          filter: ImageFilter.blur(sigmaX: sigma * scale, sigmaY: sigma * scale),
                           child: Opacity(
                             opacity: fade,
                             child: OverflowBox(
