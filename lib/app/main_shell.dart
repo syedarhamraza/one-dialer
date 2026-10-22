@@ -9,7 +9,6 @@ import '../features/keypad/keypad_screen.dart';
 import '../features/recents/call_log_repository.dart';
 import '../features/recents/recents_screen.dart';
 import '../widgets/one_ui_floating_nav_bar.dart';
-import '../widgets/one_ui_status_bar_scrim.dart';
 import '../theme/one_ui_theme.dart';
 import '../widgets/press_glow.dart';
 import 'layout.dart';
@@ -102,7 +101,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     // Hosted like OneSpend's home shell: the bar floats over the tabs in a Stack (it
-    // fills its parent's height), under a top status-bar scrim. The keypad sheet sits
+    // fills its parent's height); each tab draws its own top scrim. The keypad sheet sits
     // over Calls, above the bar's baseline. Tabs pad themselves with navBarClearance().
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -123,7 +122,6 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
               ],
             ),
           ),
-          const Positioned(top: 0, left: 0, right: 0, child: OneUIStatusBarScrim()),
           const Positioned(top: 0, left: 0, right: 0, child: ReturnToCallBanner()),
           Positioned(
             left: 0,

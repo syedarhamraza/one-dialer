@@ -14,6 +14,7 @@ import '../../widgets/call_glass.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_floating_action_bar.dart';
 import '../../widgets/one_ui_floating_menu.dart';
+import '../../widgets/one_ui_status_bar_scrim.dart';
 import '../../widgets/round_header_controls.dart';
 import '../../widgets/swipe_to_call.dart';
 import '../contacts/editor/add_to_contacts.dart';
@@ -223,7 +224,10 @@ class _RecentsScreenState extends State<RecentsScreen> {
         SliverAppBar(
           pinned: true,
           automaticallyImplyLeading: false,
-          backgroundColor: Colors.black,
+          backgroundColor: Colors.transparent,
+          // The page's top blur sits behind the header's pills, not over them.
+          // Ends at the bar's bottom: the big title right under it stays sharp.
+          flexibleSpace: OneUIStatusBarScrim(height: MediaQuery.paddingOf(context).top + kHeaderBarHeight),
           surfaceTintColor: Colors.transparent,
           scrolledUnderElevation: 0,
           toolbarHeight: kHeaderBarHeight,
