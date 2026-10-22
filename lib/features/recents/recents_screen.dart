@@ -632,7 +632,7 @@ class _CallRow extends StatelessWidget {
         child: Row(
           children: [
             selectMark,
-            LetterAvatar(name: call.isPrivate ? '' : name),
+            CallerAvatar(number: call.number, name: name, isPrivate: call.isPrivate),
             const SizedBox(width: 14),
             Expanded(
               child: Column(

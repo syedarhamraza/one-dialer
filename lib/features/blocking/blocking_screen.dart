@@ -50,7 +50,9 @@ class _BlockingScreenState extends State<BlockingScreen> {
       ],
     );
     if (!mounted || choice == null) return;
-    final numbers = choice == 'type' ? [?await _typeNumber()] : (await pickContact(context, title: 'Block contact'))?.numbers;
+    final numbers = choice == 'type'
+        ? [?await _typeNumber()]
+        : (await pickContact(context, title: 'Block contact'))?.numbers;
     for (final n in numbers ?? const <String>[]) {
       await _repo.setBlocked(n, true);
     }
@@ -77,82 +79,90 @@ class _BlockingScreenState extends State<BlockingScreen> {
   @override
   Widget build(BuildContext context) {
     return OneUISubpage(
-      title: 'Block numbers',
+      title: 'Block & filter',
       listenable: Listenable.merge([
         _repo.numbers,
         _repo.rules,
         _repo.hasScreeningRole,
         CallLogRepository.instance.calls,
       ]),
-      builder: (context) {
+      // Slivers: the blocked numbers and calls build lazily.
+      slivers: (context) {
         final rules = _repo.rules.value;
-        final blockedCalls = CallLogRepository.instance.calls.value
-            .where((c) => c.type == CallType.blocked)
-            .take(50)
-            .toList();
+        final blockedCalls = CallLogRepository.instance.calls.value.where((c) => c.type == CallType.blocked).toList();
+        final numbers = _repo.numbers.value;
         return [
           if ((rules.blockHidden || rules.blockNonContacts) && !_repo.hasScreeningRole.value)
-            OneUIGroupCard(
+            SliverToBoxAdapter(
+              child: OneUIGroupCard(
+                items: [
+                  OneUIGroupItem(
+                    leading: const Icon(Icons.warning_amber_rounded, color: OneUITheme.accentRed),
+                    title: 'Blocking rules are paused',
+                    subtitle: 'Another app screens your calls. Tap to let Dialer screen them.',
+                    subtitleColor: OneUITheme.accentRed,
+                    onTap: () => _setRules(blockHidden: rules.blockHidden, blockNonContacts: rules.blockNonContacts),
+                  ),
+                ],
+              ),
+            ),
+          SliverToBoxAdapter(
+            child: OneUIGroupCard(
               items: [
-                OneUIGroupItem(
-                  leading: const Icon(Icons.warning_amber_rounded, color: OneUITheme.accentRed),
-                  title: 'Blocking rules are paused',
-                  subtitle: 'Another app screens your calls. Tap to let Dialer screen them.',
-                  subtitleColor: OneUITheme.accentRed,
-                  onTap: () => _setRules(blockHidden: rules.blockHidden, blockNonContacts: rules.blockNonContacts),
+                _switch(
+                  title: 'Block unknown/private numbers',
+                  subtitle: 'Callers who hide their number',
+                  value: rules.blockHidden,
+                  onChanged: (v) => _setRules(blockHidden: v, blockNonContacts: rules.blockNonContacts),
+                ),
+                _switch(
+                  title: 'Block calls from numbers not in Contacts',
+                  subtitle: 'Only your contacts can ring you',
+                  value: rules.blockNonContacts,
+                  onChanged: (v) => _setRules(blockHidden: rules.blockHidden, blockNonContacts: v),
                 ),
               ],
             ),
-          OneUIGroupCard(
-            items: [
-              _switch(
-                title: 'Block unknown/private numbers',
-                subtitle: 'Callers who hide their number',
-                value: rules.blockHidden,
-                onChanged: (v) => _setRules(blockHidden: v, blockNonContacts: rules.blockNonContacts),
-              ),
-              _switch(
-                title: 'Block calls from numbers not in Contacts',
-                subtitle: 'Only your contacts can ring you',
-                value: rules.blockNonContacts,
-                onChanged: (v) => _setRules(blockHidden: rules.blockHidden, blockNonContacts: v),
-              ),
-            ],
           ),
-          OneUIGroupCard(
+          OneUIGroupCardSliver(
             headerTitle: 'Blocked numbers',
-            items: [
-              OneUIGroupItem(
-                leading: Icon(Icons.add_rounded, key: _addKey, color: OneUITheme.accentBlue),
-                title: 'Add number',
-                onTap: _add,
-                trailing: const SizedBox.shrink(),
-              ),
-              for (final n in _repo.numbers.value)
-                OneUIGroupItem(
-                  title: ContactsRepository.instance.nameFor(n) ?? n,
-                  subtitle: ContactsRepository.instance.nameFor(n) == null ? null : n,
-                  trailing: IconButton(
-                    tooltip: 'Unblock',
-                    icon: const Icon(Icons.remove_circle_outline_rounded, color: OneUITheme.accentRed),
-                    onPressed: () => _repo.setBlocked(n, false),
-                  ),
+            itemCount: numbers.length + 1,
+            itemBuilder: (context, i) {
+              if (i == 0) {
+                return OneUIGroupItem(
+                  leading: Icon(Icons.add_rounded, key: _addKey, color: OneUITheme.accentBlue),
+                  title: 'Add number',
+                  onTap: _add,
+                  trailing: const SizedBox.shrink(),
+                );
+              }
+              final n = numbers[i - 1];
+              final name = ContactsRepository.instance.nameFor(n);
+              return OneUIGroupItem(
+                title: name ?? n,
+                subtitle: name == null ? null : n,
+                trailing: IconButton(
+                  tooltip: 'Unblock',
+                  icon: const Icon(Icons.remove_circle_outline_rounded, color: OneUITheme.accentRed),
+                  onPressed: () => _repo.setBlocked(n, false),
                 ),
-            ],
+              );
+            },
           ),
           if (blockedCalls.isNotEmpty)
-            OneUIGroupCard(
+            OneUIGroupCardSliver(
               headerTitle: 'Blocked calls',
-              items: [
-                for (final c in blockedCalls)
-                  OneUIGroupItem(
-                    leading: const Icon(Icons.block_rounded, color: OneUITheme.textSecondary),
-                    title: callerName(c),
-                    subtitle: '${dayLabel(c.date, DateTime.now())}, ${timeLabel(c.date)}',
-                    onTap: () =>
-                        Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => CallDetailsScreen(call: c))),
-                  ),
-              ],
+              itemCount: blockedCalls.length,
+              itemBuilder: (context, i) {
+                final c = blockedCalls[i];
+                return OneUIGroupItem(
+                  leading: const Icon(Icons.block_rounded, color: OneUITheme.textSecondary),
+                  title: callerName(c),
+                  subtitle: '${dayLabel(c.date, DateTime.now())}, ${timeLabel(c.date)}',
+                  onTap: () =>
+                      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => CallDetailsScreen(call: c))),
+                );
+              },
             ),
         ];
       },

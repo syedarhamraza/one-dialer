@@ -60,6 +60,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
 
     /** Set by [MainActivity]: opens the photo picker; the result is JPEG bytes or null. */
     var photoPicker: ((MethodChannel.Result) -> Unit)? = null
+    var photoTaker: ((MethodChannel.Result) -> Unit)? = null
 
     /** Set by [MainActivity]: the system ringtone picker; the result is the picked URI, "" for Default, null if cancelled. */
     var ringtonePicker: ((String?, MethodChannel.Result) -> Unit)? = null
@@ -155,6 +156,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
             "pickRingtone" -> ringtonePicker?.invoke(call.argument<String>("current"), result)
                 ?: result.error("NO_ACTIVITY", "Ringtones can only be picked from the main screen", null)
             "pickPhoto" -> photoPicker?.invoke(result)
+            "takePhoto" -> photoTaker?.invoke(result)
                 ?: result.error("NO_ACTIVITY", "Photos can only be picked from the main screen", null)
             "getQuickReplies" -> result.success(com.syedarhamraza.dialer.telecom.QuickReplies.read(context))
             "setQuickReplies" -> {
@@ -280,6 +282,8 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
             page == "fullScreen" && android.os.Build.VERSION.SDK_INT >= 34 ->
                 android.content.Intent(android.provider.Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:$pkg"))
             page == "defaultApps" -> android.content.Intent(android.provider.Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
+            // The SIM provider's call settings (forwarding, waiting, caller ID), from the phone service.
+            page == "carrier" -> android.content.Intent(android.telecom.TelecomManager.ACTION_SHOW_CALL_SETTINGS)
             // Android's "Contacts storage": the default account for new contacts (vivo hides it from its menus).
             page == "contactsStorage" -> android.content.Intent("android.provider.action.SET_DEFAULT_ACCOUNT")
             page == "googleContactsSync" -> android.content.Intent("com.google.android.gms.people.sync.CONTACTS_SYNC_SETTINGS")

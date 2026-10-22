@@ -11,7 +11,7 @@ import '../../core/config/changelog.dart';
 import '../updates/data/update_service.dart';
 import '../updates/presentation/update_controller.dart';
 import '../../theme/one_ui_theme.dart';
-import '../../widgets/one_ui_ambient_glow.dart';
+import '../../widgets/cos_artwork.dart';
 import '../../widgets/one_ui_cancel_save_pill.dart';
 import '../../widgets/round_header_controls.dart';
 import '../../widgets/one_ui_floating_menu.dart';
@@ -23,8 +23,8 @@ import '../../widgets/one_ui_toast.dart';
 import 'changelog_screen.dart';
 import '../../core/haptics/haptics.dart';
 
-/// Settings › Software update, in the style of One UI's own Software update page:
-/// the version over a soft glow, the result of the last check, and one big button.
+/// Settings › Software update, in the style of ColorOS 17's: the version over the ColorOS
+/// artwork, the result of the last check (or the update's cards), and one big button.
 /// Google Play in-app updates do the work: the update downloads in the background while
 /// the app stays usable, then "Install and restart" finishes it.
 class SoftwareUpdateScreen extends StatefulWidget {
@@ -123,7 +123,7 @@ class _SoftwareUpdateScreenState extends State<SoftwareUpdateScreen> {
             Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const _AutoDownloadScreen()));
           },
         ),
-        OneUIFloatingMenuItem(label: 'Changelog', onTap: () => ChangelogScreen.open(context)),
+        OneUIFloatingMenuItem(label: "What's new", onTap: () => ChangelogScreen.open(context)),
       ],
     );
   }
@@ -145,20 +145,26 @@ class _SoftwareUpdateScreenState extends State<SoftwareUpdateScreen> {
             UpdateStatus.failed || UpdateStatus.offline => 'Try again',
             UpdateStatus.upToDate || UpdateStatus.notFromPlay => null,
           };
+          // ColorOS shows the version card and notes only while there's an update to get.
+          final hasUpdate =
+              status == UpdateStatus.available ||
+              status == UpdateStatus.downloading ||
+              status == UpdateStatus.readyToInstall;
           return Stack(
             children: [
-              // One UI's blue and amber halo behind the version.
-              OneUIAmbientGlow(
-                color: OneUITheme.accentBlue,
-                center: Alignment(0.22, -0.16),
-                radius: 0.62,
-                alphas: [0.34, 0.16, 0.04, 0.0],
-              ),
-              OneUIAmbientGlow(
-                color: OneUITheme.accentOrange,
-                center: Alignment(-0.24, 0.12),
-                radius: 0.56,
-                alphas: [0.24, 0.10, 0.02, 0.0],
+              // ColorOS's artwork, fading to black where the cards sit.
+              const Positioned.fill(child: CosArtwork()),
+              const Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0x00000000), Color(0x00000000), Color(0xE6000000), Color(0xFF000000)],
+                      stops: [0, 0.45, 0.72, 1],
+                    ),
+                  ),
+                ),
               ),
               SafeArea(
                 child: Column(
@@ -172,7 +178,15 @@ class _SoftwareUpdateScreenState extends State<SoftwareUpdateScreen> {
                             tooltip: 'Back',
                             onTap: () => Navigator.of(context).maybePop(),
                           ),
-                          const Spacer(),
+                          const SizedBox(width: 14),
+                          const Expanded(
+                            child: Text(
+                              'Software update',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, letterSpacing: -0.3),
+                            ),
+                          ),
                           // The menu opens from this wrapper (see the Calls header's menu).
                           KeyedSubtree(
                             key: _moreKey,
@@ -185,13 +199,12 @@ class _SoftwareUpdateScreenState extends State<SoftwareUpdateScreen> {
                         ],
                       ),
                     ),
-                    Expanded(
-                      child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 32),
-                          child: _Headline(status: status),
-                        ),
-                      ),
+                    const Expanded(child: Center(child: _Hero())),
+                    AnimatedSwitcher(
+                      duration: transition,
+                      child: hasUpdate
+                          ? const _UpdateCards(key: ValueKey('cards'))
+                          : _StatusLine(key: const ValueKey('status'), status: status),
                     ),
                     SizedBox(
                       height: 96,
@@ -232,30 +245,12 @@ class _SoftwareUpdateScreenState extends State<SoftwareUpdateScreen> {
   }
 }
 
-/// "Dialer 1.0.0", the pre-release channel, and what the last check found.
-class _Headline extends StatelessWidget {
-  final UpdateStatus status;
-
-  const _Headline({required this.status});
+/// ColorOS's big version over the artwork: "1.0", "One Dialer", and the channel.
+class _Hero extends StatelessWidget {
+  const _Hero();
 
   @override
   Widget build(BuildContext context) {
-    final (message, color) = switch (status) {
-      UpdateStatus.notChecked || UpdateStatus.checking => (null, OneUITheme.textSecondary),
-      UpdateStatus.upToDate => ('One Dialer is up to date.', OneUITheme.textSecondary),
-      UpdateStatus.available => ('A new version is available.', OneUITheme.accentBlue),
-      UpdateStatus.downloading => ('Downloading the update… You can keep using One Dialer.', OneUITheme.textSecondary),
-      UpdateStatus.readyToInstall => ('The update is ready to install.', OneUITheme.accentBlue),
-      UpdateStatus.offline => (
-        'No internet connection. Connect to Wi-Fi or mobile data and try again.',
-        OneUITheme.textSecondary,
-      ),
-      UpdateStatus.notFromPlay => (
-        "Updates come from Google Play. This copy wasn't installed from Play.",
-        OneUITheme.textSecondary,
-      ),
-      UpdateStatus.failed => ("Couldn't reach Google Play.", OneUITheme.textSecondary),
-    };
     return FutureBuilder<AppVersion?>(
       future: AppVersion.current(),
       builder: (context, snapshot) {
@@ -263,55 +258,148 @@ class _Headline extends StatelessWidget {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                v == null ? AppInfo.name : '${AppInfo.name} ${v.number}',
-                maxLines: 1,
-                style: const TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -1,
-                  color: OneUITheme.textPrimary,
-                ),
-              ),
+            Text(
+              v == null ? '' : '${v.major}.${v.minor}',
+              style: const TextStyle(fontSize: 96, height: 1, fontWeight: FontWeight.w700, letterSpacing: -3),
             ),
-            if (v != null && v.isPreRelease) ...[
-              const SizedBox(height: 2),
-              Text(v.channelLabel, style: const TextStyle(fontSize: 16, color: OneUITheme.textSecondary)),
-            ],
-            // A fixed slot, so the title stays put when a message appears.
-            ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 72, minWidth: double.infinity),
-              child: AnimatedSwitcher(
-                duration: _SoftwareUpdateScreenState.transition,
-                switchInCurve: Curves.easeOutCubic,
-                switchOutCurve: Curves.easeInCubic,
-                layoutBuilder: (current, previous) =>
-                    Stack(alignment: Alignment.topCenter, children: [...previous, ?current]),
-                transitionBuilder: (child, animation) => FadeTransition(
-                  opacity: animation,
-                  child: SlideTransition(
-                    position: Tween<Offset>(begin: const Offset(0, 0.15), end: Offset.zero).animate(animation),
-                    child: child,
-                  ),
-                ),
-                child: message == null
-                    ? const SizedBox(key: ValueKey('none'), width: double.infinity)
-                    : Padding(
-                        key: ValueKey(message),
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text(
-                          message,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 16, height: 1.35, color: color),
-                        ),
-                      ),
-              ),
-            ),
+            const Text(AppInfo.name, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
+            if (v != null && v.isPreRelease)
+              Text(v.channelLabel, style: const TextStyle(fontSize: 14, color: Color(0xCCFFFFFF))),
           ],
         );
       },
+    );
+  }
+}
+
+/// What the last check found, centred under the artwork ("No network connection").
+class _StatusLine extends StatelessWidget {
+  const _StatusLine({super.key, required this.status});
+
+  final UpdateStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final message = switch (status) {
+      UpdateStatus.notChecked => '',
+      UpdateStatus.checking => 'Checking for updates…',
+      UpdateStatus.upToDate => 'Version up to date',
+      UpdateStatus.offline => 'No network connection',
+      UpdateStatus.notFromPlay => "Updates come from Google Play. This copy wasn't installed from Play.",
+      UpdateStatus.failed => "Couldn't reach Google Play",
+      UpdateStatus.available || UpdateStatus.downloading || UpdateStatus.readyToInstall => '',
+    };
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: SizedBox(
+        height: 48,
+        child: Center(
+          child: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 15, height: 1.35, color: Color(0xE6FFFFFF)),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// ColorOS's "Software version" card and the collapsible "About this update" notes.
+class _UpdateCards extends StatefulWidget {
+  const _UpdateCards({super.key});
+
+  @override
+  State<_UpdateCards> createState() => _UpdateCardsState();
+}
+
+class _UpdateCardsState extends State<_UpdateCards> {
+  bool _open = true;
+
+  @override
+  Widget build(BuildContext context) {
+    // Play doesn't say what's in the update, so the notes are the newest written ones.
+    final notes = Changelog.entries.first;
+    final card = BoxDecoration(color: const Color(0xF21C1C1E), borderRadius: OneUITheme.cardBorderRadius);
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.42),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+              decoration: card,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Text('Software version', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+                      const SizedBox(width: 8),
+                      if (notes.version.contains('-'))
+                        const Text('Closed beta', style: TextStyle(fontSize: 13, color: OneUITheme.textSecondary)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${AppInfo.name} ${notes.version}',
+                    style: const TextStyle(fontSize: 14, color: OneUITheme.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              decoration: card,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  InkWell(
+                    borderRadius: OneUITheme.cardBorderRadius,
+                    onTap: () => setState(() => _open = !_open),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 16, 14, 16),
+                      child: Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'About this update',
+                              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          Icon(
+                            _open ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                            color: OneUITheme.textSecondary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (_open)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (final change in notes.changes)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: Text(
+                                change,
+                                style: const TextStyle(fontSize: 15, height: 1.35, color: Color(0xDDFFFFFF)),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -345,7 +433,7 @@ class _UpdateButton extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: SizedBox(
-            width: 224,
+            width: MediaQuery.sizeOf(context).width - 48,
             height: 54,
             child: Center(
               child: AnimatedSwitcher(

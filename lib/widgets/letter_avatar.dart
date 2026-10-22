@@ -108,3 +108,22 @@ class ContactAvatar extends StatelessWidget {
     );
   }
 }
+
+/// A call's avatar: the saved contact's (with their photo) when the number is one, else
+/// initials from [name] (a person icon for hidden callers).
+class CallerAvatar extends StatelessWidget {
+  const CallerAvatar({super.key, required this.number, required this.name, this.isPrivate = false, this.size = 42});
+
+  final String number;
+  final String name;
+  final bool isPrivate;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final contact = isPrivate ? null : ContactsRepository.instance.contactFor(number);
+    return contact == null
+        ? LetterAvatar(name: isPrivate ? '' : name, size: size)
+        : ContactAvatar(id: contact.id, name: contact.name, size: size);
+  }
+}

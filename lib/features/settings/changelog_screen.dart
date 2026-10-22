@@ -2,14 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../../app/app_info.dart';
 import '../../core/config/app_version.dart';
 import '../../core/config/changelog.dart';
 import '../../theme/one_ui_theme.dart';
+import '../../widgets/cos_artwork.dart';
 import '../../widgets/one_ui_card.dart';
 import '../../widgets/one_ui_subpage.dart';
 import '../../core/haptics/haptics.dart';
 
-/// Settings › Software update › Changelog: the installed version's notes in a card,
+/// Settings › What's new (also Software update › Changelog): the installed version's notes in a card,
 /// then earlier versions collapsed to one row each.
 class ChangelogScreen extends StatefulWidget {
   const ChangelogScreen({super.key});
@@ -50,8 +52,28 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
     final latest = Changelog.entries.first;
     final earlier = Changelog.entries.skip(1).toList();
     return OneUISubpage(
-      title: 'Changelog',
+      title: "What's new",
       builder: (context) => [
+        // ColorOS's artwork as the page's banner.
+        ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: SizedBox(
+            height: 170,
+            child: Stack(
+              children: [
+                const Positioned.fill(child: CosArtwork()),
+                Center(
+                  child: Text(
+                    "What's new in\n${AppInfo.name}",
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 28, height: 1.15, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
         FutureBuilder(
           future: _installed,
           builder: (context, snapshot) => _InstalledCard(

@@ -19,6 +19,7 @@ class MainActivity : FlutterActivity() {
         bridge = CallBridge(applicationContext, flutterEngine.dartExecutor.binaryMessenger).also {
             it.roleRequester = ::requestRole
             it.photoPicker = ::pickPhoto
+            it.photoTaker = ::takePhoto
             it.ringtonePicker = ::pickRingtone
             it.pendingDialNumber = dialNumberFrom(intent)
             it.pendingOpenRecents = intent.getBooleanExtra(EXTRA_OPEN_RECENTS, false)
@@ -59,6 +60,21 @@ class MainActivity : FlutterActivity() {
         }
         @Suppress("DEPRECATION")
         startActivityForResult(intent, REQUEST_PHOTO)
+    }
+
+    /**
+     * The camera app's quick capture: a small preview bitmap, which is plenty for a contact
+     * photo and needs no CAMERA permission or FileProvider (the app declares no CAMERA).
+     */
+    private fun takePhoto(result: MethodChannel.Result) {
+        pendingPhotoResult?.success(null)
+        pendingPhotoResult = result
+        @Suppress("DEPRECATION")
+        runCatching { startActivityForResult(Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE), REQUEST_CAMERA) }
+            .onFailure {
+                pendingPhotoResult = null
+                result.error("NO_CAMERA", it.message, null)
+            }
     }
 
     /** Android's ringtone picker with the contact's current tone selected; "Default" comes back as "". */
@@ -104,6 +120,20 @@ class MainActivity : FlutterActivity() {
             }.start()
             return
         }
+        if (requestCode == REQUEST_CAMERA) {
+            val result = pendingPhotoResult ?: return
+            pendingPhotoResult = null
+            @Suppress("DEPRECATION")
+            val bitmap = data?.extras?.get("data") as? android.graphics.Bitmap
+            if (resultCode != RESULT_OK || bitmap == null) return result.success(null)
+            result.success(
+                java.io.ByteArrayOutputStream().use {
+                    bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 95, it)
+                    it.toByteArray()
+                },
+            )
+            return
+        }
         if (requestCode == REQUEST_ROLE) {
             pendingRoleResult?.success(resultCode == RESULT_OK)
             pendingRoleResult = null
@@ -134,6 +164,7 @@ class MainActivity : FlutterActivity() {
         private const val REQUEST_ROLE = 1001
         private const val REQUEST_PHOTO = 1002
         private const val REQUEST_RINGTONE = 1003
+        private const val REQUEST_CAMERA = 1004
         private const val PHOTO_MAX = 720
         private const val EXTRA_OPEN_RECENTS = "open_recents"
 

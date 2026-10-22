@@ -14,6 +14,7 @@ import '../blocking/blocking_repository.dart';
 import '../blocking/blocking_screen.dart';
 import '../keypad/speed_dial_screen.dart';
 import '../updates/presentation/update_controller.dart';
+import 'about_screen.dart';
 import 'changelog_screen.dart';
 import 'quick_replies_screen.dart';
 import 'software_update_screen.dart';
@@ -104,6 +105,84 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     value: 'Fix',
   );
 
+  @override
+  Widget build(BuildContext context) {
+    final problems = _problems;
+    // Grouped like ColorOS's Call settings; the rarely changed rest is under More settings.
+    return OneUISubpage(
+      title: 'Call settings',
+      builder: (context) => [
+        if (problems.isNotEmpty) OneUIGroupCard(headerTitle: 'Needs attention', items: problems),
+        OneUIGroupCard(
+          items: [
+            OneUIGroupItem(
+              title: 'Caller identification',
+              subtitle: 'Caller ID & spam app',
+              onTap: () => _telecom.openSystemSettings('defaultApps'),
+            ),
+            OneUIGroupItem(title: 'Speed dial', onTap: () => _push(const SpeedDialScreen())),
+            OneUIGroupItem(title: 'Decline with message', onTap: () => _push(const QuickRepliesScreen())),
+          ],
+        ),
+        OneUIGroupCard(
+          items: [OneUIGroupItem(title: 'Block & filter', onTap: () => _push(const BlockingScreen()))],
+        ),
+        OneUIGroupCard(
+          items: [
+            OneUIGroupItem(title: 'Carrier-related settings', onTap: () => _openSystem('carrier')),
+            OneUIGroupItem(title: 'More settings', onTap: () => _push(const _MoreSettingsScreen())),
+          ],
+        ),
+        OneUIGroupCard(
+          items: [
+            OneUIGroupItem(
+              title: 'Software update',
+              value: _version?.label,
+              trailing: ListenableBuilder(
+                listenable: UpdateController.instance,
+                builder: (context, _) => Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (UpdateController.instance.updateAvailable) ...[const OneUIDot(), const SizedBox(width: 6)],
+                    const Icon(Icons.chevron_right_rounded, size: 22, color: OneUITheme.textSecondary),
+                  ],
+                ),
+              ),
+              onTap: () => SoftwareUpdateScreen.open(context),
+            ),
+            OneUIGroupItem(title: "What's new", onTap: () => ChangelogScreen.open(context)),
+            OneUIGroupItem(
+              title: 'Privacy policy',
+              onTap: () => _telecom.openSystemSettings('url:${AppInfo.privacyPolicyUrl}'),
+            ),
+            OneUIGroupItem(title: 'About One Dialer', onTap: () => _push(const AboutScreen())),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Settings › More settings: how taps and SIMs behave, contacts storage, and About.
+class _MoreSettingsScreen extends StatefulWidget {
+  const _MoreSettingsScreen();
+
+  @override
+  State<_MoreSettingsScreen> createState() => _MoreSettingsScreenState();
+}
+
+class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
+  final _telecom = TelecomBridge.instance;
+
+  /// A system screen that not every phone has (Contacts storage, Google's sync).
+  Future<void> _openSystem(String page) async {
+    try {
+      await _telecom.openSystemSettings(page);
+    } on PlatformException {
+      if (mounted) OneUIToast.show(context, "This phone doesn't have that setting");
+    }
+  }
+
   final _tapKey = GlobalKey();
   final _simKey = GlobalKey();
 
@@ -154,27 +233,9 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
 
   @override
   Widget build(BuildContext context) {
-    final problems = _problems;
     return OneUISubpage(
-      title: 'Call settings',
+      title: 'More settings',
       builder: (context) => [
-        if (problems.isNotEmpty) OneUIGroupCard(headerTitle: 'Needs attention', items: problems),
-        OneUIGroupCard(
-          items: [
-            OneUIGroupItem(
-              title: 'Block numbers',
-              onTap: () => _push(const BlockingScreen()),
-            ),
-            OneUIGroupItem(
-              title: 'Quick decline messages',
-              onTap: () => _push(const QuickRepliesScreen()),
-            ),
-            OneUIGroupItem(
-              title: 'Speed dial',
-              onTap: () => _push(const SpeedDialScreen()),
-            ),
-          ],
-        ),
         OneUIGroupCard(
           items: [
             _choice(
@@ -207,44 +268,8 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               subtitle: 'Which accounts sync, and backing up phone contacts',
               onTap: () => _openSystem('googleContactsSync'),
             ),
-          ],
-        ),
-        OneUIGroupCard(
-          items: [
-            OneUIGroupItem(
-              title: 'Default apps',
-              subtitle: 'Phone app, caller ID & spam app',
-              onTap: () => _telecom.openSystemSettings('defaultApps'),
-            ),
-            OneUIGroupItem(
-              title: 'Notifications',
-              onTap: () => _telecom.openSystemSettings('notifications'),
-            ),
-          ],
-        ),
-        OneUIGroupCard(
-          headerTitle: 'About',
-          items: [
-            OneUIGroupItem(
-              title: 'Software update',
-              value: _version?.label,
-              trailing: ListenableBuilder(
-                listenable: UpdateController.instance,
-                builder: (context, _) => Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (UpdateController.instance.updateAvailable) ...[const OneUIDot(), const SizedBox(width: 6)],
-                    const Icon(Icons.chevron_right_rounded, size: 22, color: OneUITheme.textSecondary),
-                  ],
-                ),
-              ),
-              onTap: () => SoftwareUpdateScreen.open(context),
-            ),
-            OneUIGroupItem(title: "What's new", onTap: () => ChangelogScreen.open(context)),
-            OneUIGroupItem(
-              title: 'Privacy policy',
-              onTap: () => _telecom.openSystemSettings('url:${AppInfo.privacyPolicyUrl}'),
-            ),
+            OneUIGroupItem(title: 'Default apps', onTap: () => _telecom.openSystemSettings('defaultApps')),
+            OneUIGroupItem(title: 'Notifications', onTap: () => _telecom.openSystemSettings('notifications')),
           ],
         ),
       ],

@@ -3,21 +3,18 @@ import 'package:flutter/material.dart';
 import '../../core/contacts/contacts_repository.dart';
 import '../../core/prefs/dialer_prefs.dart';
 import '../../theme/one_ui_theme.dart';
+import '../../theme/one_ui_scroll.dart';
+import '../../widgets/call_glass.dart';
 import '../../widgets/letter_avatar.dart';
-import '../../widgets/one_ui_floating_search_field.dart';
-import '../../widgets/one_ui_subpage.dart';
+import '../../widgets/one_ui_status_bar_scrim.dart';
 import '../contacts/contact_details_screen.dart';
-import '../recents/call_details_screen.dart';
-import '../recents/call_log.dart';
-import '../recents/call_log_repository.dart';
-import '../recents/recents_screen.dart' show CallTypeIcon;
 import 'search.dart';
 
 Future<void> openSearch(BuildContext context) =>
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SearchScreen()));
 
-/// Samsung's Phone search: Filters (call time / type chips), Recent searches, and results
-/// grouped as Favorites, Contacts and Recents, with the search pill floating at the bottom.
+/// The Phone app's contact search: Recent searches, then matching contacts by name or
+/// number, under ColorOS's glass search field and Cancel.
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
@@ -27,12 +24,7 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   final _query = TextEditingController();
-  bool _showFilters = false;
-  CallTime? _time;
-  CallFilter? _type;
   List<String> _recent = const [];
-
-  static const _types = [CallFilter.missed, CallFilter.rejected, CallFilter.outgoing, CallFilter.incoming];
 
   @override
   void initState() {
@@ -72,162 +64,131 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     final contactsRepo = ContactsRepository.instance;
-    final callsRepo = CallLogRepository.instance;
-    return OneUISubpage(
-      title: '',
-      listenable: Listenable.merge([_query, contactsRepo.contacts, callsRepo.calls]),
-      bottomPill: SizedBox(
-        width: MediaQuery.sizeOf(context).width - 32,
-        child: OneUIFloatingSearchField(
-          controller: _query,
-          hintText: 'Search',
-          autofocus: true,
-          onSubmitted: (_) => _remember(),
-        ),
-      ),
-      builder: (context) {
-        final query = _query.text.trim();
-        final filtering = _time != null || _type != null;
-        // Like Samsung, call filters narrow the results to Recents.
-        final hits = filtering ? const <ContactHit>[] : searchContacts(contactsRepo.contacts.value, query);
-        final favorites = [
-          for (final h in hits)
-            if (h.contact.isFavorite) h,
-        ];
-        final calls = query.isEmpty && !filtering
-            ? const <CallLogEntry>[]
-            : searchCalls(
-                callsRepo.calls.value,
-                query,
-                time: _time,
-                type: _type,
-                nameFor: contactsRepo.nameFor,
-                now: DateTime.now(),
-              );
-        return [
-          _FiltersHeader(open: _showFilters, onTap: () => setState(() => _showFilters = !_showFilters)),
-          if (_showFilters)
-            _Card(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
-              children: [
-                const _Label('Call time'),
-                _Chips(
-                  labels: [for (final t in CallTime.values) t.label],
-                  selected: _time?.index,
-                  onTap: (i) => setState(() => _time = _time == CallTime.values[i] ? null : CallTime.values[i]),
-                ),
-                const SizedBox(height: 24),
-                const _Label('Call type'),
-                _Chips(
-                  labels: [for (final t in _types) t.label],
-                  selected: _type == null ? null : _types.indexOf(_type!),
-                  onTap: (i) => setState(() => _type = _type == _types[i] ? null : _types[i]),
+    final padding = MediaQuery.paddingOf(context);
+    return Scaffold(
+      body: Stack(
+        children: [
+          ListenableBuilder(
+            listenable: Listenable.merge([_query, contactsRepo.contacts]),
+            builder: (context, _) => CustomScrollView(
+              physics: const OneUIScrollPhysics(),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              slivers: [
+                SliverPadding(
+                  padding: EdgeInsets.fromLTRB(16, padding.top + 8 + _bar + 16, 16, padding.bottom + 32),
+                  sliver: SliverMainAxisGroup(slivers: _results(context)),
                 ),
               ],
             ),
-          if (query.isEmpty && !filtering && _recent.isNotEmpty)
-            _Card(
-              padding: const EdgeInsets.fromLTRB(20, 14, 12, 20),
+          ),
+          const Positioned(left: 0, right: 0, top: 0, child: OneUIStatusBarScrim()),
+          // ColorOS: the search field across the top, Cancel beside it.
+          Positioned(
+            left: 16,
+            right: 16,
+            top: padding.top + 8,
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    const Expanded(child: _Label('Recent searches')),
-                    TextButton(
-                      onPressed: () async {
-                        await DialerPrefs.instance.clearRecentSearches();
+                Expanded(
+                  child: _SearchField(controller: _query, onSubmitted: (_) => _remember()),
+                ),
+                const SizedBox(width: 10),
+                CallGlass(
+                  radius: _bar / 2,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    style: TextButton.styleFrom(
+                      foregroundColor: OneUITheme.textPrimary,
+                      minimumSize: const Size(0, _bar),
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: const StadiumBorder(),
+                    ),
+                    child: const Text('Cancel', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static const double _bar = 48;
+
+  List<Widget> _results(BuildContext context) {
+    final contactsRepo = ContactsRepository.instance;
+    final query = _query.text.trim();
+    final hits = searchContacts(contactsRepo.contacts.value, query);
+    return [
+      if (query.isEmpty && _recent.isNotEmpty)
+        SliverToBoxAdapter(
+          child: _Card(
+            padding: const EdgeInsets.fromLTRB(20, 14, 12, 20),
+            children: [
+              Row(
+                children: [
+                  const Expanded(child: _Label('Recent searches')),
+                  TextButton(
+                    onPressed: () async {
+                      await DialerPrefs.instance.clearRecentSearches();
+                      await _loadRecent();
+                    },
+                    child: const Text(
+                      'Clear all',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: OneUITheme.accentBlue),
+                    ),
+                  ),
+                ],
+              ),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (final s in _recent)
+                    _RecentChip(
+                      label: s,
+                      onTap: () => _setQuery(s),
+                      onRemove: () async {
+                        await DialerPrefs.instance.updateRecentSearch(s, remove: true);
                         await _loadRecent();
                       },
-                      child: const Text(
-                        'Clear all',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: OneUITheme.accentBlue),
-                      ),
-                    ),
-                  ],
-                ),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    for (final s in _recent)
-                      _RecentChip(
-                        label: s,
-                        onTap: () => _setQuery(s),
-                        onRemove: () async {
-                          await DialerPrefs.instance.updateRecentSearch(s, remove: true);
-                          await _loadRecent();
-                        },
-                      ),
-                  ],
-                ),
-              ],
-            ),
-          if ((query.isNotEmpty || filtering) && hits.isEmpty && calls.isEmpty)
-            const Padding(
-              padding: EdgeInsets.only(top: 200),
-              child: Center(
-                child: Text('No results found', style: TextStyle(fontSize: 22, color: OneUITheme.textSecondary)),
-              ),
-            ),
-          for (final (title, list) in [
-            ('Favorites', favorites),
-            (
-              'Contacts',
-              [
-                for (final h in hits)
-                  if (!h.contact.isFavorite) h,
-              ],
-            ),
-          ])
-            if (list.isNotEmpty) ...[
-              _SectionHeader(title: title, count: list.length),
-              _Card(
-                children: [
-                  for (final (i, h) in list.indexed)
-                    _ResultRow(
-                      avatar: ContactAvatar(id: h.contact.id, name: h.contact.name, size: 36),
-                      title: _highlighted(h.contact.name, h.nameRange, 19),
-                      subtitle: _highlighted(h.number, h.numberRange, 15, color: OneUITheme.textSecondary),
-                      divider: i > 0,
-                      onTap: () => _open(ContactDetailsScreen(contactId: h.contact.id)),
                     ),
                 ],
               ),
             ],
-          if (calls.isNotEmpty) ...[
-            _SectionHeader(title: 'Recents', count: calls.length),
-            _Card(
-              children: [
-                // shortcut: shows the newest 100 matches, add paging if people need older calls here.
-                for (final (i, c) in calls.take(100).indexed)
-                  _ResultRow(
-                    avatar: LetterAvatar(name: callName(c, contactsRepo.nameFor) ?? '', size: 36),
-                    title: _highlighted(
-                      c.isPrivate ? 'Private number' : callName(c, contactsRepo.nameFor) ?? c.number,
-                      c.isPrivate ? null : matchRange(callName(c, contactsRepo.nameFor) ?? c.number, query),
-                      19,
-                    ),
-                    subtitle: Row(
-                      children: [
-                        CallTypeIcon(type: c.type),
-                        const SizedBox(width: 6),
-                        Text(
-                          '${dayLabel(c.date, DateTime.now())}, ${timeLabel(c.date)}',
-                          style: const TextStyle(fontSize: 15, color: OneUITheme.textSecondary),
-                        ),
-                      ],
-                    ),
-                    divider: i > 0,
-                    onTap: () {
-                      _remember();
-                      openCallDetails(context, c);
-                    },
-                  ),
-              ],
+          ),
+        ),
+      if (query.isNotEmpty && hits.isEmpty)
+        const SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.only(top: 200),
+            child: Center(
+              child: Text('No results found', style: TextStyle(fontSize: 22, color: OneUITheme.textSecondary)),
             ),
-          ],
-        ];
-      },
-    );
+          ),
+        ),
+      // Lazy card: a short query can match hundreds of contacts.
+      if (hits.isNotEmpty) ...[
+        SliverToBoxAdapter(
+          child: _SectionHeader(title: 'Contacts', count: hits.length),
+        ),
+        _CardSliver(
+          itemCount: hits.length,
+          itemBuilder: (context, i) {
+            final h = hits[i];
+            return _ResultRow(
+              avatar: ContactAvatar(id: h.contact.id, name: h.contact.name, size: 36),
+              title: _highlighted(h.contact.name, h.nameRange, 19),
+              subtitle: _highlighted(h.number, h.numberRange, 15, color: OneUITheme.textSecondary),
+              divider: i > 0,
+              onTap: () => _open(ContactDetailsScreen(contactId: h.contact.id)),
+            );
+          },
+        ),
+      ],
+    ];
   }
 
   static Widget _highlighted(String text, (int, int)? range, double size, {Color color = OneUITheme.textPrimary}) {
@@ -248,38 +209,6 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-    );
-  }
-}
-
-class _FiltersHeader extends StatelessWidget {
-  const _FiltersHeader({required this.open, required this.onTap});
-
-  final bool open;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 16, 16),
-        child: Row(
-          children: [
-            const Expanded(
-              child: Text(
-                'Filters',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: OneUITheme.textSecondary),
-              ),
-            ),
-            Icon(
-              open ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
-              color: OneUITheme.textSecondary,
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -337,43 +266,6 @@ class _Label extends StatelessWidget {
       style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: OneUITheme.textSecondary),
     ),
   );
-}
-
-/// Single-choice outlined chips; tapping the selected one clears it.
-class _Chips extends StatelessWidget {
-  const _Chips({required this.labels, required this.selected, required this.onTap});
-
-  final List<String> labels;
-  final int? selected;
-  final ValueChanged<int> onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 9,
-      runSpacing: 10,
-      children: [
-        for (final (i, label) in labels.indexed)
-          Semantics(
-            selected: i == selected,
-            button: true,
-            child: GestureDetector(
-              onTap: () => onTap(i),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 160),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: i == selected ? OneUITheme.accentBlue : Colors.transparent,
-                  borderRadius: BorderRadius.circular(OneUITheme.radiusPill),
-                  border: Border.all(color: i == selected ? OneUITheme.accentBlue : OneUITheme.surfacePillActive),
-                ),
-                child: Text(label, style: const TextStyle(fontSize: 15, color: OneUITheme.textPrimary)),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
 }
 
 class _RecentChip extends StatelessWidget {
@@ -457,6 +349,76 @@ class _ResultRow extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// ColorOS's search field: a glass stadium with the magnifier, the query and a clear button.
+class _SearchField extends StatelessWidget {
+  const _SearchField({required this.controller, required this.onSubmitted});
+
+  final TextEditingController controller;
+  final ValueChanged<String> onSubmitted;
+
+  @override
+  Widget build(BuildContext context) {
+    return CallGlass(
+      radius: 24,
+      child: SizedBox(
+        height: 48,
+        child: Padding(
+          padding: const EdgeInsets.only(left: 16, right: 4),
+          child: Row(
+            children: [
+              const Icon(Icons.search_rounded, size: 24, color: OneUITheme.textSecondary),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  autofocus: true,
+                  textInputAction: TextInputAction.search,
+                  onSubmitted: onSubmitted,
+                  style: const TextStyle(fontSize: 17),
+                  cursorColor: OneUITheme.accentBlue,
+                  decoration: const InputDecoration.collapsed(
+                    hintText: 'Search contacts',
+                    hintStyle: TextStyle(fontSize: 17, color: OneUITheme.textSecondary),
+                  ),
+                ),
+              ),
+              ValueListenableBuilder(
+                valueListenable: controller,
+                builder: (context, value, _) => value.text.isEmpty
+                    ? const SizedBox(width: 12)
+                    : IconButton(
+                        tooltip: 'Clear',
+                        onPressed: controller.clear,
+                        icon: const Icon(Icons.cancel_rounded, size: 20, color: OneUITheme.textSecondary),
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// [_Card] as a sliver: result rows build as they scroll in.
+class _CardSliver extends StatelessWidget {
+  const _CardSliver({required this.itemCount, required this.itemBuilder});
+
+  final int itemCount;
+  final NullableIndexedWidgetBuilder itemBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverPadding(
+      padding: const EdgeInsets.only(bottom: 12),
+      sliver: DecoratedSliver(
+        decoration: BoxDecoration(color: OneUITheme.surfaceCard, borderRadius: OneUITheme.cardBorderRadius),
+        sliver: SliverList.builder(itemCount: itemCount, itemBuilder: itemBuilder),
       ),
     );
   }
