@@ -44,6 +44,9 @@ class _ContactsScreenState extends State<ContactsScreen> {
   /// and the visible rows' circles rebuild.
   final _selectionChanged = ValueNotifier(0);
 
+  /// The big "Contacts" going under the header, where a small one takes over.
+  final _collapse = TitleCollapse(titleTop: 0);
+
   // Fixed heights, so each section's scroll offset is known without building it.
   static const double _titleHeight = 92;
   static const double _cardRowHeight = 60;
@@ -64,6 +67,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
   @override
   void dispose() {
     _scroll.dispose();
+    _collapse.dispose();
     _currentLetter.dispose();
     _selectionChanged.dispose();
     super.dispose();
@@ -220,113 +224,118 @@ class _ContactsScreenState extends State<ContactsScreen> {
     final top = MediaQuery.paddingOf(context).top;
     return Stack(
       children: [
-        CustomScrollView(
-          controller: _scroll,
-          physics: const OneUIScrollPhysics(),
-          slivers: [
-            SliverAppBar(
-              pinned: true,
-              automaticallyImplyLeading: false,
-              backgroundColor: Colors.transparent,
-              // The page's top blur sits behind the header's pills, not over them.
-              // Ends at the bar's bottom: the big title right under it stays sharp.
-              flexibleSpace: OneUIStatusBarScrim(height: MediaQuery.paddingOf(context).top + kHeaderBarHeight),
-              surfaceTintColor: Colors.transparent,
-              scrolledUnderElevation: 0,
-              toolbarHeight: kHeaderBarHeight,
-              // The glass press stretches the buttons past the bar; don't cut it off.
-              clipBehavior: Clip.none,
-              titleSpacing: 0,
-              title: ValueListenableBuilder(
-                valueListenable: _selectionChanged,
-                builder: (context, _, _) => _Header(
-                  selecting: selecting,
-                  allSelected: _allSelected,
-                  onToggleSelectAll: _toggleSelectAll,
-                  onCancel: _endSelection,
-                  menuKey: _menuKey,
-                  onMenu: _openMenu,
+        NotificationListener<ScrollUpdateNotification>(
+          onNotification: _collapse.track,
+          child: CustomScrollView(
+            controller: _scroll,
+            physics: const OneUIScrollPhysics(),
+            slivers: [
+              SliverAppBar(
+                pinned: true,
+                automaticallyImplyLeading: false,
+                backgroundColor: Colors.transparent,
+                // The page's top blur sits behind the header's pills, not over them.
+                // Ends at the bar's bottom: the big title right under it stays sharp.
+                flexibleSpace: OneUIStatusBarScrim(height: MediaQuery.paddingOf(context).top + kHeaderBarHeight),
+                surfaceTintColor: Colors.transparent,
+                scrolledUnderElevation: 0,
+                toolbarHeight: kHeaderBarHeight,
+                // The glass press stretches the buttons past the bar; don't cut it off.
+                clipBehavior: Clip.none,
+                titleSpacing: 0,
+                title: ValueListenableBuilder(
+                  valueListenable: _selectionChanged,
+                  builder: (context, _, _) => Stack(
+                    children: [
+                      HeaderTitle(collapse: _collapse, text: 'Contacts', hidden: selecting),
+                      _Header(
+                        selecting: selecting,
+                        allSelected: _allSelected,
+                        onToggleSelectAll: _toggleSelectAll,
+                        onCancel: _endSelection,
+                        menuKey: _menuKey,
+                        onMenu: _openMenu,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            SliverToBoxAdapter(
-              child: SizedBox(
-                height: _titleHeight,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                  child: ValueListenableBuilder(
-                    valueListenable: _selectionChanged,
-                    builder: (context, _, _) => Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          selecting ? '${_selected!.length} selected' : 'Contacts',
-                          style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w700, letterSpacing: -0.5),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${all.length} contacts',
-                          style: const TextStyle(fontSize: 15, color: OneUITheme.textSecondary),
-                        ),
-                      ],
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: _titleHeight,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                    child: ValueListenableBuilder(
+                      valueListenable: _selectionChanged,
+                      builder: (context, _, _) => Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          BigTitle(collapse: _collapse, text: selecting ? '${_selected!.length} selected' : 'Contacts'),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${all.length} contacts',
+                            style: const TextStyle(fontSize: 15, color: OneUITheme.textSecondary),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            if (!repo.hasAccess.value)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(32, 40, 32, 0),
-                  child: Column(
-                    children: [
-                      const Text(
-                        'Allow access to your contacts to see them here and show names for calls',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: OneUITheme.textSecondary),
-                      ),
-                      const SizedBox(height: 16),
-                      FilledButton(onPressed: repo.requestAccess, child: const Text('Allow')),
-                    ],
+              if (!repo.hasAccess.value)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(32, 40, 32, 0),
+                    child: Column(
+                      children: [
+                        const Text(
+                          'Allow access to your contacts to see them here and show names for calls',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: OneUITheme.textSecondary),
+                        ),
+                        const SizedBox(height: 16),
+                        FilledButton(onPressed: repo.requestAccess, child: const Text('Allow')),
+                      ],
+                    ),
+                  ),
+                )
+              else ...[
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: _topCardHeight,
+                    child: _TopCard(
+                      profile: _profile,
+                      onGroups: () =>
+                          Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const GroupsScreen())),
+                    ),
                   ),
                 ),
-              )
-            else ...[
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height: _topCardHeight,
-                  child: _TopCard(
-                    profile: _profile,
-                    onGroups: () =>
-                        Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const GroupsScreen())),
+                for (final (letter, list) in _sections) ...[
+                  SliverToBoxAdapter(child: ContactsSectionHeader(title: letter)),
+                  // Lazy, fixed-extent rows: only the ones on screen are built.
+                  SliverFixedExtentList.builder(
+                    itemExtent: ContactRow.height,
+                    itemCount: list.length,
+                    itemBuilder: (context, i) {
+                      final c = list[i];
+                      return ContactRow(
+                        contact: c,
+                        isLast: i == list.length - 1,
+                        selecting: selecting,
+                        selectMark: ValueListenableBuilder(
+                          valueListenable: _selectionChanged,
+                          builder: (context, _, _) => SelectMark(selected: _selected?.contains(c.id), gap: 12),
+                        ),
+                        onTap: () => _selected != null ? _toggleSelected(c) : _open(c),
+                        onLongPress: () => _selected != null ? _toggleSelected(c) : _startSelection(c),
+                      );
+                    },
                   ),
-                ),
-              ),
-              for (final (letter, list) in _sections) ...[
-                SliverToBoxAdapter(child: ContactsSectionHeader(title: letter)),
-                // Lazy, fixed-extent rows: only the ones on screen are built.
-                SliverFixedExtentList.builder(
-                  itemExtent: ContactRow.height,
-                  itemCount: list.length,
-                  itemBuilder: (context, i) {
-                    final c = list[i];
-                    return ContactRow(
-                      contact: c,
-                      isLast: i == list.length - 1,
-                      selecting: selecting,
-                      selectMark: ValueListenableBuilder(
-                        valueListenable: _selectionChanged,
-                        builder: (context, _, _) => SelectMark(selected: _selected?.contains(c.id), gap: 12),
-                      ),
-                      onTap: () => _selected != null ? _toggleSelected(c) : _open(c),
-                      onLongPress: () => _selected != null ? _toggleSelected(c) : _startSelection(c),
-                    );
-                  },
-                ),
+                ],
               ],
+              SliverToBoxAdapter(child: SizedBox(height: navBarClearance(context) + 8)),
             ],
-            SliverToBoxAdapter(child: SizedBox(height: navBarClearance(context) + 8)),
-          ],
+          ),
         ),
         if (_sections.length > 1)
           Positioned(
