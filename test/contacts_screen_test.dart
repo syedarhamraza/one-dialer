@@ -53,9 +53,9 @@ void main() {
     final pushes = await open(tester);
     expect(find.text('Contacts'), findsOneWidget);
     expect(find.text('64 contacts'), findsOneWidget);
-    // The favourite is listed under the star, above the A section.
-    expect(find.text('Bname 0'), findsOneWidget);
-    expect(tester.getTopLeft(find.text('Bname 0')).dy, lessThan(tester.getTopLeft(find.text('Aname 0')).dy));
+    // The favourite is listed under the star, above the A section (and again under B).
+    expect(find.text('Bname 0'), findsWidgets);
+    expect(tester.getTopLeft(find.text('Bname 0').first).dy, lessThan(tester.getTopLeft(find.text('Aname 0')).dy));
 
     await tester.tap(find.text('Aname 1'));
     expect(pushes.routes, hasLength(1), reason: 'tap opens the details page');

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Contacts icon's warm orange, so it reads apart from the green Phone icon. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient android:angle="270" android:startColor="#FFFFA449" android:endColor="#FFF57A1F" />
+</shape>

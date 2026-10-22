@@ -23,6 +23,7 @@ class MainActivity : FlutterActivity() {
             it.ringtonePicker = ::pickRingtone
             it.pendingDialNumber = dialNumberFrom(intent)
             it.pendingOpenRecents = intent.getBooleanExtra(EXTRA_OPEN_RECENTS, false)
+            it.pendingContactAction = contactActionFrom(intent)
         }
     }
 
@@ -36,6 +37,7 @@ class MainActivity : FlutterActivity() {
         super.onNewIntent(intent)
         dialNumberFrom(intent)?.let { bridge?.sendDialNumber(it) }
         if (intent.getBooleanExtra(EXTRA_OPEN_RECENTS, false)) bridge?.sendOpenRecents()
+        contactActionFrom(intent)?.let { bridge?.sendContactAction(it) }
     }
 
     /** Asks for [role] (dialer or call screening); the result is whether it's held afterwards. */
@@ -156,6 +158,41 @@ class MainActivity : FlutterActivity() {
             it.toByteArray()
         }
     }
+
+    /**
+     * What the Contacts icon or another app asked for: the Contacts tab, a contact to show or
+     * edit (`id`), or a new contact (`phone`, `name` from the insert extras). Null otherwise.
+     */
+    private fun contactActionFrom(intent: Intent?): Map<String, String?>? {
+        intent ?: return null
+        val fromContactsIcon = intent.component?.className?.endsWith(".ContactsLauncher") == true
+        return when (intent.action) {
+            Intent.ACTION_VIEW, Intent.ACTION_EDIT, Intent.ACTION_INSERT_OR_EDIT -> {
+                val id = intent.data?.let(::contactIdOf)
+                when {
+                    id != null -> mapOf("kind" to if (intent.action == Intent.ACTION_VIEW) "view" else "edit", "id" to id)
+                    intent.action == Intent.ACTION_INSERT_OR_EDIT -> insertAction(intent)
+                    fromContactsIcon -> mapOf("kind" to "tab")
+                    else -> null
+                }
+            }
+            Intent.ACTION_INSERT -> insertAction(intent)
+            else -> if (fromContactsIcon) mapOf("kind" to "tab") else null
+        }
+    }
+
+    private fun insertAction(intent: Intent): Map<String, String?> = mapOf(
+        "kind" to "insert",
+        "phone" to intent.getStringExtra(android.provider.ContactsContract.Intents.Insert.PHONE),
+        "name" to intent.getStringExtra(android.provider.ContactsContract.Intents.Insert.NAME),
+    )
+
+    /** A contact (or lookup, or raw contact) URI's contact id. */
+    private fun contactIdOf(uri: android.net.Uri): String? = runCatching {
+        val contact = android.provider.ContactsContract.Contacts.lookupContact(contentResolver, uri) ?: uri
+        contentResolver.query(contact, arrayOf(android.provider.ContactsContract.Contacts._ID), null, null, null)
+            ?.use { c -> if (c.moveToFirst()) c.getLong(0).toString() else null }
+    }.getOrNull()
 
     private fun dialNumberFrom(intent: Intent?): String? =
         intent?.data?.takeIf { it.scheme == "tel" }?.schemeSpecificPart

@@ -71,6 +71,9 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
     /** Opened from the missed-call notification; handed to Flutter once. */
     var pendingOpenRecents = false
 
+    /** From the Contacts icon or another app's contact intent; see MainActivity.contactActionFrom. */
+    var pendingContactAction: Map<String, String?>? = null
+
     init {
         methods.setMethodCallHandler(this)
         events.setStreamHandler(this)
@@ -102,6 +105,8 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
 
     fun sendOpenRecents() = methods.invokeMethod("onOpenRecents", null)
 
+    fun sendContactAction(action: Map<String, String?>) = methods.invokeMethod("onContactAction", action)
+
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
             "isDefaultDialer" -> result.success(isDefaultDialer())
@@ -113,6 +118,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
             )
             "consumeDialNumber" -> result.success(pendingDialNumber).also { pendingDialNumber = null }
             "consumeOpenRecents" -> result.success(pendingOpenRecents).also { pendingOpenRecents = false }
+            "consumeContactAction" -> result.success(pendingContactAction).also { pendingContactAction = null }
             "getCallLog" -> {
                 watchCallLog()
                 inBackground(result) { CallLogSource.query(context) }

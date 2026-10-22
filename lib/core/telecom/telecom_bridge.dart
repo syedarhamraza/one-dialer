@@ -20,6 +20,10 @@ class TelecomBridge {
   /// Fires when the missed-call notification is tapped while the app is running.
   VoidCallback? onOpenRecents;
 
+  /// The Contacts icon or another app's contact intent: `kind` is tab, view, edit or insert,
+  /// with `id` (view, edit) or `phone` and `name` (insert).
+  void Function(Map<Object?, Object?> action)? onContactAction;
+
   /// Fires on every change to the system call log.
   VoidCallback? onCallLogChanged;
 
@@ -41,6 +45,8 @@ class TelecomBridge {
         onDialIntent?.call(call.arguments as String);
       case 'onOpenRecents':
         onOpenRecents?.call();
+      case 'onContactAction':
+        onContactAction?.call(call.arguments as Map<Object?, Object?>);
       case 'onCallLogChanged':
         onCallLogChanged?.call();
       case 'onWallpaperBackdropChanged':
@@ -61,6 +67,9 @@ class TelecomBridge {
 
   /// Whether the app was opened from the missed-call notification (returned once).
   Future<bool> consumeOpenRecents() async => await _methods.invokeMethod<bool>('consumeOpenRecents') ?? false;
+
+  Future<Map<Object?, Object?>?> consumeContactAction() =>
+      _methods.invokeMapMethod<Object?, Object?>('consumeContactAction');
 
   /// Android's photo picker; returns the picked photo as JPEG bytes (max 720px), or null.
   Future<Uint8List?> pickPhoto() => _methods.invokeMethod<Uint8List>('pickPhoto');
