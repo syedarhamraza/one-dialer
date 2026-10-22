@@ -25,6 +25,19 @@ class Changelog {
 
   static const List<ChangelogEntry> entries = [
     ChangelogEntry(
+      version: '1.0.0-beta.3',
+      date: 'In development',
+      changes: [
+        'Much smoother menus, contact pages and keypad, especially on Samsung Galaxy and other Snapdragon phones',
+        'Tapping a recent call now opens its details instead of calling. Prefer the old way? Settings › Tap a recent call › Write in keypad',
+        'Dual SIM: two Call buttons on the keypad, or choose the SIM each time (Settings › Choose SIM for calls)',
+        'A new contact page: Call, Message and Video (Google Meet) buttons, WhatsApp, SIM card for calls and where the contact is saved',
+        'A new contact editor: choose where to save (phone, SIM or Google account)',
+        'New contact now slides up from the bottom, like the keypad',
+        'Alerts and menus now match the frosted glass look of the rest of the app',
+      ],
+    ),
+    ChangelogEntry(
       version: '1.0.0-beta.2',
       date: 'Oct 2026',
       changes: [
