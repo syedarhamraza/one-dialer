@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/haptics/haptics.dart';
 import '../core/telecom/telecom_bridge.dart';
+import '../features/contacts/contact_details_screen.dart';
 import '../features/contacts/contacts_screen.dart';
 import '../features/contacts/editor/contact_editor_screen.dart';
 import '../features/in_call/call_controls.dart';
@@ -63,6 +64,26 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     TelecomBridge.instance.consumeOpenRecents().then((open) {
       if (open) _openRecents();
     });
+    // The Contacts icon, and contacts other apps ask us to show, edit or add.
+    TelecomBridge.instance.onContactAction = _contactAction;
+    TelecomBridge.instance.consumeContactAction().then((action) {
+      if (action != null) _contactAction(action);
+    });
+  }
+
+  void _contactAction(Map<Object?, Object?> action) {
+    if (!mounted) return;
+    _keypadOpen.value = false;
+    _select(1);
+    final id = action['id'] as String?;
+    switch (action['kind']) {
+      case 'view' when id != null:
+        Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ContactDetailsScreen(contactId: id)));
+      case 'edit' when id != null:
+        openContactEditor(context, contactId: id);
+      case 'insert':
+        openContactEditor(context, number: action['phone'] as String?, name: action['name'] as String?, rise: true);
+    }
   }
 
   @override
@@ -93,6 +114,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     TelecomBridge.instance.onDialIntent = null;
     TelecomBridge.instance.onOpenRecents = null;
+    TelecomBridge.instance.onContactAction = null;
     _input.dispose();
     _keypadOpen.dispose();
     super.dispose();

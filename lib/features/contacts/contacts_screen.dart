@@ -8,7 +8,6 @@ import '../../core/haptics/haptics.dart';
 import '../../theme/one_ui_scroll.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/cos_dialog.dart';
-import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_floating_action_bar.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_status_bar_scrim.dart';
@@ -21,7 +20,6 @@ import 'contact_actions.dart';
 import 'contact_details_screen.dart';
 import 'contact_sections.dart';
 import 'contacts_widgets.dart';
-import 'groups_screen.dart';
 
 /// The Contacts tab in the Calls tab's style (ColorOS layout): glass search and menu,
 /// a big title, a card with My contact card and Groups, favourites under a star, then
@@ -37,7 +35,6 @@ class _ContactsScreenState extends State<ContactsScreen> {
   final _scroll = ScrollController();
   final _menuKey = GlobalKey();
   final _currentLetter = ValueNotifier<String?>(null);
-  Contact? _profile;
   Set<String>? _selected; // null when not selecting
 
   /// Bumped when the selection changes but selection mode doesn't, so only the header
@@ -49,19 +46,11 @@ class _ContactsScreenState extends State<ContactsScreen> {
 
   // Fixed heights, so each section's scroll offset is known without building it.
   static const double _titleHeight = 92;
-  static const double _cardRowHeight = 60;
-  static const double _cardBottom = 8;
 
   @override
   void initState() {
     super.initState();
     _scroll.addListener(_onScroll);
-    FlutterContacts.profile
-        .get(properties: {ContactProperty.name, ContactProperty.photoThumbnail})
-        .then((p) {
-          if (mounted) setState(() => _profile = p);
-        })
-        .catchError((Object _) {}); // no "Me" profile on this phone
   }
 
   @override
@@ -73,24 +62,23 @@ class _ContactsScreenState extends State<ContactsScreen> {
     super.dispose();
   }
 
-  // --- Sections, recomputed only when the contacts or the profile row change -------
+  // --- Sections, recomputed only when the contacts change ----------------------------
 
-  (List<DialerContact>, bool)? _builtFor;
+  List<DialerContact>? _builtFor;
   List<DialerContact> _favourites = const [];
   List<(String, List<DialerContact>)> _sections = const [];
   Map<String, double> _offsets = const {};
 
   void _section(List<DialerContact> all) {
-    final key = (all, _profile != null);
-    if (_builtFor case (final list, final profile) when identical(list, all) && profile == key.$2) return;
-    _builtFor = key;
+    if (identical(_builtFor, all)) return;
+    _builtFor = all;
     _favourites = [
       for (final c in all)
         if (c.isFavorite) c,
     ];
     _sections = [if (_favourites.isNotEmpty) (kFavoritesMark, _favourites), ...sectionContacts(all)];
     // Offsets are measured below the pinned header, which is what `jumpTo` scrolls under.
-    var y = _titleHeight + _topCardHeight;
+    var y = _titleHeight;
     final offsets = <String, double>{};
     for (final (letter, list) in _sections) {
       offsets[letter] = y;
@@ -98,8 +86,6 @@ class _ContactsScreenState extends State<ContactsScreen> {
     }
     _offsets = offsets;
   }
-
-  double get _topCardHeight => (_profile == null ? 1 : 2) * _cardRowHeight + _cardBottom;
 
   void _onScroll() {
     final y = _scroll.offset + 8;
@@ -300,16 +286,6 @@ class _ContactsScreenState extends State<ContactsScreen> {
                   ),
                 )
               else ...[
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: _topCardHeight,
-                    child: _TopCard(
-                      profile: _profile,
-                      onGroups: () =>
-                          Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const GroupsScreen())),
-                    ),
-                  ),
-                ),
                 for (final (letter, list) in _sections) ...[
                   SliverToBoxAdapter(child: ContactsSectionHeader(title: letter)),
                   // Lazy, fixed-extent rows: only the ones on screen are built.
@@ -340,7 +316,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
         if (_sections.length > 1)
           Positioned(
             right: 4,
-            top: top + kHeaderBarHeight + _titleHeight + _topCardHeight,
+            top: top + kHeaderBarHeight + _titleHeight,
             bottom: navBarClearance(context),
             width: 140,
             child: FastScroller(
@@ -405,88 +381,6 @@ class _Header extends StatelessWidget {
                     child: RoundIconButton(icon: Icons.more_vert_rounded, tooltip: 'More options', onTap: onMenu),
                   ),
                 ],
-        ),
-      ),
-    );
-  }
-}
-
-/// My contact card (when the phone has a profile) and Groups, in one card.
-class _TopCard extends StatelessWidget {
-  const _TopCard({required this.profile, required this.onGroups});
-
-  final Contact? profile;
-  final VoidCallback onGroups;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = profile;
-    final photo = p?.photo?.thumbnail;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, _ContactsScreenState._cardBottom),
-      child: Material(
-        color: OneUITheme.surfaceCard,
-        borderRadius: OneUITheme.cardBorderRadius,
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          children: [
-            if (p != null) ...[
-              _CardRow(
-                leading: photo != null
-                    ? LetterAvatar(name: p.displayName ?? '', photo: photo, size: 40)
-                    : const _GreenIcon(Icons.person_rounded),
-                title: 'My contact card',
-              ),
-              Divider(height: 1, indent: 70, color: Colors.white.withValues(alpha: 0.1)),
-            ],
-            _CardRow(leading: const _GreenIcon(Icons.group_rounded), title: 'My groups', onTap: onGroups),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _GreenIcon extends StatelessWidget {
-  const _GreenIcon(this.icon);
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: 40,
-    height: 40,
-    decoration: const BoxDecoration(color: OneUITheme.dialGreen, shape: BoxShape.circle),
-    child: Icon(icon, color: Colors.white, size: 22),
-  );
-}
-
-class _CardRow extends StatelessWidget {
-  const _CardRow({required this.leading, required this.title, this.onTap});
-
-  final Widget leading;
-  final String title;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: SizedBox(
-        height: _ContactsScreenState._cardRowHeight - 0.5,
-        child: Row(
-          children: [
-            const SizedBox(width: 16),
-            leading,
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-              ),
-            ),
-          ],
         ),
       ),
     );

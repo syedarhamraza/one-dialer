@@ -19,24 +19,33 @@ import '../../../widgets/one_ui_date_wheel.dart';
 import '../../../widgets/one_ui_floating_menu.dart';
 import '../../../widgets/one_ui_floating_modal.dart';
 import '../../../widgets/press_glow.dart';
-import '../groups_screen.dart' show hiddenGroupNames;
 import 'contact_form.dart';
 import 'editor_widgets.dart';
 
-/// Opens the editor: a new contact (optionally with [number]) or [contactId] (optionally
-/// adding [number] to it). Returns the saved contact's id, or null if cancelled. With
+/// Opens the editor: a new contact (optionally with [number] and [name], as another app's
+/// "add contact" sends) or [contactId] (optionally adding [number] to it). Returns the saved contact's id, or null if cancelled. With
 /// [rise] slides it up from the bottom like the keypad sheet (the Contacts tab's +).
-Future<String?> openContactEditor(BuildContext context, {String? contactId, String? number, bool rise = false}) {
-  Widget page(BuildContext _) => ContactEditorScreen(contactId: contactId, initialNumber: number);
+Future<String?> openContactEditor(
+  BuildContext context, {
+  String? contactId,
+  String? number,
+  String? name,
+  bool rise = false,
+}) {
+  Widget page(BuildContext _) => ContactEditorScreen(contactId: contactId, initialNumber: number, initialName: name);
   return Navigator.of(context).push<String>(rise ? RisePageRoute(builder: page) : MaterialPageRoute(builder: page));
 }
 
+/// Google's built-in groups that aren't real user groups.
+const hiddenGroupNames = {'My Contacts', 'Starred in Android'};
+
 /// Samsung-style add/edit contact screen (replaces Android's contact editor).
 class ContactEditorScreen extends StatefulWidget {
-  const ContactEditorScreen({super.key, this.contactId, this.initialNumber});
+  const ContactEditorScreen({super.key, this.contactId, this.initialNumber, this.initialName});
 
   final String? contactId;
   final String? initialNumber;
+  final String? initialName;
 
   @override
   State<ContactEditorScreen> createState() => _ContactEditorScreenState();
@@ -123,6 +132,8 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
     if (initialNumber.isNotEmpty) {
       form.phones.add(LabeledValue(label: 'mobile', value: initialNumber));
     }
+    final initialName = widget.initialName?.trim() ?? '';
+    if (initialName.isNotEmpty && form.fullName.isEmpty) form.fullName = initialName;
     _keepBlankPhone(form);
     return form;
   }
