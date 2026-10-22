@@ -93,20 +93,31 @@ function Get-Name($v) {
   return $name
 }
 
+# Runs git or flutter and returns what they print on stdout; their stderr is shown as text.
+# They write harmless warnings there (git's line-ending notes, pub's version list), and under
+# 'Stop' Windows PowerShell turns any stderr line into a fatal error as soon as the output is
+# redirected or captured (a log file, a pipe, $x = ...). Failures are caught by exit code.
+function Invoke-Native([scriptblock]$command) {
+  $ErrorActionPreference = 'Continue'
+  & $command 2>&1 | ForEach-Object {
+    if ($_ -is [System.Management.Automation.ErrorRecord]) { Write-Host $_.ToString() } else { $_ }
+  }
+}
+
 function Invoke-Checked([string]$what, [scriptblock]$command) {
-  & $command
+  Invoke-Native $command
   if ($LASTEXITCODE -ne 0) { Fail "$what failed (exit $LASTEXITCODE)." }
 }
 
 if ($Help) { Show-Usage; exit 0 }
 
 $current = Read-Version
-$sha = (git rev-parse --short HEAD).Trim()
+$sha = (Invoke-Native { git rev-parse --short HEAD }).Trim()
 
 # --- Debug build: nothing changes -------------------------------------------------
 if ($Debug) {
   if (-not $Target) { $Target = 'apk' }
-  if (git status --porcelain) { $sha = "$sha-dirty" }
+  if (Invoke-Native { git status --porcelain }) { $sha = "$sha-dirty" }
   Write-Host "Debug $Target of $(Get-Name $current)+$($current.Code) from $sha"
   Invoke-Checked 'flutter build' { flutter build $Target --debug "--dart-define=GIT_SHA=$sha" }
   exit 0
@@ -146,10 +157,10 @@ $newName = Get-Name $next
 $newVersion = "$newName+$($next.Code)"
 
 # --- Safety checks ----------------------------------------------------------------
-if (git status --porcelain) { Fail 'Commit or stash your changes first; a release is built from a clean tree.' }
-$branch = (git rev-parse --abbrev-ref HEAD).Trim()
+if (Invoke-Native { git status --porcelain }) { Fail 'Commit or stash your changes first; a release is built from a clean tree.' }
+$branch = (Invoke-Native { git rev-parse --abbrev-ref HEAD }).Trim()
 if ($branch -ne 'main') { Write-Host "Note: releasing from '$branch', not main." -ForegroundColor Yellow }
-if (git tag --list "v$newName") {
+if (Invoke-Native { git tag --list "v$newName" }) {
   if (-not $Rebuild) { Fail "Tag v$newName already exists." }
 }
 if (-not $SkipBuild -and -not (Test-Path 'android/key.properties')) {
@@ -175,7 +186,8 @@ $month = (Get-Date).ToString('MMM yyyy', [Globalization.CultureInfo]::InvariantC
 $changelog = [System.IO.File]::ReadAllText((Resolve-Path $changelogPath), $utf8)
 $nl = "`n"
 if ($changelog.Contains("`r`n")) { $nl = "`r`n" }
-$entryPattern = "version: '" + [regex]::Escape($newName) + "',(\s*)date: '[^']*'"
+# The date is a quoted string or, for notes written ahead, Changelog.inDevelopment.
+$entryPattern = "version: '" + [regex]::Escape($newName) + "',(\s*)date: (?:'[^']*'|Changelog\.inDevelopment)"
 if ([regex]::IsMatch($changelog, $entryPattern)) {
   # The entry exists (e.g. written while "In development"): stamp this month.
   $changelog = [regex]::Replace($changelog, $entryPattern, "version: '$newName',`$1date: '$month'")
@@ -191,7 +203,7 @@ else {
 [System.IO.File]::WriteAllText((Resolve-Path $changelogPath), $changelog, $utf8)
 
 function Restore-Files {
-  git checkout -- $pubspecPath $changelogPath | Out-Null
+  Invoke-Native { git checkout -- $pubspecPath $changelogPath } | Out-Null
 }
 
 if ((Get-Content $changelogPath -Raw).Contains("'TODO: what changed'")) {
@@ -208,9 +220,9 @@ if ((Get-Content $changelogPath -Raw).Contains("'TODO: what changed'")) {
 Invoke-Checked 'Version check' { flutter test test/app_version_test.dart --reporter failures-only }
 
 # --- Commit, build, tag -----------------------------------------------------------
-git add $pubspecPath $changelogPath
+Invoke-Checked 'git add' { git add $pubspecPath $changelogPath }
 Invoke-Checked 'git commit' { git commit -q -m "chore(release): $newName ($($next.Code))" }
-$sha = (git rev-parse --short HEAD).Trim()
+$sha = (Invoke-Native { git rev-parse --short HEAD }).Trim()
 
 if (-not $SkipBuild) {
   if (-not $Target) { $Target = 'appbundle' }
@@ -227,9 +239,9 @@ if (-not $SkipBuild) {
   # x86_64 is only for emulators; the bundle keeps it since Play serves per-ABI splits anyway.
   if ($Target -eq 'apk') { $buildArgs += '--target-platform=android-arm,android-arm64' }
   Write-Host "`nBuilding $Target for $newVersion ($sha)..."
-  flutter build @buildArgs
+  Invoke-Native { flutter build @buildArgs }
   if ($LASTEXITCODE -ne 0) {
-    git reset -q --soft HEAD~1
+    Invoke-Native { git reset -q --soft HEAD~1 }
     Fail 'The build failed. The release commit was undone; your version changes are still staged.'
   }
 
@@ -245,7 +257,7 @@ if (-not $SkipBuild) {
   }
 }
 
-if (-not (git tag --list "v$newName")) { git tag -a "v$newName" -m "One Dialer $newName" }
+if (-not (Invoke-Native { git tag --list "v$newName" })) { Invoke-Checked 'git tag' { git tag -a "v$newName" -m "One Dialer $newName" } }
 
 # --- Next steps -------------------------------------------------------------------
 $track = 'Production'
