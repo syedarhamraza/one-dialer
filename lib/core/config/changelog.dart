@@ -20,7 +20,7 @@ class Changelog {
   const Changelog._();
 
   /// Date of notes written ahead of their release. `tool/release.ps1` stamps the month
-  /// when it releases that version, so entries spell it out as a quoted string.
+  /// when it releases that version (as `date: Changelog.inDevelopment` or the quoted string).
   static const String inDevelopment = 'In development';
 
   static const List<ChangelogEntry> entries = [
