@@ -133,7 +133,11 @@ class ContactForm {
   /// Stable fingerprint, to detect unsaved changes.
   String get signature => jsonEncode({
     'n': [prefix, first, middle, last, suffix],
-    'p': phones.map((e) => e.toJson()).toList(),
+    // The always-there blank phone row isn't a change.
+    'p': [
+      for (final p in phones)
+        if (p.value.trim().isNotEmpty) p.toJson(),
+    ],
     'e': emails.map((e) => e.toJson()).toList(),
     'a': addresses.map((e) => e.toJson()).toList(),
     'o': [company, jobTitle, department],

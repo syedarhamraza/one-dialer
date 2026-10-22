@@ -145,16 +145,13 @@ class _LabelButtonState extends State<LabelButton> {
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.only(top: 10),
+          padding: const EdgeInsets.symmetric(vertical: 10),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                labelDisplay(widget.label),
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: OneUITheme.accentGreen),
-              ),
-              const SizedBox(width: 4),
-              const Icon(Icons.keyboard_arrow_down_rounded, size: 20, color: OneUITheme.accentGreen),
+              Text(labelDisplay(widget.label), style: const TextStyle(fontSize: 17)),
+              const SizedBox(width: 2),
+              const Icon(Icons.arrow_drop_down_rounded, size: 22, color: OneUITheme.textSecondary),
             ],
           ),
         ),
@@ -163,7 +160,7 @@ class _LabelButtonState extends State<LabelButton> {
   }
 }
 
-/// Samsung's red "—" remove control.
+/// ColorOS's red ⊖ remove control.
 class RemoveButton extends StatelessWidget {
   const RemoveButton({super.key, required this.onPressed, this.tooltip = 'Remove'});
 
@@ -175,7 +172,31 @@ class RemoveButton extends StatelessWidget {
     return IconButton(
       tooltip: tooltip,
       onPressed: onPressed,
-      icon: Container(width: 22, height: 2.5, color: OneUITheme.accentRed),
+      icon: const Icon(Icons.remove_circle_rounded, size: 22, color: OneUITheme.accentRed),
+    );
+  }
+}
+
+/// ColorOS's one-line labelled value: "Mobile ▾ | 0300 1234567".
+class InlineLabeledField extends StatelessWidget {
+  const InlineLabeledField({super.key, required this.label, required this.field});
+
+  final Widget label;
+  final Widget field;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        label,
+        Container(
+          width: 1,
+          height: 18,
+          margin: const EdgeInsets.symmetric(horizontal: 10),
+          color: OneUITheme.textSecondary.withValues(alpha: .5),
+        ),
+        Expanded(child: field),
+      ],
     );
   }
 }

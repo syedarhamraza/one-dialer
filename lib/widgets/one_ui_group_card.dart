@@ -161,3 +161,38 @@ class OneUIGroupItemTile extends StatelessWidget {
     );
   }
 }
+
+/// [OneUIGroupCard] as a sliver for long lists: rows build as they scroll in.
+class OneUIGroupCardSliver extends StatelessWidget {
+  const OneUIGroupCardSliver({super.key, required this.itemCount, required this.itemBuilder, this.headerTitle});
+
+  final int itemCount;
+  final OneUIGroupItem Function(BuildContext context, int index) itemBuilder;
+  final String? headerTitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverMainAxisGroup(
+      slivers: [
+        if (headerTitle != null)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 18, bottom: 8, top: 4),
+              child: Text(headerTitle!, style: const TextStyle(fontSize: 15, color: OneUITheme.textSecondary)),
+            ),
+          ),
+        SliverPadding(
+          padding: const EdgeInsets.only(bottom: 20),
+          sliver: DecoratedSliver(
+            decoration: BoxDecoration(color: OneUITheme.surfaceCard, borderRadius: OneUITheme.cardBorderRadius),
+            sliver: SliverList.builder(
+              itemCount: itemCount,
+              itemBuilder: (context, i) =>
+                  OneUIGroupItemTile(item: itemBuilder(context, i), isFirst: i == 0, isLast: i == itemCount - 1),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

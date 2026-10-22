@@ -65,6 +65,9 @@ class TelecomBridge {
   /// Android's photo picker; returns the picked photo as JPEG bytes (max 720px), or null.
   Future<Uint8List?> pickPhoto() => _methods.invokeMethod<Uint8List>('pickPhoto');
 
+  /// The camera's quick capture (a small photo); null when cancelled.
+  Future<Uint8List?> takePhoto() => _methods.invokeMethod<Uint8List>('takePhoto');
+
   // Contact extras (ContactExtras.kt)
   /// WhatsApp / WhatsApp Business chat rows for a contact: label, dataId, mimeType, icon (PNG bytes).
   Future<List<Map<Object?, Object?>>> getMessagingApps(String contactId) async =>

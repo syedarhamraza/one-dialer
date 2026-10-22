@@ -68,7 +68,14 @@ class CallDetailsScreen extends StatelessWidget {
                       slivers: [
                         SliverList.list(
                           children: [
-                            Center(child: LetterAvatar(name: call.isPrivate ? '' : name, size: 112)),
+                            Center(
+                              child: CallerAvatar(
+                                number: call.number,
+                                name: name,
+                                isPrivate: call.isPrivate,
+                                size: 112,
+                              ),
+                            ),
                             const SizedBox(height: 16),
                             Text(
                               name,

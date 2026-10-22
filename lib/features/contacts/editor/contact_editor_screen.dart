@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:intl/intl.dart';
 
+import '../contact_subpages.dart' show accountApp;
 import '../../../core/telecom/telecom_bridge.dart';
 import '../../../theme/one_ui_scroll.dart';
 import '../../../theme/one_ui_theme.dart';
@@ -49,6 +50,12 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
   List<Account> _accounts = const [];
   Account? _account;
   List<Group> _groups = const [];
+
+  /// The contact's ringtone URI, "" for the system one; saved with the contact.
+  String _ringtone = '', _savedRingtone = '';
+
+  /// The account copies of an existing contact, for "From the following account".
+  List<Map<Object?, Object?>> _raw = const [];
   bool _nameExpanded = false, _workOpen = false, _more = false, _saving = false;
   bool _closing = false, _confirming = false, _loadFailed = false;
   final _loadReady = ValueNotifier(false);
@@ -66,7 +73,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
     for (final g in all)
       if (!hiddenGroupNames.contains(g.name)) g,
   ];
-  bool get _dirty => _form != null && _form!.signature != _savedSignature;
+  bool get _dirty => _form != null && (_form!.signature != _savedSignature || _ringtone != _savedRingtone);
 
   @override
   void initState() {
@@ -111,15 +118,20 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
 
   ContactForm _prepareForm(ContactForm form) {
     final initialNumber = widget.initialNumber?.trim() ?? '';
-    // A blank phone row is not a change; a supplied number is.
-    if (form.phones.isEmpty && initialNumber.isEmpty) {
-      form.phones.add(LabeledValue(label: 'mobile'));
-    }
+    // A supplied number is a change; the blank row isn't (the signature skips it).
     _savedSignature = form.signature;
     if (initialNumber.isNotEmpty) {
       form.phones.add(LabeledValue(label: 'mobile', value: initialNumber));
     }
+    _keepBlankPhone(form);
     return form;
+  }
+
+  /// ColorOS keeps an empty number row at the end to type the next one into.
+  static bool _keepBlankPhone(ContactForm form) {
+    if (form.phones.isNotEmpty && form.phones.last.value.trim().isEmpty) return false;
+    form.phones.add(LabeledValue(label: 'mobile'));
+    return true;
   }
 
   Future<void> _load() async {
@@ -138,10 +150,12 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
 
   Future<void> _loadData() async {
     if (!_isNew) {
-      final (c, membership, groups) = await (
+      final (c, membership, groups, ringtone, raw) = await (
         FlutterContacts.get(widget.contactId!, properties: ContactProperties.all),
         FlutterContacts.groups.getOf(widget.contactId!),
         FlutterContacts.groups.getAll(),
+        TelecomBridge.instance.getRingtone(widget.contactId!),
+        TelecomBridge.instance.getRawContacts(widget.contactId!),
       ).wait;
       await _entered.future;
       if (!_active) return;
@@ -151,12 +165,19 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
       }
       setState(() {
         _base = c;
+        _ringtone = _savedRingtone = ringtone ?? '';
+        _raw = raw;
         _initialGroups = {for (final g in membership) ?g.id};
         final form = _prepareForm(ContactForm.fromContact(c, groupIds: _initialGroups));
         _form = form;
         _groups = _userGroups(groups);
         _workOpen = form.company.isNotEmpty || form.jobTitle.isNotEmpty || form.department.isNotEmpty;
-        _more = form.dates.isNotEmpty || form.websites.isNotEmpty || form.relations.isNotEmpty || form.notes.isNotEmpty;
+        _more =
+            _workOpen ||
+            form.dates.isNotEmpty ||
+            form.websites.isNotEmpty ||
+            form.relations.isNotEmpty ||
+            form.notes.isNotEmpty;
         _loadReady.value = true;
       });
     } else {
@@ -238,6 +259,9 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
       } else {
         await FlutterContacts.update(form.applyTo(_base!));
         id = _base!.id!;
+      }
+      if (_ringtone != _savedRingtone) {
+        await TelecomBridge.instance.setRingtone(id, _ringtone.isEmpty ? null : _ringtone);
       }
       for (final g in form.groupIds.difference(_initialGroups)) {
         await FlutterContacts.groups.addContacts(groupId: g, contactIds: [id]);
@@ -324,6 +348,8 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                         if (_isNew) _accountRow(),
                         const SizedBox(height: 24),
                         ..._mainCards(form),
+                        _ringtoneCard(),
+                        _groupsCard(form),
                         _listCard(
                           icon: Icons.mail_outline_rounded,
                           title: 'Email',
@@ -335,8 +361,8 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                         ),
                         _addressCard(form),
                         if (_more) ...[
+                          _workCard(form),
                           _datesCard(form),
-                          _groupsCard(form),
                           _listCard(
                             icon: Icons.language_rounded,
                             title: 'Website',
@@ -381,6 +407,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                             style: TextButton.styleFrom(foregroundColor: OneUITheme.textPrimary),
                           ),
                         ),
+                        if (!_isNew && _raw.isNotEmpty) ..._accountsCard(),
                       ],
                     ),
             ),
@@ -545,43 +572,183 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
               minimumSize: const Size(88, 40),
               padding: const EdgeInsets.symmetric(horizontal: 22),
             ),
-            child: const Text('Edit', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+            child: const Text('Change', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
           ),
         ),
       ],
     );
   }
 
+  /// ColorOS's "Profile picture" sheet: Camera | Select photos, and Delete when there's one.
   Future<void> _photoMenu({required bool hasPhoto}) async {
-    Future<void> gallery() async {
-      final bytes = await TelecomBridge.instance.pickPhoto();
-      if (bytes != null && _active) {
-        setState(
-          () => _form!
-            ..newPhoto = bytes
-            ..photoRemoved = false,
-        );
-      }
-    }
-
-    if (!hasPhoto) return gallery();
-    await OneUIFloatingMenu.show(
+    final choice = await OneUIFloatingModal.show<String>(
       context: context,
-      fallbackTop: 300,
-      fallbackRight: 80,
-      items: [
-        OneUIFloatingMenuItem(label: 'Gallery', icon: Icons.photo_library_outlined, onTap: gallery),
-        OneUIFloatingMenuItem(
-          label: 'Remove picture',
-          icon: Icons.delete_outline_rounded,
-          onTap: () => setState(
-            () => _form!
-              ..newPhoto = null
-              ..photoRemoved = true,
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            height: 48,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: TextButton.styleFrom(foregroundColor: OneUITheme.textPrimary),
+                    child: const Text('Cancel', style: TextStyle(fontSize: 16)),
+                  ),
+                ),
+                const Text('Profile picture', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              for (final (icon, label, value) in [
+                (Icons.photo_camera_outlined, 'Camera', 'camera'),
+                (Icons.photo_library_outlined, 'Select photos', 'gallery'),
+              ]) ...[
+                if (value == 'gallery') const SizedBox(width: 12),
+                Expanded(
+                  child: Material(
+                    color: OneUITheme.surfaceCardHighlight,
+                    borderRadius: BorderRadius.circular(20),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(20),
+                      onTap: () => Navigator.pop(ctx, value),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        child: Column(
+                          children: [
+                            Icon(icon, size: 26),
+                            const SizedBox(height: 8),
+                            Text(label, style: const TextStyle(fontSize: 15)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          if (hasPhoto) ...[
+            const SizedBox(height: 12),
+            Material(
+              color: OneUITheme.surfaceCardHighlight,
+              borderRadius: BorderRadius.circular(20),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () => Navigator.pop(ctx, 'delete'),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                  child: Text('Delete profile picture', style: TextStyle(fontSize: 16, color: OneUITheme.accentRed)),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+    if (choice == null || !_active) return;
+    if (choice == 'delete') {
+      setState(
+        () => _form!
+          ..newPhoto = null
+          ..photoRemoved = true,
+      );
+      return;
+    }
+    final Uint8List? bytes;
+    try {
+      bytes = choice == 'camera' ? await TelecomBridge.instance.takePhoto() : await TelecomBridge.instance.pickPhoto();
+    } on PlatformException {
+      if (mounted) OneUIToast.show(context, "Couldn't open the camera");
+      return;
+    }
+    if (bytes != null && _active) {
+      setState(
+        () => _form!
+          ..newPhoto = bytes
+          ..photoRemoved = false,
+      );
+    }
+  }
+
+  // --- Ringtone, accounts ------------------------------------------------------
+
+  /// "Follow system", or the contact's own tone; saved with the contact.
+  Widget _ringtoneCard() {
+    return EditorCard(
+      children: [
+        InkWell(
+          borderRadius: OneUITheme.cardBorderRadius,
+          onTap: () async {
+            final picked = await TelecomBridge.instance.pickRingtone(_ringtone.isEmpty ? null : _ringtone);
+            if (picked != null && _active) setState(() => _ringtone = picked);
+          },
+          child: EditorRow(
+            icon: Icons.notifications_none_rounded,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Text(
+                _ringtone.isEmpty ? 'Follow system' : 'Custom ringtone',
+                style: const TextStyle(fontSize: 18),
+              ),
+            ),
           ),
         ),
       ],
     );
+  }
+
+  /// ColorOS's "From the following account": where this contact is saved.
+  List<Widget> _accountsCard() {
+    final byAccount = <(String, String?), int>{};
+    for (final r in _raw) {
+      final key = (accountApp(r['accountType'] as String?), r['accountName'] as String?);
+      byAccount[key] = (byAccount[key] ?? 0) + 1;
+    }
+    return [
+      const SizedBox(height: 16),
+      const Padding(
+        padding: EdgeInsets.only(left: 18, bottom: 8),
+        child: Text('From the following account', style: TextStyle(fontSize: 14, color: OneUITheme.textSecondary)),
+      ),
+      EditorCard(
+        children: [
+          for (final MapEntry(key: (app, name), value: count) in byAccount.entries)
+            EditorRow(
+              icon: Icons.account_box_outlined,
+              trailing: const SizedBox.shrink(),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(app, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+                          if (name != null && name.isNotEmpty)
+                            Text(name, style: const TextStyle(fontSize: 13, color: OneUITheme.textSecondary)),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      count == 1 ? '1 contact' : '$count contacts',
+                      style: const TextStyle(fontSize: 13, color: OneUITheme.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    ];
   }
 
   // --- Name, phones, work ----------------------------------------------------
@@ -640,78 +807,80 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
             EditorRow(
               key: ObjectKey(phone),
               icon: i == 0 ? Icons.call_outlined : null,
-              trailing: RemoveButton(onPressed: () => setState(() => form.phones.remove(phone))),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  LabelButton(
-                    label: phone.label,
-                    options: EditorLabels.phone,
-                    onChanged: (l) => setState(() => phone.label = l),
-                  ),
-                  EditorField(
-                    hint: 'Phone',
-                    value: phone.value,
-                    keyboardType: TextInputType.phone,
-                    onChanged: (v) {
-                      phone.value = v;
-                      _edited();
-                    },
-                  ),
-                ],
-              ),
-            ),
-          AddRow(
-            label: 'Add phone number',
-            onTap: () => setState(() => form.phones.add(LabeledValue(label: 'mobile'))),
-          ),
-        ],
-      ),
-      EditorCard(
-        children: [
-          if (!_workOpen)
-            PlaceholderRow(
-              icon: Icons.work_outline_rounded,
-              label: 'Work info',
-              onTap: () => setState(() => _workOpen = true),
-            )
-          else
-            EditorRow(
-              icon: Icons.work_outline_rounded,
-              child: Column(
-                children: [
-                  EditorField(
-                    divider: true,
-                    hint: 'Company',
-                    value: form.company,
-                    onChanged: (v) {
-                      form.company = v;
-                      _edited();
-                    },
-                  ),
-                  EditorField(
-                    divider: true,
-                    hint: 'Job title',
-                    value: form.jobTitle,
-                    onChanged: (v) {
-                      form.jobTitle = v;
-                      _edited();
-                    },
-                  ),
-                  EditorField(
-                    hint: 'Department',
-                    value: form.department,
-                    onChanged: (v) {
-                      form.department = v;
-                      _edited();
-                    },
-                  ),
-                ],
+              trailing: phone.value.trim().isEmpty && i == form.phones.length - 1
+                  ? null
+                  : RemoveButton(onPressed: () => setState(() => form.phones.remove(phone))),
+              child: InlineLabeledField(
+                label: LabelButton(
+                  label: phone.label,
+                  options: EditorLabels.phone,
+                  onChanged: (l) => setState(() => phone.label = l),
+                ),
+                field: EditorField(
+                  hint: 'Number',
+                  value: phone.value,
+                  keyboardType: TextInputType.phone,
+                  onChanged: (v) {
+                    phone.value = v;
+                    // Typing in the blank row adds the next one (and its remove button).
+                    if (v.trim().isNotEmpty && i == form.phones.length - 1 && _keepBlankPhone(form)) {
+                      setState(() {});
+                    }
+                    _edited();
+                  },
+                ),
               ),
             ),
         ],
       ),
     ];
+  }
+
+  Widget _workCard(ContactForm form) {
+    return EditorCard(
+      children: [
+        if (!_workOpen)
+          PlaceholderRow(
+            icon: Icons.work_outline_rounded,
+            label: 'Work info',
+            onTap: () => setState(() => _workOpen = true),
+          )
+        else
+          EditorRow(
+            icon: Icons.work_outline_rounded,
+            child: Column(
+              children: [
+                EditorField(
+                  divider: true,
+                  hint: 'Company',
+                  value: form.company,
+                  onChanged: (v) {
+                    form.company = v;
+                    _edited();
+                  },
+                ),
+                EditorField(
+                  divider: true,
+                  hint: 'Job title',
+                  value: form.jobTitle,
+                  onChanged: (v) {
+                    form.jobTitle = v;
+                    _edited();
+                  },
+                ),
+                EditorField(
+                  hint: 'Department',
+                  value: form.department,
+                  onChanged: (v) {
+                    form.department = v;
+                    _edited();
+                  },
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
   }
 
   // --- Emails, websites, relationships --------------------------------------
@@ -744,22 +913,19 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
             key: ObjectKey(row),
             icon: i == 0 ? icon : null,
             trailing: RemoveButton(onPressed: () => setState(() => rows.remove(row))),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                LabelButton(label: row.label, options: options, onChanged: (l) => setState(() => row.label = l)),
-                EditorField(
-                  hint: title,
-                  value: row.value,
-                  keyboardType: keyboard,
-                  capitalization: capitalization,
-                  autofocus: row.value.isEmpty && i == rows.length - 1,
-                  onChanged: (v) {
-                    row.value = v;
-                    _edited();
-                  },
-                ),
-              ],
+            child: InlineLabeledField(
+              label: LabelButton(label: row.label, options: options, onChanged: (l) => setState(() => row.label = l)),
+              field: EditorField(
+                hint: title,
+                value: row.value,
+                keyboardType: keyboard,
+                capitalization: capitalization,
+                autofocus: row.value.isEmpty && i == rows.length - 1,
+                onChanged: (v) {
+                  row.value = v;
+                  _edited();
+                },
+              ),
             ),
           ),
         AddRow(
