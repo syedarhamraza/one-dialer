@@ -204,3 +204,90 @@ class SelectAllCount extends StatelessWidget {
     );
   }
 }
+
+/// How far a tab's big title has gone under its header bar (0 to 1), fed from the list's
+/// scroll offset; [titleTop] is where the title's text starts below the bar.
+class TitleCollapse extends ValueNotifier<double> {
+  TitleCollapse({required this.titleTop}) : super(0);
+
+  final double titleTop;
+
+  /// The title's travel under the bar: the big one fades over the first half, the small one
+  /// over the second, so the two never show at once.
+  static const double _span = 44;
+
+  /// For a `NotificationListener<ScrollUpdateNotification>` around the tab's list.
+  bool track(ScrollUpdateNotification n) {
+    if (n.depth == 0) value = ((n.metrics.pixels - titleTop) / _span).clamp(0.0, 1.0);
+    return false;
+  }
+}
+
+/// The small title that takes the big one's place at the left of the header bar
+/// (ColorOS), fading and rising in as [collapse] goes from 0 to 1.
+class HeaderTitle extends StatelessWidget {
+  const HeaderTitle({super.key, required this.collapse, required this.text, this.hidden = false});
+
+  final TitleCollapse collapse;
+  final String text;
+
+  /// While the header uses its left side (selecting, typing).
+  final bool hidden;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: 20,
+      top: 0,
+      bottom: 0,
+      child: IgnorePointer(
+        child: Center(
+          child: ValueListenableBuilder(
+            valueListenable: collapse,
+            builder: (context, t, _) {
+              final shown = hidden ? 0.0 : (t * 2 - 1).clamp(0.0, 1.0);
+              // Not there at all while hidden, so screen readers don't read it twice.
+              if (shown == 0) return const SizedBox.shrink();
+              return Transform.translate(
+                offset: Offset(0, (1 - shown) * 10),
+                child: Text(
+                  text,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.3,
+                    color: Colors.white.withValues(alpha: shown),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The big title fading out as [collapse] rises, by its colour (no Opacity layer).
+class BigTitle extends StatelessWidget {
+  const BigTitle({super.key, required this.collapse, required this.text});
+
+  final TitleCollapse collapse;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder(
+      valueListenable: collapse,
+      builder: (context, t, _) => Text(
+        text,
+        style: TextStyle(
+          fontSize: 34,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.5,
+          color: Colors.white.withValues(alpha: (1 - t * 2).clamp(0.0, 1.0)),
+        ),
+      ),
+    );
+  }
+}

@@ -12,9 +12,8 @@ import '../updates/data/update_service.dart';
 import '../updates/presentation/update_controller.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/one_ui_ambient_glow.dart';
-import '../../widgets/one_ui_bare_top_bar.dart';
 import '../../widgets/one_ui_cancel_save_pill.dart';
-import '../../widgets/one_ui_collapsible_header.dart';
+import '../../widgets/round_header_controls.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_floating_modal.dart';
 import '../../widgets/one_ui_group_card.dart';
@@ -164,14 +163,26 @@ class _SoftwareUpdateScreenState extends State<SoftwareUpdateScreen> {
               SafeArea(
                 child: Column(
                   children: [
-                    OneUIBareTopBar(
-                      trailing: OneUIHeaderAction(
-                        icon: Icons.more_vert_rounded,
-                        tooltip: 'More options',
-                        width: 44,
-                        height: 44,
-                        actionKey: _moreKey,
-                        onTap: _showMenu,
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      child: Row(
+                        children: [
+                          RoundIconButton(
+                            icon: Icons.arrow_back_rounded,
+                            tooltip: 'Back',
+                            onTap: () => Navigator.of(context).maybePop(),
+                          ),
+                          const Spacer(),
+                          // The menu opens from this wrapper (see the Calls header's menu).
+                          KeyedSubtree(
+                            key: _moreKey,
+                            child: RoundIconButton(
+                              icon: Icons.more_vert_rounded,
+                              tooltip: 'More options',
+                              onTap: _showMenu,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     Expanded(

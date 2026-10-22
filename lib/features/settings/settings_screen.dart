@@ -101,10 +101,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     subtitle: subtitle,
     subtitleColor: OneUITheme.accentRed,
     onTap: onFix,
-    trailing: const Text(
-      'Fix',
-      style: TextStyle(color: OneUITheme.accentBlue, fontWeight: FontWeight.w700),
-    ),
+    value: 'Fix',
   );
 
   final _tapKey = GlobalKey();
@@ -115,7 +112,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
 
   /// A row whose current choice shows on the right; tapping it opens the choices from there.
   OneUIGroupItem _choice({
-    required Widget leading,
     required String title,
     String? subtitle,
     required GlobalKey anchor,
@@ -123,16 +119,23 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     required Map<String, String> labels,
     required ValueChanged<String> onPick,
   }) => OneUIGroupItem(
-    leading: leading,
     title: title,
     subtitle: subtitle,
-    trailing: ValueListenableBuilder(
-      valueListenable: value,
-      builder: (context, v, _) => Text(
-        labels[v] ?? '',
-        key: anchor,
-        style: const TextStyle(color: OneUITheme.accentBlue, fontWeight: FontWeight.w600),
-      ),
+    // The choice in grey before a chevron, as ColorOS settings show values.
+    trailing: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ValueListenableBuilder(
+          valueListenable: value,
+          builder: (context, v, _) => Text(
+            labels[v] ?? '',
+            key: anchor,
+            style: const TextStyle(fontSize: 15, color: OneUITheme.textSecondary),
+          ),
+        ),
+        const SizedBox(width: 4),
+        const Icon(Icons.chevron_right_rounded, size: 22, color: OneUITheme.textSecondary),
+      ],
     ),
     onTap: () => OneUIFloatingMenu.show(
       context: context,
@@ -159,18 +162,15 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         OneUIGroupCard(
           items: [
             OneUIGroupItem(
-              leading: const Icon(Icons.block_rounded, color: OneUITheme.accentRed),
               title: 'Block numbers',
               onTap: () => _push(const BlockingScreen()),
             ),
             OneUIGroupItem(
-              leading: const Icon(Icons.message_outlined, color: OneUITheme.accentBlue),
               title: 'Quick decline messages',
               onTap: () => _push(const QuickRepliesScreen()),
             ),
             OneUIGroupItem(
-              leading: const Icon(Icons.speed_rounded, color: OneUITheme.accentGreen),
-              title: 'Speed dial numbers',
+              title: 'Speed dial',
               onTap: () => _push(const SpeedDialScreen()),
             ),
           ],
@@ -178,7 +178,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         OneUIGroupCard(
           items: [
             _choice(
-              leading: const Icon(Icons.touch_app_outlined, color: OneUITheme.accentBlue),
               title: 'Tap a recent call',
               anchor: _tapKey,
               value: DialerPrefs.instance.recentTap,
@@ -186,7 +185,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               onPick: DialerPrefs.instance.setRecentTap,
             ),
             _choice(
-              leading: const Icon(Icons.sim_card_outlined, color: OneUITheme.accentGreen),
               title: 'Choose SIM for calls',
               subtitle: 'Dual SIM with no default SIM',
               anchor: _simKey,
@@ -200,13 +198,11 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           headerTitle: 'Contacts',
           items: [
             OneUIGroupItem(
-              leading: const Icon(Icons.inventory_2_outlined, color: OneUITheme.accentBlue),
               title: 'Default account for new contacts',
               subtitle: 'Phone, SIM or Google',
               onTap: () => _openSystem('contactsStorage'),
             ),
             OneUIGroupItem(
-              leading: const Icon(Icons.sync_rounded, color: OneUITheme.accentGreen),
               title: 'Google Contacts sync',
               subtitle: 'Which accounts sync, and backing up phone contacts',
               onTap: () => _openSystem('googleContactsSync'),
@@ -216,13 +212,11 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         OneUIGroupCard(
           items: [
             OneUIGroupItem(
-              leading: const Icon(Icons.apps_rounded, color: OneUITheme.textSecondary),
               title: 'Default apps',
               subtitle: 'Phone app, caller ID & spam app',
               onTap: () => _telecom.openSystemSettings('defaultApps'),
             ),
             OneUIGroupItem(
-              leading: const Icon(Icons.notifications_none_rounded, color: OneUITheme.textSecondary),
               title: 'Notifications',
               onTap: () => _telecom.openSystemSettings('notifications'),
             ),
@@ -233,17 +227,16 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           items: [
             OneUIGroupItem(
               title: 'Software update',
-              subtitle: _version?.label,
+              value: _version?.label,
               trailing: ListenableBuilder(
                 listenable: UpdateController.instance,
-                builder: (context, _) => UpdateController.instance.updateAvailable
-                    ? const SizedBox.square(
-                        dimension: 8,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(color: OneUITheme.accentOrange, shape: BoxShape.circle),
-                        ),
-                      )
-                    : const SizedBox.shrink(),
+                builder: (context, _) => Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (UpdateController.instance.updateAvailable) ...[const OneUIDot(), const SizedBox(width: 6)],
+                    const Icon(Icons.chevron_right_rounded, size: 22, color: OneUITheme.textSecondary),
+                  ],
+                ),
               ),
               onTap: () => SoftwareUpdateScreen.open(context),
             ),

@@ -4,7 +4,9 @@ import '../../core/prefs/dialer_prefs.dart';
 import '../contacts/contact_picker_screen.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/one_ui_subpage.dart';
-import '../../widgets/one_ui_group_card.dart';
+import '../../core/haptics/haptics.dart';
+import '../../widgets/letter_avatar.dart';
+import '../../widgets/one_ui_toast.dart';
 
 /// Keypad keys 2–9: long-press calls the number assigned here.
 class SpeedDialScreen extends StatelessWidget {
@@ -26,19 +28,21 @@ class SpeedDialScreen extends StatelessWidget {
         builder: (context, snap) {
           final entries = snap.data;
           return OneUISubpage(
-            title: 'Speed dial numbers',
+            title: 'Speed dial',
             builder: (context) => [
               const Padding(
-                padding: EdgeInsets.fromLTRB(16, 0, 16, 4),
-                child: Text(
-                  'Long-press a key on the keypad to call',
-                  style: TextStyle(fontSize: 13.5, color: OneUITheme.textSecondary),
-                ),
+                padding: EdgeInsets.fromLTRB(14, 8, 14, 28),
+                child: Text('Assign contacts', style: TextStyle(fontSize: 15, color: OneUITheme.textSecondary)),
               ),
               if (entries != null)
-                OneUIGroupCard(
-                  items: [
-                    for (var i = 0; i < entries.length; i++) _item(context, DialerPrefs.speedDialDigits[i], entries[i]),
+                GridView.count(
+                  crossAxisCount: 3,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  childAspectRatio: 0.78,
+                  children: [
+                    const _Cell(digit: '1', label: 'Voicemail', icon: Icons.voicemail_rounded),
+                    for (var i = 0; i < entries.length; i++) _cell(context, DialerPrefs.speedDialDigits[i], entries[i]),
                   ],
                 ),
             ],
@@ -48,24 +52,76 @@ class SpeedDialScreen extends StatelessWidget {
     );
   }
 
-  OneUIGroupItem _item(BuildContext context, String digit, (String, String)? entry) => OneUIGroupItem(
-    leading: SizedBox(
-      width: 26,
-      child: Text(
-        digit,
-        textAlign: TextAlign.center,
-        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w500),
-      ),
-    ),
-    title: entry?.$1 ?? 'Not assigned',
-    subtitle: entry?.$2,
+  Widget _cell(BuildContext context, String digit, (String, String)? entry) => _Cell(
+    digit: digit,
+    label: entry?.$1 ?? 'Add',
+    icon: entry == null ? Icons.add_rounded : null,
+    name: entry?.$1,
     onTap: () => _assign(context, digit),
-    trailing: entry == null
-        ? const Icon(Icons.add_rounded, color: OneUITheme.accentBlue)
-        : IconButton(
-            tooltip: 'Remove',
-            icon: const Icon(Icons.remove_circle_outline_rounded, color: OneUITheme.accentRed),
-            onPressed: () => DialerPrefs.instance.setSpeedDial(digit, null),
-          ),
+    onLongPress: entry == null
+        ? null
+        : () {
+            Haptics.longPress();
+            DialerPrefs.instance.setSpeedDial(digit, null);
+            OneUIToast.show(context, 'Removed ${entry.$1} from $digit');
+          },
   );
+}
+
+/// One key of the ColorOS speed-dial grid: its digit, a grey circle and a label.
+class _Cell extends StatelessWidget {
+  const _Cell({required this.digit, required this.label, this.icon, this.name, this.onTap, this.onLongPress});
+
+  final String digit;
+  final String label;
+  final IconData? icon;
+
+  /// The assigned contact, drawn as their avatar instead of [icon].
+  final String? name;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+
+  static const double _circle = 76;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Positioned(
+          left: 4,
+          top: 0,
+          child: Text(digit, style: const TextStyle(fontSize: 20, color: OneUITheme.textSecondary)),
+        ),
+        Align(
+          alignment: Alignment.topCenter,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Column(
+              children: [
+                GestureDetector(
+                  onTap: onTap,
+                  onLongPress: onLongPress,
+                  child: name != null
+                      ? LetterAvatar(name: name!, size: _circle)
+                      : Container(
+                          width: _circle,
+                          height: _circle,
+                          decoration: const BoxDecoration(color: Color(0xFF333335), shape: BoxShape.circle),
+                          child: Icon(icon, size: 36),
+                        ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 15, color: OneUITheme.textSecondary),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }

@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../theme/one_ui_theme.dart';
 import 'one_ui_bottom_vignette.dart';
-import 'one_ui_collapsible_header.dart';
+import 'one_ui_status_bar_scrim.dart';
+import 'round_header_controls.dart';
 import '../theme/one_ui_scroll.dart';
 
-/// Standard One UI subpage (design doc §5.1): pinned small header with a back button,
-/// padded scrolling content, the bottom vignette and an optional floating pill.
+/// A ColorOS 17 subpage, laid out like the contact page: black, the round glass Back
+/// button with the title beside it pinned at the top, the content (cards) scrolling under
+/// the header blur, the bottom vignette and an optional floating pill.
 ///
 /// [builder] runs again whenever [listenable] notifies, so rows can show live values.
 class OneUISubpage extends StatelessWidget {
@@ -27,39 +29,56 @@ class OneUISubpage extends StatelessWidget {
     this.onBack,
   });
 
+  static const double _button = 48;
+
   @override
   Widget build(BuildContext context) {
+    final padding = MediaQuery.paddingOf(context);
     Widget content(BuildContext context) =>
-        Column(crossAxisAlignment: CrossAxisAlignment.start, children: builder(context));
+        Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: builder(context));
 
     return Scaffold(
       backgroundColor: OneUITheme.surfacePitch,
       body: Stack(
         children: [
-          CustomScrollView(
+          SingleChildScrollView(
             physics: const OneUIScrollPhysics(),
-            slivers: [
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: OneUICollapsibleHeaderDelegate(
-                  title: title,
-                  hasBigHeader: false,
-                  showBackButton: true,
-                  onBack: onBack ?? () => Navigator.pop(context),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 140),
-                  child: listenable == null
-                      ? content(context)
-                      : AnimatedBuilder(animation: listenable!, builder: (context, _) => content(context)),
-                ),
-              ),
-            ],
+            padding: EdgeInsets.fromLTRB(
+              16,
+              padding.top + 8 + _button + 20,
+              16,
+              bottomPill == null ? padding.bottom + 32 : 140,
+            ),
+            child: listenable == null
+                ? content(context)
+                : AnimatedBuilder(animation: listenable!, builder: (context, _) => content(context)),
           ),
-          const Positioned(left: 0, right: 0, bottom: 0, child: OneUIBottomVignette()),
-          if (bottomPill != null)
+          const Positioned(left: 0, right: 0, top: 0, child: OneUIStatusBarScrim()),
+          Positioned(
+            left: 16,
+            right: 16,
+            top: padding.top + 8,
+            child: Row(
+              children: [
+                RoundIconButton(
+                  icon: Icons.arrow_back_rounded,
+                  tooltip: 'Back',
+                  onTap: onBack ?? () => Navigator.of(context).maybePop(),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600, letterSpacing: -0.3),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (bottomPill != null) ...[
+            const Positioned(left: 0, right: 0, bottom: 0, child: OneUIBottomVignette()),
             Positioned(
               left: 0,
               right: 0,
@@ -72,6 +91,7 @@ class OneUISubpage extends StatelessWidget {
                 ),
               ),
             ),
+          ],
         ],
       ),
     );

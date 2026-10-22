@@ -54,6 +54,9 @@ class _RecentsScreenState extends State<RecentsScreen> {
   /// Bumped when the selection changes but selection mode doesn't, so only the
   /// header count and the visible rows' checkboxes rebuild, not the whole list.
   final _selectionChanged = ValueNotifier(0);
+
+  /// The big "Calls" going under the header, where a small one takes over.
+  final _collapse = TitleCollapse(titleTop: 0);
   List<SimCard> _sims = const [];
 
   @override
@@ -70,6 +73,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
   void dispose() {
     DialerPrefs.instance.changes.removeListener(_loadPrefs);
     _selectionChanged.dispose();
+    _collapse.dispose();
     super.dispose();
   }
 
@@ -218,101 +222,110 @@ class _RecentsScreenState extends State<RecentsScreen> {
     final groups = [for (final (_, g) in _groupedDays) ...g];
     final now = DateTime.now();
     final selecting = _selected != null;
-    return CustomScrollView(
-      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-      slivers: [
-        SliverAppBar(
-          pinned: true,
-          automaticallyImplyLeading: false,
-          backgroundColor: Colors.transparent,
-          // The page's top blur sits behind the header's pills, not over them.
-          // Ends at the bar's bottom: the big title right under it stays sharp.
-          flexibleSpace: OneUIStatusBarScrim(height: MediaQuery.paddingOf(context).top + kHeaderBarHeight),
-          surfaceTintColor: Colors.transparent,
-          scrolledUnderElevation: 0,
-          toolbarHeight: kHeaderBarHeight,
-          // The glass press stretches the pills past the bar; don't cut it off.
-          clipBehavior: Clip.none,
-          titleSpacing: 0,
-          title: ListenableBuilder(
-            listenable: Listenable.merge([widget.dialInput ?? _noInput, _selectionChanged]),
-            builder: (context, _) {
-              final number = (widget.dialInput ?? _noInput).value;
-              return _HeaderControls(
-                typing: number.isNotEmpty,
-                selecting: selecting,
-                filterIndex: _filter == CallFilter.missed ? 1 : 0,
-                onFilter: (i) => setState(() => _filter = i == 1 ? CallFilter.missed : CallFilter.all),
-                onAdd: () => showAddToContacts(context, number),
-                allSelected: selecting && _selectedRows == _rows.length,
-                onToggleSelectAll: _toggleSelectAll,
-                onCancel: _endSelection,
-                menuKey: _menuKey,
-                menuItems: () => number.isEmpty
-                    ? _menuItems()
-                    : keypadMenuItems(context, input: widget.dialInput!, open: widget.keypadOpen!),
-              );
-            },
-          ),
-        ),
-        // While a number is typed the keypad's results take this space: the list fades
-        // out under them (their backdrop is clear, so the header's press isn't covered).
-        ValueListenableBuilder(
-          valueListenable: widget.dialInput ?? _noInput,
-          builder: (context, number, list) => SliverIgnorePointer(
-            ignoring: number.isNotEmpty,
-            sliver: SliverAnimatedOpacity(
-              opacity: number.isEmpty ? 1 : 0,
-              duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 220),
-              sliver: list!,
+    return NotificationListener<ScrollUpdateNotification>(
+      onNotification: _collapse.track,
+      child: CustomScrollView(
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            automaticallyImplyLeading: false,
+            backgroundColor: Colors.transparent,
+            // The page's top blur sits behind the header's pills, not over them.
+            // Ends at the bar's bottom: the big title right under it stays sharp.
+            flexibleSpace: OneUIStatusBarScrim(height: MediaQuery.paddingOf(context).top + kHeaderBarHeight),
+            surfaceTintColor: Colors.transparent,
+            scrolledUnderElevation: 0,
+            toolbarHeight: kHeaderBarHeight,
+            // The glass press stretches the pills past the bar; don't cut it off.
+            clipBehavior: Clip.none,
+            titleSpacing: 0,
+            title: ListenableBuilder(
+              listenable: Listenable.merge([widget.dialInput ?? _noInput, _selectionChanged]),
+              builder: (context, _) {
+                final number = (widget.dialInput ?? _noInput).value;
+                final controls = _HeaderControls(
+                  typing: number.isNotEmpty,
+                  selecting: selecting,
+                  filterIndex: _filter == CallFilter.missed ? 1 : 0,
+                  onFilter: (i) => setState(() => _filter = i == 1 ? CallFilter.missed : CallFilter.all),
+                  onAdd: () => showAddToContacts(context, number),
+                  allSelected: selecting && _selectedRows == _rows.length,
+                  onToggleSelectAll: _toggleSelectAll,
+                  onCancel: _endSelection,
+                  menuKey: _menuKey,
+                  menuItems: () => number.isEmpty
+                      ? _menuItems()
+                      : keypadMenuItems(context, input: widget.dialInput!, open: widget.keypadOpen!),
+                );
+                return Stack(
+                  children: [
+                    HeaderTitle(collapse: _collapse, text: 'Calls', hidden: selecting || number.isNotEmpty),
+                    controls,
+                  ],
+                );
+              },
             ),
           ),
-          child: SliverMainAxisGroup(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                  child: ValueListenableBuilder(
-                    valueListenable: _selectionChanged,
-                    builder: (context, _, _) => AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 220),
-                      layoutBuilder: (current, previous) =>
-                          Stack(alignment: Alignment.centerLeft, children: [...previous, ?current]),
-                      child: Text(
-                        selecting ? '$_selectedRows selected' : 'Calls',
-                        // Keyed on the mode only, so the count updates in place.
-                        key: ValueKey(selecting),
-                        style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w700, letterSpacing: -0.5),
+          // While a number is typed the keypad's results take this space: the list fades
+          // out under them (their backdrop is clear, so the header's press isn't covered).
+          ValueListenableBuilder(
+            valueListenable: widget.dialInput ?? _noInput,
+            builder: (context, number, list) => SliverIgnorePointer(
+              ignoring: number.isNotEmpty,
+              sliver: SliverAnimatedOpacity(
+                opacity: number.isEmpty ? 1 : 0,
+                duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 220),
+                sliver: list!,
+              ),
+            ),
+            child: SliverMainAxisGroup(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                    child: ValueListenableBuilder(
+                      valueListenable: _selectionChanged,
+                      builder: (context, _, _) => AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 220),
+                        layoutBuilder: (current, previous) =>
+                            Stack(alignment: Alignment.centerLeft, children: [...previous, ?current]),
+                        child: BigTitle(
+                          collapse: _collapse,
+                          text: selecting ? '$_selectedRows selected' : 'Calls',
+                          // Keyed on the mode only, so the count updates in place.
+                          key: ValueKey(selecting),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              if (!_repo.hasAccess.value)
-                _Empty(
-                  icon: Icons.lock_outline_rounded,
-                  text: 'Set Dialer as your default phone app to see recent calls',
-                  action: (
-                    'Set as default',
-                    () async {
-                      await TelecomBridge.instance.requestDefaultDialer();
-                      await _repo.start();
-                    },
+                if (!_repo.hasAccess.value)
+                  _Empty(
+                    icon: Icons.lock_outline_rounded,
+                    text: 'Set Dialer as your default phone app to see recent calls',
+                    action: (
+                      'Set as default',
+                      () async {
+                        await TelecomBridge.instance.requestDefaultDialer();
+                        await _repo.start();
+                      },
+                    ),
+                  )
+                else if (groups.isEmpty)
+                  _Empty(text: _filter == CallFilter.all ? 'No recent calls' : 'No ${_filter.label.toLowerCase()}')
+                else
+                  // Lazy: only the rows on screen are built.
+                  SliverList.builder(
+                    itemCount: groups.length,
+                    itemBuilder: (context, i) => _row(context, groups, i, now),
                   ),
-                )
-              else if (groups.isEmpty)
-                _Empty(text: _filter == CallFilter.all ? 'No recent calls' : 'No ${_filter.label.toLowerCase()}')
-              else
-                // Lazy: only the rows on screen are built.
-                SliverList.builder(
-                  itemCount: groups.length,
-                  itemBuilder: (context, i) => _row(context, groups, i, now),
-                ),
-              SliverToBoxAdapter(child: SizedBox(height: navBarClearance(context) + 8)),
-            ],
+                SliverToBoxAdapter(child: SizedBox(height: navBarClearance(context) + 8)),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

@@ -9,6 +9,9 @@ class OneUIGroupItem {
   final Widget? customSubtitle;
   final Color? subtitleColor;
   final Widget? trailing;
+
+  /// Grey text before the chevron, e.g. "On" or "Ask every time" (ColorOS settings rows).
+  final String? value;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
 
@@ -19,6 +22,7 @@ class OneUIGroupItem {
     this.customSubtitle,
     this.subtitleColor,
     this.trailing,
+    this.value,
     this.onTap,
     this.onLongPress,
   });
@@ -41,25 +45,14 @@ class OneUIGroupCard extends StatelessWidget {
           children: [
             if (headerTitle != null)
               Padding(
-                padding: const EdgeInsets.only(left: 16, bottom: 6, top: 14),
-                child: Text(
-                  headerTitle!,
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.2,
-                    color: Color(0xFFD4D4D8),
-                  ),
-                ),
+                padding: const EdgeInsets.only(left: 18, bottom: 8, top: 4),
+                child: Text(headerTitle!, style: const TextStyle(fontSize: 15, color: OneUITheme.textSecondary)),
               ),
             Container(
-              margin: margin ?? const EdgeInsets.only(bottom: 14),
-              decoration: BoxDecoration(
-                color: OneUIEffectsController.instance.resolveCardBackground(),
-                borderRadius: OneUITheme.cardBorderRadius,
-                border: OneUITheme.cardBorder,
-                boxShadow: OneUITheme.cardShadow,
-              ),
+              margin: margin ?? const EdgeInsets.only(bottom: 20),
+              clipBehavior: Clip.antiAlias,
+              // ColorOS 17: a flat grey card, no border or shadow (as `DetailsCard`).
+              decoration: BoxDecoration(color: OneUITheme.surfaceCard, borderRadius: OneUITheme.cardBorderRadius),
               child: Column(
                 children: [
                   for (int index = 0; index < items.length; index++)
@@ -101,14 +94,10 @@ class OneUIGroupItemTile extends StatelessWidget {
                     item.onTap!();
                   },
             onLongPress: item.onLongPress,
-            borderRadius: BorderRadius.vertical(
-              top: isFirst ? const Radius.circular(26) : Radius.zero,
-              bottom: isLast ? const Radius.circular(26) : Radius.zero,
-            ),
             splashColor: Colors.white.withValues(alpha: 0.06),
             highlightColor: Colors.white.withValues(alpha: 0.03),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 17),
               child: Row(
                 children: [
                   if (item.leading != null) ...[item.leading!, const SizedBox(width: 16)],
@@ -120,7 +109,7 @@ class OneUIGroupItemTile extends StatelessWidget {
                         Text(
                           item.title,
                           style: const TextStyle(
-                            fontSize: 16.0,
+                            fontSize: 17.0,
                             fontWeight: FontWeight.w400,
                             height: 1.25,
                             letterSpacing: -0.2,
@@ -146,10 +135,14 @@ class OneUIGroupItemTile extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 14),
+                  if (item.value case final value?) ...[
+                    Text(value, style: const TextStyle(fontSize: 15, color: OneUITheme.textSecondary)),
+                    const SizedBox(width: 4),
+                  ],
                   if (item.trailing != null)
                     item.trailing!
-                  else
-                    const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: OneUITheme.textTertiary),
+                  else if (item.onTap != null)
+                    const Icon(Icons.chevron_right_rounded, size: 22, color: OneUITheme.textSecondary),
                 ],
               ),
             ),
@@ -159,8 +152,9 @@ class OneUIGroupItemTile extends StatelessWidget {
           Divider(
             height: 1,
             thickness: 0.8,
-            indent: item.leading != null ? 58 : 16,
-            endIndent: 16,
+            // Under the text, as ColorOS insets them.
+            indent: item.leading != null ? 70 : 18,
+            endIndent: 18,
             color: Colors.white.withValues(alpha: 0.08),
           ),
       ],
