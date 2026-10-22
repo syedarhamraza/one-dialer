@@ -26,7 +26,7 @@ class Changelog {
   static const List<ChangelogEntry> entries = [
     ChangelogEntry(
       version: '1.0.0-beta.3',
-      date: 'In development',
+      date: 'Oct 2026',
       changes: [
         'Much smoother menus, contact pages and keypad, especially on Samsung Galaxy and other Snapdragon phones',
         'Tapping a recent call now opens its details instead of calling. Prefer the old way? Settings › Tap a recent call › Write in keypad',
