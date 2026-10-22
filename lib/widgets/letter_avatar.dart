@@ -40,16 +40,17 @@ class LetterAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (photo case final bytes?) {
-      return ClipOval(
-        child: Image.memory(
-          bytes,
-          width: size,
-          height: size,
-          // Decode at display size, not the thumbnail's full resolution.
-          cacheWidth: (size * MediaQuery.devicePixelRatioOf(context)).round(),
-          fit: BoxFit.cover,
-          gaplessPlayback: true,
+      // A circular decoration rather than a ClipOval: no clip layer per avatar while lists scroll.
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          image: DecorationImage(
+            // Decode at display size, not the thumbnail's full resolution.
+            image: ResizeImage(MemoryImage(bytes), width: (size * MediaQuery.devicePixelRatioOf(context)).round()),
+            fit: BoxFit.cover,
+          ),
         ),
+        child: SizedBox.square(dimension: size),
       );
     }
     final text = initials(name);

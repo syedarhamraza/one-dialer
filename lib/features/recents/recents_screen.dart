@@ -442,17 +442,23 @@ class _HeaderControls extends StatelessWidget {
             (sel) => Stack(
               clipBehavior: Clip.none,
               children: [
-                // Search merges into the menu button and fades while selecting.
+                // Search slides under the menu button while selecting: its icon fades, its glass
+                // stays solid (fading the glass itself drew it offscreen every frame).
                 Positioned(
                   left: _lerp(searchLeft, menuLeft, sel),
                   child: IgnorePointer(
                     ignoring: selecting,
-                    child: Opacity(
-                      opacity: (1 - sel * 1.5).clamp(0.0, 1.0),
-                      child: RoundIconButton(
-                        icon: Icons.search_rounded,
-                        tooltip: 'Search',
-                        onTap: () => openSearch(context),
+                    child: CallGlass(
+                      child: SizedBox.square(
+                        dimension: _button,
+                        child: Opacity(
+                          opacity: (1 - sel * 1.5).clamp(0.0, 1.0),
+                          child: _glassIcon(
+                            icon: Icons.search_rounded,
+                            tooltip: 'Search',
+                            onTap: () => openSearch(context),
+                          ),
+                        ),
                       ),
                     ),
                   ),
