@@ -218,7 +218,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                     child: LetterAvatar(
                       name: contact.name,
                       // Full resolution once loaded; the thumbnail is soft at this size.
-                      photo: _full?.photo?.fullSize ?? contact.thumbnail,
+                      photo: _full?.photo?.fullSize ?? ContactsRepository.instance.cachedThumbnail(contact.id),
                       size: 112,
                     ),
                   ),
@@ -557,6 +557,29 @@ class DetailsCard extends StatelessWidget {
       padding: padding,
       decoration: BoxDecoration(color: OneUITheme.surfaceCard, borderRadius: OneUITheme.cardBorderRadius),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
+    );
+  }
+}
+
+/// [DetailsCard] as a sliver for long lists (call logs): rows build as they scroll in.
+class DetailsCardSliver extends StatelessWidget {
+  const DetailsCardSliver({super.key, required this.itemCount, required this.itemBuilder, required this.padding});
+
+  final int itemCount;
+  final NullableIndexedWidgetBuilder itemBuilder;
+  final EdgeInsets padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverPadding(
+      padding: const EdgeInsets.only(bottom: 20),
+      sliver: DecoratedSliver(
+        decoration: BoxDecoration(color: OneUITheme.surfaceCard, borderRadius: OneUITheme.cardBorderRadius),
+        sliver: SliverPadding(
+          padding: padding,
+          sliver: SliverList.builder(itemCount: itemCount, itemBuilder: itemBuilder),
+        ),
+      ),
     );
   }
 }

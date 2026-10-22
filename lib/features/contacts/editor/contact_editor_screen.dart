@@ -388,7 +388,10 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
         ),
       ),
     );
-    return MediaQuery(data: _exitMediaQuery ?? MediaQuery.of(context), child: screen);
+    // Only while leaving: depending on the whole MediaQuery would rebuild the form on every
+    // frame of a keyboard animation.
+    final exit = _exitMediaQuery;
+    return exit == null ? screen : MediaQuery(data: exit, child: screen);
   }
 
   // --- Header --------------------------------------------------------------

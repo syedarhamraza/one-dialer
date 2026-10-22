@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../core/contacts/contacts_repository.dart';
+
 /// The contact's photo, or Samsung's soft gradient circle with up to two initials
 /// ("Aamir Zaman" → "AZ"). Unsaved numbers and hidden callers get a person icon.
 class LetterAvatar extends StatelessWidget {
@@ -83,6 +85,26 @@ class LetterAvatar extends StatelessWidget {
           color: Colors.white,
         ),
       ),
+    );
+  }
+}
+
+/// A saved contact's [LetterAvatar]: initials until the photo loads, which happens the first
+/// time the row shows (contacts load without photos, so startup reads names and numbers only).
+class ContactAvatar extends StatelessWidget {
+  const ContactAvatar({super.key, required this.id, required this.name, this.size = 42});
+
+  final String id;
+  final String name;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final repo = ContactsRepository.instance;
+    return FutureBuilder(
+      future: repo.thumbnail(id),
+      initialData: repo.cachedThumbnail(id),
+      builder: (context, photo) => LetterAvatar(name: name, photo: photo.data, size: size),
     );
   }
 }

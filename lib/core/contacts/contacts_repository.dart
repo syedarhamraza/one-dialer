@@ -20,6 +20,9 @@ class DialerContact extends T9Entry {
 
   /// "Mobile", "Home", ... for each of [numbers], same order.
   final List<String> labels;
+
+  /// Only with `start(preloadPhotos: true)` (the call screen); elsewhere use
+  /// [ContactsRepository.thumbnail], which loads a photo when its row first shows.
   final Uint8List? thumbnail;
   final bool isFavorite;
 
@@ -62,9 +65,11 @@ class ContactsRepository {
   String? nameFor(String number) => contactFor(number)?.name;
 
   /// Loads contacts if READ_CONTACTS is granted (the dialer role grants it), then
-  /// reloads on every change to the contacts database.
-  Future<void> start() async {
+  /// reloads on every change to the contacts database. [preloadPhotos] also reads every
+  /// thumbnail up front, for the call screen, whose layout depends on there being a photo.
+  Future<void> start({bool preloadPhotos = false}) async {
     if (_changes != null) return; // already loaded and following changes
+    _preloadPhotos = preloadPhotos;
     hasAccess.value = await FlutterContacts.permissions.has(PermissionType.read);
     if (!hasAccess.value) return;
     // Android fires bursts of changes (e.g. after every call); reload once they settle.
@@ -76,6 +81,24 @@ class ContactsRepository {
   }
 
   Timer? _reload;
+  var _preloadPhotos = false;
+
+  final _thumbnails = <String, Uint8List?>{};
+  final _thumbnailLoads = <String, Future<Uint8List?>>{};
+
+  /// A contact's thumbnail if it has already been loaded, for a first frame without a flash.
+  Uint8List? cachedThumbnail(String id) => _thumbnails[id];
+
+  /// A contact's 96 px thumbnail, loaded on first use and cached. A reload refetches it on
+  /// next use (the old one shows meanwhile), so a changed photo turns up.
+  Future<Uint8List?> thumbnail(String id) => _thumbnailLoads[id] ??= () async {
+    try {
+      final photo = (await FlutterContacts.get(id, properties: {ContactProperty.photoThumbnail}))?.photo?.thumbnail;
+      return _thumbnails[id] = photo;
+    } on Object {
+      return _thumbnails[id];
+    }
+  }();
 
   final _fullPhotos = <String, Future<Uint8List?>>{};
 
@@ -91,8 +114,13 @@ class ContactsRepository {
 
   Future<void> _load() async {
     _fullPhotos.clear();
+    _thumbnailLoads.clear();
     final all = await FlutterContacts.getAll(
-      properties: {ContactProperty.phone, ContactProperty.photoThumbnail, ContactProperty.favorite},
+      properties: {
+        ContactProperty.phone,
+        ContactProperty.favorite,
+        if (_preloadPhotos) ContactProperty.photoThumbnail,
+      },
     );
     final entries = [
       for (final c in all)

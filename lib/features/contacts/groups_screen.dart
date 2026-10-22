@@ -125,7 +125,7 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
             items: [
               for (final c in members)
                 OneUIGroupItem(
-                  leading: LetterAvatar(name: c.name, photo: c.thumbnail),
+                  leading: ContactAvatar(id: c.id, name: c.name),
                   title: c.name,
                   trailing: const SizedBox.shrink(),
                   onTap: () =>

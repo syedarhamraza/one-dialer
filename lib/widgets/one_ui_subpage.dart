@@ -13,7 +13,10 @@ import '../theme/one_ui_scroll.dart';
 /// [builder] runs again whenever [listenable] notifies, so rows can show live values.
 class OneUISubpage extends StatelessWidget {
   final String title;
-  final List<Widget> Function(BuildContext context) builder;
+  final List<Widget> Function(BuildContext context)? builder;
+
+  /// Instead of [builder], for long pages: slivers, so rows build lazily as they scroll in.
+  final List<Widget> Function(BuildContext context)? slivers;
   final Listenable? listenable;
 
   /// Floating bottom control, e.g. `OneUIFloatingCancelSavePill`.
@@ -23,7 +26,8 @@ class OneUISubpage extends StatelessWidget {
   const OneUISubpage({
     super.key,
     required this.title,
-    required this.builder,
+    this.builder,
+    this.slivers,
     this.listenable,
     this.bottomPill,
     this.onBack,
@@ -34,25 +38,31 @@ class OneUISubpage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final padding = MediaQuery.paddingOf(context);
-    Widget content(BuildContext context) =>
-        Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: builder(context));
+    final insets = EdgeInsets.fromLTRB(
+      16,
+      padding.top + 8 + _button + 20,
+      16,
+      bottomPill == null ? padding.bottom + 32 : 140,
+    );
+    Widget content(BuildContext context) => slivers == null
+        ? SingleChildScrollView(
+            physics: const OneUIScrollPhysics(),
+            padding: insets,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: builder!(context)),
+          )
+        : CustomScrollView(
+            physics: const OneUIScrollPhysics(),
+            slivers: [SliverPadding(padding: insets, sliver: SliverMainAxisGroup(slivers: slivers!(context)))],
+          );
 
     return Scaffold(
       backgroundColor: OneUITheme.surfacePitch,
       body: Stack(
         children: [
-          SingleChildScrollView(
-            physics: const OneUIScrollPhysics(),
-            padding: EdgeInsets.fromLTRB(
-              16,
-              padding.top + 8 + _button + 20,
-              16,
-              bottomPill == null ? padding.bottom + 32 : 140,
-            ),
-            child: listenable == null
-                ? content(context)
-                : AnimatedBuilder(animation: listenable!, builder: (context, _) => content(context)),
-          ),
+          if (listenable == null)
+            content(context)
+          else
+            AnimatedBuilder(animation: listenable!, builder: (context, _) => content(context)),
           const Positioned(left: 0, right: 0, top: 0, child: OneUIStatusBarScrim()),
           Positioned(
             left: 16,
