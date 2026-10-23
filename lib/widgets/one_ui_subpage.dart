@@ -52,7 +52,12 @@ class OneUISubpage extends StatelessWidget {
           )
         : CustomScrollView(
             physics: const OneUIScrollPhysics(),
-            slivers: [SliverPadding(padding: insets, sliver: SliverMainAxisGroup(slivers: slivers!(context)))],
+            slivers: [
+              SliverPadding(
+                padding: insets,
+                sliver: SliverMainAxisGroup(slivers: slivers!(context)),
+              ),
+            ],
           );
 
     return Scaffold(

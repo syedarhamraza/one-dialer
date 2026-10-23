@@ -1,9 +1,6 @@
 import 'dart:async';
 
-import 'package:device_info_plus/device_info_plus.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../app/app_info.dart';
 import '../../core/config/app_version.dart';
@@ -11,20 +8,20 @@ import '../../core/config/changelog.dart';
 import '../updates/data/update_service.dart';
 import '../updates/presentation/update_controller.dart';
 import '../../theme/one_ui_theme.dart';
+import '../../widgets/glow_button.dart';
 import '../../widgets/cos_artwork.dart';
-import '../../widgets/one_ui_cancel_save_pill.dart';
+import '../../widgets/version_mark.dart';
 import '../../widgets/round_header_controls.dart';
 import '../../widgets/one_ui_floating_menu.dart';
-import '../../widgets/one_ui_floating_modal.dart';
 import '../../widgets/one_ui_group_card.dart';
-import '../../widgets/one_ui_radio.dart';
 import '../../widgets/one_ui_subpage.dart';
 import '../../widgets/one_ui_toast.dart';
+import 'about_screen.dart';
 import 'changelog_screen.dart';
 import '../../core/haptics/haptics.dart';
 
-/// Settings › Software update, in the style of ColorOS 17's: the version over the ColorOS
-/// artwork, the result of the last check (or the update's cards), and one big button.
+/// Settings › Software update: the version over the artwork, the last check's result (or
+/// the update's cards), and one lit green button that shimmers while it works.
 /// Google Play in-app updates do the work: the update downloads in the background while
 /// the app stays usable, then "Install and restart" finishes it.
 class SoftwareUpdateScreen extends StatefulWidget {
@@ -115,7 +112,10 @@ class _SoftwareUpdateScreenState extends State<SoftwareUpdateScreen> {
       fallbackTop: MediaQuery.paddingOf(context).top + 6.0,
       width: 220,
       items: [
-        OneUIFloatingMenuItem(label: 'Software information', onTap: () => _SoftwareInformation.show(context)),
+        OneUIFloatingMenuItem(
+          label: 'Software information',
+          onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const AboutScreen())),
+        ),
         OneUIFloatingMenuItem(
           label: 'Auto download',
           onTap: () {
@@ -152,20 +152,8 @@ class _SoftwareUpdateScreenState extends State<SoftwareUpdateScreen> {
               status == UpdateStatus.readyToInstall;
           return Stack(
             children: [
-              // ColorOS's artwork, fading to black where the cards sit.
-              const Positioned.fill(child: CosArtwork()),
-              const Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Color(0x00000000), Color(0x00000000), Color(0xE6000000), Color(0xFF000000)],
-                      stops: [0, 0.45, 0.72, 1],
-                    ),
-                  ),
-                ),
-              ),
+              // The artwork behind the version, fading into the black page where the cards sit.
+              const Positioned.fill(child: CosArtwork(fadeToBlack: .3, waveShift: .16)),
               SafeArea(
                 child: Column(
                   children: [
@@ -199,6 +187,7 @@ class _SoftwareUpdateScreenState extends State<SoftwareUpdateScreen> {
                         ],
                       ),
                     ),
+                    // Centred on the page; the ribbon and sphere sit lower, below it.
                     const Expanded(child: Center(child: _Hero())),
                     AnimatedSwitcher(
                       duration: transition,
@@ -222,14 +211,13 @@ class _SoftwareUpdateScreenState extends State<SoftwareUpdateScreen> {
                           ),
                           child: buttonLabel == null && !busy
                               ? const SizedBox.shrink()
-                              : _UpdateButton(
+                              : GlowButton(
                                   key: const ValueKey('button'),
                                   label: buttonLabel ?? 'Check for updates',
                                   busy: busy,
-                                  busyLabel: status == UpdateStatus.downloading
-                                      ? 'Downloading the update'
-                                      : 'Checking for updates',
-                                  onTap: busy ? null : _onButtonTap,
+                                  busyLabel: status == UpdateStatus.downloading ? 'Downloading…' : 'Checking…',
+                                  width: MediaQuery.sizeOf(context).width - 48,
+                                  onTap: _onButtonTap,
                                 ),
                         ),
                       ),
@@ -245,7 +233,7 @@ class _SoftwareUpdateScreenState extends State<SoftwareUpdateScreen> {
   }
 }
 
-/// ColorOS's big version over the artwork: "1.0", "One Dialer", and the channel.
+/// The version mark over the artwork: "1.0" in glass, "One Dialer" and the channel.
 class _Hero extends StatelessWidget {
   const _Hero();
 
@@ -255,17 +243,9 @@ class _Hero extends StatelessWidget {
       future: AppVersion.current(),
       builder: (context, snapshot) {
         final v = snapshot.data;
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              v == null ? '' : '${v.major}.${v.minor}',
-              style: const TextStyle(fontSize: 96, height: 1, fontWeight: FontWeight.w700, letterSpacing: -3),
-            ),
-            const Text(AppInfo.name, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
-            if (v != null && v.isPreRelease)
-              Text(v.channelLabel, style: const TextStyle(fontSize: 14, color: Color(0xCCFFFFFF))),
-          ],
+        return VersionMark(
+          version: v == null ? '' : '${v.major}.${v.minor}',
+          channel: v != null && v.isPreRelease ? v.channelLabel : null,
         );
       },
     );
@@ -282,7 +262,7 @@ class _StatusLine extends StatelessWidget {
   Widget build(BuildContext context) {
     final message = switch (status) {
       UpdateStatus.notChecked => '',
-      UpdateStatus.checking => 'Checking for updates…',
+      UpdateStatus.checking => '',
       UpdateStatus.upToDate => 'Version up to date',
       UpdateStatus.offline => 'No network connection',
       UpdateStatus.notFromPlay => "Updates come from Google Play. This copy wasn't installed from Play.",
@@ -320,7 +300,7 @@ class _UpdateCardsState extends State<_UpdateCards> {
   Widget build(BuildContext context) {
     // Play doesn't say what's in the update, so the notes are the newest written ones.
     final notes = Changelog.entries.first;
-    final card = BoxDecoration(color: const Color(0xF21C1C1E), borderRadius: OneUITheme.cardBorderRadius);
+    final card = BoxDecoration(color: OneUITheme.surfaceCard, borderRadius: OneUITheme.cardBorderRadius);
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.42),
       child: SingleChildScrollView(
@@ -404,216 +384,6 @@ class _UpdateCardsState extends State<_UpdateCards> {
   }
 }
 
-/// The big blue capsule at the bottom. While busy its label becomes One UI's spinning dots.
-class _UpdateButton extends StatelessWidget {
-  final String label;
-  final bool busy;
-
-  /// What screen readers hear while [busy].
-  final String busyLabel;
-  final VoidCallback? onTap;
-
-  const _UpdateButton({
-    super.key,
-    required this.label,
-    required this.busy,
-    required this.busyLabel,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: busy ? busyLabel : null,
-      child: Material(
-        color: OneUITheme.accentBlue,
-        shape: const StadiumBorder(),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: SizedBox(
-            width: MediaQuery.sizeOf(context).width - 48,
-            height: 54,
-            child: Center(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 180),
-                child: busy
-                    ? const _LoadingDots(key: ValueKey('dots'))
-                    : Text(
-                        label,
-                        key: ValueKey(label),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: Colors.white),
-                      ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Four dots turning in a square, like One UI's progress indicator.
-class _LoadingDots extends StatefulWidget {
-  const _LoadingDots({super.key});
-
-  @override
-  State<_LoadingDots> createState() => _LoadingDotsState();
-}
-
-class _LoadingDotsState extends State<_LoadingDots> with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1100),
-  )..repeat();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    const dot = SizedBox.square(
-      dimension: 6,
-      child: DecoratedBox(
-        decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-      ),
-    );
-    return RotationTransition(
-      turns: CurvedAnimation(parent: _controller, curve: Curves.easeInOutCubic),
-      child: SizedBox.square(
-        dimension: 18,
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, _) {
-            Widget at(Alignment alignment, int i) {
-              final phase = (_controller.value * 4 - i) % 4;
-              final opacity = phase < 1 ? 1.0 : 0.55;
-              return Align(
-                alignment: alignment,
-                child: Opacity(opacity: opacity, child: dot),
-              );
-            }
-
-            return Stack(
-              children: [
-                at(Alignment.topCenter, 0),
-                at(Alignment.centerRight, 1),
-                at(Alignment.bottomCenter, 2),
-                at(Alignment.centerLeft, 3),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-/// ⋮ › Software information: a floating sheet listing the version details.
-class _SoftwareInformation extends StatefulWidget {
-  const _SoftwareInformation();
-
-  static Future<void> show(BuildContext context) {
-    Haptics.tap();
-    return OneUIFloatingModal.show<void>(context: context, builder: (_) => const _SoftwareInformation());
-  }
-
-  @override
-  State<_SoftwareInformation> createState() => _SoftwareInformationState();
-}
-
-class _SoftwareInformationState extends State<_SoftwareInformation> {
-  AppVersion? _version;
-  String? _installer;
-  String? _android;
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  /// Fills the lines in as the platform answers; the sheet opens straight away.
-  Future<void> _load() async {
-    final version = await AppVersion.current();
-    String? installer;
-    String? android;
-    try {
-      installer = (await PackageInfo.fromPlatform()).installerStore;
-    } catch (_) {}
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      try {
-        android = (await DeviceInfoPlugin().androidInfo).version.release;
-      } catch (_) {}
-    }
-    if (!mounted) return;
-    setState(() {
-      _version = version;
-      _installer = installer;
-      _android = android;
-    });
-  }
-
-  String get _source => switch (_installer) {
-    PlayUpdateService.playStoreInstaller => 'Google Play',
-    null => 'Installed directly',
-    _ => 'Another app store',
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    final v = _version;
-    final android = _android;
-    final lines = [
-      if (android != null) 'Android version: $android',
-      'Version: ${v?.label ?? AppVersion.describe(Changelog.entries.first.version)}',
-      if (v?.code != null) 'Build: ${v!.code}',
-      'Installed from: $_source',
-      if (kDebugMode && BuildInfo.commit.isNotEmpty) 'Commit: ${BuildInfo.commit}',
-    ];
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Software information',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: -0.3),
-        ),
-        const SizedBox(height: 12),
-        for (final line in lines)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 3),
-            child: Text(
-              '• $line',
-              style: const TextStyle(fontSize: 15.5, height: 1.35, color: Color(0xFFC4C4CA), letterSpacing: -0.2),
-            ),
-          ),
-        const SizedBox(height: 16),
-        SizedBox(
-          width: double.infinity,
-          child: TextButton(
-            onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            ),
-            child: const Text(
-              'OK',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: -0.2),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 /// ⋮ › Auto download: when Dialer checks Google Play by itself at launch.
 class _AutoDownloadScreen extends StatefulWidget {
   const _AutoDownloadScreen();
@@ -625,43 +395,40 @@ class _AutoDownloadScreen extends StatefulWidget {
 class _AutoDownloadScreenState extends State<_AutoDownloadScreen> {
   AutoUpdateCheck _mode = UpdateController.instance.autoCheckMode;
 
-  void _save() {
-    Haptics.confirm();
-    unawaited(UpdateController.instance.setAutoCheck(_mode)); // saved in the background
-    Navigator.pop(context);
+  void _pick(AutoUpdateCheck mode) {
+    Haptics.select();
+    setState(() => _mode = mode);
+    unawaited(UpdateController.instance.setAutoCheck(mode)); // saved in the background
   }
 
   @override
   Widget build(BuildContext context) {
     return OneUISubpage(
       title: 'Auto download',
-      bottomPill: OneUIFloatingCancelSavePill(onCancel: () => Navigator.pop(context), onSave: _save),
       builder: (context) => [
         const Padding(
-          padding: EdgeInsets.fromLTRB(8, 0, 8, 16),
+          padding: EdgeInsets.fromLTRB(18, 0, 18, 16),
           child: Text(
-            'Choose when One Dialer checks Google Play for updates when you open it.\n\n'
-            'Updates are only installed when you tap Download and install.',
-            style: TextStyle(fontSize: 15, height: 1.4, color: OneUITheme.textPrimary),
+            'When One Dialer checks Google Play for updates as you open it. Updates only '
+            'install when you tap Download and install.',
+            style: TextStyle(fontSize: 15, height: 1.4, color: OneUITheme.textSecondary),
           ),
         ),
         OneUIGroupCard(
-          margin: EdgeInsets.zero,
           items: [
             for (final mode in AutoUpdateCheck.values)
               OneUIGroupItem(
-                leading: OneUIRadio(isSelected: mode == _mode),
                 title: mode.label,
                 subtitle: switch (mode) {
                   AutoUpdateCheck.never => 'Only when you tap Check for updates',
                   AutoUpdateCheck.wifiOnly => null,
-                  AutoUpdateCheck.always => 'Checking uses very little data.',
+                  AutoUpdateCheck.always => 'Checking uses very little data',
                 },
-                subtitleColor: OneUITheme.textSecondary,
-                onTap: () {
-                  Haptics.select();
-                  setState(() => _mode = mode);
-                },
+                // ColorOS marks the choice with a check on the right.
+                trailing: mode == _mode
+                    ? const Icon(Icons.check_rounded, color: OneUITheme.dialGreen)
+                    : const SizedBox(width: 24),
+                onTap: () => _pick(mode),
               ),
           ],
         ),
