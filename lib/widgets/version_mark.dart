@@ -56,6 +56,9 @@ class _GlassTextPainter extends CustomPainter {
     text: TextSpan(
       text: text,
       style: TextStyle(
+        // A bundled font: system fonts differ by phone, and some draw bold digits from
+        // overlapping contours that the glass rim would trace twice.
+        fontFamily: 'GlassNumeral',
         fontSize: size,
         height: 1,
         fontWeight: FontWeight.w700,
