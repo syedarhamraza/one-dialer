@@ -2,17 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-import '../../app/app_info.dart';
 import '../../core/config/app_version.dart';
 import '../../core/config/changelog.dart';
+import '../../core/haptics/haptics.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/cos_artwork.dart';
-import '../../widgets/one_ui_card.dart';
+import '../../widgets/version_mark.dart';
+import '../../widgets/one_ui_group_card.dart';
 import '../../widgets/one_ui_subpage.dart';
-import '../../core/haptics/haptics.dart';
 
-/// Settings › What's new (also Software update › Changelog): the installed version's notes in a card,
-/// then earlier versions collapsed to one row each.
+/// Settings › What's new (also Software update › What's new), written like a release note:
+/// the running version over the artwork, its notes as short paragraphs, then earlier versions,
+/// each opening its own page.
 class ChangelogScreen extends StatefulWidget {
   const ChangelogScreen({super.key});
 
@@ -28,7 +29,6 @@ class ChangelogScreen extends StatefulWidget {
 class _ChangelogScreenState extends State<ChangelogScreen> {
   static final DateFormat _installedFormat = DateFormat('MMM d, y');
 
-  final Set<String> _expanded = {};
   late final Future<({AppVersion? version, DateTime? installed})> _installed = _loadInstalled();
 
   static Future<({AppVersion? version, DateTime? installed})> _loadInstalled() async {
@@ -42,11 +42,6 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
     return (version: version, installed: installed);
   }
 
-  void _toggle(String version) {
-    Haptics.select();
-    setState(() => _expanded.contains(version) ? _expanded.remove(version) : _expanded.add(version));
-  }
-
   @override
   Widget build(BuildContext context) {
     final latest = Changelog.entries.first;
@@ -54,201 +49,88 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
     return OneUISubpage(
       title: "What's new",
       builder: (context) => [
-        // ColorOS's artwork as the page's banner.
-        ClipRRect(
-          borderRadius: BorderRadius.circular(28),
-          child: SizedBox(
-            height: 170,
-            child: Stack(
-              children: [
-                const Positioned.fill(child: CosArtwork()),
-                Center(
-                  child: Text(
-                    "What's new in\n${AppInfo.name}",
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 28, height: 1.15, fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
         FutureBuilder(
           future: _installed,
-          builder: (context, snapshot) => _InstalledCard(
-            entry: latest,
-            // The notes ship with the app, so the newest entry is the running version
-            // (app_version_test checks it). Unknown versions (tests, odd platforms) count too.
-            installed: snapshot.data?.version == null || snapshot.data!.version!.name == latest.version,
-            installedOn: snapshot.data?.installed == null ? null : _installedFormat.format(snapshot.data!.installed!),
-          ),
+          builder: (context, snapshot) {
+            final installed = snapshot.data?.installed;
+            return _ReleaseHero(
+              entry: latest,
+              // The notes ship with the app, so the newest entry is the running version
+              // (app_version_test checks it).
+              note: installed == null ? latest.date : 'Installed ${_installedFormat.format(installed)}',
+            );
+          },
         ),
+        const SizedBox(height: 20),
+        _ReleaseNotes(latest),
         if (earlier.isNotEmpty)
-          OneUISection(
-            title: 'Earlier versions',
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(color: OneUITheme.cardColor, borderRadius: OneUITheme.cardBorderRadius),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                children: [
-                  for (final (i, entry) in earlier.indexed) ...[
-                    if (i > 0)
-                      Divider(
-                        height: 1,
-                        thickness: 0.8,
-                        indent: 16,
-                        endIndent: 16,
-                        color: Colors.white.withValues(alpha: 0.08),
-                      ),
-                    _EarlierVersion(
-                      entry: entry,
-                      expanded: _expanded.contains(entry.version),
-                      onTap: () => _toggle(entry.version),
-                    ),
-                  ],
-                ],
-              ),
-            ),
+          OneUIGroupCard(
+            headerTitle: 'Earlier versions',
+            items: [
+              for (final entry in earlier)
+                OneUIGroupItem(
+                  title: AppVersion.describe(entry.version),
+                  value: entry.date,
+                  onTap: () =>
+                      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => _ReleasePage(entry: entry))),
+                ),
+            ],
           ),
       ],
     );
   }
 }
 
-/// The installed version: title, "Installed" chip, dates and every change.
-class _InstalledCard extends StatelessWidget {
-  final ChangelogEntry entry;
-  final bool installed;
-  final String? installedOn;
+/// An earlier version's note on its own page.
+class _ReleasePage extends StatelessWidget {
+  const _ReleasePage({required this.entry});
 
-  const _InstalledCard({required this.entry, required this.installed, required this.installedOn});
+  final ChangelogEntry entry;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: OneUITheme.cardColor, borderRadius: OneUITheme.cardBorderRadius),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  AppVersion.describe(entry.version),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.3,
-                    color: OneUITheme.textPrimary,
-                  ),
-                ),
-              ),
-              if (installed) ...[const SizedBox(width: 10), const _InstalledChip()],
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            [entry.date, if (installed && installedOn != null) 'Installed $installedOn'].join(' · '),
-            style: const TextStyle(fontSize: 13.5, color: OneUITheme.textSecondary),
-          ),
-          const SizedBox(height: 10),
-          _ChangeList(entry.changes),
-        ],
-      ),
+    return OneUISubpage(
+      title: AppVersion.describe(entry.version),
+      builder: (context) => [
+        _ReleaseHero(entry: entry, note: entry.date),
+        const SizedBox(height: 20),
+        _ReleaseNotes(entry),
+      ],
     );
   }
 }
 
-/// Blue capsule marking the version that's running.
-class _InstalledChip extends StatelessWidget {
-  const _InstalledChip();
+/// The artwork with the version written over it, as ColorOS heads its update notes.
+class _ReleaseHero extends StatelessWidget {
+  const _ReleaseHero({required this.entry, required this.note});
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-      decoration: BoxDecoration(
-        color: OneUITheme.accentBlue.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(OneUITheme.radiusBadge),
-      ),
-      child: const Text(
-        'Installed',
-        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: OneUITheme.accentBlue),
-      ),
-    );
-  }
-}
-
-/// One collapsed row ("1.0.0 Alpha 2", "Oct 2026 · 4 changes") that expands into its notes.
-class _EarlierVersion extends StatelessWidget {
   final ChangelogEntry entry;
-  final bool expanded;
-  final VoidCallback onTap;
-
-  const _EarlierVersion({required this.entry, required this.expanded, required this.onTap});
+  final String note;
 
   @override
   Widget build(BuildContext context) {
-    final count = entry.changes.length;
-    return InkWell(
-      onTap: onTap,
-      splashColor: Colors.white.withValues(alpha: 0.06),
-      highlightColor: Colors.white.withValues(alpha: 0.03),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    final v = AppVersion.tryParse(entry.version);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: SizedBox(
+        height: 290,
+        child: Stack(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        AppVersion.describe(entry.version),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 16, height: 1.25, color: OneUITheme.textPrimary),
-                      ),
-                      const SizedBox(height: 1),
-                      Text(
-                        '${entry.date} · $count ${count == 1 ? 'change' : 'changes'}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 13.5, height: 1.25, color: OneUITheme.textSecondary),
-                      ),
-                    ],
+            // Softly blurred, so the mark reads as the subject.
+            const Positioned.fill(child: CosArtwork(waveShift: .3, blur: 3, dim: .35)),
+            // The version mark centred, and when this release came.
+            Positioned.fill(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  VersionMark(
+                    version: v == null ? entry.version : '${v.major}.${v.minor}',
+                    channel: v != null && v.isPreRelease ? v.channelLabel : null,
+                    size: 84,
                   ),
-                ),
-                const SizedBox(width: 12),
-                AnimatedRotation(
-                  turns: expanded ? 0.5 : 0,
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeInOutCubic,
-                  child: const Icon(Icons.expand_more_rounded, color: OneUITheme.textSecondary),
-                ),
-              ],
-            ),
-            AnimatedSize(
-              duration: const Duration(milliseconds: 280),
-              curve: Curves.easeInOutCubic,
-              alignment: Alignment.topCenter,
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                child: expanded
-                    ? Padding(
-                        key: const ValueKey('open'),
-                        padding: const EdgeInsets.only(top: 10),
-                        child: _ChangeList(entry.changes),
-                      )
-                    : const SizedBox(key: ValueKey('closed'), width: double.infinity),
+                  const SizedBox(height: 4),
+                  Text(note, style: const TextStyle(fontSize: 13, color: Color(0xCCFFFFFF))),
+                ],
               ),
             ),
           ],
@@ -258,40 +140,48 @@ class _EarlierVersion extends StatelessWidget {
   }
 }
 
-/// Release notes as blue-dot bullet rows.
-class _ChangeList extends StatelessWidget {
-  final List<String> changes;
+/// The notes as short paragraphs. A note written "Topic: detail" leads with the topic in
+/// bold, the way release notes read, instead of a bulleted list.
+class _ReleaseNotes extends StatelessWidget {
+  const _ReleaseNotes(this.entry);
 
-  const _ChangeList(this.changes);
+  final ChangelogEntry entry;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (final change in changes)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 5),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(top: 7, right: 12),
-                  child: SizedBox(
-                    width: 6,
-                    height: 6,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(color: OneUITheme.accentBlue, shape: BoxShape.circle),
-                    ),
+    const body = TextStyle(fontSize: 16, height: 1.55, color: Color(0xE0FFFFFF));
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.fromLTRB(22, 20, 22, 6),
+      decoration: BoxDecoration(color: OneUITheme.surfaceCard, borderRadius: OneUITheme.cardBorderRadius),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('About this update', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 14),
+          for (final change in entry.changes)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: switch (change.indexOf(': ')) {
+                final i when i > 0 && i < 40 => Text.rich(
+                  TextSpan(
+                    style: body,
+                    children: [
+                      TextSpan(
+                        text: '${change.substring(0, i)}. ',
+                        style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+                      ),
+                      TextSpan(text: _capitalised(change.substring(i + 2))),
+                    ],
                   ),
                 ),
-                Expanded(
-                  child: Text(change, style: const TextStyle(fontSize: 15, height: 1.4, color: OneUITheme.textPrimary)),
-                ),
-              ],
+                _ => Text(change, style: body),
+              },
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
+
+  static String _capitalised(String s) => s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
 }

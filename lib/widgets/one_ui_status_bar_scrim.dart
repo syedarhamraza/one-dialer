@@ -27,10 +27,8 @@ class OneUIStatusBarScrim extends StatelessWidget {
   /// Fades the blur out (shaders/progressive_blur.frag). A ShaderMask can't: around a
   /// BackdropFilter it cuts the blur off from the backdrop.
   static final Future<FragmentShader?> _fade = ImageFilter.isShaderFilterSupported
-      ? FragmentProgram.fromAsset('shaders/progressive_blur.frag').then<FragmentShader?>(
-          (program) => program.fragmentShader(),
-          onError: (_) => null,
-        )
+      ? FragmentProgram.fromAsset('shaders/progressive_blur.frag')
+            .then<FragmentShader?>((program) => program.fragmentShader(), onError: (_) => null)
       : Future.value(null);
 
   @override
@@ -71,7 +69,9 @@ class OneUIStatusBarScrim extends StatelessWidget {
                           ),
                         ),
                       ),
-                    const Positioned.fill(child: DecoratedBox(decoration: BoxDecoration(gradient: topGradient))),
+                    const Positioned.fill(
+                      child: DecoratedBox(decoration: BoxDecoration(gradient: topGradient)),
+                    ),
                   ],
                 );
               },

@@ -1,16 +1,22 @@
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../app/app_info.dart';
 import '../../core/config/app_version.dart';
-import '../../widgets/cos_artwork.dart';
+import '../../core/config/changelog.dart';
+import '../../widgets/glow_button.dart';
 import '../../widgets/one_ui_group_card.dart';
 import '../../widgets/one_ui_subpage.dart';
+import '../../widgets/cos_artwork.dart';
+import '../../widgets/version_mark.dart';
+import '../updates/data/update_service.dart';
 import '../updates/presentation/update_controller.dart';
 import 'software_update_screen.dart';
 
-/// Settings › About One Dialer, like ColorOS 17's About device: the artwork card with the
-/// version and a "Version up to date" pill, then the details.
+/// Settings › About One Dialer (also Software update › Software information): the artwork card
+/// with the version and a button to Software update, then the details (where it came from too).
 class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
 
@@ -22,6 +28,7 @@ class _AboutScreenState extends State<AboutScreen> {
   AppVersion? _version;
   String? _device;
   String? _android;
+  String? _installer;
 
   @override
   void initState() {
@@ -31,50 +38,82 @@ class _AboutScreenState extends State<AboutScreen> {
 
   Future<void> _load() async {
     final version = await AppVersion.current();
-    String? device, android;
+    String? device, android, installer;
     try {
+      installer = (await PackageInfo.fromPlatform()).installerStore;
       final info = await DeviceInfoPlugin().androidInfo;
       device = '${info.manufacturer} ${info.model}';
       android = info.version.release;
     } catch (_) {
-      // Not on Android (tests): the rows stay empty.
+      // Not on Android (tests): those rows stay empty.
     }
     if (mounted) {
       setState(() {
         _version = version;
         _device = device;
         _android = android;
+        _installer = installer;
       });
     }
   }
 
+  String get _source => switch (_installer) {
+    PlayUpdateService.playStoreInstaller => 'Google Play',
+    'com.sec.android.app.samsungapps' => 'Galaxy Store',
+    // A file opened on the phone, or adb.
+    null || 'com.android.shell' => 'Installed directly',
+    final i when i.contains('packageinstaller') => 'Installed directly',
+    _ => 'Another app store',
+  };
+
   @override
   Widget build(BuildContext context) {
     final v = _version;
+    OneUIGroupItem row(String title, String? value) =>
+        OneUIGroupItem(title: title, value: value, trailing: const SizedBox.shrink());
     return OneUISubpage(
       title: 'About ${AppInfo.name}',
       builder: (context) => [
+        // The artwork card (softly blurred) with the version mark centred in it and, under
+        // the channel, the way to Software update.
         ClipRRect(
           borderRadius: BorderRadius.circular(28),
           child: SizedBox(
-            height: 260,
+            height: 340,
             child: Stack(
               children: [
-                const Positioned.fill(child: CosArtwork()),
-                Positioned.fill(
+                const Positioned.fill(child: CosArtwork(waveShift: .3, blur: 3, dim: .35)),
+                Center(
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(AppInfo.name, style: TextStyle(fontSize: 36, fontWeight: FontWeight.w700)),
-                      if (v != null)
-                        Text(v.label, style: const TextStyle(fontSize: 16, color: Color(0xDDFFFFFF))),
-                      const SizedBox(height: 18),
+                      VersionMark(
+                        version: v == null ? '' : '${v.major}.${v.minor}',
+                        channel: v != null && v.isPreRelease ? v.channelLabel : null,
+                        size: 96,
+                      ),
+                      const SizedBox(height: 16),
                       ListenableBuilder(
                         listenable: UpdateController.instance,
-                        builder: (context, _) => _Pill(
-                          label: UpdateController.instance.updateAvailable ? 'Update available' : 'Version up to date',
-                          onTap: () => SoftwareUpdateScreen.open(context),
-                        ),
+                        builder: (context, _) {
+                          final updates = UpdateController.instance;
+                          final update = updates.updateAvailable;
+                          // "Version up to date" only once a check has confirmed it, as ColorOS
+                          // does; lit green only when there's something to get.
+                          return GlowButton(
+                            label: update
+                                ? 'Update available'
+                                : updates.status == UpdateStatus.upToDate
+                                ? 'Version up to date'
+                                : 'Check for updates',
+                            busy: updates.status == UpdateStatus.checking,
+                            busyLabel: 'Checking…',
+                            lit: update,
+                            height: 44,
+                            fontSize: 15,
+                            onTap: () => SoftwareUpdateScreen.open(context),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -86,49 +125,24 @@ class _AboutScreenState extends State<AboutScreen> {
         const SizedBox(height: 20),
         OneUIGroupCard(
           items: [
-            OneUIGroupItem(title: 'Version', value: v?.label, trailing: const SizedBox.shrink()),
-            if (v?.code != null) OneUIGroupItem(title: 'Build', value: '${v!.code}', trailing: const SizedBox.shrink()),
-            OneUIGroupItem(title: 'Device', value: _device, trailing: const SizedBox.shrink()),
-            OneUIGroupItem(title: 'Android version', value: _android, trailing: const SizedBox.shrink()),
+            row('Version', v?.label ?? AppVersion.describe(Changelog.entries.first.version)),
+            if (v?.code != null) row('Build', '${v!.code}'),
+            row('Installed from', _installer == null && v == null ? null : _source),
+            row('Device', _device),
+            row('Android version', _android),
+            if (kDebugMode && BuildInfo.commit.isNotEmpty) row('Commit', BuildInfo.commit),
           ],
         ),
         OneUIGroupCard(
           items: [
             OneUIGroupItem(
               title: 'Open source licences',
-              onTap: () => showLicensePage(
-                context: context,
-                applicationName: AppInfo.name,
-                applicationVersion: v?.label,
-              ),
+              onTap: () =>
+                  showLicensePage(context: context, applicationName: AppInfo.name, applicationVersion: v?.label),
             ),
           ],
         ),
       ],
-    );
-  }
-}
-
-/// ColorOS's frosted "Version up to date" capsule on the artwork (a tint, no blur).
-class _Pill extends StatelessWidget {
-  const _Pill({required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white.withValues(alpha: 0.18),
-      shape: StadiumBorder(side: BorderSide(color: Colors.white.withValues(alpha: 0.25))),
-      child: InkWell(
-        customBorder: const StadiumBorder(),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
-          child: Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-        ),
-      ),
     );
   }
 }
