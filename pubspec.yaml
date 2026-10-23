@@ -72,6 +72,17 @@ flutter:
   shaders:
     - shaders/progressive_blur.frag
 
+  # Only for the glass version numeral: phones' own fonts (vivo's) build bold digits from
+  # overlapping pieces, and the glass rim traces each one.
+  fonts:
+    - family: GlassNumeral
+      fonts:
+        - asset: assets/fonts/Roboto-Bold.ttf
+          weight: 700
+
+  assets:
+    - assets/fonts/Roboto-LICENSE.txt
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

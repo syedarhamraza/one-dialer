@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import 'app/dialer_app.dart';
@@ -18,6 +19,10 @@ Future<void> main() async {
   await initCrashReporting();
   // Not awaited: rows use the defaults until the saved choices arrive a moment later.
   DialerPrefs.instance.loadChoices();
+  // The bundled Roboto (the glass version numeral) under About › Open source licences.
+  LicenseRegistry.addLicense(() async* {
+    yield LicenseEntryWithLineBreaks(['Roboto'], await rootBundle.loadString('assets/fonts/Roboto-LICENSE.txt'));
+  });
   runApp(const DialerApp());
   // Play's update API needs a foreground activity, so ask after the first frame.
   WidgetsBinding.instance.addPostFrameCallback(
