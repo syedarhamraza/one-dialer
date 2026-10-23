@@ -30,15 +30,20 @@ class CallLogRepository {
   }
 
   Timer? _reload;
+  final _pendingDeletes = <int>{};
+  int _revision = 0;
 
   Future<void> _load() async {
+    final revision = ++_revision;
     try {
       final rows = await TelecomBridge.instance.getCallLog();
-      final loaded = rows.map(CallLogEntry.fromMap).toList();
+      if (revision != _revision) return;
+      final loaded = rows.map(CallLogEntry.fromMap).where((c) => !_pendingDeletes.contains(c.id)).toList();
       // Unchanged rows (a change elsewhere in the log) rebuild nothing.
       if (!sameCalls(loaded, calls.value)) calls.value = loaded;
       hasAccess.value = true;
     } on PlatformException catch (e) {
+      if (revision != _revision) return;
       if (e.code != 'NO_PERMISSION') rethrow;
       calls.value = const [];
       hasAccess.value = false;
@@ -66,7 +71,34 @@ class CallLogRepository {
     return true;
   }
 
-  Future<void> delete(Iterable<int> ids) => TelecomBridge.instance.deleteCalls(ids.toList());
+  Future<void> delete(Iterable<int> ids) async {
+    final deleting = ids.toSet().difference(_pendingDeletes);
+    if (deleting.isEmpty) return;
+    final removed = calls.value.where((c) => deleting.contains(c.id)).toList();
+    _pendingDeletes.addAll(deleting);
+    ++_revision;
+    calls.value = calls.value.where((c) => !deleting.contains(c.id)).toList();
+    try {
+      await TelecomBridge.instance.deleteCalls(deleting.toList());
+    } catch (_) {
+      _pendingDeletes.removeAll(deleting);
+      ++_revision;
+      final current = {for (final c in calls.value) c.id: c};
+      for (final c in removed) {
+        current.putIfAbsent(c.id, () => c);
+      }
+      calls.value = current.values.toList()..sort((a, b) => b.date.compareTo(a.date));
+      rethrow;
+    }
+    _pendingDeletes.removeAll(deleting);
+    ++_revision;
+    // A read failure must not turn a successful deletion into a failed deletion.
+    try {
+      await _load();
+    } on PlatformException {
+      // The next observer notification retries the read.
+    }
+  }
 
   /// Marks missed calls seen (clears their notification) if there are any unseen.
   Future<void> markMissedSeen() async {
