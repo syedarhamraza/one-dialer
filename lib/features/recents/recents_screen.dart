@@ -16,7 +16,6 @@ import '../../widgets/one_ui_floating_action_bar.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_status_bar_scrim.dart';
 import '../../widgets/round_header_controls.dart';
-import '../../widgets/swipe_to_call.dart';
 import '../contacts/editor/add_to_contacts.dart';
 import '../in_call/call_controls.dart';
 import '../keypad/keypad_screen.dart';
@@ -696,16 +695,7 @@ class _CallRow extends StatelessWidget {
       ),
     );
 
-    if (call.isPrivate || call.number.isEmpty) return row;
-    // Call back on the SIM the call used.
-    return SwipeToCallOrMessage(
-      key: ValueKey(call.id),
-      number: call.number,
-      simId: call.simId,
-      enabled: !selecting,
-      color: Colors.black,
-      child: row,
-    );
+    return row;
   }
 }
 

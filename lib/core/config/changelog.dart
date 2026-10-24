@@ -29,7 +29,7 @@ class Changelog {
       date: inDevelopment,
       changes: [
         'Block & filter and the contact picker can now be searched',
-        'Call and message swipes require a deliberate half-row swipe to avoid accidental actions while scrolling',
+        'Swipe to call or message on Calls and Contacts rows is removed: tap the row or its info button',
         'Call history asks before deleting and updates immediately; private blocked-call entries can also be deleted',
         'Hide blocked calls now also hides older calls from numbers on your block list',
         'Updated the keypad Add to Contacts menu and removed keypad menu icons',
