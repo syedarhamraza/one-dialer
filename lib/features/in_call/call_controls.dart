@@ -438,7 +438,7 @@ Future<bool> editCallNote(BuildContext context, String number, DateTime at, {boo
                 child: ColoredBox(
                   color: Colors.white,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(22, 14, 14, 18),
+                    padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
                     child: _CallNoteSheet(number: number, at: at, initial: initial, light: true),
                   ),
                 ),
@@ -481,76 +481,113 @@ class _CallNoteSheetState extends State<_CallNoteSheet> {
     super.dispose();
   }
 
+  void _delete() {
+    _controller.clear();
+    _flush(); // Blank removes the note.
+    Navigator.of(context).pop('');
+  }
+
+  void _done() {
+    _flush();
+    Navigator.of(context).pop(_controller.text);
+  }
+
+  void _changed(String _) {
+    _save?.cancel();
+    _save = Timer(const Duration(milliseconds: 400), _flush);
+  }
+
+  static const _hint = 'Write something to remember from this call';
   static const _ink = Color(0xFF111418);
 
   @override
-  Widget build(BuildContext context) {
-    final light = widget.light;
-    return Material(
-      color: Colors.transparent,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+  Widget build(BuildContext context) => Material(color: Colors.transparent, child: widget.light ? _card() : _sheet());
+
+  Widget _sheet() => Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Row(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Call note',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: light ? _ink : null),
-                ),
-              ),
-              if (widget.initial.isNotEmpty)
-                TextButton(
-                  onPressed: () {
-                    _controller.clear();
-                    _flush(); // Blank removes the note.
-                    Navigator.of(context).pop('');
-                  },
-                  style: TextButton.styleFrom(foregroundColor: OneUITheme.accentRed),
-                  child: const Text('Delete'),
-                ),
-              TextButton(
-                onPressed: () {
-                  _flush();
-                  Navigator.of(context).pop(_controller.text);
-                },
-                style: light ? TextButton.styleFrom(foregroundColor: _ink) : null,
-                child: const Text('Done'),
-              ),
-            ],
+          const Expanded(
+            child: Text('Call note', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
           ),
-          SizedBox(height: light ? 6 : 8),
-          TextField(
-            controller: _controller,
-            autofocus: true,
-            minLines: 3,
-            maxLines: 6,
-            textCapitalization: TextCapitalization.sentences,
-            style: light ? const TextStyle(color: _ink, fontSize: 16) : null,
-            cursorColor: light ? _ink : null,
-            decoration: light
-                ? const InputDecoration(
-                    hintText: 'Write something to remember from this call',
-                    hintStyle: TextStyle(color: Color(0x80111418)),
-                    filled: true,
-                    fillColor: Color(0x0D000000),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide.none,
-                      borderRadius: BorderRadius.all(Radius.circular(20)),
-                    ),
-                  )
-                : const InputDecoration(hintText: 'Write something to remember from this call'),
-            onChanged: (_) {
-              _save?.cancel();
-              _save = Timer(const Duration(milliseconds: 400), _flush);
-            },
-          ),
+          if (widget.initial.isNotEmpty)
+            TextButton(
+              onPressed: _delete,
+              style: TextButton.styleFrom(foregroundColor: OneUITheme.accentRed),
+              child: const Text('Delete'),
+            ),
+          TextButton(onPressed: _done, child: const Text('Done')),
         ],
       ),
-    );
-  }
+      const SizedBox(height: 8),
+      TextField(
+        controller: _controller,
+        autofocus: true,
+        minLines: 3,
+        maxLines: 6,
+        textCapitalization: TextCapitalization.sentences,
+        decoration: const InputDecoration(hintText: _hint),
+        onChanged: _changed,
+      ),
+    ],
+  );
+
+  // The call screen's: a ColorOS dialog on the menus' white card, centred title, a grey field and
+  // pill buttons along the bottom.
+  Widget _card() => Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const Text(
+        'Call note',
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: _ink),
+      ),
+      const SizedBox(height: 16),
+      TextField(
+        controller: _controller,
+        autofocus: true,
+        minLines: 3,
+        maxLines: 6,
+        textCapitalization: TextCapitalization.sentences,
+        style: const TextStyle(color: _ink, fontSize: 16, height: 1.35),
+        cursorColor: answerGreen,
+        decoration: const InputDecoration(
+          hintText: _hint,
+          hintStyle: TextStyle(color: Color(0x80111418)),
+          filled: true,
+          fillColor: Color(0x0F000000),
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          border: OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(20))),
+        ),
+        onChanged: _changed,
+      ),
+      const SizedBox(height: 18),
+      Row(
+        children: [
+          if (widget.initial.isNotEmpty) ...[
+            Expanded(child: _pill('Delete', const Color(0x0F000000), OneUITheme.accentRed, _delete)),
+            const SizedBox(width: 10),
+          ],
+          Expanded(child: _pill('Done', answerGreen, Colors.white, _done)),
+        ],
+      ),
+    ],
+  );
+
+  Widget _pill(String label, Color background, Color foreground, VoidCallback onPressed) => TextButton(
+    onPressed: onPressed,
+    style: TextButton.styleFrom(
+      backgroundColor: background,
+      foregroundColor: foreground,
+      minimumSize: const Size.fromHeight(48),
+      shape: const StadiumBorder(),
+      textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+    ),
+    child: Text(label),
+  );
 }
 
 /// The dial pad glyph: ten dots, three rows of three and one under the middle (the 0 key), sized like an icon.
