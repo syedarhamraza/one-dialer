@@ -119,7 +119,7 @@ ISLAND = {
     "island_answer": ball(ANSWER, 0),
     "island_decline": ball(END, 135),  # the handset hung up
     # the collapsed island's glyph (also the ongoing call's small icon)
-    "island_phone": handset(ISL / 2, ISL / 2, ISL * .92, ANSWER, W * ISL / (0.59 * T)),
+    "island_phone": handset(ISL / 2, ISL / 2, ISL * .75, ANSWER, W * ISL / (0.59 * T)),  # the old Icon's 18 of 24
     # LetterAvatar's no-photo person
     "island_caller": (f'<circle cx="{ISL / 2}" cy="{ISL / 2}" r="{ISL / 2}" fill="#2C2C2E"/>'
                       f'<g fill="#9E9EA4" transform="translate({ISL / 2 - 280 * cpk:.2f} {ISL / 2 - 282 * cpk:.2f}) scale({cpk:.4f})">'
