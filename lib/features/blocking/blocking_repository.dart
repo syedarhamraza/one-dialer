@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 
 import '../../core/telecom/telecom_bridge.dart';
@@ -27,8 +28,14 @@ class BlockingRepository {
     final raw = await TelecomBridge.instance.getBlocking();
     rules.value = (blockHidden: raw['blockHidden'] == true, blockNonContacts: raw['blockNonContacts'] == true);
     hasScreeningRole.value = await TelecomBridge.instance.hasScreeningRole();
-    if (!await _api.isAvailable()) return;
-    numbers.value = [for (final p in await _api.getAll()) p.number];
+    // isAvailable() only checks the phone user, not our role: reading the list needs the
+    // default dialer role, which the user can hand to another app at any time.
+    if (!await TelecomBridge.instance.isDefaultDialer() || !await _api.isAvailable()) return;
+    try {
+      numbers.value = [for (final p in await _api.getAll()) p.number];
+    } on PlatformException {
+      // Lost the role between the check and the read: keep the last list.
+    }
   }
 
   bool isBlocked(String number) {
