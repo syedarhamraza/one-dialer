@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../core/contacts/contacts_repository.dart';
+import '../core/prefs/dialer_prefs.dart';
 
 /// The contact's photo, or Samsung's soft gradient circle with up to two initials
 /// ("Aamir Zaman" → "AZ"). Unsaved numbers and hidden callers get a person icon.
@@ -101,10 +102,16 @@ class ContactAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final repo = ContactsRepository.instance;
-    return FutureBuilder(
-      future: repo.thumbnail(id),
-      initialData: repo.cachedThumbnail(id),
-      builder: (context, photo) => LetterAvatar(name: name, photo: photo.data, size: size),
+    // Manage contacts › Show contact's profile picture.
+    return ValueListenableBuilder(
+      valueListenable: DialerPrefs.instance.showPhotos,
+      builder: (context, show, _) => !show
+          ? LetterAvatar(name: name, size: size)
+          : FutureBuilder(
+              future: repo.thumbnail(id),
+              initialData: repo.cachedThumbnail(id),
+              builder: (context, photo) => LetterAvatar(name: name, photo: photo.data, size: size),
+            ),
     );
   }
 }

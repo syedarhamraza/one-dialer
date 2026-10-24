@@ -20,6 +20,7 @@ String accountApp(String? type) => switch (type?.toLowerCase() ?? '') {
   final t when t.contains('google') => 'Google',
   final t when t.contains('samsung') || t.contains('osp.app') => 'Samsung account',
   final t when t.contains('telegram') => 'Telegram',
+  final t when t.contains('sdn') => 'SIM service numbers',
   final t when t.contains('sim') => 'SIM card',
   _ => 'This device',
 };

@@ -81,6 +81,21 @@ object ContactExtras {
         if (ops.isNotEmpty()) context.contentResolver.applyBatch(android.provider.ContactsContract.AUTHORITY, ops)
     }
 
+    /** Manage contacts › Merge duplicates: joins every raw contact of [contactIds] into one contact. */
+    fun merge(context: Context, contactIds: List<String>) {
+        val raws = contactIds.flatMap { id -> rawContacts(context, id).map { it["id"] as Long } }
+        val first = raws.firstOrNull() ?: return
+        val ops = ArrayList<ContentProviderOperation>()
+        for (other in raws.drop(1)) {
+            ops += ContentProviderOperation.newUpdate(AggregationExceptions.CONTENT_URI)
+                .withValue(AggregationExceptions.TYPE, AggregationExceptions.TYPE_KEEP_TOGETHER)
+                .withValue(AggregationExceptions.RAW_CONTACT_ID1, first)
+                .withValue(AggregationExceptions.RAW_CONTACT_ID2, other)
+                .build()
+        }
+        if (ops.isNotEmpty()) context.contentResolver.applyBatch(android.provider.ContactsContract.AUTHORITY, ops)
+    }
+
     /**
      * Where a new contact can be saved, as ColorOS offers: the phone itself (the NULL account,
      * type and name null), SIM accounts, and Google accounts. Read from the accounts contacts

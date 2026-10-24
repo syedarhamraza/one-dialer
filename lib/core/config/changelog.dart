@@ -29,10 +29,13 @@ class Changelog {
       date: inDevelopment,
       changes: [
         'Block & filter and the contact picker can now be searched',
+        'Adding a contact whose number or name is already saved (also from a QR code) asks first',
+        'Merging duplicate contacts asks first',
         'Swipe to call or message on Calls and Contacts rows is removed: tap the row or its info button',
         'Call history asks before deleting and updates immediately; private blocked-call entries can also be deleted',
         'Hide blocked calls now also hides older calls from numbers on your block list',
         'Dual SIM: Settings › Tap a recent call can be set to Choose SIM and call',
+        'Contacts ⋮ › Manage contacts: profile pictures, contacts without numbers, accounts to display, sort and name format, default save location, import and export .vcf, SIM card contacts and merging duplicates',
         'Updated the keypad Add to Contacts menu and removed keypad menu icons',
         'Contact QR codes include all phone numbers in a camera-friendly format',
         'Adding a contact from a scanned QR code or another app now keeps all its numbers',

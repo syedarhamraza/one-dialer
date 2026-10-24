@@ -9,7 +9,8 @@ class DialerPrefs {
 
   static final DialerPrefs instance = DialerPrefs._();
 
-  final _prefs = SharedPreferencesAsync();
+  // Lazy: widgets read the notifiers below without touching storage.
+  late final _prefs = SharedPreferencesAsync();
 
   /// Bumped on every change, so screens can rebuild.
   final ValueNotifier<int> changes = ValueNotifier(0);
@@ -100,14 +101,39 @@ class DialerPrefs {
   }
 
   /// Settings › "Tap a recent call": `details` (open its page), `dial` (write the number
-  /// in the keypad) or `sim` (dual SIM only: pick a SIM and call). Notifiers so rows read it synchronously; [loadChoices] fills them at startup.
+  /// in the keypad) or `sim` (dual SIM only: pick a SIM and call). Notifiers so rows read
+  /// it synchronously; [loadChoices] fills them at startup.
   final recentTap = ValueNotifier('details');
 
   /// Settings › "Choose SIM for calls" (dual SIM, no default): `buttons` (two Call keys)
   /// or `menu` (ask on every call).
   final simChoice = ValueNotifier('buttons');
 
+  // Manage contacts. Accounts are keyed `type|name` (`|` is the phone itself).
+  final showPhotos = ValueNotifier(true);
+  final onlyWithNumbers = ValueNotifier(true);
+
+  /// `first` or `last`: which name the A–Z list sorts by.
+  final sortBy = ValueNotifier('first');
+
+  /// `first` (First Last) or `last` (Last First).
+  final nameOrder = ValueNotifier('first');
+
+  /// Accounts whose contacts the Contacts tab leaves out; empty shows all.
+  final hiddenAccounts = ValueNotifier<Set<String>>(const {});
+
+  /// Where new contacts are saved; null leaves it to the editor's default.
+  final saveAccount = ValueNotifier<String?>(null);
+
   Future<void> loadChoices() async {
+    showPhotos.value = await _prefs.getBool('contacts_show_photos') ?? true;
+    onlyWithNumbers.value = await _prefs.getBool('contacts_only_numbers') ?? true;
+    if (await _prefs.getString('contacts_sort') case final v? when v == 'first' || v == 'last') sortBy.value = v;
+    if (await _prefs.getString('contacts_name_order') case final v? when v == 'first' || v == 'last') {
+      nameOrder.value = v;
+    }
+    hiddenAccounts.value = {...?await _prefs.getStringList('contacts_hidden_accounts')};
+    saveAccount.value = await _prefs.getString('contacts_save_account');
     // Ignores values from earlier test builds that no longer exist.
     final tap = await _prefs.getString('recent_tap');
     if (tap == 'details' || tap == 'dial' || tap == 'sim') recentTap.value = tap!;
@@ -118,6 +144,36 @@ class DialerPrefs {
   Future<void> setRecentTap(String value) async {
     recentTap.value = value;
     await _prefs.setString('recent_tap', value);
+  }
+
+  Future<void> setShowPhotos(bool value) async {
+    showPhotos.value = value;
+    await _prefs.setBool('contacts_show_photos', value);
+  }
+
+  Future<void> setOnlyWithNumbers(bool value) async {
+    onlyWithNumbers.value = value;
+    await _prefs.setBool('contacts_only_numbers', value);
+  }
+
+  Future<void> setSortBy(String value) async {
+    sortBy.value = value;
+    await _prefs.setString('contacts_sort', value);
+  }
+
+  Future<void> setNameOrder(String value) async {
+    nameOrder.value = value;
+    await _prefs.setString('contacts_name_order', value);
+  }
+
+  Future<void> setHiddenAccounts(Set<String> value) async {
+    hiddenAccounts.value = value;
+    await _prefs.setStringList('contacts_hidden_accounts', value.toList());
+  }
+
+  Future<void> setSaveAccount(String value) async {
+    saveAccount.value = value;
+    await _prefs.setString('contacts_save_account', value);
   }
 
   Future<void> setSimChoice(String value) async {

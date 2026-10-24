@@ -218,7 +218,9 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                     child: LetterAvatar(
                       name: contact.name,
                       // Full resolution once loaded; the thumbnail is soft at this size.
-                      photo: _full?.photo?.fullSize ?? ContactsRepository.instance.cachedThumbnail(contact.id),
+                      photo: !DialerPrefs.instance.showPhotos.value
+                          ? null
+                          : _full?.photo?.fullSize ?? ContactsRepository.instance.cachedThumbnail(contact.id),
                       size: 112,
                     ),
                   ),
