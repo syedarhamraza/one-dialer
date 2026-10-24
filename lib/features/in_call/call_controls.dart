@@ -419,22 +419,46 @@ Future<void> chooseCallAudioRoute(BuildContext context, AudioInfo audio, GlobalK
 );
 
 /// Opens the call note over the call screen. Text saves as it's typed, so a note survives the
-/// other side hanging up mid-sentence. Returns whether a note is left.
-Future<bool> editCallNote(BuildContext context, String number, DateTime at) async {
+/// other side hanging up mid-sentence. Returns whether a note is left. [light] is the call
+/// screen's look: a flat white card like its menus.
+Future<bool> editCallNote(BuildContext context, String number, DateTime at, {bool light = false}) async {
   final initial = await DialerPrefs.instance.callNote(number, at) ?? '';
   if (!context.mounted) return initial.isNotEmpty;
-  final text = await OneUIFloatingModal.show<String>(
-    context: context,
-    builder: (context) => _CallNoteSheet(number: number, at: at, initial: initial),
-  );
+  final text = light
+      ? await showModalBottomSheet<String>(
+          context: context,
+          backgroundColor: Colors.transparent,
+          isScrollControlled: true,
+          useRootNavigator: true,
+          builder: (context) => SafeArea(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + MediaQuery.viewInsetsOf(context).bottom),
+              child: ClipRSuperellipse(
+                borderRadius: const BorderRadius.all(Radius.circular(34)),
+                child: ColoredBox(
+                  color: Colors.white,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(22, 14, 14, 18),
+                    child: _CallNoteSheet(number: number, at: at, initial: initial, light: true),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        )
+      : await OneUIFloatingModal.show<String>(
+          context: context,
+          builder: (context) => _CallNoteSheet(number: number, at: at, initial: initial),
+        );
   return (text ?? await DialerPrefs.instance.callNote(number, at) ?? '').trim().isNotEmpty;
 }
 
 class _CallNoteSheet extends StatefulWidget {
-  const _CallNoteSheet({required this.number, required this.at, required this.initial});
+  const _CallNoteSheet({required this.number, required this.at, required this.initial, this.light = false});
   final String number;
   final DateTime at;
   final String initial;
+  final bool light;
 
   @override
   State<_CallNoteSheet> createState() => _CallNoteSheetState();
@@ -457,53 +481,76 @@ class _CallNoteSheetState extends State<_CallNoteSheet> {
     super.dispose();
   }
 
+  static const _ink = Color(0xFF111418);
+
   @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.transparent,
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            const Expanded(
-              child: Text('Call note', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
-            ),
-            if (widget.initial.isNotEmpty)
+  Widget build(BuildContext context) {
+    final light = widget.light;
+    return Material(
+      color: Colors.transparent,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Call note',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: light ? _ink : null),
+                ),
+              ),
+              if (widget.initial.isNotEmpty)
+                TextButton(
+                  onPressed: () {
+                    _controller.clear();
+                    _flush(); // Blank removes the note.
+                    Navigator.of(context).pop('');
+                  },
+                  style: TextButton.styleFrom(foregroundColor: OneUITheme.accentRed),
+                  child: const Text('Delete'),
+                ),
               TextButton(
                 onPressed: () {
-                  _controller.clear();
-                  _flush(); // Blank removes the note.
-                  Navigator.of(context).pop('');
+                  _flush();
+                  Navigator.of(context).pop(_controller.text);
                 },
-                style: TextButton.styleFrom(foregroundColor: OneUITheme.accentRed),
-                child: const Text('Delete'),
+                style: light ? TextButton.styleFrom(foregroundColor: _ink) : null,
+                child: const Text('Done'),
               ),
-            TextButton(
-              onPressed: () {
-                _flush();
-                Navigator.of(context).pop(_controller.text);
-              },
-              child: const Text('Done'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _controller,
-          autofocus: true,
-          minLines: 3,
-          maxLines: 6,
-          textCapitalization: TextCapitalization.sentences,
-          decoration: const InputDecoration(hintText: 'Write something to remember from this call'),
-          onChanged: (_) {
-            _save?.cancel();
-            _save = Timer(const Duration(milliseconds: 400), _flush);
-          },
-        ),
-      ],
-    ),
-  );
+            ],
+          ),
+          SizedBox(height: light ? 6 : 8),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            minLines: 3,
+            maxLines: 6,
+            textCapitalization: TextCapitalization.sentences,
+            style: light ? const TextStyle(color: _ink, fontSize: 16) : null,
+            cursorColor: light ? _ink : null,
+            decoration: light
+                ? const InputDecoration(
+                    hintText: 'Write something to remember from this call',
+                    hintStyle: TextStyle(color: Color(0x80111418)),
+                    filled: true,
+                    fillColor: Color(0x0D000000),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide.none,
+                      borderRadius: BorderRadius.all(Radius.circular(20)),
+                    ),
+                  )
+                : const InputDecoration(hintText: 'Write something to remember from this call'),
+            onChanged: (_) {
+              _save?.cancel();
+              _save = Timer(const Duration(milliseconds: 400), _flush);
+            },
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// The dial pad glyph: ten dots, three rows of three and one under the middle (the 0 key), sized like an icon.
@@ -582,7 +629,11 @@ ShapeDecoration solidGlow(OutlinedBorder shape) => ShapeDecoration(
 /// wallpaper tints it, and without its even rim ([glassGlow] draws a lit one). Pair with [glassGlow].
 ShapeDecoration glassBody(Color color, OutlinedBorder shape, {double glow = .3, double blur = 22}) {
   final body = solidBody(color.withValues(alpha: .86), shape, glow: glow, blur: blur);
-  return ShapeDecoration(shape: shape.copyWith(side: BorderSide.none), gradient: body.gradient, shadows: body.shadows);
+  return ShapeDecoration(
+    shape: shape.copyWith(side: BorderSide.none),
+    gradient: body.gradient,
+    shadows: body.shadows,
+  );
 }
 
 /// [solidGlow] plus a glass sheen over the top and a rim that catches the light at the top

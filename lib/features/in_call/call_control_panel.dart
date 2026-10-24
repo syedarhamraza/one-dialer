@@ -507,7 +507,7 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
 
   Future<void> _editNote() async {
     final at = _noteAt ??= DateTime.now();
-    final hasNote = await editCallNote(context, widget.call.number ?? '', at);
+    final hasNote = await editCallNote(context, widget.call.number ?? '', at, light: true);
     if (mounted) setState(() => _hasNote = hasNote);
   }
 
