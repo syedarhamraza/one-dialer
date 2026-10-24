@@ -100,9 +100,16 @@ class CallLogRepository {
     }
   }
 
-  /// Marks missed calls seen (clears their notification) if there are any unseen.
+  /// Marks missed calls seen (clears their notification). Asks the call log itself rather than
+  /// [calls], which can still be loading or predate the missed call when the app opens.
   Future<void> markMissedSeen() async {
-    if (calls.value.any((c) => c.isMissed && c.isNew)) await TelecomBridge.instance.markMissedRead();
+    try {
+      await TelecomBridge.instance.markMissedRead();
+    } on PlatformException {
+      // No call log access yet; the next open retries.
+    } on MissingPluginException {
+      // Widget tests have no native side.
+    }
   }
 
   /// The most recently dialled number, for the keypad's empty-call-button redial.
