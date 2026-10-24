@@ -10,12 +10,13 @@ import 'one_ui_floating_menu.dart';
 
 /// Calls [number] the way Samsung does: on [simId] if given, else on the contact's chosen
 /// SIM, else (dual SIM with "Ask every time") after asking with our SIM menu, which pops
-/// from [anchorKey]'s button when given. [chooseSim] always asks on dual SIM.
+/// from [anchorKey]'s button (or [anchorContext]'s widget) when given. [chooseSim] always asks on dual SIM.
 Future<bool> placeCall(
   BuildContext context,
   String number, {
   String? simId,
   GlobalKey? anchorKey,
+  BuildContext? anchorContext,
   bool chooseSim = false,
 }) async {
   final telecom = TelecomBridge.instance;
@@ -23,7 +24,7 @@ Future<bool> placeCall(
     final sims = await telecom.getSims();
     if (sims.length > 1) {
       if (!context.mounted) return false;
-      final sim = await _pickSim(context, sims, anchorKey);
+      final sim = await _pickSim(context, sims, anchorKey, anchorContext);
       if (sim == null) return false;
       simId = sim.id;
     }
@@ -36,7 +37,7 @@ Future<bool> placeCall(
     final sims = await telecom.getSims();
     if (sims.length > 1 && !sims.any((s) => s.isDefault)) {
       if (!context.mounted) return false;
-      final sim = await _pickSim(context, sims, anchorKey);
+      final sim = await _pickSim(context, sims, anchorKey, anchorContext);
       if (sim == null) return false;
       simId = sim.id;
     }
@@ -45,11 +46,17 @@ Future<bool> placeCall(
   return true;
 }
 
-Future<SimCard?> _pickSim(BuildContext context, List<SimCard> sims, GlobalKey? anchorKey) async {
+Future<SimCard?> _pickSim(
+  BuildContext context,
+  List<SimCard> sims,
+  GlobalKey? anchorKey,
+  BuildContext? anchorContext,
+) async {
   final picked = Completer<SimCard?>();
   await OneUIFloatingMenu.show(
     context: context,
     anchorKey: anchorKey,
+    anchorContext: anchorContext,
     centered: true,
     fallbackBottom: 120,
     width: 220,
