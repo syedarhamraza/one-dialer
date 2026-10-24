@@ -579,17 +579,53 @@ ShapeDecoration solidGlow(OutlinedBorder shape) => ShapeDecoration(
 );
 
 /// The call buttons (End, Answer, Decline) as glass: [solidBody] a touch see-through, so the
-/// wallpaper tints it. Pair with [glassGlow].
-ShapeDecoration glassBody(Color color, OutlinedBorder shape, {double glow = .3, double blur = 22}) =>
-    solidBody(color.withValues(alpha: .86), shape, glow: glow, blur: blur);
+/// wallpaper tints it, and without its even rim ([glassGlow] draws a lit one). Pair with [glassGlow].
+ShapeDecoration glassBody(Color color, OutlinedBorder shape, {double glow = .3, double blur = 22}) {
+  final body = solidBody(color.withValues(alpha: .86), shape, glow: glow, blur: blur);
+  return ShapeDecoration(shape: shape.copyWith(side: BorderSide.none), gradient: body.gradient, shadows: body.shadows);
+}
 
-/// [solidGlow] plus a glass sheen over the top and a brighter rim.
-ShapeDecoration glassGlow(OutlinedBorder shape) => ShapeDecoration(
-  shape: shape.copyWith(side: const BorderSide(color: Color(0x47FFFFFF), width: 1)),
-  gradient: const LinearGradient(
+/// [solidGlow] plus a glass sheen over the top and a rim that catches the light at the top
+/// edge and fades down the sides.
+Decoration glassGlow(OutlinedBorder shape) => _GlassGlow(shape.copyWith(side: BorderSide.none));
+
+class _GlassGlow extends Decoration {
+  const _GlassGlow(this.shape);
+  final OutlinedBorder shape;
+
+  @override
+  BoxPainter createBoxPainter([VoidCallback? onChanged]) => _GlassGlowPainter(shape);
+}
+
+class _GlassGlowPainter extends BoxPainter {
+  _GlassGlowPainter(this.shape);
+  final OutlinedBorder shape;
+
+  static const _sheen = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0x52FFFFFF), Color(0x14FFFFFF), Color(0x00FFFFFF), Color(0x00FFFFFF), Color(0x3DFFFFFF)],
+    colors: [Color(0x47FFFFFF), Color(0x12FFFFFF), Color(0x00FFFFFF), Color(0x00FFFFFF), Color(0x3DFFFFFF)],
     stops: [0, .28, .46, .55, 1],
-  ),
-);
+  );
+  static const _rim = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0x80FFFFFF), Color(0x14FFFFFF), Color(0x00FFFFFF), Color(0x29FFFFFF)],
+    stops: [0, .3, .65, 1],
+  );
+
+  @override
+  void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
+    final rect = offset & configuration.size!;
+    final path = shape.getOuterPath(rect);
+    canvas.drawPath(path, Paint()..shader = _sheen.createShader(rect));
+    // Inset half the stroke so the rim sits inside the edge.
+    canvas.drawPath(
+      shape.getOuterPath(rect.deflate(.6)),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2
+        ..shader = _rim.createShader(rect),
+    );
+  }
+}
