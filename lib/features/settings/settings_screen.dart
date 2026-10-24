@@ -187,6 +187,18 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
   final _simKey = GlobalKey();
 
   static const _tapLabels = {'details': 'Open details', 'dial': 'Write in keypad'};
+
+  /// "Choose SIM and call" is offered only with two SIMs; with one, a saved `sim` reads as details.
+  bool _dualSim = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _telecom.getSims().then((s) {
+      if (mounted) setState(() => _dualSim = s.length > 1);
+    });
+  }
+
   static const _simLabels = {'buttons': 'Two Call buttons', 'menu': 'Ask every time'};
 
   /// A row whose current choice shows on the right; tapping it opens the choices from there.
@@ -207,7 +219,7 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
         ValueListenableBuilder(
           valueListenable: value,
           builder: (context, v, _) => Text(
-            labels[v] ?? '',
+            labels[v] ?? labels.values.first,
             key: anchor,
             style: const TextStyle(fontSize: 15, color: OneUITheme.textSecondary),
           ),
@@ -242,7 +254,7 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
               title: 'Tap a recent call',
               anchor: _tapKey,
               value: DialerPrefs.instance.recentTap,
-              labels: _tapLabels,
+              labels: _dualSim ? {..._tapLabels, 'sim': 'Choose SIM and call'} : _tapLabels,
               onPick: DialerPrefs.instance.setRecentTap,
             ),
             _choice(
