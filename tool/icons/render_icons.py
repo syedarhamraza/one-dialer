@@ -26,21 +26,20 @@ def rgba(h, a):
     return f"0 0 0 0 {r:.3f} 0 0 0 0 {g:.3f} 0 0 0 0 {b:.3f} 0 0 0 {a} 0"
 
 
-def glass_filter(fid, s=1, drop="#00451F", drop_a=.38, tint="#1FA85C"):
-    """Figma's effects on the glyphs: a deep drop shadow, a white bevel top-left, a tinted one bottom-right.
-    [s] scales the offsets and blurs (1 = the 1024-unit launcher tile)."""
+def glass_filter(fid):
+    """Figma's effects on the glyphs: a deep green drop shadow, a white bevel top-left, a green one bottom-right."""
     alpha = '<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>'
     inner = lambda dx, dy, blur, c, a, prev, out: (
-        alpha + f'<feOffset dx="{dx * s}" dy="{dy * s}"/><feGaussianBlur stdDeviation="{blur * s / 2}"/>'
+        alpha + f'<feOffset dx="{dx}" dy="{dy}"/><feGaussianBlur stdDeviation="{blur / 2}"/>'
         '<feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>'
         f'<feColorMatrix type="matrix" values="{rgba(c, a)}"/><feBlend in2="{prev}" result="{out}"/>')
     return (
-        f'<filter id="{fid}" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB">'
-        + alpha + f'<feOffset dy="{22 * s}"/><feGaussianBlur stdDeviation="{22 * s}"/>'
-        f'<feColorMatrix type="matrix" values="{rgba(drop, drop_a)}" result="drop"/>'
+        f'<filter id="{fid}" x="0" y="0" width="{L}" height="{L}" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">'
+        + alpha + '<feOffset dy="22"/><feGaussianBlur stdDeviation="22"/>'
+        f'<feColorMatrix type="matrix" values="{rgba("#00451F", .38)}" result="drop"/>'
         '<feBlend in="SourceGraphic" in2="drop" result="shape"/>'
         + inner(-4, 8, 10, "#FFFFFF", 1, "shape", "bevel")
-        + inner(6, -14, 22, tint, .6, "bevel", "out")
+        + inner(6, -14, 22, "#1FA85C", .6, "bevel", "out")
         + "</filter>")
 
 
@@ -84,7 +83,7 @@ PHONE_BG = tile_bg("#4DEA8E", "#04B457")
 CONTACTS_BG = tile_bg("#3FE3A0", "#00A86B", SPINE)
 
 # vivo Origin Island images (CallNotifications.kt): 72 dp at 3x. The balls are the call screen's
-# solidBody + solidGlow (call_controls.dart) with a glass rim; the glyphs are the launcher's frosted handset.
+# solidBody + solidGlow (call_controls.dart); the glyphs are the launcher's rounded handset, flat.
 ISL = 216
 GS = ISL * .46 / (0.59 * T)  # island glyph : launcher glyph
 ANSWER, END = "#2FAE52", "#D2463A"
@@ -96,57 +95,38 @@ def mix(a, b, t):
     return "#" + "".join(f"{round(x + (y - x) * t):02X}" for x, y in zip(ca, cb))
 
 
-def frost(bottom):
-    """The launcher's frost, tinted toward [bottom] to suit the button under it."""
-    return FROST.replace("#F0FFF5", mix("#FFFFFF", bottom, .4)).replace("#C2F5D6", bottom)
-
-
-def disc(fill_defs, fill, rim=.18):
-    """A round button: its fill, a light rim, a soft light along the top inside edge."""
-    r = ISL / 2
-    return (f'<defs>{fill_defs}<filter id="lift" x="-10%" y="-10%" width="120%" height="120%">'
-            '<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="a"/>'
-            f'<feOffset dy="4"/><feGaussianBlur stdDeviation="3"/><feComposite in2="a" operator="arithmetic" k2="-1" k3="1"/>'
-            f'<feColorMatrix type="matrix" values="{rgba("#FFFFFF", .35)}"/><feBlend in2="SourceGraphic"/></filter></defs>'
-            f'<circle cx="{r}" cy="{r}" r="{r}" fill="{fill}" filter="url(#lift)"/>'
-            f'<circle cx="{r}" cy="{r}" r="{r - 1.2}" fill="none" stroke="#FFFFFF" stroke-opacity="{rim}" stroke-width="2.4"/>')
-
-
 def ball(color, rotate):
-    body = (f'<linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop stop-color="{mix(color, "#000000", .1)}"/>'
+    """IncomingControls' ball (solidBody + solidGlow, no drop glow) with a flat white handset."""
+    r = ISL / 2
+    return (f'<defs><linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop stop-color="{mix(color, "#000000", .1)}"/>'
             f'<stop offset=".55" stop-color="{color}"/><stop offset="1" stop-color="{mix(color, "#FFFFFF", .14)}"/></linearGradient>'
             '<linearGradient id="lit" x1="0" y1="0" x2="0" y2="1"><stop offset=".5" stop-color="#FFFFFF" stop-opacity="0"/>'
-            '<stop offset="1" stop-color="#FFFFFF" stop-opacity=".24"/></linearGradient>')
-    return (disc(body + frost(mix(color, "#FFFFFF", .75)) + glass_filter("glass", GS * 1.6, mix(color, "#000000", .6), .35, mix(color, "#000000", .15)), "url(#body)")
-            + f'<circle cx="{ISL / 2}" cy="{ISL / 2}" r="{ISL / 2}" fill="url(#lit)"/>'
-            + f'<g filter="url(#glass)">{handset(ISL / 2, ISL / 2, ISL * .46, "url(#frost)", W * GS, rotate)}</g>')
+            '<stop offset="1" stop-color="#FFFFFF" stop-opacity=".24"/></linearGradient></defs>'
+            f'<circle cx="{r}" cy="{r}" r="{r}" fill="url(#body)"/><circle cx="{r}" cy="{r}" r="{r}" fill="url(#lit)"/>'
+            f'<circle cx="{r}" cy="{r}" r="{r - 1.2}" fill="none" stroke="#FFFFFF" stroke-opacity=".18" stroke-width="2.4"/>'
+            + handset(r, r, ISL * .46, "#FFFFFF", W * GS, rotate))
 
 
-def speaker(fill, fill_a, glyph, glyph_fx):
-    return (disc(frost("#DADAE0") + glass_filter("glass", GS * 1.6, "#000000", .3, "#7A7A84"), fill, .22).replace(
-                f'fill="{fill}"', f'fill="{fill}" fill-opacity="{fill_a}"', 1)
-            + f'<g filter="{glyph_fx}"><path transform="translate({ISL * .27} {ISL * .27}) scale({ISL * .46 / 18:.4f}) translate(-3 -3)" '
-              f'd="{VOLUME}" fill="{glyph}" stroke="{glyph}" stroke-width=".5" stroke-linejoin="round"/></g>')
+def speaker(fill, glyph):
+    """CallControlButton's Speaker: a flat disc and the volume glyph, rounded like the handset."""
+    return (f'<circle cx="{ISL / 2}" cy="{ISL / 2}" r="{ISL / 2}" fill="{fill}"/>'
+            f'<path transform="translate({ISL * .27} {ISL * .27}) scale({ISL * .46 / 18:.4f}) translate(-3 -3)" '
+            f'd="{VOLUME}" fill="{glyph}" stroke="{glyph}" stroke-width=".5" stroke-linejoin="round"/>')
 
 
-# The collapsed island's glyph (also the ongoing call's small icon): the handset lit in Answer green.
-ANSWER_LIT = (f'<linearGradient id="ans" x1="0" y1="0" x2="0" y2="1"><stop stop-color="{mix(ANSWER, "#000000", .1)}"/>'
-              f'<stop offset=".55" stop-color="{ANSWER}"/><stop offset="1" stop-color="#5CCB7B"/></linearGradient>')
-cpk = ISL * .54 / 484
+cpk = ISL * .4 / 484  # LetterAvatar's person is about 40% of the disc
 ISLAND = {
     "island_answer": ball(ANSWER, 0),
     "island_decline": ball(END, 135),  # the handset hung up
-    "island_phone": f'<defs>{ANSWER_LIT}{glass_filter("glass", ISL / (0.59 * T) * .9, "#0B4A22", .0, "#1E8A40")}</defs>'
-                    f'<g filter="url(#glass)">{handset(ISL / 2, ISL / 2, ISL * .92, "url(#ans)", W * ISL / (0.59 * T))}</g>',
-    # LetterAvatar's no-photo person, in frosted glass on its dark disc
-    "island_caller": (disc('<linearGradient id="av" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#3A3A3F"/><stop offset="1" stop-color="#26262A"/></linearGradient>'
-                           '<linearGradient id="pf" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#C9C9D1"/><stop offset="1" stop-color="#8E8E98"/></linearGradient>'
-                           + glass_filter("glass", GS * 1.6, "#000000", .35, "#55555E"), "url(#av)", .12)
-                      + f'<g filter="url(#glass)" fill="url(#pf)" transform="translate({ISL / 2 - 280 * cpk:.2f} {ISL / 2 - 282 * cpk:.2f}) scale({cpk:.4f})">'
-                        f'<circle cx="280" cy="168" r="128"/><path d="{BODY}"/></g>'),
-    # CallControlButton's Speaker: frosted with a white glyph, or white with a dark glyph when on
-    "island_speaker": speaker("#FFFFFF", .18, "url(#frost)", "url(#glass)"),
-    "island_speaker_on": speaker("#FFFFFF", .92, "#111418", "none"),
+    # the collapsed island's glyph (also the ongoing call's small icon)
+    "island_phone": handset(ISL / 2, ISL / 2, ISL * .92, ANSWER, W * ISL / (0.59 * T)),
+    # LetterAvatar's no-photo person
+    "island_caller": (f'<circle cx="{ISL / 2}" cy="{ISL / 2}" r="{ISL / 2}" fill="#2C2C2E"/>'
+                      f'<g fill="#9E9EA4" transform="translate({ISL / 2 - 280 * cpk:.2f} {ISL / 2 - 282 * cpk:.2f}) scale({cpk:.4f})">'
+                      f'<circle cx="280" cy="168" r="128"/><path d="{BODY}"/></g>'),
+    # frosted with a white glyph, or white with a dark glyph when on
+    "island_speaker": speaker("#FFFFFF2E", "#FFFFFF"),
+    "island_speaker_on": speaker("#FFFFFFEB", "#111418"),
 }
 
 
