@@ -72,6 +72,7 @@ object CallNotifications {
 
         val builder = Notification.Builder(context, channel)
             .setSmallIcon(R.drawable.ic_stat_call)
+            .setColor(ANSWER_GREEN)
             .setContentTitle(caller)
             .setContentText("Incoming call")
             .setCategory(Notification.CATEGORY_CALL)
@@ -219,6 +220,7 @@ object CallNotifications {
         val builder = Notification.Builder(context, CHANNEL_ONGOING)
             // vivo's call island shows this as-is: the same green glyph as the incoming island.
             .setSmallIcon(R.drawable.island_phone)
+            .setColor(ANSWER_GREEN)
             .setContentTitle(caller)
             .setContentText(status)
             .setCategory(Notification.CATEGORY_CALL)

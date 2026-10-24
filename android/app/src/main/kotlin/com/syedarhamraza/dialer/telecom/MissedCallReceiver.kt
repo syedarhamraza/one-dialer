@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.text.format.DateUtils
 import com.syedarhamraza.dialer.MainActivity
 import com.syedarhamraza.dialer.R
 
@@ -44,7 +45,7 @@ object MissedCallNotifier {
         manager.createNotificationChannel(
             NotificationChannel(CHANNEL, "Missed calls", NotificationManager.IMPORTANCE_DEFAULT)
         )
-        val (number, name) = missed.first()
+        val (number, name, date) = missed.first()
         val caller = name?.takeIf { it.isNotBlank() } ?: number.ifBlank { "Unknown" }
         val open = PendingIntent.getActivity(
             context, 0, MainActivity.openRecentsIntent(context),
@@ -53,22 +54,32 @@ object MissedCallNotifier {
 
         val builder = Notification.Builder(context, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_missed_call)
+            .setColor(0xFFD2463A.toInt()) // endRed in lib/features/in_call/call_controls.dart
             .setCategory(Notification.CATEGORY_MISSED_CALL)
             .setContentIntent(open)
             .setAutoCancel(true)
             .setNumber(missed.size)
+            .setWhen(date)
+            .setShowWhen(true)
 
         if (missed.size == 1) {
-            builder.setContentTitle("Missed call").setContentText(caller)
+            builder.setContentTitle("Missed call").setContentText("$caller · ${time(context, date)}")
             if (number.isNotBlank()) {
                 builder.addAction(action(context, "Call back", Intent(Intent.ACTION_CALL, Uri.fromParts("tel", number, null)), 1))
                 builder.addAction(action(context, "Message", Intent(Intent.ACTION_SENDTO, Uri.fromParts("smsto", number, null)), 2))
             }
         } else {
-            builder.setContentTitle("${missed.size} missed calls").setContentText("Latest: $caller")
+            builder.setContentTitle("${missed.size} missed calls").setContentText("Latest: $caller · ${time(context, date)}")
         }
         manager.notify(ID, builder.build())
     }
+
+    /** When the call came in, in the text too: vivo's shade hides the notification's own time. */
+    private fun time(context: Context, date: Long): String = DateUtils.formatDateTime(
+        context, date,
+        if (DateUtils.isToday(date)) DateUtils.FORMAT_SHOW_TIME
+        else DateUtils.FORMAT_SHOW_TIME or DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_ABBREV_MONTH,
+    )
 
     fun cancel(context: Context) = context.getSystemService(NotificationManager::class.java).cancel(ID)
 

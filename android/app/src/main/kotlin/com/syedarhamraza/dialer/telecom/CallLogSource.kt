@@ -105,16 +105,16 @@ object CallLogSource {
     }
 
     /** Unseen missed calls, newest first: (number, cached name) pairs. */
-    fun unseenMissed(context: Context): List<Pair<String, String?>> {
+    fun unseenMissed(context: Context): List<Triple<String, String?, Long>> {
         fixBlocked(context)
-        val out = mutableListOf<Pair<String, String?>>()
+        val out = mutableListOf<Triple<String, String?, Long>>()
         context.contentResolver.query(
             Calls.CONTENT_URI,
-            arrayOf(Calls.NUMBER, Calls.CACHED_NAME),
+            arrayOf(Calls.NUMBER, Calls.CACHED_NAME, Calls.DATE),
             "${Calls.TYPE} = ? AND ${Calls.NEW} = 1",
             arrayOf(Calls.MISSED_TYPE.toString()),
             "${Calls.DATE} DESC",
-        )?.use { c -> while (c.moveToNext()) out += c.getString(0).orEmpty() to c.getString(1) }
+        )?.use { c -> while (c.moveToNext()) out += Triple(c.getString(0).orEmpty(), c.getString(1), c.getLong(2)) }
         return out
     }
 
