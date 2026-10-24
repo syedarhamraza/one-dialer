@@ -53,6 +53,7 @@ object MissedCallNotifier {
 
         val builder = Notification.Builder(context, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_missed_call)
+            .setColor(0xFFD2463A.toInt()) // endRed in lib/features/in_call/call_controls.dart
             .setCategory(Notification.CATEGORY_MISSED_CALL)
             .setContentIntent(open)
             .setAutoCancel(true)
