@@ -18,6 +18,7 @@ import '../../widgets/place_call.dart';
 import '../../widgets/press_glow.dart';
 import '../../widgets/round_header_controls.dart';
 import '../blocking/blocking_repository.dart';
+import '../recents/call_details_screen.dart' show CallNotesCard;
 import '../recents/call_log.dart';
 import '../recents/call_log_repository.dart';
 import '../recents/recents_screen.dart' show CallTypeIcon, SimBadge, callTypeLabel;
@@ -267,6 +268,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   _settingsCard(contact),
                   if (_full case final full?) ..._detailCards(full),
                   if (_chatApps.isNotEmpty) _appsCard(),
+                  CallNotesCard(numbers: contact.numbers),
                   _callLogs(contact),
                 ],
               ),

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -8,7 +9,9 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
+import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_floating_modal.dart';
+import '../../theme/phosphor_fill.dart';
 
 /// A ColorOS 17 call-control body, a circle or (with [radius]) a squircle-ended key: frosted (the backdrop blurred behind it), milky, glowing up
 /// from every edge (least along the top), with a lip along the top edge and a fainter one below. The glass package supplies the press: it squeezes, stretches toward
@@ -254,14 +257,13 @@ class GlassSpringCurve extends Curve {
 const springSettle = Duration(milliseconds: 700);
 final bouncySpring = GlassSpringCurve(GlassSpring.bouncy(), springSettle);
 
-/// An unavailable action: just an outline, so it reads as "not yet" rather than broken.
-const _outlined = BoxDecoration(
-  shape: BoxShape.circle,
-  border: Border.fromBorderSide(BorderSide(color: Color(0x2EFFFFFF))),
-);
+/// The lit fill of an active action: near white, deeper along the top and lit from below like the
+/// solid buttons.
+const _lit = Color(0xFFEDEFF2);
 
 /// Shared round action for the call controls and the persistent bottom row. Turning it on
-/// grows a white fill out from the icon; unavailable actions show as an outline.
+/// grows a lit white fill out from the icon; unavailable actions keep the frosted body with a
+/// greyed icon.
 class CallAction extends StatelessWidget {
   const CallAction({
     super.key,
@@ -271,6 +273,7 @@ class CallAction extends StatelessWidget {
     required this.onPressed,
     this.size = 60,
     this.glyph,
+    this.circleKey,
   });
   final IconData icon;
   final String label;
@@ -278,63 +281,67 @@ class CallAction extends StatelessWidget {
   final VoidCallback? onPressed;
   final double size;
 
-  /// Draws the icon instead of [icon], for glyphs Material lacks (the 12-dot dial pad).
+  /// Draws the icon instead of [icon], for glyphs Phosphor lacks (the dial pad).
   final Widget Function(Color? color)? glyph;
+
+  /// Marks the circle, so a menu opened from it can anchor there.
+  final Key? circleKey;
 
   @override
   Widget build(BuildContext context) {
     final still = MediaQuery.disableAnimationsOf(context);
     final fast = still ? Duration.zero : const Duration(milliseconds: 180);
     final enabled = onPressed != null;
-    final foreground = active ? const Color(0xFF111418) : (enabled ? Colors.white : const Color(0x73FFFFFF));
+    final foreground = active ? const Color(0xFF111418) : (enabled ? Colors.white : const Color(0x59FFFFFF));
     Widget circle(VoidCallback? onPressed) {
       final body = SizedBox.square(
+        key: circleKey,
         dimension: size,
         child: Stack(
           fit: StackFit.expand,
           children: [
-            if (!enabled) const DecoratedBox(decoration: _outlined),
             AnimatedScale(
               scale: active ? 1 : 0,
               duration: still ? Duration.zero : (active ? springSettle : const Duration(milliseconds: 220)),
               curve: active ? bouncySpring : Curves.easeInCubic,
-              child: const DecoratedBox(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Color(0xEBFFFFFF),
-                  boxShadow: [BoxShadow(color: Color(0x40FFFFFF), blurRadius: 18)],
-                ),
+              child: Container(
+                decoration: solidBody(_lit, const CircleBorder(), glow: .25, blur: 18),
+                foregroundDecoration: solidGlow(const CircleBorder()),
               ),
             ),
-            IconButton(
-              tooltip: label,
-              isSelected: active,
-              iconSize: size * .46,
-              style: IconButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                disabledBackgroundColor: Colors.transparent,
-                shape: const CircleBorder(),
-                side: BorderSide.none,
-                elevation: 0,
-              ),
-              onPressed: onPressed,
-              icon: TweenAnimationBuilder<Color?>(
-                tween: ColorTween(end: foreground),
-                duration: fast,
-                builder: (context, color, _) => AnimatedSwitcher(
+            // The label under the circle is visible; a tooltip on long press would only repeat it.
+            Semantics(
+              label: label,
+              child: IconButton(
+                isSelected: active,
+                iconSize: size * .42,
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  disabledBackgroundColor: Colors.transparent,
+                  shape: const CircleBorder(),
+                  side: BorderSide.none,
+                  elevation: 0,
+                ),
+                onPressed: onPressed,
+                icon: TweenAnimationBuilder<Color?>(
+                  tween: ColorTween(end: foreground),
                   duration: fast,
-                  transitionBuilder: (child, animation) => FadeTransition(
-                    opacity: animation,
-                    child: ScaleTransition(scale: Tween(begin: .6, end: 1.0).animate(animation), child: child),
+                  builder: (context, color, _) => AnimatedSwitcher(
+                    duration: fast,
+                    transitionBuilder: (child, animation) => FadeTransition(
+                      opacity: animation,
+                      child: ScaleTransition(scale: Tween(begin: .6, end: 1.0).animate(animation), child: child),
+                    ),
+                    child: glyph?.call(color) ?? Icon(icon, key: ValueKey(icon), color: color),
                   ),
-                  child: glyph?.call(color) ?? Icon(icon, key: ValueKey(icon), color: color),
                 ),
               ),
             ),
           ],
         ),
       );
-      return enabled ? CallBody(child: body) : body;
+      // Unavailable: the same frosted body, without the glass press.
+      return enabled ? CallBody(child: body) : CallBodyArtwork(radius: null, child: body);
     }
 
     return Column(
@@ -345,21 +352,23 @@ class CallAction extends StatelessWidget {
         SizedBox(
           // Room for a two-line label, no more, so the rows sit close as on ColorOS.
           height: 32,
-          child: AnimatedSwitcher(
-            duration: fast,
-            // Labels hang just under the circle, level with End's.
-            layoutBuilder: (current, previous) =>
-                Stack(alignment: Alignment.topCenter, children: [...previous, ?current]),
-            child: Text(
-              label,
-              key: ValueKey(label),
-              maxLines: 2,
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 12,
-                height: 1.1,
-                color: enabled ? const Color(0xC7FFFFFF) : const Color(0x66FFFFFF),
+          child: ExcludeSemantics(
+            child: AnimatedSwitcher(
+              duration: fast,
+              // Labels hang just under the circle, level with End's.
+              layoutBuilder: (current, previous) =>
+                  Stack(alignment: Alignment.topCenter, children: [...previous, ?current]),
+              child: Text(
+                label,
+                key: ValueKey(label),
+                maxLines: 2,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 1.1,
+                  color: enabled ? const Color(0xC7FFFFFF) : const Color(0x59FFFFFF),
+                ),
               ),
             ),
           ),
@@ -376,36 +385,27 @@ String audioRouteLabel(AudioRoute route) => switch (route) {
   AudioRoute.wiredHeadset => 'Wired headset',
 };
 
-Future<void> chooseCallAudioRoute(BuildContext context, AudioInfo audio) async {
-  final route = await OneUIFloatingModal.show<AudioRoute>(
-    context: context,
-    builder: (context) => Material(
-      color: Colors.transparent,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text('Audio output', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 16),
-          for (final route in audio.supportedRoutes)
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(switch (route) {
-                AudioRoute.earpiece => Icons.phone_in_talk_rounded,
-                AudioRoute.speaker => Icons.volume_up_rounded,
-                AudioRoute.bluetooth => Icons.bluetooth_audio_rounded,
-                AudioRoute.wiredHeadset => Icons.headset_rounded,
-              }),
-              title: Text(audioRouteLabel(route)),
-              trailing: route == audio.route ? const Icon(Icons.check_rounded, color: Color(0xFFB5E8D1)) : null,
-              onTap: () => Navigator.of(context).pop(route),
-            ),
-        ],
+IconData audioRouteIcon(AudioRoute route) => switch (route) {
+  AudioRoute.earpiece => PhosphorFill.phone,
+  AudioRoute.speaker => PhosphorFill.speakerHigh,
+  AudioRoute.bluetooth => PhosphorFill.bluetooth,
+  AudioRoute.wiredHeadset => PhosphorFill.headphones,
+};
+
+/// The app's floating menu over the Speaker button, the current route marked like a choice row's.
+Future<void> chooseCallAudioRoute(BuildContext context, AudioInfo audio, GlobalKey anchor) => OneUIFloatingMenu.show(
+  context: context,
+  anchorKey: anchor,
+  width: 230,
+  items: [
+    for (final route in audio.supportedRoutes)
+      OneUIFloatingMenuItem(
+        label: audioRouteLabel(route),
+        icon: route == audio.route ? Icons.radio_button_checked_rounded : Icons.radio_button_unchecked_rounded,
+        onTap: () => TelecomBridge.instance.setAudioRoute(route),
       ),
-    ),
-  );
-  if (route != null && context.mounted) await TelecomBridge.instance.setAudioRoute(route);
-}
+  ],
+);
 
 /// Opens the call note over the call screen. Text saves as it's typed, so a note survives the
 /// other side hanging up mid-sentence. Returns whether a note is left.
@@ -485,7 +485,7 @@ class _CallNoteSheetState extends State<_CallNoteSheet> {
   );
 }
 
-/// ColorOS's dial pad glyph: twelve dots, three across and four down, sized like an icon.
+/// The dial pad glyph: ten dots, three rows of three and one under the middle (the 0 key), sized like an icon.
 class DialPadGlyph extends StatelessWidget {
   const DialPadGlyph({super.key, this.color});
   final Color? color;
@@ -510,6 +510,7 @@ class _DialPadDots extends CustomPainter {
     final paint = Paint()..color = color;
     for (var row = 0; row < 4; row++) {
       for (var column = 0; column < 3; column++) {
+        if (row == 3 && column != 1) continue;
         canvas.drawCircle(Offset(left + column * gap, top + row * gap), dot, paint);
       }
     }
@@ -517,6 +518,70 @@ class _DialPadDots extends CustomPainter {
 
   @override
   bool shouldRepaint(_DialPadDots oldDelegate) => oldDelegate.color != color;
+}
+
+/// The rounded handset of the launcher icon and the vivo island images (`handset()` in
+/// `tool/icons/render_icons.py`): Material's handset with its pads rounded by a round-joined
+/// stroke. [turns] of .375 (135 degrees) hangs it up, as on Decline and End.
+class HandsetGlyph extends StatelessWidget {
+  const HandsetGlyph({super.key, this.size, this.color = Colors.white, this.turns = 0});
+  final double? size;
+  final Color color;
+  final double turns;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = this.size ?? IconTheme.of(context).size ?? 24;
+    return CustomPaint(size: Size.square(size), painter: _HandsetPainter(color, turns));
+  }
+}
+
+class _HandsetPainter extends CustomPainter {
+  const _HandsetPainter(this.color, this.turns);
+  final Color color;
+  final double turns;
+
+  /// Material's `call` path (a 24-unit box, 18 units across).
+  static final _path = Path()
+    ..moveTo(19.23, 15.26)
+    ..relativeLineTo(-2.54, -.29)
+    ..relativeCubicTo(-.61, -.07, -1.21, .14, -1.64, .57)
+    ..relativeLineTo(-1.84, 1.84)
+    ..relativeCubicTo(-2.83, -1.44, -5.15, -3.75, -6.59, -6.59)
+    ..relativeLineTo(1.85, -1.85)
+    ..relativeCubicTo(.43, -.43, .64, -1.03, .57, -1.64)
+    ..relativeLineTo(-.29, -2.52)
+    ..relativeCubicTo(-.12, -1.01, -.97, -1.77, -1.99, -1.77)
+    ..lineTo(5.03, 3.01)
+    ..relativeCubicTo(-1.13, 0, -2.07, .94, -2, 2.07)
+    ..relativeCubicTo(.53, 8.54, 7.36, 15.36, 15.89, 15.89)
+    ..relativeCubicTo(1.13, .07, 2.07, -.87, 2.07, -2)
+    ..relativeLineTo(0, -1.73)
+    ..relativeCubicTo(.01, -1.01, -.75, -1.86, -1.76, -1.98)
+    ..close();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // As render_icons.py: the rounding is 28 / (0.59 * 1024) of the glyph, inside its size.
+    final w = size.shortestSide * .0463;
+    final k = (size.shortestSide - 2 * w) / 18;
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 2 * w / k
+      ..strokeJoin = StrokeJoin.round;
+    canvas
+      ..save()
+      ..translate(size.width / 2, size.height / 2)
+      ..rotate(turns * 2 * math.pi)
+      ..scale(k)
+      ..translate(-12, -12)
+      ..drawPath(_path, paint)
+      ..drawPath(_path, paint..style = PaintingStyle.stroke)
+      ..restore();
+  }
+
+  @override
+  bool shouldRepaint(_HandsetPainter oldDelegate) => oldDelegate.color != color || oldDelegate.turns != turns;
 }
 
 /// End's red, shared by the End pill, Decline and the Answer flight's landing.

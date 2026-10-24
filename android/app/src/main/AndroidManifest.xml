@@ -153,6 +153,8 @@
         <!-- Messaging apps shown on the contact page (their icons need package visibility) -->
         <package android:name="com.whatsapp" />
         <package android:name="com.whatsapp.w4b" />
+        <!-- Google Meet, for the call screen's Video button -->
+        <package android:name="com.google.android.apps.tachyon" />
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>

@@ -16,7 +16,10 @@ class OneUIFloatingMenuItem {
   final IconData? icon;
   final VoidCallback onTap;
 
-  const OneUIFloatingMenuItem({required this.label, this.icon, required this.onTap});
+  /// False greys the row out and ignores taps on it (the menu stays open).
+  final bool enabled;
+
+  const OneUIFloatingMenuItem({required this.label, this.icon, required this.onTap, this.enabled = true});
 }
 
 /// The app's floating menu (originally OneSpend's One UI menu, now our own): a
@@ -266,7 +269,7 @@ class _MenuItemsState extends State<_MenuItems> {
     _finger.value = null;
     if (y == null || _picked) return;
     final i = _rowAt(e.localPosition.dy - _pad, e.localPosition.dx, width);
-    if (i == null) return;
+    if (i == null || !widget.items[i].enabled) return;
     _picked = true;
     Haptics.tap();
     Navigator.pop(context);
@@ -336,10 +339,13 @@ class _MenuItemsState extends State<_MenuItems> {
                     for (final item in widget.items)
                       Semantics(
                         button: true,
-                        onTap: () {
-                          Navigator.pop(context);
-                          item.onTap();
-                        },
+                        enabled: item.enabled,
+                        onTap: item.enabled
+                            ? () {
+                                Navigator.pop(context);
+                                item.onTap();
+                              }
+                            : null,
                         child: _MenuRow(item: item),
                       ),
                   ],
@@ -360,27 +366,20 @@ class _MenuRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = item.enabled ? OneUITheme.textPrimary : OneUITheme.textPrimary.withValues(alpha: .38);
     return SizedBox(
       height: OneUIFloatingMenu._rowHeight,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
           children: [
-            if (item.icon != null) ...[
-              Icon(item.icon, size: 20, color: OneUITheme.textPrimary),
-              const SizedBox(width: 14),
-            ],
+            if (item.icon != null) ...[Icon(item.icon, size: 20, color: color), const SizedBox(width: 14)],
             Expanded(
               child: Text(
                 item.label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: -0.2,
-                  color: OneUITheme.textPrimary,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, letterSpacing: -0.2, color: color),
               ),
             ),
           ],

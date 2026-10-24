@@ -201,6 +201,12 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
                 )
                 result.success(null)
             }
+            // Video: hands the number to Google Meet; the phone call keeps going.
+            "canMeetCall" -> result.success(meetIntent("0").resolveActivity(context.packageManager) != null)
+            "meetCall" -> {
+                val number = call.argument<String>("number").orEmpty()
+                result.success(runCatching { context.startActivity(meetIntent(number)) }.isSuccess)
+            }
             "sendSms" -> {
                 val number = call.argument<String>("number").orEmpty()
                 val intent = android.content.Intent(android.content.Intent.ACTION_SENDTO, Uri.fromParts("smsto", number, null))
@@ -392,4 +398,9 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
             '*' to ToneGenerator.TONE_DTMF_S, '#' to ToneGenerator.TONE_DTMF_P,
         )
     }
+
+    private fun meetIntent(number: String) =
+        android.content.Intent("com.google.android.apps.tachyon.action.CALL", Uri.fromParts("tel", number, null))
+            .setPackage("com.google.android.apps.tachyon")
+            .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
 }

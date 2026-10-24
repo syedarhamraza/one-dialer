@@ -2,6 +2,8 @@ package com.syedarhamraza.dialer
 
 import android.app.WallpaperManager
 import android.content.Context
+import android.os.Build
+import android.view.WindowManager
 
 /**
  * The call screen's backdrop, as on ColorOS 17: the system wallpaper drawn behind [InCallActivity]
@@ -16,6 +18,9 @@ object WallpaperBackdrop {
     var blur = false
         private set
 
+    /** Whether [InCallActivity] has reported [blur] yet. */
+    private var reported = false
+
     private val listeners = mutableSetOf<() -> Unit>()
 
     fun addListener(listener: () -> Unit) {
@@ -28,10 +33,15 @@ object WallpaperBackdrop {
 
     /** Reported by [InCallActivity] from the window manager's cross-window blur listener. */
     fun setBlur(enabled: Boolean) {
-        if (blur == enabled) return
+        val first = !reported
+        reported = true
+        if (blur == enabled && !first) return
         blur = enabled
         notifyChanged()
     }
+
+    private fun systemBlur(context: Context) = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+        context.getSystemService(WindowManager::class.java)?.isCrossWindowBlurEnabled == true
 
     fun notifyChanged() = listeners.toList().forEach { it() }
 
@@ -43,7 +53,9 @@ object WallpaperBackdrop {
             null
         }
         return mapOf(
-            "blur" to blur,
+            // The engine is warmed before the call window exists; ask the system then, so the
+            // first frame doesn't paint the dark fallback and flash black before the wallpaper.
+            "blur" to if (reported) blur else systemBlur(context),
             "colors" to listOfNotNull(colors?.primaryColor, colors?.secondaryColor, colors?.tertiaryColor)
                 // As unsigned ARGB, which Dart's Color takes as is.
                 .map { it.toArgb().toLong() and 0xFFFFFFFFL },

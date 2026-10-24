@@ -9,6 +9,7 @@ import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/one_ui_floating_modal.dart';
 import 'call_controls.dart';
+import '../../theme/phosphor_fill.dart';
 
 /// Incoming call, ColorOS 17 style: Decline and Answer side by side, each dragged away to act,
 /// with a "Decline with message" pill underneath. Dragging one fades out everything else.
@@ -114,7 +115,8 @@ class _IncomingControlsState extends State<IncomingControls> {
                   child: SwipeUpButton(
                     // The connected screen's End red.
                     color: endRed,
-                    icon: Icons.call_end_rounded,
+                    // The handset hung up, as on End.
+                    turns: .375,
                     label: 'Decline',
                     compact: compact,
                     onProgress: (armed) => _progress('Decline', armed),
@@ -125,7 +127,6 @@ class _IncomingControlsState extends State<IncomingControls> {
                   opacity: _opacityFor('Answer'),
                   child: SwipeUpButton(
                     color: answerGreen,
-                    icon: Icons.call_rounded,
                     label: 'Answer',
                     compact: compact,
                     hidden: widget.answerHidden,
@@ -147,7 +148,7 @@ class _IncomingControlsState extends State<IncomingControls> {
                 radius: 22,
                 child: TextButton.icon(
                   onPressed: () => _declineWithMessage(context),
-                  icon: const Icon(Icons.chat_bubble_rounded, size: 18),
+                  icon: const Icon(PhosphorFill.chatCircleText, size: 18),
                   label: const Text(
                     'Decline with message',
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
@@ -174,7 +175,7 @@ class SwipeUpButton extends StatefulWidget {
   const SwipeUpButton({
     super.key,
     required this.color,
-    required this.icon,
+    this.turns = 0,
     required this.label,
     required this.onTriggered,
     this.onProgress,
@@ -184,7 +185,9 @@ class SwipeUpButton extends StatefulWidget {
   });
 
   final Color color;
-  final IconData icon;
+
+  /// The handset's rotation in turns (.375 hangs it up).
+  final double turns;
   final String label;
 
   /// Gets the ball's global rect where it was released (its resting rect from a screen reader).
@@ -393,7 +396,9 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                                     blur: 22 + 10 * armed,
                                   ),
                                   foregroundDecoration: solidGlow(const CircleBorder()),
-                                  child: Icon(widget.icon, color: Colors.white, size: size * .46),
+                                  child: Center(
+                                    child: HandsetGlyph(size: size * .42, turns: widget.turns),
+                                  ),
                                 ),
                               ),
                             ),

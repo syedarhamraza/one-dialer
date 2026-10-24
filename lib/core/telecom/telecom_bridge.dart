@@ -180,6 +180,13 @@ class TelecomBridge {
 
   /// Opens the keypad to place another call; Telecom holds the current one.
   Future<void> openDialer() => _methods.invokeMethod('openDialer');
+
+  /// Whether Google Meet can take a video call to a number.
+  Future<bool> canMeetCall() async => await _methods.invokeMethod<bool>('canMeetCall') ?? false;
+
+  /// Opens a Google Meet video call to [number]; false if Meet couldn't start.
+  Future<bool> meetCall(String number) async =>
+      await _methods.invokeMethod<bool>('meetCall', {'number': number}) ?? false;
   Future<void> hangUp(String id) => _call('hangUp', id);
   Future<void> hold(String id) => _call('hold', id);
   Future<void> unhold(String id) => _call('unhold', id);

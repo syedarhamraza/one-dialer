@@ -47,7 +47,6 @@ dependencies:
   package_info_plus: ^10.2.1
   device_info_plus: ^13.3.0
   connectivity_plus: ^7.3.1
-
 dev_dependencies:
   shared_preferences_platform_interface: ^2.4.2
   flutter_test:
@@ -79,9 +78,14 @@ flutter:
       fonts:
         - asset: assets/fonts/Roboto-Bold.ttf
           weight: 700
+    # Phosphor's fill icons for the call screen (see lib/theme/phosphor_fill.dart).
+    - family: PhosphorFill
+      fonts:
+        - asset: assets/fonts/Phosphor-Fill.ttf
 
   assets:
     - assets/fonts/Roboto-LICENSE.txt
+    - assets/fonts/Phosphor-LICENSE.txt
 
   # To add assets to your application, add an assets section, like this:
   # assets:

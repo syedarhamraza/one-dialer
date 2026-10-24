@@ -124,8 +124,6 @@ class _CallSession extends StatefulWidget {
 class _CallSessionState extends State<_CallSession> with TickerProviderStateMixin {
   bool _keypadOpen = false;
   String _digits = '';
-  String? _routeToast;
-  Timer? _toastTimer;
 
   /// Keypad morph progress, spring-driven so a mid-flight reversal keeps its momentum.
   late final AnimationController _morph = AnimationController(vsync: this)..addListener(_syncDim);
@@ -245,9 +243,11 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     final color = _ballColor.transform(settled)!;
     // The same shared finish as the End pill, so the hand-off on landing is invisible.
     final shape = RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(rect.shortestSide / 2));
-    final iconSize = lerpDouble(from.shortestSide * .46, 41, settled)!;
-    // The handset tips over and hands off to the hang-up glyph as it lands.
-    final handoff = const Interval(.6, 1).transform(settled);
+    final iconSize = lerpDouble(
+      from.shortestSide * .42,
+      to == null ? from.shortestSide * .42 : to.height * .4,
+      settled,
+    )!;
     return Positioned.fromRect(
       rect: rect,
       child: IgnorePointer(
@@ -256,22 +256,8 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
           decoration: solidBody(color, shape),
           foregroundDecoration: solidGlow(shape),
           alignment: Alignment.center,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Opacity(
-                opacity: 1 - handoff,
-                child: Transform.rotate(
-                  angle: 2.36 * settled,
-                  child: Icon(Icons.call_rounded, color: Colors.white, size: iconSize),
-                ),
-              ),
-              Opacity(
-                opacity: handoff,
-                child: Icon(Icons.call_end_rounded, color: Colors.white, size: iconSize),
-              ),
-            ],
-          ),
+          // The handset tips over into End's hung-up handset as it lands.
+          child: HandsetGlyph(size: iconSize, turns: .375 * settled),
         ),
       ),
     );
@@ -327,19 +313,10 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     } else if (state != CallState.ringing) {
       _launchBall();
     }
-    final route = widget.snapshot.audio.route;
-    if (route != oldWidget.snapshot.audio.route) {
-      _toastTimer?.cancel();
-      setState(() => _routeToast = route == AudioRoute.speaker ? 'Speaker on' : audioRouteLabel(route));
-      _toastTimer = Timer(const Duration(milliseconds: 1500), () {
-        if (mounted) setState(() => _routeToast = null);
-      });
-    }
   }
 
   @override
   void dispose() {
-    _toastTimer?.cancel();
     _ballTimeout?.cancel();
     _fly.dispose();
     _morph.dispose();
@@ -413,18 +390,17 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        if (held != null && !ringing && !ended) ...[
+                          HeldCallCard(call: held, onSwitch: () => TelecomBridge.instance.unhold(held.id)),
+                          const SizedBox(height: 20),
+                        ],
                         CallHeader(
                           call: call,
                           sims: widget.sims,
                           compact: compact,
                           keypadProgress: progress,
                           digits: _digits,
-                          chip: ringing || ended ? null : _routeToast ?? (widget.snapshot.audio.muted ? 'Muted' : null),
                         ),
-                        if (held != null && !ringing && !ended) ...[
-                          const SizedBox(height: 16),
-                          HeldCallChip(call: held, onSwap: () => TelecomBridge.instance.unhold(held.id)),
-                        ],
                       ],
                     ),
                   );

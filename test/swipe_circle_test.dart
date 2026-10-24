@@ -12,7 +12,6 @@ void main() {
         home: Center(
           child: SwipeUpButton(
             color: Colors.green,
-            icon: Icons.call,
             label: 'Answer',
             onTriggered: (ball) {
               fired.add('answer');

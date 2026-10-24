@@ -16,14 +16,22 @@ import 'package:dialer/core/telecom/telecom_bridge.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
+/// A call control by its spoken name (the call screen shows no tooltips).
+Finder control(String label) => find.descendant(
+  of: find.byWidgetPredicate((w) => w is Semantics && w.properties.label == label),
+  matching: find.byType(IconButton),
+);
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   final nativeCalls = <MethodCall>[];
   const events = 'com.syedarhamraza.dialer/call_state';
   const codec = StandardMethodCodec();
   Map<String, Object?>? wallpaper;
+  var meet = false;
   setUp(() {
     nativeCalls.clear();
+    meet = false;
     wallpaper = null;
     TelecomBridge.instance.wallpaperBackdrop.value = null;
     SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.empty();
@@ -43,6 +51,7 @@ void main() {
       }
       if (call.method == 'getQuickReplies') return ["I'll call you back", "Can't talk right now"];
       if (call.method == 'getWallpaperBackdrop') return wallpaper;
+      if (call.method == 'canMeetCall') return meet;
       return null;
     });
   });
@@ -158,9 +167,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 280));
     double endOpacity() => tester
-        .widget<AnimatedOpacity>(
-          find.ancestor(of: find.byTooltip('End call'), matching: find.byType(AnimatedOpacity)).first,
-        )
+        .widget<AnimatedOpacity>(find.ancestor(of: control('End call'), matching: find.byType(AnimatedOpacity)).first)
         .opacity;
     // Mid-flight: the ball has left where it was let go, and the real pill waits for it.
     expect(tester.getRect(ball), isNot(released));
@@ -221,7 +228,7 @@ void main() {
       await emit(tester, [call('active')]);
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull, reason: 'connected at $size');
-      final ratio = tester.getRect(find.byTooltip('End call')).width / size.width;
+      final ratio = tester.getRect(control('End call')).width / size.width;
       if (size.width == DesignWidth.width) vivoRatio = ratio;
       if (fontPath.isNotEmpty) {
         await tester.runAsync(() async {
@@ -246,17 +253,50 @@ void main() {
       await open(tester, size: size, scaled: true);
       await emit(tester, [call('active')]);
       await tester.pumpAndSettle();
-      expect(tester.getRect(find.byTooltip('End call')).width / size.width, closeTo(vivoRatio!, .005), reason: '$size');
+      expect(tester.getRect(control('End call')).width / size.width, closeTo(vivoRatio!, .005), reason: '$size');
       await tester.pumpWidget(const SizedBox());
     }
   });
 
-  testWidgets('Add call takes the fourth slot and opens the dialer', (tester) async {
+  testWidgets('Add call takes the third slot and opens the dialer; More holds the rest', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
-    expect(find.byTooltip('More'), findsNothing);
-    await tester.tap(find.byTooltip('Add call'));
+    await tester.tap(control('Add call'));
     expect(nativeCalls.where((c) => c.method == 'openDialer'), hasLength(1));
+    await tester.tap(control('More'));
+    await tester.pumpAndSettle();
+    expect(find.text('Note'), findsOneWidget);
+    // No Google Meet: Video stays in the menu, greyed out, and does nothing.
+    expect(find.text('Video call'), findsOneWidget);
+    await tester.tap(find.text('Video call'));
+    await tester.pumpAndSettle();
+    expect(nativeCalls.where((c) => c.method == 'meetCall'), isEmpty);
+    expect(find.text('Video call'), findsOneWidget); // The menu stayed open.
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('Video call hands the number to Google Meet when it is installed', (tester) async {
+    meet = true;
+    await open(tester);
+    await emit(tester, [call('active')]);
+    await tester.tap(control('More'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Video call'));
+    await tester.pumpAndSettle();
+    expect(nativeCalls.where((c) => c.method == 'meetCall').single.arguments['number'], '5550100');
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('a long press shows no tooltip, but screen readers keep the names', (tester) async {
+    final semantics = tester.ensureSemantics();
+    await open(tester);
+    await emit(tester, [call('active')]);
+    await tester.longPress(control('Mute'));
+    await tester.pumpAndSettle();
+    expect(find.byType(Tooltip), findsNothing);
+    expect(find.bySemanticsLabel('Mute'), findsOneWidget);
+    expect(find.bySemanticsLabel('End call'), findsOneWidget);
+    semantics.dispose();
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -332,10 +372,12 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('the fourth action takes a note on one call and merges with two', (tester) async {
+  testWidgets('More takes a note; with two calls Merge takes Add call\'s place', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
-    await tester.tap(find.byTooltip('Note'));
+    await tester.tap(control('More'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Note'));
     await tester.pumpAndSettle();
     expect(find.text('Call note'), findsOneWidget);
     await tester.enterText(find.byType(TextField), 'Send the invoice');
@@ -345,17 +387,19 @@ void main() {
     await tester.tap(find.text('Done'));
     await tester.pumpAndSettle();
     expect(find.byType(TextField), findsNothing); // Still on the call screen.
-    expect(
-      tester.widget<IconButton>(find.byWidgetPredicate((w) => w is IconButton && w.tooltip == 'Note')).isSelected,
-      isTrue,
-    );
     await emit(tester, [
       {...call('active'), 'canMerge': true},
       call('holding', id: 'held'),
     ]);
     await tester.pumpAndSettle();
-    expect(find.byTooltip('Note'), findsNothing);
-    expect(find.byTooltip('Merge'), findsOneWidget);
+    expect(control('Add call'), findsNothing);
+    expect(control('Merge'), findsOneWidget);
+    await tester.tap(control('More'));
+    await tester.pumpAndSettle();
+    expect(find.text('Edit note'), findsOneWidget);
+    await tester.tap(find.text('Add call'));
+    await tester.pumpAndSettle();
+    expect(nativeCalls.where((c) => c.method == 'openDialer'), hasLength(1));
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -365,11 +409,11 @@ void main() {
     ) async {
       await open(tester, size: size);
       await emit(tester, [call('active')]);
-      await tester.tap(find.byTooltip('Dial pad'));
+      await tester.tap(control('Dial pad'));
       await tester.pumpAndSettle();
       Rect key(String digit) => tester.getRect(find.byKey(ValueKey('morph-key-$digit')));
       final rowGap = key('4').top - key('1').bottom;
-      final footerGap = tester.getRect(find.byTooltip('End call')).top - key('0').bottom;
+      final footerGap = tester.getRect(control('End call')).top - key('0').bottom;
       expect(footerGap, inInclusiveRange(rowGap - 1, rowGap + 11));
       await tester.pumpWidget(const SizedBox());
     });
@@ -391,9 +435,8 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
-    double fade() => tester
-        .widget<Opacity>(find.ancestor(of: find.byTooltip('End call'), matching: find.byType(Opacity)).last)
-        .opacity;
+    double fade() =>
+        tester.widget<Opacity>(find.ancestor(of: control('End call'), matching: find.byType(Opacity)).last).opacity;
     expect(fade(), lessThan(1));
     await tester.pump(const Duration(milliseconds: 600));
     expect(fade(), 1);
@@ -403,7 +446,7 @@ void main() {
   testWidgets('typed digits replace the caller name while the keypad is open', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
-    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.tap(control('Dial pad'));
     await tester.pumpAndSettle();
     expect(find.text('Alex Morgan'), findsOneWidget);
     await tester.tap(find.bySemanticsLabel('4'));
@@ -417,7 +460,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('mute shows a status chip and route changes flash a toast', (tester) async {
+  testWidgets('mute and route changes light their buttons, with no status pills', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
     expect(find.text('Muted'), findsNothing);
@@ -435,11 +478,10 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    expect(find.text('Speaker on'), findsOneWidget);
-    await tester.pump(const Duration(seconds: 2));
-    await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Speaker on'), findsNothing);
-    expect(find.text('Muted'), findsOneWidget);
+    expect(find.text('Muted'), findsNothing);
+    expect(tester.widget<IconButton>(control('Mute')).isSelected, isTrue);
+    expect(tester.widget<IconButton>(control('Speaker')).isSelected, isTrue);
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -457,8 +499,8 @@ void main() {
   testWidgets('mute and End call still target Telecom', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
-    await tester.tap(find.byTooltip('Mute'));
-    await tester.tap(find.byTooltip('End call'));
+    await tester.tap(control('Mute'));
+    await tester.tap(control('End call'));
     expect(nativeCalls.any((c) => c.method == 'setMuted' && c.arguments['muted'] == true), isTrue);
     expect(nativeCalls.any((c) => c.method == 'hangUp' && c.arguments['id'] == 'call-1'), isTrue);
     await tester.pumpWidget(const SizedBox());
@@ -467,21 +509,23 @@ void main() {
   testWidgets('connected controls are flat and End call has comfortable bottom clearance', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
-    final mute = tester.widget<IconButton>(find.byWidgetPredicate((w) => w is IconButton && w.tooltip == 'Mute'));
+    final mute = tester.widget<IconButton>(control('Mute'));
     expect(mute.style!.backgroundColor!.resolve({}), Colors.transparent); // The body is painted behind.
     expect(mute.style!.side?.resolve({}), anyOf(isNull, BorderSide.none));
-    expect(tester.getSize(find.byTooltip('Mute')), const Size(76, 76));
-    expect(tester.getSize(find.byTooltip('Speaker')), const Size(76, 76));
-    expect(tester.getBottomLeft(find.byTooltip('End call')).dy, lessThanOrEqualTo(915 - 48));
+    expect(tester.getSize(control('Mute')), const Size(76, 76));
+    expect(tester.getSize(control('Speaker')), const Size(76, 76));
+    expect(tester.getBottomLeft(control('End call')).dy, lessThanOrEqualTo(915 - 48));
     await tester.pumpWidget(const SizedBox());
   });
 
   testWidgets('audio output and quick replies use floating sheets', (tester) async {
     await open(tester, reduceMotion: true); // The ringing hint loops, which pumpAndSettle can't outwait.
     await emit(tester, [call('active')], bluetooth: true);
-    await tester.tap(find.byTooltip('Speaker'));
+    await tester.tap(control('Speaker'));
     await tester.pumpAndSettle();
-    expect(find.byType(OneUIFloatingModal), findsOneWidget);
+    // The app's own floating menu, the current route checked.
+    expect(find.byType(OneUIFloatingModal), findsNothing);
+    expect(find.byIcon(Icons.radio_button_checked_rounded), findsOneWidget);
     await tester.tap(find.text('Bluetooth'));
     await tester.pumpAndSettle();
     expect(nativeCalls.any((c) => c.method == 'setAudioRoute' && c.arguments['route'] == 'bluetooth'), isTrue);
@@ -507,7 +551,7 @@ void main() {
     // The empty snapshot as the screen closes keeps the summary: "Call ended" shows once.
     await emit(tester, []);
     expect(find.textContaining('Call ended'), findsOneWidget);
-    expect(find.byTooltip('End call'), findsNothing);
+    expect(control('End call'), findsNothing);
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -515,29 +559,24 @@ void main() {
     await open(tester);
     await emit(tester, [call('dialing')]);
     expect(find.textContaining('Calling'), findsOneWidget);
-    expect(
-      tester.widget<IconButton>(find.byWidgetPredicate((w) => w is IconButton && w.tooltip == 'Hold')).onPressed,
-      isNull,
-    );
-    expect(find.byTooltip('Merge'), findsNothing); // One call: the slot holds a note instead.
-    expect(find.byTooltip('Note'), findsOneWidget);
+    expect(tester.widget<IconButton>(control('Hold')).onPressed, isNull);
+    expect(control('Merge'), findsNothing); // One call: the slot holds Add call.
+    expect(control('Add call'), findsOneWidget);
     await emit(tester, [
       {...call('active'), 'canHold': true, 'canMerge': true},
       call('holding', id: 'held'),
     ]);
-    await tester.tap(find.byTooltip('Hold'));
-    await tester.tap(find.byTooltip('Merge'));
-    await tester.tap(find.text('Swap'));
+    await tester.tap(control('Hold'));
+    await tester.tap(control('Merge'));
+    expect(find.text('On hold'), findsOneWidget); // The held call's card.
+    await tester.tap(find.text('Switch'));
     expect(nativeCalls.any((c) => c.method == 'hold' && c.arguments['id'] == 'call-1'), isTrue);
     expect(nativeCalls.any((c) => c.method == 'merge' && c.arguments['id'] == 'call-1'), isTrue);
     expect(nativeCalls.any((c) => c.method == 'unhold' && c.arguments['id'] == 'held'), isTrue);
     await emit(tester, [call('holding')]);
     expect(find.text('On hold'), findsOneWidget);
-    expect(
-      tester.widget<IconButton>(find.byWidgetPredicate((w) => w is IconButton && w.tooltip == 'Resume')).isSelected,
-      isTrue,
-    );
-    await tester.tap(find.byTooltip('Resume'));
+    expect(tester.widget<IconButton>(control('Resume')).isSelected, isTrue);
+    await tester.tap(control('Resume'));
     expect(nativeCalls.last.method, 'unhold');
     await tester.pumpWidget(const SizedBox());
   });
@@ -545,7 +584,7 @@ void main() {
   testWidgets('DTMF stops on release and Back restores controls', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
-    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.tap(control('Dial pad'));
     await tester.pumpAndSettle();
     final key = find.bySemanticsLabel('5');
     final gesture = await tester.startGesture(tester.getCenter(key));
@@ -556,13 +595,10 @@ void main() {
     expect(nativeCalls.last.method, 'stopDtmf');
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
-    expect(find.byTooltip('Mute'), findsOneWidget);
+    expect(control('Mute'), findsOneWidget);
     await emit(tester, [call('active', id: 'new-call')]);
     // The Dial pad toggle is back to unlit.
-    expect(
-      tester.widget<IconButton>(find.byWidgetPredicate((w) => w is IconButton && w.tooltip == 'Dial pad')).isSelected,
-      isFalse,
-    );
+    expect(tester.widget<IconButton>(control('Dial pad')).isSelected, isFalse);
     expect(find.text('5'), findsNothing);
     await tester.pumpWidget(const SizedBox());
   });
@@ -573,12 +609,12 @@ void main() {
     final panel = find.byKey(const ValueKey('call-upper-panel'));
     final actions = find.byKey(const ValueKey('receding-call-actions'));
     double muteFade() =>
-        tester.widget<Opacity>(find.ancestor(of: find.byTooltip('Mute'), matching: find.byType(Opacity)).first).opacity;
+        tester.widget<Opacity>(find.ancestor(of: control('Mute'), matching: find.byType(Opacity)).first).opacity;
     expect(muteFade(), 1);
     final height = tester.getSize(panel).height;
-    final end = tester.getRect(find.byTooltip('End call'));
-    final speaker = tester.getRect(find.byTooltip('Speaker'));
-    await tester.tap(find.byTooltip('Dial pad'));
+    final end = tester.getRect(control('End call'));
+    final speaker = tester.getRect(control('Speaker'));
+    await tester.tap(control('Dial pad'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 210));
     // Actions fade out in place; keys fade in.
@@ -590,14 +626,14 @@ void main() {
     expect(fade('0'), inExclusiveRange(0, 1));
     final middle = tester.getTopLeft(find.byKey(const ValueKey('morph-key-1')));
     expect(tester.getSize(panel).height, greaterThan(height));
-    expect(tester.getRect(find.byTooltip('End call')), end);
-    expect(tester.getRect(find.byTooltip('Speaker')), speaker);
+    expect(tester.getRect(control('End call')), end);
+    expect(tester.getRect(control('Speaker')), speaker);
     // Upper-panel touches are ignored in flight, but ending the call is always available.
     await tester.tapAt(tester.getCenter(find.byKey(const ValueKey('morph-key-5'))));
     expect(nativeCalls.where((c) => c.method == 'playDtmf'), isEmpty);
-    await tester.tap(find.byTooltip('End call'));
+    await tester.tap(control('End call'));
     expect(nativeCalls.last.method, 'hangUp');
-    final endCenter = tester.getCenter(find.byTooltip('End call'));
+    final endCenter = tester.getCenter(control('End call'));
     // The spring's tail is longer than the old fixed curve; let it come to rest.
     for (var i = 0; i < 6; i++) {
       await tester.pump(const Duration(milliseconds: 100));
@@ -608,9 +644,9 @@ void main() {
     expect(fade('8'), 1);
     // Once tapped, End call draws in to a circle around the same centre (the glass press spring
     // may still be a fraction of a pixel from rest).
-    expect(tester.getCenter(find.byTooltip('End call')), within(distance: .5, from: endCenter));
+    expect(tester.getCenter(control('End call')), within(distance: .5, from: endCenter));
     expect(endCenter, within(distance: .5, from: end.center));
-    expect(tester.getRect(find.byTooltip('Speaker')), speaker);
+    expect(tester.getRect(control('Speaker')), speaker);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
   });
@@ -620,12 +656,12 @@ void main() {
       await open(tester, size: size);
       await emit(tester, [call('active')]);
       final panel = find.byKey(const ValueKey('call-upper-panel'));
-      await tester.tap(find.byTooltip('Dial pad'));
+      await tester.tap(control('Dial pad'));
       await tester.pumpAndSettle();
       final height = tester.getSize(panel).height;
-      final end = tester.getRect(find.byTooltip('End call'));
-      final speaker = tester.getRect(find.byTooltip('Speaker'));
-      await tester.tap(find.byTooltip('Dial pad'));
+      final end = tester.getRect(control('End call'));
+      final speaker = tester.getRect(control('Speaker'));
+      await tester.tap(control('Dial pad'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 220));
       double fade(String digit) => tester.widget<Opacity>(find.byKey(ValueKey('keypad-fade-$digit'))).opacity;
@@ -637,17 +673,17 @@ void main() {
       await tester.tapAt(tester.getCenter(find.byKey(const ValueKey('morph-key-5'))));
       expect(nativeCalls.where((c) => c.method == 'playDtmf'), isEmpty);
       await tester.pump(const Duration(milliseconds: 160));
-      final muteOpacity = find.ancestor(of: find.byTooltip('Mute'), matching: find.byType(Opacity)).first;
+      final muteOpacity = find.ancestor(of: control('Mute'), matching: find.byType(Opacity)).first;
       final opacity = tester.widget<Opacity>(muteOpacity).opacity;
       expect(opacity, inExclusiveRange(0, 1));
       await tester.pump(const Duration(milliseconds: 32));
       expect(tester.widget<Opacity>(muteOpacity).opacity, greaterThan(opacity));
-      expect(tester.getRect(find.byTooltip('End call')), end);
-      expect(tester.getRect(find.byTooltip('Speaker')), speaker);
+      expect(tester.getRect(control('End call')), end);
+      expect(tester.getRect(control('Speaker')), speaker);
       await tester.pumpAndSettle();
       expect(tester.getSize(panel).height, lessThan(height));
       expect(tester.widget<Opacity>(muteOpacity).opacity, 1);
-      await tester.tap(find.byTooltip('Mute'));
+      await tester.tap(control('Mute'));
       expect(nativeCalls.last.method, 'setMuted');
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
@@ -657,20 +693,20 @@ void main() {
   testWidgets('call controls survive density and orientation changes with the keypad open', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
-    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.tap(control('Dial pad'));
     await tester.pumpAndSettle();
     tester.view.physicalSize = const Size(1400, 720);
     tester.view.devicePixelRatio = 2;
     await tester.pumpAndSettle();
-    expect(find.byTooltip('End call'), findsOneWidget);
+    expect(control('End call'), findsOneWidget);
     expect(find.byKey(const ValueKey('morph-key-5')), findsOneWidget);
     expect(tester.takeException(), isNull);
     tester.view.physicalSize = const Size(412, 915);
     tester.view.devicePixelRatio = 1;
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.tap(control('Dial pad'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Mute'));
+    await tester.tap(control('Mute'));
     expect(nativeCalls.last.method, 'setMuted');
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
@@ -679,9 +715,9 @@ void main() {
   testWidgets('reopening during the fade preserves key opacity and transform', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
-    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.tap(control('Dial pad'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.tap(control('Dial pad'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     final key = find.byKey(const ValueKey('keypad-fade-5'));
@@ -689,7 +725,7 @@ void main() {
     final transform = tester
         .widget<Transform>(find.descendant(of: key, matching: find.byType(Transform)).first)
         .transform;
-    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.tap(control('Dial pad'));
     await tester.pump();
     expect(tester.widget<Opacity>(key).opacity, opacity);
     expect(
@@ -705,20 +741,20 @@ void main() {
     await open(tester);
     await emit(tester, [call('active')]);
     double fade(String digit) => tester.widget<Opacity>(find.byKey(ValueKey('keypad-fade-$digit'))).opacity;
-    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.tap(control('Dial pad'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     final shown = fade('0');
     final progress = tester.widget<CallHeader>(find.byType(CallHeader)).keypadProgress;
     expect(shown, greaterThan(.5));
-    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.tap(control('Dial pad'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 60));
     // Still on its way out, not gone in a frame.
     expect(fade('0'), inExclusiveRange(.3, shown + .01));
     expect(tester.widget<CallHeader>(find.byType(CallHeader)).keypadProgress, lessThan(progress));
     await tester.pumpAndSettle();
-    expect(find.byTooltip('Mute'), findsOneWidget);
+    expect(control('Mute'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -727,11 +763,11 @@ void main() {
     await emit(tester, [call('active')]);
     final panel = find.byKey(const ValueKey('call-upper-panel'));
     final start = tester.getSize(panel).height;
-    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.tap(control('Dial pad'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 110));
     final before = tester.getSize(panel).height;
-    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.tap(control('Dial pad'));
     await tester.pump();
     expect(tester.getSize(panel).height, before);
     // Closing starts immediately and stays continuous when reversed again.
@@ -739,7 +775,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 140));
     final reversing = tester.getSize(panel).height;
     expect(reversing, lessThan(before));
-    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.tap(control('Dial pad'));
     await tester.pump();
     expect(tester.getSize(panel).height, reversing);
     await tester.pumpAndSettle();
@@ -754,7 +790,7 @@ void main() {
   testWidgets('tones cancel on pointer cancellation, hiding, and changing calls', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
-    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.tap(control('Dial pad'));
     await tester.pumpAndSettle();
     Future<TestGesture> press() async {
       final gesture = await tester.startGesture(tester.getCenter(find.byKey(const ValueKey('morph-key-5'))));
@@ -774,7 +810,7 @@ void main() {
     expect(nativeCalls.last.method, 'stopDtmf');
     await hidden.up();
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.tap(control('Dial pad'));
     await tester.pumpAndSettle();
     final changed = await press();
     await emit(tester, [call('active', id: 'replacement')]);
@@ -787,17 +823,17 @@ void main() {
   testWidgets('enabling reduced motion during closing immediately restores controls', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
-    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.tap(control('Dial pad'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.tap(control('Dial pad'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     await open(tester, reduceMotion: true);
     expect(tester.widget<CallHeader>(find.byType(CallHeader)).keypadProgress, 0);
     expect(find.byKey(const ValueKey('morph-key-5')), findsNothing);
-    final opacity = find.ancestor(of: find.byTooltip('Mute'), matching: find.byType(Opacity)).first;
+    final opacity = find.ancestor(of: control('Mute'), matching: find.byType(Opacity)).first;
     expect(tester.widget<Opacity>(opacity).opacity, 1);
-    await tester.tap(find.byTooltip('Mute'));
+    await tester.tap(control('Mute'));
     expect(nativeCalls.last.method, 'setMuted');
     await tester.pumpWidget(const SizedBox());
   });
@@ -823,17 +859,17 @@ void main() {
       await emit(tester, [call('active')]);
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
-      expect(tester.getBottomLeft(find.byTooltip('End call')).dy, lessThan(size.height));
-      final footerPosition = tester.getRect(find.byTooltip('End call'));
-      await tester.tap(find.byTooltip('Dial pad'));
+      expect(tester.getBottomLeft(control('End call')).dy, lessThan(size.height));
+      final footerPosition = tester.getRect(control('End call'));
+      await tester.tap(control('Dial pad'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 140));
       // Within half a pixel: the glass press spring can still be settling.
-      expect(tester.getCenter(find.byTooltip('End call')), within(distance: .5, from: footerPosition.center));
+      expect(tester.getCenter(control('End call')), within(distance: .5, from: footerPosition.center));
       await tester.pumpAndSettle();
-      expect(tester.getCenter(find.byTooltip('End call')), within(distance: .5, from: footerPosition.center));
+      expect(tester.getCenter(control('End call')), within(distance: .5, from: footerPosition.center));
       expect(tester.takeException(), isNull);
-      expect(tester.getBottomLeft(find.byTooltip('End call')).dy, lessThan(size.height));
+      expect(tester.getBottomLeft(control('End call')).dy, lessThan(size.height));
       await tester.pumpWidget(const SizedBox());
     });
   }
@@ -841,13 +877,13 @@ void main() {
   testWidgets('reduced motion disables call transitions and ended calls have no actions', (tester) async {
     await open(tester, reduceMotion: true);
     await emit(tester, [call('active')]);
-    await tester.tap(find.byTooltip('Dial pad'));
+    await tester.tap(control('Dial pad'));
     await tester.pump();
     expect(find.bySemanticsLabel('5'), findsOneWidget);
     await emit(tester, [call('disconnected')]);
     expect(find.textContaining(RegExp(r'^Call ended · 00:0\d$')), findsOneWidget);
-    expect(find.byTooltip('End call'), findsNothing);
-    expect(find.byTooltip('Mute'), findsNothing);
+    expect(control('End call'), findsNothing);
+    expect(control('Mute'), findsNothing);
     expect(find.byType(CallBackdrop), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
@@ -884,12 +920,12 @@ void main() {
       }
 
       Future<void> captureClose(String name) async {
-        await tester.tap(find.byTooltip('Dial pad'));
+        await tester.tap(control('Dial pad'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 220));
         await capture('$name-close-fade', settle: false);
         await tester.pump(const Duration(milliseconds: 160));
-        final actions = find.ancestor(of: find.byTooltip('Mute'), matching: find.byType(Opacity)).first;
+        final actions = find.ancestor(of: control('Mute'), matching: find.byType(Opacity)).first;
         expect(tester.widget<Opacity>(actions).opacity, inExclusiveRange(0, 1));
         await capture('$name-close-actions', settle: false);
         await capture('$name-closed');
@@ -915,7 +951,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 600));
       await capture('ringing-private', settle: false);
       await emit(tester, [call('active', id: 'call-1')]);
-      await tester.tap(find.byTooltip('Dial pad'));
+      await tester.tap(control('Dial pad'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 210));
       await capture('midpoint', settle: false);
@@ -923,12 +959,12 @@ void main() {
       await captureClose('normal');
       await open(tester, boundary: boundary, size: const Size(320, 568), textScale: 1.5);
       await emit(tester, [call('active', id: 'compact')]);
-      await tester.tap(find.byTooltip('Dial pad'));
+      await tester.tap(control('Dial pad'));
       await capture('compact-keypad');
       await captureClose('compact');
       await open(tester, boundary: boundary, size: const Size(700, 360), textScale: 1.5);
       await emit(tester, [call('active', id: 'landscape')]);
-      await tester.tap(find.byTooltip('Dial pad'));
+      await tester.tap(control('Dial pad'));
       await capture('landscape-keypad');
       await captureClose('landscape');
       await tester.pumpWidget(const SizedBox());

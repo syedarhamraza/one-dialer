@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import '../../core/contacts/contacts_repository.dart';
 import '../../core/telecom/call_info.dart';
 import '../../widgets/letter_avatar.dart';
+import 'call_controls.dart';
+import '../../theme/phosphor_fill.dart';
 
 /// The call backdrop, as on ColorOS 17: the phone's own wallpaper, blurred by Android behind the
 /// transparent call window (`WallpaperBackdrop.kt`), under black fades at the top and bottom.
@@ -28,7 +30,9 @@ class CallBackdrop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final blurred = wallpaper?.blur ?? false;
+    // Until Android reports the backdrop, assume the wallpaper shows: painting the dark aurora
+    // first flashed black before the wallpaper faded in.
+    final blurred = wallpaper?.blur ?? true;
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -56,9 +60,9 @@ class CallBackdrop extends StatelessWidget {
                   for (final (rest, keypad) in const [
                     (Color(0x99000000), Color(0x99000000)),
                     (Color(0x33000000), Color(0x73000000)),
-                    (Color(0x14000000), Color(0x80000000)),
-                    (Color(0x80000000), Color(0x8C000000)),
-                    (Color(0xE6000000), Color(0xB3000000)),
+                    (Color(0x24000000), Color(0x80000000)),
+                    (Color(0xA6000000), Color(0x8C000000)),
+                    (Color(0xF2000000), Color(0xB3000000)),
                   ])
                     Color.lerp(rest, keypad, t.clamp(0.0, 1.0))!,
                 ],
@@ -139,7 +143,6 @@ class CallHeader extends StatelessWidget {
     required this.compact,
     this.keypadProgress = 0,
     this.digits = '',
-    this.chip,
   });
   final CallInfo call;
   final List<SimCard> sims;
@@ -148,9 +151,6 @@ class CallHeader extends StatelessWidget {
 
   /// Typed DTMF digits; while the keypad is open they take the title's place.
   final String digits;
-
-  /// A short status pill under the timer ("Muted", "Speaker on").
-  final String? chip;
 
   @override
   Widget build(BuildContext context) {
@@ -206,8 +206,9 @@ class CallHeader extends StatelessWidget {
                         style: TextStyle(
                           fontSize: compact ? 26 : 32,
                           height: 1.15,
-                          fontWeight: showDigits ? FontWeight.w400 : FontWeight.w700,
-                          letterSpacing: showDigits ? 2 : -0.4,
+                          // Medium, not bold: vivo's system font draws 700 very heavy.
+                          fontWeight: showDigits ? FontWeight.w400 : FontWeight.w500,
+                          letterSpacing: showDigits ? 2 : 0,
                           color: Colors.white,
                           fontFeatures: const [FontFeature.tabularFigures()],
                         ),
@@ -255,20 +256,7 @@ class CallHeader extends StatelessWidget {
                 ),
             ],
           ),
-          AnimatedSize(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOutCubic,
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: chip == null
-                  ? const SizedBox(width: double.infinity)
-                  : Padding(
-                      key: ValueKey(chip),
-                      padding: const EdgeInsets.only(top: 10),
-                      child: _Badge(label: chip!, bright: true),
-                    ),
-            ),
-          ),
+          const SizedBox(width: double.infinity),
         ],
       ),
     );
@@ -280,28 +268,6 @@ class CallHeader extends StatelessWidget {
 
 bool _calling(CallState state) =>
     state == CallState.dialing || state == CallState.connecting || state == CallState.newCall;
-
-/// The transient status toast under the timer ("Muted", "Speaker on").
-class _Badge extends StatelessWidget {
-  const _Badge({required this.label, this.bright = false});
-  final String label;
-  final bool bright;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-    decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: bright ? .18 : .10),
-      borderRadius: BorderRadius.circular(20),
-    ),
-    child: Text(
-      label,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: bright ? Colors.white : Colors.white70),
-    ),
-  );
-}
 
 class CallStatus extends StatefulWidget {
   const CallStatus({super.key, required this.call, this.sim, this.simSlot = 0, this.alignment = Alignment.center});
@@ -540,7 +506,7 @@ class _HdCallGlyph extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.call_rounded, size: 16, color: Colors.white70),
+          HandsetGlyph(size: 16, color: Colors.white70),
           Text(
             'HD',
             style: TextStyle(fontSize: 8, height: 1, fontWeight: FontWeight.w800, color: Colors.white70),
@@ -551,41 +517,71 @@ class _HdCallGlyph extends StatelessWidget {
   );
 }
 
-class HeldCallChip extends StatelessWidget {
-  const HeldCallChip({super.key, required this.call, required this.onSwap});
+/// The other call, on hold, as a frosted card above the caller: its avatar, name and "On hold",
+/// with a Switch pill. Tapping anywhere on it switches to that call.
+class HeldCallCard extends StatelessWidget {
+  const HeldCallCard({super.key, required this.call, required this.onSwitch});
   final CallInfo call;
-  final VoidCallback onSwap;
+  final VoidCallback onSwitch;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.white.withValues(alpha: 0.12),
-    borderRadius: BorderRadius.circular(24),
-    child: InkWell(
-      onTap: onSwap,
-      borderRadius: BorderRadius.circular(24),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.pause_rounded, size: 18, color: Colors.white70),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                'On hold: ${callerName(call)}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 14, color: Colors.white),
-              ),
+  Widget build(BuildContext context) {
+    final name = callerName(call);
+    return Semantics(
+      button: true,
+      label: 'Switch to $name, on hold',
+      excludeSemantics: true,
+      onTap: onSwitch,
+      child: CallBody(
+        radius: 28,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onSwitch,
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Row(
+              children: [
+                LetterAvatar(name: name, size: 40),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white),
+                      ),
+                      const SizedBox(height: 2),
+                      const Text('On hold', style: TextStyle(fontSize: 13, color: Colors.white60)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const DecoratedBox(
+                  decoration: ShapeDecoration(color: Color(0x29FFFFFF), shape: StadiumBorder()),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(PhosphorFill.arrowsDownUp, size: 16, color: Colors.white),
+                        SizedBox(width: 6),
+                        Text(
+                          'Switch',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.white),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            const Text(
-              'Swap',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFFB5E8D1)),
-            ),
-          ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
