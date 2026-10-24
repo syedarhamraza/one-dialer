@@ -406,7 +406,8 @@ Future<void> chooseCallAudioRoute(BuildContext context, AudioInfo audio, GlobalK
   context: context,
   anchorKey: anchor,
   light: true,
-  width: 230,
+  scale: 1.15,
+  width: 250,
   items: [
     for (final route in audio.supportedRoutes)
       OneUIFloatingMenuItem(
@@ -574,5 +575,21 @@ ShapeDecoration solidGlow(OutlinedBorder shape) => ShapeDecoration(
     end: Alignment.bottomCenter,
     colors: [Color(0x00FFFFFF), Color(0x00FFFFFF), Color(0x3DFFFFFF)],
     stops: [0, .5, 1],
+  ),
+);
+
+/// The call buttons (End, Answer, Decline) as glass: [solidBody] a touch see-through, so the
+/// wallpaper tints it. Pair with [glassGlow].
+ShapeDecoration glassBody(Color color, OutlinedBorder shape, {double glow = .3, double blur = 22}) =>
+    solidBody(color.withValues(alpha: .86), shape, glow: glow, blur: blur);
+
+/// [solidGlow] plus a glass sheen over the top and a brighter rim.
+ShapeDecoration glassGlow(OutlinedBorder shape) => ShapeDecoration(
+  shape: shape.copyWith(side: const BorderSide(color: Color(0x47FFFFFF), width: 1)),
+  gradient: const LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0x52FFFFFF), Color(0x14FFFFFF), Color(0x00FFFFFF), Color(0x00FFFFFF), Color(0x3DFFFFFF)],
+    stops: [0, .28, .46, .55, 1],
   ),
 );

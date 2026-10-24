@@ -88,7 +88,8 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
       context: context,
       anchorKey: _moreKey,
       light: true,
-      width: 220,
+      scale: 1.15,
+      width: 250,
       items: [
         // With two calls Merge takes Add call's place in the row, so Add call moves here.
         if (merging)
@@ -434,10 +435,10 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                                     height: actionSize,
                                     // ColorOS 17's tomato red, lit from below like the other buttons, with
                                     // squircle ends like the keys.
-                                    foregroundDecoration: solidGlow(
+                                    foregroundDecoration: glassGlow(
                                       RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(actionSize / 2)),
                                     ),
-                                    decoration: solidBody(
+                                    decoration: glassBody(
                                       endRed,
                                       RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(actionSize / 2)),
                                       glow: 0,

@@ -395,13 +395,13 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                                   height: size,
                                   // The connected screen's End pill finish, lit from below, its glow
                                   // brightening as the drag arms.
-                                  decoration: solidBody(
+                                  decoration: glassBody(
                                     widget.color,
                                     const CircleBorder(),
                                     glow: .3 + .25 * armed,
                                     blur: 22 + 10 * armed,
                                   ),
-                                  foregroundDecoration: solidGlow(const CircleBorder()),
+                                  foregroundDecoration: glassGlow(const CircleBorder()),
                                   child: Transform.rotate(
                                     // A decaying wiggle over the first 40% of each cycle, then still.
                                     angle: widget.shake && still && !reduceMotion && phase < .4
