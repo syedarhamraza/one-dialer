@@ -54,6 +54,8 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // A cold start opens on Calls without a resume event or a tab tap.
+    CallLogRepository.instance.markMissedSeen();
     // `tel:` links open on the keypad with the number filled in.
     TelecomBridge.instance.onDialIntent = _dial;
     TelecomBridge.instance.consumeDialNumber().then((n) {
