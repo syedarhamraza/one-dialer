@@ -87,6 +87,7 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
     OneUIFloatingMenu.show(
       context: context,
       anchorKey: _moreKey,
+      light: true,
       width: 220,
       items: [
         // With two calls Merge takes Add call's place in the row, so Add call moves here.
@@ -266,7 +267,7 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
         )
       else
         (icon: Icons.add_call, label: 'Add call', active: false, tap: telecom.openDialer, key: null),
-      (icon: Icons.more_horiz_rounded, label: 'More', active: false, tap: () => _openMore(canMerge), key: _moreKey),
+      (icon: Icons.more_vert_rounded, label: 'More', active: false, tap: () => _openMore(canMerge), key: _moreKey),
     ];
     final route = widget.audio.route;
     final routeLabel = switch (route) {

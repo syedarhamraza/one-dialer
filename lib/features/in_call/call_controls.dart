@@ -8,6 +8,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
+import '../../theme/one_ui_theme.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_floating_modal.dart';
 
@@ -17,8 +18,11 @@ import '../../widgets/one_ui_floating_modal.dart';
 /// Taps still belong to [child] (its IconButton or key detector); the glass button only reads
 /// raw pointer events for the effect. A circle, or a stadium when [radius] is given.
 class CallBody extends StatelessWidget {
-  const CallBody({super.key, this.radius, required this.child});
+  const CallBody({super.key, this.radius, this.pill = false, required this.child});
   final double? radius;
+
+  /// Round ends (a stadium) instead of the keys' squircle ends; [radius] is ignored.
+  final bool pill;
   final Widget child;
 
   static void _taps() {}
@@ -29,10 +33,14 @@ class CallBody extends StatelessWidget {
     onTap: _taps,
     excludeFromSemantics: true,
     canRequestFocus: false,
-    shape: radius == null ? const LiquidOval() : LiquidRoundedSuperellipse(borderRadius: radius!),
+    shape: pill
+        ? const LiquidRoundedRectangle(borderRadius: 999)
+        : radius == null
+        ? const LiquidOval()
+        : LiquidRoundedSuperellipse(borderRadius: radius!),
     // No live backdrop blur: the call backdrop behind is already blurred, so a per-control blur
     // looked the same but re-read the backdrop for every key on every frame of the keypad morph.
-    child: CallBodyArtwork(radius: radius, child: child),
+    child: CallBodyArtwork(radius: pill ? double.infinity : radius, child: child),
   );
 }
 
@@ -234,9 +242,12 @@ class TintedCallBody extends CustomPainter {
       oldDelegate.radius != radius || oldDelegate.glow != glow || oldDelegate.spread != spread;
 }
 
-/// A circle, or a superellipse whose ends are ColorOS's soft oval rather than a true semicircle.
+/// A circle, a superellipse whose ends are ColorOS's soft oval rather than a true semicircle, or
+/// (an infinite [radius]) a stadium with round ends.
 Path bodyPath(Rect rect, double? radius) => radius == null
     ? (Path()..addOval(rect))
+    : radius.isInfinite
+    ? (Path()..addRRect(RRect.fromRectAndRadius(rect, Radius.circular(rect.shortestSide / 2))))
     : (Path()..addRSuperellipse(RSuperellipse.fromRectAndRadius(rect, Radius.circular(radius))));
 
 /// A [GlassSpring] as a curve, so implicit animations can move like the glass package.
@@ -394,6 +405,7 @@ IconData audioRouteIcon(AudioRoute route) => switch (route) {
 Future<void> chooseCallAudioRoute(BuildContext context, AudioInfo audio, GlobalKey anchor) => OneUIFloatingMenu.show(
   context: context,
   anchorKey: anchor,
+  light: true,
   width: 230,
   items: [
     for (final route in audio.supportedRoutes)
@@ -456,6 +468,16 @@ class _CallNoteSheetState extends State<_CallNoteSheet> {
             const Expanded(
               child: Text('Call note', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
             ),
+            if (widget.initial.isNotEmpty)
+              TextButton(
+                onPressed: () {
+                  _controller.clear();
+                  _flush(); // Blank removes the note.
+                  Navigator.of(context).pop('');
+                },
+                style: TextButton.styleFrom(foregroundColor: OneUITheme.accentRed),
+                child: const Text('Delete'),
+              ),
             TextButton(
               onPressed: () {
                 _flush();

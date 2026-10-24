@@ -50,6 +50,7 @@ class OneUIFloatingMenu {
     double fallbackRight = 16.0,
     double width = 200.0,
     bool centered = false,
+    bool light = false,
   }) async {
     final screen = MediaQuery.sizeOf(context);
     final height = items.length * _rowHeight + _padding * 2;
@@ -103,8 +104,14 @@ class OneUIFloatingMenu {
           barrierLabel: 'Dismiss menu',
           transitionDuration: const Duration(milliseconds: 400),
           reverseTransitionDuration: const Duration(milliseconds: 170),
-          pageBuilder: (context, animation, _) =>
-              _PopoverMenu(items: items, button: anchor!, menu: menu, upwards: upwards, animation: animation),
+          pageBuilder: (context, animation, _) => _PopoverMenu(
+            items: items,
+            button: anchor!,
+            menu: menu,
+            upwards: upwards,
+            animation: animation,
+            light: light,
+          ),
           transitionsBuilder: (context, animation, secondary, child) => child,
         ),
       );
@@ -125,6 +132,7 @@ class _PopoverMenu extends StatelessWidget {
     required this.menu,
     required this.upwards,
     required this.animation,
+    this.light = false,
   });
 
   final List<OneUIFloatingMenuItem> items;
@@ -132,6 +140,9 @@ class _PopoverMenu extends StatelessWidget {
   final Rect menu;
   final bool upwards;
   final Animation<double> animation;
+
+  /// The call screen's menus: a flat, solid white card with dark rows and no blur.
+  final bool light;
 
   /// ~94% at 150 ms, peak ~1.5% over at ~290 ms, settled by ~330 ms.
   static final _spring = GlassSpringCurve(
@@ -149,7 +160,9 @@ class _PopoverMenu extends StatelessWidget {
     final pivotX = button.center.dx.clamp(menu.left, menu.right);
     final pivot = Alignment((pivotX - menu.left) / menu.width * 2 - 1, upwards ? 1 : -1);
     // Built once, on its own layer; only the glass around it animates.
-    final items = RepaintBoundary(child: _MenuItems(items: this.items));
+    final items = RepaintBoundary(
+      child: _MenuItems(items: this.items, light: light),
+    );
     return AnimatedBuilder(
       animation: animation,
       builder: (context, items) {
@@ -157,9 +170,14 @@ class _PopoverMenu extends StatelessWidget {
         final closing = animation.status == AnimationStatus.reverse;
         final grow = closing ? Curves.easeIn.transform(v) : _spring.transform(v);
         final scale = _startScale + (1 - _startScale) * grow;
-        // In fast at the start of opening; out over most of the close.
-        final fade = (closing ? Curves.easeOut.transform(v) : Curves.easeOut.transform((v / .28).clamp(0.0, 1.0)))
-            .clamp(0.0, 1.0);
+        // In fast at the start of opening. Closing, it's gone before the shrink's fast last stretch,
+        // where the tiny card hitched on screen.
+        final fade =
+            (closing
+                    ? Curves.easeOut.transform(((v - .3) / .7).clamp(0.0, 1.0))
+                    : Curves.easeOut.transform((v / .28).clamp(0.0, 1.0)))
+                .clamp(0.0, 1.0);
+        if (fade == 0) return const SizedBox.shrink();
         // The card scaled about the pivot, in its own coordinates. The glass is laid out at
         // this size instead of scaled by a Transform: a blur under a scale reads its backdrop
         // magnified by 1/scale, which dropped frames on Adreno. Radius and sigma scale as the
@@ -183,41 +201,57 @@ class _PopoverMenu extends StatelessWidget {
                       rect: glass,
                       child: ClipRSuperellipse(
                         borderRadius: BorderRadius.all(Radius.circular(OneUIFloatingMenu._radius * scale)),
-                        // The fade goes inside the blur (an Opacity around a BackdropFilter
-                        // would cut it off from the backdrop); the blur is at full strength from
-                        // the first frame, so its filter doesn't change every frame.
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: sigma * scale, sigmaY: sigma * scale),
-                          child: Opacity(
-                            opacity: fade,
-                            child: OverflowBox(
-                              alignment: Alignment.topLeft,
-                              minWidth: menu.width,
-                              maxWidth: menu.width,
-                              minHeight: menu.height,
-                              maxHeight: menu.height,
-                              child: Transform.scale(
-                                scale: scale,
-                                alignment: Alignment.topLeft,
-                                // A dark base keeps the items legible over list text; the call-glass
-                                // wash, edge glow and lip go on top, as on the header buttons.
-                                child: ColoredBox(
-                                  color: const Color(0xB3141416),
-                                  // The same glow as the buttons, but reaching less far in: across a card
-                                  // this much bigger the button's spread reads as a wide haze. From a cached
-                                  // image: drawn live, its blurred strokes were re-rendered every frame of a
-                                  // press (~10 ms on a Galaxy S25).
-                                  child: CallBodyArtwork(
-                                    radius: OneUIFloatingMenu._radius,
-                                    glow: kMainGlassGlow,
-                                    spread: .5,
-                                    child: items!,
+                        child: light
+                            ? Opacity(
+                                opacity: fade,
+                                child: OverflowBox(
+                                  alignment: Alignment.topLeft,
+                                  minWidth: menu.width,
+                                  maxWidth: menu.width,
+                                  minHeight: menu.height,
+                                  maxHeight: menu.height,
+                                  child: Transform.scale(
+                                    scale: scale,
+                                    alignment: Alignment.topLeft,
+                                    child: ColoredBox(color: Colors.white, child: items),
+                                  ),
+                                ),
+                              )
+                            // The fade goes inside the blur (an Opacity around a BackdropFilter
+                            // would cut it off from the backdrop); the blur is at full strength from
+                            // the first frame, so its filter doesn't change every frame.
+                            : BackdropFilter(
+                                filter: ImageFilter.blur(sigmaX: sigma * scale, sigmaY: sigma * scale),
+                                child: Opacity(
+                                  opacity: fade,
+                                  child: OverflowBox(
+                                    alignment: Alignment.topLeft,
+                                    minWidth: menu.width,
+                                    maxWidth: menu.width,
+                                    minHeight: menu.height,
+                                    maxHeight: menu.height,
+                                    child: Transform.scale(
+                                      scale: scale,
+                                      alignment: Alignment.topLeft,
+                                      // A dark base keeps the items legible over list text; the call-glass
+                                      // wash, edge glow and lip go on top, as on the header buttons.
+                                      child: ColoredBox(
+                                        color: const Color(0xB3141416),
+                                        // The same glow as the buttons, but reaching less far in: across a card
+                                        // this much bigger the button's spread reads as a wide haze. From a cached
+                                        // image: drawn live, its blurred strokes were re-rendered every frame of a
+                                        // press (~10 ms on a Galaxy S25).
+                                        child: CallBodyArtwork(
+                                          radius: OneUIFloatingMenu._radius,
+                                          glow: kMainGlassGlow,
+                                          spread: .5,
+                                          child: items!,
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ),
-                        ),
                       ),
                     ),
                   ],
@@ -237,9 +271,10 @@ class _PopoverMenu extends StatelessWidget {
 /// which springs row to row as it slides and stays on the nearest row off the card;
 /// lifting picks the row under the finger, and lifting off the card picks nothing.
 class _MenuItems extends StatefulWidget {
-  const _MenuItems({required this.items});
+  const _MenuItems({required this.items, this.light = false});
 
   final List<OneUIFloatingMenuItem> items;
+  final bool light;
 
   @override
   State<_MenuItems> createState() => _MenuItemsState();
@@ -321,9 +356,9 @@ class _MenuItemsState extends State<_MenuItems> {
                         child: AnimatedOpacity(
                           opacity: on ? 1 : 0,
                           duration: const Duration(milliseconds: 120),
-                          child: const DecoratedBox(
+                          child: DecoratedBox(
                             decoration: ShapeDecoration(
-                              color: Color(0x3DFFFFFF),
+                              color: widget.light ? const Color(0x14000000) : const Color(0x3DFFFFFF),
                               shape: RoundedSuperellipseBorder(
                                 borderRadius: BorderRadius.all(Radius.circular(_row / 2)),
                               ),
@@ -346,7 +381,7 @@ class _MenuItemsState extends State<_MenuItems> {
                                 item.onTap();
                               }
                             : null,
-                        child: _MenuRow(item: item),
+                        child: _MenuRow(item: item, light: widget.light),
                       ),
                   ],
                 ),
@@ -360,13 +395,15 @@ class _MenuItemsState extends State<_MenuItems> {
 }
 
 class _MenuRow extends StatelessWidget {
-  const _MenuRow({required this.item});
+  const _MenuRow({required this.item, this.light = false});
 
   final OneUIFloatingMenuItem item;
+  final bool light;
 
   @override
   Widget build(BuildContext context) {
-    final color = item.enabled ? OneUITheme.textPrimary : OneUITheme.textPrimary.withValues(alpha: .38);
+    final base = light ? const Color(0xFF111418) : OneUITheme.textPrimary;
+    final color = item.enabled ? base : base.withValues(alpha: .38);
     return SizedBox(
       height: OneUIFloatingMenu._rowHeight,
       child: Padding(
