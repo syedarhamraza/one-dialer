@@ -503,8 +503,10 @@ void main() {
     expect(find.text('Decline with message'), findsNothing);
     await emit(tester, [call('active', conference: true)]);
     expect(find.text('Conference call'), findsOneWidget);
+    await emit(tester, [call('disconnected', conference: true)]);
+    // The empty snapshot as the screen closes keeps the summary: "Call ended" shows once.
     await emit(tester, []);
-    expect(find.text('Call ended'), findsOneWidget);
+    expect(find.textContaining('Call ended'), findsOneWidget);
     expect(find.byTooltip('End call'), findsNothing);
     await tester.pumpWidget(const SizedBox());
   });

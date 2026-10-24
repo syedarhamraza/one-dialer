@@ -31,7 +31,7 @@ import com.syedarhamraza.dialer.R
 
 object CallNotifications {
     private const val CHANNEL_INCOMING = "incoming_calls"
-    private const val CHANNEL_INCOMING_ISLAND = "incoming_calls_island"
+    private const val CHANNEL_INCOMING_QUIET = "incoming_calls_quiet"
     // shortcut: vivo has no call scene (sic "METTING" = meetings); switch if vivo adds one.
     private const val VIVO_SCENE = "METTING"
     private const val ID_INCOMING = 1
@@ -39,16 +39,19 @@ object CallNotifications {
 
     fun showIncoming(context: Context, callId: String, call: Call) {
         val manager = context.getSystemService(NotificationManager::class.java)
-        // On an unlocked vivo the Atomic Island card is the pop-up; a heads-up banner would double it.
+        // On an unlocked vivo the Atomic Island card is the pop-up, and with the call screen up
+        // (call waiting) the screen itself rings; a heads-up banner would double either.
         val island = vivoIsland &&
             context.getSystemService(PowerManager::class.java).isInteractive &&
             !context.getSystemService(KeyguardManager::class.java).isKeyguardLocked
-        val channel = if (island) CHANNEL_INCOMING_ISLAND else CHANNEL_INCOMING
+        val quiet = island || InCallActivity.isFullScreen
+        val channel = if (quiet) CHANNEL_INCOMING_QUIET else CHANNEL_INCOMING
+        manager.deleteNotificationChannel("incoming_calls_island")
         manager.createNotificationChannel(
             NotificationChannel(
                 channel,
-                if (island) "Incoming calls (Origin Island)" else "Incoming calls",
-                if (island) NotificationManager.IMPORTANCE_DEFAULT else NotificationManager.IMPORTANCE_HIGH,
+                if (quiet) "Incoming calls (quiet)" else "Incoming calls",
+                if (quiet) NotificationManager.IMPORTANCE_DEFAULT else NotificationManager.IMPORTANCE_HIGH,
             ).apply {
                 // Telecom plays the ringtone; the notification itself stays silent.
                 setSound(null, null)
@@ -67,7 +70,7 @@ object CallNotifications {
             context, 0, InCallActivity.intent(context),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
-        val answer = CallActionReceiver.pendingIntent(context, CallActionReceiver.ACTION_ANSWER, callId)
+        val answer = CallActionReceiver.answerIntent(context, callId)
         val decline = CallActionReceiver.pendingIntent(context, CallActionReceiver.ACTION_DECLINE, callId)
 
         val builder = Notification.Builder(context, channel)
@@ -79,7 +82,7 @@ object CallNotifications {
             .setOngoing(true)
             .setContentIntent(fullScreen)
             // CallStyle still needs a full-screen intent; not high priority when the island pops up instead.
-            .setFullScreenIntent(fullScreen, !island)
+            .setFullScreenIntent(fullScreen, !quiet)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val person = Person.Builder().setName(caller).setIcon(callerIcon(context, details.handle?.schemeSpecificPart))
@@ -197,8 +200,14 @@ object CallNotifications {
             ?: return removeOngoing(manager)
         if (Call.STATE_RINGING in states) return removeOngoing(manager)
 
+        // Not IMPORTANCE_LOW: Android 12+ and vivo hide silent notifications on the lock screen,
+        // which left no way back to a call there. An existing channel's importance can't change.
+        manager.deleteNotificationChannel("ongoing_calls")
         manager.createNotificationChannel(
-            NotificationChannel(CHANNEL_ONGOING, "Ongoing calls", NotificationManager.IMPORTANCE_LOW)
+            NotificationChannel(CHANNEL_ONGOING, "Ongoing calls", NotificationManager.IMPORTANCE_DEFAULT).apply {
+                setSound(null, null)
+                enableVibration(false)
+            }
         )
         val state = CallManager.stateOf(call)
         val details = call.details
@@ -226,6 +235,7 @@ object CallNotifications {
             .setCategory(Notification.CATEGORY_CALL)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
+            .setVisibility(Notification.VISIBILITY_PUBLIC)
             .setContentIntent(open)
             // CallStyle needs a full-screen intent (or a foreground service); not high priority,
             // so it never interrupts on its own.
@@ -330,7 +340,7 @@ object CallNotifications {
         null // No photo is better than no notification (e.g. contacts permission revoked).
     }
 
-    private const val CHANNEL_ONGOING = "ongoing_calls"
+    private const val CHANNEL_ONGOING = "ongoing_calls_v2"
     private const val ID_ONGOING = 3
 
     /** Which call the ongoing notification describes, best first. */

@@ -15,6 +15,7 @@ import android.media.ToneGenerator
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.telecom.CallAudioState
 import android.telecom.PhoneAccountHandle
 import android.telecom.TelecomManager
 import android.telecom.VideoProfile
@@ -221,7 +222,9 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
                 result.success(null)
             }
             "setAudioRoute" -> {
+                // Earpiece means "off speaker": a plugged-in headset wins, as the island's toggle does.
                 val route = call.argument<String>("route")?.let(CallManager::routeValue)
+                    ?.let { if (it == CallAudioState.ROUTE_EARPIECE) CallAudioState.ROUTE_WIRED_OR_EARPIECE else it }
                 @Suppress("DEPRECATION")
                 if (route != null) CallManager.service?.setAudioRoute(route)
                 result.success(null)
