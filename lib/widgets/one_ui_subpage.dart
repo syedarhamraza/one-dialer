@@ -23,6 +23,9 @@ class OneUISubpage extends StatelessWidget {
   final Widget? bottomPill;
   final VoidCallback? onBack;
 
+  /// Optional 48 dp header, for subpages with an expanding search control.
+  final Widget? header;
+
   const OneUISubpage({
     super.key,
     required this.title,
@@ -31,6 +34,7 @@ class OneUISubpage extends StatelessWidget {
     this.listenable,
     this.bottomPill,
     this.onBack,
+    this.header,
   });
 
   static const double _button = 48;
@@ -73,24 +77,26 @@ class OneUISubpage extends StatelessWidget {
             left: 16,
             right: 16,
             top: padding.top + 8,
-            child: Row(
-              children: [
-                RoundIconButton(
-                  icon: Icons.arrow_back_rounded,
-                  tooltip: 'Back',
-                  onTap: onBack ?? () => Navigator.of(context).maybePop(),
+            child:
+                header ??
+                Row(
+                  children: [
+                    RoundIconButton(
+                      icon: Icons.arrow_back_rounded,
+                      tooltip: 'Back',
+                      onTap: onBack ?? () => Navigator.of(context).maybePop(),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600, letterSpacing: -0.3),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600, letterSpacing: -0.3),
-                  ),
-                ),
-              ],
-            ),
           ),
           if (bottomPill != null) ...[
             const Positioned(left: 0, right: 0, bottom: 0, child: OneUIBottomVignette()),

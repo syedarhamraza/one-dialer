@@ -6,6 +6,7 @@ import '../../theme/one_ui_theme.dart';
 import '../../widgets/one_ui_status_bar_scrim.dart';
 import '../../widgets/round_header_controls.dart';
 import '../../widgets/one_ui_floating_modal.dart';
+import '../../widgets/search_bar_row.dart';
 import 'contact_sections.dart';
 import 'contacts_widgets.dart';
 
@@ -67,11 +68,25 @@ class ContactPickerScreen extends StatefulWidget {
 }
 
 class _ContactPickerScreenState extends State<ContactPickerScreen> {
-  String _query = '';
+  final _query = TextEditingController();
+  @override
+  void initState() {
+    super.initState();
+    _query.addListener(_refresh);
+    ContactsRepository.instance.contacts.addListener(_refresh);
+  }
+
+  void _refresh() => setState(() {});
+  @override
+  void dispose() {
+    ContactsRepository.instance.contacts.removeListener(_refresh);
+    _query.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final sections = sectionContacts(searchContacts(ContactsRepository.instance.contacts.value, _query));
+    final sections = sectionContacts(searchContacts(ContactsRepository.instance.contacts.value, _query.text));
     final top = MediaQuery.paddingOf(context).top;
     return Scaffold(
       body: Stack(
@@ -81,26 +96,10 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
             slivers: [
               // Room for the pinned Back row (as `OneUISubpage`).
               SliverToBoxAdapter(child: SizedBox(height: top + 8 + 48 + 16)),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-                  child: TextField(
-                    autofocus: false,
-                    onChanged: (v) => setState(() => _query = v),
-                    decoration: InputDecoration(
-                      hintText: 'Search',
-                      prefixIcon: const Icon(Icons.search_rounded, color: OneUITheme.textSecondary),
-                      filled: true,
-                      fillColor: OneUITheme.surfaceCard,
-                      contentPadding: EdgeInsets.zero,
-                      border: OutlineInputBorder(
-                        borderRadius: OneUITheme.pillBorderRadius,
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
+              if (sections.isEmpty)
+                const SliverToBoxAdapter(
+                  child: Padding(padding: EdgeInsets.all(20), child: Text('No matching contacts')),
                 ),
-              ),
               // The Contacts tab's A–Z sections and flat rows.
               for (final (letter, list) in sections) ...[
                 SliverToBoxAdapter(child: ContactsSectionHeader(title: letter)),
@@ -126,23 +125,26 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
             left: 16,
             right: 16,
             top: top + 8,
-            child: Row(
-              children: [
-                RoundIconButton(
-                  icon: Icons.arrow_back_rounded,
-                  tooltip: 'Back',
-                  onTap: () => Navigator.of(context).pop(),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Text(
-                    widget.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600, letterSpacing: -0.3),
+            child: ExpandableSearchHeader(
+              controller: _query,
+              leading: Row(
+                children: [
+                  RoundIconButton(
+                    icon: Icons.arrow_back_rounded,
+                    tooltip: 'Back',
+                    onTap: () => Navigator.of(context).pop(),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      widget.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600, letterSpacing: -0.3),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

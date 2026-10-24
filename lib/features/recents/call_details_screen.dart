@@ -16,6 +16,7 @@ import '../contacts/editor/add_to_contacts.dart';
 import 'call_log.dart';
 import 'call_log_repository.dart';
 import 'recents_screen.dart';
+import 'delete_calls.dart';
 
 /// (i) on a call: a saved contact's own page, else this number's page.
 void openCallDetails(BuildContext context, CallLogEntry call) {
@@ -52,7 +53,7 @@ class CallDetailsScreen extends StatelessWidget {
             builder: (context, _) {
               // Private calls have no number to match on; show just this one.
               final history = call.isPrivate
-                  ? [call]
+                  ? repo.calls.value.where((c) => c.id == call.id).toList()
                   : [
                       for (final c in repo.calls.value)
                         if (numberKey(c.number) == key) c,
@@ -186,19 +187,21 @@ class CallDetailsScreen extends StatelessWidget {
                       );
                     },
                   ),
-                  RoundIconButton(
-                    icon: Icons.delete_outline_rounded,
-                    tooltip: 'Delete call history',
-                    onTap: () async {
-                      final ids = [
-                        for (final c in repo.calls.value)
-                          if (numberKey(c.number) == key) c.id,
-                      ];
-                      await repo.delete(ids);
-                      if (context.mounted) Navigator.of(context).pop();
-                    },
-                  ),
                 ],
+                RoundIconButton(
+                  icon: Icons.delete_outline_rounded,
+                  tooltip: 'Delete call history',
+                  onTap: () async {
+                    final ids = call.isPrivate || call.number.isEmpty
+                        ? [call.id]
+                        : [
+                            for (final c in repo.calls.value)
+                              if (!c.isPrivate && numberKey(c.number) == key) c.id,
+                          ];
+                    final deleted = await confirmDeleteCalls(context, ids);
+                    if (deleted && context.mounted) Navigator.of(context).pop();
+                  },
+                ),
               ],
             ),
           ),

@@ -181,11 +181,40 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun insertAction(intent: Intent): Map<String, String?> = mapOf(
-        "kind" to "insert",
-        "phone" to intent.getStringExtra(android.provider.ContactsContract.Intents.Insert.PHONE),
-        "name" to intent.getStringExtra(android.provider.ContactsContract.Intents.Insert.NAME),
-    )
+    /**
+     * Another app's "add contact". QR scanners put a card's numbers in PHONE, SECONDARY_PHONE and
+     * TERTIARY_PHONE, or in the DATA rows, sometimes as non-String CharSequences; "phone" carries
+     * them all, one per line.
+     */
+    private fun insertAction(intent: Intent): Map<String, String?> {
+        fun text(key: String) = intent.getCharSequenceExtra(key)?.toString()?.trim()?.takeIf { it.isNotEmpty() }
+        @Suppress("DEPRECATION") // getParcelableArrayListExtra(String, Class) is API 33+
+        val rows = runCatching {
+            intent.getParcelableArrayListExtra<android.content.ContentValues>(
+                android.provider.ContactsContract.Intents.Insert.DATA,
+            )
+        }.getOrNull().orEmpty()
+        fun rowValues(mime: String, column: String) =
+            rows.filter { it.getAsString(android.provider.ContactsContract.Data.MIMETYPE) == mime }
+                .mapNotNull { it.getAsString(column)?.trim()?.takeIf(String::isNotEmpty) }
+        val phones = listOfNotNull(
+            text(android.provider.ContactsContract.Intents.Insert.PHONE),
+            text(android.provider.ContactsContract.Intents.Insert.SECONDARY_PHONE),
+            text(android.provider.ContactsContract.Intents.Insert.TERTIARY_PHONE),
+        ) + rowValues(
+            android.provider.ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE,
+            android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER,
+        )
+        val name = text(android.provider.ContactsContract.Intents.Insert.NAME) ?: rowValues(
+            android.provider.ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE,
+            android.provider.ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME,
+        ).firstOrNull()
+        return mapOf(
+            "kind" to "insert",
+            "phone" to phones.distinctBy { it.filter { c -> c.isDigit() || c == '+' } }.joinToString("\n").ifEmpty { null },
+            "name" to name,
+        )
+    }
 
     /** A contact (or lookup, or raw contact) URI's contact id. */
     private fun contactIdOf(uri: android.net.Uri): String? = runCatching {

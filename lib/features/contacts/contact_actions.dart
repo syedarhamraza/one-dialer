@@ -10,6 +10,7 @@ import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/cos_dialog.dart';
 import '../../widgets/one_ui_floating_modal.dart';
+import 'contact_qr.dart';
 
 /// Contact-page actions behind Share and More.
 abstract final class ContactActions {
@@ -54,7 +55,7 @@ abstract final class ContactActions {
           decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
           child: QrImageView(
             // Without photos: QR codes hold only a few KB.
-            data: FlutterContacts.vCard.export(contact.copyWith(clearPhoto: true)),
+            data: contactQrPayload(contact),
             size: 240,
             backgroundColor: Colors.white,
           ),
