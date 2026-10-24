@@ -57,6 +57,13 @@ object MissedCallNotifier {
             .setColor(0xFFD2463A.toInt()) // endRed in lib/features/in_call/call_controls.dart
             .setCategory(Notification.CATEGORY_MISSED_CALL)
             .setContentIntent(open)
+            .setDeleteIntent(
+                PendingIntent.getBroadcast(
+                    context, 3,
+                    Intent(context, CallActionReceiver::class.java).setAction(CallActionReceiver.ACTION_MISSED_DISMISSED),
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                )
+            )
             .setAutoCancel(true)
             .setNumber(missed.size)
             .setWhen(date)

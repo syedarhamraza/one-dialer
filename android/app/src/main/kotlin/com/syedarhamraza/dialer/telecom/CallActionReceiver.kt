@@ -12,6 +12,18 @@ import com.syedarhamraza.dialer.InCallActivity
 class CallActionReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == ACTION_MISSED_DISMISSED) {
+            // Otherwise the calls stay new and Telecom's next missed-call broadcast (after any call) reposts them.
+            val result = goAsync()
+            Thread {
+                try {
+                    CallLogSource.markMissedRead(context)
+                } finally {
+                    result.finish()
+                }
+            }.start()
+            return
+        }
         val call = intent.getStringExtra(EXTRA_CALL_ID)?.let(CallManager::get) ?: return
         when (intent.action) {
             ACTION_ANSWER -> {
@@ -37,6 +49,7 @@ class CallActionReceiver : BroadcastReceiver() {
         const val ACTION_HANG_UP = "com.syedarhamraza.dialer.HANG_UP"
         const val ACTION_ANSWER_IN_ISLAND = "com.syedarhamraza.dialer.ANSWER_IN_ISLAND"
         const val ACTION_SPEAKER = "com.syedarhamraza.dialer.SPEAKER"
+        const val ACTION_MISSED_DISMISSED = "com.syedarhamraza.dialer.MISSED_DISMISSED"
         private const val EXTRA_CALL_ID = "call_id"
 
         fun pendingIntent(context: Context, action: String, callId: String): PendingIntent {
