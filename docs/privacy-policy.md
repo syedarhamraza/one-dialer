@@ -12,7 +12,7 @@ When you make One Dialer your default phone app, Android gives it access to:
 | --- | --- |
 | **Phone** (calls, SIM cards) | Making, answering, holding and ending calls; choosing which SIM to call from |
 | **Call history** | Showing Recents, missed calls and blocked calls; deleting calls you choose to delete |
-| **Contacts** | Showing names and photos for calls, contact search, favourites and speed dial |
+| **Contacts** | Showing names and photos for calls, contact search, favourites and speed dial; importing contacts from your SIM card or a .vcf file you pick, exporting them to a .vcf you share, and merging duplicates (Manage contacts) |
 | **Notifications** | Showing incoming, ongoing and missed calls |
 | **Blocked numbers** | Blocking and unblocking numbers you choose |
 

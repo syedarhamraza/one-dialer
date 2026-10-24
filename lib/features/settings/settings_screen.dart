@@ -7,8 +7,9 @@ import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/one_ui_subpage.dart';
+import '../../widgets/choice_row.dart';
+import '../contacts/manage_contacts_screen.dart';
 import '../../widgets/one_ui_toast.dart';
-import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_group_card.dart';
 import '../blocking/blocking_repository.dart';
 import '../blocking/blocking_screen.dart';
@@ -201,48 +202,6 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
 
   static const _simLabels = {'buttons': 'Two Call buttons', 'menu': 'Ask every time'};
 
-  /// A row whose current choice shows on the right; tapping it opens the choices from there.
-  OneUIGroupItem _choice({
-    required String title,
-    String? subtitle,
-    required GlobalKey anchor,
-    required ValueNotifier<String> value,
-    required Map<String, String> labels,
-    required ValueChanged<String> onPick,
-  }) => OneUIGroupItem(
-    title: title,
-    subtitle: subtitle,
-    // The choice in grey before a chevron, as ColorOS settings show values.
-    trailing: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ValueListenableBuilder(
-          valueListenable: value,
-          builder: (context, v, _) => Text(
-            labels[v] ?? labels.values.first,
-            key: anchor,
-            style: const TextStyle(fontSize: 15, color: OneUITheme.textSecondary),
-          ),
-        ),
-        const SizedBox(width: 4),
-        const Icon(Icons.chevron_right_rounded, size: 22, color: OneUITheme.textSecondary),
-      ],
-    ),
-    onTap: () => OneUIFloatingMenu.show(
-      context: context,
-      anchorKey: anchor,
-      width: 220,
-      items: [
-        for (final MapEntry(:key, value: label) in labels.entries)
-          OneUIFloatingMenuItem(
-            label: label,
-            icon: key == value.value ? Icons.radio_button_checked_rounded : Icons.radio_button_unchecked_rounded,
-            onTap: () => onPick(key),
-          ),
-      ],
-    ),
-  );
-
   @override
   Widget build(BuildContext context) {
     return OneUISubpage(
@@ -250,14 +209,16 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
       builder: (context) => [
         OneUIGroupCard(
           items: [
-            _choice(
+            choiceRow(
+              context,
               title: 'Tap a recent call',
               anchor: _tapKey,
               value: DialerPrefs.instance.recentTap,
               labels: _dualSim ? {..._tapLabels, 'sim': 'Choose SIM and call'} : _tapLabels,
               onPick: DialerPrefs.instance.setRecentTap,
             ),
-            _choice(
+            choiceRow(
+              context,
               title: 'Choose SIM for calls',
               subtitle: 'Dual SIM with no default SIM',
               anchor: _simKey,
@@ -271,9 +232,10 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
           headerTitle: 'Contacts',
           items: [
             OneUIGroupItem(
-              title: 'Default account for new contacts',
-              subtitle: 'Phone, SIM or Google',
-              onTap: () => _openSystem('contactsStorage'),
+              title: 'Manage contacts',
+              subtitle: 'Display, save location, import and export, SIM, duplicates',
+              onTap: () =>
+                  Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ManageContactsScreen())),
             ),
             OneUIGroupItem(
               title: 'Google Contacts sync',

@@ -13,6 +13,7 @@ class MainActivity : FlutterActivity() {
     private var pendingRoleResult: MethodChannel.Result? = null
     private var pendingPhotoResult: MethodChannel.Result? = null
     private var pendingRingtoneResult: MethodChannel.Result? = null
+    private var pendingVcfResult: MethodChannel.Result? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -20,6 +21,7 @@ class MainActivity : FlutterActivity() {
             it.roleRequester = ::requestRole
             it.photoPicker = ::pickPhoto
             it.photoTaker = ::takePhoto
+            it.vcfPicker = ::pickVcf
             it.ringtonePicker = ::pickRingtone
             it.pendingDialNumber = dialNumberFrom(intent)
             it.pendingOpenRecents = intent.getBooleanExtra(EXTRA_OPEN_RECENTS, false)
@@ -64,6 +66,18 @@ class MainActivity : FlutterActivity() {
         startActivityForResult(intent, REQUEST_PHOTO)
     }
 
+    /** Manage contacts › Import: a .vcf from the files app (no storage permission needed). */
+    private fun pickVcf(result: MethodChannel.Result) {
+        pendingVcfResult?.success(null)
+        pendingVcfResult = result
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+            .addCategory(Intent.CATEGORY_OPENABLE)
+            .setType("*/*")
+            .putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("text/x-vcard", "text/vcard", "text/directory"))
+        @Suppress("DEPRECATION")
+        startActivityForResult(intent, REQUEST_VCF)
+    }
+
     /**
      * The camera app's quick capture: a small preview bitmap, which is plenty for a contact
      * photo and needs no CAMERA permission or FileProvider (the app declares no CAMERA).
@@ -100,6 +114,18 @@ class MainActivity : FlutterActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         @Suppress("DEPRECATION")
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_VCF) {
+            val result = pendingVcfResult ?: return
+            pendingVcfResult = null
+            val uri = data?.data.takeIf { resultCode == RESULT_OK } ?: return result.success(null)
+            Thread {
+                val text = runCatching {
+                    contentResolver.openInputStream(uri)?.use { it.readBytes().toString(Charsets.UTF_8) }
+                }.getOrNull()
+                runOnUiThread { result.success(text) }
+            }.start()
+            return
+        }
         if (requestCode == REQUEST_RINGTONE) {
             val result = pendingRingtoneResult ?: return
             pendingRingtoneResult = null
@@ -231,6 +257,7 @@ class MainActivity : FlutterActivity() {
         private const val REQUEST_PHOTO = 1002
         private const val REQUEST_RINGTONE = 1003
         private const val REQUEST_CAMERA = 1004
+        private const val REQUEST_VCF = 1005
         private const val PHOTO_MAX = 720
         private const val EXTRA_OPEN_RECENTS = "open_recents"
 

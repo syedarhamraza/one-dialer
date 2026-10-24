@@ -5,8 +5,10 @@ import 'package:flutter_contacts/flutter_contacts.dart';
 
 import '../../features/keypad/t9.dart';
 import '../../features/recents/call_log.dart';
+import '../prefs/dialer_prefs.dart';
 
-/// A device contact with at least one phone number. Usable directly as a T9 entry.
+/// A device contact. Usable directly as a T9 entry; only [ContactsRepository.allContacts]
+/// holds contacts without numbers.
 class DialerContact extends T9Entry {
   const DialerContact({
     required String super.id,
@@ -16,6 +18,8 @@ class DialerContact extends T9Entry {
     this.thumbnail,
     this.isFavorite = false,
     this.primaryIndex = -1,
+    this._sortKey,
+    this.accounts = const [],
   });
 
   /// "Mobile", "Home", ... for each of [numbers], same order.
@@ -28,6 +32,14 @@ class DialerContact extends T9Entry {
 
   /// Index in [numbers] of Android's default number for this contact, or -1 if none is set.
   final int primaryIndex;
+
+  final String? _sortKey;
+
+  /// What the A–Z list sorts and buckets by (Manage contacts › Sort by), lowercased.
+  String get sortKey => _sortKey ?? name.toLowerCase();
+
+  /// The accounts holding a copy, as `type|name`; empty for a contact only on the phone.
+  final List<String> accounts;
 
   /// The number to call without asking: the default, or the only number. Null means ask.
   String? get callNumber => primaryIndex >= 0 ? numbers[primaryIndex] : (numbers.length == 1 ? numbers.single : null);
@@ -45,6 +57,10 @@ class ContactsRepository {
   /// Sorted by name. Notifies only when a listed contact changed (Android fires database
   /// changes after every call, and each one rebuilt Recents, Contacts and the keypad results).
   final ValueNotifier<List<DialerContact>> contacts = ValueNotifier(const []);
+
+  /// [contacts] plus those without a number, for Manage contacts' "Only display contacts
+  /// with numbers" turned off and for Merge duplicates.
+  final ValueNotifier<List<DialerContact>> allContacts = ValueNotifier(const []);
 
   /// Bumps on every reload of the contacts database, for screens that show fields [contacts]
   /// doesn't hold (emails, addresses, notes).
@@ -73,11 +89,16 @@ class ContactsRepository {
     hasAccess.value = await FlutterContacts.permissions.has(PermissionType.read);
     if (!hasAccess.value) return;
     // Android fires bursts of changes (e.g. after every call); reload once they settle.
-    _changes = FlutterContacts.onDatabaseChange.listen((_) {
-      _reload?.cancel();
-      _reload = Timer(const Duration(milliseconds: 400), _load);
-    });
+    _changes = FlutterContacts.onDatabaseChange.listen((_) => reload());
+    // Names and order follow Manage contacts.
+    Listenable.merge([DialerPrefs.instance.sortBy, DialerPrefs.instance.nameOrder]).addListener(reload);
     await _load();
+  }
+
+  /// Reloads once a burst of changes settles.
+  void reload() {
+    _reload?.cancel();
+    _reload = Timer(const Duration(milliseconds: 400), _load);
   }
 
   Timer? _reload;
@@ -117,29 +138,70 @@ class ContactsRepository {
     _thumbnailLoads.clear();
     final all = await FlutterContacts.getAll(
       properties: {
+        ContactProperty.name,
         ContactProperty.phone,
         ContactProperty.favorite,
         if (_preloadPhotos) ContactProperty.photoThumbnail,
       },
     );
-    final entries = [
-      for (final c in all)
-        if (_uniquePhones(c.phones) case final phones when phones.isNotEmpty && c.id != null)
-          DialerContact(
-            id: c.id!,
-            name: (c.displayName?.trim().isNotEmpty ?? false) ? c.displayName!.trim() : phones.first.number,
-            numbers: [for (final p in phones) p.number],
-            labels: [for (final p in phones) _label(p.label)],
-            thumbnail: c.photo?.thumbnail,
-            isFavorite: c.android?.isFavorite ?? false,
-            primaryIndex: phones.indexWhere((p) => p.isPrimary ?? false),
-          ),
+    final prefs = DialerPrefs.instance;
+    final entries = <DialerContact>[];
+    for (final c in all) {
+      final phones = _uniquePhones(c.phones);
+      final display = c.displayName?.trim() ?? '';
+      final fallback = display.isNotEmpty ? display : (phones.isEmpty ? '' : phones.first.number);
+      if (c.id == null || fallback.isEmpty) continue;
+      final (name, sortKey) = displayNames(
+        first: c.name?.first,
+        middle: c.name?.middle,
+        last: c.name?.last,
+        fallback: fallback,
+        order: prefs.nameOrder.value,
+        sortBy: prefs.sortBy.value,
+      );
+      entries.add(
+        DialerContact(
+          id: c.id!,
+          name: name,
+          sortKey: sortKey,
+          numbers: [for (final p in phones) p.number],
+          labels: [for (final p in phones) _label(p.label)],
+          thumbnail: c.photo?.thumbnail,
+          isFavorite: c.android?.isFavorite ?? false,
+          primaryIndex: phones.indexWhere((p) => p.isPrimary ?? false),
+          accounts: [for (final a in c.metadata?.accounts ?? const <Account>[]) '${a.type}|${a.name}'],
+        ),
+      );
+    }
+    entries.sort((a, b) => a.sortKey.compareTo(b.sortKey));
+    final numbered = [
+      for (final e in entries)
+        if (e.numbers.isNotEmpty) e,
     ];
-    // Lowercased once per contact, not twice per comparison.
-    final keyed = [for (final e in entries) (e.name.toLowerCase(), e)]..sort((a, b) => a.$1.compareTo(b.$1));
-    final sorted = [for (final (_, e) in keyed) e];
-    if (!sameContacts(sorted, contacts.value)) _publish(sorted);
+    if (!sameContacts(entries, allContacts.value)) allContacts.value = entries;
+    if (!sameContacts(numbered, contacts.value)) _publish(numbered);
     revision.value++;
+  }
+
+  /// The name to show in [order] (`first` or `last` first) and the sort key by [sortBy],
+  /// from Android's structured name. The display name stays when the structured one is
+  /// empty or already in the order asked for.
+  @visibleForTesting
+  static (String, String) displayNames({
+    String? first,
+    String? middle,
+    String? last,
+    required String fallback,
+    required String order,
+    required String sortBy,
+  }) {
+    String join(List<String?> parts) => [
+      for (final p in parts)
+        if (p?.trim() case final t? when t.isNotEmpty) t,
+    ].join(' ');
+    final lastFirst = join([last, first, middle]);
+    if (join([first, middle, last]).isEmpty) return (fallback, fallback.toLowerCase());
+    return (order == 'last' ? lastFirst : fallback, (sortBy == 'last' ? lastFirst : fallback).toLowerCase());
   }
 
   /// Whether [a] and [b] list the same contacts, field for field (thumbnails by content).
@@ -150,6 +212,8 @@ class ContactsRepository {
       final x = a[i], y = b[i];
       if (x.id != y.id ||
           x.name != y.name ||
+          x.sortKey != y.sortKey ||
+          !listEquals(x.accounts, y.accounts) ||
           x.isFavorite != y.isFavorite ||
           x.primaryIndex != y.primaryIndex ||
           !listEquals(x.numbers, y.numbers) ||
@@ -163,7 +227,13 @@ class ContactsRepository {
 
   /// Shows [entries] (sorted by name) without reading the device, e.g. demo data for store screenshots.
   @visibleForTesting
-  void debugSetContacts(List<DialerContact> entries) => _publish(entries);
+  void debugSetContacts(List<DialerContact> entries) {
+    allContacts.value = entries;
+    _publish([
+      for (final e in entries)
+        if (e.numbers.isNotEmpty) e,
+    ]);
+  }
 
   void _publish(List<DialerContact> entries) {
     // Several contacts can share a number (duplicates across accounts); prefer one with a photo,

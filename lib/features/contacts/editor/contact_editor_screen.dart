@@ -7,7 +7,9 @@ import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:intl/intl.dart';
 
 import '../contact_subpages.dart' show accountApp;
+import '../../../core/contacts/contacts_repository.dart';
 import '../../../core/telecom/telecom_bridge.dart';
+import '../../../core/prefs/dialer_prefs.dart';
 import '../../../theme/one_ui_scroll.dart';
 import '../../../theme/one_ui_theme.dart';
 import '../../../widgets/cos_dialog.dart';
@@ -206,7 +208,10 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
           if (!cloudDefault || a['type'] == 'com.google')
             Account(id: '', name: (a['name'] as String?) ?? '', type: (a['type'] as String?) ?? ''),
       ];
+      // Manage contacts › Default save location first, when this phone still offers it.
+      final saved = DialerPrefs.instance.saveAccount.value;
       final account =
+          accounts.where((a) => '${a.type}|${a.name}' == saved).firstOrNull ??
           accounts.where((a) => a.type == fallback?.type && a.name == fallback?.name).firstOrNull ??
           accounts.where((a) => a.type == 'com.google').firstOrNull ??
           accounts.firstOrNull;
@@ -251,7 +256,10 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
 
   Future<void> _save() async {
     final form = _form!;
-    if (form.isEmpty || _saving || !_ready || !_active) return;
+    if (form.isEmpty || _saving || _confirming || !_ready || !_active) return;
+    // Only waits when there's a duplicate to ask about, so a double tap can't save twice.
+    final duplicate = _base == null ? _duplicateOf(form) : null;
+    if (duplicate != null && !await _confirmDuplicate(duplicate)) return;
     setState(() => _saving = true);
     try {
       final String id;
@@ -306,6 +314,41 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
     final form = _form!;
     final shown = (form.isEmpty, LetterAvatar.initials(_avatarName(form)));
     if (shown != _shown) setState(() => _shown = shown);
+  }
+
+  /// For a new contact, the saved contact that already has one of its numbers or its name
+  /// (typed, or from a QR code or another app), as the line that says so.
+  String? _duplicateOf(ContactForm form) {
+    final repo = ContactsRepository.instance;
+    final byNumber = [
+      for (final p in form.phones)
+        if (repo.contactFor(p.value) case final c?) (c, p.value.trim()),
+    ].firstOrNull;
+    final name = [form.first, form.middle, form.last].map((s) => s.trim()).where((s) => s.isNotEmpty).join(' ');
+    final byName = name.isEmpty
+        ? null
+        : repo.allContacts.value.where((c) => c.name.toLowerCase() == name.toLowerCase()).firstOrNull;
+    final existing = byNumber?.$1 ?? byName;
+    if (existing == null) return null;
+    return byNumber != null
+        ? '${byNumber.$2} is already saved as ${existing.name}.'
+        : '${existing.name} is already in your contacts.';
+  }
+
+  /// Says who already has it before making a second copy. True to save anyway.
+  Future<bool> _confirmDuplicate(String duplicate) async {
+    _confirming = true;
+    final choice = await showCosActions<bool>(
+      context,
+      title: 'Already in contacts',
+      message: '$duplicate Save another contact anyway?',
+      actions: [
+        (label: 'Save anyway', value: true, destructive: false),
+        (label: 'Cancel', value: false, destructive: false),
+      ],
+    );
+    _confirming = false;
+    return choice == true && _active;
   }
 
   /// "Save your changes or discard them?" on back with unsaved changes.

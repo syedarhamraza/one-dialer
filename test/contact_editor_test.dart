@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dialer/core/contacts/contacts_repository.dart';
 import 'package:dialer/features/contacts/editor/contact_editor_screen.dart';
 import 'package:dialer/theme/one_ui_theme.dart';
 import 'package:flutter/material.dart';
@@ -107,10 +108,8 @@ void main() {
         theme: OneUITheme.darkTheme.copyWith(platform: TargetPlatform.android),
         home: Scaffold(
           body: Builder(
-            builder: (context) => TextButton(
-              onPressed: () => openContactEditor(context, rise: true),
-              child: const Text('Open editor'),
-            ),
+            builder: (context) =>
+                TextButton(onPressed: () => openContactEditor(context, rise: true), child: const Text('Open editor')),
           ),
         ),
       ),
@@ -269,6 +268,25 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Keep these edits'), findsOneWidget);
     expect(writes, isEmpty);
+  });
+
+  testWidgets('saving a number that is already saved asks first', (tester) async {
+    ContactsRepository.instance.debugSetContacts([
+      DialerContact(id: 'a', name: 'Alice', numbers: const ['555 0100'], labels: const ['Mobile']),
+    ]);
+    addTearDown(() => ContactsRepository.instance.debugSetContacts([]));
+    accounts.complete([
+      {'name': 'test@example.com', 'type': 'com.google'},
+    ]);
+    await open(tester, number: '5550100');
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, 'Done'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('5550100 is already saved as Alice'), findsOneWidget);
+    await tester.tap(find.text('Cancel').last); // the dialog's, over the editor's
+    await tester.pumpAndSettle();
+    expect(writes, isEmpty);
+    expect(find.byType(ContactEditorScreen), findsOneWidget);
   });
 
   testWidgets('Save returns the created id and uses the resolved account once', (tester) async {

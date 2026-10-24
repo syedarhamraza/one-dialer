@@ -96,6 +96,13 @@ class TelecomBridge {
   /// An empty contact on the phone itself (no account), to fill in with update; its id.
   Future<String> createLocalContact() async => (await _methods.invokeMethod<String>('createLocalContact'))!;
 
+  /// Joins the contacts into one (Android's "link"), for Merge duplicates.
+  Future<void> mergeContacts(List<String> contactIds) =>
+      _methods.invokeMethod('mergeContacts', {'contactIds': contactIds});
+
+  /// A .vcf file's text from the files app; null when cancelled.
+  Future<String?> pickVcf() => _methods.invokeMethod<String>('pickVcf');
+
   Future<void> unlinkRawContacts(String contactId, List<int> rawIds) =>
       _methods.invokeMethod('unlinkRawContacts', {'contactId': contactId, 'rawIds': rawIds});
 

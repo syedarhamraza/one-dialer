@@ -5,6 +5,7 @@ import '../../app/layout.dart';
 import '../../app/main_shell.dart' show navDock;
 import '../../core/contacts/contacts_repository.dart';
 import '../../core/haptics/haptics.dart';
+import '../../core/prefs/dialer_prefs.dart';
 import '../../theme/one_ui_scroll.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/cos_dialog.dart';
@@ -20,6 +21,7 @@ import 'contact_actions.dart';
 import 'contact_details_screen.dart';
 import 'contact_sections.dart';
 import 'contacts_widgets.dart';
+import 'manage_contacts_screen.dart';
 
 /// The Contacts tab in the Calls tab's style (ColorOS layout): glass search and menu,
 /// a big title, a card with My contact card and Groups, favourites under a star, then
@@ -64,14 +66,27 @@ class _ContactsScreenState extends State<ContactsScreen> {
 
   // --- Sections, recomputed only when the contacts change ----------------------------
 
-  List<DialerContact>? _builtFor;
+  (List<DialerContact>, Set<String>)? _builtFor;
+  List<DialerContact> _shown = const [];
   List<DialerContact> _favourites = const [];
   List<(String, List<DialerContact>)> _sections = const [];
   Map<String, double> _offsets = const {};
 
-  void _section(List<DialerContact> all) {
-    if (identical(_builtFor, all)) return;
-    _builtFor = all;
+  /// The contacts Manage contacts lets through: with numbers only (unless turned off), and
+  /// not only in accounts it hides.
+  void _section() {
+    final prefs = DialerPrefs.instance;
+    final repo = ContactsRepository.instance;
+    final source = prefs.onlyWithNumbers.value ? repo.contacts.value : repo.allContacts.value;
+    final hidden = prefs.hiddenAccounts.value;
+    if (_builtFor case (final s, final h) when identical(s, source) && identical(h, hidden)) return;
+    _builtFor = (source, hidden);
+    final all = _shown = hidden.isEmpty
+        ? source
+        : [
+            for (final c in source)
+              if (!(c.accounts.isEmpty ? hidden.contains('|') : c.accounts.every(hidden.contains))) c,
+          ];
     _favourites = [
       for (final c in all)
         if (c.isFavorite) c,
@@ -96,8 +111,10 @@ class _ContactsScreenState extends State<ContactsScreen> {
     _currentLetter.value = current;
   }
 
-  void _open(DialerContact c) =>
-      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ContactDetailsScreen(contactId: c.id)));
+  // Our details page is built around numbers; Android's shows the rest.
+  void _open(DialerContact c) => c.numbers.isEmpty
+      ? FlutterContacts.native.showViewer(c.id)
+      : Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ContactDetailsScreen(contactId: c.id)));
 
   // --- Selection ---------------------------------------------------------------
 
@@ -142,10 +159,10 @@ class _ContactsScreenState extends State<ContactsScreen> {
     );
   }
 
-  bool get _allSelected => _selected?.length == ContactsRepository.instance.contacts.value.length;
+  bool get _allSelected => _selected?.length == _shown.length;
 
   void _toggleSelectAll() {
-    final all = ContactsRepository.instance.contacts.value;
+    final all = _shown;
     _selected = _allSelected ? {} : {for (final c in all) c.id};
     _selectionChanged.value++;
     _updateDock();
@@ -180,6 +197,10 @@ class _ContactsScreenState extends State<ContactsScreen> {
     items: [
       OneUIFloatingMenuItem(label: 'Select', onTap: _startSelection),
       OneUIFloatingMenuItem(
+        label: 'Manage contacts',
+        onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ManageContactsScreen())),
+      ),
+      OneUIFloatingMenuItem(
         label: 'Settings',
         onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),
       ),
@@ -196,7 +217,13 @@ class _ContactsScreenState extends State<ContactsScreen> {
         if (!didPop) _endSelection();
       },
       child: ListenableBuilder(
-        listenable: Listenable.merge([ContactsRepository.instance.contacts, ContactsRepository.instance.hasAccess]),
+        listenable: Listenable.merge([
+          ContactsRepository.instance.contacts,
+          ContactsRepository.instance.allContacts,
+          ContactsRepository.instance.hasAccess,
+          DialerPrefs.instance.onlyWithNumbers,
+          DialerPrefs.instance.hiddenAccounts,
+        ]),
         builder: (context, _) => _build(context),
       ),
     );
@@ -204,8 +231,8 @@ class _ContactsScreenState extends State<ContactsScreen> {
 
   Widget _build(BuildContext context) {
     final repo = ContactsRepository.instance;
-    final all = repo.contacts.value;
-    _section(all);
+    _section();
+    final all = _shown;
     final selecting = _selected != null;
     final top = MediaQuery.paddingOf(context).top;
     return Stack(
