@@ -323,10 +323,10 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                                     onPressed: action.tap,
                                     size: actionSize,
                                     circleKey: action.key,
-                                    // The glyph's weight (the handset) sits low left of its box; nudge it so it looks centred.
+                                    // The plus pulls the glyph's box up and right of the handset; nudge it down left so it looks centred.
                                     glyph: action.icon == Icons.add_call
                                         ? (color) => Transform.translate(
-                                            offset: Offset(actionSize * .02, -actionSize * .02),
+                                            offset: Offset(-actionSize * .02, actionSize * .02),
                                             child: Icon(Icons.add_call, color: color),
                                           )
                                         : null,
