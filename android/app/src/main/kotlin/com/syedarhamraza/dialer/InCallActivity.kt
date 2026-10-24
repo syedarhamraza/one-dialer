@@ -85,9 +85,26 @@ class InCallActivity : FlutterActivity() {
     override fun onStart() {
         super.onStart()
         setFullScreen(!isInMultiWindowMode)
+        if (WallpaperBackdrop.isLive(this)) {
+            WallpaperBackdrop.setCover(true)
+            // In case no enter animation runs (onEnterAnimationComplete may not come).
+            window.decorView.postDelayed(uncover, UNCOVER_FALLBACK_MS)
+        }
+    }
+
+    private val uncover = Runnable { WallpaperBackdrop.setCover(false) }
+
+    // The live wallpaper goes black right as the open animation ends, for ~0.2 s while it redraws
+    // (seen on vivo's LightShadow); keep the cover a little past that, then Flutter fades it out.
+    override fun onEnterAnimationComplete() {
+        super.onEnterAnimationComplete()
+        window.decorView.removeCallbacks(uncover)
+        window.decorView.postDelayed(uncover, UNCOVER_AFTER_ANIMATION_MS)
     }
 
     override fun onStop() {
+        window.decorView.removeCallbacks(uncover)
+        WallpaperBackdrop.setCover(false)
         setFullScreen(false)
         super.onStop()
     }
@@ -137,6 +154,9 @@ class InCallActivity : FlutterActivity() {
 
         /** Heavy, like ColorOS: only the wallpaper's colours and shapes survive. */
         private const val BLUR_RADIUS = 120
+
+        private const val UNCOVER_AFTER_ANIMATION_MS = 450L
+        private const val UNCOVER_FALLBACK_MS = 1500L
 
         fun intent(context: Context): Intent =
             Intent(context, InCallActivity::class.java)

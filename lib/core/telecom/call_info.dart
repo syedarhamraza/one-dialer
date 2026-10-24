@@ -179,13 +179,18 @@ class SimCard {
 /// The call screen's backdrop from `WallpaperBackdrop.kt`: whether Android is blurring the real
 /// wallpaper behind the call window, and the wallpaper's main colours for when it isn't.
 class WallpaperBackdrop {
-  const WallpaperBackdrop({required this.blur, required this.colors});
+  const WallpaperBackdrop({required this.blur, required this.colors, this.cover = false});
 
   factory WallpaperBackdrop.fromMap(Map<Object?, Object?> map) => WallpaperBackdrop(
     blur: map['blur'] as bool? ?? false,
     colors: [for (final c in (map['colors'] as List<Object?>? ?? const [])) Color((c! as num).toInt())],
+    cover: map['cover'] as bool? ?? false,
   );
 
   final bool blur;
   final List<Color> colors;
+
+  /// A live wallpaper is redrawing behind the opening call window (black for a moment): paint
+  /// the colour stand-in over it until it's back.
+  final bool cover;
 }

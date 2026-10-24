@@ -31,7 +31,7 @@ class CallBackdrop extends StatelessWidget {
   Widget build(BuildContext context) {
     // Until Android reports the backdrop, assume the wallpaper shows: painting the dark aurora
     // first flashed black before the wallpaper faded in.
-    final blurred = wallpaper?.blur ?? true;
+    final blurred = (wallpaper?.blur ?? true) && !(wallpaper?.cover ?? false);
     return Stack(
       fit: StackFit.expand,
       children: [
