@@ -78,6 +78,8 @@ flutter {
 }
 
 dependencies {
+    // WindowCompat.enableEdgeToEdge (1.17+); the plugins already pull in this version.
+    implementation("androidx.core:core:1.18.0")
     // Formats caller numbers and names a foreign caller's country on the call screen.
     implementation("com.googlecode.libphonenumber:libphonenumber:8.13.50")
     testImplementation("junit:junit:4.13.2")

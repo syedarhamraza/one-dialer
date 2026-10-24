@@ -3,6 +3,8 @@ package com.syedarhamraza.dialer
 import android.app.role.RoleManager
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
+import androidx.core.view.WindowCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -14,6 +16,12 @@ class MainActivity : FlutterActivity() {
     private var pendingPhotoResult: MethodChannel.Result? = null
     private var pendingRingtoneResult: MethodChannel.Result? = null
     private var pendingVcfResult: MethodChannel.Result? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // Android 15 forces edge-to-edge for SDK 35; opting in on older versions too keeps them the same.
+        WindowCompat.enableEdgeToEdge(window)
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
