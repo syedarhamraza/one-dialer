@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 import 'dart:io';
 
@@ -46,7 +47,8 @@ void _profileServiceAddress() {
 Future<void> inCallMain() async {
   WidgetsFlutterBinding.ensureInitialized();
   _profileServiceAddress();
-  await initCrashReporting();
+  // Not awaited: the ringing screen's first frame mustn't wait on Firebase's round trips.
+  unawaited(initCrashReporting());
   // Pre-warms the call screen's glass shaders so its first frame doesn't flash.
   await LiquidGlassWidgets.initialize();
   runApp(LiquidGlassWidgets.wrap(brightnessResolver: Theme.maybeBrightnessOf, child: const InCallApp()));

@@ -28,8 +28,6 @@ class DialerInCallService : InCallService() {
         if (power.isWakeLockLevelSupported(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK)) {
             proximityLock = power.newWakeLock(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK, "dialer:proximity")
         }
-        // Warm the in-call Flutter engine so the call screen shows without a cold start.
-        InCallEngine.ensure(this)
     }
 
     override fun onDestroy() {
@@ -49,6 +47,9 @@ class DialerInCallService : InCallService() {
         } else {
             InCallActivity.start(this)
         }
+        // Warm the call screen's Flutter engine only now: building it (~0.5 s on a cold start) used
+        // to hold up the ringing notification while vivo's flash and edge glow already ran.
+        InCallEngine.ensure(this)
     }
 
     override fun onCallRemoved(call: Call) {

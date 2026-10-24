@@ -65,7 +65,7 @@ Call flows only work after the app is set as the default phone app (the home scr
 Two Flutter engines run in one app, sharing the same Kotlin call state:
 
 - **Main engine** (`main()` in `lib/main.dart` → `DialerApp`) is hosted by `MainActivity`: dial pad, recents, contacts, default-dialer setup.
-- **In-call engine** (`inCallMain()`, `@pragma('vm:entry-point')`) is created and cached by `InCallEngine.kt` as soon as Telecom binds `DialerInCallService`, then hosted by `InCallActivity` (lock-screen capable, `singleInstance`). It's pre-warmed so the call screen opens without a cold start, and it outlives the activity (`shouldDestroyEngineWithHost = false`).
+- **In-call engine** (`inCallMain()`, `@pragma('vm:entry-point')`) is created and cached by `InCallEngine.kt` right after `DialerInCallService.onCallAdded` posts the ringing notification (never before it: building the engine takes ~0.5 s on a cold start), then hosted by `InCallActivity` (lock-screen capable, `singleInstance`). It's pre-warmed so the call screen opens without a cold start, and it outlives the activity (`shouldDestroyEngineWithHost = false`).
 
 Call flow (Kotlin, `android/app/src/main/kotlin/com/syedarhamraza/dialer/`):
 
