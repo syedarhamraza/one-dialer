@@ -8,7 +8,6 @@ import '../../core/contacts/contacts_repository.dart';
 import '../../core/telecom/call_info.dart';
 import '../../widgets/letter_avatar.dart';
 import 'call_controls.dart';
-import '../../theme/phosphor_fill.dart';
 
 /// The call backdrop, as on ColorOS 17: the phone's own wallpaper, blurred by Android behind the
 /// transparent call window (`WallpaperBackdrop.kt`), under black fades at the top and bottom.
@@ -506,7 +505,7 @@ class _HdCallGlyph extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          HandsetGlyph(size: 16, color: Colors.white70),
+          Icon(Icons.call_rounded, size: 16, color: Colors.white70),
           Text(
             'HD',
             style: TextStyle(fontSize: 8, height: 1, fontWeight: FontWeight.w800, color: Colors.white70),
@@ -567,7 +566,7 @@ class HeldCallCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(PhosphorFill.arrowsDownUp, size: 16, color: Colors.white),
+                        Icon(Icons.swap_vert_rounded, size: 18, color: Colors.white),
                         SizedBox(width: 6),
                         Text(
                           'Switch',

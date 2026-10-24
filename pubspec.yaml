@@ -78,14 +78,9 @@ flutter:
       fonts:
         - asset: assets/fonts/Roboto-Bold.ttf
           weight: 700
-    # Phosphor's fill icons for the call screen (see lib/theme/phosphor_fill.dart).
-    - family: PhosphorFill
-      fonts:
-        - asset: assets/fonts/Phosphor-Fill.ttf
 
   assets:
     - assets/fonts/Roboto-LICENSE.txt
-    - assets/fonts/Phosphor-LICENSE.txt
 
   # To add assets to your application, add an assets section, like this:
   # assets:

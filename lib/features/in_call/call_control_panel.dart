@@ -9,7 +9,6 @@ import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import 'call_controls.dart';
-import '../../theme/phosphor_fill.dart';
 
 /// Actions recede while the keypad rises within one reversible animated panel.
 /// The bottom row is outside the changing panel, so it never moves.
@@ -92,15 +91,11 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
       items: [
         // With two calls Merge takes Add call's place in the row, so Add call moves here.
         if (merging)
-          OneUIFloatingMenuItem(
-            label: 'Add call',
-            icon: PhosphorFill.phonePlus,
-            onTap: TelecomBridge.instance.openDialer,
-          ),
-        OneUIFloatingMenuItem(label: _hasNote ? 'Edit note' : 'Note', icon: PhosphorFill.notePencil, onTap: _editNote),
+          OneUIFloatingMenuItem(label: 'Add call', icon: Icons.add_call, onTap: TelecomBridge.instance.openDialer),
+        OneUIFloatingMenuItem(label: _hasNote ? 'Edit note' : 'Note', icon: Icons.edit_note_rounded, onTap: _editNote),
         OneUIFloatingMenuItem(
           label: 'Video call',
-          icon: PhosphorFill.videoCamera,
+          icon: Icons.videocam_rounded,
           enabled: canVideo,
           onTap: () => TelecomBridge.instance.meetCall(number),
         ),
@@ -246,14 +241,14 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
     final actions = <({IconData icon, String label, bool active, VoidCallback? tap, Key? key})>[
       (
         // ColorOS shows the slashed mic either way; muted lights the circle.
-        icon: PhosphorFill.microphoneSlash,
+        icon: Icons.mic_off_rounded,
         label: 'Mute',
         active: widget.audio.muted,
         tap: () => telecom.setMuted(!widget.audio.muted),
         key: null,
       ),
       (
-        icon: PhosphorFill.pause,
+        icon: Icons.pause_rounded,
         label: holding ? 'Resume' : 'Hold',
         active: holding,
         tap: widget.call.canHold || holding
@@ -263,15 +258,15 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
       ),
       if (canMerge)
         (
-          icon: PhosphorFill.gitMerge,
+          icon: Icons.call_merge_rounded,
           label: 'Merge',
           active: false,
           tap: () => telecom.merge(widget.call.id),
           key: null,
         )
       else
-        (icon: PhosphorFill.phonePlus, label: 'Add call', active: false, tap: telecom.openDialer, key: null),
-      (icon: PhosphorFill.dotsThree, label: 'More', active: false, tap: () => _openMore(canMerge), key: _moreKey),
+        (icon: Icons.add_call, label: 'Add call', active: false, tap: telecom.openDialer, key: null),
+      (icon: Icons.more_horiz_rounded, label: 'More', active: false, tap: () => _openMore(canMerge), key: _moreKey),
     ];
     final route = widget.audio.route;
     final routeLabel = switch (route) {
@@ -442,14 +437,14 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                                     child: Semantics(
                                       label: 'End call',
                                       child: IconButton(
-                                        iconSize: actionSize * .4,
+                                        iconSize: 46,
                                         style: IconButton.styleFrom(
                                           foregroundColor: Colors.white,
                                           disabledForegroundColor: Colors.white,
                                           shape: const StadiumBorder(),
                                         ),
                                         onPressed: _ending ? null : _endCall,
-                                        icon: const HandsetGlyph(turns: .375),
+                                        icon: const Icon(Icons.call_end_rounded),
                                       ),
                                     ),
                                   ),

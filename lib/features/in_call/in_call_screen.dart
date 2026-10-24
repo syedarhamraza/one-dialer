@@ -243,11 +243,9 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     final color = _ballColor.transform(settled)!;
     // The same shared finish as the End pill, so the hand-off on landing is invisible.
     final shape = RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(rect.shortestSide / 2));
-    final iconSize = lerpDouble(
-      from.shortestSide * .42,
-      to == null ? from.shortestSide * .42 : to.height * .4,
-      settled,
-    )!;
+    final iconSize = lerpDouble(from.shortestSide * .52, 46, settled)!;
+    // The handset tips over and hands off to the hang-up glyph as it lands.
+    final handoff = const Interval(.6, 1).transform(settled);
     return Positioned.fromRect(
       rect: rect,
       child: IgnorePointer(
@@ -256,8 +254,22 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
           decoration: solidBody(color, shape),
           foregroundDecoration: solidGlow(shape),
           alignment: Alignment.center,
-          // The handset tips over into End's hung-up handset as it lands.
-          child: HandsetGlyph(size: iconSize, turns: .375 * settled),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Opacity(
+                opacity: 1 - handoff,
+                child: Transform.rotate(
+                  angle: 2.36 * settled,
+                  child: Icon(Icons.call_rounded, color: Colors.white, size: iconSize),
+                ),
+              ),
+              Opacity(
+                opacity: handoff,
+                child: Icon(Icons.call_end_rounded, color: Colors.white, size: iconSize),
+              ),
+            ],
+          ),
         ),
       ),
     );

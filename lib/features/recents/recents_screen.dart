@@ -28,7 +28,6 @@ import 'delete_calls.dart';
 import '../search/search_screen.dart';
 import '../../widgets/select_mark.dart';
 import '../blocking/blocking_repository.dart';
-import '../../theme/phosphor_fill.dart';
 
 /// Samsung-style Recents: calls grouped by day, All / Missed filter, swipe right to
 /// call and left to message, tap for details, long-press to multi-select and delete.
@@ -62,8 +61,8 @@ class _RecentsScreenState extends State<RecentsScreen> {
   final _collapse = TitleCollapse(titleTop: 0);
   List<SimCard> _sims = const [];
 
-  /// When saved call notes were started, by number key, for the rows' note marks.
-  Map<String, List<DateTime>> _notes = const {};
+  /// Saved call notes by number key, shown under the rows' numbers.
+  Map<String, List<(DateTime, String)>> _notes = const {};
 
   @override
   void initState() {
@@ -78,14 +77,24 @@ class _RecentsScreenState extends State<RecentsScreen> {
   }
 
   Future<void> _loadNotes() async {
-    final notes = await DialerPrefs.instance.noteTimes();
+    final notes = await DialerPrefs.instance.noteIndex();
     if (mounted) setState(() => _notes = notes);
   }
 
-  bool _hasNote(CallGroup group) {
+  /// The newest note taken during one of [group]'s calls.
+  String? _noteFor(CallGroup group) {
     final call = group.latest;
-    final times = _notes[call.isPrivate || numberKey(call.number).isEmpty ? 'private' : numberKey(call.number)];
-    return times != null && group.calls.any((c) => times.any((at) => noteDuring(c, at)));
+    final notes = _notes[call.isPrivate || numberKey(call.number).isEmpty ? 'private' : numberKey(call.number)];
+    if (notes == null) return null;
+    String? newest;
+    DateTime? newestAt;
+    for (final (at, text) in notes) {
+      if ((newestAt == null || at.isAfter(newestAt)) && group.calls.any((c) => noteDuring(c, at))) {
+        newest = text;
+        newestAt = at;
+      }
+    }
+    return newest;
   }
 
   @override
@@ -393,7 +402,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
           builder: (row) => _CallRow(
             group: group,
             simBadge: _simBadge(call.simId),
-            hasNote: _hasNote(group),
+            note: _noteFor(group),
             when: day == 'Today' ? timeLabel(call.date) : day,
             selecting: _selected != null,
             // Only the circle listens to selection taps; the rest of the row stays built.
@@ -642,7 +651,7 @@ class _CallRow extends StatelessWidget {
   const _CallRow({
     required this.group,
     required this.simBadge,
-    required this.hasNote,
+    this.note,
     required this.when,
     required this.selecting,
     required this.selectMark,
@@ -654,8 +663,8 @@ class _CallRow extends StatelessWidget {
   final CallGroup group;
   final (String, Color)? simBadge;
 
-  /// A note was taken during one of the group's calls.
-  final bool hasNote;
+  /// A note taken during one of the group's calls, shown under the number.
+  final String? note;
   final String when;
 
   final bool selecting;
@@ -712,19 +721,27 @@ class _CallRow extends StatelessWidget {
                       ),
                     ],
                   ),
+                  if (note case final note?) ...[
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        const Icon(Icons.edit_note_rounded, size: 16, color: OneUITheme.textSecondary),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            note,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 14, color: OneUITheme.textSecondary),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
             const SizedBox(width: 8),
-            if (hasNote) ...[
-              const Icon(
-                PhosphorFill.notePencil,
-                size: 16,
-                color: OneUITheme.textSecondary,
-                semanticLabel: 'Has a note',
-              ),
-              const SizedBox(width: 6),
-            ],
             Text(when, style: const TextStyle(fontSize: 14, color: OneUITheme.textSecondary)),
             IconButton(
               tooltip: 'Call details',

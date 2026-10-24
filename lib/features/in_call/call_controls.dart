@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -11,7 +10,6 @@ import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_floating_modal.dart';
-import '../../theme/phosphor_fill.dart';
 
 /// A ColorOS 17 call-control body, a circle or (with [radius]) a squircle-ended key: frosted (the backdrop blurred behind it), milky, glowing up
 /// from every edge (least along the top), with a lip along the top edge and a fainter one below. The glass package supplies the press: it squeezes, stretches toward
@@ -281,7 +279,7 @@ class CallAction extends StatelessWidget {
   final VoidCallback? onPressed;
   final double size;
 
-  /// Draws the icon instead of [icon], for glyphs Phosphor lacks (the dial pad).
+  /// Draws the icon instead of [icon], for glyphs Material lacks (the 10-dot dial pad).
   final Widget Function(Color? color)? glyph;
 
   /// Marks the circle, so a menu opened from it can anchor there.
@@ -314,7 +312,7 @@ class CallAction extends StatelessWidget {
               label: label,
               child: IconButton(
                 isSelected: active,
-                iconSize: size * .42,
+                iconSize: size * .5,
                 style: IconButton.styleFrom(
                   backgroundColor: Colors.transparent,
                   disabledBackgroundColor: Colors.transparent,
@@ -386,10 +384,10 @@ String audioRouteLabel(AudioRoute route) => switch (route) {
 };
 
 IconData audioRouteIcon(AudioRoute route) => switch (route) {
-  AudioRoute.earpiece => PhosphorFill.phone,
-  AudioRoute.speaker => PhosphorFill.speakerHigh,
-  AudioRoute.bluetooth => PhosphorFill.bluetooth,
-  AudioRoute.wiredHeadset => PhosphorFill.headphones,
+  AudioRoute.earpiece => Icons.phone_in_talk_rounded,
+  AudioRoute.speaker => Icons.volume_up_rounded,
+  AudioRoute.bluetooth => Icons.bluetooth_audio_rounded,
+  AudioRoute.wiredHeadset => Icons.headset_rounded,
 };
 
 /// The app's floating menu over the Speaker button, the current route marked like a choice row's.
@@ -518,70 +516,6 @@ class _DialPadDots extends CustomPainter {
 
   @override
   bool shouldRepaint(_DialPadDots oldDelegate) => oldDelegate.color != color;
-}
-
-/// The rounded handset of the launcher icon and the vivo island images (`handset()` in
-/// `tool/icons/render_icons.py`): Material's handset with its pads rounded by a round-joined
-/// stroke. [turns] of .375 (135 degrees) hangs it up, as on Decline and End.
-class HandsetGlyph extends StatelessWidget {
-  const HandsetGlyph({super.key, this.size, this.color = Colors.white, this.turns = 0});
-  final double? size;
-  final Color color;
-  final double turns;
-
-  @override
-  Widget build(BuildContext context) {
-    final size = this.size ?? IconTheme.of(context).size ?? 24;
-    return CustomPaint(size: Size.square(size), painter: _HandsetPainter(color, turns));
-  }
-}
-
-class _HandsetPainter extends CustomPainter {
-  const _HandsetPainter(this.color, this.turns);
-  final Color color;
-  final double turns;
-
-  /// Material's `call` path (a 24-unit box, 18 units across).
-  static final _path = Path()
-    ..moveTo(19.23, 15.26)
-    ..relativeLineTo(-2.54, -.29)
-    ..relativeCubicTo(-.61, -.07, -1.21, .14, -1.64, .57)
-    ..relativeLineTo(-1.84, 1.84)
-    ..relativeCubicTo(-2.83, -1.44, -5.15, -3.75, -6.59, -6.59)
-    ..relativeLineTo(1.85, -1.85)
-    ..relativeCubicTo(.43, -.43, .64, -1.03, .57, -1.64)
-    ..relativeLineTo(-.29, -2.52)
-    ..relativeCubicTo(-.12, -1.01, -.97, -1.77, -1.99, -1.77)
-    ..lineTo(5.03, 3.01)
-    ..relativeCubicTo(-1.13, 0, -2.07, .94, -2, 2.07)
-    ..relativeCubicTo(.53, 8.54, 7.36, 15.36, 15.89, 15.89)
-    ..relativeCubicTo(1.13, .07, 2.07, -.87, 2.07, -2)
-    ..relativeLineTo(0, -1.73)
-    ..relativeCubicTo(.01, -1.01, -.75, -1.86, -1.76, -1.98)
-    ..close();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    // As render_icons.py: the rounding is 28 / (0.59 * 1024) of the glyph, inside its size.
-    final w = size.shortestSide * .0463;
-    final k = (size.shortestSide - 2 * w) / 18;
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 2 * w / k
-      ..strokeJoin = StrokeJoin.round;
-    canvas
-      ..save()
-      ..translate(size.width / 2, size.height / 2)
-      ..rotate(turns * 2 * math.pi)
-      ..scale(k)
-      ..translate(-12, -12)
-      ..drawPath(_path, paint)
-      ..drawPath(_path, paint..style = PaintingStyle.stroke)
-      ..restore();
-  }
-
-  @override
-  bool shouldRepaint(_HandsetPainter oldDelegate) => oldDelegate.color != color || oldDelegate.turns != turns;
 }
 
 /// End's red, shared by the End pill, Decline and the Answer flight's landing.
