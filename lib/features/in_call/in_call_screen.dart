@@ -30,6 +30,9 @@ class InCallScreen extends StatefulWidget {
 class _InCallScreenState extends State<InCallScreen> {
   List<SimCard> _sims = const [];
 
+  /// The last snapshot that had a call in it.
+  CallSnapshot? _last;
+
   /// The keypad's open progress, which dims the backdrop behind it.
   final _keypadBlur = ValueNotifier<double>(0);
 
@@ -65,7 +68,9 @@ class _InCallScreenState extends State<InCallScreen> {
     body: StreamBuilder<CallSnapshot>(
       stream: TelecomBridge.instance.callState,
       builder: (context, snapshot) {
-        final state = snapshot.data;
+        // The ended summary goes before the screen closes; keep showing it rather than a second "Call ended".
+        if (snapshot.data?.primary != null) _last = snapshot.data;
+        final state = _last;
         final call = state?.primary;
         return ListenableBuilder(
           // Contacts load in late (the aurora's tint follows the caller's name); the wallpaper's
@@ -81,20 +86,6 @@ class _InCallScreenState extends State<InCallScreen> {
               seed: call == null ? null : backdropSeed(call),
               child: SafeArea(
                 child: switch ((state, call)) {
-                  (null, _) => const SizedBox.expand(),
-                  (_, null) => const Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.call_end_rounded, size: 44, color: Colors.white54),
-                        SizedBox(height: 20),
-                        Text(
-                          'Call ended',
-                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500, color: Colors.white70),
-                        ),
-                      ],
-                    ),
-                  ),
                   (final state?, final call?) => _CallSession(
                     key: ValueKey(call.id),
                     snapshot: state,
@@ -102,6 +93,7 @@ class _InCallScreenState extends State<InCallScreen> {
                     sims: _sims,
                     keypadBlur: _keypadBlur,
                   ),
+                  _ => const SizedBox.expand(),
                 },
               ),
             );
@@ -363,7 +355,8 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     final held = widget.snapshot.calls.where((c) => c.id != call.id && c.state == CallState.holding).firstOrNull;
     final switchDuration = MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 350);
     return PopScope(
-      canPop: !_keypadOpen,
+      // Back can't dismiss a ringing call (as on AOSP): answer, decline, or the volume key to silence.
+      canPop: !_keypadOpen && !ringing,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop && _keypadOpen) _toggleKeypad();
       },

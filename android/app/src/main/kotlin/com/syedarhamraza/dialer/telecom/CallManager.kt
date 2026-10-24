@@ -22,7 +22,8 @@ object CallManager {
 
     private val callback = object : Call.Callback() {
         override fun onStateChanged(call: Call, state: Int) {
-            if (state != Call.STATE_RINGING) service?.let { CallNotifications.cancelIncoming(it) }
+            // Only once nothing rings: another call ending during call waiting mustn't hide the ringing one.
+            if (calls.values.none { stateOf(it) == Call.STATE_RINGING }) service?.let { CallNotifications.cancelIncoming(it) }
             notifyChanged()
         }
 

@@ -8,7 +8,7 @@ import android.telecom.CallAudioState
 import android.telecom.VideoProfile
 import com.syedarhamraza.dialer.InCallActivity
 
-/** Handles the call notifications' buttons (Answer, Decline, Hang up, and vivo's island Speaker). */
+/** Handles the call notifications' buttons (Decline, Hang up, and vivo's island Answer and Speaker). */
 class CallActionReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -26,10 +26,6 @@ class CallActionReceiver : BroadcastReceiver() {
         }
         val call = intent.getStringExtra(EXTRA_CALL_ID)?.let(CallManager::get) ?: return
         when (intent.action) {
-            ACTION_ANSWER -> {
-                call.answer(VideoProfile.STATE_AUDIO_ONLY)
-                InCallActivity.start(context)
-            }
             // vivo's island card: the call carries on in the island, no call screen.
             ACTION_ANSWER_IN_ISLAND -> call.answer(VideoProfile.STATE_AUDIO_ONLY)
             ACTION_DECLINE -> call.reject(false, null)
@@ -50,7 +46,18 @@ class CallActionReceiver : BroadcastReceiver() {
         const val ACTION_ANSWER_IN_ISLAND = "com.syedarhamraza.dialer.ANSWER_IN_ISLAND"
         const val ACTION_SPEAKER = "com.syedarhamraza.dialer.SPEAKER"
         const val ACTION_MISSED_DISMISSED = "com.syedarhamraza.dialer.MISSED_DISMISSED"
-        private const val EXTRA_CALL_ID = "call_id"
+        const val EXTRA_CALL_ID = "call_id"
+
+        /**
+         * Answer opens the call screen directly: Android 12+ blocks activity starts from a
+         * notification's broadcast (a "trampoline"), which left answered calls in the background.
+         * [InCallActivity] answers the call when it gets this intent.
+         */
+        fun answerIntent(context: Context, callId: String): PendingIntent = PendingIntent.getActivity(
+            context, ACTION_ANSWER.hashCode(),
+            InCallActivity.intent(context).setAction(ACTION_ANSWER).putExtra(EXTRA_CALL_ID, callId),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
 
         fun pendingIntent(context: Context, action: String, callId: String): PendingIntent {
             val intent = Intent(context, CallActionReceiver::class.java)

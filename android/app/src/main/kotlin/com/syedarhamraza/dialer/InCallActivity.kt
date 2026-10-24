@@ -10,7 +10,10 @@ import android.os.Build
 import android.os.Bundle
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
+import android.telecom.VideoProfile
+import com.syedarhamraza.dialer.telecom.CallActionReceiver
 import com.syedarhamraza.dialer.telecom.CallManager
+import com.syedarhamraza.dialer.telecom.CallNotifications
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.android.FlutterActivityLaunchConfigs.BackgroundMode
 import io.flutter.embedding.android.RenderMode
@@ -61,6 +64,22 @@ class InCallActivity : FlutterActivity() {
             // Called right away with the current state, then on every change.
             windowManager.addCrossWindowBlurEnabledListener(blurListener)
         }
+        answerFrom(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        answerFrom(intent)
+    }
+
+    /** The incoming notification's Answer opens this screen (see [CallActionReceiver.answerIntent]). */
+    private fun answerFrom(intent: Intent) {
+        if (intent.action != CallActionReceiver.ACTION_ANSWER) return
+        // Once only: a recreated activity gets the same intent again.
+        intent.action = null
+        intent.getStringExtra(CallActionReceiver.EXTRA_CALL_ID)?.let(CallManager::get)
+            ?.answer(VideoProfile.STATE_AUDIO_ONLY)
+        CallNotifications.cancelIncoming(this)
     }
 
     override fun onStart() {
