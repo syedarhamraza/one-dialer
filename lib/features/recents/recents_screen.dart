@@ -16,6 +16,7 @@ import '../../widgets/one_ui_floating_action_bar.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_status_bar_scrim.dart';
 import '../../widgets/round_header_controls.dart';
+import '../../widgets/place_call.dart';
 import '../contacts/editor/add_to_contacts.dart';
 import '../in_call/call_controls.dart';
 import '../keypad/keypad_screen.dart';
@@ -347,11 +348,15 @@ class _RecentsScreenState extends State<RecentsScreen> {
     final day = dayLabel(call.date, now);
     void details() => openCallDetails(context, call);
     // What a tap does is the Settings choice (DialerPrefs.recentTap): open the details page,
-    // or write the number in the keypad so the call is one more, deliberate tap.
+    // write the number in the keypad so the call is one more, deliberate tap, or (dual SIM)
+    // pick a SIM from our menu and call.
     void tap() {
       if (_selected != null) return _toggle(group);
-      final dial = DialerPrefs.instance.recentTap.value == 'dial' && !call.isPrivate && call.number.isNotEmpty;
-      if (dial && widget.dialInput != null) {
+      final choice = DialerPrefs.instance.recentTap.value;
+      final callable = !call.isPrivate && call.number.isNotEmpty;
+      if (choice == 'sim' && callable && _sims.length > 1) {
+        placeCall(context, call.number, chooseSim: true);
+      } else if (choice == 'dial' && callable && widget.dialInput != null) {
         widget.dialInput!.value = call.number;
         widget.keypadOpen?.value = true;
       } else {

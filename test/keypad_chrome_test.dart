@@ -141,6 +141,47 @@ void main() {
     expect(native.where((c) => c.method == 'placeCall'), isEmpty);
   });
 
+  for (final dual in [true, false]) {
+    testWidgets('"Choose SIM and call" asks for a SIM on dual SIM${dual ? '' : ', opens details on one'}', (
+      tester,
+    ) async {
+      final native = <MethodCall>[];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('com.syedarhamraza.dialer/telecom'),
+        (call) async {
+          native.add(call);
+          if (call.method == 'getSims') {
+            return [
+              {'id': 'a', 'label': 'Jazz', 'isDefault': true},
+              if (dual) {'id': 'b', 'label': 'Zong'},
+            ];
+          }
+          return null;
+        },
+      );
+      CallLogRepository.instance.calls.value = [
+        CallLogEntry(id: 1, number: '03001234567', type: CallType.incoming, date: DateTime.now()),
+      ];
+      DialerPrefs.instance.recentTap.value = 'sim';
+      addTearDown(() {
+        CallLogRepository.instance.calls.value = const [];
+        DialerPrefs.instance.recentTap.value = 'details';
+      });
+      await open(tester);
+      await tester.tap(find.text('03001234567'));
+      await tester.pumpAndSettle();
+      if (!dual) {
+        expect(find.text('Call logs'), findsOneWidget);
+        return;
+      }
+      // Asks even though SIM 1 is the default.
+      await tester.tap(find.text('SIM 2 · Zong'));
+      await tester.pumpAndSettle();
+      final placed = native.singleWhere((c) => c.method == 'placeCall');
+      expect((placed.arguments as Map)['simId'], 'b');
+    });
+  }
+
   testWidgets('the menu grows from its button, runs an item, and closes on Back', (tester) async {
     await open(tester);
     await tester.tap(find.byTooltip('More options'));

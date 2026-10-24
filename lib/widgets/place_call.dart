@@ -10,9 +10,24 @@ import 'one_ui_floating_menu.dart';
 
 /// Calls [number] the way Samsung does: on [simId] if given, else on the contact's chosen
 /// SIM, else (dual SIM with "Ask every time") after asking with our SIM menu, which pops
-/// from [anchorKey]'s button when given.
-Future<bool> placeCall(BuildContext context, String number, {String? simId, GlobalKey? anchorKey}) async {
+/// from [anchorKey]'s button when given. [chooseSim] always asks on dual SIM.
+Future<bool> placeCall(
+  BuildContext context,
+  String number, {
+  String? simId,
+  GlobalKey? anchorKey,
+  bool chooseSim = false,
+}) async {
   final telecom = TelecomBridge.instance;
+  if (chooseSim) {
+    final sims = await telecom.getSims();
+    if (sims.length > 1) {
+      if (!context.mounted) return false;
+      final sim = await _pickSim(context, sims, anchorKey);
+      if (sim == null) return false;
+      simId = sim.id;
+    }
+  }
   if (simId == null) {
     final contact = ContactsRepository.instance.contactFor(number);
     if (contact != null) simId = await DialerPrefs.instance.contactSim(contact.id);

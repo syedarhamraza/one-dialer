@@ -99,8 +99,8 @@ class DialerPrefs {
     changes.value++;
   }
 
-  /// Settings › "Tap a recent call": `details` (open its page) or `dial` (write the number
-  /// in the keypad). Notifiers so rows read it synchronously; [loadChoices] fills them at startup.
+  /// Settings › "Tap a recent call": `details` (open its page), `dial` (write the number
+  /// in the keypad) or `sim` (dual SIM only: pick a SIM and call). Notifiers so rows read it synchronously; [loadChoices] fills them at startup.
   final recentTap = ValueNotifier('details');
 
   /// Settings › "Choose SIM for calls" (dual SIM, no default): `buttons` (two Call keys)
@@ -110,7 +110,7 @@ class DialerPrefs {
   Future<void> loadChoices() async {
     // Ignores values from earlier test builds that no longer exist.
     final tap = await _prefs.getString('recent_tap');
-    if (tap == 'details' || tap == 'dial') recentTap.value = tap!;
+    if (tap == 'details' || tap == 'dial' || tap == 'sim') recentTap.value = tap!;
     final sim = await _prefs.getString('sim_choice');
     if (sim == 'buttons' || sim == 'menu') simChoice.value = sim!;
   }
