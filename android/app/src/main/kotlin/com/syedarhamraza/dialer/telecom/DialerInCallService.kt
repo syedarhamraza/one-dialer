@@ -61,8 +61,11 @@ class DialerInCallService : InCallService() {
         CallManager.notifyChanged()
     }
 
-    /** Screen off at the ear: only for a live call on the earpiece, never while ringing. */
-    private fun updateProximity() {
+    /**
+     * Screen off at the ear: only for a live call on the earpiece, never while ringing, and only
+     * while the full call screen is up (not in vivo's island or a small floating window).
+     */
+    fun updateProximity() {
         val lock = proximityLock ?: return
         val states = CallManager.all().map { CallManager.stateOf(it.second) }
 
@@ -70,7 +73,7 @@ class DialerInCallService : InCallService() {
         val onEarpiece = callAudioState?.route?.let {
             it == CallAudioState.ROUTE_EARPIECE || it == CallAudioState.ROUTE_WIRED_HEADSET
         } ?: true
-        val wanted = onEarpiece && Call.STATE_RINGING !in states &&
+        val wanted = InCallActivity.isFullScreen && onEarpiece && Call.STATE_RINGING !in states &&
             states.any { it == Call.STATE_ACTIVE || it == Call.STATE_DIALING || it == Call.STATE_CONNECTING }
         if (wanted && !lock.isHeld) lock.acquire()
         if (!wanted && lock.isHeld) lock.release(PowerManager.RELEASE_FLAG_WAIT_FOR_NO_PROXIMITY)

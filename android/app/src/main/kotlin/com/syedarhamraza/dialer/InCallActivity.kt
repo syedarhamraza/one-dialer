@@ -5,9 +5,11 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.IntentFilter
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.Lifecycle
 import com.syedarhamraza.dialer.telecom.CallManager
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.android.FlutterActivityLaunchConfigs.BackgroundMode
@@ -61,6 +63,27 @@ class InCallActivity : FlutterActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        setFullScreen(!isInMultiWindowMode)
+    }
+
+    override fun onStop() {
+        setFullScreen(false)
+        super.onStop()
+    }
+
+    // vivo's small floating window and picture-in-picture are multi-window: no ear sensor there.
+    override fun onMultiWindowModeChanged(isInMultiWindowMode: Boolean, newConfig: Configuration) {
+        super.onMultiWindowModeChanged(isInMultiWindowMode, newConfig)
+        if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) setFullScreen(!isInMultiWindowMode)
+    }
+
+    private fun setFullScreen(shown: Boolean) {
+        isFullScreen = shown
+        CallManager.service?.updateProximity()
+    }
+
     override fun onResume() {
         super.onResume()
         // Unlocked again (after a screen-off): back to the home wallpaper.
@@ -89,6 +112,10 @@ class InCallActivity : FlutterActivity() {
     override fun getRenderMode(): RenderMode = RenderMode.surface
 
     companion object {
+        /** Whether the call screen is up and full-screen; the ear sensor only runs then. */
+        var isFullScreen = false
+            private set
+
         /** Heavy, like ColorOS: only the wallpaper's colours and shapes survive. */
         private const val BLUR_RADIUS = 120
 
