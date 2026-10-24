@@ -24,6 +24,7 @@ import '../settings/settings_screen.dart';
 import 'call_details_screen.dart';
 import 'call_log.dart';
 import 'call_log_repository.dart';
+import 'delete_calls.dart';
 import '../search/search_screen.dart';
 import '../../widgets/select_mark.dart';
 import '../blocking/blocking_repository.dart';
@@ -47,6 +48,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
   static final _noInput = ValueNotifier('');
   final _repo = CallLogRepository.instance;
   final _menuKey = GlobalKey();
+  final _addKey = GlobalKey();
   CallFilter _filter = CallFilter.all;
   bool _hideBlocked = true;
   Set<int>? _selected; // call ids; null when not selecting
@@ -152,8 +154,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
   Future<void> _deleteSelected() async {
     final ids = _selected;
     if (ids == null || ids.isEmpty) return;
-    _endSelection();
-    await _repo.delete(ids);
+    await confirmDeleteCalls(context, ids, onConfirmed: _endSelection);
   }
 
   Future<void> _blockSelected() async {
@@ -193,7 +194,12 @@ class _RecentsScreenState extends State<RecentsScreen> {
         if (!didPop) _endSelection();
       },
       child: ListenableBuilder(
-        listenable: Listenable.merge([_repo.calls, _repo.hasAccess, ContactsRepository.instance.contacts]),
+        listenable: Listenable.merge([
+          _repo.calls,
+          _repo.hasAccess,
+          ContactsRepository.instance.contacts,
+          BlockingRepository.instance.numbers,
+        ]),
         builder: (context, _) => _buildList(context),
       ),
     );
@@ -201,17 +207,23 @@ class _RecentsScreenState extends State<RecentsScreen> {
 
   List<CallLogEntry> get _visibleCalls => [
     for (final c in _repo.calls.value)
-      if (_filter.matches(c, hideBlocked: _hideBlocked)) c,
+      if (_filter.matches(c, hideBlocked: _hideBlocked) &&
+          !(_hideBlocked && !c.isPrivate && BlockingRepository.instance.isBlocked(c.number)))
+        c,
   ];
 
   // groupByDay is only redone when the calls or the filter change, not on every selection tap.
-  (List<CallLogEntry>, CallFilter, bool)? _groupedFor;
+  (List<CallLogEntry>, CallFilter, bool, List<String>)? _groupedFor;
   List<(DateTime, List<CallGroup>)> _days = const [];
 
   List<(DateTime, List<CallGroup>)> get _groupedDays {
-    final key = (_repo.calls.value, _filter, _hideBlocked);
+    final key = (_repo.calls.value, _filter, _hideBlocked, BlockingRepository.instance.numbers.value);
     final old = _groupedFor;
-    if (old == null || !identical(old.$1, key.$1) || old.$2 != key.$2 || old.$3 != key.$3) {
+    if (old == null ||
+        !identical(old.$1, key.$1) ||
+        old.$2 != key.$2 ||
+        old.$3 != key.$3 ||
+        !identical(old.$4, key.$4)) {
       _groupedFor = key;
       _days = groupByDay(_visibleCalls);
     }
@@ -249,7 +261,8 @@ class _RecentsScreenState extends State<RecentsScreen> {
                   selecting: selecting,
                   filterIndex: _filter == CallFilter.missed ? 1 : 0,
                   onFilter: (i) => setState(() => _filter = i == 1 ? CallFilter.missed : CallFilter.all),
-                  onAdd: () => showAddToContacts(context, number),
+                  onAdd: () => showAddToContacts(context, number, anchorKey: _addKey),
+                  addKey: _addKey,
                   allSelected: selecting && _selectedRows == _rows.length,
                   onToggleSelectAll: _toggleSelectAll,
                   onCancel: _endSelection,
@@ -387,6 +400,7 @@ class _HeaderControls extends StatelessWidget {
     required this.filterIndex,
     required this.onFilter,
     required this.onAdd,
+    required this.addKey,
     required this.allSelected,
     required this.onToggleSelectAll,
     required this.onCancel,
@@ -399,6 +413,7 @@ class _HeaderControls extends StatelessWidget {
   final int filterIndex;
   final ValueChanged<int> onFilter;
   final VoidCallback onAdd;
+  final GlobalKey addKey;
   final bool allSelected;
   final VoidCallback onToggleSelectAll;
   final VoidCallback onCancel;
@@ -563,6 +578,7 @@ class _HeaderControls extends StatelessWidget {
                               child: Opacity(
                                 opacity: _in(typ) * _out(sel),
                                 child: _glassIcon(
+                                  key: addKey,
                                   icon: Icons.person_add_alt_rounded,
                                   tooltip: 'Add to Contacts',
                                   onTap: onAdd,

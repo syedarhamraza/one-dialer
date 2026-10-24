@@ -68,4 +68,21 @@ void main() {
     await tester.pumpAndSettle();
     expect(actions, isEmpty);
   });
+
+  testWidgets('deliberate right swipe calls once and a later vertical turn cancels', (tester) async {
+    await open(tester);
+    final gesture = await tester.startGesture(const Offset(50, 40));
+    await gesture.moveBy(const Offset(450, 0));
+    expect(actions, isEmpty);
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(actions, ['placeCall']);
+    actions.clear();
+    final cancelled = await tester.startGesture(const Offset(50, 40));
+    await cancelled.moveBy(const Offset(450, 0));
+    await cancelled.moveBy(const Offset(0, 300));
+    await cancelled.up();
+    await tester.pumpAndSettle();
+    expect(actions, isEmpty);
+  });
 }

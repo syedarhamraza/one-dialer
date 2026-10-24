@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../core/contacts/contacts_repository.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/cos_dialog.dart';
+import '../../widgets/search_bar_row.dart';
+import '../../widgets/round_header_controls.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_subpage.dart';
 import '../../widgets/one_ui_switch.dart';
@@ -24,6 +26,13 @@ class BlockingScreen extends StatefulWidget {
 
 class _BlockingScreenState extends State<BlockingScreen> {
   final _repo = BlockingRepository.instance;
+  final _query = TextEditingController();
+
+  @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -80,7 +89,31 @@ class _BlockingScreenState extends State<BlockingScreen> {
   Widget build(BuildContext context) {
     return OneUISubpage(
       title: 'Block & filter',
+      header: ExpandableSearchHeader(
+        controller: _query,
+        hint: 'Search blocked numbers',
+        leading: Row(
+          children: [
+            RoundIconButton(
+              icon: Icons.arrow_back_rounded,
+              tooltip: 'Back',
+              onTap: () => Navigator.of(context).maybePop(),
+            ),
+            const SizedBox(width: 14),
+            const Expanded(
+              child: Text(
+                'Block & filter',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+      ),
       listenable: Listenable.merge([
+        _query,
+        ContactsRepository.instance.contacts,
         _repo.numbers,
         _repo.rules,
         _repo.hasScreeningRole,
@@ -90,7 +123,17 @@ class _BlockingScreenState extends State<BlockingScreen> {
       slivers: (context) {
         final rules = _repo.rules.value;
         final blockedCalls = CallLogRepository.instance.calls.value.where((c) => c.type == CallType.blocked).toList();
-        final numbers = _repo.numbers.value;
+        final query = _query.text.trim().toLowerCase();
+        final digits = query.replaceAll(RegExp(r'[^0-9+]'), '');
+        final numbers = _repo.numbers.value
+            .where(
+              (n) =>
+                  query.isEmpty ||
+                  (ContactsRepository.instance.nameFor(n) ?? '').toLowerCase().contains(query) ||
+                  n.toLowerCase().contains(query) ||
+                  (digits.isNotEmpty && n.replaceAll(RegExp(r'[^0-9+]'), '').contains(digits)),
+            )
+            .toList();
         return [
           if ((rules.blockHidden || rules.blockNonContacts) && !_repo.hasScreeningRole.value)
             SliverToBoxAdapter(
@@ -130,7 +173,7 @@ class _BlockingScreenState extends State<BlockingScreen> {
             itemBuilder: (context, i) {
               if (i == 0) {
                 return OneUIGroupItem(
-                  leading: Icon(Icons.add_rounded, key: _addKey, color: OneUITheme.accentBlue),
+                  leading: Icon(Icons.add_rounded, key: _addKey, color: OneUITheme.textPrimary),
                   title: 'Add number',
                   onTap: _add,
                   trailing: const SizedBox.shrink(),
@@ -143,13 +186,17 @@ class _BlockingScreenState extends State<BlockingScreen> {
                 subtitle: name == null ? null : n,
                 trailing: IconButton(
                   tooltip: 'Unblock',
-                  icon: const Icon(Icons.remove_circle_outline_rounded, color: OneUITheme.accentRed),
+                  icon: const Icon(Icons.remove_circle_outline_rounded, color: OneUITheme.textSecondary),
                   onPressed: () => _repo.setBlocked(n, false),
                 ),
               );
             },
           ),
-          if (blockedCalls.isNotEmpty)
+          if (query.isNotEmpty && numbers.isEmpty)
+            const SliverToBoxAdapter(
+              child: Padding(padding: EdgeInsets.all(20), child: Text('No matching blocked numbers')),
+            ),
+          if (blockedCalls.isNotEmpty && query.isEmpty)
             OneUIGroupCardSliver(
               headerTitle: 'Blocked calls',
               itemCount: blockedCalls.length,

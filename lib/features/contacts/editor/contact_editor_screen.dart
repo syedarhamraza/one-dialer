@@ -126,11 +126,11 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
   }
 
   ContactForm _prepareForm(ContactForm form) {
-    final initialNumber = widget.initialNumber?.trim() ?? '';
     // A supplied number is a change; the blank row isn't (the signature skips it).
     _savedSignature = form.signature;
-    if (initialNumber.isNotEmpty) {
-      form.phones.add(LabeledValue(label: 'mobile', value: initialNumber));
+    // Another app's "add contact" may send several, one per line (a scanned QR card).
+    for (final number in (widget.initialNumber ?? '').split('\n')) {
+      if (number.trim().isNotEmpty) form.phones.add(LabeledValue(label: 'mobile', value: number.trim()));
     }
     final initialName = widget.initialName?.trim() ?? '';
     if (initialName.isNotEmpty && form.fullName.isEmpty) form.fullName = initialName;

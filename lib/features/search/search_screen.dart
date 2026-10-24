@@ -4,9 +4,9 @@ import '../../core/contacts/contacts_repository.dart';
 import '../../core/prefs/dialer_prefs.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../theme/one_ui_scroll.dart';
-import '../../widgets/call_glass.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_status_bar_scrim.dart';
+import '../../widgets/search_bar_row.dart';
 import '../contacts/contact_details_screen.dart';
 import 'search.dart';
 
@@ -87,27 +87,10 @@ class _SearchScreenState extends State<SearchScreen> {
             left: 16,
             right: 16,
             top: padding.top + 8,
-            child: Row(
-              children: [
-                Expanded(
-                  child: _SearchField(controller: _query, onSubmitted: (_) => _remember()),
-                ),
-                const SizedBox(width: 10),
-                CallGlass(
-                  radius: _bar / 2,
-                  child: TextButton(
-                    onPressed: () => Navigator.of(context).maybePop(),
-                    style: TextButton.styleFrom(
-                      foregroundColor: OneUITheme.textPrimary,
-                      minimumSize: const Size(0, _bar),
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      shape: const StadiumBorder(),
-                    ),
-                    child: const Text('Cancel', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                  ),
-                ),
-              ],
+            child: SearchBarRow(
+              controller: _query,
+              onSubmitted: (_) => _remember(),
+              onCancel: () => Navigator.of(context).maybePop(),
             ),
           ),
         ],
@@ -348,57 +331,6 @@ class _ResultRow extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// ColorOS's search field: a glass stadium with the magnifier, the query and a clear button.
-class _SearchField extends StatelessWidget {
-  const _SearchField({required this.controller, required this.onSubmitted});
-
-  final TextEditingController controller;
-  final ValueChanged<String> onSubmitted;
-
-  @override
-  Widget build(BuildContext context) {
-    return CallGlass(
-      radius: 24,
-      child: SizedBox(
-        height: 48,
-        child: Padding(
-          padding: const EdgeInsets.only(left: 16, right: 4),
-          child: Row(
-            children: [
-              const Icon(Icons.search_rounded, size: 24, color: OneUITheme.textSecondary),
-              const SizedBox(width: 10),
-              Expanded(
-                child: TextField(
-                  controller: controller,
-                  autofocus: true,
-                  textInputAction: TextInputAction.search,
-                  onSubmitted: onSubmitted,
-                  style: const TextStyle(fontSize: 17),
-                  cursorColor: OneUITheme.accentBlue,
-                  decoration: const InputDecoration.collapsed(
-                    hintText: 'Search contacts',
-                    hintStyle: TextStyle(fontSize: 17, color: OneUITheme.textSecondary),
-                  ),
-                ),
-              ),
-              ValueListenableBuilder(
-                valueListenable: controller,
-                builder: (context, value, _) => value.text.isEmpty
-                    ? const SizedBox(width: 12)
-                    : IconButton(
-                        tooltip: 'Clear',
-                        onPressed: controller.clear,
-                        icon: const Icon(Icons.cancel_rounded, size: 20, color: OneUITheme.textSecondary),
-                      ),
-              ),
-            ],
-          ),
         ),
       ),
     );

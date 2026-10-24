@@ -716,27 +716,17 @@ List<OneUIFloatingMenuItem> keypadMenuItems(
   final typing = input.value.isNotEmpty;
   return [
     if (typing) ...[
-      OneUIFloatingMenuItem(
-        label: open.value ? 'Hide keypad' : 'Show keypad',
-        icon: Icons.dialpad_rounded,
-        onTap: () => open.value = !open.value,
-      ),
-      OneUIFloatingMenuItem(label: 'Add 2-sec pause', icon: Icons.pause_rounded, onTap: () => input.value += ','),
-      OneUIFloatingMenuItem(label: 'Add wait', icon: Icons.hourglass_empty_rounded, onTap: () => input.value += ';'),
-      OneUIFloatingMenuItem(
-        label: 'Send message',
-        icon: Icons.message_outlined,
-        onTap: () => TelecomBridge.instance.sendSms(input.value),
-      ),
+      OneUIFloatingMenuItem(label: open.value ? 'Hide keypad' : 'Show keypad', onTap: () => open.value = !open.value),
+      OneUIFloatingMenuItem(label: 'Add 2-sec pause', onTap: () => input.value += ','),
+      OneUIFloatingMenuItem(label: 'Add wait', onTap: () => input.value += ';'),
+      OneUIFloatingMenuItem(label: 'Send message', onTap: () => TelecomBridge.instance.sendSms(input.value)),
     ],
     OneUIFloatingMenuItem(
       label: 'Speed dial numbers',
-      icon: Icons.speed_rounded,
       onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SpeedDialScreen())),
     ),
     OneUIFloatingMenuItem(
       label: 'Settings',
-      icon: Icons.settings_outlined,
       onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),
     ),
   ];
