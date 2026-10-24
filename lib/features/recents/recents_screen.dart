@@ -350,12 +350,12 @@ class _RecentsScreenState extends State<RecentsScreen> {
     // What a tap does is the Settings choice (DialerPrefs.recentTap): open the details page,
     // write the number in the keypad so the call is one more, deliberate tap, or (dual SIM)
     // pick a SIM from our menu and call.
-    void tap() {
+    void tap(BuildContext row) {
       if (_selected != null) return _toggle(group);
       final choice = DialerPrefs.instance.recentTap.value;
       final callable = !call.isPrivate && call.number.isNotEmpty;
       if (choice == 'sim' && callable && _sims.length > 1) {
-        placeCall(context, call.number, chooseSim: true);
+        placeCall(context, call.number, chooseSim: true, anchorContext: row);
       } else if (choice == 'dial' && callable && widget.dialInput != null) {
         widget.dialInput!.value = call.number;
         widget.keypadOpen?.value = true;
@@ -369,22 +369,25 @@ class _RecentsScreenState extends State<RecentsScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (i > 0) Divider(height: 1, indent: 76, color: Colors.white.withValues(alpha: 0.1)),
-        _CallRow(
-          group: group,
-          simBadge: _simBadge(call.simId),
-          when: day == 'Today' ? timeLabel(call.date) : day,
-          selecting: _selected != null,
-          // Only the circle listens to selection taps; the rest of the row stays built.
-          selectMark: ValueListenableBuilder(
-            valueListenable: _selectionChanged,
-            builder: (context, _, _) => SelectMark(selected: _selected?.contains(call.id), gap: 12),
+        Builder(
+          // The SIM menu pops from this row.
+          builder: (row) => _CallRow(
+            group: group,
+            simBadge: _simBadge(call.simId),
+            when: day == 'Today' ? timeLabel(call.date) : day,
+            selecting: _selected != null,
+            // Only the circle listens to selection taps; the rest of the row stays built.
+            selectMark: ValueListenableBuilder(
+              valueListenable: _selectionChanged,
+              builder: (context, _, _) => SelectMark(selected: _selected?.contains(call.id), gap: 12),
+            ),
+            onTap: () => tap(row),
+            onInfo: details,
+            onLongPress: () {
+              HapticFeedback.mediumImpact();
+              _toggle(group);
+            },
           ),
-          onTap: tap,
-          onInfo: details,
-          onLongPress: () {
-            HapticFeedback.mediumImpact();
-            _toggle(group);
-          },
         ),
       ],
     );

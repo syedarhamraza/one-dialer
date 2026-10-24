@@ -41,6 +41,7 @@ class OneUIFloatingMenu {
     required BuildContext context,
     required List<OneUIFloatingMenuItem> items,
     GlobalKey? anchorKey,
+    BuildContext? anchorContext,
     double fallbackTop = 54.0,
     double? fallbackBottom,
     double fallbackRight = 16.0,
@@ -51,9 +52,9 @@ class OneUIFloatingMenu {
     final height = items.length * _rowHeight + _padding * 2;
     final menuWidth = math.min(width, screen.width - _edge * 2);
 
-    // The button the menu separates from, or a button-sized spot at the fallback corner.
+    // The button (or [anchorContext]'s widget, e.g. a list row) the menu separates from, or a button-sized spot at the fallback corner.
     Rect? anchor;
-    final box = anchorKey?.currentContext?.findRenderObject() as RenderBox?;
+    final box = (anchorKey?.currentContext ?? anchorContext)?.findRenderObject() as RenderBox?;
     // Relative to the navigator, not the screen: `DesignWidth` scales the app, so screen pixels aren't layout pixels.
     final navigator = Navigator.of(context).context.findRenderObject();
     if (box != null && box.hasSize) anchor = box.localToGlobal(Offset.zero, ancestor: navigator) & box.size;
