@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import '../../core/contacts/contacts_repository.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/letter_avatar.dart';
-import '../../widgets/swipe_to_call.dart';
 
 /// Favourites' star, shared by their section header and the letter index.
 const kFavoritesMark = '★';
@@ -42,7 +41,6 @@ class ContactRow extends StatelessWidget {
     super.key,
     required this.contact,
     required this.isLast,
-    required this.selecting,
     required this.selectMark,
     required this.onTap,
     required this.onLongPress,
@@ -53,7 +51,6 @@ class ContactRow extends StatelessWidget {
 
   final DialerContact contact;
   final bool isLast;
-  final bool selecting;
 
   /// The selection circle, which alone listens to selection taps.
   final Widget selectMark;
@@ -61,7 +58,7 @@ class ContactRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final row = InkWell(
+    return InkWell(
       onTap: onTap,
       onLongPress: onLongPress,
       splashColor: Colors.white.withValues(alpha: 0.06),
@@ -95,13 +92,6 @@ class ContactRow extends StatelessWidget {
           ],
         ),
       ),
-    );
-    return SwipeToCallOrMessage(
-      key: ValueKey('contact-${contact.id}'),
-      number: contact.callNumber ?? contact.numbers.first,
-      enabled: !selecting,
-      color: Colors.black,
-      child: row,
     );
   }
 }

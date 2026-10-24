@@ -110,7 +110,6 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
                     contact: list[i],
                     isLast: i == list.length - 1,
                     // Turns off the row's swipe to call: picking must never place a call.
-                    selecting: true,
                     selectMark: const SizedBox.shrink(),
                     onTap: () => Navigator.of(context).pop(list[i]),
                     onLongPress: () => Navigator.of(context).pop(list[i]),

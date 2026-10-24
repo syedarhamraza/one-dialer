@@ -297,7 +297,6 @@ class _ContactsScreenState extends State<ContactsScreen> {
                       return ContactRow(
                         contact: c,
                         isLast: i == list.length - 1,
-                        selecting: selecting,
                         selectMark: ValueListenableBuilder(
                           valueListenable: _selectionChanged,
                           builder: (context, _, _) => SelectMark(selected: _selected?.contains(c.id), gap: 12),
