@@ -503,23 +503,70 @@ class _TypedDigits extends StatelessWidget {
           opacity: const Interval(.5, 1).transform(open),
           child: Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              digits.length > 18 ? '…${digits.substring(digits.length - 17)}' : digits,
-              key: const ValueKey('typed-digits'),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              style: TextStyle(
-                fontSize: compact ? 26 : 32,
-                height: 1.15,
-                letterSpacing: 2,
-                color: Colors.white,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
+            child: LayoutBuilder(
+              builder: (context, box) {
+                final (text, style) = _fit(digits, box.maxWidth, MediaQuery.textScalerOf(context));
+                return Text(
+                  text,
+                  key: const ValueKey('typed-digits'),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  softWrap: false,
+                  style: style,
+                );
+              },
             ),
           ),
         ),
       ),
     );
+  }
+
+  /// As on ColorOS: the digits shrink to fit as they're typed, then the earliest give way to
+  /// an ellipsis so the latest stay in view.
+  (String, TextStyle) _fit(String digits, double width, TextScaler scaler) {
+    final last = _last;
+    if (last != null && last.$1 == digits && last.$2 == width && last.$3 == scaler && last.$4 == compact) {
+      return last.$5;
+    }
+    final fit = _measure(digits, width, scaler);
+    _last = (digits, width, scaler, compact, fit);
+    return fit;
+  }
+
+  // Rebuilt every frame of the keypad's morph; the measuring only reruns when something changes.
+  static (String, double, TextScaler, bool, (String, TextStyle))? _last;
+
+  (String, TextStyle) _measure(String digits, double width, TextScaler scaler) {
+    TextStyle style(double size) => TextStyle(
+      fontSize: size,
+      height: 1.15,
+      letterSpacing: size / 16,
+      color: Colors.white,
+      fontFeatures: const [FontFeature.tabularFigures()],
+    );
+    bool fits(String text, TextStyle style) {
+      final painter = TextPainter(
+        text: TextSpan(text: text, style: style),
+        textDirection: TextDirection.ltr,
+        textScaler: scaler,
+        maxLines: 1,
+      )..layout();
+      final fit = painter.width <= width;
+      painter.dispose();
+      return fit;
+    }
+
+    final full = compact ? 26.0 : 32.0;
+    for (final size in [full, full * .85, full * .72]) {
+      if (fits(digits, style(size))) return (digits, style(size));
+    }
+    final small = style(full * .72);
+    var keep = digits.length - 1;
+    while (keep > 1 && !fits('…${digits.substring(digits.length - keep)}', small)) {
+      keep--;
+    }
+    return ('…${digits.substring(digits.length - keep)}', small);
   }
 }
 

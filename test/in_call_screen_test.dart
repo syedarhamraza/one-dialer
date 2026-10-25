@@ -443,6 +443,23 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('a long typed number keeps its latest digits in view, on one line', (tester) async {
+    await open(tester);
+    await emit(tester, [call('active')]);
+    await tester.tap(control('Dial pad'));
+    await tester.pumpAndSettle();
+    for (var i = 0; i < 30; i++) {
+      await tester.tap(find.bySemanticsLabel('${i % 10}'));
+    }
+    await tester.pumpAndSettle();
+    final typed = find.byKey(const ValueKey('typed-digits'));
+    final text = tester.widget<Text>(typed).data!;
+    final paragraph = tester.renderObject<RenderParagraph>(typed);
+    expect(text, endsWith('6789'));
+    expect(paragraph.didExceedMaxLines, isFalse);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('typed digits show above the keypad, under the caller name', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);

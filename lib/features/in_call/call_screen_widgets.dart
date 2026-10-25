@@ -156,7 +156,7 @@ class CallHeader extends StatelessWidget {
     // the photo folds away, the lines glide to the centre and the number and city fold up, all
     // with the keypad's progress.
     final photo = contact?.thumbnail;
-    final folded = Curves.easeInOutCubic.transform(k);
+    final folded = k; // Already eased by the screen; easing it again made it lurch mid-way.
     final line = AlignmentDirectional(photo == null ? 0 : folded - 1, -1);
     final textAlign = photo == null || folded == 1 ? TextAlign.center : TextAlign.start;
     // ColorOS puts the number and the city on lines of their own.
