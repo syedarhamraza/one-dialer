@@ -1,9 +1,9 @@
 """Renders the launcher icons (Phone, Contacts), the Play Store icon and the vivo island images from SVG.
 
-The design is the green frosted-glass pair from Figma ("One Dialer — App Icons"). Adaptive icon
-layers are 108 dp with the middle 72 dp visible, so the 1024-unit tile sits at 256..1280 of a
-1536-unit layer. Vector drawables can't draw the glass shading, so the layers are PNGs, rendered
-with headless Chrome/Edge. Run from the repo root after changing the design:
+The design is the flat green pair from Figma ("One Dialer — App Icons"), with a light glass rim
+on the glyphs. Adaptive icon layers are 108 dp with the middle 72 dp visible, so the 1024-unit
+tile sits at 256..1280 of a 1536-unit layer. Vector drawables can't draw the glass shading, so the
+layers are PNGs, rendered with headless Chrome/Edge. Run from the repo root after changing the design:
 
     python tool/icons/render_icons.py
 """
@@ -27,7 +27,7 @@ def rgba(h, a):
 
 
 def glass_filter(fid):
-    """Figma's effects on the glyphs: a deep green drop shadow, a white bevel top-left, a green one bottom-right."""
+    """The glyphs' light glass: a faint shadow, a thin white rim on top and a softer green one underneath."""
     alpha = '<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>'
     inner = lambda dx, dy, blur, c, a, prev, out: (
         alpha + f'<feOffset dx="{dx}" dy="{dy}"/><feGaussianBlur stdDeviation="{blur / 2}"/>'
@@ -35,11 +35,11 @@ def glass_filter(fid):
         f'<feColorMatrix type="matrix" values="{rgba(c, a)}"/><feBlend in2="{prev}" result="{out}"/>')
     return (
         f'<filter id="{fid}" x="0" y="0" width="{L}" height="{L}" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">'
-        + alpha + '<feOffset dy="22"/><feGaussianBlur stdDeviation="22"/>'
-        f'<feColorMatrix type="matrix" values="{rgba("#00451F", .38)}" result="drop"/>'
+        + alpha + '<feOffset dy="6"/><feGaussianBlur stdDeviation="10"/>'
+        f'<feColorMatrix type="matrix" values="{rgba("#00451F", .12)}" result="drop"/>'
         '<feBlend in="SourceGraphic" in2="drop" result="shape"/>'
-        + inner(-4, 8, 10, "#FFFFFF", 1, "shape", "bevel")
-        + inner(6, -14, 22, "#1FA85C", .6, "bevel", "out")
+        + inner(0, 4, 3, "#FFFFFF", .9, "shape", "rim")
+        + inner(0, -4, 6, "#1FA85C", .25, "rim", "out")
         + "</filter>")
 
 
@@ -52,35 +52,35 @@ def handset(cx, cy, size, fill, w, rotate=0, extra=""):
 
 
 FROST = ('<linearGradient id="frost" x1="0" y1="0" x2="0" y2="1">'
-         '<stop stop-color="#FFFFFF"/><stop offset=".55" stop-color="#F0FFF5"/><stop offset="1" stop-color="#C2F5D6"/></linearGradient>')
+         '<stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#E6FAEE"/></linearGradient>')
 
 
 def tile_bg(top, bottom, extra=""):
     return (f'<defs><linearGradient id="bg" x1="0" y1="{O}" x2="0" y2="{O + T}" gradientUnits="userSpaceOnUse">'
             f'<stop stop-color="{top}"/><stop offset="1" stop-color="{bottom}"/></linearGradient>'
             f'<radialGradient id="glow" cx="{O + 250}" cy="{O - 10}" r="550" gradientUnits="userSpaceOnUse">'
-            '<stop stop-color="#FFFFFF" stop-opacity=".32"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient></defs>'
+            '<stop stop-color="#FFFFFF" stop-opacity=".12"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient></defs>'
             f'<rect width="{L}" height="{L}" fill="url(#bg)"/><rect width="{L}" height="{L}" fill="url(#glow)"/>{extra}')
 
 
 SPINE = (f'<defs><linearGradient id="spine" x1="0" y1="{O}" x2="0" y2="{O + T}" gradientUnits="userSpaceOnUse">'
-         '<stop stop-color="#18B873"/><stop offset="1" stop-color="#007A4C"/></linearGradient></defs>'
+         '<stop stop-color="#16B079"/><stop offset="1" stop-color="#05905C"/></linearGradient></defs>'
          f'<rect x="{O + T - 150}" width="{L}" height="{L}" fill="url(#spine)" opacity=".9"/>'
          + "".join(f'<rect x="{O + T - 140}" y="{O + y}" width="14" height="110" rx="7" fill="#FFFFFF" fill-opacity=".28"/>' for y in (300, 470, 640)))
 
 # The handset fills 59% of the tile like vivo's; a round-joined stroke rounds its pads (28 units out).
 W = 28
-HANDSET_FG = (f'<defs>{FROST}{glass_filter("glass")}</defs><g filter="url(#glass)"><g opacity=".88">'
+HANDSET_FG = (f'<defs>{FROST}{glass_filter("glass")}</defs><g filter="url(#glass)"><g opacity=".95">'
               + handset(O + T / 2, O + T / 2, 0.59 * T, "url(#frost)", W) + '</g></g>')
 
 # The person is 54% of the tile tall, a little left of centre to clear the spine.
 pk = 0.54 * T / 484
 px, py = O + 0.47 * T - 280 * pk, O + T / 2 - 282 * pk
-PERSON_FG = (f'<defs>{FROST}{glass_filter("glass")}</defs><g filter="url(#glass)"><g opacity=".88" fill="url(#frost)" '
+PERSON_FG = (f'<defs>{FROST}{glass_filter("glass")}</defs><g filter="url(#glass)"><g opacity=".95" fill="url(#frost)" '
              f'transform="translate({px:.2f} {py:.2f}) scale({pk:.4f})"><circle cx="280" cy="168" r="128"/><path d="{BODY}"/></g></g>')
 
-PHONE_BG = tile_bg("#4DEA8E", "#04B457")
-CONTACTS_BG = tile_bg("#3FE3A0", "#00A86B", SPINE)
+PHONE_BG = tile_bg("#34DE7E", "#12B85E")
+CONTACTS_BG = tile_bg("#30D894", "#0AAE72", SPINE)
 
 # vivo Origin Island images (CallNotifications.kt): 72 dp at 3x. The balls are the call screen's
 # solidBody + solidGlow (call_controls.dart); the glyphs are the launcher's rounded handset, flat.
