@@ -272,7 +272,7 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
     ];
     final route = widget.audio.route;
     final routeLabel = switch (route) {
-      AudioRoute.bluetooth => 'Bluetooth',
+      AudioRoute.bluetooth => widget.audio.activeBluetoothLabel,
       AudioRoute.wiredHeadset => 'Headset',
       _ => 'Speaker',
     };

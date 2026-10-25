@@ -4,6 +4,8 @@
     <!-- Placing and managing calls -->
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <!-- Bluetooth device names in the call's audio menu (a watch and earbuds at once) -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <!-- Recents and contacts -->
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
     <uses-permission android:name="android.permission.WRITE_CALL_LOG" />

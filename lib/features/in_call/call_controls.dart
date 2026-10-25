@@ -410,11 +410,22 @@ Future<void> chooseCallAudioRoute(BuildContext context, AudioInfo audio, GlobalK
   width: 250,
   items: [
     for (final route in audio.supportedRoutes)
-      OneUIFloatingMenuItem(
-        label: audioRouteLabel(route),
-        icon: route == audio.route ? Icons.radio_button_checked_rounded : Icons.radio_button_unchecked_rounded,
-        onTap: () => TelecomBridge.instance.setAudioRoute(route),
-      ),
+      if (route == AudioRoute.bluetooth && audio.bluetoothDevices.isNotEmpty)
+        // One row per device, so a watch and earbuds can be told apart.
+        for (final (i, device) in audio.bluetoothDevices.indexed)
+          OneUIFloatingMenuItem(
+            label: audio.bluetoothLabel(i),
+            icon: route == audio.route && device.id == audio.activeBluetooth
+                ? Icons.radio_button_checked_rounded
+                : Icons.radio_button_unchecked_rounded,
+            onTap: () => TelecomBridge.instance.setBluetoothDevice(device.id),
+          )
+      else
+        OneUIFloatingMenuItem(
+          label: audioRouteLabel(route),
+          icon: route == audio.route ? Icons.radio_button_checked_rounded : Icons.radio_button_unchecked_rounded,
+          onTap: () => TelecomBridge.instance.setAudioRoute(route),
+        ),
   ],
 );
 

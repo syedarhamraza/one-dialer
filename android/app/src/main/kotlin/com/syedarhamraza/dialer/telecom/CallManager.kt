@@ -127,7 +127,18 @@ object CallManager {
             "route" to routeName(state.route),
             "supportedRoutes" to ROUTES.filter { (mask, _) -> state.supportedRouteMask and mask != 0 }
                 .map { it.second },
+            "bluetoothDevices" to state.supportedBluetoothDevices.map {
+                mapOf("id" to it.address, "name" to bluetoothName(it))
+            },
+            "activeBluetooth" to state.activeBluetoothDevice?.address,
         )
+    }
+
+    /** The name the user gave the device (watch, buds); null without the Nearby devices permission. */
+    private fun bluetoothName(device: android.bluetooth.BluetoothDevice): String? = try {
+        (if (android.os.Build.VERSION.SDK_INT >= 30) device.alias else null) ?: device.name
+    } catch (_: SecurityException) {
+        null
     }
 
     private fun stateName(state: Int): String = when (state) {

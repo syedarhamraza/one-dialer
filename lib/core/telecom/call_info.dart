@@ -118,6 +118,8 @@ class AudioInfo {
     this.muted = false,
     this.route = AudioRoute.earpiece,
     this.supportedRoutes = const [AudioRoute.earpiece],
+    this.bluetoothDevices = const [],
+    this.activeBluetooth,
   });
 
   factory AudioInfo.fromMap(Map<Object?, Object?> map) => AudioInfo(
@@ -126,11 +128,36 @@ class AudioInfo {
     supportedRoutes: (map['supportedRoutes'] as List<Object?>? ?? const [])
         .map((r) => AudioRoute.parse(r as String?))
         .toList(),
+    bluetoothDevices: [
+      for (final d in map['bluetoothDevices'] as List<Object?>? ?? const [])
+        if (d case {'id': final String id, 'name': final String? name}) (id: id, name: name),
+    ],
+    activeBluetooth: map['activeBluetooth'] as String?,
   );
 
   final bool muted;
   final AudioRoute route;
   final List<AudioRoute> supportedRoutes;
+
+  /// Connected Bluetooth devices (a watch and earbuds at once); [name] is null without the
+  /// Nearby devices permission.
+  final List<({String id, String? name})> bluetoothDevices;
+
+  /// The [bluetoothDevices] id the call is on, when it's on Bluetooth.
+  final String? activeBluetooth;
+
+  /// A device's name, or "Bluetooth 2" when Android hides names.
+  String bluetoothLabel(int index) {
+    final name = bluetoothDevices[index].name;
+    if (name != null && name.isNotEmpty) return name;
+    return bluetoothDevices.length > 1 ? 'Bluetooth ${index + 1}' : 'Bluetooth';
+  }
+
+  /// The label for the device in use, or 'Bluetooth' when Android doesn't say which.
+  String get activeBluetoothLabel {
+    final i = bluetoothDevices.indexWhere((d) => d.id == activeBluetooth);
+    return i < 0 ? 'Bluetooth' : bluetoothLabel(i);
+  }
 }
 
 /// Everything the in-call UI needs, pushed on every Telecom change.

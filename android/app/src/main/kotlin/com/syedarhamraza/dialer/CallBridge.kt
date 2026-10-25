@@ -223,6 +223,14 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
                 if (route != null) CallManager.service?.setAudioRoute(route)
                 result.success(null)
             }
+            "setBluetoothDevice" -> {
+                val service = CallManager.service
+                @Suppress("DEPRECATION")
+                service?.callAudioState?.supportedBluetoothDevices
+                    ?.firstOrNull { it.address == call.argument<String>("id") }
+                    ?.let(service::requestBluetoothAudio)
+                result.success(null)
+            }
             else -> withCall(call, result)
         }
     }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../app/app_info.dart';
 import '../../core/config/app_version.dart';
@@ -32,6 +33,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObserver {
   final _telecom = TelecomBridge.instance;
   Map<Object?, Object?> _health = const {};
+  bool _bluetoothNames = true;
   AppVersion? _version;
 
   @override
@@ -57,7 +59,19 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
 
   Future<void> _refresh() async {
     final health = await _telecom.getCallHealth();
-    if (mounted) setState(() => _health = health);
+    final bluetoothNames = await Permission.bluetoothConnect.isGranted;
+    if (mounted) {
+      setState(() {
+        _health = health;
+        _bluetoothNames = bluetoothNames;
+      });
+    }
+  }
+
+  Future<void> _allowBluetoothNames() async {
+    // Android stops asking after two refusals; then only the app's settings page can grant it.
+    if (await Permission.bluetoothConnect.request().isPermanentlyDenied) await openAppSettings();
+    _refresh();
   }
 
   /// A system screen that not every phone has (Contacts storage, Google's sync).
@@ -95,6 +109,8 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         ),
       if ((rules.blockHidden || rules.blockNonContacts) && _health['screensCalls'] != true)
         _problem('Blocking rules are paused', 'Another app screens your calls', () => _push(const BlockingScreen())),
+      if (!_bluetoothNames)
+        _problem('Bluetooth names hidden', "Calls can't tell your watch from your earbuds", _allowBluetoothNames),
     ];
   }
 
