@@ -4,7 +4,6 @@ import 'dart:ui' as ui;
 
 import 'package:dialer/app/main_shell.dart';
 import 'package:dialer/core/contacts/contacts_repository.dart';
-import 'package:dialer/features/in_call/call_controls.dart';
 import 'package:dialer/features/in_call/in_call_screen.dart';
 import 'package:dialer/features/recents/call_log.dart';
 import 'package:dialer/features/recents/call_log_repository.dart';
@@ -16,7 +15,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
-/// Exports the Play Store phone screenshots (1080 × 1920, captioned) and the 1024 × 500 feature
+/// Exports the Play Store phone screenshots (1080 × 2160, the bare app) and the 1024 × 500 feature
 /// graphic to `docs/play/`, rendered from the real screens with made-up contacts and calls.
 /// Re-run after UI changes:
 /// `flutter test test/play_store_screenshots_test.dart --dart-define=PREVIEW_FONT=<Flutter SDK>/bin/cache/artifacts/material_fonts/roboto-regular.ttf`
@@ -24,7 +23,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const fontPath = String.fromEnvironment('PREVIEW_FONT');
   const events = 'com.syedarhamraza.dialer/call_state';
-  const phone = Size(420, 933); // the vivo the app is designed on (DesignWidth)
+  const phone = Size(420, 840); // DesignWidth, at Play's tallest allowed ratio (2:1)
   final now = DateTime.now();
 
   final people = [
@@ -133,16 +132,10 @@ void main() {
     });
   }
 
-  /// Pumps [home] as a phone screen inside a captioned store frame.
-  Future<GlobalKey> frame(
-    WidgetTester tester,
-    String title,
-    String subtitle,
-    Widget home, {
-    bool wallpaper = false,
-    bool feature = false,
-  }) async {
-    tester.view.physicalSize = feature ? const Size(1024, 500) : const Size(1080, 1920);
+  /// Pumps [home] as a full-screen phone shot, or inside the feature graphic when given a [title].
+  Future<GlobalKey> frame(WidgetTester tester, Widget home, {String? title, String subtitle = ''}) async {
+    final feature = title != null;
+    tester.view.physicalSize = feature ? const Size(1024, 500) : const Size(1080, 2160);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -155,25 +148,33 @@ void main() {
         scrollBehavior: OneUITheme.scrollBehavior,
         builder: (context, child) => RepaintBoundary(
           key: boundary,
-          child: _StoreFrame(
-            title: title,
-            subtitle: subtitle,
-            wallpaper: wallpaper,
-            feature: feature,
-            child: MediaQuery(
-              data: MediaQuery.of(context).copyWith(
+          child: Builder(
+            builder: (_) {
+              final screen = SizedBox.fromSize(
                 size: phone,
-                padding: const EdgeInsets.only(top: 36, bottom: 16),
-                viewPadding: const EdgeInsets.only(top: 36, bottom: 16),
-                devicePixelRatio: 3,
-              ),
-              child: child!,
-            ),
+                child: MediaQuery(
+                  data: MediaQuery.of(context).copyWith(
+                    size: phone,
+                    padding: const EdgeInsets.only(top: 36, bottom: 16),
+                    viewPadding: const EdgeInsets.only(top: 36, bottom: 16),
+                    devicePixelRatio: 3,
+                  ),
+                  child: child!,
+                ),
+              );
+              return feature
+                  ? _FeatureGraphic(title: title, subtitle: subtitle, child: screen)
+                  : ColoredBox(
+                      color: Colors.black,
+                      child: FittedBox(child: screen),
+                    );
+            },
           ),
         ),
         home: home,
       ),
     );
+    if (feature) await tester.runAsync(() => precacheImage(_playIcon, boundary.currentContext!));
     await tester.pump();
     return boundary;
   }
@@ -206,67 +207,38 @@ void main() {
     await loadFonts(tester);
 
     consumeRecents = true;
-    var boundary = await frame(
-      tester,
-      'Your calls at a glance',
-      'Recents grouped by day, with missed calls up top',
-      const MainShell(),
-    );
+    var boundary = await frame(tester, const MainShell());
     await tester.pumpAndSettle();
     await save(tester, boundary, '1-recents');
     consumeRecents = false;
 
     consumeDial = '2539';
-    boundary = await frame(
-      tester,
-      'Type a name or number',
-      'Smart dialing finds contacts as you type',
-      const MainShell(),
-    );
+    boundary = await frame(tester, const MainShell());
     await tester.pumpAndSettle();
     await save(tester, boundary, '2-keypad');
     consumeDial = '';
 
-    boundary = await frame(tester, 'All your contacts', 'Find anyone fast, from A to Z', const MainShell());
+    boundary = await frame(tester, const MainShell());
     await tester.pumpAndSettle();
     await tester.tap(find.text('Contacts').last);
     await tester.pumpAndSettle();
     await save(tester, boundary, '3-contacts');
 
-    boundary = await frame(
-      tester,
-      'A call screen that glows',
-      'Swipe to answer, in a glow tinted to each caller',
-      const InCallScreen(),
-      wallpaper: true,
-    );
+    boundary = await frame(tester, const InCallScreen());
     emit(tester, 'ringing');
     for (var i = 0; i < 6; i++) {
       await tester.pump(const Duration(milliseconds: 300));
     }
     await save(tester, boundary, '4-incoming');
 
-    boundary = await frame(
-      tester,
-      'Everything during a call',
-      'Speaker, mute, keypad, hold and more',
-      const InCallScreen(),
-      wallpaper: true,
-    );
+    boundary = await frame(tester, const InCallScreen());
     emit(tester, 'active');
     for (var i = 0; i < 6; i++) {
       await tester.pump(const Duration(milliseconds: 300));
     }
     await save(tester, boundary, '5-in-call');
 
-    boundary = await frame(
-      tester,
-      'One Dialer',
-      'A clean phone app that glows',
-      const InCallScreen(),
-      wallpaper: true,
-      feature: true,
-    );
+    boundary = await frame(tester, const InCallScreen(), title: 'One Dialer', subtitle: 'A clean phone app that glows');
     emit(tester, 'ringing');
     for (var i = 0; i < 6; i++) {
       await tester.pump(const Duration(milliseconds: 300));
@@ -276,27 +248,19 @@ void main() {
   });
 }
 
-/// The store page around a phone screen: a caption on black with the app's green glow.
-class _StoreFrame extends StatelessWidget {
-  const _StoreFrame({
-    required this.title,
-    required this.subtitle,
-    required this.wallpaper,
-    required this.feature,
-    required this.child,
-  });
+/// The launcher icon as Play shows it (`tool/icons/render_icons.py`).
+final _playIcon = MemoryImage(File('docs/play-icon.png').readAsBytesSync());
+
+/// The 1024 × 500 feature graphic: icon and name on the left, the phone cut off on the right.
+class _FeatureGraphic extends StatelessWidget {
+  const _FeatureGraphic({required this.title, required this.subtitle, required this.child});
 
   final String title;
   final String subtitle;
-  final bool wallpaper;
-
-  /// The 1024 × 500 feature graphic: icon and name on the left, the phone cut off on the right.
-  final bool feature;
   final Widget child;
 
+  /// The phone screen in a thin rounded frame.
   Widget _phone() => Container(
-    width: 420,
-    height: 933,
     margin: const EdgeInsets.symmetric(horizontal: 4),
     foregroundDecoration: BoxDecoration(
       borderRadius: BorderRadius.circular(44),
@@ -304,66 +268,12 @@ class _StoreFrame extends StatelessWidget {
     ),
     child: ClipRRect(
       borderRadius: BorderRadius.circular(44),
-      child: DecoratedBox(
-        decoration: wallpaper
-            ? const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF1B2A4A), Color(0xFF3A1F5C), Color(0xFF0E3B33)],
-                ),
-              )
-            : const BoxDecoration(color: Colors.black),
-        child: child,
-      ),
+      child: ColoredBox(color: Colors.black, child: child),
     ),
   );
 
   @override
-  Widget build(BuildContext context) {
-    if (feature) return _feature();
-    return Material(
-      color: Colors.black,
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: RadialGradient(
-            center: Alignment(0, 1.2),
-            radius: 1.2,
-            colors: [Color(0x662FAE52), Color(0x1A2FAE52), Color(0x002FAE52)],
-            stops: [0, .5, 1],
-          ),
-        ),
-        child: Column(
-          children: [
-            const SizedBox(height: 110),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontFamily: 'Roboto',
-                fontSize: 68,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 18),
-            Text(
-              subtitle,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontFamily: 'Roboto', fontSize: 36, color: Color(0xFFB0B4BA)),
-            ),
-            const SizedBox(height: 80),
-            Expanded(
-              child: FittedBox(alignment: Alignment.topCenter, child: _phone()),
-            ),
-            const SizedBox(height: 60),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _feature() => Material(
+  Widget build(BuildContext context) => Material(
     color: Colors.black,
     child: DecoratedBox(
       decoration: const BoxDecoration(
@@ -385,12 +295,9 @@ class _StoreFrame extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 112,
-                  height: 112,
-                  decoration: solidBody(answerGreen, _iconShape, glow: .45, blur: 40),
-                  foregroundDecoration: solidGlow(_iconShape),
-                  child: const Icon(Icons.call_rounded, color: Colors.white, size: 88),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(26),
+                  child: Image(image: _playIcon, width: 112, height: 112),
                 ),
                 const SizedBox(height: 32),
                 Text(
@@ -422,8 +329,6 @@ class _StoreFrame extends StatelessWidget {
       ),
     ),
   );
-
-  static const _iconShape = RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(32)));
 }
 
 /// Play takes only JPEG or 24-bit PNG (no alpha) for screenshots and the feature graphic, and
