@@ -26,7 +26,7 @@ class Changelog {
   static const List<ChangelogEntry> entries = [
     ChangelogEntry(
       version: '1.0.0-beta.4',
-      date: inDevelopment,
+      date: 'Oct 2026',
       changes: [
         'Block & filter and the contact picker can now be searched',
         'Adding a contact whose number or name is already saved (also from a QR code) asks first',
@@ -39,6 +39,16 @@ class Changelog {
         'Updated the keypad Add to Contacts menu and removed keypad menu icons',
         'Contact QR codes include all phone numbers in a camera-friendly format',
         'Adding a contact from a scanned QR code or another app now keeps all its numbers',
+        'New green frosted-glass icons for Phone and Contacts, with matching notification icons',
+        'A polished call screen: its own colourful backdrop, bigger menus, glassy buttons and a smoother Answer animation',
+        'Call notes can be deleted and show under the number in Calls',
+        'The call audio menu names each Bluetooth device',
+        'Incoming calls appear faster; answering opens the call screen, with one "Call ended"',
+        'Missed-call notifications show the time, stay dismissed, and clear when you open the app',
+        'Typed digits sit above the keypad, and long numbers shrink to fit',
+        'Settings › Help & feedback',
+        'Back uses Android\'s predictive back gesture',
+        'Pages bounce gently at their ends, and the contact QR code has a new look',
       ],
     ),
     ChangelogEntry(
