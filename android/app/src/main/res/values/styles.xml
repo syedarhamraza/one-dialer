@@ -15,12 +15,9 @@
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
-    <!-- The call screen (InCallActivity): the system wallpaper shows behind the transparent window,
-         and on Android 12+ the compositor blurs it (WallpaperBackdrop), as on ColorOS 17. Dark in
-         both modes, like the call screen itself. -->
+    <!-- The call screen (InCallActivity): opaque black under Flutter's gradient backdrop, dark in
+         both modes like the call screen itself. -->
     <style name="InCallTheme" parent="@android:style/Theme.Black.NoTitleBar">
-        <item name="android:windowShowWallpaper">true</item>
-        <item name="android:windowIsTranslucent">true</item>
-        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowBackground">@android:color/black</item>
     </style>
 </resources>

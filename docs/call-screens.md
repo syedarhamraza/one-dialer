@@ -1,24 +1,14 @@
 # Call screen presentation
 
 Incoming, dialing, connected, held, conference, private, and ended calls share a
-backdrop, as on ColorOS 17: the phone's own wallpaper, blurred, under black fades
-at the top and bottom. The wallpaper bitmap is never read (that needs "All files
-access" on Android 13+). Instead `InCallTheme` shows the system wallpaper behind
-`InCallActivity`'s window (`windowShowWallpaper`, translucent), the activity runs
-Flutter transparent on a SurfaceView (not the slower TextureView), and on Android
-12+ it asks the compositor to blur what's behind (`setBackgroundBlurRadius`,
-following `addCrossWindowBlurEnabledListener`). Over the lock screen Android puts
-the lock-screen wallpaper behind; so that an unlocked phone shows the home one,
-the activity only asks to show when locked while the keyguard is up: it sets
-`setShowWhenLocked(true)` on screen-off (before the keyguard returns) and
-`false` on unlock (`USER_PRESENT`) and when it opens unlocked. `WallpaperBackdrop.kt` reports
-`{blur, colors}` over the bridge (`getWallpaperBackdrop`, pushed again as
-`onWallpaperBackdropChanged`). With blur on, `CallBackdrop` paints nothing opaque.
-With blur off (Android < 12, battery saver, unsupported devices) it paints an
-aurora in the wallpaper's own colours (`WallpaperManager.getWallpaperColors`, no
-permission), or in hues around the caller's avatar colour if there are none. The
-fades ease to an even dim while the keypad is open. Contacts' photos only appear
-in the header circle.
+backdrop: `CallBackdrop` paints a soft aurora in hues around the caller's avatar
+colour (blue, teal and violet for private, conference and unknown calls) under
+black fades at the top and bottom, which ease to an even dim while the keypad is
+open. The system wallpaper is not used: `InCallTheme` is an opaque black window
+and Flutter runs opaque. (Showing the wallpaper behind a translucent window, blurred
+by the compositor, was tried and removed: over the home screen vivo's open
+animation showed the home screen or black through the window before the
+wallpaper.) Contacts' photos only appear in the header circle.
 
 The layout follows ColorOS 17. For a contact with a photo, the name, number and
 status sit at the top on the left with the photo in a plain circle on the right
@@ -141,8 +131,7 @@ The static control wash, glow and rim are rasterized once at device pixel ratio,
 then reused while the controls move and scale. Their image is regenerated when
 size, radius or pixel ratio changes and disposed with the control. Text, icons and
 press feedback remain live. Nothing in the call screen blurs per frame any more:
-the per-control backdrop blur was removed, and the wallpaper blur is done by the
-system compositor.
+the per-control backdrop blur was removed, and the backdrop is a painted gradient.
 
 On the V2413, the 2026-10-18 connected-keypad profile traces showed median
 `GPURasterizer::Draw` time dropping from 5.37 ms to 4.56 ms and P95 from 8.95 ms

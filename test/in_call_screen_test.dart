@@ -11,8 +11,6 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dialer/core/prefs/dialer_prefs.dart';
-import 'package:dialer/core/telecom/call_info.dart';
-import 'package:dialer/core/telecom/telecom_bridge.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
@@ -27,13 +25,10 @@ void main() {
   final nativeCalls = <MethodCall>[];
   const events = 'com.syedarhamraza.dialer/call_state';
   const codec = StandardMethodCodec();
-  Map<String, Object?>? wallpaper;
   var meet = false;
   setUp(() {
     nativeCalls.clear();
     meet = false;
-    wallpaper = null;
-    TelecomBridge.instance.wallpaperBackdrop.value = null;
     SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.empty();
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     messenger.setMockMethodCallHandler(const MethodChannel(events), (_) async => null);
@@ -50,7 +45,6 @@ void main() {
         ];
       }
       if (call.method == 'getQuickReplies') return ["I'll call you back", "Can't talk right now"];
-      if (call.method == 'getWallpaperBackdrop') return wallpaper;
       if (call.method == 'canMeetCall') return meet;
       return null;
     });
@@ -323,18 +317,10 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('the backdrop shows the blurred wallpaper when Android blurs, else its colours', (tester) async {
-    wallpaper = {'blur': true, 'colors': <int>[]};
+  testWidgets('the backdrop is a gradient aurora, never the wallpaper', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
-    expect(find.byKey(const ValueKey('wallpaper')), findsOneWidget);
-    expect(tester.widget<Scaffold>(find.byType(Scaffold).first).backgroundColor, Colors.transparent);
-
-    // Battery saver switches the blur off: a gradient in the wallpaper's colours stands in.
-    TelecomBridge.instance.wallpaperBackdrop.value = const WallpaperBackdrop(blur: false, colors: [Color(0xFF3355AA)]);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
-    expect(find.byKey(const ValueKey('wallpaper')), findsNothing);
+    expect(nativeCalls.map((c) => c.method), isNot(contains('getWallpaperBackdrop')));
     expect(
       find.byWidgetPredicate(
         (w) =>

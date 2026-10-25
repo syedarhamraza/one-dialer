@@ -1,7 +1,6 @@
 package com.syedarhamraza.dialer
 
 import android.Manifest
-import android.app.WallpaperManager
 import android.app.role.RoleManager
 import android.content.ComponentName
 import android.content.Context
@@ -50,12 +49,6 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
     }
     private var watchingCallLog = false
 
-    /** Tells Flutter when the call backdrop changes: blur switched on/off or a new wallpaper. */
-    private val backdropListener: () -> Unit = {
-        main.post { methods.invokeMethod("onWallpaperBackdropChanged", WallpaperBackdrop.snapshot(context)) }
-    }
-    private val wallpaperColorsListener = WallpaperManager.OnColorsChangedListener { _, _ -> backdropListener() }
-
     /** Set by [MainActivity], which owns the activity result for the role request. */
     var roleRequester: ((String, MethodChannel.Result) -> Unit)? = null
 
@@ -82,8 +75,6 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
         methods.setMethodCallHandler(this)
         events.setStreamHandler(this)
         watchCallLog()
-        WallpaperBackdrop.addListener(backdropListener)
-        WallpaperManager.getInstance(context).addOnColorsChangedListener(wallpaperColorsListener, main)
     }
 
     fun dispose() {
@@ -91,8 +82,6 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
         toneGenerator?.release()
         toneGenerator = null
         if (watchingCallLog) context.contentResolver.unregisterContentObserver(callLogObserver)
-        WallpaperBackdrop.removeListener(backdropListener)
-        WallpaperManager.getInstance(context).removeOnColorsChangedListener(wallpaperColorsListener)
         methods.setMethodCallHandler(null)
         events.setStreamHandler(null)
     }
@@ -136,7 +125,6 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
                 MissedCallNotifier.cancel(context)
             }
             "getState" -> result.success(CallManager.snapshot())
-            "getWallpaperBackdrop" -> result.success(WallpaperBackdrop.snapshot(context))
             "placeCall" -> placeCall(call.argument<String>("number"), call.argument<String>("simId"), result)
             "getSims" -> getSims(result)
             "showInCallScreen" -> {

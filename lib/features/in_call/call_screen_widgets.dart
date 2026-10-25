@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -9,19 +8,18 @@ import '../../core/telecom/call_info.dart';
 import '../../widgets/letter_avatar.dart';
 import 'call_controls.dart';
 
-/// The call backdrop, as on ColorOS 17: the phone's own wallpaper, blurred by Android behind the
-/// transparent call window (`WallpaperBackdrop.kt`), under black fades at the top and bottom.
-/// When the system can't blur (Android < 12, battery saver, some devices), a soft gradient in the
-/// wallpaper's own colours stands in, else an aurora tinted from the caller's avatar colour.
+/// The call backdrop: a soft aurora tinted from the caller's avatar colour, under black fades at
+/// the top and bottom.
 class CallBackdrop extends StatelessWidget {
-  const CallBackdrop({super.key, required this.child, this.wallpaper, this.seed, this.dim});
+  const CallBackdrop({super.key, required this.child, this.seed, this.dim, this.shown = true});
   final Widget child;
 
-  /// What Android reports about the wallpaper; null until it answers.
-  final WallpaperBackdrop? wallpaper;
+  /// False until the first call arrives: the window stays black, then fades straight into this
+  /// caller's tint instead of the default one first.
+  final bool shown;
 
-  /// The caller's name, tinting the fallback aurora when there are no wallpaper colours; null
-  /// keeps it blue, teal and violet for private, conference and unknown calls.
+  /// The caller's name, tinting the aurora; null keeps it blue, teal and violet for private,
+  /// conference and unknown calls.
   final String? seed;
 
   /// The keypad's open progress (0-1): the fades ease to an even dim behind it.
@@ -29,22 +27,16 @@ class CallBackdrop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Until Android reports the backdrop, assume the wallpaper shows: painting the dark aurora
-    // first flashed black before the wallpaper faded in.
-    final blurred = wallpaper?.blur ?? true;
     return Stack(
       fit: StackFit.expand,
       children: [
+        // A new caller's tint fades in over the last one.
         AnimatedSwitcher(
           duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 400),
           layoutBuilder: (current, previous) => Stack(fit: StackFit.expand, children: [...previous, ?current]),
-          child: blurred
-              // The blurred wallpaper shows through the transparent window.
-              ? const SizedBox.expand(key: ValueKey('wallpaper'))
-              : KeyedSubtree(
-                  key: ValueKey<Object?>((wallpaper?.colors, seed)),
-                  child: _aurora(wallpaper?.colors ?? const [], seed),
-                ),
+          child: shown
+              ? KeyedSubtree(key: ValueKey(seed), child: _aurora(seed))
+              : const SizedBox.expand(key: ValueKey('black')),
         ),
         ValueListenableBuilder(
           valueListenable: dim ?? const AlwaysStoppedAnimation(0.0),
@@ -74,21 +66,13 @@ class CallBackdrop extends StatelessWidget {
     );
   }
 
-  /// A soft aurora: a dark base with blurred-looking blobs, in the wallpaper's own colours when
-  /// Android gives them, else in hues around the caller's avatar colour. Painted once.
-  static Widget _aurora(List<Color> wallpaperColors, String? seed) {
-    final Color Function(int i, double lightness, double saturation) tone;
-    if (wallpaperColors.isNotEmpty) {
-      tone = (i, lightness, saturation) {
-        final hsl = HSLColor.fromColor(wallpaperColors[i % wallpaperColors.length]);
-        return hsl.withLightness(lightness).withSaturation(math.min(hsl.saturation, saturation)).toColor();
-      };
-    } else {
-      final hue = seed == null ? 200.0 : HSLColor.fromColor(LetterAvatar.colorFor(seed)).hue;
-      const shifts = [0.0, 45.0, -50.0, 20.0, -30.0];
-      tone = (i, lightness, saturation) =>
-          HSLColor.fromAHSL(1, (hue + shifts[i % shifts.length]) % 360, saturation, lightness).toColor();
-    }
+  /// A soft aurora: a dark base with blurred-looking blobs in hues around the caller's avatar
+  /// colour. Painted once.
+  static Widget _aurora(String? seed) {
+    final hue = seed == null ? 200.0 : HSLColor.fromColor(LetterAvatar.colorFor(seed)).hue;
+    const shifts = [0.0, 45.0, -50.0, 20.0, -30.0];
+    Color tone(int i, double lightness, double saturation) =>
+        HSLColor.fromAHSL(1, (hue + shifts[i % shifts.length]) % 360, saturation, lightness).toColor();
     Widget blob(Alignment centre, double radius, Color color) => DecoratedBox(
       decoration: BoxDecoration(
         gradient: RadialGradient(center: centre, radius: radius, colors: [color, color.withValues(alpha: 0)]),

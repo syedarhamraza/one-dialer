@@ -663,7 +663,7 @@ ShapeDecoration solidGlow(OutlinedBorder shape) => ShapeDecoration(
 );
 
 /// The call buttons (End, Answer, Decline) as glass: [solidBody] a touch see-through, so the
-/// wallpaper tints it, and without its even rim ([glassGlow] draws a lit one). Pair with [glassGlow].
+/// backdrop tints it, and without its even rim ([glassGlow] draws a lit one). Pair with [glassGlow].
 ShapeDecoration glassBody(Color color, OutlinedBorder shape, {double glow = .3, double blur = 22}) {
   final body = solidBody(color.withValues(alpha: .86), shape, glow: glow, blur: blur);
   return ShapeDecoration(

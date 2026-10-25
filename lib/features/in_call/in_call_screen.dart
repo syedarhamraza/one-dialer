@@ -48,8 +48,6 @@ class _InCallScreenState extends State<InCallScreen> {
     // Caller lookup must not prevent answering if a contacts provider is unavailable.
     ContactsRepository.instance.start(preloadPhotos: true).catchError((Object _) {});
     _loadSims();
-    // The backdrop works without it (the aurora), so a failure is only logged.
-    TelecomBridge.instance.loadWallpaperBackdrop().catchError((Object e) => debugPrint('Wallpaper backdrop: $e'));
   }
 
   Future<void> _loadSims() async {
@@ -63,7 +61,7 @@ class _InCallScreenState extends State<InCallScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    // Transparent: the system-blurred wallpaper behind the window is the backdrop (CallBackdrop).
+    // CallBackdrop paints the whole screen.
     backgroundColor: Colors.transparent,
     body: StreamBuilder<CallSnapshot>(
       stream: TelecomBridge.instance.callState,
@@ -73,15 +71,11 @@ class _InCallScreenState extends State<InCallScreen> {
         final state = _last;
         final call = state?.primary;
         return ListenableBuilder(
-          // Contacts load in late (the aurora's tint follows the caller's name); the wallpaper's
-          // blur and colours change with the device.
-          listenable: Listenable.merge([
-            ContactsRepository.instance.contacts,
-            TelecomBridge.instance.wallpaperBackdrop,
-          ]),
+          // Contacts load in late (the aurora's tint follows the caller's name).
+          listenable: ContactsRepository.instance.contacts,
           builder: (context, _) {
             return CallBackdrop(
-              wallpaper: TelecomBridge.instance.wallpaperBackdrop.value,
+              shown: call != null,
               dim: _keypadBlur,
               seed: call == null ? null : backdropSeed(call),
               child: SafeArea(
