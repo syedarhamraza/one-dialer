@@ -244,6 +244,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
                                     ),
                                     // Scrolls only when a small or landscape screen can't fit it.
                                     child: SingleChildScrollView(
+                                      physics: const ClampingScrollPhysics(),
                                       child: Column(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [

@@ -12,7 +12,7 @@ class InCallApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: OneUITheme.darkTheme,
-      scrollBehavior: OneUITheme.scrollBehavior,
+      scrollBehavior: const MaterialScrollBehavior(), // the call screen holds still
       builder: (context, child) => DesignWidth(child: child!),
       home: const InCallScreen(),
     );

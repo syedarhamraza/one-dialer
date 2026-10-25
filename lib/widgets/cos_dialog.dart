@@ -17,7 +17,7 @@ Future<T?> showCosActions<T>(
   String? title,
   required String message,
   required List<CosAction<T>> actions,
-}) => _push<T>(
+}) => showCosCard<T>(
   context,
   (context) => Column(
     mainAxisSize: MainAxisSize.min,
@@ -31,7 +31,7 @@ Future<T?> showCosActions<T>(
           children: [
             for (final a in actions)
               Expanded(
-                child: _Pill(label: a.label, destructive: a.destructive, onTap: () => Navigator.pop(context, a.value)),
+                child: CosPill(label: a.label, destructive: a.destructive, onTap: () => Navigator.pop(context, a.value)),
               ),
           ],
         )
@@ -40,7 +40,7 @@ Future<T?> showCosActions<T>(
           spacing: 10,
           children: [
             for (final a in actions)
-              _Pill(label: a.label, destructive: a.destructive, onTap: () => Navigator.pop(context, a.value)),
+              CosPill(label: a.label, destructive: a.destructive, onTap: () => Navigator.pop(context, a.value)),
           ],
         ),
     ],
@@ -76,7 +76,7 @@ Future<String?> showCosTextInput(
   String confirmLabel = 'Save',
   TextInputType keyboardType = TextInputType.text,
   int? maxLength,
-}) => _push<String>(
+}) => showCosCard<String>(
   context,
   (_) => _TextInput(
     title: title,
@@ -95,7 +95,8 @@ final _spring = GlassSpringCurve(
   const Duration(milliseconds: 400),
 );
 
-Future<T?> _push<T>(BuildContext context, WidgetBuilder content) {
+/// Shows [content] in the alerts' card, for popups that aren't plain alerts (the contact QR).
+Future<T?> showCosCard<T>(BuildContext context, WidgetBuilder content) {
   HapticFeedback.lightImpact();
   return Navigator.of(context, rootNavigator: true).push<T>(
     PageRouteBuilder<T>(
@@ -193,8 +194,8 @@ class _Texts extends StatelessWidget {
 
 /// An alert button in the app's own style: a frosted call-glass pill like the header and
 /// nav buttons (it carries the press); red text when it destroys something.
-class _Pill extends StatelessWidget {
-  const _Pill({required this.label, required this.onTap, this.destructive = false});
+class CosPill extends StatelessWidget {
+  const CosPill({super.key, required this.label, required this.onTap, this.destructive = false});
 
   final String label;
   final VoidCallback onTap;
@@ -302,10 +303,10 @@ class _TextInputState extends State<_TextInput> {
         spacing: 12,
         children: [
           Expanded(
-            child: _Pill(label: 'Cancel', onTap: () => Navigator.pop(context)),
+            child: CosPill(label: 'Cancel', onTap: () => Navigator.pop(context)),
           ),
           Expanded(
-            child: _Pill(label: widget.confirmLabel, onTap: _submit),
+            child: CosPill(label: widget.confirmLabel, onTap: _submit),
           ),
         ],
       ),
