@@ -100,4 +100,16 @@ void main() {
     expect(overscroll, 0);
     expect(controller.offset, 0);
   });
+
+  testWidgets('a text field whose text fits takes no sideways drag', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        scrollBehavior: OneUIScrollBehavior(),
+        home: Scaffold(body: TextField()),
+      ),
+    );
+    final position = tester.state<ScrollableState>(find.byType(Scrollable)).position;
+    expect(position.maxScrollExtent, 0);
+    expect(position.physics.shouldAcceptUserOffset(position), isFalse);
+  });
 }
