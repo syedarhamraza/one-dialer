@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 
 import '../core/contacts/contacts_repository.dart';
@@ -28,8 +27,9 @@ class DialerApp extends StatelessWidget {
   }
 }
 
-/// The theme's slide, with each page's glass controls (`CallGlass`) sharing one backdrop
-/// read, as the shell's tabs do: a separate read per button splits the GPU pass every frame.
+/// Android's predictive back (the system back swipe drags the page), with each page's glass
+/// controls (`CallGlass`) sharing one backdrop read, as the shell's tabs do: a separate read
+/// per button splits the GPU pass every frame.
 class _GroupedSlide extends PageTransitionsBuilder {
   const _GroupedSlide();
 
@@ -40,7 +40,7 @@ class _GroupedSlide extends PageTransitionsBuilder {
     Animation<double> animation,
     Animation<double> secondaryAnimation,
     Widget child,
-  ) => const CupertinoPageTransitionsBuilder().buildTransitions(
+  ) => const PredictiveBackPageTransitionsBuilder().buildTransitions(
     route,
     context,
     animation,

@@ -28,7 +28,8 @@
     <application
         android:label="One Dialer"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:enableOnBackInvokedCallback="true">
 
         <!-- Main UI: dial pad, recents, contacts -->
         <activity
