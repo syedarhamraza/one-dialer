@@ -45,6 +45,7 @@ class CallDetailsScreen extends StatelessWidget {
     final key = numberKey(call.number);
     // Built here, above the list's listener, so its rebuilds keep the same key.
     final callTileKey = GlobalKey();
+    final addTileKey = GlobalKey();
     final padding = MediaQuery.paddingOf(context);
     return Scaffold(
       body: Stack(
@@ -117,9 +118,10 @@ class CallDetailsScreen extends StatelessWidget {
                                   if (!isContact)
                                     Expanded(
                                       child: DetailsActionTile(
+                                        key: addTileKey,
                                         icon: Icons.person_add_alt_1_rounded,
                                         label: 'Add',
-                                        onTap: () => showAddToContacts(context, call.number),
+                                        onTap: () => showAddToContacts(context, call.number, anchorKey: addTileKey),
                                       ),
                                     ),
                                 ],
