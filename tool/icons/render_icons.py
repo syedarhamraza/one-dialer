@@ -27,7 +27,7 @@ def rgba(h, a):
 
 
 def glass_filter(fid):
-    """The glyphs' glass: a bright edge all round, brightest top-left, so the green shows through the fill."""
+    """The glyphs' light glass: a faint shadow, a thin white rim on top and a softer green one underneath."""
     alpha = '<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>'
     inner = lambda dx, dy, blur, c, a, prev, out: (
         alpha + f'<feOffset dx="{dx}" dy="{dy}"/><feGaussianBlur stdDeviation="{blur / 2}"/>'
@@ -35,10 +35,11 @@ def glass_filter(fid):
         f'<feColorMatrix type="matrix" values="{rgba(c, a)}"/><feBlend in2="{prev}" result="{out}"/>')
     return (
         f'<filter id="{fid}" x="0" y="0" width="{L}" height="{L}" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">'
-        + '<feMerge result="shape"><feMergeNode in="SourceGraphic"/></feMerge>'
-        + inner(0, 0, 4, "#FFFFFF", .75, "shape", "edge")
-        + inner(-6, 8, 6, "#FFFFFF", 1, "edge", "lit")
-        + inner(6, -8, 10, "#FFFFFF", .45, "lit", "out")
+        + alpha + '<feOffset dy="6"/><feGaussianBlur stdDeviation="10"/>'
+        f'<feColorMatrix type="matrix" values="{rgba("#00451F", .12)}" result="drop"/>'
+        '<feBlend in="SourceGraphic" in2="drop" result="shape"/>'
+        + inner(0, 4, 3, "#FFFFFF", .9, "shape", "rim")
+        + inner(0, -4, 6, "#1FA85C", .25, "rim", "out")
         + "</filter>")
 
 
@@ -50,8 +51,8 @@ def handset(cx, cy, size, fill, w, rotate=0, extra=""):
             f'fill="{fill}" stroke="{fill}" stroke-width="{2 * w / k:.3f}" stroke-linejoin="round" {extra}/>')
 
 
-FROST = ('<linearGradient id="frost" x1="0" y1="0" x2="1" y2="1">'
-         '<stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#C8F7DA"/></linearGradient>')
+FROST = ('<linearGradient id="frost" x1="0" y1="0" x2="0" y2="1">'
+         '<stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#E6FAEE"/></linearGradient>')
 
 
 def tile_bg(top, bottom, extra=""):
@@ -67,16 +68,15 @@ SPINE = (f'<defs><linearGradient id="spine" x1="0" y1="{O}" x2="0" y2="{O + T}" 
          f'<rect x="{O + T - 150}" width="{L}" height="{L}" fill="url(#spine)" opacity=".9"/>'
          + "".join(f'<rect x="{O + T - 140}" y="{O + y}" width="14" height="110" rx="7" fill="#FFFFFF" fill-opacity=".28"/>' for y in (300, 470, 640)))
 
-# The glyphs fade as one group: per-shape opacity would double the handset where its rounding stroke overlaps the fill.
 # The handset fills 59% of the tile like vivo's; a round-joined stroke rounds its pads (28 units out).
 W = 28
-HANDSET_FG = (f'<defs>{FROST}{glass_filter("glass")}</defs><g filter="url(#glass)"><g opacity=".62">'
+HANDSET_FG = (f'<defs>{FROST}{glass_filter("glass")}</defs><g filter="url(#glass)"><g opacity=".95">'
               + handset(O + T / 2, O + T / 2, 0.59 * T, "url(#frost)", W) + '</g></g>')
 
 # The person is 54% of the tile tall, a little left of centre to clear the spine.
 pk = 0.54 * T / 484
 px, py = O + 0.47 * T - 280 * pk, O + T / 2 - 282 * pk
-PERSON_FG = (f'<defs>{FROST}{glass_filter("glass")}</defs><g filter="url(#glass)"><g opacity=".62" fill="url(#frost)" '
+PERSON_FG = (f'<defs>{FROST}{glass_filter("glass")}</defs><g filter="url(#glass)"><g opacity=".95" fill="url(#frost)" '
              f'transform="translate({px:.2f} {py:.2f}) scale({pk:.4f})"><circle cx="280" cy="168" r="128"/><path d="{BODY}"/></g></g>')
 
 PHONE_BG = tile_bg("#1ED760", "#009A3E")
