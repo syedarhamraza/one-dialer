@@ -67,6 +67,9 @@ class OneUISubpage extends StatelessWidget {
     return Scaffold(
       backgroundColor: OneUITheme.surfacePitch,
       body: Stack(
+        // The scroll view must fill the page: shrink-wrapped, a bounce slides the content
+        // out of its own box and the bottom gets cut off.
+        fit: StackFit.expand,
         children: [
           if (listenable == null)
             content(context)

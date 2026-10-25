@@ -8,6 +8,7 @@ import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
+import '../../theme/one_ui_scroll.dart';
 
 import '../../widgets/cos_dialog.dart';
 import '../../widgets/call_glass.dart';
@@ -265,7 +266,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
     return NotificationListener<ScrollUpdateNotification>(
       onNotification: _collapse.track,
       child: CustomScrollView(
-        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        physics: const OneUIScrollPhysics(),
         slivers: [
           SliverAppBar(
             pinned: true,

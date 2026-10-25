@@ -10,7 +10,6 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import '../../core/contacts/contacts_repository.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
-import '../../theme/one_ui_scroll.dart';
 import 'call_control_panel.dart';
 import 'call_controls.dart';
 import 'call_screen_widgets.dart';
@@ -155,7 +154,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   static const _settled = Tolerance(distance: .01, velocity: .1);
 
   Widget _scrollArea(Widget child) => CustomScrollView(
-    physics: const OneUIScrollPhysics(),
+    physics: const ClampingScrollPhysics(),
     slivers: [SliverFillRemaining(hasScrollBody: false, child: child)],
   );
 
