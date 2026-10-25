@@ -10,6 +10,7 @@ import '../../widgets/cos_dialog.dart';
 import '../../widgets/one_ui_toast.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
+import '../../theme/one_ui_scroll.dart';
 import '../../core/prefs/dialer_prefs.dart';
 import '../recents/call_log_repository.dart';
 import '../settings/settings_screen.dart';
@@ -244,7 +245,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
                                     ),
                                     // Scrolls only when a small or landscape screen can't fit it.
                                     child: SingleChildScrollView(
-                                      physics: const ClampingScrollPhysics(),
+                                      physics: const HoldStillScrollPhysics(),
                                       child: Column(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [

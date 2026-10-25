@@ -1196,7 +1196,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
               constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(ctx).height * 0.5),
               child: ListView(
                 shrinkWrap: true,
-                physics: const ClampingScrollPhysics(), // a popup list holds still
+                physics: const HoldStillScrollPhysics(), // a popup list holds still
                 children: [
                   for (final g in _groups)
                     CheckboxListTile(

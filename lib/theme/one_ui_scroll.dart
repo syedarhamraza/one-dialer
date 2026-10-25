@@ -90,6 +90,16 @@ class OneUIScrollPhysics extends BouncingScrollPhysics {
   }
 }
 
+/// For fitted content that must hold still (the keypad sheet, panels inside a page): clamps,
+/// and takes drags only when the content overflows. It drops the app-wide
+/// [OneUIScrollPhysics] parent, whose always-accept would let a held key drag the sheet.
+class HoldStillScrollPhysics extends ClampingScrollPhysics {
+  const HoldStillScrollPhysics();
+
+  @override
+  HoldStillScrollPhysics applyTo(ScrollPhysics? ancestor) => const HoldStillScrollPhysics();
+}
+
 /// Wraps big-header pages (the home tabs, in `HomeScreen`) so pulling down at the top
 /// doesn't stretch them.
 /// The big header is the top of those pages, and the stretch drew the glass cards in an
@@ -114,7 +124,7 @@ class OneUINoTopStretch extends StatelessWidget {
 /// The app's scroll behaviour: [OneUIScrollPhysics] everywhere. Set on `MaterialApp`;
 /// screens that set `physics` use [OneUIScrollPhysics] too ([OneUIScrollPhysics.bigHeader]
 /// under a big header). Fitted content that must not move (the keypad sheet, the call
-/// screen) uses [ClampingScrollPhysics].
+/// screen) uses [HoldStillScrollPhysics].
 class OneUIScrollBehavior extends MaterialScrollBehavior {
   const OneUIScrollBehavior();
 

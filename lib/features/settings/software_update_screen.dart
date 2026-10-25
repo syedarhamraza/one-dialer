@@ -8,6 +8,7 @@ import '../../core/config/changelog.dart';
 import '../updates/data/update_service.dart';
 import '../updates/presentation/update_controller.dart';
 import '../../theme/one_ui_theme.dart';
+import '../../theme/one_ui_scroll.dart';
 import '../../widgets/glow_button.dart';
 import '../../widgets/cos_artwork.dart';
 import '../../widgets/version_mark.dart';
@@ -304,7 +305,7 @@ class _UpdateCardsState extends State<_UpdateCards> {
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.42),
       child: SingleChildScrollView(
-        physics: const ClampingScrollPhysics(), // a panel inside the page, not the page
+        physics: const HoldStillScrollPhysics(), // a panel inside the page, not the page
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

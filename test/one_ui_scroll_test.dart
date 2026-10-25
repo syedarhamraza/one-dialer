@@ -73,4 +73,31 @@ void main() {
     await tester.pumpAndSettle();
     expect(controller.offset, closeTo(OneUIScrollPhysics.bigHeaderCollapse, 1));
   });
+
+  testWidgets('fitted content holds still under the app-wide bounce', (tester) async {
+    final controller = ScrollController();
+    addTearDown(controller.dispose);
+    var overscroll = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        scrollBehavior: const OneUIScrollBehavior(),
+        home: NotificationListener<OverscrollNotification>(
+          onNotification: (_) {
+            overscroll++;
+            return false;
+          },
+          child: SingleChildScrollView(
+            controller: controller,
+            physics: const HoldStillScrollPhysics(),
+            child: const SizedBox(height: 80),
+          ),
+        ),
+      ),
+    );
+    expect(controller.position.physics.shouldAcceptUserOffset(controller.position), isFalse);
+    await tester.drag(find.byType(SingleChildScrollView), const Offset(0, 120));
+    await tester.pumpAndSettle();
+    expect(overscroll, 0);
+    expect(controller.offset, 0);
+  });
 }
