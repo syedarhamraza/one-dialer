@@ -42,29 +42,25 @@ class InCallActivity : FlutterActivity() {
     }
 
     private var blurEnabled = false
-
-    /**
-     * The wallpaper is blurred behind connected calls only; a ringing call shows it sharp. Opening,
-     * a window blur turns the whole open animation black (measured over the home screen: 14 black
-     * frames at 30 fps, none without it), so the blur also waits until the window has settled, then
-     * eases in. It eases in and out as calls start and stop ringing.
-     */
-    private var settled = false
     private var blurRadius = 0
     private var blurTarget = 0
     private var blurAnimator: ValueAnimator? = null
 
+    /** The wallpaper is blurred behind connected calls only; a ringing call shows it sharp. */
     private val updateBlur = {
         val ringing = CallManager.all().any { (_, call) ->
             CallManager.stateOf(call).let { it == Call.STATE_RINGING || it == Call.STATE_SIMULATED_RINGING }
         }
-        val target = if (blurEnabled && settled && !ringing) BLUR_RADIUS else 0
+        val target = if (blurEnabled && !ringing) BLUR_RADIUS else 0
         if (target != blurTarget) animateBlur(target)
     }
 
+    /** Eases the blur in on answer (and out if another call rings), from wherever it is. */
     private fun animateBlur(target: Int) {
         blurTarget = target
         blurAnimator?.cancel()
+        // Straight to it while the window isn't up yet (it opens with the right blur).
+        if (!lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) return setBlur(target)
         blurAnimator = ValueAnimator.ofInt(blurRadius, target).apply {
             duration = BLUR_ANIMATION_MS
             interpolator = DecelerateInterpolator()
@@ -76,11 +72,6 @@ class InCallActivity : FlutterActivity() {
     private fun setBlur(radius: Int) {
         blurRadius = radius
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) window.setBackgroundBlurRadius(radius)
-    }
-
-    private val settle = Runnable {
-        settled = true
-        updateBlur()
     }
 
     /**
@@ -131,22 +122,9 @@ class InCallActivity : FlutterActivity() {
     override fun onStart() {
         super.onStart()
         setFullScreen(!isInMultiWindowMode)
-        // In case no enter animation runs (onEnterAnimationComplete may not come).
-        window.decorView.postDelayed(settle, SETTLE_FALLBACK_MS)
-    }
-
-    override fun onEnterAnimationComplete() {
-        super.onEnterAnimationComplete()
-        window.decorView.removeCallbacks(settle)
-        settle.run()
     }
 
     override fun onStop() {
-        window.decorView.removeCallbacks(settle)
-        settled = false
-        blurAnimator?.cancel()
-        blurTarget = 0
-        setBlur(0)
         setFullScreen(false)
         super.onStop()
     }
@@ -198,7 +176,6 @@ class InCallActivity : FlutterActivity() {
         /** Heavy, like ColorOS: only the wallpaper's colours and shapes survive. */
         private const val BLUR_RADIUS = 120
         private const val BLUR_ANIMATION_MS = 300L
-        private const val SETTLE_FALLBACK_MS = 1200L
 
         fun intent(context: Context): Intent =
             Intent(context, InCallActivity::class.java)
