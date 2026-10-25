@@ -236,7 +236,7 @@ void main() {
     boundary = await frame(
       tester,
       'A call screen that glows',
-      'Swipe to answer, with your wallpaper behind',
+      'Swipe to answer, in a glow tinted to each caller',
       const InCallScreen(),
       wallpaper: true,
     );

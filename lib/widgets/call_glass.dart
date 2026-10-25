@@ -7,7 +7,7 @@ import '../theme/one_ui_theme.dart';
 import 'press_glow.dart';
 
 /// How strong the call-glass edge glow is on the main app's chrome: softer than on
-/// the call screen, where the controls sit on a dark blurred wallpaper.
+/// the call screen, where the controls sit on a dark gradient.
 const double kMainGlassGlow = .6;
 
 /// The connected call screen's control look for floating chrome: the backdrop blurred

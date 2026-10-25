@@ -175,17 +175,3 @@ class SimCard {
   /// The SIM Android calls with by default; none is default when "Ask every time" is set.
   final bool isDefault;
 }
-
-/// The call screen's backdrop from `WallpaperBackdrop.kt`: whether Android is blurring the real
-/// wallpaper behind the call window, and the wallpaper's main colours for when it isn't.
-class WallpaperBackdrop {
-  const WallpaperBackdrop({required this.blur, required this.colors});
-
-  factory WallpaperBackdrop.fromMap(Map<Object?, Object?> map) => WallpaperBackdrop(
-    blur: map['blur'] as bool? ?? false,
-    colors: [for (final c in (map['colors'] as List<Object?>? ?? const [])) Color((c! as num).toInt())],
-  );
-
-  final bool blur;
-  final List<Color> colors;
-}

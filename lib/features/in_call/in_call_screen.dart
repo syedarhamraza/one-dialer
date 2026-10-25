@@ -48,8 +48,6 @@ class _InCallScreenState extends State<InCallScreen> {
     // Caller lookup must not prevent answering if a contacts provider is unavailable.
     ContactsRepository.instance.start(preloadPhotos: true).catchError((Object _) {});
     _loadSims();
-    // The backdrop works without it (the aurora), so a failure is only logged.
-    TelecomBridge.instance.loadWallpaperBackdrop().catchError((Object e) => debugPrint('Wallpaper backdrop: $e'));
   }
 
   Future<void> _loadSims() async {
@@ -63,7 +61,7 @@ class _InCallScreenState extends State<InCallScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    // Transparent: the system-blurred wallpaper behind the window is the backdrop (CallBackdrop).
+    // CallBackdrop paints the whole screen.
     backgroundColor: Colors.transparent,
     body: StreamBuilder<CallSnapshot>(
       stream: TelecomBridge.instance.callState,
@@ -73,15 +71,11 @@ class _InCallScreenState extends State<InCallScreen> {
         final state = _last;
         final call = state?.primary;
         return ListenableBuilder(
-          // Contacts load in late (the aurora's tint follows the caller's name); the wallpaper's
-          // blur and colours change with the device.
-          listenable: Listenable.merge([
-            ContactsRepository.instance.contacts,
-            TelecomBridge.instance.wallpaperBackdrop,
-          ]),
+          // Contacts load in late (the aurora's tint follows the caller's name).
+          listenable: ContactsRepository.instance.contacts,
           builder: (context, _) {
             return CallBackdrop(
-              wallpaper: TelecomBridge.instance.wallpaperBackdrop.value,
+              shown: call != null,
               dim: _keypadBlur,
               seed: call == null ? null : backdropSeed(call),
               child: SafeArea(
@@ -124,8 +118,6 @@ class _CallSession extends StatefulWidget {
 class _CallSessionState extends State<_CallSession> with TickerProviderStateMixin {
   bool _keypadOpen = false;
   String _digits = '';
-  String? _routeToast;
-  Timer? _toastTimer;
 
   /// Keypad morph progress, spring-driven so a mid-flight reversal keeps its momentum.
   late final AnimationController _morph = AnimationController(vsync: this)..addListener(_syncDim);
@@ -245,7 +237,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     final color = _ballColor.transform(settled)!;
     // The same shared finish as the End pill, so the hand-off on landing is invisible.
     final shape = RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(rect.shortestSide / 2));
-    final iconSize = lerpDouble(from.shortestSide * .46, 41, settled)!;
+    final iconSize = lerpDouble(from.shortestSide * .52, 46, settled)!;
     // The handset tips over and hands off to the hang-up glyph as it lands.
     final handoff = const Interval(.6, 1).transform(settled);
     return Positioned.fromRect(
@@ -253,8 +245,8 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
       child: IgnorePointer(
         child: Container(
           key: const ValueKey('answer-flight'),
-          decoration: solidBody(color, shape),
-          foregroundDecoration: solidGlow(shape),
+          decoration: glassBody(color, shape),
+          foregroundDecoration: glassGlow(shape),
           alignment: Alignment.center,
           child: Stack(
             alignment: Alignment.center,
@@ -327,19 +319,10 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     } else if (state != CallState.ringing) {
       _launchBall();
     }
-    final route = widget.snapshot.audio.route;
-    if (route != oldWidget.snapshot.audio.route) {
-      _toastTimer?.cancel();
-      setState(() => _routeToast = route == AudioRoute.speaker ? 'Speaker on' : audioRouteLabel(route));
-      _toastTimer = Timer(const Duration(milliseconds: 1500), () {
-        if (mounted) setState(() => _routeToast = null);
-      });
-    }
   }
 
   @override
   void dispose() {
-    _toastTimer?.cancel();
     _ballTimeout?.cancel();
     _fly.dispose();
     _morph.dispose();
@@ -409,32 +392,45 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
                     transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
                     child: controls,
                   );
+                  final heldCard = held != null && !ringing && !ended;
                   final header = _FadeIn(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        CallHeader(
-                          call: call,
-                          sims: widget.sims,
-                          compact: compact,
-                          keypadProgress: progress,
-                          digits: _digits,
-                          chip: ringing || ended ? null : _routeToast ?? (widget.snapshot.audio.muted ? 'Muted' : null),
+                        // The held card slides the caller down as it comes in, and back up as it goes.
+                        AnimatedSize(
+                          duration: switchDuration,
+                          curve: Curves.easeOutCubic,
+                          alignment: Alignment.topCenter,
+                          child: AnimatedSwitcher(
+                            duration: switchDuration,
+                            child: heldCard
+                                ? Padding(
+                                    key: ValueKey(held.id),
+                                    padding: const EdgeInsets.only(bottom: 20),
+                                    child: HeldCallCard(
+                                      call: held,
+                                      onSwitch: () => TelecomBridge.instance.unhold(held.id),
+                                    ),
+                                  )
+                                : const SizedBox(width: double.infinity),
+                          ),
                         ),
-                        if (held != null && !ringing && !ended) ...[
-                          const SizedBox(height: 16),
-                          HeldCallChip(call: held, onSwap: () => TelecomBridge.instance.unhold(held.id)),
-                        ],
+                        CallHeader(call: call, sims: widget.sims, compact: compact, keypadProgress: progress),
                       ],
                     ),
                   );
+                  // As on ColorOS, what's typed shows right above the keys.
+                  final typed = _TypedDigits(digits: _digits, progress: progress, compact: compact);
                   if (landscape) {
                     return Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                       child: Row(
                         children: [
                           Expanded(
-                            child: _scrollArea(Column(mainAxisAlignment: MainAxisAlignment.center, children: [header])),
+                            child: _scrollArea(
+                              Column(mainAxisAlignment: MainAxisAlignment.center, children: [header, typed]),
+                            ),
                           ),
                           const SizedBox(width: 24),
                           Expanded(
@@ -465,6 +461,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
                             ),
                           ),
                         ),
+                        if (!ringing && !ended) typed,
                         animatedControls,
                       ],
                     ),
@@ -477,6 +474,93 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
         ],
       ),
     );
+  }
+}
+
+/// The DTMF digits typed on the keypad: one centred line that opens above the keys with the
+/// keypad, its latest digits kept in view.
+class _TypedDigits extends StatelessWidget {
+  const _TypedDigits({required this.digits, required this.progress, required this.compact});
+  final String digits;
+  final double progress;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final open = digits.isEmpty ? 0.0 : progress.clamp(0.0, 1.0);
+    if (open == 0) return const SizedBox.shrink();
+    return ClipRect(
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        heightFactor: open,
+        child: Opacity(
+          opacity: const Interval(.5, 1).transform(open),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: LayoutBuilder(
+              builder: (context, box) {
+                final (text, style) = _fit(digits, box.maxWidth, MediaQuery.textScalerOf(context));
+                return Text(
+                  text,
+                  key: const ValueKey('typed-digits'),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  softWrap: false,
+                  style: style,
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// As on ColorOS: the digits shrink to fit as they're typed, then the earliest give way to
+  /// an ellipsis so the latest stay in view.
+  (String, TextStyle) _fit(String digits, double width, TextScaler scaler) {
+    final last = _last;
+    if (last != null && last.$1 == digits && last.$2 == width && last.$3 == scaler && last.$4 == compact) {
+      return last.$5;
+    }
+    final fit = _measure(digits, width, scaler);
+    _last = (digits, width, scaler, compact, fit);
+    return fit;
+  }
+
+  // Rebuilt every frame of the keypad's morph; the measuring only reruns when something changes.
+  static (String, double, TextScaler, bool, (String, TextStyle))? _last;
+
+  (String, TextStyle) _measure(String digits, double width, TextScaler scaler) {
+    TextStyle style(double size) => TextStyle(
+      fontSize: size,
+      height: 1.15,
+      letterSpacing: size / 16,
+      color: Colors.white,
+      fontFeatures: const [FontFeature.tabularFigures()],
+    );
+    bool fits(String text, TextStyle style) {
+      final painter = TextPainter(
+        text: TextSpan(text: text, style: style),
+        textDirection: TextDirection.ltr,
+        textScaler: scaler,
+        maxLines: 1,
+      )..layout();
+      final fit = painter.width <= width;
+      painter.dispose();
+      return fit;
+    }
+
+    final full = compact ? 26.0 : 32.0;
+    for (final size in [full, full * .85, full * .72]) {
+      if (fits(digits, style(size))) return (digits, style(size));
+    }
+    final small = style(full * .72);
+    var keep = digits.length - 1;
+    while (keep > 1 && !fits('…${digits.substring(digits.length - keep)}', small)) {
+      keep--;
+    }
+    return ('…${digits.substring(digits.length - keep)}', small);
   }
 }
 

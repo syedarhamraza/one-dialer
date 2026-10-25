@@ -20,6 +20,16 @@ void main() {
     expect(await prefs.callNotes('03001234567'), [(second, 'Call back Friday')]);
   });
 
+  test('notes are indexed by number key, private numbers included, for Recents rows', () async {
+    final prefs = DialerPrefs.instance;
+    final at = DateTime(2026, 10, 17, 9);
+    await prefs.setCallNote('+44 20 7183 8750', at, 'Invoice');
+    await prefs.setCallNote('', at, 'Hidden caller');
+    final index = await prefs.noteIndex();
+    expect(index['private'], [(at, 'Hidden caller')]);
+    expect(index[numberKey('020 7183 8750')], [(at, 'Invoice')]);
+  });
+
   test('a note goes to the logged call it was taken during', () {
     CallLogEntry entry(int id, DateTime date, int seconds) => CallLogEntry(
       id: id,

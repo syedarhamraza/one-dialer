@@ -61,6 +61,9 @@ class _RecentsScreenState extends State<RecentsScreen> {
   final _collapse = TitleCollapse(titleTop: 0);
   List<SimCard> _sims = const [];
 
+  /// Saved call notes by number key, shown under the rows' numbers.
+  Map<String, List<(DateTime, String)>> _notes = const {};
+
   @override
   void initState() {
     super.initState();
@@ -68,18 +71,43 @@ class _RecentsScreenState extends State<RecentsScreen> {
       if (mounted) setState(() => _sims = s);
     });
     DialerPrefs.instance.changes.addListener(_loadPrefs);
+    // The call screen saves notes in its own engine; a call being logged is the cue to look.
+    _repo.calls.addListener(_loadNotes);
     _loadPrefs();
+  }
+
+  Future<void> _loadNotes() async {
+    final notes = await DialerPrefs.instance.noteIndex();
+    if (mounted) setState(() => _notes = notes);
+  }
+
+  /// The newest note taken during one of [group]'s calls.
+  String? _noteFor(CallGroup group) {
+    final call = group.latest;
+    final notes = _notes[call.isPrivate || numberKey(call.number).isEmpty ? 'private' : numberKey(call.number)];
+    if (notes == null) return null;
+    String? newest;
+    DateTime? newestAt;
+    for (final (at, text) in notes) {
+      if ((newestAt == null || at.isAfter(newestAt)) && group.calls.any((c) => noteDuring(c, at))) {
+        newest = text;
+        newestAt = at;
+      }
+    }
+    return newest;
   }
 
   @override
   void dispose() {
     DialerPrefs.instance.changes.removeListener(_loadPrefs);
+    _repo.calls.removeListener(_loadNotes);
     _selectionChanged.dispose();
     _collapse.dispose();
     super.dispose();
   }
 
   Future<void> _loadPrefs() async {
+    _loadNotes();
     final hide = await DialerPrefs.instance.hideBlockedCalls();
     if (mounted && hide != _hideBlocked) setState(() => _hideBlocked = hide);
   }
@@ -374,6 +402,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
           builder: (row) => _CallRow(
             group: group,
             simBadge: _simBadge(call.simId),
+            note: _noteFor(group),
             when: day == 'Today' ? timeLabel(call.date) : day,
             selecting: _selected != null,
             // Only the circle listens to selection taps; the rest of the row stays built.
@@ -622,6 +651,7 @@ class _CallRow extends StatelessWidget {
   const _CallRow({
     required this.group,
     required this.simBadge,
+    this.note,
     required this.when,
     required this.selecting,
     required this.selectMark,
@@ -632,6 +662,9 @@ class _CallRow extends StatelessWidget {
 
   final CallGroup group;
   final (String, Color)? simBadge;
+
+  /// A note taken during one of the group's calls, shown under the number.
+  final String? note;
   final String when;
 
   final bool selecting;
@@ -688,6 +721,23 @@ class _CallRow extends StatelessWidget {
                       ),
                     ],
                   ),
+                  if (note case final note?) ...[
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        const Icon(Icons.edit_note_rounded, size: 16, color: OneUITheme.textSecondary),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            note,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 14, color: OneUITheme.textSecondary),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),

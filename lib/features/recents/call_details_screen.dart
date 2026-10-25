@@ -5,6 +5,7 @@ import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_scroll.dart';
 import '../../theme/one_ui_theme.dart';
+import '../in_call/call_controls.dart' show editCallNote;
 import '../../widgets/call_glass.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_status_bar_scrim.dart';
@@ -125,6 +126,7 @@ class CallDetailsScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 20),
                             ],
+                            CallNotesCard(numbers: [if (!call.isPrivate) call.number]),
                             const Padding(
                               padding: EdgeInsets.only(left: 18, bottom: 8),
                               child: Text('Call logs', style: TextStyle(fontSize: 15, color: OneUITheme.textSecondary)),
@@ -132,19 +134,10 @@ class CallDetailsScreen extends StatelessWidget {
                           ],
                         ),
                         // Lazy: a number called every day has hundreds of rows.
-                        ValueListenableBuilder(
-                          valueListenable: DialerPrefs.instance.changes,
-                          builder: (context, _, _) => FutureBuilder(
-                            future: DialerPrefs.instance.callNotes(call.number),
-                            builder: (context, notes) => DetailsCardSliver(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              itemCount: history.length,
-                              itemBuilder: (context, i) => _HistoryRow(
-                                call: history[i],
-                                notes: notesFor(history[i], history, notes.data ?? const []),
-                              ),
-                            ),
-                          ),
+                        DetailsCardSliver(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          itemCount: history.length,
+                          itemBuilder: (context, i) => _HistoryRow(call: history[i]),
                         ),
                       ],
                     ),
@@ -213,21 +206,89 @@ class CallDetailsScreen extends StatelessWidget {
 
 /// Notes taken during [call]: each note goes to the newest logged call whose time span (with a
 /// little slack for ringing and the call log's rounding) contains the moment it was started.
-List<String> notesFor(CallLogEntry call, List<CallLogEntry> history, List<(DateTime, String)> notes) {
-  bool during(CallLogEntry c, DateTime at) =>
-      !at.isBefore(c.date.subtract(const Duration(minutes: 1))) &&
-      at.isBefore(c.date.add(c.duration + const Duration(minutes: 2)));
-  return [
-    for (final (at, text) in notes)
-      if (history.where((c) => during(c, at)).firstOrNull == call) text,
-  ];
+List<String> notesFor(CallLogEntry call, List<CallLogEntry> history, List<(DateTime, String)> notes) => [
+  for (final (at, text) in notes)
+    if (history.where((c) => noteDuring(c, at)).firstOrNull == call) text,
+];
+
+/// Whether a note started at [at] was taken during [call].
+bool noteDuring(CallLogEntry call, DateTime at) =>
+    !at.isBefore(call.date.subtract(const Duration(minutes: 1))) &&
+    at.isBefore(call.date.add(call.duration + const Duration(minutes: 2)));
+
+/// "Notes": every note taken during calls with [numbers], newest first, each opening the note
+/// editor (clearing a note's text deletes it). Hidden when there are none.
+class CallNotesCard extends StatelessWidget {
+  const CallNotesCard({super.key, required this.numbers});
+
+  final List<String> numbers;
+
+  Future<List<(DateTime, String, String)>> _load() async {
+    final seen = <String>{};
+    final notes = [
+      for (final number in numbers)
+        if (seen.add(numberKey(number)))
+          for (final (at, text) in await DialerPrefs.instance.callNotes(number)) (at, text, number),
+    ]..sort((a, b) => b.$1.compareTo(a.$1));
+    return notes;
+  }
+
+  @override
+  Widget build(BuildContext context) => ListenableBuilder(
+    // Notes are written by the call screen's engine, so also reload when a call is logged.
+    listenable: Listenable.merge([DialerPrefs.instance.changes, CallLogRepository.instance.calls]),
+    builder: (context, _) => FutureBuilder(
+      future: _load(),
+      builder: (context, snapshot) {
+        final notes = snapshot.data ?? const [];
+        if (notes.isEmpty) return const SizedBox.shrink();
+        final now = DateTime.now();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(left: 18, bottom: 8),
+              child: Text('Notes', style: TextStyle(fontSize: 15, color: OneUITheme.textSecondary)),
+            ),
+            DetailsCard(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              children: [
+                for (final (at, text, number) in notes)
+                  InkWell(
+                    onTap: () => editCallNote(context, number, at),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 10, 18, 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            text,
+                            maxLines: 4,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${dayLabel(at, now)}, ${timeLabel(at)}',
+                            style: const TextStyle(fontSize: 13, color: OneUITheme.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        );
+      },
+    ),
+  );
 }
 
 class _HistoryRow extends StatelessWidget {
-  const _HistoryRow({required this.call, this.notes = const []});
+  const _HistoryRow({required this.call});
 
   final CallLogEntry call;
-  final List<String> notes;
 
   @override
   Widget build(BuildContext context) {
@@ -248,18 +309,6 @@ class _HistoryRow extends StatelessWidget {
                   '${dayLabel(call.date, DateTime.now())}, ${timeLabel(call.date)}',
                   style: const TextStyle(fontSize: 17),
                 ),
-                for (final note in notes)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.edit_note_rounded, size: 16, color: OneUITheme.textSecondary),
-                        const SizedBox(width: 6),
-                        Expanded(child: Text(note, style: const TextStyle(fontSize: 14))),
-                      ],
-                    ),
-                  ),
               ],
             ),
           ),

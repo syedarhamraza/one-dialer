@@ -126,6 +126,8 @@ class _IncomingControlsState extends State<IncomingControls> {
                   child: SwipeUpButton(
                     color: answerGreen,
                     icon: Icons.call_rounded,
+                    // The handset rings, like ColorOS's Answer.
+                    shake: true,
                     label: 'Answer',
                     compact: compact,
                     hidden: widget.answerHidden,
@@ -144,18 +146,20 @@ class _IncomingControlsState extends State<IncomingControls> {
               opacity: _opacityFor(null),
               // Frosted like the connected screen's buttons, with the same glass press.
               child: CallBody(
-                radius: 22,
+                pill: true,
                 child: TextButton.icon(
                   onPressed: () => _declineWithMessage(context),
-                  icon: const Icon(Icons.chat_bubble_rounded, size: 18),
+                  icon: const Icon(Icons.chat_bubble_rounded, size: 15),
                   label: const Text(
                     'Decline with message',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
                   ),
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                    shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(22)),
+                    minimumSize: const Size(0, 36),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    shape: const StadiumBorder(),
                   ),
                 ),
               ),
@@ -181,9 +185,11 @@ class SwipeUpButton extends StatefulWidget {
     this.compact = false,
     this.hidden = false,
     this.hintPhase = 0,
+    this.shake = false,
   });
 
   final Color color;
+
   final IconData icon;
   final String label;
 
@@ -195,6 +201,9 @@ class SwipeUpButton extends StatefulWidget {
   final bool compact;
   final bool hidden;
   final double hintPhase;
+
+  /// Wiggles the icon once per hint cycle while the ball rests, as a ringing handset.
+  final bool shake;
 
   static const double size = 72;
   static const double threshold = 96;
@@ -363,7 +372,7 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                       top: travel - 22 - (reduceMotion ? 0 : 10 * rise),
                       child: Opacity(
                         opacity: dash,
-                        child: CustomPaint(size: const Size(26, 6), painter: _ArcHint(widget.color)),
+                        child: CustomPaint(size: _ArcHint.size, painter: _ArcHint(widget.color)),
                       ),
                     ),
                     Positioned(
@@ -386,14 +395,20 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                                   height: size,
                                   // The connected screen's End pill finish, lit from below, its glow
                                   // brightening as the drag arms.
-                                  decoration: solidBody(
+                                  decoration: glassBody(
                                     widget.color,
                                     const CircleBorder(),
                                     glow: .3 + .25 * armed,
                                     blur: 22 + 10 * armed,
                                   ),
-                                  foregroundDecoration: solidGlow(const CircleBorder()),
-                                  child: Icon(widget.icon, color: Colors.white, size: size * .46),
+                                  foregroundDecoration: glassGlow(const CircleBorder()),
+                                  child: Transform.rotate(
+                                    // A decaying wiggle over the first 40% of each cycle, then still.
+                                    angle: widget.shake && still && !reduceMotion && phase < .4
+                                        ? .3 * math.sin(phase / .4 * 6 * math.pi) * (1 - phase / .4)
+                                        : 0,
+                                    child: Icon(widget.icon, color: Colors.white, size: size * .52),
+                                  ),
                                 ),
                               ),
                             ),
@@ -412,21 +427,27 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
   }
 }
 
-// The ColorOS swipe hint: a shallow arc echoing the button's curve, with rounded ends.
+// The ColorOS swipe hint: a true circular arc (a cap over the button), with rounded ends.
 class _ArcHint extends CustomPainter {
   const _ArcHint(this.color);
   final Color color;
 
+  static const double _radius = 15, _sweep = 1.75, _stroke = 3; // 100 degrees
+  static final size = Size(
+    2 * _radius * math.sin(_sweep / 2) + _stroke,
+    _radius * (1 - math.cos(_sweep / 2)) + _stroke,
+  );
+
   @override
-  void paint(Canvas canvas, Size size) => canvas.drawPath(
-    Path()
-      ..moveTo(1.5, size.height - 1.5)
-      // A ~2.5 px rise over the width, close to the curve of the 72 px button.
-      ..quadraticBezierTo(size.width / 2, size.height - 6.5, size.width - 1.5, size.height - 1.5),
+  void paint(Canvas canvas, Size size) => canvas.drawArc(
+    Rect.fromCircle(center: Offset(size.width / 2, _stroke / 2 + _radius), radius: _radius),
+    -math.pi / 2 - _sweep / 2,
+    _sweep,
+    false,
     Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
+      ..strokeWidth = _stroke
       ..strokeCap = StrokeCap.round,
   );
 

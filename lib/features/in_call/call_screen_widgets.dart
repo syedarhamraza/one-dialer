@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -7,20 +6,20 @@ import 'package:flutter/material.dart';
 import '../../core/contacts/contacts_repository.dart';
 import '../../core/telecom/call_info.dart';
 import '../../widgets/letter_avatar.dart';
+import 'call_controls.dart';
 
-/// The call backdrop, as on ColorOS 17: the phone's own wallpaper, blurred by Android behind the
-/// transparent call window (`WallpaperBackdrop.kt`), under black fades at the top and bottom.
-/// When the system can't blur (Android < 12, battery saver, some devices), a soft gradient in the
-/// wallpaper's own colours stands in, else an aurora tinted from the caller's avatar colour.
+/// The call backdrop: a soft aurora tinted from the caller's avatar colour, under black fades at
+/// the top and bottom.
 class CallBackdrop extends StatelessWidget {
-  const CallBackdrop({super.key, required this.child, this.wallpaper, this.seed, this.dim});
+  const CallBackdrop({super.key, required this.child, this.seed, this.dim, this.shown = true});
   final Widget child;
 
-  /// What Android reports about the wallpaper; null until it answers.
-  final WallpaperBackdrop? wallpaper;
+  /// False until the first call arrives: the window stays black, then fades straight into this
+  /// caller's tint instead of the default one first.
+  final bool shown;
 
-  /// The caller's name, tinting the fallback aurora when there are no wallpaper colours; null
-  /// keeps it blue, teal and violet for private, conference and unknown calls.
+  /// The caller's name, tinting the aurora; null keeps it blue, teal and violet for private,
+  /// conference and unknown calls.
   final String? seed;
 
   /// The keypad's open progress (0-1): the fades ease to an even dim behind it.
@@ -28,20 +27,16 @@ class CallBackdrop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final blurred = wallpaper?.blur ?? false;
     return Stack(
       fit: StackFit.expand,
       children: [
+        // A new caller's tint fades in over the last one.
         AnimatedSwitcher(
           duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 400),
           layoutBuilder: (current, previous) => Stack(fit: StackFit.expand, children: [...previous, ?current]),
-          child: blurred
-              // The blurred wallpaper shows through the transparent window.
-              ? const SizedBox.expand(key: ValueKey('wallpaper'))
-              : KeyedSubtree(
-                  key: ValueKey<Object?>((wallpaper?.colors, seed)),
-                  child: _aurora(wallpaper?.colors ?? const [], seed),
-                ),
+          child: shown
+              ? KeyedSubtree(key: ValueKey(seed), child: _aurora(seed))
+              : const SizedBox.expand(key: ValueKey('black')),
         ),
         ValueListenableBuilder(
           valueListenable: dim ?? const AlwaysStoppedAnimation(0.0),
@@ -56,9 +51,9 @@ class CallBackdrop extends StatelessWidget {
                   for (final (rest, keypad) in const [
                     (Color(0x99000000), Color(0x99000000)),
                     (Color(0x33000000), Color(0x73000000)),
-                    (Color(0x14000000), Color(0x80000000)),
-                    (Color(0x80000000), Color(0x8C000000)),
-                    (Color(0xE6000000), Color(0xB3000000)),
+                    (Color(0x24000000), Color(0x80000000)),
+                    (Color(0xA6000000), Color(0x8C000000)),
+                    (Color(0xF2000000), Color(0xB3000000)),
                   ])
                     Color.lerp(rest, keypad, t.clamp(0.0, 1.0))!,
                 ],
@@ -71,21 +66,13 @@ class CallBackdrop extends StatelessWidget {
     );
   }
 
-  /// A soft aurora: a dark base with blurred-looking blobs, in the wallpaper's own colours when
-  /// Android gives them, else in hues around the caller's avatar colour. Painted once.
-  static Widget _aurora(List<Color> wallpaperColors, String? seed) {
-    final Color Function(int i, double lightness, double saturation) tone;
-    if (wallpaperColors.isNotEmpty) {
-      tone = (i, lightness, saturation) {
-        final hsl = HSLColor.fromColor(wallpaperColors[i % wallpaperColors.length]);
-        return hsl.withLightness(lightness).withSaturation(math.min(hsl.saturation, saturation)).toColor();
-      };
-    } else {
-      final hue = seed == null ? 200.0 : HSLColor.fromColor(LetterAvatar.colorFor(seed)).hue;
-      const shifts = [0.0, 45.0, -50.0, 20.0, -30.0];
-      tone = (i, lightness, saturation) =>
-          HSLColor.fromAHSL(1, (hue + shifts[i % shifts.length]) % 360, saturation, lightness).toColor();
-    }
+  /// A soft aurora: a dark base with blurred-looking blobs in hues around the caller's avatar
+  /// colour. Painted once.
+  static Widget _aurora(String? seed) {
+    final hue = seed == null ? 200.0 : HSLColor.fromColor(LetterAvatar.colorFor(seed)).hue;
+    const shifts = [0.0, 45.0, -50.0, 20.0, -30.0];
+    Color tone(int i, double lightness, double saturation) =>
+        HSLColor.fromAHSL(1, (hue + shifts[i % shifts.length]) % 360, saturation, lightness).toColor();
     Widget blob(Alignment centre, double radius, Color color) => DecoratedBox(
       decoration: BoxDecoration(
         gradient: RadialGradient(center: centre, radius: radius, colors: [color, color.withValues(alpha: 0)]),
@@ -132,25 +119,11 @@ String? backdropSeed(CallInfo call) {
 }
 
 class CallHeader extends StatelessWidget {
-  const CallHeader({
-    super.key,
-    required this.call,
-    required this.sims,
-    required this.compact,
-    this.keypadProgress = 0,
-    this.digits = '',
-    this.chip,
-  });
+  const CallHeader({super.key, required this.call, required this.sims, required this.compact, this.keypadProgress = 0});
   final CallInfo call;
   final List<SimCard> sims;
   final bool compact;
   final double keypadProgress;
-
-  /// Typed DTMF digits; while the keypad is open they take the title's place.
-  final String digits;
-
-  /// A short status pill under the timer ("Muted", "Speaker on").
-  final String? chip;
 
   @override
   Widget build(BuildContext context) {
@@ -162,146 +135,112 @@ class CallHeader extends StatelessWidget {
     final k = keypadProgress.clamp(0.0, 1.0);
     final fade = 1 - Curves.easeOut.transform(k);
     final avatarSize = compact ? 60.0 : 76.0;
-    final showDigits = digits.isNotEmpty && k > .5;
     // ColorOS 17: a contact with a photo gets name, number and status on the left and the photo in
-    // a circle on the right; everyone else gets them centred with no circle. With the keypad open
-    // the photo folds away and the typed digits take the title's place, centred.
+    // a circle on the right; everyone else gets them centred with no circle. As the keypad opens
+    // the photo folds away, the lines glide to the centre and the number and city fold up, all
+    // with the keypad's progress.
     final photo = contact?.thumbnail;
-    final centred = photo == null || k > .5;
-    final align = centred ? CrossAxisAlignment.center : CrossAxisAlignment.start;
-    final textAlign = centred ? TextAlign.center : TextAlign.start;
+    final folded = k; // Already eased by the screen; easing it again made it lurch mid-way.
+    final line = AlignmentDirectional(photo == null ? 0 : folded - 1, -1);
+    final textAlign = photo == null || folded == 1 ? TextAlign.center : TextAlign.start;
     // ColorOS puts the number and the city on lines of their own.
-    final subtitles = showDigits
-        ? [name]
-        : [
-            if (name != shownNumber && shownNumber.isNotEmpty && !call.isPrivate && !call.isConference) shownNumber,
-            ?call.location,
-          ];
+    final subtitles = [
+      if (name != shownNumber && shownNumber.isNotEmpty && !call.isPrivate && !call.isConference) shownNumber,
+      ?call.location,
+    ];
     final held = call.state == CallState.holding;
     final ended = call.state == CallState.disconnected || call.state == CallState.disconnecting;
-    final folded = Curves.easeInOutCubic.transform(k);
     return AnimatedOpacity(
       opacity: ended ? .6 : (held ? .55 : 1),
       duration: const Duration(milliseconds: 250),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: align,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: align,
-                  children: [
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 160),
-                      child: Text(
-                        showDigits ? _tail(digits) : name,
-                        key: ValueKey(showDigits),
-                        textAlign: textAlign,
-                        maxLines: showDigits ? 1 : 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: compact ? 26 : 32,
-                          height: 1.15,
-                          fontWeight: showDigits ? FontWeight.w400 : FontWeight.w700,
-                          letterSpacing: showDigits ? 2 : -0.4,
-                          color: Colors.white,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
-                      ),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Align(
+                  alignment: line,
+                  child: Text(
+                    name,
+                    textAlign: textAlign,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: compact ? 26 : 32,
+                      height: 1.15,
+                      // Medium, not bold: vivo's system font draws 700 very heavy.
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
                     ),
-                    for (final (i, line) in subtitles.indexed) ...[
-                      SizedBox(height: i == 0 ? 4 : 2),
-                      Text(
-                        line,
-                        textAlign: textAlign,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 16, color: Colors.white.withValues(alpha: .72)),
-                      ),
-                    ],
-                    SizedBox(height: compact ? 12 : 18),
-                    CallStatus(
-                      call: call,
-                      sim: sims.length > 1 ? sim : null,
-                      simSlot: sim == null ? 0 : sims.indexOf(sim) + 1,
-                      alignment: centred ? Alignment.center : AlignmentDirectional.centerStart,
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              // The photo folds away sideways as the keypad opens.
-              if (photo != null)
                 ClipRect(
                   child: Align(
-                    alignment: AlignmentDirectional.centerEnd,
-                    widthFactor: 1 - folded,
+                    alignment: Alignment.topCenter,
+                    heightFactor: 1 - folded,
                     child: Opacity(
                       opacity: fade,
-                      child: Padding(
-                        padding: const EdgeInsetsDirectional.only(start: 16, top: 4),
-                        // Just the photo, as on ColorOS: no ring and no ripple.
-                        child: FutureBuilder(
-                          future: ContactsRepository.instance.fullPhoto(contact!.id),
-                          builder: (context, full) =>
-                              LetterAvatar(name: name, photo: full.data ?? photo, size: avatarSize),
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          for (final (i, subtitle) in subtitles.indexed) ...[
+                            SizedBox(height: i == 0 ? 4 : 2),
+                            Align(
+                              alignment: line,
+                              child: Text(
+                                subtitle,
+                                textAlign: textAlign,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 16, color: Colors.white.withValues(alpha: .72)),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                   ),
                 ),
-            ],
-          ),
-          AnimatedSize(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOutCubic,
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: chip == null
-                  ? const SizedBox(width: double.infinity)
-                  : Padding(
-                      key: ValueKey(chip),
-                      padding: const EdgeInsets.only(top: 10),
-                      child: _Badge(label: chip!, bright: true),
-                    ),
+                SizedBox(height: compact ? 12 : 18),
+                CallStatus(
+                  call: call,
+                  sim: sims.length > 1 ? sim : null,
+                  simSlot: sim == null ? 0 : sims.indexOf(sim) + 1,
+                  alignment: line,
+                ),
+              ],
             ),
           ),
+          // The photo folds away sideways as the keypad opens.
+          if (photo != null)
+            ClipRect(
+              child: Align(
+                alignment: AlignmentDirectional.centerEnd,
+                widthFactor: 1 - folded,
+                child: Opacity(
+                  opacity: fade,
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.only(start: 16, top: 4),
+                    // Just the photo, as on ColorOS: no ring and no ripple.
+                    child: FutureBuilder(
+                      future: ContactsRepository.instance.fullPhoto(contact!.id),
+                      builder: (context, full) => LetterAvatar(name: name, photo: full.data ?? photo, size: avatarSize),
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
-
-  /// Long DTMF strings keep their latest digits visible.
-  static String _tail(String digits) => digits.length > 18 ? '…${digits.substring(digits.length - 17)}' : digits;
 }
 
 bool _calling(CallState state) =>
     state == CallState.dialing || state == CallState.connecting || state == CallState.newCall;
-
-/// The transient status toast under the timer ("Muted", "Speaker on").
-class _Badge extends StatelessWidget {
-  const _Badge({required this.label, this.bright = false});
-  final String label;
-  final bool bright;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-    decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: bright ? .18 : .10),
-      borderRadius: BorderRadius.circular(20),
-    ),
-    child: Text(
-      label,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: bright ? Colors.white : Colors.white70),
-    ),
-  );
-}
 
 class CallStatus extends StatefulWidget {
   const CallStatus({super.key, required this.call, this.sim, this.simSlot = 0, this.alignment = Alignment.center});
@@ -551,41 +490,71 @@ class _HdCallGlyph extends StatelessWidget {
   );
 }
 
-class HeldCallChip extends StatelessWidget {
-  const HeldCallChip({super.key, required this.call, required this.onSwap});
+/// The other call, on hold, as a frosted card above the caller: its avatar, name and "On hold",
+/// with a Switch pill. Tapping anywhere on it switches to that call.
+class HeldCallCard extends StatelessWidget {
+  const HeldCallCard({super.key, required this.call, required this.onSwitch});
   final CallInfo call;
-  final VoidCallback onSwap;
+  final VoidCallback onSwitch;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.white.withValues(alpha: 0.12),
-    borderRadius: BorderRadius.circular(24),
-    child: InkWell(
-      onTap: onSwap,
-      borderRadius: BorderRadius.circular(24),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.pause_rounded, size: 18, color: Colors.white70),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                'On hold: ${callerName(call)}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 14, color: Colors.white),
-              ),
+  Widget build(BuildContext context) {
+    final name = callerName(call);
+    return Semantics(
+      button: true,
+      label: 'Switch to $name, on hold',
+      excludeSemantics: true,
+      onTap: onSwitch,
+      child: CallBody(
+        radius: 28,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onSwitch,
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Row(
+              children: [
+                LetterAvatar(name: name, size: 40),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white),
+                      ),
+                      const SizedBox(height: 2),
+                      const Text('On hold', style: TextStyle(fontSize: 13, color: Colors.white60)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const DecoratedBox(
+                  decoration: ShapeDecoration(color: Color(0x29FFFFFF), shape: StadiumBorder()),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.swap_vert_rounded, size: 18, color: Colors.white),
+                        SizedBox(width: 6),
+                        Text(
+                          'Switch',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.white),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            const Text(
-              'Swap',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFFB5E8D1)),
-            ),
-          ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

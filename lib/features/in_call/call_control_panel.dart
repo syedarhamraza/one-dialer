@@ -7,6 +7,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
+import '../../widgets/one_ui_floating_menu.dart';
 import 'call_controls.dart';
 
 /// Actions recede while the keypad rises within one reversible animated panel.
@@ -68,6 +69,39 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
       duration: const Duration(milliseconds: 650),
       reverseDuration: const Duration(milliseconds: 450),
       value: widget.keypadOpen ? 1 : 0,
+    );
+    TelecomBridge.instance.canMeetCall().then((can) {
+      if (mounted && can) setState(() => _canMeet = true);
+    }, onError: (Object _) {});
+  }
+
+  /// Whether Google Meet is installed to take the Video call.
+  bool _canMeet = false;
+  final _moreKey = GlobalKey();
+  final _routeKey = GlobalKey();
+
+  void _openMore(bool merging) {
+    final call = widget.call;
+    final number = call.number ?? '';
+    final canVideo = _canMeet && !call.isPrivate && !call.isConference && number.isNotEmpty;
+    OneUIFloatingMenu.show(
+      context: context,
+      anchorKey: _moreKey,
+      light: true,
+      scale: 1.15,
+      width: 250,
+      items: [
+        // With two calls Merge takes Add call's place in the row, so Add call moves here.
+        if (merging)
+          OneUIFloatingMenuItem(label: 'Add call', icon: Icons.add_call, onTap: TelecomBridge.instance.openDialer),
+        OneUIFloatingMenuItem(label: _hasNote ? 'Edit note' : 'Note', icon: Icons.edit_note_rounded, onTap: _editNote),
+        OneUIFloatingMenuItem(
+          label: 'Video call',
+          icon: Icons.videocam_rounded,
+          enabled: canVideo,
+          onTap: () => TelecomBridge.instance.meetCall(number),
+        ),
+      ],
     );
   }
 
@@ -206,13 +240,14 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
     )!;
     final holding = widget.call.state == CallState.holding;
     final canMerge = widget.callCount > 1 && widget.call.canMerge;
-    final actions = <({IconData icon, String label, bool active, VoidCallback? tap})>[
+    final actions = <({IconData icon, String label, bool active, VoidCallback? tap, Key? key})>[
       (
-        // ColorOS shows the slashed mic either way; muted fills the circle white.
+        // ColorOS shows the slashed mic either way; muted lights the circle.
         icon: Icons.mic_off_rounded,
         label: 'Mute',
         active: widget.audio.muted,
         tap: () => telecom.setMuted(!widget.audio.muted),
+        key: null,
       ),
       (
         icon: Icons.pause_rounded,
@@ -221,13 +256,19 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
         tap: widget.call.canHold || holding
             ? () => holding ? telecom.unhold(widget.call.id) : telecom.hold(widget.call.id)
             : null,
+        key: null,
       ),
-      // Merge only matters with two calls; otherwise the slot holds a note, kept on screen.
       if (canMerge)
-        (icon: Icons.call_merge_rounded, label: 'Merge', active: false, tap: () => telecom.merge(widget.call.id))
+        (
+          icon: Icons.call_merge_rounded,
+          label: 'Merge',
+          active: false,
+          tap: () => telecom.merge(widget.call.id),
+          key: null,
+        )
       else
-        (icon: Icons.edit_note_rounded, label: 'Note', active: _hasNote, tap: _editNote),
-      (icon: Icons.add_call, label: 'Add call', active: false, tap: telecom.openDialer),
+        (icon: Icons.add_call, label: 'Add call', active: false, tap: telecom.openDialer, key: null),
+      (icon: Icons.more_vert_rounded, label: 'More', active: false, tap: () => _openMore(canMerge), key: _moreKey),
     ];
     final route = widget.audio.route;
     final routeLabel = switch (route) {
@@ -283,6 +324,14 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                                     active: action.active,
                                     onPressed: action.tap,
                                     size: actionSize,
+                                    circleKey: action.key,
+                                    // The plus pulls the glyph's box up and right of the handset; nudge it down left so it looks centred.
+                                    glyph: action.icon == Icons.add_call
+                                        ? (color) => Transform.translate(
+                                            offset: Offset(-actionSize * .02, actionSize * .02),
+                                            child: Icon(Icons.add_call, color: color),
+                                          )
+                                        : null,
                                   ),
                                 ),
                             ],
@@ -330,16 +379,13 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                 SizedBox(
                   width: compact ? 72 : 92,
                   child: CallAction(
-                    icon: switch (route) {
-                      AudioRoute.bluetooth => Icons.bluetooth_audio_rounded,
-                      AudioRoute.wiredHeadset => Icons.headset_rounded,
-                      _ => Icons.volume_up_rounded,
-                    },
+                    icon: audioRouteIcon(route == AudioRoute.earpiece ? AudioRoute.speaker : route),
                     label: routeLabel,
                     active: route != AudioRoute.earpiece,
                     size: actionSize,
+                    circleKey: _routeKey,
                     onPressed: widget.audio.supportedRoutes.contains(AudioRoute.bluetooth)
-                        ? () => chooseCallAudioRoute(context, widget.audio)
+                        ? () => chooseCallAudioRoute(context, widget.audio, _routeKey)
                         : () => telecom.setAudioRoute(
                             route == AudioRoute.speaker ? AudioRoute.earpiece : AudioRoute.speaker,
                           ),
@@ -389,24 +435,26 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                                     height: actionSize,
                                     // ColorOS 17's tomato red, lit from below like the other buttons, with
                                     // squircle ends like the keys.
-                                    foregroundDecoration: solidGlow(
+                                    foregroundDecoration: glassGlow(
                                       RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(actionSize / 2)),
                                     ),
-                                    decoration: solidBody(
+                                    decoration: glassBody(
                                       endRed,
                                       RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(actionSize / 2)),
                                       glow: 0,
                                     ),
-                                    child: IconButton(
-                                      tooltip: 'End call',
-                                      iconSize: 41,
-                                      style: IconButton.styleFrom(
-                                        foregroundColor: Colors.white,
-                                        disabledForegroundColor: Colors.white,
-                                        shape: const StadiumBorder(),
+                                    child: Semantics(
+                                      label: 'End call',
+                                      child: IconButton(
+                                        iconSize: 46,
+                                        style: IconButton.styleFrom(
+                                          foregroundColor: Colors.white,
+                                          disabledForegroundColor: Colors.white,
+                                          shape: const StadiumBorder(),
+                                        ),
+                                        onPressed: _ending ? null : _endCall,
+                                        icon: const Icon(Icons.call_end_rounded),
                                       ),
-                                      onPressed: _ending ? null : _endCall,
-                                      icon: const Icon(Icons.call_end_rounded),
                                     ),
                                   ),
                                 ),
@@ -459,7 +507,7 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
 
   Future<void> _editNote() async {
     final at = _noteAt ??= DateTime.now();
-    final hasNote = await editCallNote(context, widget.call.number ?? '', at);
+    final hasNote = await editCallNote(context, widget.call.number ?? '', at, light: true);
     if (mounted) setState(() => _hasNote = hasNote);
   }
 

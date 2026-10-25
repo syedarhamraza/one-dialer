@@ -88,6 +88,22 @@ class DialerPrefs {
     return notes;
   }
 
+  /// Every saved note with when it was started, by [numberKey] (`private` for hidden numbers),
+  /// for Recents' rows.
+  Future<Map<String, List<(DateTime, String)>>> noteIndex() async {
+    const prefix = 'call_note_';
+    final keys = (await _prefs.getKeys()).where((k) => k.startsWith(prefix)).toSet();
+    if (keys.isEmpty) return const {};
+    final index = <String, List<(DateTime, String)>>{};
+    for (final MapEntry(:key, :value) in (await _prefs.getAll(allowList: keys)).entries) {
+      final split = key.lastIndexOf('_');
+      final millis = int.tryParse(key.substring(split + 1));
+      if (millis == null || split < prefix.length || value is! String) continue;
+      (index[key.substring(prefix.length, split)] ??= []).add((DateTime.fromMillisecondsSinceEpoch(millis), value));
+    }
+    return index;
+  }
+
   /// The SIM id (see `SimCard.id`) calls to this contact should use; null = ask / Android default.
   Future<String?> contactSim(String contactId) => _prefs.getString('contact_sim_$contactId');
 
