@@ -85,29 +85,9 @@ class InCallActivity : FlutterActivity() {
     override fun onStart() {
         super.onStart()
         setFullScreen(!isInMultiWindowMode)
-        // Opening over the home screen the window is black for its whole enter animation and a
-        // moment after, whatever the wallpaper; a live one goes black on the lock screen too.
-        val locked = getSystemService(KeyguardManager::class.java).isKeyguardLocked
-        if (!locked || WallpaperBackdrop.isLive(this)) {
-            WallpaperBackdrop.setCover(true)
-            // In case no enter animation runs (onEnterAnimationComplete may not come).
-            window.decorView.postDelayed(uncover, UNCOVER_FALLBACK_MS)
-        }
-    }
-
-    private val uncover = Runnable { WallpaperBackdrop.setCover(false) }
-
-    // The wallpaper shows again ~0.3 s after the open animation ends (a live one redraws, a still
-    // one is just late); keep the cover a little past that, then Flutter fades it out.
-    override fun onEnterAnimationComplete() {
-        super.onEnterAnimationComplete()
-        window.decorView.removeCallbacks(uncover)
-        window.decorView.postDelayed(uncover, UNCOVER_AFTER_ANIMATION_MS)
     }
 
     override fun onStop() {
-        window.decorView.removeCallbacks(uncover)
-        WallpaperBackdrop.setCover(false)
         setFullScreen(false)
         super.onStop()
     }
@@ -157,9 +137,6 @@ class InCallActivity : FlutterActivity() {
 
         /** Heavy, like ColorOS: only the wallpaper's colours and shapes survive. */
         private const val BLUR_RADIUS = 120
-
-        private const val UNCOVER_AFTER_ANIMATION_MS = 450L
-        private const val UNCOVER_FALLBACK_MS = 1500L
 
         fun intent(context: Context): Intent =
             Intent(context, InCallActivity::class.java)

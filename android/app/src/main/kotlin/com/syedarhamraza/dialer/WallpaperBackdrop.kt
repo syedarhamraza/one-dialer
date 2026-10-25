@@ -18,23 +18,6 @@ object WallpaperBackdrop {
     var blur = false
         private set
 
-    /**
-     * A live wallpaper stops drawing while hidden; when the call window takes it over at the end
-     * of its open animation it's black for a moment while it redraws. Flutter covers it meanwhile.
-     */
-    var cover = false
-        private set
-
-    fun setCover(enabled: Boolean) {
-        if (cover == enabled) return
-        cover = enabled
-        notifyChanged()
-    }
-
-    /** Whether the system wallpaper is a live one (none of this applies to a still image). */
-    fun isLive(context: Context) = runCatching { WallpaperManager.getInstance(context).wallpaperInfo != null }
-        .getOrDefault(false)
-
     /** Whether [InCallActivity] has reported [blur] yet. */
     private var reported = false
 
@@ -73,7 +56,6 @@ object WallpaperBackdrop {
             // The engine is warmed before the call window exists; ask the system then, so the
             // first frame doesn't paint the dark fallback and flash black before the wallpaper.
             "blur" to if (reported) blur else systemBlur(context),
-            "cover" to cover,
             "colors" to listOfNotNull(colors?.primaryColor, colors?.secondaryColor, colors?.tertiaryColor)
                 // As unsigned ARGB, which Dart's Color takes as is.
                 .map { it.toArgb().toLong() and 0xFFFFFFFFL },
