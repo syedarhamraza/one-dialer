@@ -14,7 +14,7 @@ void main() {
             color: Colors.green,
             icon: Icons.call,
             label: 'Answer',
-            onTriggered: (ball) {
+            onTriggered: (ball, _) {
               fired.add('answer');
               released = ball;
             },

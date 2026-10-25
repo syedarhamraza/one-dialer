@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
@@ -144,7 +143,8 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     if (MediaQuery.disableAnimationsOf(context)) {
       _entrance.value = 1;
     } else if (_entrance.value == 0 && !_entrance.isAnimating) {
-      _entrance.forward();
+      // Just answered by swipe: the controls fade in quickly as the ball flies (ColorOS).
+      _entrance.animateTo(1, duration: _ball != null ? const Duration(milliseconds: 150) : null);
     }
   }
 
@@ -164,18 +164,26 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   Rect? _ball;
   Timer? _ballTimeout;
 
-  /// Runs the glass package's snappy spring, so the ball lands with a slight overshoot.
-  late final AnimationController _fly = AnimationController.unbounded(vsync: this)
+  /// How far (global px) the released ball glides on up to the top of its travel, as on ColorOS.
+  double _lift = 0;
+  late final AnimationController _rise = AnimationController(vsync: this, duration: const Duration(milliseconds: 170));
+
+  /// The flight, linear: [_flyingBall] eases each part on its own timeline.
+  late final AnimationController _fly = AnimationController(vsync: this, duration: const Duration(milliseconds: 700))
     ..addStatusListener((status) {
       if (status == AnimationStatus.completed) _land();
     });
   final _endKey = GlobalKey();
   final _stackKey = GlobalKey();
 
-  void _answered(Rect ball) {
+  void _answered(Rect ball, double lift) {
     TelecomBridge.instance.answer(widget.call.id);
     if (MediaQuery.disableAnimationsOf(context) || ball.isEmpty) return;
-    setState(() => _ball = ball);
+    setState(() {
+      _ball = ball;
+      _lift = lift;
+    });
+    _rise.forward(from: 0);
     // If Telecom never connects, don't leave the ball hanging.
     _ballTimeout = Timer(const Duration(seconds: 4), _land);
   }
@@ -189,10 +197,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   void _launchBall() {
     if (_ball == null || _fly.isAnimating) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _ball != null && !_fly.isAnimating) {
-        // Fast at first, slowing into place, a touch past it (~1%) and floating gently back (ColorOS).
-        _fly.animateTo(1, duration: const Duration(milliseconds: 850), curve: const Cubic(.2, 1, .25, 1.04));
-      }
+      if (mounted && _ball != null && !_fly.isAnimating) _fly.forward(from: 0);
     });
   }
 
@@ -203,63 +208,76 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     return MatrixUtils.transformRect(stack.getTransformTo(null)..invert(), global);
   }
 
+  // Fitted frame by frame to a ColorOS 17 recording: the ball drops in ~350 ms (fast from the start)
+  // while it slides across over the whole 700 ms, so it curves in from above, carrying ~1% past End
+  // to the left and drifting slowly back. It stretches to the pill alongside the drop, stays green
+  // for the first ~100 ms, then crossfades to red as the handset tips over.
+  static const _slide = Cubic(.15, 0, .2, 1.14);
+  static const _drop = Interval(0, .5, curve: Cubic(.25, .1, .25, 1));
+  static const _stretch = Interval(0, .5, curve: Curves.easeOutCubic);
+  static const _turn = Interval(.14, .43, curve: Curves.easeInOut);
+  static const _hangUpIn = Interval(.43, .6);
+  static const _handsetOut = Interval(.6, .75);
+
   Widget _flyingBall() {
-    final from = _localRect(_ball!);
+    final from = _localRect(_ball!.shift(Offset(0, -_lift * Curves.easeOutCubic.transform(_rise.value))));
     final endBox = _endKey.currentContext?.findRenderObject() as RenderBox?;
     final to = endBox == null || !endBox.hasSize
         ? null
         : _localRect(MatrixUtils.transformRect(endBox.getTransformTo(null), Offset.zero & endBox.size));
     if (from == null) return const SizedBox.shrink();
     final t = to == null ? 0.0 : _fly.value;
-    final settled = t.clamp(0.0, 1.0);
-    // ColorOS's path curves: the ball drops first, then sweeps across into the pill (a quadratic
-    // Bezier bending toward the point below the ball, level with End).
     final Rect rect;
     if (to == null) {
       rect = from;
     } else {
-      // Bends only part way toward the corner below the ball, for a gentle arc.
-      final bend = Offset.lerp((from.center + to.center) / 2, Offset(from.center.dx, to.center.dy), .25)!;
-      // The path itself stops on End; the curve's small overshoot carries the ball on to the left
-      // and a little up past it (as on ColorOS), then back into place.
-      final p = settled;
-      final u = 1 - p;
-      final centre = from.center * (u * u) + bend * (2 * u * p) + to.center * (p * p);
-      final past = math.max(0.0, t - 1) * (to.center - from.center).distance;
+      final down = _drop.transform(t);
+      final grow = _stretch.transform(t);
       rect = Rect.fromCenter(
-        center: centre + _overshoot * past,
-        width: lerpDouble(from.width, to.width, p)!,
-        height: lerpDouble(from.height, to.height, p)!,
+        center: Offset(
+          lerpDouble(from.center.dx, to.center.dx, _slide.transform(t))!,
+          lerpDouble(from.center.dy, to.center.dy, down)!,
+        ),
+        width: lerpDouble(from.width, to.width, grow)!,
+        height: lerpDouble(from.height, to.height, grow)!,
       );
     }
-    // The ball wears the End pill's finish the whole way, its colour morphing from Answer's green
-    // through orange to End's red, so it lands as the pill itself.
-    final color = _ballColor.transform(settled)!;
+    // Green crossfades to End's red (not a colour tween): half way both layers are half see-through,
+    // the muddy amber of ColorOS's morph. It lands as the pill itself.
+    final red = _turn.transform(t);
     // The same shared finish as the End pill, so the hand-off on landing is invisible.
     final shape = RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(rect.shortestSide / 2));
-    final iconSize = lerpDouble(from.shortestSide * .52, 46, settled)!;
-    // The handset tips over and hands off to the hang-up glyph as it lands.
-    final handoff = const Interval(.6, 1).transform(settled);
+    final iconSize = lerpDouble(from.shortestSide * .52, 46, red)!;
     return Positioned.fromRect(
       rect: rect,
       child: IgnorePointer(
         child: Container(
           key: const ValueKey('answer-flight'),
-          decoration: glassBody(color, shape),
           foregroundDecoration: glassGlow(shape),
           alignment: Alignment.center,
           child: Stack(
+            fit: StackFit.expand,
             alignment: Alignment.center,
             children: [
               Opacity(
-                opacity: 1 - handoff,
+                opacity: 1 - red,
+                child: DecoratedBox(decoration: glassBody(answerGreen, shape)),
+              ),
+              Opacity(
+                opacity: red,
+                child: DecoratedBox(decoration: glassBody(endRed, shape)),
+              ),
+              // The handset tips over, then End's hang-up glyph fades in over it and only then does
+              // the handset fade out underneath: never dimmed, and it lands already as End's icon.
+              Opacity(
+                opacity: 1 - _handsetOut.transform(t),
                 child: Transform.rotate(
-                  angle: 2.36 * settled,
+                  angle: 2.36 * red,
                   child: Icon(Icons.call_rounded, color: Colors.white, size: iconSize),
                 ),
               ),
               Opacity(
-                opacity: handoff,
+                opacity: _hangUpIn.transform(t),
                 child: Icon(Icons.call_end_rounded, color: Colors.white, size: iconSize),
               ),
             ],
@@ -268,21 +286,6 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
       ),
     );
   }
-
-  /// Which way the landing overshoots: left, lifting slightly (a unit vector).
-  static final _overshoot = const Offset(-1, -.3) / const Offset(-1, -.3).distance;
-
-  static final _ballColor = TweenSequence<Color?>([
-    TweenSequenceItem(
-      tween: ColorTween(begin: answerGreen, end: const Color(0xFFF5A04A)),
-      weight: 1,
-    ),
-    TweenSequenceItem(
-      // End's red, so the hand-off to the real pill is seamless.
-      tween: ColorTween(begin: const Color(0xFFF5A04A), end: endRed),
-      weight: 1,
-    ),
-  ]);
 
   void _toggleKeypad() {
     if (_keypadOpen) TelecomBridge.instance.stopDtmf(widget.call.id);
@@ -325,6 +328,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   void dispose() {
     _ballTimeout?.cancel();
     _fly.dispose();
+    _rise.dispose();
     _morph.dispose();
     _entrance.dispose();
     super.dispose();
@@ -470,7 +474,8 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
               ),
             ),
           ),
-          if (_ball != null) AnimatedBuilder(animation: _fly, builder: (context, _) => _flyingBall()),
+          if (_ball != null)
+            AnimatedBuilder(animation: Listenable.merge([_rise, _fly]), builder: (context, _) => _flyingBall()),
         ],
       ),
     );
