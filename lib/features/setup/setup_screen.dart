@@ -27,6 +27,7 @@ class _SetupScreenState extends State<SetupScreen> {
     await TelecomBridge.instance.requestDefaultDialer();
     // The role grants phone, contacts and call log; notifications still need asking.
     await Permission.notification.request();
+    await Permission.bluetoothConnect.request(); // names the watch and earbuds in a call's audio menu
     if (mounted) setState(() => _asking = false);
     widget.onDone();
   }

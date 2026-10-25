@@ -58,7 +58,7 @@ In-app updates (Settings › Software update) only work on Play-installed builds
 ### App content › Permissions declaration (call log / phone)
 
 - **Core functionality:** Default Phone handler (the app is a dialer and asks to be the default phone app on first launch).
-- Permissions: `READ_CALL_LOG`, `WRITE_CALL_LOG` (Recents, missed and blocked calls, deleting history), `CALL_PHONE`, `READ_PHONE_STATE` (placing calls, choosing SIMs).
+- Permissions: `READ_CALL_LOG`, `WRITE_CALL_LOG` (Recents, missed and blocked calls, deleting history), `CALL_PHONE`, `READ_PHONE_STATE` (placing calls, choosing SIMs). `BLUETOOTH_CONNECT` (no form) names the Bluetooth devices in the call's audio menu.
 - Video: record a short screen capture of the setup screen → "Set as default" → making a call → Recents. Play asks for one.
 
 ### Full-screen intent (`USE_FULL_SCREEN_INTENT`)

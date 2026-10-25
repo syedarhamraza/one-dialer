@@ -190,5 +190,8 @@ class TelecomBridge {
 
   Future<void> setAudioRoute(AudioRoute route) => _methods.invokeMethod('setAudioRoute', {'route': route.name});
 
+  /// Moves the call to one Bluetooth device ([AudioInfo.bluetoothDevices]' id).
+  Future<void> setBluetoothDevice(String id) => _methods.invokeMethod('setBluetoothDevice', {'id': id});
+
   Future<void> _call(String method, String id) => _methods.invokeMethod(method, {'id': id});
 }

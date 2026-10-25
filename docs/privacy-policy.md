@@ -14,6 +14,7 @@ When you make One Dialer your default phone app, Android gives it access to:
 | **Call history** | Showing Recents, missed calls and blocked calls; deleting calls you choose to delete |
 | **Contacts** | Showing names and photos for calls, contact search, favourites and speed dial; importing contacts from your SIM card or a .vcf file you pick, exporting them to a .vcf you share, and merging duplicates (Manage contacts) |
 | **Notifications** | Showing incoming, ongoing and missed calls |
+| **Nearby devices** (Bluetooth) | Showing the names of your connected Bluetooth devices (a watch, earbuds) so you can pick which one a call uses; nothing is sent anywhere |
 | **Blocked numbers** | Blocking and unblocking numbers you choose |
 
 ## Where your data goes
