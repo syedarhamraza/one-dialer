@@ -443,7 +443,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('typed digits replace the caller name while the keypad is open', (tester) async {
+  testWidgets('typed digits show above the keypad, under the caller name', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
     await tester.tap(control('Dial pad'));
@@ -453,7 +453,9 @@ void main() {
     await tester.tap(find.bySemanticsLabel('2'));
     await tester.pumpAndSettle();
     expect(find.text('42'), findsOneWidget);
-    expect(find.text('Alex Morgan'), findsOneWidget); // Now the subtitle.
+    expect(find.text('Alex Morgan'), findsOneWidget); // Still the title.
+    expect(tester.getRect(find.text('42')).bottom, lessThanOrEqualTo(tester.getRect(find.bySemanticsLabel('1')).top));
+    expect(tester.getRect(find.text('42')).top, greaterThan(tester.getRect(find.text('Alex Morgan')).bottom));
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(find.text('42'), findsNothing);

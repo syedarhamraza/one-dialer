@@ -85,7 +85,10 @@ class InCallActivity : FlutterActivity() {
     override fun onStart() {
         super.onStart()
         setFullScreen(!isInMultiWindowMode)
-        if (WallpaperBackdrop.isLive(this)) {
+        // Opening over the home screen the window is black for its whole enter animation and a
+        // moment after, whatever the wallpaper; a live one goes black on the lock screen too.
+        val locked = getSystemService(KeyguardManager::class.java).isKeyguardLocked
+        if (!locked || WallpaperBackdrop.isLive(this)) {
             WallpaperBackdrop.setCover(true)
             // In case no enter animation runs (onEnterAnimationComplete may not come).
             window.decorView.postDelayed(uncover, UNCOVER_FALLBACK_MS)
@@ -94,8 +97,8 @@ class InCallActivity : FlutterActivity() {
 
     private val uncover = Runnable { WallpaperBackdrop.setCover(false) }
 
-    // The live wallpaper goes black right as the open animation ends, for ~0.2 s while it redraws
-    // (seen on vivo's LightShadow); keep the cover a little past that, then Flutter fades it out.
+    // The wallpaper shows again ~0.3 s after the open animation ends (a live one redraws, a still
+    // one is just late); keep the cover a little past that, then Flutter fades it out.
     override fun onEnterAnimationComplete() {
         super.onEnterAnimationComplete()
         window.decorView.removeCallbacks(uncover)

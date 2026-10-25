@@ -135,21 +135,11 @@ String? backdropSeed(CallInfo call) {
 }
 
 class CallHeader extends StatelessWidget {
-  const CallHeader({
-    super.key,
-    required this.call,
-    required this.sims,
-    required this.compact,
-    this.keypadProgress = 0,
-    this.digits = '',
-  });
+  const CallHeader({super.key, required this.call, required this.sims, required this.compact, this.keypadProgress = 0});
   final CallInfo call;
   final List<SimCard> sims;
   final bool compact;
   final double keypadProgress;
-
-  /// Typed DTMF digits; while the keypad is open they take the title's place.
-  final String digits;
 
   @override
   Widget build(BuildContext context) {
@@ -161,108 +151,108 @@ class CallHeader extends StatelessWidget {
     final k = keypadProgress.clamp(0.0, 1.0);
     final fade = 1 - Curves.easeOut.transform(k);
     final avatarSize = compact ? 60.0 : 76.0;
-    final showDigits = digits.isNotEmpty && k > .5;
     // ColorOS 17: a contact with a photo gets name, number and status on the left and the photo in
-    // a circle on the right; everyone else gets them centred with no circle. With the keypad open
-    // the photo folds away and the typed digits take the title's place, centred.
+    // a circle on the right; everyone else gets them centred with no circle. As the keypad opens
+    // the photo folds away, the lines glide to the centre and the number and city fold up, all
+    // with the keypad's progress.
     final photo = contact?.thumbnail;
-    final centred = photo == null || k > .5;
-    final align = centred ? CrossAxisAlignment.center : CrossAxisAlignment.start;
-    final textAlign = centred ? TextAlign.center : TextAlign.start;
+    final folded = Curves.easeInOutCubic.transform(k);
+    final line = AlignmentDirectional(photo == null ? 0 : folded - 1, -1);
+    final textAlign = photo == null || folded == 1 ? TextAlign.center : TextAlign.start;
     // ColorOS puts the number and the city on lines of their own.
-    final subtitles = showDigits
-        ? [name]
-        : [
-            if (name != shownNumber && shownNumber.isNotEmpty && !call.isPrivate && !call.isConference) shownNumber,
-            ?call.location,
-          ];
+    final subtitles = [
+      if (name != shownNumber && shownNumber.isNotEmpty && !call.isPrivate && !call.isConference) shownNumber,
+      ?call.location,
+    ];
     final held = call.state == CallState.holding;
     final ended = call.state == CallState.disconnected || call.state == CallState.disconnecting;
-    final folded = Curves.easeInOutCubic.transform(k);
     return AnimatedOpacity(
       opacity: ended ? .6 : (held ? .55 : 1),
       duration: const Duration(milliseconds: 250),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: align,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: align,
-                  children: [
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 160),
-                      child: Text(
-                        showDigits ? _tail(digits) : name,
-                        key: ValueKey(showDigits),
-                        textAlign: textAlign,
-                        maxLines: showDigits ? 1 : 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: compact ? 26 : 32,
-                          height: 1.15,
-                          // Medium, not bold: vivo's system font draws 700 very heavy.
-                          fontWeight: showDigits ? FontWeight.w400 : FontWeight.w500,
-                          letterSpacing: showDigits ? 2 : 0,
-                          color: Colors.white,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
-                      ),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Align(
+                  alignment: line,
+                  child: Text(
+                    name,
+                    textAlign: textAlign,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: compact ? 26 : 32,
+                      height: 1.15,
+                      // Medium, not bold: vivo's system font draws 700 very heavy.
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
                     ),
-                    for (final (i, line) in subtitles.indexed) ...[
-                      SizedBox(height: i == 0 ? 4 : 2),
-                      Text(
-                        line,
-                        textAlign: textAlign,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 16, color: Colors.white.withValues(alpha: .72)),
-                      ),
-                    ],
-                    SizedBox(height: compact ? 12 : 18),
-                    CallStatus(
-                      call: call,
-                      sim: sims.length > 1 ? sim : null,
-                      simSlot: sim == null ? 0 : sims.indexOf(sim) + 1,
-                      alignment: centred ? Alignment.center : AlignmentDirectional.centerStart,
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              // The photo folds away sideways as the keypad opens.
-              if (photo != null)
                 ClipRect(
                   child: Align(
-                    alignment: AlignmentDirectional.centerEnd,
-                    widthFactor: 1 - folded,
+                    alignment: Alignment.topCenter,
+                    heightFactor: 1 - folded,
                     child: Opacity(
                       opacity: fade,
-                      child: Padding(
-                        padding: const EdgeInsetsDirectional.only(start: 16, top: 4),
-                        // Just the photo, as on ColorOS: no ring and no ripple.
-                        child: FutureBuilder(
-                          future: ContactsRepository.instance.fullPhoto(contact!.id),
-                          builder: (context, full) =>
-                              LetterAvatar(name: name, photo: full.data ?? photo, size: avatarSize),
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          for (final (i, subtitle) in subtitles.indexed) ...[
+                            SizedBox(height: i == 0 ? 4 : 2),
+                            Align(
+                              alignment: line,
+                              child: Text(
+                                subtitle,
+                                textAlign: textAlign,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 16, color: Colors.white.withValues(alpha: .72)),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                   ),
                 ),
-            ],
+                SizedBox(height: compact ? 12 : 18),
+                CallStatus(
+                  call: call,
+                  sim: sims.length > 1 ? sim : null,
+                  simSlot: sim == null ? 0 : sims.indexOf(sim) + 1,
+                  alignment: line,
+                ),
+              ],
+            ),
           ),
-          const SizedBox(width: double.infinity),
+          // The photo folds away sideways as the keypad opens.
+          if (photo != null)
+            ClipRect(
+              child: Align(
+                alignment: AlignmentDirectional.centerEnd,
+                widthFactor: 1 - folded,
+                child: Opacity(
+                  opacity: fade,
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.only(start: 16, top: 4),
+                    // Just the photo, as on ColorOS: no ring and no ripple.
+                    child: FutureBuilder(
+                      future: ContactsRepository.instance.fullPhoto(contact!.id),
+                      builder: (context, full) => LetterAvatar(name: name, photo: full.data ?? photo, size: avatarSize),
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
-
-  /// Long DTMF strings keep their latest digits visible.
-  static String _tail(String digits) => digits.length > 18 ? '…${digits.substring(digits.length - 17)}' : digits;
 }
 
 bool _calling(CallState state) =>

@@ -398,31 +398,45 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
                     transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
                     child: controls,
                   );
+                  final heldCard = held != null && !ringing && !ended;
                   final header = _FadeIn(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (held != null && !ringing && !ended) ...[
-                          HeldCallCard(call: held, onSwitch: () => TelecomBridge.instance.unhold(held.id)),
-                          const SizedBox(height: 20),
-                        ],
-                        CallHeader(
-                          call: call,
-                          sims: widget.sims,
-                          compact: compact,
-                          keypadProgress: progress,
-                          digits: _digits,
+                        // The held card slides the caller down as it comes in, and back up as it goes.
+                        AnimatedSize(
+                          duration: switchDuration,
+                          curve: Curves.easeOutCubic,
+                          alignment: Alignment.topCenter,
+                          child: AnimatedSwitcher(
+                            duration: switchDuration,
+                            child: heldCard
+                                ? Padding(
+                                    key: ValueKey(held.id),
+                                    padding: const EdgeInsets.only(bottom: 20),
+                                    child: HeldCallCard(
+                                      call: held,
+                                      onSwitch: () => TelecomBridge.instance.unhold(held.id),
+                                    ),
+                                  )
+                                : const SizedBox(width: double.infinity),
+                          ),
                         ),
+                        CallHeader(call: call, sims: widget.sims, compact: compact, keypadProgress: progress),
                       ],
                     ),
                   );
+                  // As on ColorOS, what's typed shows right above the keys.
+                  final typed = _TypedDigits(digits: _digits, progress: progress, compact: compact);
                   if (landscape) {
                     return Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                       child: Row(
                         children: [
                           Expanded(
-                            child: _scrollArea(Column(mainAxisAlignment: MainAxisAlignment.center, children: [header])),
+                            child: _scrollArea(
+                              Column(mainAxisAlignment: MainAxisAlignment.center, children: [header, typed]),
+                            ),
                           ),
                           const SizedBox(width: 24),
                           Expanded(
@@ -453,6 +467,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
                             ),
                           ),
                         ),
+                        if (!ringing && !ended) typed,
                         animatedControls,
                       ],
                     ),
@@ -463,6 +478,46 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
           ),
           if (_ball != null) AnimatedBuilder(animation: _fly, builder: (context, _) => _flyingBall()),
         ],
+      ),
+    );
+  }
+}
+
+/// The DTMF digits typed on the keypad: one centred line that opens above the keys with the
+/// keypad, its latest digits kept in view.
+class _TypedDigits extends StatelessWidget {
+  const _TypedDigits({required this.digits, required this.progress, required this.compact});
+  final String digits;
+  final double progress;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final open = digits.isEmpty ? 0.0 : progress.clamp(0.0, 1.0);
+    if (open == 0) return const SizedBox.shrink();
+    return ClipRect(
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        heightFactor: open,
+        child: Opacity(
+          opacity: const Interval(.5, 1).transform(open),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              digits.length > 18 ? '…${digits.substring(digits.length - 17)}' : digits,
+              key: const ValueKey('typed-digits'),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              style: TextStyle(
+                fontSize: compact ? 26 : 32,
+                height: 1.15,
+                letterSpacing: 2,
+                color: Colors.white,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
