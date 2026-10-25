@@ -43,9 +43,11 @@ class OneUIScrollPhysics extends BouncingScrollPhysics {
   OneUIScrollPhysics applyTo(ScrollPhysics? ancestor) =>
       OneUIScrollPhysics(parent: buildParent(ancestor), headerSnap: headerSnap);
 
-  // Short and empty pages bounce too.
+  // Short and empty pages bounce too. Sideways scrollers (text fields) don't: a swipe on a
+  // field whose text fits would rubber-band the text.
   @override
-  bool shouldAcceptUserOffset(ScrollMetrics position) => true;
+  bool shouldAcceptUserOffset(ScrollMetrics position) =>
+      position.axis == Axis.vertical || super.shouldAcceptUserOffset(position);
 
   // Flutter's default is 0.52 * (1 - f)²: the pull past an end follows the finger less.
   @override
