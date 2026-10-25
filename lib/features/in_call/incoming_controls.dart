@@ -26,8 +26,9 @@ class IncomingControls extends StatefulWidget {
   final bool Function()? isCurrent;
   final bool compact;
 
-  /// Answers with the released ball's global rect, so the screen can fly it into the End pill.
-  final ValueChanged<Rect>? onAnswer;
+  /// Answers with the released ball's global rect and how far (global px) it still glides up to
+  /// the top of its travel, so the screen can carry it on and fly it into the End pill.
+  final void Function(Rect ball, double lift)? onAnswer;
 
   /// Hides the Answer ball once the screen has taken it over for that flight.
   final bool answerHidden;
@@ -118,7 +119,7 @@ class _IncomingControlsState extends State<IncomingControls> {
                     label: 'Decline',
                     compact: compact,
                     onProgress: (armed) => _progress('Decline', armed),
-                    onTriggered: (_) => telecom.reject(call.id),
+                    onTriggered: (_, _) => telecom.reject(call.id),
                   ),
                 ),
                 Opacity(
@@ -134,7 +135,8 @@ class _IncomingControlsState extends State<IncomingControls> {
                     // Offset so the two hints don't pulse in lockstep.
                     hintPhase: .5,
                     onProgress: (armed) => _progress('Answer', armed),
-                    onTriggered: (ball) => widget.onAnswer != null ? widget.onAnswer!(ball) : telecom.answer(call.id),
+                    onTriggered: (ball, lift) =>
+                        widget.onAnswer != null ? widget.onAnswer!(ball, lift) : telecom.answer(call.id),
                   ),
                 ),
               ],
@@ -193,8 +195,9 @@ class SwipeUpButton extends StatefulWidget {
   final IconData icon;
   final String label;
 
-  /// Gets the ball's global rect where it was released (its resting rect from a screen reader).
-  final ValueChanged<Rect> onTriggered;
+  /// Gets the ball's global rect where it was released (its resting rect from a screen reader) and
+  /// the global distance left to the top of its travel.
+  final void Function(Rect ball, double lift) onTriggered;
 
   /// How armed the drag is, 0 at rest to 1 at [threshold].
   final ValueChanged<double>? onProgress;
@@ -229,6 +232,9 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
   Offset get _offset => _drag * math.max(_hold.value, -.08);
 
   /// Only an upward drag arms, so a downward brush never fires.
+  /// How far up the ball can go: ColorOS's released Answer rests about 1.85 diameters up.
+  double get _maxTravel => _threshold * 1.4;
+
   bool _armedBy(Offset drag) => -drag.dy >= _threshold;
 
   double _armedFraction(Offset drag) => (-drag.dy / _threshold).clamp(0.0, 1.0);
@@ -272,7 +278,9 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
     final rect = box == null || !box.hasSize
         ? Rect.zero
         : MatrixUtils.transformRect(box.getTransformTo(null), Offset.zero & box.size);
-    widget.onTriggered(rect);
+    // The rest of the way to the travel cap, in global px (the screen may be scaled to `DesignWidth`).
+    final scale = box == null || !box.hasSize ? 1.0 : rect.height / box.size.height;
+    widget.onTriggered(rect, math.max(0.0, _maxTravel + _offset.dy) * scale);
   }
 
   void _onStart(DragStartDetails _) {
@@ -289,7 +297,7 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
     if (_fired) return;
     // Straight up only, a little past the threshold; downward can't act, so it only gives a
     // little and never slides under the pill below.
-    final limited = Offset(0, (_drag.dy + d.delta.dy).clamp(-_threshold * 1.3, 16.0));
+    final limited = Offset(0, (_drag.dy + d.delta.dy).clamp(-_maxTravel, 16.0));
     if (_armedBy(_drag) != _armedBy(limited)) HapticFeedback.selectionClick();
     setState(() => _drag = limited);
     widget.onProgress?.call(_armedFraction(_drag));

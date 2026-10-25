@@ -68,17 +68,21 @@ the other button and the pill fade out as it arms.
 
 - Release at least `threshold` (96 px) up to act. The ball moves only vertically (sideways is ignored), up to 1.3× the threshold, and grows and glows as it arms.
 - Touching a ball grows it to 108% (a glass-button press); it settles back on release. Taps never act.
-- **Answer → End**: the released Answer ball stays where it was let go until
-  Telecom connects. Then the session flies it into the End pill along a curve, as
-  on ColorOS: it drops first, then sweeps across (a quadratic Bezier bending
-  25% of the way from the straight line toward the corner below the ball, level
-  with End), fast at first, slowing into place,
-  overshooting about 1% of the trip to the left and a little up, then gently back (850 ms, `Cubic(.2, 1, .25, 1.04)`, a long soft settle so it floats into place). The ball wears the End
-  pill's finish the whole way (the shared `solidBody`/`solidGlow`, squircle shape) while
-  its colour morphs green → orange → End's red, its icon grows to End's size and
-  tips over into the hang-up glyph. The real pill stays hidden until it lands. If
-  the call never connects, the ball is dropped after 4 s. Answering from the
-  notification, or with reduced motion on, skips the flight.
+- **Answer → End** (timed frame by frame off a ColorOS 17 recording): the released Answer ball
+  glides on up to the top of its travel (1.4× the threshold, about 1.85 diameters; 170 ms,
+  ease-out) and waits there until Telecom connects. Then the session flies it into the End pill
+  in 700 ms: it drops in the first 350 ms (`Cubic(.25, .1, .25, 1)`, fast from the start) while
+  sliding across over the whole flight (`Cubic(.15, 0, .2, 1.14)`), so it curves in from above,
+  carries about 1% past End to the left and drifts slowly back; it stretches to the pill's size
+  alongside the drop (first 350 ms, ease-out). It stays green for the first
+  14%, then crossfades (two stacked layers, not a colour tween, so mid-way it reads as a
+  see-through amber) to End's red by 43%, while the
+  handset tips over 135°; End's hang-up glyph then fades in over it before the handset fades out
+  underneath (so the icon never dims or jumps on landing). The ball wears the End
+  pill's finish the whole way (the shared `solidBody`/`solidGlow`, squircle shape), and the
+  connected controls fade in over 150 ms as it flies. The real pill stays hidden until it lands.
+  If the call never connects, the ball is dropped after 4 s. Answering from the notification, or
+  with reduced motion on, skips the flight.
 - Anything shorter springs back on `GlassSpring.snappy`, carrying a third of the fling, wobbling at most 8% past rest (never through to the other side). Downward drags give only 16 px.
 - Taps never answer or decline.
 - The button grows and glows as it arms.

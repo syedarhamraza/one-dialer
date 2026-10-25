@@ -167,7 +167,7 @@ void main() {
     expect(tester.getRect(ball), isNot(released));
     expect(endOpacity(), 0);
 
-    // The flight overshoots a little and eases back; it has landed well within a second.
+    // The flight has landed well within a second.
     for (var i = 0; i < 10; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
