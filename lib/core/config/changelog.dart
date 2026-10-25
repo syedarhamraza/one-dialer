@@ -26,7 +26,7 @@ class Changelog {
   static const List<ChangelogEntry> entries = [
     ChangelogEntry(
       version: '1.0.0-beta.4',
-      date: inDevelopment,
+      date: Changelog.inDevelopment,
       changes: [
         'Block & filter and the contact picker can now be searched',
         'Adding a contact whose number or name is already saved (also from a QR code) asks first',
