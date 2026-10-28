@@ -170,10 +170,10 @@ class OneUIPalette {
 
   /// ColorOS 17 light: grey page, white cards, black text.
   static const light = OneUIPalette._(
-    page: Color(0xFFF2F2F6),
+    page: Color(0xFFE9E9EE),
     card: Color(0xFFFFFFFF),
-    cardHighlight: Color(0xFFE8E8EC),
-    pill: Color(0xFFE6E6EA),
+    cardHighlight: Color(0xFFF0F0F3),
+    pill: Color(0xFFF5F5F8),
     textPrimary: Color(0xFF000000),
     textSecondary: Color(0xFF6E6E73),
     textTertiary: Color(0xFFA1A1A6),
