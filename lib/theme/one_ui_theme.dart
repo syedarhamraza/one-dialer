@@ -136,12 +136,6 @@ class OneUIPalette {
   static const lightFloating = Color(0xCCF8F8FA);
   static const lightModal = Color(0xEBF8F8FA);
 
-  /// A soft drop shadow lifting light glass off the page; drawn only outside the shape, so the
-  /// translucent glass doesn't turn grey.
-  static const lightGlassShadow = [
-    BoxShadow(color: Color(0x26000000), blurRadius: 14, offset: Offset(0, 3), blurStyle: BlurStyle.outer),
-  ];
-
   bool get isLight => identical(this, light);
 
   /// [g], a black page fade, redrawn in the light page colour (same alphas).

@@ -202,21 +202,6 @@ class _PopoverMenu extends StatelessWidget {
                 radius: OneUIFloatingMenu._radius * size,
                 child: Stack(
                   children: [
-                    if (context.palette.isLight)
-                      Positioned.fromRect(
-                        rect: glass,
-                        child: DecoratedBox(
-                          decoration: ShapeDecoration(
-                            shape: RoundedSuperellipseBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(OneUIFloatingMenu._radius * size * scale)),
-                            ),
-                            shadows: [
-                              for (final s in OneUIPalette.lightGlassShadow)
-                                s.copyWith(color: s.color.withValues(alpha: s.color.a * fade)),
-                            ],
-                          ),
-                        ),
-                      ),
                     Positioned.fromRect(
                       rect: glass,
                       child: ClipRSuperellipse(
