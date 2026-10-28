@@ -212,11 +212,17 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
   /// "Choose SIM and call" is offered only with two SIMs; with one, a saved `sim` reads as details.
   bool _dualSim = false;
 
+  /// Android 17 lets VoIP apps share their calls with Recents; earlier phones have no switch for it.
+  bool _appCallLog = false;
+
   @override
   void initState() {
     super.initState();
     _telecom.getSims().then((s) {
       if (mounted) setState(() => _dualSim = s.length > 1);
+    });
+    _telecom.getCallHealth().then((h) {
+      if (mounted) setState(() => _appCallLog = (h['sdk'] as int? ?? 0) >= 37);
     });
   }
 
@@ -254,6 +260,12 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
               labels: _themeLabels,
               onPick: DialerPrefs.instance.setThemeMode,
             ),
+            if (_appCallLog)
+              OneUIGroupItem(
+                title: 'Calls from other apps',
+                subtitle: "Show WhatsApp and other apps' calls in Recents",
+                onTap: () => _openSystem('voipCallLog'),
+              ),
           ],
         ),
         OneUIGroupCard(

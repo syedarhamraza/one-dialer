@@ -23,6 +23,7 @@ import '../in_call/call_controls.dart';
 import '../keypad/keypad_screen.dart';
 import '../settings/settings_screen.dart';
 import 'call_details_screen.dart';
+import 'app_calls.dart';
 import 'call_log.dart';
 import 'call_log_repository.dart';
 import 'delete_calls.dart';
@@ -51,6 +52,9 @@ class _RecentsScreenState extends State<RecentsScreen> {
   final _menuKey = GlobalKey();
   final _addKey = GlobalKey();
   CallFilter _filter = CallFilter.all;
+
+  /// Only calls VoIP apps (WhatsApp...) shared with the call log; combines with All/Missed.
+  bool _appsOnly = false;
   bool _hideBlocked = true;
   Set<int>? _selected; // call ids; null when not selecting
 
@@ -114,6 +118,12 @@ class _RecentsScreenState extends State<RecentsScreen> {
   }
 
   List<OneUIFloatingMenuItem> _menuItems() => [
+    // Only offered once an app has shared calls (Android 16.1+ with the app's call-log integration).
+    if (_appsOnly || _repo.calls.value.any((c) => c.isApp))
+      OneUIFloatingMenuItem(
+        label: _appsOnly ? 'Show all calls' : 'Show app calls only',
+        onTap: () => setState(() => _appsOnly = !_appsOnly),
+      ),
     OneUIFloatingMenuItem(
       label: _hideBlocked ? 'Show blocked calls' : 'Hide blocked calls',
       onTap: () => DialerPrefs.instance.setHideBlockedCalls(!_hideBlocked),
@@ -237,22 +247,24 @@ class _RecentsScreenState extends State<RecentsScreen> {
   List<CallLogEntry> get _visibleCalls => [
     for (final c in _repo.calls.value)
       if (_filter.matches(c, hideBlocked: _hideBlocked) &&
+          (!_appsOnly || c.isApp) &&
           !(_hideBlocked && !c.isPrivate && BlockingRepository.instance.isBlocked(c.number)))
         c,
   ];
 
   // groupByDay is only redone when the calls or the filter change, not on every selection tap.
-  (List<CallLogEntry>, CallFilter, bool, List<String>)? _groupedFor;
+  (List<CallLogEntry>, CallFilter, bool, List<String>, bool)? _groupedFor;
   List<(DateTime, List<CallGroup>)> _days = const [];
 
   List<(DateTime, List<CallGroup>)> get _groupedDays {
-    final key = (_repo.calls.value, _filter, _hideBlocked, BlockingRepository.instance.numbers.value);
+    final key = (_repo.calls.value, _filter, _hideBlocked, BlockingRepository.instance.numbers.value, _appsOnly);
     final old = _groupedFor;
     if (old == null ||
         !identical(old.$1, key.$1) ||
         old.$2 != key.$2 ||
         old.$3 != key.$3 ||
-        !identical(old.$4, key.$4)) {
+        !identical(old.$4, key.$4) ||
+        old.$5 != key.$5) {
       _groupedFor = key;
       _days = groupByDay(_visibleCalls);
     }
@@ -355,7 +367,13 @@ class _RecentsScreenState extends State<RecentsScreen> {
                     ),
                   )
                 else if (groups.isEmpty)
-                  _Empty(text: _filter == CallFilter.all ? 'No recent calls' : 'No ${_filter.label.toLowerCase()}')
+                  _Empty(
+                    text: _appsOnly
+                        ? 'No app calls'
+                        : _filter == CallFilter.all
+                        ? 'No recent calls'
+                        : 'No ${_filter.label.toLowerCase()}',
+                  )
                 else
                   // Lazy: only the rows on screen are built.
                   SliverList.builder(
@@ -381,6 +399,10 @@ class _RecentsScreenState extends State<RecentsScreen> {
     // pick a SIM from our menu and call.
     void tap(BuildContext row) {
       if (_selected != null) return _toggle(group);
+      if (call.isApp) {
+        showAppCallBack(context, call, anchorContext: row);
+        return;
+      }
       final choice = DialerPrefs.instance.recentTap.value;
       final callable = !call.isPrivate && call.number.isNotEmpty;
       if (choice == 'sim' && callable && _sims.length > 1) {
@@ -688,7 +710,10 @@ class _CallRow extends StatelessWidget {
         child: Row(
           children: [
             selectMark,
-            CallerAvatar(number: call.number, name: name, isPrivate: call.isPrivate),
+            AppBadged(
+              package: call.appPackage,
+              child: CallerAvatar(number: call.number, name: name, isPrivate: call.isPrivate),
+            ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -710,10 +735,14 @@ class _CallRow extends StatelessWidget {
                     children: [
                       CallTypeIcon(type: call.type, muted: true),
                       const SizedBox(width: 6),
-                      if (simBadge != null) ...[SimBadge(badge: simBadge!), const SizedBox(width: 6)],
+                      if (simBadge != null && !call.isApp) ...[SimBadge(badge: simBadge!), const SizedBox(width: 6)],
                       Flexible(
                         child: Text(
-                          name == call.number || call.isPrivate ? callTypeLabel(call.type) : call.number,
+                          call.isApp
+                              ? appCallLabel(call)
+                              : name == call.number || call.isPrivate
+                              ? callTypeLabel(call.type)
+                              : call.number,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(fontSize: 14, color: context.palette.textSecondary),

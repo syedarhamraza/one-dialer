@@ -14,6 +14,9 @@ class CallLogEntry {
     this.simId,
     this.isPrivate = false,
     this.isNew = false,
+    this.app,
+    this.appPackage,
+    this.isVideo = false,
   });
 
   factory CallLogEntry.fromMap(Map<Object?, Object?> map) {
@@ -28,6 +31,9 @@ class CallLogEntry {
       simId: map['simId'] as String?,
       isPrivate: presentation == 'private' || presentation == 'unknown',
       isNew: map['isNew'] as bool? ?? false,
+      app: map['app'] as String?,
+      appPackage: map['appPackage'] as String?,
+      isVideo: map['video'] as bool? ?? false,
     );
   }
 
@@ -47,10 +53,16 @@ class CallLogEntry {
   final bool isPrivate;
   final bool isNew;
 
+  /// The calling app (WhatsApp...) for a call it shared with the call log; null for SIM calls.
+  final String? app;
+  final String? appPackage;
+  final bool isVideo;
+
   bool get isMissed => type == CallType.missed;
+  bool get isApp => appPackage != null;
 }
 
-/// Consecutive calls with the same number and kind on the same day, shown as one row
+/// Consecutive calls with the same number, app and kind on the same day, shown as one row
 /// with a count, like Samsung. A missed call never merges with answered ones.
 class CallGroup {
   CallGroup(this.calls);
@@ -85,6 +97,7 @@ List<(DateTime, List<CallGroup>)> groupByDay(List<CallLogEntry> calls) {
         !call.isPrivate &&
         !last.isPrivate &&
         numberKey(last.number) == numberKey(call.number) &&
+        last.appPackage == call.appPackage &&
         last.isMissed == call.isMissed;
     if (sameRow) {
       groups.last.calls.add(call);

@@ -14,6 +14,7 @@ import '../../widgets/round_header_controls.dart';
 import '../blocking/blocking_repository.dart';
 import '../contacts/contact_details_screen.dart';
 import '../contacts/editor/add_to_contacts.dart';
+import 'app_calls.dart';
 import 'call_log.dart';
 import 'call_log_repository.dart';
 import 'recents_screen.dart';
@@ -72,11 +73,15 @@ class CallDetailsScreen extends StatelessWidget {
                         SliverList.list(
                           children: [
                             Center(
-                              child: CallerAvatar(
-                                number: call.number,
-                                name: name,
-                                isPrivate: call.isPrivate,
-                                size: 112,
+                              child: AppBadged(
+                                package: call.appPackage,
+                                size: 32,
+                                child: CallerAvatar(
+                                  number: call.number,
+                                  name: name,
+                                  isPrivate: call.isPrivate,
+                                  size: 112,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -98,6 +103,15 @@ class CallDetailsScreen extends StatelessWidget {
                               Row(
                                 spacing: 12,
                                 children: [
+                                  // An app's call: call back through that app (from the details page a tap is deliberate).
+                                  if (call.isApp)
+                                    Expanded(
+                                      child: DetailsActionTile(
+                                        icon: call.isVideo ? Icons.videocam_rounded : Icons.call_rounded,
+                                        label: call.app!,
+                                        onTap: () => TelecomBridge.instance.callBack(call.id),
+                                      ),
+                                    ),
                                   Expanded(
                                     child: DetailsActionTile(
                                       key: callTileKey,
@@ -314,6 +328,8 @@ class _HistoryRow extends StatelessWidget {
                   '${dayLabel(call.date, DateTime.now())}, ${timeLabel(call.date)}',
                   style: const TextStyle(fontSize: 17),
                 ),
+                if (call.isApp)
+                  Text(appCallLabel(call), style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
               ],
             ),
           ),

@@ -64,7 +64,10 @@ class CallLogRepository {
           x.duration != y.duration ||
           x.simId != y.simId ||
           x.isPrivate != y.isPrivate ||
-          x.isNew != y.isNew) {
+          x.isNew != y.isNew ||
+          x.app != y.app ||
+          x.appPackage != y.appPackage ||
+          x.isVideo != y.isVideo) {
         return false;
       }
     }
