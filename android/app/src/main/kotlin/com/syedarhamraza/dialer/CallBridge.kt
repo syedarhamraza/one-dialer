@@ -91,6 +91,10 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
         if (watchingCallLog) return
         if (context.checkSelfPermission(Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED) return
         context.contentResolver.registerContentObserver(CallLog.Calls.CONTENT_URI, true, callLogObserver)
+        // VoIP apps write their calls here; it may not notify the main URI.
+        if (android.os.Build.VERSION.SDK_INT >= 37) {
+            context.contentResolver.registerContentObserver(CallLog.Calls.CONTENT_VOIP_URI, true, callLogObserver)
+        }
         watchingCallLog = true
     }
 
@@ -126,6 +130,15 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
             }
             "getState" -> result.success(CallManager.snapshot())
             "placeCall" -> placeCall(call.argument<String>("number"), call.argument<String>("simId"), result)
+            "callBack" -> {
+                if (context.checkSelfPermission(Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+                    result.error("NO_PERMISSION", "CALL_PHONE not granted", null)
+                } else {
+                    CallLogSource.callBack(context, call.argument<Number>("id")!!.toLong())
+                    result.success(null)
+                }
+            }
+            "getAppIcon" -> inBackground(result) { ContactExtras.appIcon(context, call.argument<String>("package")!!) }
             "getSims" -> getSims(result)
             "showInCallScreen" -> {
                 context.getSystemService(TelecomManager::class.java).showInCallScreen(false)
@@ -289,6 +302,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
             "screensCalls" to roles.isRoleHeld(RoleManager.ROLE_CALL_SCREENING),
             "version" to info.versionName,
             "build" to info.longVersionCode,
+            "sdk" to android.os.Build.VERSION.SDK_INT,
         )
     }
 
@@ -300,6 +314,8 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
                 .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, pkg)
             page == "fullScreen" && android.os.Build.VERSION.SDK_INT >= 34 ->
                 android.content.Intent(android.provider.Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:$pkg"))
+            // Android 17's per-app switches for calls VoIP apps share with the call log.
+            page == "voipCallLog" -> android.content.Intent(android.telecom.TelecomManager.ACTION_CONFIGURE_CALL_LOG_INTEGRATION)
             page == "defaultApps" -> android.content.Intent(android.provider.Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
             // The SIM provider's call settings (forwarding, waiting, caller ID), from the phone service.
             page == "carrier" -> android.content.Intent(android.telecom.TelecomManager.ACTION_SHOW_CALL_SETTINGS)

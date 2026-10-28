@@ -37,6 +37,26 @@ void main() {
     expect(days.single.$2.length, 2);
   });
 
+  test("an app's calls read their app and never merge with SIM calls to the same number", () {
+    final whatsApp = CallLogEntry.fromMap({
+      'id': 3,
+      'number': '03001234567',
+      'type': 'incoming',
+      'date': DateTime(2026, 10, 17, 11).millisecondsSinceEpoch,
+      'app': 'WhatsApp',
+      'appPackage': 'com.whatsapp',
+      'video': true,
+    });
+    expect((whatsApp.isApp, whatsApp.app, whatsApp.isVideo), (true, 'WhatsApp', true));
+    expect(call(1, '1', now).isApp, false);
+
+    final days = groupByDay([
+      whatsApp,
+      call(2, '03001234567', DateTime(2026, 10, 17, 10)),
+    ]);
+    expect(days.single.$2.length, 2);
+  });
+
   test('day labels', () {
     expect(dayLabel(DateTime(2026, 10, 17), now), 'Today');
     expect(dayLabel(DateTime(2026, 10, 16), now), 'Yesterday');

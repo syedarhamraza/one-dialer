@@ -147,6 +147,15 @@ class TelecomBridge {
   Future<void> placeCall(String number, {String? simId}) =>
       _methods.invokeMethod('placeCall', {'number': number, 'simId': simId});
 
+  /// Calls back call-log row [id]; an app's row (WhatsApp...) is called back by that app.
+  Future<void> callBack(int id) => _methods.invokeMethod('callBack', {'id': id});
+
+  final _appIcons = <String, Future<Uint8List?>>{};
+
+  /// [package]'s launcher icon as a PNG, fetched once per run.
+  Future<Uint8List?> appIcon(String package) =>
+      _appIcons[package] ??= _methods.invokeMethod<Uint8List>('getAppIcon', {'package': package});
+
   /// Opens the default SMS app on a conversation with [number].
   Future<void> sendSms(String number) => _methods.invokeMethod('sendSms', {'number': number});
 

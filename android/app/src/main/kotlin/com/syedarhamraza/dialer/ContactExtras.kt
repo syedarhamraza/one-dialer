@@ -144,7 +144,7 @@ object ContactExtras {
         context.contentResolver.update(ContentUris.withAppendedId(Contacts.CONTENT_URI, contactId.toLong()), values, null, null)
     }
 
-    private fun appIcon(context: Context, pkg: String): ByteArray? = runCatching {
+    fun appIcon(context: Context, pkg: String): ByteArray? = runCatching {
         val drawable = context.packageManager.getApplicationIcon(pkg)
         val size = 96
         val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
