@@ -29,7 +29,7 @@ class OneUISegmentedPills<T> extends StatelessWidget {
       height: dense ? 34 : 44,
       padding: EdgeInsets.all(dense ? 3 : 4),
       decoration: dense
-          ? BoxDecoration(color: OneUITheme.surfacePill, borderRadius: OneUITheme.pillBorderRadius)
+          ? BoxDecoration(color: context.palette.pill, borderRadius: OneUITheme.pillBorderRadius)
           : BoxDecoration(
               color: OneUITheme.cardColor,
               borderRadius: OneUITheme.pillBorderRadius,
@@ -50,7 +50,7 @@ class OneUISegmentedPills<T> extends StatelessWidget {
                 width: segmentWidth,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: OneUITheme.surfacePillActive,
+                    color: context.palette.pillActive,
                     borderRadius: OneUITheme.pillBorderRadius,
                   ),
                 ),
@@ -75,7 +75,7 @@ class OneUISegmentedPills<T> extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: dense ? 12.5 : 13.5,
                                 fontWeight: i == selectedIndex ? FontWeight.w700 : FontWeight.w500,
-                                color: i == selectedIndex ? OneUITheme.textPrimary : OneUITheme.textSecondary,
+                                color: i == selectedIndex ? context.palette.textPrimary : context.palette.textSecondary,
                               ),
                             ),
                           ),

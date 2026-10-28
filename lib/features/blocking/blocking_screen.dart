@@ -173,7 +173,7 @@ class _BlockingScreenState extends State<BlockingScreen> {
             itemBuilder: (context, i) {
               if (i == 0) {
                 return OneUIGroupItem(
-                  leading: Icon(Icons.add_rounded, key: _addKey, color: OneUITheme.textPrimary),
+                  leading: Icon(Icons.add_rounded, key: _addKey, color: context.palette.textPrimary),
                   title: 'Add number',
                   onTap: _add,
                   trailing: const SizedBox.shrink(),
@@ -186,7 +186,7 @@ class _BlockingScreenState extends State<BlockingScreen> {
                 subtitle: name == null ? null : n,
                 trailing: IconButton(
                   tooltip: 'Unblock',
-                  icon: const Icon(Icons.remove_circle_outline_rounded, color: OneUITheme.textSecondary),
+                  icon: Icon(Icons.remove_circle_outline_rounded, color: context.palette.textSecondary),
                   onPressed: () => _repo.setBlocked(n, false),
                 ),
               );
@@ -203,7 +203,7 @@ class _BlockingScreenState extends State<BlockingScreen> {
               itemBuilder: (context, i) {
                 final c = blockedCalls[i];
                 return OneUIGroupItem(
-                  leading: const Icon(Icons.block_rounded, color: OneUITheme.textSecondary),
+                  leading: Icon(Icons.block_rounded, color: context.palette.textSecondary),
                   title: callerName(c),
                   subtitle: '${dayLabel(c.date, DateTime.now())}, ${timeLabel(c.date)}',
                   onTap: () =>

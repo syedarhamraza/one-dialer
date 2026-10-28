@@ -162,7 +162,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (UpdateController.instance.updateAvailable) ...[const OneUIDot(), const SizedBox(width: 6)],
-                    const Icon(Icons.chevron_right_rounded, size: 22, color: OneUITheme.textSecondary),
+                    Icon(Icons.chevron_right_rounded, size: 22, color: context.palette.textSecondary),
                   ],
                 ),
               ),
@@ -204,7 +204,9 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
 
   final _tapKey = GlobalKey();
   final _simKey = GlobalKey();
+  final _themeKey = GlobalKey();
 
+  static const _themeLabels = {'system': 'Same as phone', 'light': 'Light', 'dark': 'Dark'};
   static const _tapLabels = {'details': 'Open details', 'dial': 'Write in keypad'};
 
   /// "Choose SIM and call" is offered only with two SIMs; with one, a saved `sim` reads as details.
@@ -243,6 +245,14 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
               value: DialerPrefs.instance.simChoice,
               labels: _simLabels,
               onPick: DialerPrefs.instance.setSimChoice,
+            ),
+            choiceRow(
+              context,
+              title: 'Appearance',
+              anchor: _themeKey,
+              value: DialerPrefs.instance.themeMode,
+              labels: _themeLabels,
+              onPick: DialerPrefs.instance.setThemeMode,
             ),
           ],
         ),

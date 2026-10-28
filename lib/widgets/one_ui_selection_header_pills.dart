@@ -64,7 +64,7 @@ class OneUISelectionCountPill extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: allSelected ? const Color(0xFF2C69FF) : Colors.transparent,
                   border: Border.all(
-                    color: allSelected ? const Color(0xFF2C69FF) : Colors.white.withValues(alpha: 0.55),
+                    color: allSelected ? const Color(0xFF2C69FF) : context.palette.textPrimary.withValues(alpha: 0.55),
                     width: 2.0,
                   ),
                 ),
@@ -73,10 +73,10 @@ class OneUISelectionCountPill extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 '$selectedCount',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: OneUITheme.textPrimary,
+                  color: context.palette.textPrimary,
                   letterSpacing: -0.2,
                 ),
               ),
@@ -103,14 +103,14 @@ class OneUISelectionCancelPill extends StatelessWidget {
         Haptics.tap();
         onCancel();
       },
-      child: const _SelectionHeaderCapsule(
+      child: _SelectionHeaderCapsule(
         padding: EdgeInsets.symmetric(horizontal: 18),
         child: Text(
           'Cancel',
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: OneUITheme.textPrimary,
+            color: context.palette.textPrimary,
             letterSpacing: -0.2,
           ),
         ),

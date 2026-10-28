@@ -173,11 +173,11 @@ class _OneUIToastWidgetState extends State<_OneUIToastWidget> with SingleTickerP
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
                       height: 1.3,
-                      color: OneUITheme.textPrimary,
+                      color: context.palette.textPrimary,
                       decoration: TextDecoration.none,
                     ),
                   ),

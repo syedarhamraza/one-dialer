@@ -36,6 +36,7 @@ class CallGlass extends StatelessWidget {
       onVerticalDragStart: _ignoreDrag,
       child: PressGlow(
         radius: radius ?? 999,
+        shadows: context.palette.isLight ? OneUIPalette.lightGlassShadow : null,
         // Only the frosted body is clipped; the content draws on top unclipped, so a
         // springy thumb can overshoot the edge.
         child: Stack(

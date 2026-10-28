@@ -196,6 +196,22 @@ class _PopoverMenu extends StatelessWidget {
         );
         return Stack(
           children: [
+            // Outside the press, which clips to the menu's shape.
+            if (context.palette.isLight)
+              Positioned.fromRect(
+                rect: glass.shift(menu.topLeft),
+                child: DecoratedBox(
+                  decoration: ShapeDecoration(
+                    shape: RoundedSuperellipseBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(OneUIFloatingMenu._radius * size * scale)),
+                    ),
+                    shadows: [
+                      for (final s in OneUIPalette.lightMenuShadow)
+                        s.copyWith(color: s.color.withValues(alpha: s.color.a * fade)),
+                    ],
+                  ),
+                ),
+              ),
             Positioned.fromRect(
               rect: menu,
               child: PressGlow(
@@ -241,7 +257,9 @@ class _PopoverMenu extends StatelessWidget {
                                       // A dark base keeps the items legible over list text; the call-glass
                                       // wash, edge glow and lip go on top, as on the header buttons.
                                       child: ColoredBox(
-                                        color: const Color(0xB3141416),
+                                        color: context.palette.isLight
+                                            ? const Color(0xCCFFFFFF)
+                                            : const Color(0xB3141416),
                                         // The same glow as the buttons, but reaching less far in: across a card
                                         // this much bigger the button's spread reads as a wide haze. From a cached
                                         // image: drawn live, its blurred strokes were re-rendered every frame of a
@@ -364,7 +382,9 @@ class _MenuItemsState extends State<_MenuItems> {
                           duration: const Duration(milliseconds: 120),
                           child: DecoratedBox(
                             decoration: ShapeDecoration(
-                              color: widget.light ? const Color(0x14000000) : const Color(0x3DFFFFFF),
+                              color: widget.light || context.palette.isLight
+                                  ? const Color(0x14000000)
+                                  : const Color(0x3DFFFFFF),
                               shape: RoundedSuperellipseBorder(
                                 borderRadius: BorderRadius.all(Radius.circular(_row / 2)),
                               ),
@@ -409,7 +429,7 @@ class _MenuRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final base = light ? const Color(0xFF111418) : OneUITheme.textPrimary;
+    final base = light || context.palette.isLight ? const Color(0xFF111418) : OneUITheme.textPrimary;
     final color = item.enabled ? base : base.withValues(alpha: .38);
     return SizedBox(
       height: OneUIFloatingMenu._rowHeight * size,

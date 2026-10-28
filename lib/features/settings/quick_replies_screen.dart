@@ -53,11 +53,11 @@ class _QuickRepliesScreenState extends State<QuickRepliesScreen> {
     return OneUISubpage(
       title: 'Quick decline messages',
       builder: (context) => [
-        const Padding(
+        Padding(
           padding: EdgeInsets.fromLTRB(16, 0, 16, 4),
           child: Text(
             'Sent when you decline a call with a message',
-            style: TextStyle(fontSize: 13.5, color: OneUITheme.textSecondary),
+            style: TextStyle(fontSize: 13.5, color: context.palette.textSecondary),
           ),
         ),
         if (replies != null)

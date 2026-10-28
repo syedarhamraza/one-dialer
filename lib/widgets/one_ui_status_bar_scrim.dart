@@ -69,8 +69,8 @@ class OneUIStatusBarScrim extends StatelessWidget {
                           ),
                         ),
                       ),
-                    const Positioned.fill(
-                      child: DecoratedBox(decoration: BoxDecoration(gradient: topGradient)),
+                    Positioned.fill(
+                      child: DecoratedBox(decoration: BoxDecoration(gradient: context.palette.tint(topGradient))),
                     ),
                   ],
                 );

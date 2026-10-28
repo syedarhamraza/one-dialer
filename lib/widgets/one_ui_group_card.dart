@@ -46,13 +46,13 @@ class OneUIGroupCard extends StatelessWidget {
             if (headerTitle != null)
               Padding(
                 padding: const EdgeInsets.only(left: 18, bottom: 8, top: 4),
-                child: Text(headerTitle!, style: const TextStyle(fontSize: 15, color: OneUITheme.textSecondary)),
+                child: Text(headerTitle!, style: TextStyle(fontSize: 15, color: context.palette.textSecondary)),
               ),
             Container(
               margin: margin ?? const EdgeInsets.only(bottom: 20),
               clipBehavior: Clip.antiAlias,
               // ColorOS 17: a flat grey card, no border or shadow (as `DetailsCard`).
-              decoration: BoxDecoration(color: OneUITheme.surfaceCard, borderRadius: OneUITheme.cardBorderRadius),
+              decoration: BoxDecoration(color: context.palette.card, borderRadius: OneUITheme.cardBorderRadius),
               child: Column(
                 children: [
                   for (int index = 0; index < items.length; index++)
@@ -108,12 +108,12 @@ class OneUIGroupItemTile extends StatelessWidget {
                       children: [
                         Text(
                           item.title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 17.0,
                             fontWeight: FontWeight.w400,
                             height: 1.25,
                             letterSpacing: -0.2,
-                            color: OneUITheme.textPrimary,
+                            color: context.palette.textPrimary,
                           ),
                         ),
                         if (item.customSubtitle != null) ...[
@@ -127,7 +127,7 @@ class OneUIGroupItemTile extends StatelessWidget {
                               fontSize: 13.5,
                               fontWeight: FontWeight.normal,
                               height: 1.25,
-                              color: item.subtitleColor ?? OneUITheme.textSecondary,
+                              color: item.subtitleColor ?? context.palette.textSecondary,
                             ),
                           ),
                         ],
@@ -136,13 +136,13 @@ class OneUIGroupItemTile extends StatelessWidget {
                   ),
                   const SizedBox(width: 14),
                   if (item.value case final value?) ...[
-                    Text(value, style: const TextStyle(fontSize: 15, color: OneUITheme.textSecondary)),
+                    Text(value, style: TextStyle(fontSize: 15, color: context.palette.textSecondary)),
                     const SizedBox(width: 4),
                   ],
                   if (item.trailing != null)
                     item.trailing!
                   else if (item.onTap != null)
-                    const Icon(Icons.chevron_right_rounded, size: 22, color: OneUITheme.textSecondary),
+                    Icon(Icons.chevron_right_rounded, size: 22, color: context.palette.textSecondary),
                 ],
               ),
             ),
@@ -178,13 +178,13 @@ class OneUIGroupCardSliver extends StatelessWidget {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(left: 18, bottom: 8, top: 4),
-              child: Text(headerTitle!, style: const TextStyle(fontSize: 15, color: OneUITheme.textSecondary)),
+              child: Text(headerTitle!, style: TextStyle(fontSize: 15, color: context.palette.textSecondary)),
             ),
           ),
         SliverPadding(
           padding: const EdgeInsets.only(bottom: 20),
           sliver: DecoratedSliver(
-            decoration: BoxDecoration(color: OneUITheme.surfaceCard, borderRadius: OneUITheme.cardBorderRadius),
+            decoration: BoxDecoration(color: context.palette.card, borderRadius: OneUITheme.cardBorderRadius),
             sliver: SliverList.builder(
               itemCount: itemCount,
               itemBuilder: (context, i) =>

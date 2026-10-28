@@ -287,7 +287,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                           const SizedBox(height: 2),
                           Text(
                             '${all.length} contacts',
-                            style: const TextStyle(fontSize: 15, color: OneUITheme.textSecondary),
+                            style: TextStyle(fontSize: 15, color: context.palette.textSecondary),
                           ),
                         ],
                       ),
@@ -301,10 +301,10 @@ class _ContactsScreenState extends State<ContactsScreen> {
                     padding: const EdgeInsets.fromLTRB(32, 40, 32, 0),
                     child: Column(
                       children: [
-                        const Text(
+                        Text(
                           'Allow access to your contacts to see them here and show names for calls',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: OneUITheme.textSecondary),
+                          style: TextStyle(color: context.palette.textSecondary),
                         ),
                         const SizedBox(height: 16),
                         FilledButton(onPressed: repo.requestAccess, child: const Text('Allow')),

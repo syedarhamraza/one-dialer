@@ -157,6 +157,20 @@ class DialerPrefs {
     if (sim == 'buttons' || sim == 'menu') simChoice.value = sim!;
   }
 
+  /// Settings › "Appearance": `system`, `light` or `dark`.
+  final themeMode = ValueNotifier('system');
+
+  /// Awaited before the first frame, so the app doesn't open dark and then turn light.
+  Future<void> loadThemeMode() async {
+    final mode = await _prefs.getString('theme_mode');
+    if (mode == 'system' || mode == 'light' || mode == 'dark') themeMode.value = mode!;
+  }
+
+  Future<void> setThemeMode(String value) async {
+    themeMode.value = value;
+    await _prefs.setString('theme_mode', value);
+  }
+
   Future<void> setRecentTap(String value) async {
     recentTap.value = value;
     await _prefs.setString('recent_tap', value);

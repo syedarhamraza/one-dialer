@@ -75,7 +75,9 @@ class OneUIBottomVignette extends StatelessWidget {
                 curve: Curves.easeInOutCubic,
                 height: effectiveHeight,
                 width: double.infinity,
-                decoration: BoxDecoration(gradient: hasFloatingElements ? normalGradient : decreasedGradient),
+                decoration: BoxDecoration(
+                  gradient: context.palette.tint(hasFloatingElements ? normalGradient : decreasedGradient),
+                ),
               ),
             ),
           ),

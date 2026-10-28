@@ -33,21 +33,21 @@ class OneUIFloatingCancelSavePill extends StatelessWidget {
     return AnimatedBuilder(
       animation: OneUIEffectsController.instance,
       builder: (context, _) {
-        if (docked) return _buildRow();
+        if (docked) return _buildRow(context);
 
         return Center(
           child: OneUIGlassSurface(
             borderRadius: const BorderRadius.all(Radius.circular(30)),
             elevation: OneUIGlassElevation.navbar,
             height: 52,
-            child: _buildRow(),
+            child: _buildRow(context),
           ),
         );
       },
     );
   }
 
-  Widget _buildRow() {
+  Widget _buildRow(BuildContext context) {
     return Material(
       color: Colors.transparent,
       child: Row(
@@ -68,18 +68,18 @@ class OneUIFloatingCancelSavePill extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 28),
               child: Text(
                 cancelLabel,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   letterSpacing: -0.2,
-                  color: OneUITheme.textPrimary,
+                  color: context.palette.textPrimary,
                 ),
               ),
             ),
           ),
 
           // 1px Subtle Vertical Divider
-          Container(width: 1, height: 20, color: Colors.white.withValues(alpha: 0.12)),
+          Container(width: 1, height: 20, color: context.palette.divider),
 
           // Save Button
           InkWell(
@@ -102,7 +102,7 @@ class OneUIFloatingCancelSavePill extends StatelessWidget {
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   letterSpacing: -0.2,
-                  color: canSave ? OneUITheme.textPrimary : const Color(0xFF8E8E93),
+                  color: canSave ? context.palette.textPrimary : const Color(0xFF8E8E93),
                 ),
               ),
             ),

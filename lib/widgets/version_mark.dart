@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import '../app/app_info.dart';
+import '../theme/one_ui_theme.dart';
 import 'cached_paint.dart';
 
 /// The app's version mark, over [CosArtwork]: the version ("1.0") in polished glass, then
@@ -29,7 +30,7 @@ class VersionMark extends StatelessWidget {
         child: OverflowBox(
           maxWidth: size * 2.3 + _GlassTextPainter.margin(size) * 2,
           maxHeight: height + _GlassTextPainter.margin(size) * 2,
-          child: CachedPaint(painter: _GlassTextPainter(version, channel, size)),
+          child: CachedPaint(painter: _GlassTextPainter(version, channel, size, context.palette.isLight)),
         ),
       ),
     );
@@ -40,11 +41,14 @@ class VersionMark extends StatelessWidget {
 /// the frosted body, the glossy streak and the edge light stay within the letters. A soft drop
 /// shadow and a green glow sit behind.
 class _GlassTextPainter extends CustomPainter {
-  _GlassTextPainter(this.text, this.channel, this.size);
+  _GlassTextPainter(this.text, this.channel, this.size, this.light);
 
   final String text;
   final String? channel;
   final double size;
+
+  /// Light mode: green glass and dark green lettering, which read on the pale artwork.
+  final bool light;
 
   /// The numeral's area, with room for its glow.
   static double glassHeight(double size) => size * 1.15;
@@ -94,11 +98,12 @@ class _GlassTextPainter extends CustomPainter {
           fontWeight: FontWeight.w500,
           letterSpacing: -nameSize * .02,
           foreground: Paint()
-            ..shader = ui.Gradient.linear(Offset.zero, Offset(0, nameSize * 1.2), const [
-              Colors.white,
-              Color(0xFFCFF7DD),
-            ]),
-          shadows: const [Shadow(color: Color(0x662FAE52), blurRadius: 18)],
+            ..shader = ui.Gradient.linear(
+              Offset.zero,
+              Offset(0, nameSize * 1.2),
+              light ? const [Color(0xFF0E3B26), Color(0xFF1E5A3C)] : const [Colors.white, Color(0xFFCFF7DD)],
+            ),
+          shadows: light ? null : const [Shadow(color: Color(0x662FAE52), blurRadius: 18)],
         ),
       ),
       textDirection: TextDirection.ltr,
@@ -113,7 +118,11 @@ class _GlassTextPainter extends CustomPainter {
       final tag = TextPainter(
         text: TextSpan(
           text: channel,
-          style: TextStyle(fontSize: nameSize * .56, fontWeight: FontWeight.w400, color: const Color(0xFF8BF0B0)),
+          style: TextStyle(
+            fontSize: nameSize * .56,
+            fontWeight: FontWeight.w400,
+            color: light ? const Color(0xFF1E8A43) : const Color(0xFF8BF0B0),
+          ),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
@@ -139,7 +148,7 @@ class _GlassTextPainter extends CustomPainter {
       canvas.restore();
     }
 
-    halo(size * .1, Offset(0, size * .07), const Color(0x8C000000));
+    halo(size * .1, Offset(0, size * .07), light ? const Color(0x400B3D24) : const Color(0x8C000000));
     halo(size * .19, Offset.zero, const Color(0x732FAE52));
 
     // A layer the shape of the glyphs, then [paint] drawn inside it.
@@ -157,11 +166,13 @@ class _GlassTextPainter extends CustomPainter {
       () => canvas.drawRect(
         r,
         Paint()
-          ..shader = const LinearGradient(
+          ..shader = LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0x9EFFFFFF), Color(0x47E8FFF0), Color(0x2E8BF0B0), Color(0x7A8BF0B0)],
-            stops: [0, .4, .72, 1],
+            colors: light
+                ? const [Color(0xF26FD99A), Color(0xE62FAE52), Color(0xE61E8A43), Color(0xF24CC77C)]
+                : const [Color(0x9EFFFFFF), Color(0x47E8FFF0), Color(0x2E8BF0B0), Color(0x7A8BF0B0)],
+            stops: const [0, .4, .72, 1],
           ).createShader(r),
       ),
     );
@@ -234,12 +245,16 @@ class _GlassTextPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_GlassTextPainter old) => old.text != text || old.channel != channel || old.size != size;
+  bool shouldRepaint(_GlassTextPainter old) => this != old;
 
   @override
   bool operator ==(Object other) =>
-      other is _GlassTextPainter && other.text == text && other.channel == channel && other.size == size;
+      other is _GlassTextPainter &&
+      other.text == text &&
+      other.channel == channel &&
+      other.size == size &&
+      other.light == light;
 
   @override
-  int get hashCode => Object.hash(text, channel, size);
+  int get hashCode => Object.hash(text, channel, size, light);
 }

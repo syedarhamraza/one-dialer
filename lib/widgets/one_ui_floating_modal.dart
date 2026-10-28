@@ -100,10 +100,10 @@ class OneUIFloatingModal extends StatelessWidget {
               // Title
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: context.palette.textPrimary,
                   letterSpacing: -0.3,
                 ),
               ),
@@ -134,16 +134,16 @@ class OneUIFloatingModal extends StatelessWidget {
                       ),
                       child: Text(
                         cancelLabel,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                          color: context.palette.textPrimary,
                           letterSpacing: -0.2,
                         ),
                       ),
                     ),
                   ),
-                  Container(width: 1, height: 18, color: Colors.white.withValues(alpha: 0.10)),
+                  Container(width: 1, height: 18, color: context.palette.divider),
                   Expanded(
                     child: TextButton(
                       onPressed: () {
@@ -159,7 +159,7 @@ class OneUIFloatingModal extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: confirmTextColor ?? Colors.white,
+                          color: confirmTextColor ?? context.palette.textPrimary,
                           letterSpacing: -0.2,
                         ),
                       ),
@@ -253,7 +253,12 @@ class _OneUIFloatingTextInputModalState extends State<_OneUIFloatingTextInputMod
         children: [
           Text(
             widget.title,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: -0.3),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: context.palette.textPrimary,
+              letterSpacing: -0.3,
+            ),
           ),
           if (widget.message != null) ...[
             const SizedBox(height: 12),
@@ -265,15 +270,15 @@ class _OneUIFloatingTextInputModalState extends State<_OneUIFloatingTextInputMod
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 4),
-            decoration: BoxDecoration(color: OneUITheme.surfacePill, borderRadius: OneUITheme.fieldBorderRadius),
+            decoration: BoxDecoration(color: context.palette.pill, borderRadius: OneUITheme.fieldBorderRadius),
             child: TextField(
               controller: _controller,
               autofocus: widget.autofocus,
               keyboardType: widget.keyboardType,
-              style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(color: context.palette.textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
               decoration: InputDecoration(
                 prefixText: widget.prefixText,
-                prefixStyle: const TextStyle(color: Colors.white, fontSize: 18),
+                prefixStyle: TextStyle(color: context.palette.textPrimary, fontSize: 18),
                 border: InputBorder.none,
               ),
             ),
@@ -290,16 +295,16 @@ class _OneUIFloatingTextInputModalState extends State<_OneUIFloatingTextInputMod
                   ),
                   child: Text(
                     widget.cancelLabel,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: context.palette.textPrimary,
                       letterSpacing: -0.2,
                     ),
                   ),
                 ),
               ),
-              Container(width: 1, height: 18, color: Colors.white.withValues(alpha: 0.10)),
+              Container(width: 1, height: 18, color: context.palette.divider),
               Expanded(
                 child: TextButton(
                   onPressed: () => Navigator.pop(context, _controller.text.trim()),
@@ -309,10 +314,10 @@ class _OneUIFloatingTextInputModalState extends State<_OneUIFloatingTextInputMod
                   ),
                   child: Text(
                     widget.confirmLabel,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                      color: context.palette.textPrimary,
                       letterSpacing: -0.2,
                     ),
                   ),

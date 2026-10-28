@@ -144,11 +144,11 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
         ),
       if (query.isNotEmpty && hits.isEmpty)
-        const SliverToBoxAdapter(
+        SliverToBoxAdapter(
           child: Padding(
             padding: EdgeInsets.only(top: 200),
             child: Center(
-              child: Text('No results found', style: TextStyle(fontSize: 22, color: OneUITheme.textSecondary)),
+              child: Text('No results found', style: TextStyle(fontSize: 22, color: context.palette.textSecondary)),
             ),
           ),
         ),
@@ -163,8 +163,8 @@ class _SearchScreenState extends State<SearchScreen> {
             final h = hits[i];
             return _ResultRow(
               avatar: ContactAvatar(id: h.contact.id, name: h.contact.name, size: 36),
-              title: _highlighted(h.contact.name, h.nameRange, 19),
-              subtitle: _highlighted(h.number, h.numberRange, 15, color: OneUITheme.textSecondary),
+              title: _highlighted(h.contact.name, h.nameRange, 19, color: context.palette.textPrimary),
+              subtitle: _highlighted(h.number, h.numberRange, 15, color: context.palette.textSecondary),
               divider: i > 0,
               onTap: () => _open(ContactDetailsScreen(contactId: h.contact.id)),
             );
@@ -174,7 +174,7 @@ class _SearchScreenState extends State<SearchScreen> {
     ];
   }
 
-  static Widget _highlighted(String text, (int, int)? range, double size, {Color color = OneUITheme.textPrimary}) {
+  static Widget _highlighted(String text, (int, int)? range, double size, {required Color color}) {
     final style = TextStyle(fontSize: size, color: color);
     if (range == null) return Text(text, style: style, maxLines: 1, overflow: TextOverflow.ellipsis);
     final (start, end) = range;
@@ -204,7 +204,7 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const style = TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: OneUITheme.textSecondary);
+    final style = TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: context.palette.textSecondary);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
       child: Row(
@@ -229,7 +229,7 @@ class _Card extends StatelessWidget {
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 12),
       padding: padding,
-      decoration: BoxDecoration(color: OneUITheme.surfaceCard, borderRadius: OneUITheme.cardBorderRadius),
+      decoration: BoxDecoration(color: context.palette.card, borderRadius: OneUITheme.cardBorderRadius),
       clipBehavior: Clip.antiAlias,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
     );
@@ -246,7 +246,7 @@ class _Label extends StatelessWidget {
     padding: const EdgeInsets.only(bottom: 14),
     child: Text(
       text,
-      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: OneUITheme.textSecondary),
+      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: context.palette.textSecondary),
     ),
   );
 }
@@ -260,7 +260,7 @@ class _RecentChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: OneUITheme.surfacePill,
+      color: context.palette.pill,
       shape: const StadiumBorder(),
       child: InkWell(
         onTap: onTap,
@@ -281,7 +281,7 @@ class _RecentChip extends StatelessWidget {
                     width: 30,
                     height: 30,
                     decoration: const BoxDecoration(color: OneUITheme.surfacePillActive, shape: BoxShape.circle),
-                    child: const Icon(Icons.close_rounded, size: 18, color: OneUITheme.textSecondary),
+                    child: Icon(Icons.close_rounded, size: 18, color: context.palette.textSecondary),
                   ),
                 ),
               ),
@@ -349,7 +349,7 @@ class _CardSliver extends StatelessWidget {
     return SliverPadding(
       padding: const EdgeInsets.only(bottom: 12),
       sliver: DecoratedSliver(
-        decoration: BoxDecoration(color: OneUITheme.surfaceCard, borderRadius: OneUITheme.cardBorderRadius),
+        decoration: BoxDecoration(color: context.palette.card, borderRadius: OneUITheme.cardBorderRadius),
         sliver: SliverList.builder(itemCount: itemCount, itemBuilder: itemBuilder),
       ),
     );

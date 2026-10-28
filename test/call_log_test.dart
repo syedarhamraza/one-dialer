@@ -19,7 +19,13 @@ void main() {
 
     expect(days.length, 2);
     expect(days[0].$1, DateTime(2026, 10, 17));
-    expect([for (final g in days[0].$2) g.calls.map((c) => c.id).toList()], [[5, 4], [3]]);
+    expect(
+      [for (final g in days[0].$2) g.calls.map((c) => c.id).toList()],
+      [
+        [5, 4],
+        [3],
+      ],
+    );
     expect(days[1].$2.single.calls.length, 2);
   });
 
@@ -57,8 +63,10 @@ void main() {
       for (final t in [CallType.incoming, CallType.outgoing, CallType.missed, CallType.rejected, CallType.blocked])
         t: call(t.index, '0300', now, type: t),
     };
-    List<CallType> shown(CallFilter f, {bool hideBlocked = true}) =>
-        [for (final c in calls.values) if (f.matches(c, hideBlocked: hideBlocked)) c.type];
+    List<CallType> shown(CallFilter f, {bool hideBlocked = true}) => [
+      for (final c in calls.values)
+        if (f.matches(c, hideBlocked: hideBlocked)) c.type,
+    ];
 
     expect(shown(CallFilter.all), [CallType.incoming, CallType.outgoing, CallType.missed, CallType.rejected]);
     expect(shown(CallFilter.all, hideBlocked: false), contains(CallType.blocked));

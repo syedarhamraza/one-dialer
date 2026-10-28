@@ -28,7 +28,7 @@ class ContactsSectionHeader extends StatelessWidget {
           ? const Icon(Icons.star_rounded, size: 18, color: _favoriteStar)
           : Text(
               title,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: OneUITheme.textSecondary),
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: context.palette.textSecondary),
             ),
     );
   }
@@ -169,7 +169,7 @@ class _FastScrollerState extends State<FastScroller> {
                                   fontWeight: FontWeight.w500,
                                   color: l == (_dragLetter ?? current)
                                       ? OneUITheme.accentGreen
-                                      : OneUITheme.textSecondary,
+                                      : context.palette.textSecondary,
                                 ),
                               ),
                             ),

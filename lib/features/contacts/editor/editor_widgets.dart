@@ -16,7 +16,7 @@ class EditorCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.fromLTRB(0, 4, 4, 4),
-      decoration: BoxDecoration(color: OneUITheme.surfaceCard, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(color: context.palette.card, borderRadius: BorderRadius.circular(20)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
     );
   }
@@ -40,7 +40,7 @@ class EditorRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 56,
-            child: icon == null ? null : Icon(icon, size: 24, color: iconColor ?? OneUITheme.textPrimary),
+            child: icon == null ? null : Icon(icon, size: 24, color: iconColor ?? context.palette.textPrimary),
           ),
           Expanded(child: child),
           SizedBox(width: 48, child: trailing),
@@ -89,11 +89,11 @@ class EditorField extends StatelessWidget {
       maxLines: maxLines,
       minLines: 1,
       textCapitalization: capitalization,
-      style: const TextStyle(fontSize: 18, color: OneUITheme.textPrimary),
+      style: TextStyle(fontSize: 18, color: context.palette.textPrimary),
       cursorColor: OneUITheme.accentGreen,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(fontSize: 18, color: OneUITheme.textTertiary),
+        hintStyle: TextStyle(fontSize: 18, color: context.palette.textTertiary),
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(vertical: 14),
         enabledBorder: divider ? _hairline : InputBorder.none,
@@ -151,7 +151,7 @@ class _LabelButtonState extends State<LabelButton> {
             children: [
               Text(labelDisplay(widget.label), style: const TextStyle(fontSize: 17)),
               const SizedBox(width: 2),
-              const Icon(Icons.arrow_drop_down_rounded, size: 22, color: OneUITheme.textSecondary),
+              Icon(Icons.arrow_drop_down_rounded, size: 22, color: context.palette.textSecondary),
             ],
           ),
         ),
@@ -193,7 +193,7 @@ class InlineLabeledField extends StatelessWidget {
           width: 1,
           height: 18,
           margin: const EdgeInsets.symmetric(horizontal: 10),
-          color: OneUITheme.textSecondary.withValues(alpha: .5),
+          color: context.palette.textSecondary.withValues(alpha: .5),
         ),
         Expanded(child: field),
       ],
@@ -218,7 +218,7 @@ class AddRow extends StatelessWidget {
         iconColor: OneUITheme.accentGreen,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 14),
-          child: Text(label, style: const TextStyle(fontSize: 18, color: OneUITheme.textTertiary)),
+          child: Text(label, style: TextStyle(fontSize: 18, color: context.palette.textTertiary)),
         ),
       ),
     );
@@ -242,7 +242,7 @@ class PlaceholderRow extends StatelessWidget {
         icon: icon,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Text(label, style: const TextStyle(fontSize: 18, color: OneUITheme.textSecondary)),
+          child: Text(label, style: TextStyle(fontSize: 18, color: context.palette.textSecondary)),
         ),
       ),
     );

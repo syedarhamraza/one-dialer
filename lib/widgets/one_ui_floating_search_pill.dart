@@ -14,8 +14,6 @@ class OneUIFloatingSearchPill extends StatelessWidget {
     return AnimatedBuilder(
       animation: OneUIEffectsController.instance,
       builder: (context, _) {
-        final is3d = OneUIEffectsController.instance.floating3dEffect;
-
         return RepaintBoundary(
           child: GestureDetector(
             onTap: onTap,
@@ -25,20 +23,12 @@ class OneUIFloatingSearchPill extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 18),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.search_rounded,
-                    color: is3d ? OneUITheme.navbar3dInactiveIcon : OneUITheme.textSecondary,
-                    size: 22,
-                  ),
+                  Icon(Icons.search_rounded, color: context.palette.textSecondary, size: 22),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       hintText,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        color: is3d ? OneUITheme.navbar3dInactiveText : OneUITheme.textSecondary,
-                      ),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, color: context.palette.textSecondary),
                     ),
                   ),
                 ],

@@ -30,9 +30,9 @@ class SpeedDialScreen extends StatelessWidget {
           return OneUISubpage(
             title: 'Speed dial',
             builder: (context) => [
-              const Padding(
+              Padding(
                 padding: EdgeInsets.fromLTRB(14, 8, 14, 28),
-                child: Text('Assign contacts', style: TextStyle(fontSize: 15, color: OneUITheme.textSecondary)),
+                child: Text('Assign contacts', style: TextStyle(fontSize: 15, color: context.palette.textSecondary)),
               ),
               if (entries != null)
                 GridView.count(
@@ -90,7 +90,7 @@ class _Cell extends StatelessWidget {
         Positioned(
           left: 4,
           top: 0,
-          child: Text(digit, style: const TextStyle(fontSize: 20, color: OneUITheme.textSecondary)),
+          child: Text(digit, style: TextStyle(fontSize: 20, color: context.palette.textSecondary)),
         ),
         Align(
           alignment: Alignment.topCenter,
@@ -106,7 +106,10 @@ class _Cell extends StatelessWidget {
                       : Container(
                           width: _circle,
                           height: _circle,
-                          decoration: const BoxDecoration(color: Color(0xFF333335), shape: BoxShape.circle),
+                          decoration: BoxDecoration(
+                            color: context.palette.isLight ? const Color(0xFFE4E4E9) : const Color(0xFF333335),
+                            shape: BoxShape.circle,
+                          ),
                           child: Icon(icon, size: 36),
                         ),
                 ),
@@ -115,7 +118,7 @@ class _Cell extends StatelessWidget {
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 15, color: OneUITheme.textSecondary),
+                  style: TextStyle(fontSize: 15, color: context.palette.textSecondary),
                 ),
               ],
             ),

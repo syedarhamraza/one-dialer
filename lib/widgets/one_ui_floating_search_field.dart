@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/one_ui_theme.dart';
+
 import 'one_ui_glass_surface.dart';
 import '../core/haptics/haptics.dart';
 import '../core/speech/voice_input.dart';
@@ -71,7 +73,7 @@ class OneUIFloatingSearchField extends StatelessWidget {
               textInputAction: TextInputAction.search,
               onSubmitted: onSubmitted,
               onChanged: onChanged,
-              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
+              style: TextStyle(color: context.palette.textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
               decoration: InputDecoration(
                 hintText: hintText,
                 hintStyle: const TextStyle(color: Color(0xFF8E95B8), fontSize: 16, fontWeight: FontWeight.w400),

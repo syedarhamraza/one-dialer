@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../theme/one_ui_theme.dart';
 import 'cached_paint.dart';
 
 /// The update / about artwork, after ColorOS 17's, in polished glass and the app's greens: a
@@ -25,7 +26,13 @@ class CosArtwork extends StatelessWidget {
   final double dim;
 
   @override
-  Widget build(BuildContext context) => CachedPaint(painter: _ArtworkPainter(fadeToBlack, waveShift, dim), blur: blur);
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    return CachedPaint(
+      painter: _ArtworkPainter(fadeToBlack, waveShift, dim, palette.isLight, palette.page),
+      blur: blur,
+    );
+  }
 }
 
 Paint _blur(Color color, double sigma) => Paint()
@@ -33,11 +40,15 @@ Paint _blur(Color color, double sigma) => Paint()
   ..maskFilter = MaskFilter.blur(BlurStyle.normal, sigma);
 
 class _ArtworkPainter extends CustomPainter {
-  const _ArtworkPainter(this.fade, this.shift, this.dim);
+  const _ArtworkPainter(this.fade, this.shift, this.dim, this.light, this.page);
 
   final double fade;
   final double shift;
   final double dim;
+
+  /// Light mode: a pale mint sky, softer shadows, a white wash for [dim], fading into [page].
+  final bool light;
+  final Color page;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -46,11 +57,13 @@ class _ArtworkPainter extends CustomPainter {
     canvas.drawRect(
       rect,
       Paint()
-        ..shader = const LinearGradient(
+        ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF020C08), Color(0xFF05201A), Color(0xFF0A3426)],
-          stops: [0, .55, 1],
+          colors: light
+              ? const [Color(0xFFF3FBF6), Color(0xFFE2F4E9), Color(0xFFC9EAD7)]
+              : const [Color(0xFF020C08), Color(0xFF05201A), Color(0xFF0A3426)],
+          stops: const [0, .55, 1],
         ).createShader(rect),
     );
     canvas.save();
@@ -72,7 +85,7 @@ class _ArtworkPainter extends CustomPainter {
     // Soft shadow under the ribbon.
     canvas.save();
     canvas.translate(0, 16);
-    canvas.drawPath(ribbon, _blur(const Color(0x8C000000), 22));
+    canvas.drawPath(ribbon, _blur(light ? const Color(0x400B3D24) : const Color(0x8C000000), 22));
     canvas.restore();
 
     // The ribbon's glass: mint toward the crest, deeper green toward the underside.
@@ -126,7 +139,7 @@ class _ArtworkPainter extends CustomPainter {
     final sphere = Rect.fromCircle(center: c, radius: r);
     canvas.drawOval(
       Rect.fromCenter(center: c + Offset(0, r * .95), width: r * 1.6, height: r * .35),
-      _blur(const Color(0x99000000), r * .14),
+      _blur(light ? const Color(0x4D0B3D24) : const Color(0x99000000), r * .14),
     );
     canvas.drawCircle(c, r * 1.15, _blur(const Color(0x332FAE52), r * .3));
 
@@ -210,7 +223,9 @@ class _ArtworkPainter extends CustomPainter {
     canvas.drawCircle(c + Offset(-r * .52, -r * .55), r * .04, _blur(Colors.white, r * .025));
     canvas.restore();
 
-    if (dim > 0) canvas.drawRect(rect, Paint()..color = Colors.black.withValues(alpha: dim));
+    if (dim > 0) {
+      canvas.drawRect(rect, Paint()..color = (light ? Colors.white : Colors.black).withValues(alpha: dim));
+    }
 
     if (fade > 0) {
       canvas.drawRect(
@@ -219,7 +234,7 @@ class _ArtworkPainter extends CustomPainter {
           ..shader = LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: const [Color(0x00000000), Color(0x00000000), Color(0xFF000000)],
+            colors: [page.withValues(alpha: 0), page.withValues(alpha: 0), page],
             stops: [0, 1 - fade, 1],
           ).createShader(rect),
       );
@@ -227,11 +242,17 @@ class _ArtworkPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_ArtworkPainter old) => old.fade != fade || old.shift != shift || old.dim != dim;
+  bool shouldRepaint(_ArtworkPainter old) => this != old;
 
   @override
-  bool operator ==(Object other) => other is _ArtworkPainter && other.fade == fade && other.shift == shift && other.dim == dim;
+  bool operator ==(Object other) =>
+      other is _ArtworkPainter &&
+      other.fade == fade &&
+      other.shift == shift &&
+      other.dim == dim &&
+      other.light == light &&
+      other.page == page;
 
   @override
-  int get hashCode => Object.hash(fade, shift, dim);
+  int get hashCode => Object.hash(fade, shift, dim, light, page);
 }

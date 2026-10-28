@@ -139,12 +139,12 @@ class OneUIDateWheelState extends State<OneUIDateWheel> {
 
   @override
   Widget build(BuildContext context) {
-    const style = TextStyle(
+    final style = TextStyle(
       fontSize: 52,
       fontWeight: FontWeight.w600,
       height: 1,
       letterSpacing: -1.0,
-      color: OneUITheme.textPrimary,
+      color: context.palette.textPrimary,
       fontFeatures: [FontFeature.tabularFigures()],
     );
 

@@ -90,7 +90,7 @@ class CallDetailsScreen extends StatelessWidget {
                               Text(
                                 call.number,
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(fontSize: 15, color: OneUITheme.textSecondary),
+                                style: TextStyle(fontSize: 15, color: context.palette.textSecondary),
                               ),
                             ],
                             const SizedBox(height: 28),
@@ -129,9 +129,12 @@ class CallDetailsScreen extends StatelessWidget {
                               const SizedBox(height: 20),
                             ],
                             CallNotesCard(numbers: [if (!call.isPrivate) call.number]),
-                            const Padding(
+                            Padding(
                               padding: EdgeInsets.only(left: 18, bottom: 8),
-                              child: Text('Call logs', style: TextStyle(fontSize: 15, color: OneUITheme.textSecondary)),
+                              child: Text(
+                                'Call logs',
+                                style: TextStyle(fontSize: 15, color: context.palette.textSecondary),
+                              ),
                             ),
                           ],
                         ),
@@ -173,7 +176,7 @@ class CallDetailsScreen extends StatelessWidget {
                           tooltip: blocked ? 'Unblock' : 'Block',
                           onPressed: () => BlockingRepository.instance.setBlocked(call.number, !blocked),
                           style: IconButton.styleFrom(
-                            foregroundColor: blocked ? OneUITheme.accentRed : OneUITheme.textPrimary,
+                            foregroundColor: blocked ? OneUITheme.accentRed : context.palette.textPrimary,
                             fixedSize: const Size.square(_button),
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
@@ -248,9 +251,9 @@ class CallNotesCard extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(left: 18, bottom: 8),
-              child: Text('Notes', style: TextStyle(fontSize: 15, color: OneUITheme.textSecondary)),
+              child: Text('Notes', style: TextStyle(fontSize: 15, color: context.palette.textSecondary)),
             ),
             DetailsCard(
               padding: const EdgeInsets.symmetric(vertical: 4),
@@ -272,7 +275,7 @@ class CallNotesCard extends StatelessWidget {
                           const SizedBox(height: 4),
                           Text(
                             '${dayLabel(at, now)}, ${timeLabel(at)}',
-                            style: const TextStyle(fontSize: 13, color: OneUITheme.textSecondary),
+                            style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
                           ),
                         ],
                       ),
@@ -318,7 +321,7 @@ class _HistoryRow extends StatelessWidget {
             answered ? durationLabel(call.duration) : callTypeLabel(call.type),
             style: TextStyle(
               fontSize: 13,
-              color: call.type == CallType.missed ? OneUITheme.accentRed : OneUITheme.textSecondary,
+              color: call.type == CallType.missed ? OneUITheme.accentRed : context.palette.textSecondary,
             ),
           ),
         ],

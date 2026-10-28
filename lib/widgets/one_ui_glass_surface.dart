@@ -64,6 +64,7 @@ class OneUIGlassSurface extends StatelessWidget {
         final fx = OneUIEffectsController.instance;
         final t = progress.clamp(0.0, 1.0);
         final isModal = elevation == OneUIGlassElevation.modal;
+        final light = context.palette.isLight;
 
         final body = AnimatedContainer(
           duration: duration,
@@ -75,7 +76,14 @@ class OneUIGlassSurface extends StatelessWidget {
           decoration: t <= 0.05
               ? null
               : BoxDecoration(
-                  color: fx.floating3dEffect ? null : _fade(isModal ? fx.modalColor : fx.floatingColor, t),
+                  color: fx.floating3dEffect
+                      ? null
+                      : _fade(
+                          light
+                              ? (isModal ? OneUIPalette.lightModal : OneUIPalette.lightFloating)
+                              : (isModal ? fx.modalColor : fx.floatingColor),
+                          t,
+                        ),
                   gradient: (isModal ? fx.modalGradient : fx.floatingGradient)?.scale(t),
                   borderRadius: borderRadius,
                 ),
@@ -87,7 +95,8 @@ class OneUIGlassSurface extends StatelessWidget {
 
         final rim = fx.floatingRimGradient;
         final shadows = [
-          for (final s in fx.glassShadow(elevation)) t >= 1.0 ? s : s.copyWith(color: _fade(s.color, t)),
+          for (final s in light && !isModal ? OneUIPalette.lightGlassShadow : fx.glassShadow(elevation))
+            t >= 1.0 ? s : s.copyWith(color: _fade(s.color, t)),
         ];
 
         return DecoratedBox(

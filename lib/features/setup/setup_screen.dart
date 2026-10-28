@@ -75,10 +75,10 @@ class _SetupScreenState extends State<SetupScreen> {
                         style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: Colors.white, height: 1.3),
                       ),
                       const SizedBox(height: 12),
-                      const Text(
+                      Text(
                         'Needed to make and answer calls, show your call history and contacts, and block numbers.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 15, color: OneUITheme.textSecondary, height: 1.4),
+                        style: TextStyle(fontSize: 15, color: context.palette.textSecondary, height: 1.4),
                       ),
                       const SizedBox(height: 40),
                       GlowButton(
@@ -91,13 +91,13 @@ class _SetupScreenState extends State<SetupScreen> {
                       ),
                       const SizedBox(height: 24),
                       // Prominent disclosure (Google Play): what each permission is used for.
-                      const Text(
+                      Text(
                         'One Dialer uses Phone to make and manage calls on your SIMs, Call history for Recents '
                         'and missed calls, Contacts for names, photos and search, and Notifications for incoming, '
                         'ongoing and missed calls. Your calls, call history and contacts never leave your phone. '
                         'Crash reports (no personal data) help fix bugs.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 12, color: OneUITheme.textSecondary, height: 1.4),
+                        style: TextStyle(fontSize: 12, color: context.palette.textSecondary, height: 1.4),
                       ),
                       const SizedBox(height: 24),
                     ],

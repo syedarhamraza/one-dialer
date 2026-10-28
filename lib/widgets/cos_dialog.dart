@@ -31,7 +31,11 @@ Future<T?> showCosActions<T>(
           children: [
             for (final a in actions)
               Expanded(
-                child: CosPill(label: a.label, destructive: a.destructive, onTap: () => Navigator.pop(context, a.value)),
+                child: CosPill(
+                  label: a.label,
+                  destructive: a.destructive,
+                  onTap: () => Navigator.pop(context, a.value),
+                ),
               ),
           ],
         )
@@ -145,8 +149,8 @@ class _Frame extends StatelessWidget {
               },
               // A flat card, as ColorOS draws it; the glass is on the buttons.
               child: DecoratedBox(
-                decoration: const ShapeDecoration(
-                  color: OneUITheme.surfaceCard,
+                decoration: ShapeDecoration(
+                  color: context.palette.card,
                   shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.all(Radius.circular(_radius))),
                 ),
                 child: Material(
@@ -175,7 +179,7 @@ class _Texts extends StatelessWidget {
         Text(
           title!,
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: OneUITheme.textPrimary),
+          style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
         ),
         const SizedBox(height: 8),
       ],
@@ -185,7 +189,7 @@ class _Texts extends StatelessWidget {
         style: TextStyle(
           fontSize: title == null ? 18 : 15.5,
           height: 1.35,
-          color: title == null ? OneUITheme.textPrimary : OneUITheme.textSecondary,
+          color: title == null ? context.palette.textPrimary : context.palette.textSecondary,
         ),
       ),
     ],
@@ -220,7 +224,7 @@ class CosPill extends StatelessWidget {
               style: TextStyle(
                 fontSize: 16.5,
                 fontWeight: FontWeight.w600,
-                color: destructive ? OneUITheme.accentRed : OneUITheme.textPrimary,
+                color: destructive ? OneUITheme.accentRed : context.palette.textPrimary,
               ),
             ),
           ),
@@ -271,13 +275,13 @@ class _TextInputState extends State<_TextInput> {
       Text(
         widget.title,
         textAlign: TextAlign.center,
-        style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: OneUITheme.textPrimary),
+        style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
       ),
       const SizedBox(height: 18),
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 18),
-        decoration: const ShapeDecoration(
-          color: OneUITheme.surfacePill,
+        decoration: ShapeDecoration(
+          color: context.palette.pill,
           shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.all(Radius.circular(18))),
         ),
         child: TextField(
@@ -289,12 +293,12 @@ class _TextInputState extends State<_TextInput> {
               ? TextCapitalization.sentences
               : TextCapitalization.none,
           onSubmitted: (_) => _submit(),
-          style: const TextStyle(fontSize: 17, color: OneUITheme.textPrimary),
+          style: TextStyle(fontSize: 17, color: context.palette.textPrimary),
           decoration: InputDecoration(
             hintText: widget.hint,
-            hintStyle: const TextStyle(color: OneUITheme.textSecondary),
+            hintStyle: TextStyle(color: context.palette.textSecondary),
             border: InputBorder.none,
-            counterStyle: const TextStyle(color: OneUITheme.textSecondary),
+            counterStyle: TextStyle(color: context.palette.textSecondary),
           ),
         ),
       ),

@@ -190,8 +190,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           return Scaffold(
             body: Stack(
               children: [
-                const Center(
-                  child: Text('Contact not found', style: TextStyle(color: OneUITheme.textSecondary)),
+                Center(
+                  child: Text('Contact not found', style: TextStyle(color: context.palette.textSecondary)),
                 ),
                 Positioned(
                   left: 16,
@@ -291,7 +291,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                         tooltip: contact.isFavorite ? 'Remove from favourites' : 'Add to favourites',
                         onPressed: () => repo.setFavorite(contact.id, !contact.isFavorite),
                         style: IconButton.styleFrom(
-                          foregroundColor: contact.isFavorite ? const Color(0xFFF7A93B) : OneUITheme.textPrimary,
+                          foregroundColor: contact.isFavorite ? const Color(0xFFF7A93B) : context.palette.textPrimary,
                           fixedSize: const Size.square(_button),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
@@ -478,8 +478,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               padding: const EdgeInsets.only(left: 18),
               child: Row(
                 children: [
-                  const Expanded(
-                    child: Text('Call logs', style: TextStyle(fontSize: 15, color: OneUITheme.textSecondary)),
+                  Expanded(
+                    child: Text('Call logs', style: TextStyle(fontSize: 15, color: context.palette.textSecondary)),
                   ),
                   TextButton(
                     onPressed: () =>
@@ -518,7 +518,7 @@ class DetailsActionTile extends StatelessWidget {
     return PressGlow(
       radius: OneUITheme.radiusCard,
       child: Material(
-        color: OneUITheme.surfaceCard,
+        color: context.palette.card,
         borderRadius: OneUITheme.cardBorderRadius,
         child: InkWell(
           onTap: onTap,
@@ -529,14 +529,14 @@ class DetailsActionTile extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 16),
             child: Column(
               children: [
-                Icon(icon, color: onTap == null ? OneUITheme.textTertiary : OneUITheme.textPrimary, size: 26),
+                Icon(icon, color: onTap == null ? context.palette.textTertiary : context.palette.textPrimary, size: 26),
                 const SizedBox(height: 6),
                 Text(
                   label,
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
-                    color: onTap == null ? OneUITheme.textTertiary : OneUITheme.textPrimary,
+                    color: onTap == null ? context.palette.textTertiary : context.palette.textPrimary,
                   ),
                 ),
               ],
@@ -559,7 +559,7 @@ class DetailsCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       padding: padding,
-      decoration: BoxDecoration(color: OneUITheme.surfaceCard, borderRadius: OneUITheme.cardBorderRadius),
+      decoration: BoxDecoration(color: context.palette.card, borderRadius: OneUITheme.cardBorderRadius),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
     );
   }
@@ -578,7 +578,7 @@ class DetailsCardSliver extends StatelessWidget {
     return SliverPadding(
       padding: const EdgeInsets.only(bottom: 20),
       sliver: DecoratedSliver(
-        decoration: BoxDecoration(color: OneUITheme.surfaceCard, borderRadius: OneUITheme.cardBorderRadius),
+        decoration: BoxDecoration(color: context.palette.card, borderRadius: OneUITheme.cardBorderRadius),
         sliver: SliverPadding(
           padding: padding,
           sliver: SliverList.builder(itemCount: itemCount, itemBuilder: itemBuilder),
@@ -606,7 +606,7 @@ class _ValueRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final caption = label.isEmpty
         ? null
-        : Text(label, style: const TextStyle(fontSize: 13, color: OneUITheme.textSecondary));
+        : Text(label, style: TextStyle(fontSize: 13, color: context.palette.textSecondary));
     final numberRow = icon != null || leading != null;
     return InkWell(
       onTap: onTap,
@@ -664,7 +664,7 @@ class ContactCallLogRow extends StatelessWidget {
                       child: Text(
                         c.number,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 13, color: OneUITheme.textSecondary),
+                        style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
                       ),
                     ),
                   ],
@@ -676,7 +676,7 @@ class ContactCallLogRow extends StatelessWidget {
             c.type != CallType.missed && c.duration > Duration.zero ? durationLabel(c.duration) : callTypeLabel(c.type),
             style: TextStyle(
               fontSize: 13,
-              color: c.type == CallType.missed ? OneUITheme.accentRed : OneUITheme.textSecondary,
+              color: c.type == CallType.missed ? OneUITheme.accentRed : context.palette.textSecondary,
             ),
           ),
         ],
