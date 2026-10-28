@@ -196,27 +196,28 @@ class _PopoverMenu extends StatelessWidget {
         );
         return Stack(
           children: [
+            // Outside the press, which clips to the menu's shape.
+            if (context.palette.isLight)
+              Positioned.fromRect(
+                rect: glass.shift(menu.topLeft),
+                child: DecoratedBox(
+                  decoration: ShapeDecoration(
+                    shape: RoundedSuperellipseBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(OneUIFloatingMenu._radius * size * scale)),
+                    ),
+                    shadows: [
+                      for (final s in OneUIPalette.lightMenuShadow)
+                        s.copyWith(color: s.color.withValues(alpha: s.color.a * fade)),
+                    ],
+                  ),
+                ),
+              ),
             Positioned.fromRect(
               rect: menu,
               child: PressGlow(
                 radius: OneUIFloatingMenu._radius * size,
                 child: Stack(
                   children: [
-                    if (context.palette.isLight)
-                      Positioned.fromRect(
-                        rect: glass,
-                        child: DecoratedBox(
-                          decoration: ShapeDecoration(
-                            shape: RoundedSuperellipseBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(OneUIFloatingMenu._radius * size * scale)),
-                            ),
-                            shadows: [
-                              for (final s in OneUIPalette.lightGlassShadow)
-                                s.copyWith(color: s.color.withValues(alpha: s.color.a * fade)),
-                            ],
-                          ),
-                        ),
-                      ),
                     Positioned.fromRect(
                       rect: glass,
                       child: ClipRSuperellipse(
@@ -264,7 +265,6 @@ class _PopoverMenu extends StatelessWidget {
                                         // image: drawn live, its blurred strokes were re-rendered every frame of a
                                         // press (~10 ms on a Galaxy S25).
                                         child: CallBodyArtwork(
-                                          shadow: false,
                                           radius: OneUIFloatingMenu._radius * size,
                                           glow: kMainGlassGlow,
                                           spread: .5,

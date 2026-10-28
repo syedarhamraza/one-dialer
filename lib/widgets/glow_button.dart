@@ -95,6 +95,7 @@ class GlowButton extends StatelessWidget {
       excludeSemantics: true,
       child: PressGlow(
         glowColor: lit ? color : null,
+        shadows: !lit && context.palette.isLight ? OneUIPalette.lightGlassShadow : null,
         child: lit
             ? Container(
                 decoration: solidBody(color, const StadiumBorder(), glow: 0),

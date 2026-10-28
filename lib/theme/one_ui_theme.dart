@@ -143,6 +143,12 @@ class OneUIPalette {
     BoxShadow(color: Color(0x0A000000), blurRadius: 6, offset: Offset(0, 1)),
   ];
 
+  /// Deeper for menus, which open over white cards as often as over the grey page.
+  static const lightMenuShadow = [
+    BoxShadow(color: Color(0x29000000), blurRadius: 40, offset: Offset(0, 12)),
+    BoxShadow(color: Color(0x14000000), blurRadius: 8, offset: Offset(0, 2)),
+  ];
+
   bool get isLight => identical(this, light);
 
   /// [g], a black page fade, redrawn in the light page colour (same alphas).

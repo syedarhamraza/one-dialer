@@ -583,6 +583,7 @@ class _Pill extends StatelessWidget {
     excludeSemantics: true,
     child: PressGlow(
       glowColor: lit ? color : null,
+      shadows: !lit && context.palette.isLight ? OneUIPalette.lightGlassShadow : null,
       child: Container(
         decoration: lit ? solidBody(color, const StadiumBorder(), glow: 0) : null,
         foregroundDecoration: lit ? solidGlow(const StadiumBorder()) : null,

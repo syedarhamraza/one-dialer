@@ -7,7 +7,7 @@ import '../features/in_call/call_controls.dart';
 /// glass body (the transparent style draws no shader, so the main engine needs no
 /// `LiquidGlassWidgets.initialize()`). Taps and semantics stay with the button inside.
 class PressGlow extends StatelessWidget {
-  const PressGlow({super.key, this.radius = 999, this.glowColor, required this.child});
+  const PressGlow({super.key, this.radius = 999, this.glowColor, this.shadows, required this.child});
 
   /// Corner radius; the default is clamped to a pill at any height.
   final double radius;
@@ -16,6 +16,9 @@ class PressGlow extends StatelessWidget {
   /// draws none), outside the press's clip, which would otherwise cut it off. Softer than
   /// the call screen's, to match the main app's gentler glass glow.
   final Color? glowColor;
+
+  /// Drop shadows (light mode's glass), drawn outside the press's clip like [glowColor]'s glow.
+  final List<BoxShadow>? shadows;
   final Widget child;
 
   static void _noTap() {}
@@ -39,10 +42,13 @@ class PressGlow extends StatelessWidget {
       child: child,
     );
     final color = glowColor;
-    if (color == null) return press;
+    if (color == null && shadows == null) return press;
     final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius));
     return DecoratedBox(
-      decoration: ShapeDecoration(shape: shape, shadows: solidBody(color, shape, glow: .22).shadows),
+      decoration: ShapeDecoration(
+        shape: shape,
+        shadows: [...?shadows, if (color != null) ...?solidBody(color, shape, glow: .22).shadows],
+      ),
       child: press,
     );
   }

@@ -106,7 +106,10 @@ class _Cell extends StatelessWidget {
                       : Container(
                           width: _circle,
                           height: _circle,
-                          decoration: const BoxDecoration(color: Color(0xFF333335), shape: BoxShape.circle),
+                          decoration: BoxDecoration(
+                            color: context.palette.isLight ? const Color(0xFFE4E4E9) : const Color(0xFF333335),
+                            shape: BoxShape.circle,
+                          ),
                           child: Icon(icon, size: 36),
                         ),
                 ),

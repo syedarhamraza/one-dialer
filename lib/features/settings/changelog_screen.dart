@@ -129,7 +129,13 @@ class _ReleaseHero extends StatelessWidget {
                     size: 84,
                   ),
                   const SizedBox(height: 4),
-                  Text(note, style: const TextStyle(fontSize: 13, color: Color(0xCCFFFFFF))),
+                  Text(
+                    note,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: context.palette.isLight ? context.palette.textSecondary : const Color(0xCCFFFFFF),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -149,7 +155,7 @@ class _ReleaseNotes extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const body = TextStyle(fontSize: 16, height: 1.55, color: Color(0xE0FFFFFF));
+    final body = TextStyle(fontSize: 16, height: 1.55, color: context.palette.textPrimary.withValues(alpha: .88));
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       padding: const EdgeInsets.fromLTRB(22, 20, 22, 6),
@@ -169,7 +175,7 @@ class _ReleaseNotes extends StatelessWidget {
                     children: [
                       TextSpan(
                         text: '${change.substring(0, i)}. ',
-                        style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+                        style: TextStyle(fontWeight: FontWeight.w600, color: context.palette.textPrimary),
                       ),
                       TextSpan(text: _capitalised(change.substring(i + 2))),
                     ],

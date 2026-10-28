@@ -54,14 +54,10 @@ class CallBodyArtwork extends StatefulWidget {
     this.glow = 1,
     this.spread = 1,
     this.opacity = 1,
-    this.shadow = true,
     required this.child,
   });
   final double? radius;
 
-  /// Draws [OneUIPalette.lightGlassShadow] under it in light mode; off when the caller clips it
-  /// and draws the shadow outside the clip itself.
-  final bool shadow;
   final double glow;
 
   /// How far the edge glow reaches in (see [TintedCallBody.spread]).
@@ -92,13 +88,7 @@ class _CallBodyArtworkState extends State<CallBodyArtwork> {
       _painter?.dispose();
       _painter = _CachedBodyPainter(widget.radius, ratio, widget.glow, widget.spread, widget.opacity, light);
     }
-    final body = CustomPaint(painter: _painter, child: widget.child);
-    return light && widget.shadow
-        ? DecoratedBox(
-            decoration: ShapeDecoration(shape: bodyShape(widget.radius), shadows: OneUIPalette.lightGlassShadow),
-            child: body,
-          )
-        : body;
+    return CustomPaint(painter: _painter, child: widget.child);
   }
 
   @override
@@ -160,7 +150,7 @@ class TintedCallBody extends CustomPainter {
   const TintedCallBody(this.radius, {this.glow = 1, this.spread = 1, this.light = false});
   final double? radius;
 
-  /// Light mode: a denser white wash and a bright white rim (the shadow under it sets it off).
+  /// Light mode: a denser white wash and a bright white rim (the press draws its shadow).
   final bool light;
 
   /// Strength of the edge glow and the brighter border glow (1 = the call screen's).
@@ -281,13 +271,6 @@ Path bodyPath(Rect rect, double? radius) => radius == null
     : radius.isInfinite
     ? (Path()..addRRect(RRect.fromRectAndRadius(rect, Radius.circular(rect.shortestSide / 2))))
     : (Path()..addRSuperellipse(RSuperellipse.fromRectAndRadius(rect, Radius.circular(radius))));
-
-/// [bodyPath] as a border, for shadows.
-ShapeBorder bodyShape(double? radius) => radius == null
-    ? const CircleBorder()
-    : radius.isInfinite
-    ? const StadiumBorder()
-    : RoundedSuperellipseBorder(borderRadius: BorderRadius.all(Radius.circular(radius)));
 
 /// A [GlassSpring] as a curve, so implicit animations can move like the glass package.
 class GlassSpringCurve extends Curve {

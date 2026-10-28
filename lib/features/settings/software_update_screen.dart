@@ -278,7 +278,11 @@ class _StatusLine extends StatelessWidget {
           child: Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 15, height: 1.35, color: Color(0xE6FFFFFF)),
+            style: TextStyle(
+              fontSize: 15,
+              height: 1.35,
+              color: context.palette.isLight ? context.palette.textSecondary : const Color(0xE6FFFFFF),
+            ),
           ),
         ),
       ),
@@ -370,7 +374,11 @@ class _UpdateCardsState extends State<_UpdateCards> {
                               padding: const EdgeInsets.only(bottom: 10),
                               child: Text(
                                 change,
-                                style: const TextStyle(fontSize: 15, height: 1.35, color: Color(0xDDFFFFFF)),
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  height: 1.35,
+                                  color: context.palette.textPrimary.withValues(alpha: .87),
+                                ),
                               ),
                             ),
                         ],

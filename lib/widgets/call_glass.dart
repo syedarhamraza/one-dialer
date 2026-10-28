@@ -28,7 +28,7 @@ class CallGlass extends StatelessWidget {
       filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
       // From a cached image, like the keypad keys: drawn live, its blurred strokes were
       // re-rendered every frame of a press (the press scales them).
-      child: CallBodyArtwork(radius: radius, glow: kMainGlassGlow, shadow: false, child: const SizedBox.expand()),
+      child: CallBodyArtwork(radius: radius, glow: kMainGlassGlow, child: const SizedBox.expand()),
     );
     // Claims vertical drags that start on it, so holding and moving a pill inside a
     // scrolling page plays the press instead of scrolling the page.
@@ -36,17 +36,12 @@ class CallGlass extends StatelessWidget {
       onVerticalDragStart: _ignoreDrag,
       child: PressGlow(
         radius: radius ?? 999,
+        shadows: context.palette.isLight ? OneUIPalette.lightGlassShadow : null,
         // Only the frosted body is clipped; the content draws on top unclipped, so a
         // springy thumb can overshoot the edge.
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            if (context.palette.isLight)
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: ShapeDecoration(shape: bodyShape(radius), shadows: OneUIPalette.lightGlassShadow),
-                ),
-              ),
             Positioned.fill(
               child: radius == null
                   ? ClipOval(child: body)
