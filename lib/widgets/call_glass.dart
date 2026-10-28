@@ -41,6 +41,12 @@ class CallGlass extends StatelessWidget {
         child: Stack(
           clipBehavior: Clip.none,
           children: [
+            if (context.palette.isLight)
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: ShapeDecoration(shape: bodyShape(radius), shadows: OneUIPalette.lightGlassShadow),
+                ),
+              ),
             Positioned.fill(
               child: radius == null
                   ? ClipOval(child: body)
