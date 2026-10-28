@@ -9,6 +9,7 @@ import '../features/in_call/call_controls.dart';
 import '../features/keypad/keypad_screen.dart';
 import '../features/recents/call_log_repository.dart';
 import '../features/recents/recents_screen.dart';
+import '../widgets/one_ui_bottom_vignette.dart';
 import '../widgets/one_ui_floating_nav_bar.dart';
 import '../theme/one_ui_theme.dart';
 import '../widgets/press_glow.dart';
@@ -146,6 +147,8 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
               ],
             ),
           ),
+          // Light mode shades the bottom behind the nav bar (dark mode needs none on black).
+          if (context.palette.isLight) const Positioned(left: 0, right: 0, bottom: 0, child: OneUIBottomVignette()),
           const Positioned(top: 0, left: 0, right: 0, child: ReturnToCallBanner()),
           Positioned(
             left: 0,

@@ -138,13 +138,13 @@ class OneUIPalette {
 
   bool get isLight => identical(this, light);
 
-  /// [g], a black page fade, redrawn in the light page colour (same alphas).
+  /// [g], a black fade behind floating bars, as a soft grey shade in light mode.
   LinearGradient tint(LinearGradient g) => isLight
       ? LinearGradient(
           begin: g.begin,
           end: g.end,
           stops: g.stops,
-          colors: [for (final c in g.colors) page.withValues(alpha: c.a)],
+          colors: [for (final c in g.colors) c.withValues(alpha: c.a * .2)],
         )
       : g;
 
