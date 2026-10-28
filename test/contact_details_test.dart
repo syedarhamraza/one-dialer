@@ -69,7 +69,11 @@ void main() {
         opened.add(call);
         return switch (call.method) {
           'getMessagingApps' => [
-            {'label': 'Meet', 'dataId': 5, 'mimeType': 'vnd.android.cursor.item/com.google.android.apps.tachyon.phone.meet'},
+            {
+              'label': 'Meet',
+              'dataId': 5,
+              'mimeType': 'vnd.android.cursor.item/com.google.android.apps.tachyon.phone.meet',
+            },
           ],
           'getSims' => [],
           _ => null,

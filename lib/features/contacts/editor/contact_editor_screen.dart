@@ -650,7 +650,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                   alignment: Alignment.centerLeft,
                   child: TextButton(
                     onPressed: () => Navigator.pop(ctx),
-                    style: TextButton.styleFrom(foregroundColor: OneUITheme.textPrimary),
+                    style: TextButton.styleFrom(foregroundColor: context.palette.textPrimary),
                     child: const Text('Cancel', style: TextStyle(fontSize: 16)),
                   ),
                 ),

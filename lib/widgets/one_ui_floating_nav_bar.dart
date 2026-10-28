@@ -131,7 +131,7 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
         children: List.generate(items.length, (index) {
           final item = items[index];
           final isSelected = index == widget.currentIndex;
-          final color = isSelected ? OneUITheme.textPrimary : OneUITheme.textSecondary;
+          final color = isSelected ? context.palette.textPrimary : context.palette.textSecondary;
           final duration = reduceMotion ? Duration.zero : const Duration(milliseconds: 220);
           // Each tab is as wide as its label (with a minimum), so the bar fits its tabs.
           return ConstrainedBox(

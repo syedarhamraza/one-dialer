@@ -40,7 +40,7 @@ class OneUIFloatingActionBar extends StatelessWidget {
       animation: OneUIEffectsController.instance,
       builder: (context, _) {
         if (docked) {
-          return Padding(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), child: _buildRow());
+          return Padding(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), child: _buildRow(context));
         }
 
         return SafeArea(
@@ -52,7 +52,7 @@ class OneUIFloatingActionBar extends StatelessWidget {
                 elevation: OneUIGlassElevation.navbar,
                 height: 60,
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                child: _buildRow(),
+                child: _buildRow(context),
               ),
             ),
           ),
@@ -61,7 +61,7 @@ class OneUIFloatingActionBar extends StatelessWidget {
     );
   }
 
-  Widget _buildRow() {
+  Widget _buildRow(BuildContext context) {
     return Material(
       color: Colors.transparent,
       child: Row(
@@ -69,8 +69,8 @@ class OneUIFloatingActionBar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: items.map((item) {
           final itemColor = item.isEnabled
-              ? (item.color ?? OneUITheme.textPrimary)
-              : OneUITheme.textSecondary.withValues(alpha: 0.35);
+              ? (item.color ?? context.palette.textPrimary)
+              : context.palette.textSecondary.withValues(alpha: 0.35);
 
           return InkWell(
             key: item.key,

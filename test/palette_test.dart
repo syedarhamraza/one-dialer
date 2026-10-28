@@ -4,7 +4,7 @@ import 'package:dialer/theme/one_ui_theme.dart';
 import 'package:dialer/widgets/one_ui_glass_surface.dart';
 
 void main() {
-  testWidgets('light pages get the light palette, glass keeps the dark one', (tester) async {
+  testWidgets('light mode reaches pages and the content of glass', (tester) async {
     late OneUIPalette page, glass;
     await tester.pumpWidget(
       MaterialApp(
@@ -25,6 +25,6 @@ void main() {
       ),
     );
     expect(page, same(OneUIPalette.light));
-    expect(glass, same(OneUIPalette.dark));
+    expect(glass, same(OneUIPalette.light));
   });
 }

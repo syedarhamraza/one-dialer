@@ -43,7 +43,7 @@ class OneUISelectionActionBar extends StatelessWidget {
       animation: OneUIEffectsController.instance,
       builder: (context, _) {
         if (docked) {
-          return Padding(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), child: _buildRow());
+          return Padding(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), child: _buildRow(context));
         }
 
         return SafeArea(
@@ -56,7 +56,7 @@ class OneUISelectionActionBar extends StatelessWidget {
                 elevation: OneUIGlassElevation.navbar,
                 height: 60,
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                child: _buildRow(),
+                child: _buildRow(context),
               ),
             ),
           ),
@@ -65,7 +65,7 @@ class OneUISelectionActionBar extends StatelessWidget {
     );
   }
 
-  Widget _buildRow() {
+  Widget _buildRow(BuildContext context) {
     final hasSelection = selectedCount > 0;
     return Material(
       color: Colors.transparent,
@@ -75,6 +75,7 @@ class OneUISelectionActionBar extends StatelessWidget {
         children: [
           // 1. Share
           _buildActionItem(
+            context,
             key: shareButtonKey,
             icon: Icons.share_outlined,
             label: 'Share',
@@ -84,6 +85,7 @@ class OneUISelectionActionBar extends StatelessWidget {
 
           // 2. Delete
           _buildActionItem(
+            context,
             icon: Icons.delete_outline_rounded,
             label: 'Delete',
             isEnabled: hasSelection,
@@ -93,6 +95,7 @@ class OneUISelectionActionBar extends StatelessWidget {
 
           // 3. More (...)
           _buildActionItem(
+            context,
             key: moreButtonKey,
             icon: Icons.more_vert_rounded,
             label: 'More',
@@ -104,7 +107,8 @@ class OneUISelectionActionBar extends StatelessWidget {
     );
   }
 
-  Widget _buildActionItem({
+  Widget _buildActionItem(
+    BuildContext context, {
     Key? key,
     required IconData icon,
     required String label,
@@ -112,7 +116,9 @@ class OneUISelectionActionBar extends StatelessWidget {
     required VoidCallback onTap,
     Color? color,
   }) {
-    final itemColor = isEnabled ? (color ?? OneUITheme.textPrimary) : OneUITheme.textSecondary.withValues(alpha: 0.4);
+    final itemColor = isEnabled
+        ? (color ?? context.palette.textPrimary)
+        : context.palette.textSecondary.withValues(alpha: 0.4);
 
     return InkWell(
       key: key,

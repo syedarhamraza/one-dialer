@@ -176,7 +176,7 @@ class CallDetailsScreen extends StatelessWidget {
                           tooltip: blocked ? 'Unblock' : 'Block',
                           onPressed: () => BlockingRepository.instance.setBlocked(call.number, !blocked),
                           style: IconButton.styleFrom(
-                            foregroundColor: blocked ? OneUITheme.accentRed : OneUITheme.textPrimary,
+                            foregroundColor: blocked ? OneUITheme.accentRed : context.palette.textPrimary,
                             fixedSize: const Size.square(_button),
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),

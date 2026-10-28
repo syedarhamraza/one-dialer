@@ -46,8 +46,7 @@ class CallGlass extends StatelessWidget {
                   ? ClipOval(child: body)
                   : ClipRSuperellipse(borderRadius: BorderRadius.all(Radius.circular(radius!)), child: body),
             ),
-            // Glass keeps the dark look in light mode too.
-            Theme(data: OneUITheme.darkTheme, child: child),
+            child,
           ],
         ),
       ),

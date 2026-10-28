@@ -21,7 +21,7 @@ class RoundIconButton extends StatelessWidget {
         onPressed: onTap,
         // Exactly 48: Material would pad a smaller one to a 48 dp tap target anyway.
         style: IconButton.styleFrom(
-          foregroundColor: OneUITheme.textPrimary,
+          foregroundColor: context.palette.textPrimary,
           fixedSize: const Size.square(48),
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
@@ -109,8 +109,11 @@ class _FilterTabsState extends State<FilterTabs> {
                   duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 600),
                   curve: thumbSpring,
                   builder: (context, x, child) => Transform.translate(offset: Offset(x, 0), child: child),
-                  child: const DecoratedBox(
-                    decoration: ShapeDecoration(color: Color(0x3DFFFFFF), shape: _thumb),
+                  child: DecoratedBox(
+                    decoration: ShapeDecoration(
+                      color: context.palette.isLight ? const Color(0x14000000) : const Color(0x3DFFFFFF),
+                      shape: _thumb,
+                    ),
                   ),
                 ),
               ),
@@ -132,7 +135,7 @@ class _FilterTabsState extends State<FilterTabs> {
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
-                              color: i == _index ? OneUITheme.textPrimary : OneUITheme.textSecondary,
+                              color: i == _index ? context.palette.textPrimary : context.palette.textSecondary,
                             ),
                             child: Text(widget.labels[i]),
                           ),
@@ -182,7 +185,7 @@ class SelectAllCount extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: allSelected ? const Color(0xFF2C69FF) : Colors.transparent,
                 border: Border.all(
-                  color: allSelected ? const Color(0xFF2C69FF) : Colors.white.withValues(alpha: 0.55),
+                  color: allSelected ? const Color(0xFF2C69FF) : context.palette.textPrimary.withValues(alpha: 0.55),
                   width: 2,
                 ),
               ),
@@ -191,11 +194,11 @@ class SelectAllCount extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               'All',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -0.2,
-                color: OneUITheme.textPrimary,
+                color: context.palette.textPrimary,
               ),
             ),
           ],

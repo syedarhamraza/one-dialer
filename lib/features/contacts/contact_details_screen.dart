@@ -291,7 +291,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                         tooltip: contact.isFavorite ? 'Remove from favourites' : 'Add to favourites',
                         onPressed: () => repo.setFavorite(contact.id, !contact.isFavorite),
                         style: IconButton.styleFrom(
-                          foregroundColor: contact.isFavorite ? const Color(0xFFF7A93B) : OneUITheme.textPrimary,
+                          foregroundColor: contact.isFavorite ? const Color(0xFFF7A93B) : context.palette.textPrimary,
                           fixedSize: const Size.square(_button),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),

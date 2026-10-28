@@ -224,7 +224,7 @@ class CosPill extends StatelessWidget {
               style: TextStyle(
                 fontSize: 16.5,
                 fontWeight: FontWeight.w600,
-                color: destructive ? OneUITheme.accentRed : OneUITheme.textPrimary,
+                color: destructive ? OneUITheme.accentRed : context.palette.textPrimary,
               ),
             ),
           ),

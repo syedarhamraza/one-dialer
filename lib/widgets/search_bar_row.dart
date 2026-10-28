@@ -34,7 +34,7 @@ class SearchBarRow extends StatelessWidget {
           child: TextButton(
             onPressed: onCancel,
             style: TextButton.styleFrom(
-              foregroundColor: OneUITheme.textPrimary,
+              foregroundColor: context.palette.textPrimary,
               minimumSize: const Size(0, _bar),
               padding: const EdgeInsets.symmetric(horizontal: 20),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -66,7 +66,7 @@ class _SearchField extends StatelessWidget {
           padding: const EdgeInsets.only(left: 16, right: 4),
           child: Row(
             children: [
-              const Icon(Icons.search_rounded, size: 24, color: OneUITheme.textSecondary),
+              Icon(Icons.search_rounded, size: 24, color: context.palette.textSecondary),
               const SizedBox(width: 10),
               Expanded(
                 child: TextField(
@@ -78,7 +78,7 @@ class _SearchField extends StatelessWidget {
                   cursorColor: OneUITheme.accentBlue,
                   decoration: InputDecoration.collapsed(
                     hintText: hint,
-                    hintStyle: const TextStyle(fontSize: 17, color: OneUITheme.textSecondary),
+                    hintStyle: TextStyle(fontSize: 17, color: context.palette.textSecondary),
                   ),
                 ),
               ),
@@ -89,7 +89,7 @@ class _SearchField extends StatelessWidget {
                     : IconButton(
                         tooltip: 'Clear',
                         onPressed: controller.clear,
-                        icon: const Icon(Icons.cancel_rounded, size: 20, color: OneUITheme.textSecondary),
+                        icon: Icon(Icons.cancel_rounded, size: 20, color: context.palette.textSecondary),
                       ),
               ),
             ],

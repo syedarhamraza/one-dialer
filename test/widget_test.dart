@@ -9,7 +9,11 @@ void main() {
         {'id': 'call-0', 'state': 'holding', 'number': '111'},
         {'id': 'call-1', 'state': 'ringing', 'number': '222'},
       ],
-      'audio': {'muted': true, 'route': 'speaker', 'supportedRoutes': ['earpiece', 'speaker']},
+      'audio': {
+        'muted': true,
+        'route': 'speaker',
+        'supportedRoutes': ['earpiece', 'speaker'],
+      },
     });
 
     expect(snapshot.primary?.id, 'call-1');

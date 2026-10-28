@@ -118,6 +118,7 @@ class OneUIPalette {
     required this.textTertiary,
     required this.sectionHeader,
     required this.divider,
+    required this.pillActive,
   });
 
   final Color page;
@@ -129,6 +130,11 @@ class OneUIPalette {
   final Color textTertiary;
   final Color sectionHeader;
   final Color divider;
+  final Color pillActive;
+
+  /// Light mode's flat glass fills (dark mode keeps [OneUIEffectsController]'s).
+  static const lightFloating = Color(0xCCF8F8FA);
+  static const lightModal = Color(0xEBF8F8FA);
 
   bool get isLight => identical(this, light);
 
@@ -152,6 +158,7 @@ class OneUIPalette {
     textTertiary: OneUITheme.textTertiary,
     sectionHeader: OneUITheme.sectionHeader,
     divider: Color(0x1AFFFFFF),
+    pillActive: OneUITheme.surfacePillActive,
   );
 
   /// ColorOS 17 light: grey page, white cards, black text.
@@ -165,6 +172,7 @@ class OneUIPalette {
     textTertiary: Color(0xFFA1A1A6),
     sectionHeader: Color(0xFF3C3C43),
     divider: Color(0x1A000000),
+    pillActive: Color(0xFFFFFFFF),
   );
 }
 

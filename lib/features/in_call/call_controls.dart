@@ -76,14 +76,16 @@ class _CallBodyArtworkState extends State<CallBodyArtwork> {
   @override
   Widget build(BuildContext context) {
     final ratio = MediaQuery.devicePixelRatioOf(context);
+    final light = context.palette.isLight;
     if (_painter == null ||
+        _painter!.light != light ||
         _painter!.radius != widget.radius ||
         _painter!.ratio != ratio ||
         _painter!.glow != widget.glow ||
         _painter!.spread != widget.spread ||
         _painter!.opacity != widget.opacity) {
       _painter?.dispose();
-      _painter = _CachedBodyPainter(widget.radius, ratio, widget.glow, widget.spread, widget.opacity);
+      _painter = _CachedBodyPainter(widget.radius, ratio, widget.glow, widget.spread, widget.opacity, light);
     }
     return CustomPaint(painter: _painter, child: widget.child);
   }
@@ -96,12 +98,13 @@ class _CallBodyArtworkState extends State<CallBodyArtwork> {
 }
 
 class _CachedBodyPainter extends CustomPainter {
-  _CachedBodyPainter(this.radius, this.ratio, this.glow, this.spread, this.opacity);
+  _CachedBodyPainter(this.radius, this.ratio, this.glow, this.spread, this.opacity, this.light);
   final double? radius;
   final double ratio;
   final double glow;
   final double spread;
   final double opacity;
+  final bool light;
   ui.Image? _image;
   Size? _size;
 
@@ -111,7 +114,7 @@ class _CachedBodyPainter extends CustomPainter {
     if (_image == null || _size != size) {
       final recorder = ui.PictureRecorder();
       final recording = Canvas(recorder)..scale(ratio);
-      TintedCallBody(radius, glow: glow, spread: spread).paint(recording, size);
+      TintedCallBody(radius, glow: glow, spread: spread, light: light).paint(recording, size);
       final picture = recorder.endRecording();
       final image = picture.toImageSync((size.width * ratio).ceil(), (size.height * ratio).ceil());
       picture.dispose();
@@ -137,13 +140,17 @@ class _CachedBodyPainter extends CustomPainter {
       ratio != oldDelegate.ratio ||
       glow != oldDelegate.glow ||
       spread != oldDelegate.spread ||
-      opacity != oldDelegate.opacity;
+      opacity != oldDelegate.opacity ||
+      light != oldDelegate.light;
 }
 
 /// The milky wash, edge glow and lips drawn over each control's frosted blur.
 class TintedCallBody extends CustomPainter {
-  const TintedCallBody(this.radius, {this.glow = 1, this.spread = 1});
+  const TintedCallBody(this.radius, {this.glow = 1, this.spread = 1, this.light = false});
   final double? radius;
+
+  /// Light mode: a denser white wash and a faint dark edge, so the glass reads on a light page.
+  final bool light;
 
   /// Strength of the edge glow and the brighter border glow (1 = the call screen's).
   final double glow;
@@ -164,13 +171,24 @@ class TintedCallBody extends CustomPainter {
     canvas.drawPath(
       shape,
       Paint()
-        ..shader = const LinearGradient(
+        ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0x33FFFFFF), Color(0x2BFFFFFF), Color(0x3DFFFFFF)],
-          stops: [0, .5, 1],
+          colors: light
+              ? const [Color(0x99FFFFFF), Color(0x8CFFFFFF), Color(0xA6FFFFFF)]
+              : const [Color(0x33FFFFFF), Color(0x2BFFFFFF), Color(0x3DFFFFFF)],
+          stops: const [0, .5, 1],
         ).createShader(rect),
     );
+    if (light) {
+      canvas.drawPath(
+        bodyPath(rect.deflate(.4), radius == null ? null : radius! - .4),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = .8
+          ..color = const Color(0x17000000),
+      );
+    }
     // The ColorOS glow: a soft light hugging every edge, shallow so the centre stays clear, and
     // weaker along the top. A blurred stroke clipped to the shape keeps it inside.
     canvas
@@ -239,7 +257,10 @@ class TintedCallBody extends CustomPainter {
 
   @override
   bool shouldRepaint(TintedCallBody oldDelegate) =>
-      oldDelegate.radius != radius || oldDelegate.glow != glow || oldDelegate.spread != spread;
+      oldDelegate.radius != radius ||
+      oldDelegate.glow != glow ||
+      oldDelegate.spread != spread ||
+      oldDelegate.light != light;
 }
 
 /// A circle, a superellipse whose ends are ColorOS's soft oval rather than a true semicircle, or

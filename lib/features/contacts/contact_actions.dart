@@ -51,7 +51,7 @@ abstract final class ContactActions {
         Text(
           contact.displayName ?? '',
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: OneUITheme.textPrimary),
+          style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
         ),
         const SizedBox(height: 18),
         Center(
@@ -70,10 +70,10 @@ abstract final class ContactActions {
           ),
         ),
         const SizedBox(height: 14),
-        const Text(
+        Text(
           'Scan with a phone camera to add this contact',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 15.5, height: 1.35, color: OneUITheme.textSecondary),
+          style: TextStyle(fontSize: 15.5, height: 1.35, color: context.palette.textSecondary),
         ),
         const SizedBox(height: 24),
         CosPill(label: 'Close', onTap: () => Navigator.pop(ctx)),

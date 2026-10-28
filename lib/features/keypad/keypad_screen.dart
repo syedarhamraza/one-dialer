@@ -240,7 +240,8 @@ class _KeypadScreenState extends State<KeypadScreen> {
                                   child: DecoratedBox(
                                     key: const ValueKey('keypad-panel'),
                                     decoration: BoxDecoration(
-                                      color: OneUITheme.surfaceCard.withValues(alpha: .75),
+                                      color: (context.palette.isLight ? context.palette.page : context.palette.card)
+                                          .withValues(alpha: .75),
                                       borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
                                     ),
                                     // Scrolls only when a small or landscape screen can't fit it.
@@ -430,11 +431,11 @@ class _NumberDisplay extends StatelessWidget {
                   Text(
                     number,
                     maxLines: 1,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 36,
                       fontWeight: FontWeight.w400,
                       letterSpacing: 0.5,
-                      color: OneUITheme.textPrimary,
+                      color: context.palette.textPrimary,
                     ),
                   ),
                 ],
@@ -469,7 +470,7 @@ class _Handle extends StatelessWidget {
             width: 36,
             height: 4,
             decoration: BoxDecoration(
-              color: OneUITheme.textSecondary.withValues(alpha: 0.5),
+              color: context.palette.textSecondary.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -532,13 +533,13 @@ class _Keypad extends StatelessWidget {
                               fontSize: digit == '*' ? 34 : 30,
                               height: 1.1,
                               fontWeight: FontWeight.w500,
-                              color: OneUITheme.textPrimary,
+                              color: context.palette.textPrimary,
                             ),
                           ),
                           if (letters == 'VM')
-                            const Icon(Icons.voicemail_rounded, size: 14, color: OneUITheme.textSecondary)
+                            Icon(Icons.voicemail_rounded, size: 14, color: context.palette.textSecondary)
                           else if (letters.isNotEmpty)
-                            Text(letters, style: const TextStyle(fontSize: 11, color: OneUITheme.textSecondary)),
+                            Text(letters, style: TextStyle(fontSize: 11, color: context.palette.textSecondary)),
                         ],
                       ),
                     ),
@@ -644,7 +645,7 @@ class _CallRow extends StatelessWidget {
               height: keyHeight,
               label: 'Hide keypad',
               onTap: onHide,
-              child: const Icon(Icons.dialpad_rounded, color: OneUITheme.textPrimary, size: 30),
+              child: Icon(Icons.dialpad_rounded, color: context.palette.textPrimary, size: 30),
             ),
           ),
           if (sims.isEmpty)
@@ -697,7 +698,7 @@ class _CallRow extends StatelessWidget {
               label: 'Delete, long-press to clear',
               onTap: onBackspace,
               onLongPress: onClear,
-              child: const Icon(Icons.backspace_rounded, color: OneUITheme.textSecondary, size: 30),
+              child: Icon(Icons.backspace_rounded, color: context.palette.textSecondary, size: 30),
             ),
           ),
         ],

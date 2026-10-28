@@ -50,7 +50,9 @@ void main() {
         MaterialApp(
           theme: OneUITheme.darkTheme,
           builder: (context, child) => DesignWidth(child: child!),
-          home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier(''))),
+          home: Scaffold(
+            body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('')),
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -70,7 +72,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(body: KeypadScreen(open: open, input: input)),
+        home: Scaffold(
+          body: KeypadScreen(open: open, input: input),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -92,7 +96,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: input)),
+        home: Scaffold(
+          body: KeypadScreen(open: ValueNotifier(true), input: input),
+        ),
       ),
     );
     final sheet = tester.element(find.byKey(const ValueKey('keypad-panel')));
@@ -130,7 +136,9 @@ void main() {
             key: boundary,
             child: MediaQuery(
               data: const MediaQueryData(size: Size(393, 852), padding: EdgeInsets.only(top: 24, bottom: 16)),
-              child: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: input)),
+              child: Scaffold(
+                body: KeypadScreen(open: ValueNotifier(true), input: input),
+              ),
             ),
           ),
         ),
@@ -163,7 +171,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(body: KeypadScreen(open: open, input: input)),
+        home: Scaffold(
+          body: KeypadScreen(open: open, input: input),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -185,7 +195,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: input)),
+        home: Scaffold(
+          body: KeypadScreen(open: ValueNotifier(true), input: input),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -205,7 +217,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(body: KeypadScreen(open: open, input: ValueNotifier('0333'))),
+        home: Scaffold(
+          body: KeypadScreen(open: open, input: ValueNotifier('0333')),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -275,7 +289,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('03331234567'))),
+        home: Scaffold(
+          body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('03331234567')),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -306,7 +322,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: input)),
+        home: Scaffold(
+          body: KeypadScreen(open: ValueNotifier(true), input: input),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -336,7 +354,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('03331234567'))),
+        home: Scaffold(
+          body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('03331234567')),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -348,7 +368,8 @@ void main() {
     expect(nativeCalls.singleWhere((call) => call.method == 'placeCall').arguments['simId'], 'sim2');
   });
 
-  testWidgets('system default SIM calls without showing a chooser', (tester) async {    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
+  testWidgets('system default SIM calls without showing a chooser', (tester) async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
       nativeCalls.add(call);
       if (call.method == 'getSims') {
         return [
@@ -361,7 +382,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('5551234567'))),
+        home: Scaffold(
+          body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('5551234567')),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -380,7 +403,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: OneUITheme.darkTheme,
-        home: Scaffold(body: KeypadScreen(open: open, input: ValueNotifier('0333'))),
+        home: Scaffold(
+          body: KeypadScreen(open: open, input: ValueNotifier('0333')),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -403,7 +428,9 @@ void main() {
         theme: OneUITheme.darkTheme,
         home: MediaQuery(
           data: const MediaQueryData(size: Size(320, 568), textScaler: TextScaler.linear(1.5)),
-          child: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('0333'))),
+          child: Scaffold(
+            body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('0333')),
+          ),
         ),
       ),
     );

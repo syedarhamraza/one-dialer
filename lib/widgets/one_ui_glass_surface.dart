@@ -64,6 +64,7 @@ class OneUIGlassSurface extends StatelessWidget {
         final fx = OneUIEffectsController.instance;
         final t = progress.clamp(0.0, 1.0);
         final isModal = elevation == OneUIGlassElevation.modal;
+        final light = context.palette.isLight;
 
         final body = AnimatedContainer(
           duration: duration,
@@ -75,12 +76,18 @@ class OneUIGlassSurface extends StatelessWidget {
           decoration: t <= 0.05
               ? null
               : BoxDecoration(
-                  color: fx.floating3dEffect ? null : _fade(isModal ? fx.modalColor : fx.floatingColor, t),
+                  color: fx.floating3dEffect
+                      ? null
+                      : _fade(
+                          light
+                              ? (isModal ? OneUIPalette.lightModal : OneUIPalette.lightFloating)
+                              : (isModal ? fx.modalColor : fx.floatingColor),
+                          t,
+                        ),
                   gradient: (isModal ? fx.modalGradient : fx.floatingGradient)?.scale(t),
                   borderRadius: borderRadius,
                 ),
-          // Glass keeps the dark look in light mode too.
-          child: Theme(data: OneUITheme.darkTheme, child: child),
+          child: child,
         );
 
         // Fully faded out: no blur, clip or shadow work at all.

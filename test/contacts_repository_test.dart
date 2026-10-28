@@ -24,8 +24,12 @@ void main() {
   test('a reload with the same contacts counts as unchanged', () {
     expect(
       same(
-        [contact(thumbnail: Uint8List.fromList([1, 2]))],
-        [contact(thumbnail: Uint8List.fromList([1, 2]))],
+        [
+          contact(thumbnail: Uint8List.fromList([1, 2])),
+        ],
+        [
+          contact(thumbnail: Uint8List.fromList([1, 2])),
+        ],
       ),
       isTrue,
     );
@@ -34,9 +38,19 @@ void main() {
   test('any listed field changing counts as a change', () {
     final base = [contact()];
     expect(same([contact(name: 'Anna')], base), isFalse);
-    expect(same([contact(numbers: const ['0300 7654321'])], base), isFalse);
+    expect(
+      same([
+        contact(numbers: const ['0300 7654321']),
+      ], base),
+      isFalse,
+    );
     expect(same([contact(isFavorite: true)], base), isFalse);
-    expect(same([contact(thumbnail: Uint8List.fromList([1]))], base), isFalse);
+    expect(
+      same([
+        contact(thumbnail: Uint8List.fromList([1])),
+      ], base),
+      isFalse,
+    );
     expect(same([contact(), contact(id: '2')], base), isFalse);
     expect(same([contact(id: '2')], base), isFalse);
   });

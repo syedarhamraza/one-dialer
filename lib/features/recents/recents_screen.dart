@@ -486,7 +486,6 @@ class _HeaderControls extends StatelessWidget {
         tooltip: tooltip,
         onPressed: onTap,
         style: IconButton.styleFrom(
-          foregroundColor: OneUITheme.textPrimary,
           fixedSize: const Size.square(_button),
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),

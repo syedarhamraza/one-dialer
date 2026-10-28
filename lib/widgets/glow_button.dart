@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/one_ui_theme.dart';
+
 import '../features/in_call/call_controls.dart';
 import 'call_glass.dart';
 import 'press_glow.dart';
@@ -62,7 +64,11 @@ class GlowButton extends StatelessWidget {
                   key: ValueKey((busy, label)),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w600, color: Colors.white),
+                  style: TextStyle(
+                    fontSize: fontSize,
+                    fontWeight: FontWeight.w600,
+                    color: lit ? Colors.white : context.palette.textPrimary,
+                  ),
                 ),
               ),
             ),

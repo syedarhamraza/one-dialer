@@ -40,10 +40,7 @@ Future<String?> chooseNumber(BuildContext context, DialerContact contact) async 
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            contact.labels[i],
-                            style: const TextStyle(fontSize: 14, color: OneUITheme.textSecondary),
-                          ),
+                          Text(contact.labels[i], style: TextStyle(fontSize: 14, color: context.palette.textSecondary)),
                           Text(n, style: const TextStyle(fontSize: 20)),
                         ],
                       ),
@@ -58,7 +55,7 @@ Future<String?> chooseNumber(BuildContext context, DialerContact contact) async 
               Expanded(
                 child: _FooterButton(label: 'Just once', onTap: () => Navigator.pop(ctx, (selected, false))),
               ),
-              Container(width: 1, height: 18, color: Colors.white.withValues(alpha: 0.10)),
+              Container(width: 1, height: 18, color: context.palette.divider),
               Expanded(
                 child: _FooterButton(label: 'Set as default', onTap: () => Navigator.pop(ctx, (selected, true))),
               ),
@@ -89,7 +86,7 @@ class _FooterButton extends StatelessWidget {
         style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
         child: Text(
           label,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
         ),
       ),
     );
