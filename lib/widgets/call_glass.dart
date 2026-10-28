@@ -28,7 +28,7 @@ class CallGlass extends StatelessWidget {
       filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
       // From a cached image, like the keypad keys: drawn live, its blurred strokes were
       // re-rendered every frame of a press (the press scales them).
-      child: CallBodyArtwork(radius: radius, glow: kMainGlassGlow, child: const SizedBox.expand()),
+      child: CallBodyArtwork(radius: radius, glow: kMainGlassGlow, shadow: false, child: const SizedBox.expand()),
     );
     // Claims vertical drags that start on it, so holding and moving a pill inside a
     // scrolling page plays the press instead of scrolling the page.

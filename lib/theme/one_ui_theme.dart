@@ -133,13 +133,14 @@ class OneUIPalette {
   final Color pillActive;
 
   /// Light mode's flat glass fills (dark mode keeps [OneUIEffectsController]'s).
-  static const lightFloating = Color(0xCCF8F8FA);
-  static const lightModal = Color(0xEBF8F8FA);
+  static const lightFloating = Color(0xE6FFFFFF);
+  static const lightModal = Color(0xF2FFFFFF);
 
-  /// A soft drop shadow lifting light glass off the page; drawn only outside the shape, so the
-  /// translucent glass doesn't turn grey.
+  /// ColorOS 17's light glass shadow: a wide, faint haze a little below the item, plus a tight
+  /// one that defines its edge on a white page.
   static const lightGlassShadow = [
-    BoxShadow(color: Color(0x26000000), blurRadius: 14, offset: Offset(0, 3), blurStyle: BlurStyle.outer),
+    BoxShadow(color: Color(0x12000000), blurRadius: 24, offset: Offset(0, 6)),
+    BoxShadow(color: Color(0x0A000000), blurRadius: 6, offset: Offset(0, 1)),
   ];
 
   bool get isLight => identical(this, light);

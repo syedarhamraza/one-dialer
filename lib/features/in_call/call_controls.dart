@@ -54,9 +54,14 @@ class CallBodyArtwork extends StatefulWidget {
     this.glow = 1,
     this.spread = 1,
     this.opacity = 1,
+    this.shadow = true,
     required this.child,
   });
   final double? radius;
+
+  /// Draws [OneUIPalette.lightGlassShadow] under it in light mode; off when the caller clips it
+  /// and draws the shadow outside the clip itself.
+  final bool shadow;
   final double glow;
 
   /// How far the edge glow reaches in (see [TintedCallBody.spread]).
@@ -88,7 +93,7 @@ class _CallBodyArtworkState extends State<CallBodyArtwork> {
       _painter = _CachedBodyPainter(widget.radius, ratio, widget.glow, widget.spread, widget.opacity, light);
     }
     final body = CustomPaint(painter: _painter, child: widget.child);
-    return light
+    return light && widget.shadow
         ? DecoratedBox(
             decoration: ShapeDecoration(shape: bodyShape(widget.radius), shadows: OneUIPalette.lightGlassShadow),
             child: body,
@@ -155,7 +160,7 @@ class TintedCallBody extends CustomPainter {
   const TintedCallBody(this.radius, {this.glow = 1, this.spread = 1, this.light = false});
   final double? radius;
 
-  /// Light mode: a denser white wash and a faint dark edge, so the glass reads on a light page.
+  /// Light mode: a denser white wash and a bright white rim (the shadow under it sets it off).
   final bool light;
 
   /// Strength of the edge glow and the brighter border glow (1 = the call screen's).
@@ -181,7 +186,7 @@ class TintedCallBody extends CustomPainter {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: light
-              ? const [Color(0x99FFFFFF), Color(0x8CFFFFFF), Color(0xA6FFFFFF)]
+              ? const [Color(0xB8FFFFFF), Color(0xA8FFFFFF), Color(0xC2FFFFFF)]
               : const [Color(0x33FFFFFF), Color(0x2BFFFFFF), Color(0x3DFFFFFF)],
           stops: const [0, .5, 1],
         ).createShader(rect),
@@ -192,7 +197,7 @@ class TintedCallBody extends CustomPainter {
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = .8
-          ..color = const Color(0x17000000),
+          ..color = const Color(0xE6FFFFFF),
       );
     }
     // The ColorOS glow: a soft light hugging every edge, shallow so the centre stays clear, and

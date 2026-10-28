@@ -257,13 +257,14 @@ class _PopoverMenu extends StatelessWidget {
                                       // wash, edge glow and lip go on top, as on the header buttons.
                                       child: ColoredBox(
                                         color: context.palette.isLight
-                                            ? const Color(0xB3F8F8FA)
+                                            ? const Color(0xCCFFFFFF)
                                             : const Color(0xB3141416),
                                         // The same glow as the buttons, but reaching less far in: across a card
                                         // this much bigger the button's spread reads as a wide haze. From a cached
                                         // image: drawn live, its blurred strokes were re-rendered every frame of a
                                         // press (~10 ms on a Galaxy S25).
                                         child: CallBodyArtwork(
+                                          shadow: false,
                                           radius: OneUIFloatingMenu._radius * size,
                                           glow: kMainGlassGlow,
                                           spread: .5,

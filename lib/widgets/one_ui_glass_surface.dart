@@ -95,7 +95,8 @@ class OneUIGlassSurface extends StatelessWidget {
 
         final rim = fx.floatingRimGradient;
         final shadows = [
-          for (final s in fx.glassShadow(elevation)) t >= 1.0 ? s : s.copyWith(color: _fade(s.color, t)),
+          for (final s in light && !isModal ? OneUIPalette.lightGlassShadow : fx.glassShadow(elevation))
+            t >= 1.0 ? s : s.copyWith(color: _fade(s.color, t)),
         ];
 
         return DecoratedBox(
