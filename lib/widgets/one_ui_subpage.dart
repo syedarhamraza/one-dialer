@@ -65,7 +65,7 @@ class OneUISubpage extends StatelessWidget {
           );
 
     return Scaffold(
-      backgroundColor: OneUITheme.surfacePitch,
+      backgroundColor: context.palette.page,
       body: Stack(
         // The scroll view must fill the page: shrink-wrapped, a bounce slides the content
         // out of its own box and the bottom gets cut off.
@@ -131,12 +131,12 @@ class OneUISoonChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
       decoration: BoxDecoration(
-        color: OneUITheme.surfacePill,
+        color: context.palette.pill,
         borderRadius: BorderRadius.circular(OneUITheme.radiusBadge),
       ),
-      child: const Text(
+      child: Text(
         'Soon',
-        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: OneUITheme.textSecondary),
+        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.palette.textSecondary),
       ),
     );
   }

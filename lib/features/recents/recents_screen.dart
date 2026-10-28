@@ -397,7 +397,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (i > 0) Divider(height: 1, indent: 76, color: Colors.white.withValues(alpha: 0.1)),
+        if (i > 0) Divider(height: 1, indent: 76, color: context.palette.divider),
         Builder(
           // The SIM menu pops from this row.
           builder: (row) => _CallRow(
@@ -703,7 +703,7 @@ class _CallRow extends StatelessWidget {
                       fontSize: 18,
                       fontWeight: FontWeight.w500,
                       letterSpacing: -0.2,
-                      color: call.isMissed ? OneUITheme.accentRed : OneUITheme.textPrimary,
+                      color: call.isMissed ? OneUITheme.accentRed : context.palette.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -717,7 +717,7 @@ class _CallRow extends StatelessWidget {
                           name == call.number || call.isPrivate ? callTypeLabel(call.type) : call.number,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 14, color: OneUITheme.textSecondary),
+                          style: TextStyle(fontSize: 14, color: context.palette.textSecondary),
                         ),
                       ),
                     ],
@@ -726,14 +726,14 @@ class _CallRow extends StatelessWidget {
                     const SizedBox(height: 2),
                     Row(
                       children: [
-                        const Icon(Icons.edit_note_rounded, size: 16, color: OneUITheme.textSecondary),
+                        Icon(Icons.edit_note_rounded, size: 16, color: context.palette.textSecondary),
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
                             note,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 14, color: OneUITheme.textSecondary),
+                            style: TextStyle(fontSize: 14, color: context.palette.textSecondary),
                           ),
                         ),
                       ],
@@ -743,11 +743,11 @@ class _CallRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Text(when, style: const TextStyle(fontSize: 14, color: OneUITheme.textSecondary)),
+            Text(when, style: TextStyle(fontSize: 14, color: context.palette.textSecondary)),
             IconButton(
               tooltip: 'Call details',
               onPressed: selecting ? null : onInfo,
-              icon: const Icon(Icons.info_outline_rounded, size: 24, color: OneUITheme.textPrimary),
+              icon: Icon(Icons.info_outline_rounded, size: 24, color: context.palette.textPrimary),
             ),
           ],
         ),
@@ -772,12 +772,12 @@ class CallTypeIcon extends StatelessWidget {
     final (icon, color) = switch (type) {
       CallType.outgoing => (Icons.call_made_rounded, OneUITheme.accentGreen),
       CallType.missed => (Icons.call_missed_rounded, OneUITheme.accentRed),
-      CallType.rejected || CallType.blocked => (Icons.block_rounded, OneUITheme.textSecondary),
+      CallType.rejected || CallType.blocked => (Icons.block_rounded, context.palette.textSecondary),
       CallType.voicemail => (Icons.voicemail_rounded, OneUITheme.accentBlue),
       _ => (Icons.call_received_rounded, OneUITheme.accentBlue),
     };
     if (muted) {
-      return Icon(icon, size: 18, color: type == CallType.missed ? color : OneUITheme.textSecondary);
+      return Icon(icon, size: 18, color: type == CallType.missed ? color : context.palette.textSecondary);
     }
     return Icon(icon, size: 15, color: color);
   }
@@ -829,12 +829,12 @@ class _Empty extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(32, 60, 32, 0),
         child: Column(
           children: [
-            Icon(icon, size: 40, color: OneUITheme.textSecondary),
+            Icon(icon, size: 40, color: context.palette.textSecondary),
             const SizedBox(height: 12),
             Text(
               text,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: OneUITheme.textSecondary),
+              style: TextStyle(color: context.palette.textSecondary),
             ),
             if (action case (final label, final onTap)) ...[
               const SizedBox(height: 16),

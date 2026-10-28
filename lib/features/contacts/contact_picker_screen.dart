@@ -44,7 +44,7 @@ Future<(DialerContact, String)?> pickContactNumber(BuildContext context, {String
                       children: [
                         Text(n, style: const TextStyle(fontSize: 19)),
                         const SizedBox(height: 2),
-                        Text(contact.labels[i], style: const TextStyle(fontSize: 13, color: OneUITheme.textSecondary)),
+                        Text(contact.labels[i], style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
                       ],
                     ),
                   ),

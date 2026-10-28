@@ -69,17 +69,17 @@ class _ContactHistoryScreenState extends State<ContactHistoryScreen> {
           title: 'Call logs',
           slivers: (context) => [
             if (calls.isEmpty)
-              const SliverToBoxAdapter(
+              SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(32, 120, 32, 0),
                   child: Column(
                     children: [
-                      Icon(Icons.watch_later_outlined, size: 40, color: OneUITheme.textSecondary),
+                      Icon(Icons.watch_later_outlined, size: 40, color: context.palette.textSecondary),
                       SizedBox(height: 12),
                       Text(
                         'No calls with this contact yet',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: OneUITheme.textSecondary),
+                        style: TextStyle(color: context.palette.textSecondary),
                       ),
                     ],
                   ),
@@ -175,7 +175,7 @@ class _StorageLocationsScreenState extends State<StorageLocationsScreen> {
                               _accountLabel(r),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 13, color: OneUITheme.textSecondary),
+                              style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
                             ),
                           ],
                         ),
@@ -204,7 +204,7 @@ class _PillButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => PressGlow(
     child: Material(
-      color: OneUITheme.surfacePill,
+      color: context.palette.pill,
       shape: const StadiumBorder(),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -216,7 +216,11 @@ class _PillButton extends StatelessWidget {
           alignment: Alignment.center,
           child: Text(
             label,
-            style: TextStyle(fontSize: wide ? 16.5 : 14.5, fontWeight: FontWeight.w600, color: OneUITheme.textPrimary),
+            style: TextStyle(
+              fontSize: wide ? 16.5 : 14.5,
+              fontWeight: FontWeight.w600,
+              color: context.palette.textPrimary,
+            ),
           ),
         ),
       ),

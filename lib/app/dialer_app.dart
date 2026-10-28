@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../core/contacts/contacts_repository.dart';
+import '../core/prefs/dialer_prefs.dart';
 import '../core/telecom/telecom_bridge.dart';
 import '../features/blocking/blocking_repository.dart';
 import '../features/recents/call_log_repository.dart';
@@ -14,15 +16,27 @@ class DialerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'One Dialer',
-      debugShowCheckedModeBanner: false,
-      theme: OneUITheme.darkTheme.copyWith(
-        pageTransitionsTheme: const PageTransitionsTheme(builders: {TargetPlatform.android: _GroupedSlide()}),
+    const transitions = PageTransitionsTheme(builders: {TargetPlatform.android: _GroupedSlide()});
+    return ValueListenableBuilder(
+      valueListenable: DialerPrefs.instance.themeMode,
+      builder: (context, mode, _) => MaterialApp(
+        title: 'One Dialer',
+        debugShowCheckedModeBanner: false,
+        theme: OneUITheme.lightTheme.copyWith(pageTransitionsTheme: transitions),
+        darkTheme: OneUITheme.darkTheme.copyWith(pageTransitionsTheme: transitions),
+        themeMode: switch (mode) {
+          'light' => ThemeMode.light,
+          'dark' => ThemeMode.dark,
+          _ => ThemeMode.system,
+        },
+        scrollBehavior: OneUITheme.scrollBehavior,
+        // Status and navigation bar icons follow the page.
+        builder: (context, child) => AnnotatedRegion(
+          value: context.palette.isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light,
+          child: DesignWidth(child: child!),
+        ),
+        home: const _SetupGate(),
       ),
-      scrollBehavior: OneUITheme.scrollBehavior,
-      builder: (context, child) => DesignWidth(child: child!),
-      home: const _SetupGate(),
     );
   }
 }

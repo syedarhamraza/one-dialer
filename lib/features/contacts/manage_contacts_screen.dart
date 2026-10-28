@@ -274,7 +274,7 @@ class _SimContactsScreenState extends State<_SimContactsScreen> {
             OneUIGroupCard(
               items: [
                 OneUIGroupItem(
-                  leading: const Icon(Icons.download_rounded, color: OneUITheme.textPrimary),
+                  leading: Icon(Icons.download_rounded, color: context.palette.textPrimary),
                   title: missing.isEmpty ? 'All saved in Contacts' : 'Import ${missing.length} to Contacts',
                   onTap: missing.isEmpty || _busy ? null : () => _import(missing),
                 ),
@@ -350,7 +350,7 @@ class _DuplicatesScreenState extends State<_DuplicatesScreen> {
           OneUIGroupCard(
             items: [
               OneUIGroupItem(
-                leading: const Icon(Icons.merge_rounded, color: OneUITheme.textPrimary),
+                leading: Icon(Icons.merge_rounded, color: context.palette.textPrimary),
                 title: 'Merge all (${groups.length})',
                 onTap: _busy ? null : () => _merge(groups),
               ),
@@ -384,7 +384,7 @@ class _Message extends StatelessWidget {
     child: Text(
       text,
       textAlign: TextAlign.center,
-      style: const TextStyle(fontSize: 16, color: OneUITheme.textSecondary),
+      style: TextStyle(fontSize: 16, color: context.palette.textSecondary),
     ),
   );
 }

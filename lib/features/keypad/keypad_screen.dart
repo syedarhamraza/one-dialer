@@ -320,7 +320,7 @@ class _Results extends StatelessWidget {
         itemBuilder: (context, i) => Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (i > 0) Divider(height: 1, indent: 76, color: Colors.white.withValues(alpha: 0.1)),
+            if (i > 0) Divider(height: 1, indent: 76, color: context.palette.divider),
             _ResultTile(match: matches[i], onTap: () => onPick(matches[i])),
           ],
         ),
@@ -340,11 +340,11 @@ class _ResultTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final name = match.entry.name;
-    const nameStyle = TextStyle(
+    final nameStyle = TextStyle(
       fontSize: 18,
       fontWeight: FontWeight.w500,
       letterSpacing: -0.2,
-      color: OneUITheme.textPrimary,
+      color: context.palette.textPrimary,
     );
     return InkWell(
       onTap: onTap,
@@ -372,7 +372,7 @@ class _ResultTile extends StatelessWidget {
                     _highlighted(
                       match.number,
                       match.numberRange,
-                      const TextStyle(fontSize: 14, color: OneUITheme.textSecondary),
+                      TextStyle(fontSize: 14, color: context.palette.textSecondary),
                     ),
                   ],
                 ],

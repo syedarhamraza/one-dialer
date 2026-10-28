@@ -256,7 +256,7 @@ class HeaderTitle extends StatelessWidget {
                     fontSize: 22,
                     fontWeight: FontWeight.w600,
                     letterSpacing: -0.3,
-                    color: Colors.white.withValues(alpha: shown),
+                    color: context.palette.textPrimary.withValues(alpha: shown),
                   ),
                 ),
               );
@@ -285,7 +285,7 @@ class BigTitle extends StatelessWidget {
           fontSize: 34,
           fontWeight: FontWeight.w700,
           letterSpacing: -0.5,
-          color: Colors.white.withValues(alpha: (1 - t * 2).clamp(0.0, 1.0)),
+          color: context.palette.textPrimary.withValues(alpha: (1 - t * 2).clamp(0.0, 1.0)),
         ),
       ),
     );

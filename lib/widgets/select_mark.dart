@@ -52,7 +52,7 @@ class SelectMark extends StatelessWidget {
           selected == true ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
           key: ValueKey(selected == true),
           size: _size,
-          color: selected == true ? OneUITheme.accentBlue : OneUITheme.textTertiary,
+          color: selected == true ? OneUITheme.accentBlue : context.palette.textTertiary,
         ),
       ),
     );

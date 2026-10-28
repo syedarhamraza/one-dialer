@@ -458,7 +458,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                             iconAlignment: IconAlignment.end,
                             icon: Icon(_more ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded),
                             label: Text(_more ? 'Show less' : 'Show more', style: const TextStyle(fontSize: 17)),
-                            style: TextButton.styleFrom(foregroundColor: OneUITheme.textPrimary),
+                            style: TextButton.styleFrom(foregroundColor: context.palette.textPrimary),
                           ),
                         ),
                         if (!_isNew && _raw.isNotEmpty) ..._accountsCard(),
@@ -490,8 +490,8 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
         child: TextButton(
           onPressed: onPressed,
           style: TextButton.styleFrom(
-            foregroundColor: OneUITheme.textPrimary,
-            disabledForegroundColor: OneUITheme.textTertiary,
+            foregroundColor: context.palette.textPrimary,
+            disabledForegroundColor: context.palette.textTertiary,
             minimumSize: const Size(0, 48),
             padding: const EdgeInsets.symmetric(horizontal: 20),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -510,7 +510,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
           leading: pill('Cancel', () => Navigator.of(context).maybePop(), OneUITheme.accentRed),
           middle: Text(
             _isNew ? 'New contact' : 'Edit contact',
-            style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: OneUITheme.textPrimary),
+            style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
           ),
           trailing: pill('Done', canSave ? _save : null, OneUITheme.accentGreen),
           middleSpacing: 12,
@@ -547,10 +547,10 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                       : 'Save to ${account == null ? 'This device' : _accountName(account)}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 16, color: OneUITheme.textSecondary),
+                  style: TextStyle(fontSize: 16, color: context.palette.textSecondary),
                 ),
               ),
-              const Icon(Icons.keyboard_arrow_down_rounded, size: 22, color: OneUITheme.textSecondary),
+              Icon(Icons.keyboard_arrow_down_rounded, size: 22, color: context.palette.textSecondary),
             ],
           ),
         ),
@@ -621,8 +621,8 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
           child: FilledButton(
             onPressed: () => _photoMenu(hasPhoto: photo != null),
             style: FilledButton.styleFrom(
-              backgroundColor: OneUITheme.surfacePill,
-              foregroundColor: OneUITheme.textPrimary,
+              backgroundColor: context.palette.pill,
+              foregroundColor: context.palette.textPrimary,
               minimumSize: const Size(88, 40),
               padding: const EdgeInsets.symmetric(horizontal: 22),
             ),
@@ -668,7 +668,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                 if (value == 'gallery') const SizedBox(width: 12),
                 Expanded(
                   child: Material(
-                    color: OneUITheme.surfaceCardHighlight,
+                    color: context.palette.cardHighlight,
                     borderRadius: BorderRadius.circular(20),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(20),
@@ -692,7 +692,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
           if (hasPhoto) ...[
             const SizedBox(height: 12),
             Material(
-              color: OneUITheme.surfaceCardHighlight,
+              color: context.palette.cardHighlight,
               borderRadius: BorderRadius.circular(20),
               child: InkWell(
                 borderRadius: BorderRadius.circular(20),
@@ -768,9 +768,9 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
     }
     return [
       const SizedBox(height: 16),
-      const Padding(
+      Padding(
         padding: EdgeInsets.only(left: 18, bottom: 8),
-        child: Text('From the following account', style: TextStyle(fontSize: 14, color: OneUITheme.textSecondary)),
+        child: Text('From the following account', style: TextStyle(fontSize: 14, color: context.palette.textSecondary)),
       ),
       EditorCard(
         children: [
@@ -788,13 +788,13 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                         children: [
                           Text(app, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
                           if (name != null && name.isNotEmpty)
-                            Text(name, style: const TextStyle(fontSize: 13, color: OneUITheme.textSecondary)),
+                            Text(name, style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
                         ],
                       ),
                     ),
                     Text(
                       count == 1 ? '1 contact' : '$count contacts',
-                      style: const TextStyle(fontSize: 13, color: OneUITheme.textSecondary),
+                      style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
                     ),
                   ],
                 ),
@@ -1171,7 +1171,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                 names.isEmpty ? (_groups.isEmpty ? 'No groups in this account' : 'Groups') : names.join(', '),
                 style: TextStyle(
                   fontSize: 18,
-                  color: names.isEmpty ? OneUITheme.textSecondary : OneUITheme.textPrimary,
+                  color: names.isEmpty ? context.palette.textSecondary : context.palette.textPrimary,
                 ),
               ),
             ),

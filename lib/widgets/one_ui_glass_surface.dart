@@ -79,7 +79,8 @@ class OneUIGlassSurface extends StatelessWidget {
                   gradient: (isModal ? fx.modalGradient : fx.floatingGradient)?.scale(t),
                   borderRadius: borderRadius,
                 ),
-          child: child,
+          // Glass keeps the dark look in light mode too.
+          child: Theme(data: OneUITheme.darkTheme, child: child),
         );
 
         // Fully faded out: no blur, clip or shadow work at all.

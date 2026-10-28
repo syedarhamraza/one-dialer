@@ -37,7 +37,8 @@ class HelpFeedbackScreen extends StatelessWidget {
       scheme: 'mailto',
       path: AppInfo.feedbackEmail,
       // Uri's queryParameters encodes spaces as '+', which mail apps show literally.
-      query: 'subject=${Uri.encodeComponent('${AppInfo.name} feedback')}'
+      query:
+          'subject=${Uri.encodeComponent('${AppInfo.name} feedback')}'
           '&body=${Uri.encodeComponent('\n\n\n---\n$details')}',
     );
     if (context.mounted) await _open(context, '$mail', 'No email app found');

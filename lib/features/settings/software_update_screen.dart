@@ -132,7 +132,7 @@ class _SoftwareUpdateScreenState extends State<SoftwareUpdateScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: OneUITheme.surfacePitch,
+      backgroundColor: context.palette.page,
       body: ListenableBuilder(
         listenable: UpdateController.instance,
         builder: (context, _) {
@@ -301,7 +301,7 @@ class _UpdateCardsState extends State<_UpdateCards> {
   Widget build(BuildContext context) {
     // Play doesn't say what's in the update, so the notes are the newest written ones.
     final notes = Changelog.entries.first;
-    final card = BoxDecoration(color: OneUITheme.surfaceCard, borderRadius: OneUITheme.cardBorderRadius);
+    final card = BoxDecoration(color: context.palette.card, borderRadius: OneUITheme.cardBorderRadius);
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.42),
       child: SingleChildScrollView(
@@ -321,13 +321,13 @@ class _UpdateCardsState extends State<_UpdateCards> {
                       const Text('Software version', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
                       const SizedBox(width: 8),
                       if (notes.version.contains('-'))
-                        const Text('Closed beta', style: TextStyle(fontSize: 13, color: OneUITheme.textSecondary)),
+                        Text('Closed beta', style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '${AppInfo.name} ${notes.version}',
-                    style: const TextStyle(fontSize: 14, color: OneUITheme.textSecondary),
+                    style: TextStyle(fontSize: 14, color: context.palette.textSecondary),
                   ),
                 ],
               ),
@@ -353,7 +353,7 @@ class _UpdateCardsState extends State<_UpdateCards> {
                           ),
                           Icon(
                             _open ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
-                            color: OneUITheme.textSecondary,
+                            color: context.palette.textSecondary,
                           ),
                         ],
                       ),
@@ -408,12 +408,12 @@ class _AutoDownloadScreenState extends State<_AutoDownloadScreen> {
     return OneUISubpage(
       title: 'Auto download',
       builder: (context) => [
-        const Padding(
+        Padding(
           padding: EdgeInsets.fromLTRB(18, 0, 18, 16),
           child: Text(
             'When One Dialer checks Google Play for updates as you open it. Updates only '
             'install when you tap Download and install.',
-            style: TextStyle(fontSize: 15, height: 1.4, color: OneUITheme.textSecondary),
+            style: TextStyle(fontSize: 15, height: 1.4, color: context.palette.textSecondary),
           ),
         ),
         OneUIGroupCard(

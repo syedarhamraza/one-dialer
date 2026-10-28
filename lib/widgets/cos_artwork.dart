@@ -230,7 +230,8 @@ class _ArtworkPainter extends CustomPainter {
   bool shouldRepaint(_ArtworkPainter old) => old.fade != fade || old.shift != shift || old.dim != dim;
 
   @override
-  bool operator ==(Object other) => other is _ArtworkPainter && other.fade == fade && other.shift == shift && other.dim == dim;
+  bool operator ==(Object other) =>
+      other is _ArtworkPainter && other.fade == fade && other.shift == shift && other.dim == dim;
 
   @override
   int get hashCode => Object.hash(fade, shift, dim);
