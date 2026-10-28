@@ -87,7 +87,13 @@ class _CallBodyArtworkState extends State<CallBodyArtwork> {
       _painter?.dispose();
       _painter = _CachedBodyPainter(widget.radius, ratio, widget.glow, widget.spread, widget.opacity, light);
     }
-    return CustomPaint(painter: _painter, child: widget.child);
+    final body = CustomPaint(painter: _painter, child: widget.child);
+    return light
+        ? DecoratedBox(
+            decoration: ShapeDecoration(shape: bodyShape(widget.radius), shadows: OneUIPalette.lightGlassShadow),
+            child: body,
+          )
+        : body;
   }
 
   @override
@@ -270,6 +276,13 @@ Path bodyPath(Rect rect, double? radius) => radius == null
     : radius.isInfinite
     ? (Path()..addRRect(RRect.fromRectAndRadius(rect, Radius.circular(rect.shortestSide / 2))))
     : (Path()..addRSuperellipse(RSuperellipse.fromRectAndRadius(rect, Radius.circular(radius))));
+
+/// [bodyPath] as a border, for shadows.
+ShapeBorder bodyShape(double? radius) => radius == null
+    ? const CircleBorder()
+    : radius.isInfinite
+    ? const StadiumBorder()
+    : RoundedSuperellipseBorder(borderRadius: BorderRadius.all(Radius.circular(radius)));
 
 /// A [GlassSpring] as a curve, so implicit animations can move like the glass package.
 class GlassSpringCurve extends Curve {
