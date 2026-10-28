@@ -329,7 +329,7 @@ class _HistoryRow extends StatelessWidget {
                   style: const TextStyle(fontSize: 17),
                 ),
                 if (call.isApp)
-                  Text(appCallLabel(call), style: const TextStyle(fontSize: 13, color: OneUITheme.textSecondary)),
+                  Text(appCallLabel(call), style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
               ],
             ),
           ),

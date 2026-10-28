@@ -54,10 +54,10 @@ class AppBadged extends StatelessWidget {
             builder: (context, snap) {
               final png = snap.data;
               if (png == null) return const SizedBox.shrink();
-              // A black ring cuts the badge out of the avatar, like ColorOS's badges.
+              // A ring in the page colour cuts the badge out of the avatar, like ColorOS's badges.
               return Container(
                 padding: const EdgeInsets.all(2),
-                decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle),
+                decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, shape: BoxShape.circle),
                 child: ClipOval(
                   child: Image.memory(png, width: size, height: size, gaplessPlayback: true, filterQuality: FilterQuality.medium),
                 ),
