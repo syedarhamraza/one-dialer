@@ -408,8 +408,9 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                                     const CircleBorder(),
                                     glow: .3 + .25 * armed,
                                     blur: 22 + 10 * armed,
+                                    flat: callFlat(context),
                                   ),
-                                  foregroundDecoration: glassGlow(const CircleBorder()),
+                                  foregroundDecoration: glassGlow(const CircleBorder(), flat: callFlat(context)),
                                   child: Transform.rotate(
                                     // A decaying wiggle over the first 40% of each cycle, then still.
                                     angle: widget.shake && still && !reduceMotion && phase < .4

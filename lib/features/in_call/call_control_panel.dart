@@ -416,6 +416,7 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                                     endRed,
                                     RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(actionSize / 2)),
                                     glow: _ending ? 0 : .3,
+                                    flat: callFlat(context),
                                   ).shadows,
                                 ),
                                 // Solid red, but with the glass package's press: glow and stretch, no glass body.
@@ -437,11 +438,13 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                                     // squircle ends like the keys.
                                     foregroundDecoration: glassGlow(
                                       RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(actionSize / 2)),
+                                      flat: callFlat(context),
                                     ),
                                     decoration: glassBody(
                                       endRed,
                                       RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(actionSize / 2)),
                                       glow: 0,
+                                      flat: callFlat(context),
                                     ),
                                     child: Semantics(
                                       label: 'End call',

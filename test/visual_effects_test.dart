@@ -1,4 +1,5 @@
 import 'package:dialer/core/prefs/dialer_prefs.dart';
+import 'package:dialer/features/in_call/call_controls.dart';
 import 'package:dialer/theme/one_ui_theme.dart';
 import 'package:dialer/widgets/call_glass.dart';
 import 'package:dialer/widgets/one_ui_glass_surface.dart';
@@ -14,7 +15,10 @@ void main() {
   final prefs = DialerPrefs.instance;
 
   setUp(() => SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.empty());
-  tearDown(() => prefs.visualEffects.value = 'full');
+  tearDown(() {
+    prefs.visualEffects.value = 'full';
+    prefs.callEffects.value = 'full';
+  });
 
   test('the level is saved, reloaded, and unknown values are ignored', () async {
     await prefs.setVisualEffects('reduced');
@@ -75,5 +79,35 @@ void main() {
     expect(summarize(frames, 60)['jankyBuild'], 1);
     expect((at120['raster']! as Map)['p50'], 6);
     expect((at120['raster']! as Map)['max'], 20);
+  });
+
+  testWidgets('the call screen follows its own setting, live', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: OneUITheme.darkTheme,
+        home: CallEffects(
+          child: const SizedBox.square(dimension: 60, child: CallFrost(radius: null, child: SizedBox())),
+        ),
+      ),
+    );
+    Finder fill(Color c) => find.byWidgetPredicate(
+      (w) => w is DecoratedBox && w.decoration is ShapeDecoration && (w.decoration as ShapeDecoration).color == c,
+    );
+    expect(find.byType(CallBodyArtwork), findsOneWidget);
+
+    // The app's own setting doesn't touch the call screen.
+    prefs.visualEffects.value = 'off';
+    await tester.pump();
+    expect(find.byType(CallBodyArtwork), findsOneWidget);
+
+    prefs.callEffects.value = 'reduced';
+    await tester.pump();
+    expect(find.byType(CallBodyArtwork), findsNothing);
+    expect(fill(callFrostFill), findsOneWidget);
+
+    prefs.callEffects.value = 'off';
+    await tester.pump();
+    expect(fill(callSolidFill), findsOneWidget);
+    expect(glassBody(const Color(0xFF2FAE52), const CircleBorder(), flat: true).shadows, isNull);
   });
 }

@@ -206,6 +206,7 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
   final _simKey = GlobalKey();
   final _themeKey = GlobalKey();
   final _effectsKey = GlobalKey();
+  final _callEffectsKey = GlobalKey();
 
   static const _themeLabels = {'system': 'Same as phone', 'light': 'Light', 'dark': 'Dark'};
   static const _effectsLabels = {'full': 'Full effects', 'reduced': 'Reduced effects', 'off': 'Effects off'};
@@ -270,6 +271,15 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
               value: DialerPrefs.instance.visualEffects,
               labels: _effectsLabels,
               onPick: DialerPrefs.instance.setVisualEffects,
+            ),
+            choiceRow(
+              context,
+              title: 'Call screen effects',
+              subtitle: 'Glass and glow on the call screen',
+              anchor: _callEffectsKey,
+              value: DialerPrefs.instance.callEffects,
+              labels: _effectsLabels,
+              onPick: DialerPrefs.instance.setCallEffects,
             ),
             if (_appCallLog)
               OneUIGroupItem(

@@ -12,7 +12,9 @@ One setting, read in one place (`OneUIEffectsController` in `lib/theme/one_ui_ef
 | Reduced effects | One UI glass: OneSpend's flat translucent fill over the blur, no glow artwork (light mode: flat grey, no shadows), flat One UI keypad keys; the header is one even blur that the shader only fades out (1 tap) | **one**, shared by everything (header, pills, keypad sheet, nav bar, glass bars) |
 | Effects off | solid One UI fills everywhere (light mode: flat grey, no shadows); the header is its tint only | none |
 
-Colours, shapes, the press glow, springs and page transitions are the same at every level. The call screen (its own engine) has no backdrop blurs and ignores the setting.
+Colours, shapes, the press glow, springs and page transitions are the same at every level.
+
+The call screen (its own engine) has no backdrop blurs and its own setting, **Call screen effects** (`DialerPrefs.callEffects`, the same three levels). Below full its frosted controls are One UI's flat fill (translucent when reduced, solid when off) instead of the cached glow artwork, which was re-rasterized every frame the keypad morph resized it, and Answer, Decline and End are flat colour with no coloured glow, sheen or rim. The in-call engine reads it in `inCallMain` and on every resume, never awaited, so a ringing call never waits on storage. Read it in widgets with `callFlat(context)` (under `CallEffects`).
 
 ## Why blurs cost what they cost
 

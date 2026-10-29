@@ -142,6 +142,7 @@ class DialerPrefs {
   final saveAccount = ValueNotifier<String?>(null);
 
   Future<void> loadChoices() async {
+    await loadCallEffects();
     showPhotos.value = await _prefs.getBool('contacts_show_photos') ?? true;
     onlyWithNumbers.value = await _prefs.getBool('contacts_only_numbers') ?? true;
     if (await _prefs.getString('contacts_sort') case final v? when v == 'first' || v == 'last') sortBy.value = v;
@@ -171,6 +172,20 @@ class DialerPrefs {
     if (mode == 'system' || mode == 'light' || mode == 'dark') themeMode.value = mode!;
     final effects = await _prefs.getString('visual_effects');
     if (effects == 'full' || effects == 'reduced' || effects == 'off') visualEffects.value = effects!;
+  }
+
+  /// Settings › "Call screen effects": the same levels as [visualEffects], for the call
+  /// screen's own engine (which reads it in `inCallMain` and on every resume, never awaited).
+  final callEffects = ValueNotifier('full');
+
+  Future<void> loadCallEffects() async {
+    final effects = await _prefs.getString('call_effects');
+    if (effects == 'full' || effects == 'reduced' || effects == 'off') callEffects.value = effects!;
+  }
+
+  Future<void> setCallEffects(String value) async {
+    callEffects.value = value;
+    await _prefs.setString('call_effects', value);
   }
 
   Future<void> setVisualEffects(String value) async {

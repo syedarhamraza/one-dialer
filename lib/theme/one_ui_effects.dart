@@ -24,6 +24,7 @@ enum OneUIGlassElevation {
 class OneUIEffectsController extends ChangeNotifier {
   OneUIEffectsController._() {
     DialerPrefs.instance.visualEffects.addListener(notifyListeners);
+    DialerPrefs.instance.callEffects.addListener(notifyListeners);
   }
 
   static final OneUIEffectsController instance = OneUIEffectsController._();
@@ -65,6 +66,9 @@ class OneUIEffectsController extends ChangeNotifier {
 
   /// `full`, `reduced` or `off` (see [DialerPrefs.visualEffects]).
   String get level => DialerPrefs.instance.visualEffects.value;
+
+  /// The call screen's own level (Settings › "Call screen effects"): `full`, `reduced` or `off`.
+  String get callLevel => DialerPrefs.instance.callEffects.value;
 
   /// Full effects: the call glass (cached glow artwork over the blur), the header's
   /// progressive blur, and separate backdrop reads where one glass must blur another.

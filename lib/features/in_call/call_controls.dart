@@ -40,8 +40,52 @@ class CallBody extends StatelessWidget {
         : LiquidRoundedSuperellipse(borderRadius: radius!),
     // No live backdrop blur: the call backdrop behind is already blurred, so a per-control blur
     // looked the same but re-read the backdrop for every key on every frame of the keypad morph.
-    child: CallBodyArtwork(radius: pill ? double.infinity : radius, child: child),
+    child: CallFrost(radius: pill ? double.infinity : radius, child: child),
   );
+}
+
+/// Settings › "Call screen effects" for the call screen below it (`InCallApp`): widgets that
+/// read [callFlat] rebuild when it changes.
+class CallEffects extends InheritedNotifier<OneUIEffectsController> {
+  CallEffects({super.key, required super.child}) : super(notifier: OneUIEffectsController.instance);
+}
+
+/// Below full call screen effects: One UI's flat fills instead of the frosted artwork, and
+/// flat coloured buttons with no glow, sheen or rim.
+bool callFlat(BuildContext context) {
+  context.dependOnInheritedWidgetOfExactType<CallEffects>();
+  return OneUIEffectsController.instance.callLevel != 'full';
+}
+
+/// [CallFrost]'s fills below full call screen effects.
+const callFrostFill = Color(0x40FFFFFF);
+const callSolidFill = Color(0xFF6E7278);
+
+/// A frosted control's body: [CallBodyArtwork] at full call screen effects, One UI's flat
+/// fill below that (translucent when reduced, solid when off), so resizing it (the keypad
+/// morph) re-rasterizes nothing.
+class CallFrost extends StatelessWidget {
+  const CallFrost({super.key, required this.radius, required this.child});
+  final double? radius;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!callFlat(context)) return CallBodyArtwork(radius: radius, child: child);
+    // Light, like the frosted controls over the call's colours (the call screen is never dark):
+    // a white wash when reduced; when off, a solid grey that keeps the white icons legible.
+    final fill = OneUIEffectsController.instance.callLevel == 'off' ? callSolidFill : callFrostFill;
+    final r = radius;
+    final OutlinedBorder shape = r == null
+        ? const CircleBorder()
+        : r == double.infinity
+        ? const StadiumBorder()
+        : RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(r));
+    return DecoratedBox(
+      decoration: ShapeDecoration(color: fill, shape: shape),
+      child: child,
+    );
+  }
 }
 
 /// The frosted backdrop stays live; only the static glow and rim are rasterized once.
@@ -336,8 +380,8 @@ class CallAction extends StatelessWidget {
               duration: still ? Duration.zero : (active ? springSettle : const Duration(milliseconds: 220)),
               curve: active ? bouncySpring : Curves.easeInCubic,
               child: Container(
-                decoration: solidBody(_lit, const CircleBorder(), glow: .25, blur: 18),
-                foregroundDecoration: solidGlow(const CircleBorder()),
+                decoration: solidBody(_lit, const CircleBorder(), glow: .25, blur: 18, flat: callFlat(context)),
+                foregroundDecoration: solidGlow(const CircleBorder(), flat: callFlat(context)),
               ),
             ),
             // The label under the circle is visible; a tooltip on long press would only repeat it.
@@ -372,7 +416,7 @@ class CallAction extends StatelessWidget {
         ),
       );
       // Unavailable: the same frosted body, without the glass press.
-      return enabled ? CallBody(child: body) : CallBodyArtwork(radius: null, child: body);
+      return enabled ? CallBody(child: body) : CallFrost(radius: null, child: body);
     }
 
     return Column(
@@ -667,37 +711,43 @@ const answerGreen = Color(0xFF2FAE52);
 /// ColorOS 17's solid buttons (End, Decline, Answer), lit from below like the frosted ones: a
 /// shade deeper at the top, lighter toward the bottom, a light rim and a soft drop glow in their
 /// own colour. Pair with [solidGlow] as the foreground.
-ShapeDecoration solidBody(Color color, OutlinedBorder shape, {double glow = .3, double blur = 22}) => ShapeDecoration(
-  shape: shape.copyWith(side: const BorderSide(color: Color(0x2EFFFFFF), width: .8)),
-  gradient: LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [Color.lerp(color, Colors.black, .1)!, color, Color.lerp(color, Colors.white, .14)!],
-    stops: const [0, .55, 1],
-  ),
-  shadows: [
-    BoxShadow(
-      color: color.withValues(alpha: glow),
-      blurRadius: blur,
-      offset: const Offset(0, 6),
-    ),
-  ],
-);
+ShapeDecoration solidBody(Color color, OutlinedBorder shape, {double glow = .3, double blur = 22, bool flat = false}) =>
+    flat
+    ? ShapeDecoration(color: color, shape: shape)
+    : ShapeDecoration(
+        shape: shape.copyWith(side: const BorderSide(color: Color(0x2EFFFFFF), width: .8)),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color.lerp(color, Colors.black, .1)!, color, Color.lerp(color, Colors.white, .14)!],
+          stops: const [0, .55, 1],
+        ),
+        shadows: [
+          BoxShadow(
+            color: color.withValues(alpha: glow),
+            blurRadius: blur,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      );
 
-/// The glow rising from a solid button's bottom edge.
-ShapeDecoration solidGlow(OutlinedBorder shape) => ShapeDecoration(
-  shape: shape.copyWith(side: BorderSide.none),
-  gradient: const LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [Color(0x00FFFFFF), Color(0x00FFFFFF), Color(0x3DFFFFFF)],
-    stops: [0, .5, 1],
-  ),
-);
+/// The glow rising from a solid button's bottom edge; nothing when [flat].
+ShapeDecoration solidGlow(OutlinedBorder shape, {bool flat = false}) => flat
+    ? ShapeDecoration(shape: shape)
+    : ShapeDecoration(
+        shape: shape.copyWith(side: BorderSide.none),
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0x00FFFFFF), Color(0x00FFFFFF), Color(0x3DFFFFFF)],
+          stops: [0, .5, 1],
+        ),
+      );
 
 /// The call buttons (End, Answer, Decline) as glass: [solidBody] a touch see-through, so the
 /// backdrop tints it, and without its even rim ([glassGlow] draws a lit one). Pair with [glassGlow].
-ShapeDecoration glassBody(Color color, OutlinedBorder shape, {double glow = .3, double blur = 22}) {
+ShapeDecoration glassBody(Color color, OutlinedBorder shape, {double glow = .3, double blur = 22, bool flat = false}) {
+  if (flat) return ShapeDecoration(color: color, shape: shape);
   final body = solidBody(color.withValues(alpha: .86), shape, glow: glow, blur: blur);
   return ShapeDecoration(
     shape: shape.copyWith(side: BorderSide.none),
@@ -708,7 +758,8 @@ ShapeDecoration glassBody(Color color, OutlinedBorder shape, {double glow = .3, 
 
 /// [solidGlow] plus a glass sheen over the top and a rim that catches the light at the top
 /// edge and fades down the sides.
-Decoration glassGlow(OutlinedBorder shape) => _GlassGlow(shape.copyWith(side: BorderSide.none));
+Decoration glassGlow(OutlinedBorder shape, {bool flat = false}) =>
+    flat ? ShapeDecoration(shape: shape) : _GlassGlow(shape.copyWith(side: BorderSide.none));
 
 class _GlassGlow extends Decoration {
   const _GlassGlow(this.shape);
