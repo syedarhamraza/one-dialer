@@ -17,6 +17,13 @@ out vec4 fragColor;
 void main() {
   vec2 xy = FlutterFragCoord().xy;
   float t = xy.y / u_height;
+  float fade = 1.0 - smoothstep(0.6, 1.0, t);
+  // Reduced visual effects: the blur before this does it all; only fade it out (one tap
+  // instead of 49 a pixel).
+  if (u_sigma <= 0.0) {
+    fragColor = texture(u_texture, xy / u_size) * fade;
+    return;
+  }
   float sigma = u_sigma * (1.0 - smoothstep(0.0, 0.7, t));
   vec4 sum = vec4(0.0);
   float total = 0.0;
@@ -29,5 +36,5 @@ void main() {
       total += w;
     }
   }
-  fragColor = sum / total * (1.0 - smoothstep(0.6, 1.0, t));
+  fragColor = sum / total * fade;
 }

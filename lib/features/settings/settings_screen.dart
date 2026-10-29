@@ -205,8 +205,10 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
   final _tapKey = GlobalKey();
   final _simKey = GlobalKey();
   final _themeKey = GlobalKey();
+  final _effectsKey = GlobalKey();
 
   static const _themeLabels = {'system': 'Same as phone', 'light': 'Light', 'dark': 'Dark'};
+  static const _effectsLabels = {'full': 'Full effects', 'reduced': 'Reduced effects', 'off': 'Effects off'};
   static const _tapLabels = {'details': 'Open details', 'dial': 'Write in keypad'};
 
   /// "Choose SIM and call" is offered only with two SIMs; with one, a saved `sim` reads as details.
@@ -259,6 +261,15 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
               value: DialerPrefs.instance.themeMode,
               labels: _themeLabels,
               onPick: DialerPrefs.instance.setThemeMode,
+            ),
+            choiceRow(
+              context,
+              title: 'Reduce visual effects',
+              subtitle: 'Less blur runs smoother on slower phones',
+              anchor: _effectsKey,
+              value: DialerPrefs.instance.visualEffects,
+              labels: _effectsLabels,
+              onPick: DialerPrefs.instance.setVisualEffects,
             ),
             if (_appCallLog)
               OneUIGroupItem(

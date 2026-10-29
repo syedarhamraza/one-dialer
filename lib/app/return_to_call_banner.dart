@@ -4,7 +4,6 @@ import '../core/telecom/call_info.dart';
 import '../core/telecom/telecom_bridge.dart';
 import '../features/in_call/call_screen_widgets.dart';
 import '../theme/one_ui_theme.dart';
-import '../features/in_call/call_controls.dart';
 import '../widgets/press_glow.dart';
 
 /// Green pill under the status bar while a call is ongoing; tapping it brings the
@@ -50,40 +49,37 @@ class _Pill extends StatelessWidget {
           label: 'Return to call',
           excludeSemantics: true,
           // Lit and pressed like the keypad's Call button.
-          child: PressGlow(
-            glowColor: OneUITheme.accentGreen,
-            child: Container(
-              decoration: solidBody(OneUITheme.accentGreen, const StadiumBorder(), glow: 0),
-              foregroundDecoration: solidGlow(const StadiumBorder()),
-              child: Material(
-                color: Colors.transparent,
-                shape: const StadiumBorder(),
-                clipBehavior: Clip.antiAlias,
-                child: InkWell(
-                  onTap: TelecomBridge.instance.showInCallScreen,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.call_rounded, size: 18, color: Colors.white),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            callerName(call),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white),
-                          ),
+          child: LitButton(
+            color: OneUITheme.accentGreen,
+            shape: const StadiumBorder(),
+            child: Material(
+              color: Colors.transparent,
+              shape: const StadiumBorder(),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: TelecomBridge.instance.showInCallScreen,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.call_rounded, size: 18, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          callerName(call),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white),
                         ),
-                        const SizedBox(width: 8),
-                        // CallStatus tints its text for the dark call screen; force white on green.
-                        ColorFiltered(
-                          colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                          child: CallStatus(call: call),
-                        ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 8),
+                      // CallStatus tints its text for the dark call screen; force white on green.
+                      ColorFiltered(
+                        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                        child: CallStatus(call: call),
+                      ),
+                    ],
                   ),
                 ),
               ),

@@ -5,7 +5,6 @@ import '../core/telecom/telecom_bridge.dart';
 import '../features/contacts/contact_details_screen.dart';
 import '../features/contacts/contacts_screen.dart';
 import '../features/contacts/editor/contact_editor_screen.dart';
-import '../features/in_call/call_controls.dart';
 import '../features/keypad/keypad_screen.dart';
 import '../features/recents/call_log_repository.dart';
 import '../features/recents/recents_screen.dart';
@@ -133,9 +132,18 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
         children: [
           // The tabs' glass controls and the keypad sheet don't overlap, so their blurs share
           // one backdrop read instead of one each. The nav bar, drawn over the keypad, keeps
-          // its own (it must blur the sheet too).
-          BackdropGroup(
-            backdropKey: _backdrop,
+          // its own (it must blur the sheet too). Reduced visual effects joins them all in the
+          // page's one read: the nav bar then blurs Calls under the sheet, which the sheet's own
+          // blur of the same Calls already matches. The key changes, not the tree, so the tabs
+          // keep their state.
+          ListenableBuilder(
+            listenable: OneUIEffectsController.instance,
+            builder: (context, tabs) => BackdropGroup(
+              backdropKey: OneUIEffectsController.instance.isFull
+                  ? _backdrop
+                  : BackdropGroup.of(context)?.backdropKey ?? _backdrop,
+              child: tabs!,
+            ),
             child: Stack(
               children: [
                 IndexedStack(index: _tab, children: [_calls, const ContactsScreen()]),
@@ -201,25 +209,22 @@ class _RoundAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox.square(
       dimension: kFloatingNavBarHeight,
-      child: PressGlow(
-        glowColor: _green,
-        child: Container(
-          decoration: solidBody(_green, const CircleBorder(), glow: 0),
-          foregroundDecoration: solidGlow(const CircleBorder()),
-          child: FloatingActionButton(
-            heroTag: null,
-            tooltip: tooltip,
-            backgroundColor: Colors.transparent,
-            foregroundColor: Colors.white,
-            shape: const CircleBorder(),
-            elevation: 0,
-            highlightElevation: 0,
-            onPressed: onPressed,
-            // Switching tabs keeps the button and cross-fades its icon.
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: Icon(icon, key: ValueKey(icon), size: icon == Icons.add_rounded ? 42 : 34, weight: 300),
-            ),
+      child: LitButton(
+        color: _green,
+        shape: const CircleBorder(),
+        child: FloatingActionButton(
+          heroTag: null,
+          tooltip: tooltip,
+          backgroundColor: Colors.transparent,
+          foregroundColor: Colors.white,
+          shape: const CircleBorder(),
+          elevation: 0,
+          highlightElevation: 0,
+          onPressed: onPressed,
+          // Switching tabs keeps the button and cross-fades its icon.
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: Icon(icon, key: ValueKey(icon), size: icon == Icons.add_rounded ? 42 : 34, weight: 300),
           ),
         ),
       ),

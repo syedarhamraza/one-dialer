@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../core/prefs/dialer_prefs.dart';
+import 'one_ui_theme.dart' show OneUIPalette;
+
 /// Elevation of a [OneUIGlassSurface]; picks its shadow.
 enum OneUIGlassElevation {
   /// Pills, circular buttons, search capsules, action bars, menus.
@@ -15,8 +18,13 @@ enum OneUIGlassElevation {
 /// Stand-in for OneSpend's appearance controller so its widgets can be copied verbatim.
 /// Always OneSpend's default **flat** look (the values are copied from its flat branch);
 /// the 3D option and the other appearance settings don't exist in the dialer.
+///
+/// Also the one place the dialer's Settings › "Reduce visual effects" is read: glass
+/// widgets ask [isFull] / [isOff] and listen here to switch live.
 class OneUIEffectsController extends ChangeNotifier {
-  OneUIEffectsController._();
+  OneUIEffectsController._() {
+    DialerPrefs.instance.visualEffects.addListener(notifyListeners);
+  }
 
   static final OneUIEffectsController instance = OneUIEffectsController._();
 
@@ -54,6 +62,24 @@ class OneUIEffectsController extends ChangeNotifier {
   Gradient? get modalGradient => null;
 
   double get blurSigma => 20.0;
+
+  /// `full`, `reduced` or `off` (see [DialerPrefs.visualEffects]).
+  String get level => DialerPrefs.instance.visualEffects.value;
+
+  /// Full effects: the call glass (cached glow artwork over the blur), the header's
+  /// progressive blur, and separate backdrop reads where one glass must blur another.
+  bool get isFull => level == 'full';
+
+  /// Effects off: solid One UI fills, no blur anywhere.
+  bool get isOff => level == 'off';
+
+  /// Below full effects, glass is OneSpend's flat One UI fill (light mode: flat grey, with no
+  /// shadows): translucent over a blur when reduced (every blur on a page sharing one backdrop
+  /// read), solid when off.
+  Color oneUIFill({required bool light}) {
+    final fill = light ? OneUIPalette.light.pill.withValues(alpha: .8) : floatingColor;
+    return isOff ? fill.withValues(alpha: 1) : fill;
+  }
 
   Color get activePillColor => const Color(0xFF3E3E42);
   Gradient? get activePillGradient => null;

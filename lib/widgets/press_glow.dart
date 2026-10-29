@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../features/in_call/call_controls.dart';
+import '../theme/one_ui_theme.dart';
 
 /// The call screen's press for ordinary buttons: the glass package's glow and stretch with no
 /// glass body (the transparent style draws no shader, so the main engine needs no
@@ -50,6 +51,38 @@ class PressGlow extends StatelessWidget {
         shadows: [...?shadows, if (color != null) ...?solidBody(color, shape, glow: .22).shadows],
       ),
       child: press,
+    );
+  }
+}
+
+/// A lit (green) button's body and press: the call screen's shaded body, light from below and
+/// coloured glow at full visual effects; a flat One UI [color] fill with the same press below.
+/// Switches live.
+class LitButton extends StatelessWidget {
+  const LitButton({super.key, required this.color, required this.shape, this.radius = 999, required this.child});
+
+  final Color color;
+  final OutlinedBorder shape;
+
+  /// The press's corner radius (see [PressGlow.radius]).
+  final double radius;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final fx = OneUIEffectsController.instance;
+    return ListenableBuilder(
+      listenable: fx,
+      builder: (context, child) => PressGlow(
+        radius: radius,
+        glowColor: fx.isFull ? color : null,
+        child: Container(
+          decoration: fx.isFull ? solidBody(color, shape, glow: 0) : ShapeDecoration(color: color, shape: shape),
+          foregroundDecoration: fx.isFull ? solidGlow(shape) : null,
+          child: child,
+        ),
+      ),
+      child: child,
     );
   }
 }

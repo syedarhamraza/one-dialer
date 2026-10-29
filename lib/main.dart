@@ -20,7 +20,7 @@ Future<void> main() async {
   await initCrashReporting();
   // Not awaited: rows use the defaults until the saved choices arrive a moment later.
   DialerPrefs.instance.loadChoices();
-  await DialerPrefs.instance.loadThemeMode();
+  await DialerPrefs.instance.loadAppearance();
   // The bundled Roboto (the glass version numeral) under About › Open source licences.
   LicenseRegistry.addLicense(() async* {
     yield LicenseEntryWithLineBreaks(['Roboto'], await rootBundle.loadString('assets/fonts/Roboto-LICENSE.txt'));
