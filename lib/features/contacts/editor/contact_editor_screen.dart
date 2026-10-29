@@ -306,13 +306,13 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
   static String _avatarName(ContactForm form) =>
       form.fullName.isEmpty ? (form.phones.firstOrNull?.value ?? '') : form.fullName;
 
-  (bool, String)? _shown;
+  (bool, String, bool)? _shown;
 
   /// Text edits only rebuild the screen when something drawn from the text changes:
-  /// the Done pill (empty or not) and the photo's initials.
+  /// the Done pill (empty or not), the photo's initials, and whether back may pop.
   void _edited() {
     final form = _form!;
-    final shown = (form.isEmpty, LetterAvatar.initials(_avatarName(form)));
+    final shown = (form.isEmpty, LetterAvatar.initials(_avatarName(form)), _dirty);
     if (shown != _shown) setState(() => _shown = shown);
   }
 
@@ -374,8 +374,8 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
   Widget build(BuildContext context) {
     final form = _form;
     final screen = PopScope(
-      // Decided at back-press time, so typing doesn't have to rebuild to keep it current.
-      canPop: false,
+      // Unchanged, Android's back swipe drags the page away; with changes, back asks first.
+      canPop: !_dirty && !_saving,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) {
           _closing = true;
@@ -507,7 +507,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
       child: SizedBox(
         height: 48,
         child: NavigationToolbar(
-          leading: pill('Cancel', () => Navigator.of(context).maybePop(), OneUITheme.accentRed),
+          leading: pill('Cancel', _requestLeave, OneUITheme.accentRed),
           middle: Text(
             _isNew ? 'New contact' : 'Edit contact',
             style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
