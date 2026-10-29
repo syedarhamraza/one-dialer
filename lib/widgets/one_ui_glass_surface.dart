@@ -79,9 +79,16 @@ class OneUIGlassSurface extends StatelessWidget {
                   color: fx.floating3dEffect
                       ? null
                       : _fade(
-                          light
-                              ? (isModal ? OneUIPalette.lightModal : OneUIPalette.lightFloating)
-                              : (isModal ? fx.modalColor : fx.floatingColor),
+                          _solid(
+                            light
+                                ? (isModal
+                                      ? OneUIPalette.lightModal
+                                      : fx.isFull
+                                      ? OneUIPalette.lightFloating
+                                      : fx.oneUIFill(light: true))
+                                : (isModal ? fx.modalColor : fx.floatingColor),
+                            !fx.isOff,
+                          ),
                           t,
                         ),
                   gradient: (isModal ? fx.modalGradient : fx.floatingGradient)?.scale(t),
@@ -95,23 +102,37 @@ class OneUIGlassSurface extends StatelessWidget {
 
         final rim = fx.floatingRimGradient;
         final shadows = [
-          for (final s in light && !isModal ? OneUIPalette.lightGlassShadow : fx.glassShadow(elevation))
+          // Dialer: below full visual effects light mode is flat One UI, with no shadows.
+          for (final s
+              in light && !isModal
+                  ? (fx.isFull ? OneUIPalette.lightGlassShadow : const <BoxShadow>[])
+                  : fx.glassShadow(elevation))
             t >= 1.0 ? s : s.copyWith(color: _fade(s.color, t)),
         ];
 
+        final content = rim == null
+            ? body
+            : CustomPaint(
+                foregroundPainter: OneUIRimPainter(gradient: rim, borderRadius: borderRadius, opacity: t),
+                child: body,
+              );
         return DecoratedBox(
           decoration: BoxDecoration(borderRadius: borderRadius, boxShadow: shadows),
           child: ClipRRect(
             borderRadius: borderRadius,
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: fx.blurSigma * t, sigmaY: fx.blurSigma * t),
-              child: rim == null
-                  ? body
-                  : CustomPaint(
-                      foregroundPainter: OneUIRimPainter(gradient: rim, borderRadius: borderRadius, opacity: t),
-                      child: body,
-                    ),
-            ),
+            // Dialer: Settings › "Reduce visual effects": reduced shares the page's one backdrop
+            // read; off is solid (see _solid).
+            child: fx.isOff
+                ? content
+                : fx.isFull
+                ? BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: fx.blurSigma * t, sigmaY: fx.blurSigma * t),
+                    child: content,
+                  )
+                : BackdropFilter.grouped(
+                    filter: ImageFilter.blur(sigmaX: fx.blurSigma * t, sigmaY: fx.blurSigma * t),
+                    child: content,
+                  ),
           ),
         );
       },
@@ -119,6 +140,9 @@ class OneUIGlassSurface extends StatelessWidget {
   }
 
   static Color _fade(Color c, double t) => c.withValues(alpha: c.a * t);
+
+  /// Effects off: the fill is solid, with nothing blurred behind it.
+  static Color _solid(Color c, bool blurred) => blurred ? c : c.withValues(alpha: 1);
 }
 
 /// Strokes a rounded-rect outline with a gradient: the 3D "rim light" on glass

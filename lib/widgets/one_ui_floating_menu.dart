@@ -157,9 +157,15 @@ class _PopoverMenu extends StatelessWidget {
 
   static const double _startScale = .2;
 
+  static Widget _glass(ImageFilter? blur, Widget child) =>
+      blur == null ? child : BackdropFilter(filter: blur, child: child);
+
   @override
   Widget build(BuildContext context) {
-    final sigma = OneUIEffectsController.instance.blurSigma;
+    // Settings › "Reduce visual effects": full grows the call glass with its blur; reduced is One UI's
+    // flat fill over a fixed blur (a small sigma mid-grow is the costliest: Impeller can't downsample
+    // it); off is a solid One UI card.
+    final fx = OneUIEffectsController.instance;
     // It grows away from the button: pivot on the edge facing it, at the point
     // nearest the button.
     final pivotX = button.center.dx.clamp(menu.left, menu.right);
@@ -196,8 +202,9 @@ class _PopoverMenu extends StatelessWidget {
         );
         return Stack(
           children: [
-            // Outside the press, which clips to the menu's shape.
-            if (context.palette.isLight)
+            // Outside the press, which clips to the menu's shape. Below full visual effects
+            // light mode is flat One UI, with no shadow.
+            if (context.palette.isLight && fx.isFull)
               Positioned.fromRect(
                 rect: glass.shift(menu.topLeft),
                 child: DecoratedBox(
@@ -241,9 +248,13 @@ class _PopoverMenu extends StatelessWidget {
                             // The fade goes inside the blur (an Opacity around a BackdropFilter
                             // would cut it off from the backdrop); the blur is at full strength from
                             // the first frame, so its filter doesn't change every frame.
-                            : BackdropFilter(
-                                filter: ImageFilter.blur(sigmaX: sigma * scale, sigmaY: sigma * scale),
-                                child: Opacity(
+                            : _glass(
+                                fx.isOff
+                                    ? null
+                                    : fx.isFull
+                                    ? ImageFilter.blur(sigmaX: fx.blurSigma * scale, sigmaY: fx.blurSigma * scale)
+                                    : ImageFilter.blur(sigmaX: fx.blurSigma, sigmaY: fx.blurSigma),
+                                Opacity(
                                   opacity: fade,
                                   child: OverflowBox(
                                     alignment: Alignment.topLeft,
@@ -257,19 +268,23 @@ class _PopoverMenu extends StatelessWidget {
                                       // A dark base keeps the items legible over list text; the call-glass
                                       // wash, edge glow and lip go on top, as on the header buttons.
                                       child: ColoredBox(
-                                        color: context.palette.isLight
+                                        color: !fx.isFull
+                                            ? fx.oneUIFill(light: context.palette.isLight)
+                                            : context.palette.isLight
                                             ? const Color(0xCCFFFFFF)
                                             : const Color(0xB3141416),
                                         // The same glow as the buttons, but reaching less far in: across a card
                                         // this much bigger the button's spread reads as a wide haze. From a cached
                                         // image: drawn live, its blurred strokes were re-rendered every frame of a
                                         // press (~10 ms on a Galaxy S25).
-                                        child: CallBodyArtwork(
-                                          radius: OneUIFloatingMenu._radius * size,
-                                          glow: kMainGlassGlow,
-                                          spread: .5,
-                                          child: items!,
-                                        ),
+                                        child: fx.isFull
+                                            ? CallBodyArtwork(
+                                                radius: OneUIFloatingMenu._radius * size,
+                                                glow: kMainGlassGlow,
+                                                spread: .5,
+                                                child: items!,
+                                              )
+                                            : items,
                                       ),
                                     ),
                                   ),

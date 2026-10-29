@@ -43,8 +43,6 @@ class KeypadScreen extends StatefulWidget {
 
 const double _gap = 10;
 
-final double _blur = OneUIEffectsController.instance.blurSigma;
-
 class _KeypadScreenState extends State<KeypadScreen> {
   final _telecom = TelecomBridge.instance;
   final _callKey = GlobalKey();
@@ -235,13 +233,12 @@ class _KeypadScreenState extends State<KeypadScreen> {
                               // blur only on frames where something animates.
                               child: ClipRRect(
                                 borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                                child: BackdropFilter.grouped(
-                                  filter: ImageFilter.blur(sigmaX: _blur, sigmaY: _blur),
-                                  child: DecoratedBox(
+                                child: _Frosted(
+                                  builder: (blur) => DecoratedBox(
                                     key: const ValueKey('keypad-panel'),
                                     decoration: BoxDecoration(
                                       color: (context.palette.isLight ? context.palette.page : context.palette.card)
-                                          .withValues(alpha: .75),
+                                          .withValues(alpha: blur ? .75 : 1),
                                       borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
                                     ),
                                     // Scrolls only when a small or landscape screen can't fit it.
@@ -581,21 +578,27 @@ class _Pill extends StatelessWidget {
     label: label,
     enabled: onTap != null,
     excludeSemantics: true,
-    child: PressGlow(
-      glowColor: lit ? color : null,
-      shadows: !lit && context.palette.isLight ? OneUIPalette.lightGlassShadow : null,
-      child: Container(
-        decoration: lit ? solidBody(color, const StadiumBorder(), glow: 0) : null,
-        foregroundDecoration: lit ? solidGlow(const StadiumBorder()) : null,
-        // The nav bar's call glass without its backdrop blur (a save layer per key), rasterized
-        // once so presses and the sheet's slide only draw an image.
-        child: lit ? _ink() : CallBodyArtwork(radius: height / 2, glow: kMainGlassGlow, opacity: .75, child: _ink()),
-      ),
+    child: ListenableBuilder(
+      listenable: OneUIEffectsController.instance,
+      builder: (context, _) {
+        final fx = OneUIEffectsController.instance;
+        if (lit) return LitButton(color: color, shape: const StadiumBorder(), child: _ink());
+        return PressGlow(
+          // Below full visual effects light mode is flat One UI: no shadows.
+          shadows: context.palette.isLight && fx.isFull ? OneUIPalette.lightGlassShadow : null,
+          child: fx.isFull
+              // The nav bar's call glass without its backdrop blur (a save layer per key), rasterized
+              // once so presses and the sheet's slide only draw an image.
+              ? CallBodyArtwork(radius: height / 2, glow: kMainGlassGlow, opacity: .75, child: _ink())
+              // Below full: a flat One UI key, translucent over the sheet when reduced, solid when off.
+              : _ink(fx.oneUIFill(light: context.palette.isLight)),
+        );
+      },
     ),
   );
 
-  Widget _ink() => Material(
-    color: Colors.transparent,
+  Widget _ink([Color fill = Colors.transparent]) => Material(
+    color: fill,
     shape: const StadiumBorder(),
     clipBehavior: Clip.antiAlias,
     child: InkWell(
@@ -734,4 +737,26 @@ List<OneUIFloatingMenuItem> keypadMenuItems(
       onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),
     ),
   ];
+}
+
+/// The sheet's frosted backing: Calls blurred behind the keys, and a solid backing with
+/// visual effects off. Switches live.
+class _Frosted extends StatelessWidget {
+  const _Frosted({required this.builder});
+  final Widget Function(bool blur) builder;
+
+  @override
+  Widget build(BuildContext context) {
+    final fx = OneUIEffectsController.instance;
+    return ListenableBuilder(
+      listenable: fx,
+      builder: (context, _) {
+        if (fx.isOff) return builder(false);
+        return BackdropFilter.grouped(
+          filter: ImageFilter.blur(sigmaX: fx.blurSigma, sigmaY: fx.blurSigma),
+          child: builder(true),
+        );
+      },
+    );
+  }
 }

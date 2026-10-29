@@ -13,6 +13,9 @@ const double kMainGlassGlow = .6;
 /// The connected call screen's control look for floating chrome: the backdrop blurred
 /// behind, the call body's milky wash, all-round edge glow and top lip, and its press
 /// (squeeze, stretch toward the finger, glow). A circle, or squircle-ended with [radius].
+///
+/// Below full visual effects it's OneSpend's flat One UI glass instead
+/// ([OneUIEffectsController.oneUIFill]): over a blur when reduced, solid when off.
 class CallGlass extends StatelessWidget {
   const CallGlass({super.key, this.radius, required this.child});
 
@@ -21,34 +24,52 @@ class CallGlass extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sigma = OneUIEffectsController.instance.blurSigma;
-    // Grouped: inside the shell's tabs, every glass control shares one backdrop read (see
-    // MainShell), as do a pushed page's (DialerApp's page transition); the nav bar blurs on its own.
-    final body = BackdropFilter.grouped(
-      filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
-      // From a cached image, like the keypad keys: drawn live, its blurred strokes were
-      // re-rendered every frame of a press (the press scales them).
-      child: CallBodyArtwork(radius: radius, glow: kMainGlassGlow, child: const SizedBox.expand()),
-    );
+    final fx = OneUIEffectsController.instance;
+    Widget body(BuildContext context) {
+      if (fx.isFull) {
+        // Grouped: inside the shell's tabs, every glass control shares one backdrop read (see
+        // MainShell), as do a pushed page's (DialerApp's page transition); the nav bar blurs on its own.
+        return BackdropFilter.grouped(
+          filter: ImageFilter.blur(sigmaX: fx.blurSigma, sigmaY: fx.blurSigma),
+          // From a cached image, like the keypad keys: drawn live, its blurred strokes were
+          // re-rendered every frame of a press (the press scales them).
+          child: CallBodyArtwork(radius: radius, glow: kMainGlassGlow, child: const SizedBox.expand()),
+        );
+      }
+      final fill = ColoredBox(
+        color: fx.oneUIFill(light: context.palette.isLight),
+        child: const SizedBox.expand(),
+      );
+      if (fx.isOff) return fill;
+      return BackdropFilter.grouped(
+        filter: ImageFilter.blur(sigmaX: fx.blurSigma, sigmaY: fx.blurSigma),
+        child: fill,
+      );
+    }
+
     // Claims vertical drags that start on it, so holding and moving a pill inside a
     // scrolling page plays the press instead of scrolling the page.
-    return GestureDetector(
-      onVerticalDragStart: _ignoreDrag,
-      child: PressGlow(
-        radius: radius ?? 999,
-        shadows: context.palette.isLight ? OneUIPalette.lightGlassShadow : null,
-        // Only the frosted body is clipped; the content draws on top unclipped, so a
-        // springy thumb can overshoot the edge.
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned.fill(
-              child: radius == null
-                  ? ClipOval(child: body)
-                  : ClipRSuperellipse(borderRadius: BorderRadius.all(Radius.circular(radius!)), child: body),
-            ),
-            child,
-          ],
+    return ListenableBuilder(
+      listenable: fx,
+      builder: (context, _) => GestureDetector(
+        onVerticalDragStart: _ignoreDrag,
+        child: PressGlow(
+          radius: radius ?? 999,
+          // Below full visual effects light mode is flat One UI: no shadows.
+          shadows: context.palette.isLight && fx.isFull ? OneUIPalette.lightGlassShadow : null,
+          // Only the frosted body is clipped; the content draws on top unclipped, so a
+          // springy thumb can overshoot the edge.
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned.fill(
+                child: radius == null
+                    ? ClipOval(child: body(context))
+                    : ClipRSuperellipse(borderRadius: BorderRadius.all(Radius.circular(radius!)), child: body(context)),
+              ),
+              child,
+            ],
+          ),
         ),
       ),
     );

@@ -160,10 +160,22 @@ class DialerPrefs {
   /// Settings › "Appearance": `system`, `light` or `dark`.
   final themeMode = ValueNotifier('system');
 
-  /// Awaited before the first frame, so the app doesn't open dark and then turn light.
-  Future<void> loadThemeMode() async {
+  /// Settings › "Reduce visual effects": `full`, `reduced` (no wide blurs) or `off` (no
+  /// blurs); read through `OneUIEffectsController`.
+  final visualEffects = ValueNotifier('full');
+
+  /// Awaited before the first frame, so the app doesn't open dark and then turn light, or
+  /// frosted and then flat.
+  Future<void> loadAppearance() async {
     final mode = await _prefs.getString('theme_mode');
     if (mode == 'system' || mode == 'light' || mode == 'dark') themeMode.value = mode!;
+    final effects = await _prefs.getString('visual_effects');
+    if (effects == 'full' || effects == 'reduced' || effects == 'off') visualEffects.value = effects!;
+  }
+
+  Future<void> setVisualEffects(String value) async {
+    visualEffects.value = value;
+    await _prefs.setString('visual_effects', value);
   }
 
   Future<void> setThemeMode(String value) async {

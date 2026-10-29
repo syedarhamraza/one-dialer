@@ -50,17 +50,21 @@ class OneUIStatusBarScrim extends StatelessWidget {
             child: FutureBuilder(
               future: _fade,
               builder: (context, fade) {
-                // A light blur everywhere; the shader adds up to sigma 12 more toward the top.
-                final blur = ImageFilter.blur(sigmaX: 7, sigmaY: 7, tileMode: TileMode.mirror);
+                // Full effects: a light blur everywhere; the shader adds up to sigma 12 more toward
+                // the top. Reduced: one even (and cheaper) blur that the shader only fades out.
+                final fx = OneUIEffectsController.instance;
+                final full = fx.isFull;
+                final sigma = full ? 7.0 : 16.0;
+                final blur = ImageFilter.blur(sigmaX: sigma, sigmaY: sigma, tileMode: TileMode.mirror);
                 // Physical pixels per layout unit (the app is laid out at DesignWidth and scaled).
                 final pixels = View.of(context).physicalSize.width / MediaQuery.sizeOf(context).width;
                 fade.data
                   ?..setFloat(2, scrimHeight * pixels)
-                  ..setFloat(3, 12 * pixels);
+                  ..setFloat(3, full ? 12 * pixels : 0);
                 return Stack(
                   children: [
-                    // Until the shader loads (or without Impeller) only the tint shows.
-                    if (fade.data case final shader?)
+                    // Until the shader loads (or without Impeller, or with effects off) only the tint shows.
+                    if (fade.data case final shader? when !fx.isOff)
                       Positioned.fill(
                         child: ClipRect(
                           child: BackdropFilter.grouped(

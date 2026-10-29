@@ -93,17 +93,28 @@ class GlowButton extends StatelessWidget {
       enabled: onTap != null && !busy,
       label: busy ? busyLabel ?? label : label,
       excludeSemantics: true,
-      child: PressGlow(
-        glowColor: lit ? color : null,
-        shadows: !lit && context.palette.isLight ? OneUIPalette.lightGlassShadow : null,
-        child: lit
-            ? Container(
-                decoration: solidBody(color, const StadiumBorder(), glow: 0),
-                foregroundDecoration: solidGlow(const StadiumBorder()),
-                child: body,
-              )
-            : CallBodyArtwork(radius: height / 2, glow: kMainGlassGlow, child: body),
-      ),
+      child: lit
+          ? LitButton(color: color, shape: const StadiumBorder(), child: body)
+          : ListenableBuilder(
+              listenable: OneUIEffectsController.instance,
+              builder: (context, body) {
+                final full = OneUIEffectsController.instance.isFull;
+                // Below full visual effects: a flat One UI pill with no shadows.
+                return PressGlow(
+                  shadows: context.palette.isLight && full ? OneUIPalette.lightGlassShadow : null,
+                  child: full
+                      ? CallBodyArtwork(radius: height / 2, glow: kMainGlassGlow, child: body!)
+                      : DecoratedBox(
+                          decoration: ShapeDecoration(
+                            color: OneUIEffectsController.instance.oneUIFill(light: context.palette.isLight),
+                            shape: const StadiumBorder(),
+                          ),
+                          child: body,
+                        ),
+                );
+              },
+              child: body,
+            ),
     );
   }
 }
