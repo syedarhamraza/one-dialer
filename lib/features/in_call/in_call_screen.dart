@@ -252,7 +252,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
       child: IgnorePointer(
         child: Container(
           key: const ValueKey('answer-flight'),
-          foregroundDecoration: glassGlow(shape),
+          foregroundDecoration: glassGlow(shape, flat: callFlat(context)),
           alignment: Alignment.center,
           child: Stack(
             fit: StackFit.expand,
@@ -260,11 +260,11 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
             children: [
               Opacity(
                 opacity: 1 - red,
-                child: DecoratedBox(decoration: glassBody(answerGreen, shape)),
+                child: DecoratedBox(decoration: glassBody(answerGreen, shape, flat: callFlat(context))),
               ),
               Opacity(
                 opacity: red,
-                child: DecoratedBox(decoration: glassBody(endRed, shape)),
+                child: DecoratedBox(decoration: glassBody(endRed, shape, flat: callFlat(context))),
               ),
               // The handset tips over, then End's hang-up glyph fades in over it and only then does
               // the handset fade out underneath: never dimmed, and it lands already as End's icon.

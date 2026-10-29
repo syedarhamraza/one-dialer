@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../features/in_call/call_controls.dart';
 import '../features/in_call/in_call_screen.dart';
 import '../theme/one_ui_theme.dart';
 import 'layout.dart';
@@ -14,7 +15,7 @@ class InCallApp extends StatelessWidget {
       theme: OneUITheme.darkTheme,
       scrollBehavior: const MaterialScrollBehavior(), // the call screen holds still
       builder: (context, child) => DesignWidth(child: child!),
-      home: const InCallScreen(),
+      home: CallEffects(child: const InCallScreen()),
     );
   }
 }

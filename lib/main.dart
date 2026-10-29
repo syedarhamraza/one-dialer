@@ -50,6 +50,10 @@ Future<void> inCallMain() async {
   _profileServiceAddress();
   // Not awaited: the ringing screen's first frame mustn't wait on Firebase's round trips.
   unawaited(initCrashReporting());
+  // Settings › Call screen effects, never awaited: a ringing call must not wait on storage. It
+  // can change while this engine is cached, so it's read again whenever the call screen resumes.
+  unawaited(DialerPrefs.instance.loadCallEffects());
+  AppLifecycleListener(onResume: DialerPrefs.instance.loadCallEffects);
   // Pre-warms the call screen's glass shaders so its first frame doesn't flash.
   await LiquidGlassWidgets.initialize();
   runApp(LiquidGlassWidgets.wrap(brightnessResolver: Theme.maybeBrightnessOf, child: const InCallApp()));
