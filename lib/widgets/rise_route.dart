@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show PredictiveBackEvent;
 
 import '../features/in_call/call_controls.dart';
 
@@ -50,14 +51,61 @@ class RisePageRoute<T> extends PageRoute<T> {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
+    child = _BackGesture(route: this, child: child);
     if (MediaQuery.disableAnimationsOf(context)) return FadeTransition(opacity: animation, child: child);
     return SlideTransition(
-      position: CurvedAnimation(
-        parent: animation,
-        curve: kSheetRise,
-        reverseCurve: kSheetDrop.flipped,
-      ).drive(Tween(begin: const Offset(0, 1), end: Offset.zero)),
+      // Linear during Android's back swipe, so the page follows the finger down.
+      position: (popGestureInProgress
+              ? animation
+              : CurvedAnimation(parent: animation, curve: kSheetRise, reverseCurve: kSheetDrop.flipped))
+          .drive(Tween(begin: const Offset(0, 1), end: Offset.zero)),
       child: child,
     );
   }
+}
+
+/// Hands Android's predictive back swipe to [route], as the theme's page transition does
+/// for Material pages; without it the page only drops once the swipe is released.
+class _BackGesture extends StatefulWidget {
+  const _BackGesture({required this.route, required this.child});
+  final PageRoute<dynamic> route;
+  final Widget child;
+
+  @override
+  State<_BackGesture> createState() => _BackGestureState();
+}
+
+class _BackGestureState extends State<_BackGesture> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  bool handleStartBackGesture(PredictiveBackEvent backEvent) {
+    final route = widget.route;
+    if (backEvent.isButtonEvent || !route.isCurrent || !route.popGestureEnabled) return false;
+    route.handleStartBackGesture(progress: 1 - backEvent.progress);
+    return true;
+  }
+
+  @override
+  void handleUpdateBackGestureProgress(PredictiveBackEvent backEvent) =>
+      widget.route.handleUpdateBackGestureProgress(progress: 1 - backEvent.progress);
+
+  @override
+  void handleCancelBackGesture() => widget.route.handleCancelBackGesture();
+
+  @override
+  void handleCommitBackGesture() => widget.route.handleCommitBackGesture();
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

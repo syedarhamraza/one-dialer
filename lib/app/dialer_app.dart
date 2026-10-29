@@ -44,7 +44,8 @@ class DialerApp extends StatelessWidget {
 /// Android's predictive back (the system back swipe drags the page), with each page's glass
 /// controls (`CallGlass`) sharing one backdrop read, as the shell's tabs do: a separate read
 /// per button splits the GPU pass every frame.
-class _GroupedSlide extends PageTransitionsBuilder {
+/// Extends the builder (not wraps it) so pages keep its 450 ms duration.
+class _GroupedSlide extends PredictiveBackPageTransitionsBuilder {
   const _GroupedSlide();
 
   @override
@@ -54,13 +55,7 @@ class _GroupedSlide extends PageTransitionsBuilder {
     Animation<double> animation,
     Animation<double> secondaryAnimation,
     Widget child,
-  ) => const PredictiveBackPageTransitionsBuilder().buildTransitions(
-    route,
-    context,
-    animation,
-    secondaryAnimation,
-    BackdropGroup(child: child),
-  );
+  ) => super.buildTransitions(route, context, animation, secondaryAnimation, BackdropGroup(child: child));
 }
 
 /// Shows [SetupScreen] until the app is the default phone app.

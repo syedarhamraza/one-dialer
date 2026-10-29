@@ -135,6 +135,75 @@ void main() {
     expect(find.byType(ContactEditorScreen), findsNothing);
   });
 
+  /// Android's predictive back, as the engine sends it.
+  Future<void> backGesture(WidgetTester tester, String method, [double progress = 0]) async {
+    await tester.binding.defaultBinaryMessenger.handlePlatformMessage(
+      SystemChannels.backGesture.name,
+      SystemChannels.backGesture.codec.encodeMethodCall(
+        MethodCall(method, {
+          'touchOffset': [5.0, 300.0],
+          'progress': progress,
+          'swipeEdge': 0,
+        }),
+      ),
+      (_) {},
+    );
+    await tester.pump();
+  }
+
+  testWidgets('a rising Add follows the back swipe down, and settles back on cancel', (tester) async {
+    accounts.complete(<Object?>[]);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: OneUITheme.darkTheme.copyWith(platform: TargetPlatform.android),
+        home: Scaffold(
+          body: Builder(
+            builder: (context) =>
+                TextButton(onPressed: () => openContactEditor(context, rise: true), child: const Text('Open editor')),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open editor'));
+    await tester.pumpAndSettle();
+    double top() => tester.getTopLeft(find.byType(ContactEditorScreen)).dy;
+
+    await backGesture(tester, 'startBackGesture');
+    await backGesture(tester, 'updateBackGestureProgress', .3);
+    expect(top(), greaterThan(0));
+    await backGesture(tester, 'cancelBackGesture');
+    await tester.pumpAndSettle();
+    expect(top(), 0);
+
+    await backGesture(tester, 'startBackGesture');
+    await backGesture(tester, 'updateBackGestureProgress', .3);
+    await backGesture(tester, 'commitBackGesture');
+    await tester.pumpAndSettle();
+    expect(find.byType(ContactEditorScreen), findsNothing);
+  });
+
+  testWidgets('back swipe pops an unchanged editor, and asks once something is typed', (tester) async {
+    accounts.complete(<Object?>[]);
+    await open(tester);
+    await tester.pumpAndSettle();
+    bool canPop() => tester.widget<PopScope<Object?>>(find.byWidgetPredicate((w) => w is PopScope)).canPop;
+    expect(canPop(), isTrue);
+    await tester.enterText(nameField(), 'Ann');
+    await tester.pump();
+    expect(canPop(), isFalse);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('Save your changes or discard them?'), findsOneWidget);
+    await tester.binding.handlePopRoute(); // closes the dialog
+    await tester.pumpAndSettle();
+    await tester.enterText(nameField(), '');
+    await tester.pump();
+    expect(canPop(), isTrue);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byType(ContactEditorScreen), findsNothing);
+  });
+
   testWidgets('Add waits for entry animation before focusing Name', (tester) async {
     accounts.complete(<Object?>[]);
     await open(tester);
