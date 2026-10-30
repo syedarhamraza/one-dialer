@@ -21,7 +21,7 @@ object InCallEngine {
 
         val app = context.applicationContext
         val engine = FlutterEngine(app)
-        bridge = CallBridge(app, engine.dartExecutor.binaryMessenger)
+        bridge = CallBridge(app, engine.dartExecutor.binaryMessenger, "in_call")
         engine.dartExecutor.executeDartEntrypoint(
             DartExecutor.DartEntrypoint(
                 FlutterInjector.instance().flutterLoader().findAppBundlePath(),

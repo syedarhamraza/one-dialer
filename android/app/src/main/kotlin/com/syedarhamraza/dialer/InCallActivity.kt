@@ -19,6 +19,16 @@ import io.flutter.embedding.engine.FlutterEngine
  */
 class InCallActivity : FlutterActivity() {
 
+    override fun onResume() {
+        super.onResume()
+        LagDiagnostics.foreground("in_call", true)
+    }
+
+    override fun onPause() {
+        LagDiagnostics.foreground("in_call", false)
+        super.onPause()
+    }
+
     private val closeWhenIdle = { if (!CallManager.isShowingCalls) finish() }
 
     override fun onCreate(savedInstanceState: Bundle?) {

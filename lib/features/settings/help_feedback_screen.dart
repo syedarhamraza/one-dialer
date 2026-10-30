@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../app/app_info.dart';
+import '../../core/diagnostics/lag_diagnostics.dart';
+import '../../widgets/cos_dialog.dart';
 import '../../core/config/app_version.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/one_ui_group_card.dart';
@@ -13,6 +15,32 @@ import '../../widgets/one_ui_toast.dart';
 /// and who made the app.
 class HelpFeedbackScreen extends StatelessWidget {
   const HelpFeedbackScreen({super.key});
+
+  static Future<void> _reportLag(BuildContext context) async {
+    final send = await showCosConfirm(
+      context,
+      title: 'Report lag',
+      message: 'Send recent performance timings, screen and action names, and device details to help find slowdowns. Phone numbers, contacts and messages are not included.',
+      confirmLabel: 'Send report',
+    );
+    if (!send || !context.mounted) return;
+    final id = await LagDiagnostics.instance.reportLag();
+    if (!context.mounted) return;
+    if (id == null) {
+      OneUIToast.show(context, 'Reporting unavailable or recently requested. Try again in a minute.');
+      return;
+    }
+    final copy = await showCosActions<bool>(
+      context,
+      title: 'Report queued',
+      message: 'Your report is saved for upload when reporting is available. Share this ID with your feedback:\n\n$id',
+      actions: [(label: 'Done', value: false, destructive: false), (label: 'Copy ID', value: true, destructive: false)],
+    );
+    if (copy == true) {
+      await Clipboard.setData(ClipboardData(text: id));
+      if (context.mounted) OneUIToast.show(context, 'Report ID copied');
+    }
+  }
 
   static Future<void> _open(BuildContext context, String url, String failure) async {
     try {
@@ -50,7 +78,10 @@ class HelpFeedbackScreen extends StatelessWidget {
       title: 'Help & feedback',
       builder: (context) => [
         OneUIGroupCard(
-          items: [OneUIGroupItem(title: 'Send feedback', onTap: () => _sendFeedback(context))],
+          items: [
+            OneUIGroupItem(title: 'Send feedback', onTap: () => _sendFeedback(context)),
+            OneUIGroupItem(title: 'Report lag', onTap: () => _reportLag(context)),
+          ],
         ),
         OneUIGroupCard(
           headerTitle: 'Developer',

@@ -33,10 +33,11 @@ import io.flutter.plugin.common.MethodChannel
  *
  * Mirrors `lib/core/telecom/telecom_bridge.dart`; keep method names in sync.
  */
-class CallBridge(private val context: Context, messenger: BinaryMessenger) :
+class CallBridge(private val context: Context, messenger: BinaryMessenger, private val engineName: String = "main") :
     MethodChannel.MethodCallHandler, EventChannel.StreamHandler {
 
     private val methods = MethodChannel(messenger, METHOD_CHANNEL)
+    private val diagnostics = LagDiagnostics.attach(context, messenger, engineName)
     private val events = EventChannel(messenger, EVENT_CHANNEL)
     private var listener: (() -> Unit)? = null
     private var toneGenerator: ToneGenerator? = null
@@ -78,6 +79,8 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
     }
 
     fun dispose() {
+        diagnostics.setMethodCallHandler(null)
+        LagDiagnostics.foreground(engineName, false)
         onCancel(null)
         toneGenerator?.release()
         toneGenerator = null
@@ -105,6 +108,16 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger) :
     fun sendContactAction(action: Map<String, String?>) = methods.invokeMethod("onContactAction", action)
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
+        val diagnosticStart = android.os.SystemClock.uptimeMillis()
+        LagDiagnostics.operation(engineName, call.method)
+        try {
+            dispatch(call, result)
+        } finally {
+            LagDiagnostics.operation(engineName, call.method, android.os.SystemClock.uptimeMillis() - diagnosticStart)
+        }
+    }
+
+    private fun dispatch(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
             "isDefaultDialer" -> result.success(isDefaultDialer())
             "requestDefaultDialer" -> requestRole(RoleManager.ROLE_DIALER, result)

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../core/contacts/contacts_repository.dart';
+import '../core/diagnostics/lag_diagnostics.dart';
 import '../core/prefs/dialer_prefs.dart';
 import '../core/telecom/telecom_bridge.dart';
 import '../features/blocking/blocking_repository.dart';
@@ -13,6 +14,7 @@ import 'main_shell.dart';
 
 class DialerApp extends StatelessWidget {
   const DialerApp({super.key});
+  static final _diagnosticsObserver = DiagnosticsNavigatorObserver();
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +23,7 @@ class DialerApp extends StatelessWidget {
       valueListenable: DialerPrefs.instance.themeMode,
       builder: (context, mode, _) => MaterialApp(
         title: 'One Dialer',
+        navigatorObservers: [_diagnosticsObserver],
         debugShowCheckedModeBanner: false,
         theme: OneUITheme.lightTheme.copyWith(pageTransitionsTheme: transitions),
         darkTheme: OneUITheme.darkTheme.copyWith(pageTransitionsTheme: transitions),

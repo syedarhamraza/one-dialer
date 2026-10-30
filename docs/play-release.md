@@ -27,6 +27,8 @@ Application id `com.syedarhamraza.onedialer` (can't change once on Play). The Ko
 
 ## Each release
 
+For beta 5 diagnostics, follow [the diagnostics verification guide](lag-diagnostics.md) before uploading. Publish the updated privacy policy and review the Play Data safety declarations for diagnostics/performance data. Filter Crashlytics **non-fatal** issues for `SevereFrameDelay`, `NativeMainStall`, `DartStall`, `RenderStall`, and `UserReportedLag`; the crash-free release chart is not a lag metric. Do not include the diagnostics integration-test entrypoint or `LAG_DIAGNOSTICS_TEST_HOOKS` in a release command. Version bump, signing, upload, and publishing remain the release workflow below.
+
 From a clean tree on a `release/<version>` branch (main only changes through PRs):
 
 | You want to… | Command |

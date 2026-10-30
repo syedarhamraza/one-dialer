@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/contacts/contacts_repository.dart';
+import '../../core/diagnostics/lag_diagnostics.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import 'call_log.dart';
 
@@ -34,6 +35,8 @@ class CallLogRepository {
   int _revision = 0;
 
   Future<void> _load() async {
+    final diagnosticTimer = Stopwatch()..start();
+    LagDiagnostics.instance.action(DiagnosticAction.callLogLoad);
     final revision = ++_revision;
     try {
       final rows = await TelecomBridge.instance.getCallLog();
@@ -47,6 +50,8 @@ class CallLogRepository {
       if (e.code != 'NO_PERMISSION') rethrow;
       calls.value = const [];
       hasAccess.value = false;
+    } finally {
+      LagDiagnostics.instance.action(DiagnosticAction.callLogLoad, elapsed: diagnosticTimer.elapsed);
     }
   }
 

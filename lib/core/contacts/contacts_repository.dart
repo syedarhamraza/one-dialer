@@ -6,6 +6,7 @@ import 'package:flutter_contacts/flutter_contacts.dart';
 import '../../features/keypad/t9.dart';
 import '../../features/recents/call_log.dart';
 import '../prefs/dialer_prefs.dart';
+import '../diagnostics/lag_diagnostics.dart';
 
 /// A device contact. Usable directly as a T9 entry; only [ContactsRepository.allContacts]
 /// holds contacts without numbers.
@@ -134,53 +135,59 @@ class ContactsRepository {
   }();
 
   Future<void> _load() async {
-    _fullPhotos.clear();
-    _thumbnailLoads.clear();
-    final all = await FlutterContacts.getAll(
-      properties: {
-        ContactProperty.name,
-        ContactProperty.phone,
-        ContactProperty.favorite,
-        if (_preloadPhotos) ContactProperty.photoThumbnail,
-      },
-    );
-    final prefs = DialerPrefs.instance;
-    final entries = <DialerContact>[];
-    for (final c in all) {
-      final phones = _uniquePhones(c.phones);
-      final display = c.displayName?.trim() ?? '';
-      final fallback = display.isNotEmpty ? display : (phones.isEmpty ? '' : phones.first.number);
-      if (c.id == null || fallback.isEmpty) continue;
-      final (name, sortKey) = displayNames(
-        first: c.name?.first,
-        middle: c.name?.middle,
-        last: c.name?.last,
-        fallback: fallback,
-        order: prefs.nameOrder.value,
-        sortBy: prefs.sortBy.value,
+    final diagnosticTimer = Stopwatch()..start();
+    LagDiagnostics.instance.action(DiagnosticAction.contactsLoad);
+    try {
+      _fullPhotos.clear();
+      _thumbnailLoads.clear();
+      final all = await FlutterContacts.getAll(
+        properties: {
+          ContactProperty.name,
+          ContactProperty.phone,
+          ContactProperty.favorite,
+          if (_preloadPhotos) ContactProperty.photoThumbnail,
+        },
       );
-      entries.add(
-        DialerContact(
-          id: c.id!,
-          name: name,
-          sortKey: sortKey,
-          numbers: [for (final p in phones) p.number],
-          labels: [for (final p in phones) _label(p.label)],
-          thumbnail: c.photo?.thumbnail,
-          isFavorite: c.android?.isFavorite ?? false,
-          primaryIndex: phones.indexWhere((p) => p.isPrimary ?? false),
-          accounts: [for (final a in c.metadata?.accounts ?? const <Account>[]) '${a.type}|${a.name}'],
-        ),
-      );
+      final prefs = DialerPrefs.instance;
+      final entries = <DialerContact>[];
+      for (final c in all) {
+        final phones = _uniquePhones(c.phones);
+        final display = c.displayName?.trim() ?? '';
+        final fallback = display.isNotEmpty ? display : (phones.isEmpty ? '' : phones.first.number);
+        if (c.id == null || fallback.isEmpty) continue;
+        final (name, sortKey) = displayNames(
+          first: c.name?.first,
+          middle: c.name?.middle,
+          last: c.name?.last,
+          fallback: fallback,
+          order: prefs.nameOrder.value,
+          sortBy: prefs.sortBy.value,
+        );
+        entries.add(
+          DialerContact(
+            id: c.id!,
+            name: name,
+            sortKey: sortKey,
+            numbers: [for (final p in phones) p.number],
+            labels: [for (final p in phones) _label(p.label)],
+            thumbnail: c.photo?.thumbnail,
+            isFavorite: c.android?.isFavorite ?? false,
+            primaryIndex: phones.indexWhere((p) => p.isPrimary ?? false),
+            accounts: [for (final a in c.metadata?.accounts ?? const <Account>[]) '${a.type}|${a.name}'],
+          ),
+        );
+      }
+      entries.sort((a, b) => a.sortKey.compareTo(b.sortKey));
+      final numbered = [
+        for (final e in entries)
+          if (e.numbers.isNotEmpty) e,
+      ];
+      if (!sameContacts(entries, allContacts.value)) allContacts.value = entries;
+      if (!sameContacts(numbered, contacts.value)) _publish(numbered);
+      revision.value++;
+    } finally {
+      LagDiagnostics.instance.action(DiagnosticAction.contactsLoad, elapsed: diagnosticTimer.elapsed);
     }
-    entries.sort((a, b) => a.sortKey.compareTo(b.sortKey));
-    final numbered = [
-      for (final e in entries)
-        if (e.numbers.isNotEmpty) e,
-    ];
-    if (!sameContacts(entries, allContacts.value)) allContacts.value = entries;
-    if (!sameContacts(numbered, contacts.value)) _publish(numbered);
-    revision.value++;
   }
 
   /// The name to show in [order] (`first` or `last` first) and the sort key by [sortBy],
