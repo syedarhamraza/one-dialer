@@ -26,7 +26,7 @@ class Changelog {
   static const List<ChangelogEntry> entries = [
     ChangelogEntry(
       version: '1.0.0-beta.5',
-      date: inDevelopment,
+      date: 'Oct 2026',
       changes: [
         'Settings › Reduce visual effects: full, reduced or off (no blur), for phones that lag or freeze',
         'Settings › Call screen effects: the same choice for the call screen',
