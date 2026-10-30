@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:ui';
 
 import 'package:dialer/core/diagnostics/lag_diagnostics.dart';

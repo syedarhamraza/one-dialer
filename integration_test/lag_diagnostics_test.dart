@@ -1,4 +1,3 @@
-import 'dart:async';
 
 import 'package:dialer/core/diagnostics/lag_diagnostics.dart';
 import 'package:firebase_core/firebase_core.dart';

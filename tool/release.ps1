@@ -187,7 +187,7 @@ $changelog = [System.IO.File]::ReadAllText((Resolve-Path $changelogPath), $utf8)
 $nl = "`n"
 if ($changelog.Contains("`r`n")) { $nl = "`r`n" }
 # The date is a quoted string or, for notes written ahead, Changelog.inDevelopment.
-$entryPattern = "version: '" + [regex]::Escape($newName) + "',(\s*)date: (?:'[^']*'|Changelog\.inDevelopment)"
+$entryPattern = "version: '" + [regex]::Escape($newName) + "',(\s*)date: (?:'[^']*'|(?:Changelog\.)?inDevelopment)"
 if ([regex]::IsMatch($changelog, $entryPattern)) {
   # The entry exists (e.g. written while "In development"): stamp this month.
   $changelog = [regex]::Replace($changelog, $entryPattern, "version: '$newName',`$1date: '$month'")
