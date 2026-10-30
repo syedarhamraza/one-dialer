@@ -6,6 +6,7 @@ import android.os.Debug
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.view.MotionEvent
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.StandardMethodCodec
@@ -42,12 +43,16 @@ internal object LagDiagnostics {
         var beat = 0L
         var context = JSONObject()
         val history = ArrayDeque<JSONObject>()
+        // InputStall: touches Android delivered that Dart has not counted yet.
+        var dartDowns = -1L
+        var firstUnseenTouchAt = 0L
+        var lastTouchAt = 0L
     }
 
     private val actions = setOf("keypad", "backspace", "tab_calls", "tab_contacts", "contacts_load",
         "call_log_load", "playTone", "stopTone", "answer", "reject", "rejectWithMessage", "hangUp",
         "hold", "unhold", "playDtmf", "stopDtmf", "merge", "swap")
-    private val categories = setOf("SevereFrameDelay", "NativeMainStall", "DartStall", "RenderStall", "UserReportedLag")
+    private val categories = setOf("SevereFrameDelay", "NativeMainStall", "DartStall", "RenderStall", "InputStall", "UserReportedLag")
 
     private fun safely(work: () -> Unit) { worker.execute { runCatching(work) } }
 
@@ -77,6 +82,20 @@ internal object LagDiagnostics {
                             "heartbeat" -> {
                                 state.beat = now
                                 if (state.enabled) updateContext(state, call.arguments as? Map<*, *>)
+                                call.argument<Number>("pointerDowns")?.toLong()?.let {
+                                    if (it != state.dartDowns) {
+                                        state.dartDowns = it
+                                        state.firstUnseenTouchAt = 0
+                                    }
+                                }
+                                result.success(null)
+                            }
+                            "actionFrames" -> {
+                                val frames = DiagnosticsPolicy.actionFrames(call.arguments as? Map<*, *>)
+                                val name = call.argument<String>("name")
+                                if (state.enabled && frames != null) state.history.lastOrNull {
+                                    it.optString("action") == name && !it.has("frames")
+                                }?.let { entry -> frames.forEach { (key, value) -> entry.put(key, value) } }
                                 result.success(null)
                             }
                             "action" -> {
@@ -143,6 +162,18 @@ internal object LagDiagnostics {
         }
     }
 
+    /** Called from the activities' dispatchTouchEvent; only the moment of a finger going down is kept. */
+    fun touch(engine: String, event: MotionEvent) {
+        val action = event.actionMasked
+        if (action != MotionEvent.ACTION_DOWN && action != MotionEvent.ACTION_POINTER_DOWN) return
+        val now = SystemClock.uptimeMillis()
+        safely {
+            val state = engines[engine] ?: return@safely
+            state.lastTouchAt = now
+            if (state.firstUnseenTouchAt == 0L) state.firstUnseenTouchAt = now
+        }
+    }
+
     fun operation(engine: String, name: String, elapsedMs: Long? = null) {
         if (name !in actions) return
         val now = SystemClock.uptimeMillis()
@@ -179,6 +210,9 @@ internal object LagDiagnostics {
                 report(name, "NativeMainStall", now)
             } else if (DiagnosticsPolicy.stalled(now, state.resumedAt, state.beat, state.resumed, false)) {
                 report(name, "DartStall", now)
+            } else if (DiagnosticsPolicy.inputStalled(now, state.firstUnseenTouchAt, state.lastTouchAt, state.beat)) {
+                report(name, "InputStall", now)
+                state.firstUnseenTouchAt = 0
             }
         }
         if (pingPending.compareAndSet(false, true)) main.post {

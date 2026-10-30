@@ -29,19 +29,39 @@ internal class DiagnosticsPolicy {
             }
             (values["refreshRate"] as? Number)?.toDouble()?.takeIf { it.isFinite() && it in 1.0..1000.0 }
                 ?.let { result["refreshRate"] = it }
-            val metrics = values["frames"] as? Map<*, *>
+            result["frames"] = frameSummary(values["frames"] as? Map<*, *>)
+            // The tabs' frames as they were when a page first opened over them.
+            (values["shellFrames"] as? Map<*, *>)?.let { result["shellFrames"] = frameSummary(it) }
+            return result
+        }
+
+        private fun frameSummary(metrics: Map<*, *>?): Map<String, Double> {
             val frames = mutableMapOf<String, Double>()
             for (key in listOf("frames", "buildP50Ms", "buildP95Ms", "buildP99Ms", "buildMaxMs",
                 "rasterP50Ms", "rasterP95Ms", "rasterP99Ms", "rasterMaxMs")) {
                 (metrics?.get(key) as? Number)?.toDouble()?.takeIf { it.isFinite() && it in 0.0..600_000.0 }
                     ?.let { frames[key] = it }
             }
-            result["frames"] = frames
+            return frames
+        }
+
+        /** The worst frames in the second after a user action; null if any value is invalid. */
+        fun actionFrames(values: Map<*, *>?): Map<String, Number>? {
+            val frames = (values?.get("frames") as? Number)?.toInt()?.takeIf { it in 0..1_000 } ?: return null
+            val result = mutableMapOf<String, Number>("frames" to frames)
+            for (key in listOf("buildMaxMs", "rasterMaxMs")) {
+                result[key] = (values[key] as? Number)?.toDouble()?.takeIf { it.isFinite() && it in 0.0..600_000.0 }
+                    ?: return null
+            }
             return result
         }
 
         fun stalled(now: Long, resumedAt: Long, heartbeat: Long, resumed: Boolean, debugger: Boolean) =
             resumed && !debugger && now - resumedAt >= 5_000 && now - heartbeat >= 3_000
+
+        /** Touches kept arriving for 3 s that Dart never counted, while Dart itself is alive. */
+        fun inputStalled(now: Long, firstUnseenTouchAt: Long, lastTouchAt: Long, heartbeat: Long) =
+            firstUnseenTouchAt > 0 && lastTouchAt - firstUnseenTouchAt >= 3_000 && now - heartbeat < 3_000
     }
 }
 

@@ -25,6 +25,13 @@ class Changelog {
 
   static const List<ChangelogEntry> entries = [
     ChangelogEntry(
+      version: '1.0.0-beta.6',
+      date: inDevelopment,
+      changes: [
+        'Performance reports now show how smooth each tap and tab switch was, and can tell when the screen stops responding to touches',
+      ],
+    ),
+    ChangelogEntry(
       version: '1.0.0-beta.5',
       date: 'Oct 2026',
       changes: [

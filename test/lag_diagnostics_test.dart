@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui' show FrameTiming;
 
 import 'package:dialer/core/diagnostics/lag_diagnostics.dart';
 import 'package:dialer/features/settings/help_feedback_screen.dart';
@@ -86,6 +87,41 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     final args = calls.singleWhere((c) => c.method == 'action').arguments;
     expect(args, {'name': 'contacts_load', 'elapsedMs': 12});
+    diagnostics.dispose();
+  });
+
+  test('each category is recorded from its own function, so Crashlytics keeps them apart', () {
+    const categories = ['SevereFrameDelay', 'NativeMainStall', 'DartStall', 'RenderStall', 'InputStall', 'UserReportedLag'];
+    final tops = {for (final c in categories) LagDiagnostics.incidentTrace(c).toString().split('\n').first};
+    expect(tops.length, categories.length);
+    expect(LagDiagnostics.incidentTrace('RenderStall').toString(), contains('_renderStall'));
+  });
+
+  test('a tap carries the worst frame drawn in the second after it', () async {
+    pending = false;
+    var now = 10000000;
+    final diagnostics = LagDiagnostics(upload: (_) async {}, monotonicMicros: () => now);
+    await diagnostics.start(engine: 'main', enabled: true);
+    diagnostics.action(DiagnosticAction.tabContacts);
+    diagnostics.action(DiagnosticAction.contactsLoad); // a load is not a tap: no window
+    FrameTiming frame(int vsyncUs, int rasterUs) => FrameTiming(
+      vsyncStart: vsyncUs,
+      buildStart: vsyncUs,
+      buildFinish: vsyncUs + 2000,
+      rasterStart: vsyncUs + 2000,
+      rasterFinish: vsyncUs + 2000 + rasterUs,
+      rasterFinishWallTime: vsyncUs + 2000 + rasterUs,
+    );
+    diagnostics.addTimings([
+      frame(now - 5000, 90000), // drawn before the tap
+      frame(now + 100000, 53500),
+      frame(now + 200000, 4000),
+      frame(now + 1200000, 70000), // more than a second later
+    ]);
+    diagnostics.closeActionWindows();
+    await Future<void>.delayed(Duration.zero);
+    final args = calls.singleWhere((c) => c.method == 'actionFrames').arguments;
+    expect(args, {'name': 'tab_contacts', 'frames': 2, 'buildMaxMs': 2.0, 'rasterMaxMs': 53.5});
     diagnostics.dispose();
   });
 
