@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/haptics/haptics.dart';
+import '../core/diagnostics/lag_diagnostics.dart';
 import '../core/telecom/telecom_bridge.dart';
 import '../features/contacts/contact_details_screen.dart';
 import '../features/contacts/contacts_screen.dart';
@@ -93,6 +94,8 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   }
 
   void _select(int tab) {
+    LagDiagnostics.instance.screen(tab == 0 ? 'calls' : 'contacts');
+    LagDiagnostics.instance.action(tab == 0 ? DiagnosticAction.tabCalls : DiagnosticAction.tabContacts);
     if (!mounted) return;
     setState(() => _tab = tab);
     if (tab == 0) CallLogRepository.instance.markMissedSeen();

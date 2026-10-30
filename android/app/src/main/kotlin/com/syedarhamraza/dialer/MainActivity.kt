@@ -11,6 +11,16 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
 
+    override fun onResume() {
+        super.onResume()
+        LagDiagnostics.foreground("main", true)
+    }
+
+    override fun onPause() {
+        LagDiagnostics.foreground("main", false)
+        super.onPause()
+    }
+
     private var bridge: CallBridge? = null
     private var pendingRoleResult: MethodChannel.Result? = null
     private var pendingPhotoResult: MethodChannel.Result? = null

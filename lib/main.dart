@@ -49,7 +49,7 @@ Future<void> inCallMain() async {
   WidgetsFlutterBinding.ensureInitialized();
   _profileServiceAddress();
   // Not awaited: the ringing screen's first frame mustn't wait on Firebase's round trips.
-  unawaited(initCrashReporting());
+  unawaited(initCrashReporting(engine: 'in_call'));
   // Settings › Call screen effects, never awaited: a ringing call must not wait on storage. It
   // can change while this engine is cached, so it's read again whenever the call screen resumes.
   unawaited(DialerPrefs.instance.loadCallEffects());

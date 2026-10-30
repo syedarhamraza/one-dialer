@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../app/layout.dart';
+import '../../core/diagnostics/lag_diagnostics.dart';
 import '../../core/contacts/contacts_repository.dart';
 import '../../core/telecom/call_info.dart';
 import '../../widgets/cos_dialog.dart';
@@ -83,6 +84,8 @@ class _KeypadScreenState extends State<KeypadScreen> {
   }
 
   void _type(String key) {
+    LagDiagnostics.instance.screen('keypad');
+    LagDiagnostics.instance.action(DiagnosticAction.keypad);
     HapticFeedback.lightImpact();
     _telecom.playTone(key);
     widget.input.value += key;
@@ -114,6 +117,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
   void _openSpeedDial() => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SpeedDialScreen()));
 
   void _backspace() {
+    LagDiagnostics.instance.action(DiagnosticAction.backspace);
     final text = widget.input.value;
     if (text.isNotEmpty) widget.input.value = text.substring(0, text.length - 1);
   }
