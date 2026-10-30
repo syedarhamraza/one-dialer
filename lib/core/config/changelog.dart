@@ -28,6 +28,9 @@ class Changelog {
       version: '1.0.0-beta.5',
       date: 'Oct 2026',
       changes: [
+        'Light mode gets the ColorOS 17 glass look, with soft shadows under buttons and bars',
+        'Calls from other calling apps show in Calls on Android 16.1 and later',
+        'The back swipe previews the page behind on every screen',
         'Settings › Reduce visual effects: full, reduced or off (no blur), for phones that lag or freeze',
         'Settings › Call screen effects: the same choice for the call screen',
         'Severe slowdowns can now send limited performance diagnostics to help improve responsiveness',
