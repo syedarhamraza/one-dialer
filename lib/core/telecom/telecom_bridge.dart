@@ -115,6 +115,9 @@ class TelecomBridge {
   Future<Map<Object?, Object?>> getCallHealth() async =>
       await _methods.invokeMapMethod<Object?, Object?>('getCallHealth') ?? const {};
 
+  /// Phones with 4 GB of RAM or less, whose GPUs can't keep up with the full blurs.
+  Future<bool> isLowEndDevice() async => await _methods.invokeMethod<bool>('isLowEndDevice') ?? false;
+
   /// `notifications`, `fullScreen`, `defaultApps`, `contactsStorage`, `googleContactsSync`, `app`,
   /// or `url:https://…`. Throws `NO_ACTIVITY` when the phone has no such screen.
   Future<void> openSystemSettings(String page) => _methods.invokeMethod('openSystemSettings', {'page': page});

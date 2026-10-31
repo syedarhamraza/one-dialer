@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../features/recents/call_log.dart' show numberKey;
+import '../telecom/telecom_bridge.dart';
 
 /// Small app settings: speed dial slots and per-contact default SIM.
 class DialerPrefs {
@@ -171,7 +172,17 @@ class DialerPrefs {
     final mode = await _prefs.getString('theme_mode');
     if (mode == 'system' || mode == 'light' || mode == 'dark') themeMode.value = mode!;
     final effects = await _prefs.getString('visual_effects');
+    if (effects == null) visualEffects.value = await _effectsDefault();
     if (effects == 'full' || effects == 'reduced' || effects == 'off') visualEffects.value = effects!;
+  }
+
+  /// The level until the user picks one: never saved, so a later cutoff still reaches them.
+  Future<String> _effectsDefault() async {
+    try {
+      return await TelecomBridge.instance.isLowEndDevice() ? 'reduced' : 'full';
+    } catch (_) {
+      return 'full';
+    }
   }
 
   /// Settings › "Call screen effects": the same levels as [visualEffects], for the call
@@ -187,6 +198,7 @@ class DialerPrefs {
 
   Future<void> loadCallEffects() async {
     final effects = await _prefs.getString('call_effects');
+    if (effects == null) callEffects.value = await _effectsDefault();
     if (effects == 'full' || effects == 'reduced' || effects == 'off') callEffects.value = effects!;
     final style = await _prefs.getString('answer_style');
     if (style == 'two' || style == 'one') answerStyle.value = style!;
