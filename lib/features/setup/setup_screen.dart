@@ -39,7 +39,7 @@ class _SetupScreenState extends State<SetupScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // ColorOS 17's glass ribbon (as on Software update) up top, fading into black above the text.
+          // ColorOS 17's glass ribbon (as on Software update) up top, fading into the page above the text.
           Positioned(
             left: 0,
             right: 0,
@@ -69,10 +69,15 @@ class _SetupScreenState extends State<SetupScreen> {
                         child: const _AppIcon(),
                       ),
                       const SizedBox(height: 40),
-                      const Text(
+                      Text(
                         'Set One Dialer as your default phone app',
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: Colors.white, height: 1.3),
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                          color: context.palette.textPrimary,
+                          height: 1.3,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Text(
@@ -124,7 +129,10 @@ class _AppIcon extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
-        boxShadow: [BoxShadow(color: answerGreen.withValues(alpha: .35), blurRadius: 40)],
+        // A green glow on black; on white it would be a halo, so a soft shadow instead.
+        boxShadow: context.palette.isLight
+            ? [BoxShadow(color: Colors.black.withValues(alpha: .12), blurRadius: 24, offset: const Offset(0, 8))]
+            : [BoxShadow(color: answerGreen.withValues(alpha: .35), blurRadius: 40)],
       ),
       child: ClipRSuperellipse(
         borderRadius: BorderRadius.circular(30),
