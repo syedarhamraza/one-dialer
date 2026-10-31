@@ -226,7 +226,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   // Fitted frame by frame to a ColorOS 17 recording: the ball drops in ~350 ms (fast from the start)
   // while it slides across over the whole 700 ms, so it curves in from above, carrying ~1% past End
   // to the left and drifting slowly back. It stretches to the pill alongside the drop, stays green
-  // for the first ~100 ms, then crossfades to red as the handset tips over.
+  // for the first ~100 ms, then crossfades to red as the handset fades into the hang-up glyph.
   static const _slide = Cubic(.15, 0, .2, 1.14);
   static const _drop = Interval(0, .5, curve: Cubic(.25, .1, .25, 1));
   static const _stretch = Interval(0, .5, curve: Curves.easeOutCubic);
@@ -234,8 +234,6 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   // the pill a touch past its size before settling (ColorOS 17's recording).
   static const _springIn = Interval(0, .6, curve: Cubic(.3, 0, .2, 1.2));
   static const _turn = Interval(.14, .43, curve: Curves.easeInOut);
-  static const _hangUpIn = Interval(.43, .6);
-  static const _handsetOut = Interval(.6, .75);
 
   Widget _flyingBall() {
     final from = _localRect(_ball!.shift(Offset(0, -_lift * Curves.easeOutCubic.transform(_rise.value))));
@@ -285,18 +283,13 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
                 opacity: red,
                 child: DecoratedBox(decoration: glassBody(endRed, shape, flat: callFlat(context))),
               ),
-              // The handset tips over, then End's hang-up glyph fades in over it and only then does
-              // the handset fade out underneath: never dimmed, and it lands already as End's icon.
+              // The handset crossfades into End's hang-up glyph alongside the colour.
               Opacity(
-                // The 1-button handset simply crossfades into the hang-up glyph alongside the colour.
-                opacity: _oneButton ? 1 - red : 1 - _handsetOut.transform(t),
-                child: Transform.rotate(
-                  angle: _oneButton ? 0 : 2.36 * red,
-                  child: Icon(Icons.call_rounded, color: Colors.white, size: iconSize),
-                ),
+                opacity: 1 - red,
+                child: Icon(Icons.call_rounded, color: Colors.white, size: iconSize),
               ),
               Opacity(
-                opacity: _oneButton ? red : _hangUpIn.transform(t),
+                opacity: red,
                 child: Icon(Icons.call_end_rounded, color: Colors.white, size: iconSize),
               ),
             ],

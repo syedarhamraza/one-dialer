@@ -482,8 +482,7 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                 final downDash = goingDown ? dash * (1 - armed) : dash;
                 final downHint = ArcHint(widget.downColor);
                 final target = goingDown ? widget.downIcon : widget.upIcon ?? widget.icon;
-                // Toward Decline the handset morphs as in the Answer → End flight: it tips over, then
-                // the hang-up glyph fades in over it before the handset fades out underneath.
+                // Toward Decline the handset crossfades into the hang-up glyph alongside the colour.
                 final morph = target == widget.icon ? 0.0 : turn;
                 return Stack(
                   clipBehavior: Clip.none,
@@ -545,15 +544,12 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                                       alignment: Alignment.center,
                                       children: [
                                         Opacity(
-                                          opacity: 1 - ((morph - .6) / .4).clamp(0.0, 1.0),
-                                          child: Transform.rotate(
-                                            angle: 2.36 * Curves.easeInOut.transform(morph),
-                                            child: Icon(widget.icon, color: iconColor, size: size * .52),
-                                          ),
+                                          opacity: 1 - morph,
+                                          child: Icon(widget.icon, color: iconColor, size: size * .52),
                                         ),
-                                        if (morph > .4)
+                                        if (morph > 0)
                                           Opacity(
-                                            opacity: ((morph - .4) / .4).clamp(0.0, 1.0),
+                                            opacity: morph,
                                             child: Icon(target, color: iconColor, size: size * .52),
                                           ),
                                       ],

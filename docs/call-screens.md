@@ -77,8 +77,7 @@ the other button and the pill fade out as it arms.
   alongside the drop (first 350 ms, ease-out). It stays green for the first
   14%, then crossfades (two stacked layers, not a colour tween, so mid-way it reads as a
   see-through amber) to End's red by 43%, while the
-  handset tips over 135°; End's hang-up glyph then fades in over it before the handset fades out
-  underneath (so the icon never dims or jumps on landing). The ball wears the End
+  handset crossfades into End's hang-up glyph, upright. The ball wears the End
   pill's finish the whole way (the shared `solidBody`/`solidGlow`, squircle shape), and the
   connected controls fade in over 150 ms as it flies. The real pill stays hidden until it lands.
   If the call never connects, the ball is dropped after 4 s. Answering from the notification, or
@@ -97,12 +96,11 @@ the other button and the pill fade out as it arms.
   (`oneButtonWhite`), `SwipeUpButton` with `onSwipeDown`. Matched frame by frame to a ColorOS 17
   recording: the ball rests about 260 dp above the bottom edge with a steady green arc on the
   answering side and a red one on the declining side. It follows the finger like the 2-button
-  balls, its colour blending to that side's green or red (toward Decline the handset tips over into
+  balls, its colour blending to that side's green or red (toward Decline the handset crossfades into
   the hang-up glyph, as in the flight into End) and growing as it arms, while the arc it's pulled over fades; it arms after 80 dp.
   Released, it glides the rest of the way to 1.85 diameters (170 ms, as with 2 buttons) and lands about half a diameter under the End pill. Once Telecom
   connects it springs up into End on the 2-button flight's
-  700 ms timeline (stretching into the pill a touch past its size, then settling, turning red, its handset
-  crossfading into the hang-up glyph without tipping over) while the connected controls rise in, held back until
+  700 ms timeline (stretching into the pill a touch past its size, then settling, turning red) while the connected controls rise in, held back until
   then. Swiping up to answer throws it up and flies it down into End as with 2 buttons.
   Screen readers get the up
   action as the tap and the down one as a custom action. `IncomingControls` is keyed per call, as
