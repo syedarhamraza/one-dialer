@@ -173,8 +173,7 @@ class TelecomBridge {
   Future<void> reject(String id) => _call('reject', id);
 
   /// Declines and texts [message] to the caller.
-  Future<void> rejectWithMessage(String id, String message) =>
-      _methods.invokeMethod('rejectWithMessage', {'id': id, 'message': message});
+  Future<void> rejectWithMessage(String id, String message) => _call('rejectWithMessage', id, {'message': message});
 
   /// Opens the keypad to place another call; Telecom holds the current one.
   Future<void> openDialer() => _methods.invokeMethod('openDialer');
@@ -191,7 +190,7 @@ class TelecomBridge {
   Future<void> merge(String id) => _call('merge', id);
   Future<void> swap(String id) => _call('swap', id);
 
-  Future<void> playDtmf(String id, String digit) => _methods.invokeMethod('playDtmf', {'id': id, 'digit': digit});
+  Future<void> playDtmf(String id, String digit) => _call('playDtmf', id, {'digit': digit});
   Future<void> stopDtmf(String id) => _call('stopDtmf', id);
 
   // Audio
@@ -202,5 +201,13 @@ class TelecomBridge {
   /// Moves the call to one Bluetooth device ([AudioInfo.bluetoothDevices]' id).
   Future<void> setBluetoothDevice(String id) => _methods.invokeMethod('setBluetoothDevice', {'id': id});
 
-  Future<void> _call(String method, String id) => _methods.invokeMethod(method, {'id': id});
+  /// Acts on one call. NO_CALL means it ended between the tap and the action (the caller hung
+  /// up as you pressed a button): there is nothing left to do, so it isn't an error.
+  Future<void> _call(String method, String id, [Map<String, Object?> extra = const {}]) async {
+    try {
+      await _methods.invokeMethod(method, {'id': id, ...extra});
+    } on PlatformException catch (e) {
+      if (e.code != 'NO_CALL') rethrow;
+    }
+  }
 }
