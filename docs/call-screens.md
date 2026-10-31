@@ -59,7 +59,7 @@ number geocoder isn't public API.
 ## Incoming
 
 ColorOS 17 style: Decline (left) and Answer (right) each slide straight up to
-act, with a "Decline with message" pill underneath. They're finished like
+act, with a "Decline with SMS" pill underneath. They're finished like
 the connected screen: the balls take the End pill's look (the shared bottom-lit
 `solidBody`/`solidGlow` finish, a glow that brightens as the drag arms) in End's red
 and `answerGreen`, and the pill is a frosted `CallBody` with the same glass

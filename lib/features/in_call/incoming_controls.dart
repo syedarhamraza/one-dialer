@@ -17,7 +17,7 @@ const oneButtonWhite = Color(0xFFF2F2F4);
 const oneButtonIcon = Color(0xFF2C2C2E);
 
 /// Incoming call, ColorOS 17 style: Decline and Answer side by side, each dragged away to act,
-/// with a "Decline with message" pill underneath. Dragging one fades out everything else.
+/// with a "Decline with SMS" pill underneath. Dragging one fades out everything else.
 class IncomingControls extends StatefulWidget {
   const IncomingControls({
     super.key,
@@ -74,7 +74,7 @@ class _IncomingControlsState extends State<IncomingControls> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Decline with message', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+            const Text('Decline with SMS', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
             const SizedBox(height: 16),
             ConstrainedBox(
               constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.5),
@@ -206,7 +206,7 @@ class _IncomingControlsState extends State<IncomingControls> {
                   onPressed: () => _declineWithMessage(context),
                   icon: const Icon(Icons.chat_bubble_rounded, size: 15),
                   label: const Text(
-                    'Decline with message',
+                    'Decline with SMS',
                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
                   ),
                   style: TextButton.styleFrom(

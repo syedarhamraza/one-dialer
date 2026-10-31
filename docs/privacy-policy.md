@@ -23,7 +23,7 @@ When you make One Dialer your default phone app, Android gives it access to:
 
 When Google Play has an update for One Dialer, Software update downloads that update's release notes from this website (syedarhamraza.github.io). Nothing about you or your phone is sent with the request.
 
-"Decline with message" sends the text you pick as an SMS to the caller, through your carrier, only when you choose to.
+"Decline with SMS" sends the text you pick as an SMS to the caller, through your carrier, only when you choose to.
 
 ## Crash and performance reports
 

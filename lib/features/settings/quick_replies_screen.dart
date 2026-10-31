@@ -6,7 +6,7 @@ import '../../widgets/cos_dialog.dart';
 import '../../widgets/one_ui_subpage.dart';
 import '../../widgets/one_ui_group_card.dart';
 
-/// Edit the "Decline with message" texts (up to [max]).
+/// Edit the "Decline with SMS" texts (up to [max]).
 class QuickRepliesScreen extends StatefulWidget {
   const QuickRepliesScreen({super.key});
 
