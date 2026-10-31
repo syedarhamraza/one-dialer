@@ -102,7 +102,8 @@ the other button and the pill fade out as it arms.
   Released, it stays where it was let go (no further glide either way) and, once Telecom connects,
   springs from there into End on the 2-button flight's 700 ms timeline (stretching into the pill a touch past its size, then settling, turning red, its handset
   crossfading into the hang-up glyph without tipping over) while the connected controls rise in, held back until
-  then. Swiping up to answer flies it down into End from where it was let go, the same way.
+  then. Swiping up to answer flies it down into End from where it was let go, the same way,
+  over 1.1 s as it has further to come.
   Screen readers get the up
   action as the tap and the down one as a custom action. `IncomingControls` is keyed per call, as
   the cached engine keeps the screen between calls.

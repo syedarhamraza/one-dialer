@@ -191,6 +191,10 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
       _lift = lift;
       _oneButton = DialerPrefs.instance.answerStyle.value == 'one';
     });
+    // Swiped up, the 1-button ball has the furthest to come down into End, so it takes longer.
+    _fly.duration = Duration(
+      milliseconds: _oneButton && DialerPrefs.instance.answerDirection.value == 'up' ? 1100 : 700,
+    );
     _rise.forward(from: 0);
     // If Telecom never connects, don't leave the ball hanging.
     _ballTimeout = Timer(const Duration(seconds: 4), _land);
