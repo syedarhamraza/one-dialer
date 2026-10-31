@@ -66,6 +66,7 @@ class InCallActivity : FlutterActivity() {
 
     override fun onStop() {
         setFullScreen(false)
+        CallNotifications.restoreAfterScreen(this)
         super.onStop()
     }
 

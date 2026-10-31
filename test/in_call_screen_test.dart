@@ -126,7 +126,7 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.byKey(const ValueKey('swipe-Answer')), findsOneWidget);
     expect(find.byKey(const ValueKey('swipe-Decline')), findsOneWidget);
-    expect(find.text('Decline with message'), findsOneWidget);
+    expect(find.text('Decline with SMS'), findsOneWidget);
     expect(find.text('Alex Morgan'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
@@ -167,8 +167,8 @@ void main() {
     expect(tester.getRect(ball), isNot(released));
     expect(endOpacity(), 0);
 
-    // The flight has landed well within a second.
-    for (var i = 0; i < 10; i++) {
+    // The flight has landed within about a second.
+    for (var i = 0; i < 12; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
     expect(ball, findsNothing);
@@ -535,7 +535,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(nativeCalls.any((c) => c.method == 'setAudioRoute' && c.arguments['route'] == 'bluetooth'), isTrue);
     await emit(tester, [call('ringing', id: 'call-2')]);
-    await tester.tap(find.text('Decline with message'));
+    await tester.tap(find.text('Decline with SMS'));
     await tester.pumpAndSettle();
     expect(find.byType(OneUIFloatingModal), findsOneWidget);
     await tester.tap(find.text("I'll call you back"));
@@ -549,7 +549,7 @@ void main() {
     await emit(tester, [call('ringing', private: true)]);
     expect(find.text('Private number'), findsOneWidget);
     expect(find.text('5550100'), findsNothing);
-    expect(find.text('Decline with message'), findsNothing);
+    expect(find.text('Decline with SMS'), findsNothing);
     await emit(tester, [call('active', conference: true)]);
     expect(find.text('Conference call'), findsOneWidget);
     await emit(tester, [call('disconnected', conference: true)]);
@@ -846,7 +846,7 @@ void main() {
   testWidgets('a reply selected after the ringing call changes cannot reject it', (tester) async {
     await open(tester, reduceMotion: true);
     await emit(tester, [call('ringing')]);
-    await tester.tap(find.text('Decline with message'));
+    await tester.tap(find.text('Decline with SMS'));
     await tester.pumpAndSettle();
     await emit(tester, [call('active')]);
     await tester.tap(find.text("I'll call you back"));

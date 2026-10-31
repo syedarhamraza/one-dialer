@@ -17,8 +17,8 @@ import '../blocking/blocking_screen.dart';
 import '../keypad/speed_dial_screen.dart';
 import '../updates/presentation/update_controller.dart';
 import 'about_screen.dart';
+import 'call_settings_pages.dart';
 import 'help_feedback_screen.dart';
-import 'quick_replies_screen.dart';
 import 'software_update_screen.dart';
 
 /// Call settings, plus a health check of everything incoming calls depend on.
@@ -132,13 +132,19 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         if (problems.isNotEmpty) OneUIGroupCard(headerTitle: 'Needs attention', items: problems),
         OneUIGroupCard(
           items: [
+            OneUIGroupItem(title: 'Incoming call reminders', onTap: () => _push(const IncomingCallRemindersScreen())),
+            OneUIGroupItem(title: 'Answer buttons', onTap: () => _push(const AnswerButtonsScreen())),
+            OneUIGroupItem(title: 'Answer/End calls', onTap: () => _push(const AnswerEndCallsScreen())),
+          ],
+        ),
+        OneUIGroupCard(
+          items: [
             OneUIGroupItem(
               title: 'Caller identification',
               subtitle: 'Caller ID & spam app',
               onTap: () => _telecom.openSystemSettings('defaultApps'),
             ),
             OneUIGroupItem(title: 'Speed dial', onTap: () => _push(const SpeedDialScreen())),
-            OneUIGroupItem(title: 'Decline with message', onTap: () => _push(const QuickRepliesScreen())),
           ],
         ),
         OneUIGroupCard(
@@ -204,10 +210,8 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
   final _simKey = GlobalKey();
   final _themeKey = GlobalKey();
   final _effectsKey = GlobalKey();
-  final _callEffectsKey = GlobalKey();
 
   static const _themeLabels = {'system': 'Same as phone', 'light': 'Light', 'dark': 'Dark'};
-  static const _effectsLabels = {'full': 'Full effects', 'reduced': 'Reduced effects', 'off': 'Effects off'};
   static const _tapLabels = {'details': 'Open details', 'dial': 'Write in keypad'};
 
   /// "Choose SIM and call" is offered only with two SIMs; with one, a saved `sim` reads as details.
@@ -267,17 +271,8 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
               subtitle: 'Less blur runs smoother on slower phones',
               anchor: _effectsKey,
               value: DialerPrefs.instance.visualEffects,
-              labels: _effectsLabels,
+              labels: effectsLabels,
               onPick: DialerPrefs.instance.setVisualEffects,
-            ),
-            choiceRow(
-              context,
-              title: 'Call screen effects',
-              subtitle: 'Glass and glow on the call screen',
-              anchor: _callEffectsKey,
-              value: DialerPrefs.instance.callEffects,
-              labels: _effectsLabels,
-              onPick: DialerPrefs.instance.setCallEffects,
             ),
             if (_appCallLog)
               OneUIGroupItem(

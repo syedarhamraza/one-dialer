@@ -15,6 +15,9 @@ import java.util.concurrent.CopyOnWriteArraySet
 object CallManager {
     private val calls = linkedMapOf<String, Call>()
     private val ids = HashMap<Call, String>()
+
+    /** Each call's last state, so a change knows where it came from (answered, hung up). */
+    private val lastState = HashMap<Call, Int>()
     private var nextId = 0
     private val listeners = CopyOnWriteArraySet<() -> Unit>()
 
@@ -22,6 +25,7 @@ object CallManager {
 
     private val callback = object : Call.Callback() {
         override fun onStateChanged(call: Call, state: Int) {
+            service?.onStateChanged(call, lastState.put(call, state), state)
             // Only once nothing rings: another call ending during call waiting mustn't hide the ringing one.
             if (calls.values.none { stateOf(it) == Call.STATE_RINGING }) service?.let { CallNotifications.cancelIncoming(it) }
             notifyChanged()
@@ -47,6 +51,7 @@ object CallManager {
         val id = "call-${nextId++}"
         calls[id] = call
         ids[call] = id
+        lastState[call] = stateOf(call)
         call.registerCallback(callback)
         notifyChanged()
         return id
@@ -54,6 +59,7 @@ object CallManager {
 
     fun onCallRemoved(call: Call) {
         call.unregisterCallback(callback)
+        lastState.remove(call)
         val id = ids.remove(call)?.also { calls.remove(it) }
         if (id != null && calls.isEmpty()) {
             ended = serialize(id, call) + ("state" to "disconnected")

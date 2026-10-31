@@ -3,7 +3,7 @@ package com.syedarhamraza.dialer.telecom
 import android.content.Context
 import org.json.JSONArray
 
-/** "Decline with message" texts, editable in Settings. Native prefs so both Flutter engines see the same list. */
+/** "Decline with SMS" texts, editable in Settings. Native prefs so both Flutter engines see the same list. */
 object QuickReplies {
     private const val FILE = "quick_replies"
 

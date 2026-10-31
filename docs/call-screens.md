@@ -59,7 +59,7 @@ number geocoder isn't public API.
 ## Incoming
 
 ColorOS 17 style: Decline (left) and Answer (right) each slide straight up to
-act, with a "Decline with message" pill underneath. They're finished like
+act, with a "Decline with SMS" pill underneath. They're finished like
 the connected screen: the balls take the End pill's look (the shared bottom-lit
 `solidBody`/`solidGlow` finish, a glow that brightens as the drag arms) in End's red
 and `answerGreen`, and the pill is a frosted `CallBody` with the same glass
@@ -71,10 +71,9 @@ the other button and the pill fade out as it arms.
 - **Answer → End** (timed frame by frame off a ColorOS 17 recording): the released Answer ball
   glides on up to the top of its travel (1.4× the threshold, about 1.85 diameters; 170 ms,
   ease-out) and waits there until Telecom connects. Then the session flies it into the End pill
-  in 700 ms: it drops in the first 350 ms (`Cubic(.25, .1, .25, 1)`, fast from the start) while
-  sliding across over the whole flight (`Cubic(.15, 0, .2, 1.14)`), so it curves in from above,
-  carries about 1% past End to the left and drifts slowly back; it stretches to the pill's size
-  alongside the drop (first 350 ms, ease-out). It stays green for the first
+  in 1 s (the 1-button one in 900 ms) on the glass package's bouncy spring (the 1-button ball's too), dropping ahead of
+  sliding across so it curves in from above (the 1-button one goes straight): it
+  stretches into the pill as it goes, softly overshooting its size and place, then settles. It stays green for the first
   14%, then crossfades (two stacked layers, not a colour tween, so mid-way it reads as a
   see-through amber) to End's red by 43%, while the
   handset tips over 135°; End's hang-up glyph then fades in over it before the handset fades out
@@ -92,6 +91,22 @@ the other button and the pill fade out as it arms.
   they loop, widget tests pump fixed durations instead of `pumpAndSettle` while
   ringing (or use reduced motion).
 - Screen readers activate Answer and Decline directly.
+- **1 button** (Settings › Answer buttons, `DialerPrefs.answerStyle == 'one'`; "Answer call" ›
+  Swipe down to answer swaps the directions): ColorOS 17's white ball with a dark handset
+  (`oneButtonWhite`), `SwipeUpButton` with `onSwipeDown`. Matched frame by frame to a ColorOS 17
+  recording: the ball rests about 260 dp above the bottom edge with a green arc on the
+  answering side and a red one on the declining side (short arcs as round as the ball itself, which drift away and fade once a cycle like the 2-button dashes until it is touched). It follows the finger like the 2-button
+  balls, its colour blending to that side's green or red (toward Decline the handset crossfades into
+  the hang-up glyph) and growing as it arms, while the arc it's pulled over fades; it arms after 80 dp.
+  Released, it stays where it was let go (no further glide either way) and, once Telecom connects,
+  springs from there into End over 900 ms on the glass package's bouncy spring (stretching into the pill,
+  overshooting its size and place softly, then settling, turning red, its handset
+  crossfading into the hang-up glyph without tipping over) while the connected controls rise in, held back until
+  then. Swiping up to answer flies it down into End from where it was let go, the same way,
+  over 1.1 s as it has further to come.
+  Screen readers get the up
+  action as the tap and the down one as a custom action. `IncomingControls` is keyed per call, as
+  the cached engine keeps the screen between calls.
 
 ## Connected and keypad
 

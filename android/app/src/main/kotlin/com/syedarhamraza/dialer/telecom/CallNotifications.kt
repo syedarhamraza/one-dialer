@@ -37,14 +37,19 @@ object CallNotifications {
     private const val ID_INCOMING = 1
     private const val ANSWER_GREEN = 0xFF2FAE52.toInt() // answerGreen in lib/features/in_call/call_controls.dart
 
-    fun showIncoming(context: Context, callId: String, call: Call) {
+    /** Whether the ringing notification was last posted without its pop-up for Full screen. */
+    private var postedForScreen = false
+
+    /** [screenOpening]: Settings › Incoming call reminders › Full screen is opening the call screen. */
+    fun showIncoming(context: Context, callId: String, call: Call, screenOpening: Boolean = false) {
+        postedForScreen = screenOpening
         val manager = context.getSystemService(NotificationManager::class.java)
         // On an unlocked vivo the Atomic Island card is the pop-up, and with the call screen up
         // (call waiting) the screen itself rings; a heads-up banner would double either.
         val island = vivoIsland &&
             context.getSystemService(PowerManager::class.java).isInteractive &&
             !context.getSystemService(KeyguardManager::class.java).isKeyguardLocked
-        val quiet = island || InCallActivity.isFullScreen
+        val quiet = screenOpening || island || InCallActivity.isFullScreen
         val channel = if (quiet) CHANNEL_INCOMING_QUIET else CHANNEL_INCOMING
         manager.deleteNotificationChannel("incoming_calls_island")
         manager.createNotificationChannel(
@@ -98,7 +103,7 @@ object CallNotifications {
         }
         val icon = callerIcon(context, details.handle?.schemeSpecificPart)
             ?: Icon.createWithResource(context, R.drawable.island_caller) // LetterAvatar's no-photo person
-        if (vivoIsland) {
+        if (vivoIsland && !screenOpening) {
             // Answering here keeps the call in the island; the full call screen is a tap away.
             val answerHere = CallActionReceiver.pendingIntent(context, CallActionReceiver.ACTION_ANSWER_IN_ISLAND, callId)
             builder.addExtras(
@@ -119,6 +124,20 @@ object CallNotifications {
         }
 
         manager.notify(ID_INCOMING, builder.build())
+    }
+
+    /**
+     * The Full screen call screen was left while still ringing (Home, Recents): post the ringing
+     * notification as Banner does, so vivo's island card (or a banner) carries the call. Only
+     * unlocked: reposting with the screen off would let the full-screen intent turn it back on.
+     */
+    fun restoreAfterScreen(context: Context) {
+        if (!postedForScreen) return
+        if (!context.getSystemService(PowerManager::class.java).isInteractive ||
+            context.getSystemService(KeyguardManager::class.java).isKeyguardLocked
+        ) return
+        val (id, call) = CallManager.all().firstOrNull { CallManager.stateOf(it.second) == Call.STATE_RINGING } ?: return
+        showIncoming(context, id, call)
     }
 
     private fun green(text: String) = SpannableString(text).apply {

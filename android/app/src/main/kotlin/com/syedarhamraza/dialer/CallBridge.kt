@@ -215,6 +215,11 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 )
                 result.success(null)
             }
+            "getCallSettings" -> result.success(com.syedarhamraza.dialer.telecom.CallPrefs.read(context))
+            "setCallSetting" -> {
+                com.syedarhamraza.dialer.telecom.CallPrefs.write(context, call.argument<String>("key")!!, call.argument<Any>("value"))
+                result.success(null)
+            }
             "openDialer" -> {
                 // "Add call": the keypad places the next call and Telecom holds the current one.
                 context.startActivity(
