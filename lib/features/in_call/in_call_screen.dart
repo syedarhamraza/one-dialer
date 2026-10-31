@@ -182,6 +182,8 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
       _ball = ball;
       _lift = lift;
     });
+    // Long glides (the 1-button ball's) take longer, so it eases into place instead of snapping there.
+    _rise.duration = Duration(milliseconds: (lift.abs() / ball.height * 260).clamp(170, 480).round());
     _rise.forward(from: 0);
     // If Telecom never connects, don't leave the ball hanging.
     _ballTimeout = Timer(const Duration(seconds: 4), _land);
@@ -195,7 +197,9 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   /// Starts the flight once the connected controls (and the End pill) are laid out.
   void _launchBall() {
     if (_ball == null || _fly.isAnimating) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Let the ball settle in its spot before it flies.
+      if (_rise.isAnimating) await _rise.forward().orCancel.catchError((_) {});
       if (mounted && _ball != null && !_fly.isAnimating) _fly.forward(from: 0);
     });
   }
