@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../../core/config/changelog.dart';
 import '../../../core/prefs/dialer_prefs.dart';
+import '../data/release_notes.dart';
 import '../data/update_service.dart';
 
 /// State of Settings › Software update.
@@ -38,6 +40,9 @@ class UpdateController extends ChangeNotifier {
   final DialerPrefs? settings;
   final NetworkStatus _network;
 
+  /// Fetches an update's notes by versionCode ([updateNotes]); none without it.
+  final Future<ChangelogEntry?> Function(int code)? releaseNotes;
+
   /// A tapped check shows its dots at least this long, so a fast answer doesn't flash.
   final Duration minCheckDuration;
 
@@ -46,6 +51,7 @@ class UpdateController extends ChangeNotifier {
     this.settings,
     NetworkStatus? network,
     this.minCheckDuration = Duration.zero,
+    this.releaseNotes,
   }) : _network = network ?? const AnyNetworkStatus();
 
   static final UpdateController instance = UpdateController(
@@ -53,6 +59,7 @@ class UpdateController extends ChangeNotifier {
     settings: DialerPrefs.instance,
     network: ConnectivityNetworkStatus(),
     minCheckDuration: const Duration(milliseconds: 900),
+    releaseNotes: fetchReleaseNotes,
   );
 
   UpdateStatus _status = UpdateStatus.notChecked;
@@ -61,6 +68,8 @@ class UpdateController extends ChangeNotifier {
   bool _installing = false;
   StreamSubscription<UpdateDownloadState>? _downloadStates;
   Timer? _resumedDownloadWatch;
+  ChangelogEntry? _updateNotes;
+  int? _notesCode;
 
   UpdateStatus get status => _status;
   DateTime? get lastChecked => _lastChecked;
@@ -71,6 +80,10 @@ class UpdateController extends ChangeNotifier {
       _status == UpdateStatus.downloading ||
       _status == UpdateStatus.readyToInstall;
   bool get installing => _installing;
+
+  /// What's in the update Play offers, from the website; null until fetched, or when the
+  /// site doesn't have that build's notes (never the installed version's notes).
+  ChangelogEntry? get updateNotes => updateAvailable ? _updateNotes : null;
 
   /// When the launch check runs (Software update › Auto download).
   AutoUpdateCheck get autoCheckMode => _autoCheck;
@@ -141,7 +154,19 @@ class UpdateController extends ChangeNotifier {
       case UpdateCheckResult.failed:
         _set(UpdateStatus.failed);
     }
+    unawaited(_loadNotes());
     return _status;
+  }
+
+  /// Fetches [updateNotes] for the build Play offers, once per build.
+  Future<void> _loadNotes() async {
+    final code = service.availableVersionCode;
+    final fetch = releaseNotes;
+    if (!updateAvailable || code == null || code == _notesCode || fetch == null) return;
+    _notesCode = code;
+    _updateNotes = await fetch(code);
+    if (_updateNotes == null) _notesCode = null; // try again on the next check
+    notifyListeners();
   }
 
   /// Forgets a finished check that found nothing to act on (up to date, offline, failed,

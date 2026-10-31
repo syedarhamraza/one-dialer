@@ -95,6 +95,9 @@ class ConnectivityNetworkStatus implements NetworkStatus {
 abstract class UpdateService {
   Future<UpdateCheckResult> check();
 
+  /// The versionCode Play offers, after a [check] that found an update; null otherwise.
+  int? get availableVersionCode;
+
   /// Opens Play's full-screen updater. Only valid right after [check] returned
   /// [UpdateCheckResult.available] or [UpdateCheckResult.inProgress].
   Future<UpdateInstallResult> installNow();
@@ -115,6 +118,9 @@ abstract class UpdateService {
 class NoopUpdateService implements UpdateService {
   @override
   Future<UpdateCheckResult> check() async => UpdateCheckResult.notFromPlay;
+
+  @override
+  int? get availableVersionCode => null;
 
   @override
   Future<UpdateInstallResult> installNow() async => UpdateInstallResult.failed;
@@ -146,6 +152,9 @@ class PlayUpdateService implements UpdateService {
   /// Whether the last [check] said Play allows a background download.
   bool _flexibleAllowed = true;
 
+  @override
+  int? availableVersionCode;
+
   PlayUpdateService({@visibleForTesting bool? isAndroid, @visibleForTesting Future<String?> Function()? installer})
     : _isAndroid = isAndroid ?? Platform.isAndroid,
       _installer = installer ?? _installerStore;
@@ -160,12 +169,17 @@ class PlayUpdateService implements UpdateService {
 
   @override
   Future<UpdateCheckResult> check() async {
+    availableVersionCode = null;
     if (!_isAndroid) return UpdateCheckResult.notFromPlay;
     // Play answers "no update" for copies it didn't install (e.g. `flutter run`), so ask first.
     if (await _installer() != playStoreInstaller) return UpdateCheckResult.notFromPlay;
     try {
       final info = await play.InAppUpdate.checkForUpdate();
       _flexibleAllowed = info.flexibleUpdateAllowed;
+      // Arbitrary when there's no update, so only kept when there is.
+      if (info.updateAvailability != play.UpdateAvailability.updateNotAvailable) {
+        availableVersionCode = info.availableVersionCode;
+      }
       // A background download started earlier (maybe in a previous session) shows up here.
       switch (info.installStatus) {
         case play.InstallStatus.downloaded:

@@ -1,6 +1,6 @@
 # One Dialer — Privacy Policy
 
-_Last updated: 30 October 2026_
+_Last updated: 31 October 2026_
 
 One Dialer is a phone app for Android made by Syed Arham Raza. This policy explains what the app accesses and what it does with it.
 
@@ -20,6 +20,8 @@ When you make One Dialer your default phone app, Android gives it access to:
 ## Where your data goes
 
 **Your calls, call history and contacts never leave your phone.** One Dialer has no account and no servers, and it doesn't sell, share or upload any of this data. Settings you choose in the app (speed dial, blocking rules, quick decline messages, the SIM to use for a contact) are stored only on your phone.
+
+When Google Play has an update for One Dialer, Software update downloads that update's release notes from this website (syedarhamraza.github.io). Nothing about you or your phone is sent with the request.
 
 "Decline with message" sends the text you pick as an SMS to the caller, through your carrier, only when you choose to.
 
