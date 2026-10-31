@@ -94,12 +94,15 @@ the other button and the pill fade out as it arms.
 - Screen readers activate Answer and Decline directly.
 - **1 button** (Settings › Answer buttons, `DialerPrefs.answerStyle == 'one'`; "Answer call" ›
   Swipe down to answer swaps the directions): ColorOS 17's white ball with a dark handset
-  (`oneButtonWhite`), `SwipeUpButton` with `onSwipeDown`. A steady green arc sits on the answering side
-  and a red one on the declining side, both staying while the ball is held; the ball stays white until
-  it's released, then takes that side's colour and glyph. Timed off a ColorOS 17 recording: the ball rests high (about 260 dp above the bottom
-  edge), shows half the finger's travel, arms after 80 dp, and once released eases 1.6 diameters
-  to the answer spot (either way; the glide's time grows with its length, up to 480 ms) and settles
-  there before the same flight into End. Screen readers get the up
+  (`oneButtonWhite`), `SwipeUpButton` with `onSwipeDown`. Matched frame by frame to a ColorOS 17
+  recording: the ball rests about 260 dp above the bottom edge with a steady green arc on the
+  answering side and a red one on the declining side. It holds still under the finger (only the
+  press grow); pulling 80 dp toward a side adds a second arc outside that side's. Released, it's
+  thrown 1.6 diameters in 150 ms, white turning green in the first half, and lands just under the
+  End pill. It holds there green for 200 ms (and until Telecom connects), then becomes End where it
+  is: it stretches into the pill and turns red in 400 ms while the connected controls fade in, held
+  back until then. Swiping up to answer throws it up and flies it down into End as with 2 buttons.
+  Screen readers get the up
   action as the tap and the down one as a custom action. `IncomingControls` is keyed per call, as
   the cached engine keeps the screen between calls.
 

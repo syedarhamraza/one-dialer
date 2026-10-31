@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../../core/contacts/contacts_repository.dart';
+import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import 'call_control_panel.dart';
@@ -141,6 +142,9 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   void _enter() {
     if (MediaQuery.disableAnimationsOf(context)) {
       _entrance.value = 1;
+    } else if (_oneButton && _ball != null && !_fly.isAnimating) {
+      // The 1-button controls wait for the green ball to start becoming End (ColorOS 17).
+      return;
     } else if (_entrance.value == 0 && !_entrance.isAnimating) {
       // Just answered by swipe: the controls fade in quickly as the ball flies (ColorOS).
       _entrance.animateTo(1, duration: _ball != null ? const Duration(milliseconds: 150) : null);
@@ -165,6 +169,10 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
 
   /// How far (global px) the released ball glides on up to the top of its travel, as on ColorOS.
   double _lift = 0;
+
+  /// The 1-button ball: thrown white, it turns green on the way and, answered downward, becomes End
+  /// where it lands instead of flying across (ColorOS 17).
+  bool _oneButton = false;
   late final AnimationController _rise = AnimationController(vsync: this, duration: const Duration(milliseconds: 170));
 
   /// The flight, linear: [_flyingBall] eases each part on its own timeline.
@@ -181,9 +189,11 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     setState(() {
       _ball = ball;
       _lift = lift;
+      _oneButton = DialerPrefs.instance.answerStyle.value == 'one';
     });
-    // Long glides (the 1-button ball's) take longer, so it eases into place instead of snapping there.
-    _rise.duration = Duration(milliseconds: (lift.abs() / ball.height * 260).clamp(170, 480).round());
+    _rise.duration = Duration(milliseconds: _oneButton ? 150 : 170);
+    // Landing just under End, it only has to stretch into the pill.
+    _fly.duration = Duration(milliseconds: _oneButton && lift < 0 ? 400 : 700);
     _rise.forward(from: 0);
     // If Telecom never connects, don't leave the ball hanging.
     _ballTimeout = Timer(const Duration(seconds: 4), _land);
@@ -192,6 +202,8 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   void _land() {
     _ballTimeout?.cancel();
     if (mounted && _ball != null) setState(() => _ball = null);
+    // Controls held back for the 1-button flight still have to show if it never ran.
+    if (mounted && widget.call.state != CallState.ringing) _enter();
   }
 
   /// Starts the flight once the connected controls (and the End pill) are laid out.
@@ -200,7 +212,12 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // Let the ball settle in its spot before it flies.
       if (_rise.isAnimating) await _rise.forward().orCancel.catchError((_) {});
-      if (mounted && _ball != null && !_fly.isAnimating) _fly.forward(from: 0);
+      // ColorOS 17 holds the green ball still a beat before it becomes End.
+      if (_oneButton) await Future<void>.delayed(const Duration(milliseconds: 200));
+      if (mounted && _ball != null && !_fly.isAnimating) {
+        _fly.forward(from: 0);
+        _enter();
+      }
     });
   }
 
@@ -251,6 +268,8 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     // The same shared finish as the End pill, so the hand-off on landing is invisible.
     final shape = RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(rect.shortestSide / 2));
     final iconSize = lerpDouble(from.shortestSide * .52, 46, red)!;
+    // Thrown white, it's already green by the time it lands.
+    final white = _oneButton ? 1 - const Interval(0, .5, curve: Curves.easeOut).transform(_rise.value) : 0.0;
     return Positioned.fromRect(
       rect: rect,
       child: IgnorePointer(
@@ -270,13 +289,22 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
                 opacity: red,
                 child: DecoratedBox(decoration: glassBody(endRed, shape, flat: callFlat(context))),
               ),
+              if (white > 0)
+                Opacity(
+                  opacity: white,
+                  child: DecoratedBox(decoration: glassBody(oneButtonWhite, shape, flat: callFlat(context))),
+                ),
               // The handset tips over, then End's hang-up glyph fades in over it and only then does
               // the handset fade out underneath: never dimmed, and it lands already as End's icon.
               Opacity(
                 opacity: 1 - _handsetOut.transform(t),
                 child: Transform.rotate(
                   angle: 2.36 * red,
-                  child: Icon(Icons.call_rounded, color: Colors.white, size: iconSize),
+                  child: Icon(
+                    Icons.call_rounded,
+                    color: Color.lerp(Colors.white, oneButtonIcon, white),
+                    size: iconSize,
+                  ),
                 ),
               ),
               Opacity(

@@ -300,9 +300,9 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
   // ColorOS 17's 1-button ball arms after a short pull (a few frames of the finger in its recording).
   double get _threshold => (_twoWay ? 80 : SwipeUpButton.threshold) * (widget.compact ? .75 : 1);
 
-  /// How much of the finger's travel the ball shows: ColorOS's 1-button ball barely follows,
-  /// then glides the rest of the way to [_answerSpot] once released.
-  double get _follow => _twoWay ? .5 : 1;
+  /// How much of the finger's travel the ball shows: ColorOS's 1-button ball holds still under the
+  /// finger, then is thrown the whole way to [_answerSpot] once released.
+  double get _follow => _twoWay ? 0 : 1;
 
   /// Where a released 1-button ball comes to rest, from its start: 1.6 diameters, as recorded.
   double get _answerSpot => SwipeUpButton.size * (widget.compact ? .85 : 1) * 1.6;
@@ -481,6 +481,9 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                 )!;
                 final iconColor = Color.lerp(widget.iconColor, Colors.white, turn)!;
                 final upHint = ArcHint(widget.upColor ?? widget.color);
+                // As the 1-button pull arms, a second arc appears outside that side's arc.
+                final upMore = _twoWay && !goingDown ? dash * armed : 0.0;
+                final downMore = _twoWay && goingDown ? dash * armed : 0.0;
                 final downHint = ArcHint(widget.downColor);
                 final icon = turn <= .5 ? widget.icon : (goingDown ? widget.downIcon : widget.upIcon ?? widget.icon);
                 return Stack(
@@ -494,6 +497,25 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                         child: CustomPaint(size: upHint.size, painter: upHint),
                       ),
                     ),
+                    if (upMore > 0)
+                      Positioned(
+                        top: travel - 30,
+                        child: Opacity(
+                          opacity: upMore,
+                          child: CustomPaint(size: upHint.size, painter: upHint),
+                        ),
+                      ),
+                    if (downMore > 0)
+                      Positioned(
+                        top: travel + size + 30 - downHint.size.height,
+                        child: Opacity(
+                          opacity: downMore,
+                          child: RotatedBox(
+                            quarterTurns: 2,
+                            child: CustomPaint(size: downHint.size, painter: downHint),
+                          ),
+                        ),
+                      ),
                     if (_twoWay)
                       Positioned(
                         // The same dash mirrored under the ball, drifting down.
@@ -515,7 +537,7 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                           duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 180),
                           curve: _pressed ? Curves.easeOutCubic : Curves.easeOutBack,
                           child: Transform.scale(
-                            scale: 1 + .1 * armed,
+                            scale: 1 + (_twoWay ? 0 : .1) * armed,
                             child: Opacity(
                               opacity: widget.hidden ? 0 : 1,
                               child: KeyedSubtree(
