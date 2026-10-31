@@ -191,10 +191,11 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
       _lift = lift;
       _oneButton = DialerPrefs.instance.answerStyle.value == 'one';
     });
-    // Swiped up, the 1-button ball has the furthest to come down into End, so it takes longer.
+    // The 1-button ball takes its time to spring into End, longest swiped up, from furthest away.
     _fly.duration = Duration(
-      milliseconds: _oneButton && DialerPrefs.instance.answerDirection.value == 'up' ? 1100 : 700,
+      milliseconds: !_oneButton ? 700 : (DialerPrefs.instance.answerDirection.value == 'up' ? 1100 : 900),
     );
+    _springIn = GlassSpringCurve(GlassSpring.bouncy(duration: _fly.duration! * .6), _fly.duration!);
     _rise.forward(from: 0);
     // If Telecom never connects, don't leave the ball hanging.
     _ballTimeout = Timer(const Duration(seconds: 4), _land);
@@ -234,9 +235,9 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   static const _slide = Cubic(.15, 0, .2, 1.14);
   static const _drop = Interval(0, .5, curve: Cubic(.25, .1, .25, 1));
   static const _stretch = Interval(0, .5, curve: Curves.easeOutCubic);
-  // The 1-button ball lands about half a diameter under End and springs up into it, squashing into
-  // the pill a touch past its size before settling (ColorOS 17's recording).
-  static const _springIn = Interval(0, .6, curve: Cubic(.3, 0, .2, 1.2));
+  // The 1-button ball springs into End on the glass package's bouncy spring over the whole flight:
+  // a soft, unhurried overshoot past the pill's size and place, then settling.
+  Curve _springIn = Curves.linear;
   static const _turn = Interval(.14, .43, curve: Curves.easeInOut);
   static const _hangUpIn = Interval(.43, .6);
   static const _handsetOut = Interval(.6, .75);

@@ -100,7 +100,8 @@ the other button and the pill fade out as it arms.
   balls, its colour blending to that side's green or red (toward Decline the handset crossfades into
   the hang-up glyph) and growing as it arms, while the arc it's pulled over fades; it arms after 80 dp.
   Released, it stays where it was let go (no further glide either way) and, once Telecom connects,
-  springs from there into End on the 2-button flight's 700 ms timeline (stretching into the pill a touch past its size, then settling, turning red, its handset
+  springs from there into End over 900 ms on the glass package's bouncy spring (stretching into the pill,
+  overshooting its size and place softly, then settling, turning red, its handset
   crossfading into the hang-up glyph without tipping over) while the connected controls rise in, held back until
   then. Swiping up to answer flies it down into End from where it was let go, the same way,
   over 1.1 s as it has further to come.
