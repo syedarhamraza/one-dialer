@@ -157,39 +157,50 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
               ],
             ),
           ),
-          const Positioned(top: 0, left: 0, right: 0, child: ReturnToCallBanner()),
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            child: ListenableBuilder(
-              listenable: Listenable.merge([navDock, _keypadOpen]),
-              builder: (context, _) => OneUIFloatingNavBar(
-                currentIndex: _tab,
-                dockedContent: navDock.value,
-                onTap: (index) {
-                  Haptics.tap();
-                  _select(index);
-                },
-                items: _items,
-                trailing: navDock.value != null
-                    ? null
-                    : _tab == 1
-                    ? _RoundAction(
-                        key: const ValueKey('action'),
-                        icon: Icons.add_rounded,
-                        tooltip: 'Create contact',
-                        // New contact rises from the bottom, like the keypad sheet.
-                        onPressed: () => openContactEditor(context, rise: true),
-                      )
-                    : _keypadOpen.value
-                    ? null
-                    : _RoundAction(
-                        key: const ValueKey('action'),
-                        icon: Icons.dialpad_rounded,
-                        tooltip: 'Show keypad',
-                        onPressed: () => _keypadOpen.value = true,
-                      ),
+            child: StreamBuilder(
+              stream: TelecomBridge.instance.callState,
+              builder: (context, calls) => ListenableBuilder(
+                listenable: Listenable.merge([navDock, _keypadOpen]),
+                builder: (context, _) => OneUIFloatingNavBar(
+                  currentIndex: _tab,
+                  dockedContent: navDock.value,
+                  onTap: (index) {
+                    Haptics.tap();
+                    _select(index);
+                  },
+                  items: _items,
+                  leading: ongoingCall(calls.data) == null
+                      ? null
+                      : _RoundAction(
+                          key: const ValueKey('call'),
+                          // The handset with sound waves: an ongoing call, not a call key.
+                          icon: Icons.phone_in_talk_rounded,
+                          tooltip: 'Return to call',
+                          onPressed: TelecomBridge.instance.showInCallScreen,
+                        ),
+                  trailing: navDock.value != null
+                      ? null
+                      : _tab == 1
+                      ? _RoundAction(
+                          key: const ValueKey('action'),
+                          icon: Icons.add_rounded,
+                          tooltip: 'Create contact',
+                          // New contact rises from the bottom, like the keypad sheet.
+                          onPressed: () => openContactEditor(context, rise: true),
+                        )
+                      : _keypadOpen.value
+                      ? null
+                      : _RoundAction(
+                          key: const ValueKey('action'),
+                          icon: Icons.dialpad_rounded,
+                          tooltip: 'Show keypad',
+                          onPressed: () => _keypadOpen.value = true,
+                        ),
+                ),
               ),
             ),
           ),

@@ -27,6 +27,9 @@ class OneUIFloatingNavBar extends StatefulWidget {
   /// and it centre together as one group.
   final Widget? trailing;
 
+  /// A round action on the bar's other side (return to call), popping out the same way.
+  final Widget? leading;
+
   const OneUIFloatingNavBar({
     super.key,
     required this.currentIndex,
@@ -34,6 +37,7 @@ class OneUIFloatingNavBar extends StatefulWidget {
     required this.items,
     this.dockedContent,
     this.trailing,
+    this.leading,
   });
 
   /// Matches `kFloatingNavBarHeight` (lib/app/layout.dart).
@@ -72,13 +76,26 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
                     reverseDuration: reduceMotion ? Duration.zero : const Duration(milliseconds: 220),
                     switchInCurve: const _SpringCurve(),
                     switchOutCurve: Curves.easeOutCubic,
-                    transitionBuilder: _pop,
+                    transitionBuilder: (child, animation) => _pop(child, animation, from: -1),
                     child: widget.trailing ?? const SizedBox.shrink(),
                   ),
                 ),
               ),
               RepaintBoundary(child: _pill(docked, reduceMotion)),
-              const SizedBox(width: _slot),
+              SizedBox(
+                width: _slot,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: AnimatedSwitcher(
+                    duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 550),
+                    reverseDuration: reduceMotion ? Duration.zero : const Duration(milliseconds: 220),
+                    switchInCurve: const _SpringCurve(),
+                    switchOutCurve: Curves.easeOutCubic,
+                    transitionBuilder: (child, animation) => _pop(child, animation, from: 1),
+                    child: widget.leading ?? const SizedBox.shrink(),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -105,14 +122,15 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
 
   /// ColorOS-style pop: the action grows out from behind the bar's edge on a spring
   /// that overshoots once and settles; leaving shrinks it back under the bar.
-  static Widget _pop(Widget child, Animation<double> animation) {
+  /// [from] is the side the bar is on: -1 for the trailing action, 1 for the leading one.
+  static Widget _pop(Widget child, Animation<double> animation, {required double from}) {
     return AnimatedBuilder(
       animation: animation,
       child: child,
       builder: (context, child) {
         final v = animation.value;
         return Transform.translate(
-          offset: Offset(-_slot * 0.6 * (1 - v), 0),
+          offset: Offset(from * _slot * 0.6 * (1 - v), 0),
           child: Transform.scale(scale: (0.3 + 0.7 * v).clamp(0.0, 1.2), child: child),
         );
       },

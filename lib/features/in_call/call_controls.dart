@@ -332,9 +332,8 @@ class GlassSpringCurve extends Curve {
 const springSettle = Duration(milliseconds: 700);
 final bouncySpring = GlassSpringCurve(GlassSpring.bouncy(), springSettle);
 
-/// The lit fill of an active action: near white, deeper along the top and lit from below like the
-/// solid buttons.
-const _lit = Color(0xFFEDEFF2);
+/// The lit fill of an active action: the 1-button Answer ball's white.
+const _lit = Color(0xFFF2F2F4);
 
 /// Shared round action for the call controls and the persistent bottom row. Turning it on
 /// grows a lit white fill out from the icon; unavailable actions keep the frosted body with a
@@ -380,8 +379,9 @@ class CallAction extends StatelessWidget {
               duration: still ? Duration.zero : (active ? springSettle : const Duration(milliseconds: 220)),
               curve: active ? bouncySpring : Curves.easeInCubic,
               child: Container(
-                decoration: solidBody(_lit, const CircleBorder(), glow: .25, blur: 18, flat: callFlat(context)),
-                foregroundDecoration: solidGlow(const CircleBorder(), flat: callFlat(context)),
+                // The 1-button Answer ball's glass finish; a plain fill below full call effects.
+                decoration: glassBody(_lit, const CircleBorder(), flat: callFlat(context)),
+                foregroundDecoration: glassGlow(const CircleBorder(), flat: callFlat(context)),
               ),
             ),
             // The label under the circle is visible; a tooltip on long press would only repeat it.
