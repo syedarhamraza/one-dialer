@@ -37,14 +37,15 @@ object CallNotifications {
     private const val ID_INCOMING = 1
     private const val ANSWER_GREEN = 0xFF2FAE52.toInt() // answerGreen in lib/features/in_call/call_controls.dart
 
-    fun showIncoming(context: Context, callId: String, call: Call) {
+    /** [screenOpening]: Settings › Incoming call reminders › Full screen is opening the call screen. */
+    fun showIncoming(context: Context, callId: String, call: Call, screenOpening: Boolean = false) {
         val manager = context.getSystemService(NotificationManager::class.java)
         // On an unlocked vivo the Atomic Island card is the pop-up, and with the call screen up
         // (call waiting) the screen itself rings; a heads-up banner would double either.
         val island = vivoIsland &&
             context.getSystemService(PowerManager::class.java).isInteractive &&
             !context.getSystemService(KeyguardManager::class.java).isKeyguardLocked
-        val quiet = island || InCallActivity.isFullScreen
+        val quiet = screenOpening || island || InCallActivity.isFullScreen
         val channel = if (quiet) CHANNEL_INCOMING_QUIET else CHANNEL_INCOMING
         manager.deleteNotificationChannel("incoming_calls_island")
         manager.createNotificationChannel(
@@ -98,7 +99,7 @@ object CallNotifications {
         }
         val icon = callerIcon(context, details.handle?.schemeSpecificPart)
             ?: Icon.createWithResource(context, R.drawable.island_caller) // LetterAvatar's no-photo person
-        if (vivoIsland) {
+        if (vivoIsland && !screenOpening) {
             // Answering here keeps the call in the island; the full call screen is a tap away.
             val answerHere = CallActionReceiver.pendingIntent(context, CallActionReceiver.ACTION_ANSWER_IN_ISLAND, callId)
             builder.addExtras(

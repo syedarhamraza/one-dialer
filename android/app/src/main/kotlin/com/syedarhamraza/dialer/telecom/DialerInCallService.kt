@@ -1,9 +1,16 @@
 package com.syedarhamraza.dialer.telecom
 
+import android.app.KeyguardManager
+import android.media.AudioManager
+import android.os.Handler
+import android.os.Looper
 import android.os.PowerManager
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.telecom.Call
 import android.telecom.CallAudioState
 import android.telecom.InCallService
+import android.telecom.VideoProfile
 import com.syedarhamraza.dialer.InCallActivity
 import com.syedarhamraza.dialer.InCallEngine
 
@@ -15,6 +22,7 @@ import com.syedarhamraza.dialer.InCallEngine
 class DialerInCallService : InCallService() {
 
     private var proximityLock: PowerManager.WakeLock? = null
+    private val handler = Handler(Looper.getMainLooper())
     private val onCallsChanged = {
         CallNotifications.updateOngoing(this, CallManager.all())
         updateProximity()
@@ -31,6 +39,7 @@ class DialerInCallService : InCallService() {
     }
 
     override fun onDestroy() {
+        handler.removeCallbacksAndMessages(null)
         CallManager.removeListener(onCallsChanged)
         CallManager.service = null
         CallNotifications.cancelIncoming(this)
@@ -42,8 +51,29 @@ class DialerInCallService : InCallService() {
     override fun onCallAdded(call: Call) {
         val id = CallManager.onCallAdded(call)
         if (CallManager.stateOf(call) == Call.STATE_RINGING) {
+            val prefs = CallPrefs.read(this)
             // Incoming: a full-screen notification is the only reliable way to open UI from the background.
-            CallNotifications.showIncoming(this, id, call)
+            // Settings › Full screen opens the call screen while unlocked too, instead of a banner.
+            val openScreen = prefs["incomingStyle"] == "full" && !InCallActivity.isFullScreen &&
+                getSystemService(PowerManager::class.java).isInteractive &&
+                !getSystemService(KeyguardManager::class.java).isKeyguardLocked
+            CallNotifications.showIncoming(this, id, call, screenOpening = openScreen)
+            if (openScreen) {
+                InCallActivity.start(this)
+                // If Android blocked the start, ring with the banner after all rather than silently.
+                handler.postDelayed({
+                    if (!InCallActivity.isFullScreen && CallManager.idOf(call) != null &&
+                        CallManager.stateOf(call) == Call.STATE_RINGING
+                    ) CallNotifications.showIncoming(this, id, call)
+                }, 1500)
+            }
+            if (prefs["autoAnswer"] == true && CallManager.all().size == 1 && headsetConnected()) {
+                handler.postDelayed({
+                    if (CallManager.idOf(call) != null && CallManager.stateOf(call) == Call.STATE_RINGING) {
+                        call.answer(VideoProfile.STATE_AUDIO_ONLY)
+                    }
+                }, (prefs["autoAnswerDelay"] as Int) * 1000L)
+            }
         } else {
             InCallActivity.start(this)
         }
@@ -56,6 +86,23 @@ class DialerInCallService : InCallService() {
         CallManager.onCallRemoved(call)
         if (!CallManager.hasCalls) CallNotifications.cancelIncoming(this)
     }
+
+    /** Settings › Answer/End calls: a buzz on answer and hang-up, and the speaker on answer. */
+    fun onStateChanged(call: Call, from: Int?, to: Int) {
+        if (!CallPrefs.buzzes(from, to)) return
+        val prefs = CallPrefs.read(this)
+        if (prefs["vibrateAnswerEnd"] == true) {
+            getSystemService(Vibrator::class.java)?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK))
+        }
+        // Not with a headset or car kit connected, as ColorOS.
+        @Suppress("DEPRECATION")
+        if (CallPrefs.goesLive(from, to) && prefs["speakerDefault"] == true &&
+            callAudioState?.route == CallAudioState.ROUTE_EARPIECE
+        ) setAudioRoute(CallAudioState.ROUTE_SPEAKER)
+    }
+
+    private fun headsetConnected() = getSystemService(AudioManager::class.java)
+        .getDevices(AudioManager.GET_DEVICES_OUTPUTS).any { CallPrefs.isHeadset(it.type) }
 
     @Deprecated("Replaced by onCallEndpointChanged on API 34+, still delivered on all versions")
     override fun onCallAudioStateChanged(audioState: CallAudioState) {

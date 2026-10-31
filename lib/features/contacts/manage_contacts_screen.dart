@@ -37,17 +37,6 @@ Account? _saveAccount() {
   return Account(id: '', type: key.substring(0, i), name: key.substring(i + 1));
 }
 
-OneUIGroupItem _switch(String title, ValueNotifier<bool> value, ValueChanged<bool> onChanged, {String? subtitle}) =>
-    OneUIGroupItem(
-      title: title,
-      subtitle: subtitle,
-      onTap: () => onChanged(!value.value),
-      trailing: ValueListenableBuilder(
-        valueListenable: value,
-        builder: (context, v, _) => OneUISwitch(value: v, onChanged: onChanged),
-      ),
-    );
-
 /// Contacts ⋮ › Manage contacts, ColorOS's page: what the list shows, where new contacts
 /// go, import and export, SIM contacts and merging duplicates.
 class ManageContactsScreen extends StatefulWidget {
@@ -133,8 +122,8 @@ class _ManageContactsScreenState extends State<ManageContactsScreen> {
         OneUIGroupCard(
           headerTitle: 'Display',
           items: [
-            _switch("Show contact's profile picture", _prefs.showPhotos, _prefs.setShowPhotos),
-            _switch('Only display contacts with numbers', _prefs.onlyWithNumbers, _prefs.setOnlyWithNumbers),
+            switchRow("Show contact's profile picture", _prefs.showPhotos, _prefs.setShowPhotos),
+            switchRow('Only display contacts with numbers', _prefs.onlyWithNumbers, _prefs.setOnlyWithNumbers),
             OneUIGroupItem(
               title: 'Contacts to display',
               value: _prefs.hiddenAccounts.value.isEmpty ? 'All' : 'Custom',

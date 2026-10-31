@@ -178,9 +178,20 @@ class DialerPrefs {
   /// screen's own engine (which reads it in `inCallMain` and on every resume, never awaited).
   final callEffects = ValueNotifier('full');
 
+  /// Settings › Incoming call reminders: `two` buttons (Decline | Answer) or `one` (swipe up to
+  /// answer, down to decline). Loaded with [callEffects], for the call screen's engine.
+  final answerStyle = ValueNotifier('two');
+
   Future<void> loadCallEffects() async {
     final effects = await _prefs.getString('call_effects');
     if (effects == 'full' || effects == 'reduced' || effects == 'off') callEffects.value = effects!;
+    final style = await _prefs.getString('answer_style');
+    if (style == 'two' || style == 'one') answerStyle.value = style!;
+  }
+
+  Future<void> setAnswerStyle(String value) async {
+    answerStyle.value = value;
+    await _prefs.setString('answer_style', value);
   }
 
   Future<void> setCallEffects(String value) async {

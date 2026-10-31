@@ -17,8 +17,8 @@ import '../blocking/blocking_screen.dart';
 import '../keypad/speed_dial_screen.dart';
 import '../updates/presentation/update_controller.dart';
 import 'about_screen.dart';
+import 'call_settings_pages.dart';
 import 'help_feedback_screen.dart';
-import 'quick_replies_screen.dart';
 import 'software_update_screen.dart';
 
 /// Call settings, plus a health check of everything incoming calls depend on.
@@ -132,13 +132,18 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         if (problems.isNotEmpty) OneUIGroupCard(headerTitle: 'Needs attention', items: problems),
         OneUIGroupCard(
           items: [
+            OneUIGroupItem(title: 'Incoming call reminders', onTap: () => _push(const IncomingCallRemindersScreen())),
+            OneUIGroupItem(title: 'Answer/End calls', onTap: () => _push(const AnswerEndCallsScreen())),
+          ],
+        ),
+        OneUIGroupCard(
+          items: [
             OneUIGroupItem(
               title: 'Caller identification',
               subtitle: 'Caller ID & spam app',
               onTap: () => _telecom.openSystemSettings('defaultApps'),
             ),
             OneUIGroupItem(title: 'Speed dial', onTap: () => _push(const SpeedDialScreen())),
-            OneUIGroupItem(title: 'Decline with message', onTap: () => _push(const QuickRepliesScreen())),
           ],
         ),
         OneUIGroupCard(

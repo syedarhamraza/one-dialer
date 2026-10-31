@@ -132,6 +132,14 @@ class TelecomBridge {
   Future<void> setBlocking({required bool blockHidden, required bool blockNonContacts}) =>
       _methods.invokeMethod('setBlocking', {'blockHidden': blockHidden, 'blockNonContacts': blockNonContacts});
 
+  /// Settings › Incoming call reminders and Answer/End calls (`CallPrefs.kt`, read by the call service):
+  /// `incomingStyle`, `vibrateAnswerEnd`, `speakerDefault`, `autoAnswer`, `autoAnswerDelay`.
+  Future<Map<Object?, Object?>> getCallSettings() async =>
+      await _methods.invokeMapMethod<Object?, Object?>('getCallSettings') ?? const {};
+
+  Future<void> setCallSetting(String key, Object value) =>
+      _methods.invokeMethod('setCallSetting', {'key': key, 'value': value});
+
   // Call log
   /// Newest first, up to 500 calls. Throws [PlatformException] `NO_PERMISSION` without call-log access.
   Future<List<Map<Object?, Object?>>> getCallLog() async =>

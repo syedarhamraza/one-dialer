@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   Rect? released;
   // The idle hint loops forever, so these tests pump fixed durations instead of settling.
-  Future<List<String>> pump(WidgetTester tester) async {
+  Future<List<String>> pump(WidgetTester tester, {bool oneButton = false}) async {
     final fired = <String>[];
     await tester.pumpWidget(
       MaterialApp(
@@ -18,6 +18,7 @@ void main() {
               fired.add('answer');
               released = ball;
             },
+            onSwipeDown: oneButton ? () => fired.add('decline') : null,
           ),
         ),
       ),
@@ -114,5 +115,20 @@ void main() {
     await tester.drag(button(), const Offset(0, -30));
     await settle(tester);
     expect(fired, isEmpty);
+  });
+
+  testWidgets('1 button: up answers, down declines', (tester) async {
+    var fired = await pump(tester, oneButton: true);
+    await tester.drag(button(), const Offset(0, 160));
+    await settle(tester);
+    expect(fired, ['decline']);
+
+    await tester.pumpWidget(const SizedBox()); // a fresh button
+    fired = await pump(tester, oneButton: true);
+    await tester.drag(button(), const Offset(0, 50)); // short: springs back
+    await settle(tester);
+    await tester.drag(button(), const Offset(0, -160));
+    await settle(tester);
+    expect(fired, ['answer']);
   });
 }

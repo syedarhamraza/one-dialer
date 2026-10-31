@@ -2,9 +2,11 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
+import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/one_ui_floating_modal.dart';
@@ -107,39 +109,56 @@ class _IncomingControlsState extends State<IncomingControls> {
           Padding(
             // Near the edges like ColorOS, leaving room between the two targets.
             padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Opacity(
-                  opacity: _opacityFor('Decline'),
-                  child: SwipeUpButton(
-                    // The connected screen's End red.
-                    color: endRed,
-                    icon: Icons.call_end_rounded,
-                    label: 'Decline',
-                    compact: compact,
-                    onProgress: (armed) => _progress('Decline', armed),
-                    onTriggered: (_, _) => telecom.reject(call.id),
-                  ),
-                ),
-                Opacity(
-                  opacity: _opacityFor('Answer'),
-                  child: SwipeUpButton(
-                    color: answerGreen,
-                    icon: Icons.call_rounded,
-                    // The handset rings, like ColorOS's Answer.
-                    shake: true,
-                    label: 'Answer',
-                    compact: compact,
-                    hidden: widget.answerHidden,
-                    // Offset so the two hints don't pulse in lockstep.
-                    hintPhase: .5,
-                    onProgress: (armed) => _progress('Answer', armed),
-                    onTriggered: (ball, lift) =>
-                        widget.onAnswer != null ? widget.onAnswer!(ball, lift) : telecom.answer(call.id),
-                  ),
-                ),
-              ],
+            child: ValueListenableBuilder(
+              // Settings › Incoming call reminders › 1 button: one ball, up answers and down declines.
+              valueListenable: DialerPrefs.instance.answerStyle,
+              builder: (context, style, _) => style == 'one'
+                  ? SwipeUpButton(
+                      color: answerGreen,
+                      icon: Icons.call_rounded,
+                      shake: true,
+                      label: 'Answer',
+                      compact: compact,
+                      hidden: widget.answerHidden,
+                      onProgress: (armed) => _progress('Answer', armed),
+                      onTriggered: (ball, lift) =>
+                          widget.onAnswer != null ? widget.onAnswer!(ball, lift) : telecom.answer(call.id),
+                      onSwipeDown: () => telecom.reject(call.id),
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Opacity(
+                          opacity: _opacityFor('Decline'),
+                          child: SwipeUpButton(
+                            // The connected screen's End red.
+                            color: endRed,
+                            icon: Icons.call_end_rounded,
+                            label: 'Decline',
+                            compact: compact,
+                            onProgress: (armed) => _progress('Decline', armed),
+                            onTriggered: (_, _) => telecom.reject(call.id),
+                          ),
+                        ),
+                        Opacity(
+                          opacity: _opacityFor('Answer'),
+                          child: SwipeUpButton(
+                            color: answerGreen,
+                            icon: Icons.call_rounded,
+                            // The handset rings, like ColorOS's Answer.
+                            shake: true,
+                            label: 'Answer',
+                            compact: compact,
+                            hidden: widget.answerHidden,
+                            // Offset so the two hints don't pulse in lockstep.
+                            hintPhase: .5,
+                            onProgress: (armed) => _progress('Answer', armed),
+                            onTriggered: (ball, lift) =>
+                                widget.onAnswer != null ? widget.onAnswer!(ball, lift) : telecom.answer(call.id),
+                          ),
+                        ),
+                      ],
+                    ),
             ),
           ),
           SizedBox(height: compact ? 12 : 28),
@@ -188,6 +207,7 @@ class SwipeUpButton extends StatefulWidget {
     this.hidden = false,
     this.hintPhase = 0,
     this.shake = false,
+    this.onSwipeDown,
   });
 
   final Color color;
@@ -207,6 +227,9 @@ class SwipeUpButton extends StatefulWidget {
 
   /// Wiggles the icon once per hint cycle while the ball rests, as a ringing handset.
   final bool shake;
+
+  /// Makes a downward swipe act too (1-button answering: down declines); the ball turns End red on the way.
+  final VoidCallback? onSwipeDown;
 
   static const double size = 72;
   static const double threshold = 96;
@@ -235,9 +258,11 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
   /// How far up the ball can go: ColorOS's released Answer rests about 1.85 diameters up.
   double get _maxTravel => _threshold * 1.4;
 
-  bool _armedBy(Offset drag) => -drag.dy >= _threshold;
+  bool get _twoWay => widget.onSwipeDown != null;
 
-  double _armedFraction(Offset drag) => (-drag.dy / _threshold).clamp(0.0, 1.0);
+  bool _armedBy(Offset drag) => (_twoWay ? drag.dy.abs() : -drag.dy) >= _threshold;
+
+  double _armedFraction(Offset drag) => ((_twoWay ? drag.dy.abs() : -drag.dy) / _threshold).clamp(0.0, 1.0);
 
   /// Touched: the ball grows a little under the finger, like a glass button.
   bool _pressed = false;
@@ -269,11 +294,12 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
     }
   }
 
-  void _fire() {
+  void _fire({bool down = false}) {
     if (_fired) return;
     _fired = true;
     _syncHint();
     HapticFeedback.heavyImpact();
+    if (down) return widget.onSwipeDown!();
     final box = _ball.currentContext?.findRenderObject() as RenderBox?;
     final rect = box == null || !box.hasSize
         ? Rect.zero
@@ -297,7 +323,7 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
     if (_fired) return;
     // Straight up only, a little past the threshold; downward can't act, so it only gives a
     // little and never slides under the pill below.
-    final limited = Offset(0, (_drag.dy + d.delta.dy).clamp(-_maxTravel, 16.0));
+    final limited = Offset(0, (_drag.dy + d.delta.dy).clamp(-_maxTravel, _twoWay ? _maxTravel : 16.0));
     if (_armedBy(_drag) != _armedBy(limited)) HapticFeedback.selectionClick();
     setState(() => _drag = limited);
     widget.onProgress?.call(_armedFraction(_drag));
@@ -305,7 +331,7 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
 
   void _onEnd(DragEndDetails d) {
     if (_fired) return;
-    if (_armedBy(_drag)) return _fire();
+    if (_armedBy(_drag)) return _fire(down: _drag.dy > 0);
     _springBack(d.velocity.pixelsPerSecond);
   }
 
@@ -339,8 +365,9 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
     return Semantics(
       button: true,
       label: widget.label,
-      hint: 'Swipe up to ${widget.label.toLowerCase()}',
+      hint: _twoWay ? 'Swipe up to answer, down to decline' : 'Swipe up to ${widget.label.toLowerCase()}',
       onTap: _fire,
+      customSemanticsActions: _twoWay ? {const CustomSemanticsAction(label: 'Decline'): () => _fire(down: true)} : null,
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -372,6 +399,9 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                 final rise = Curves.easeOut.transform((phase / .7).clamp(0.0, 1.0));
                 final still = !_dragging && !_fired && offset == Offset.zero;
                 final dash = reduceMotion ? .6 : (!still || phase >= .7 ? 0.0 : .9 * (1 - rise));
+                // Swiping down turns the ball into Decline.
+                final down = _twoWay && offset.dy > 0 ? armed : 0.0;
+                final color = Color.lerp(widget.color, endRed, down)!;
                 return Stack(
                   clipBehavior: Clip.none,
                   alignment: Alignment.topCenter,
@@ -383,6 +413,18 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                         child: CustomPaint(size: _ArcHint.size, painter: _ArcHint(widget.color)),
                       ),
                     ),
+                    if (_twoWay)
+                      Positioned(
+                        // The same dash mirrored under the ball, drifting down.
+                        top: travel + size + 22 - _ArcHint.size.height + (reduceMotion ? 0 : 10 * rise),
+                        child: Opacity(
+                          opacity: dash,
+                          child: RotatedBox(
+                            quarterTurns: 2,
+                            child: CustomPaint(size: _ArcHint.size, painter: const _ArcHint(endRed)),
+                          ),
+                        ),
+                      ),
                     Positioned(
                       top: travel,
                       child: Transform.translate(
@@ -404,7 +446,7 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                                   // The connected screen's End pill finish, lit from below, its glow
                                   // brightening as the drag arms.
                                   decoration: glassBody(
-                                    widget.color,
+                                    color,
                                     const CircleBorder(),
                                     glow: .3 + .25 * armed,
                                     blur: 22 + 10 * armed,
@@ -416,7 +458,11 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                                     angle: widget.shake && still && !reduceMotion && phase < .4
                                         ? .3 * math.sin(phase / .4 * 6 * math.pi) * (1 - phase / .4)
                                         : 0,
-                                    child: Icon(widget.icon, color: Colors.white, size: size * .52),
+                                    child: Icon(
+                                      down > .5 ? Icons.call_end_rounded : widget.icon,
+                                      color: Colors.white,
+                                      size: size * .52,
+                                    ),
                                   ),
                                 ),
                               ),
