@@ -44,24 +44,31 @@ class IncomingControls extends StatefulWidget {
 }
 
 class _IncomingControlsState extends State<IncomingControls> {
-  /// Which button is being dragged, and how close it is to acting (0–1).
-  String? _active;
-  double _armed = 0;
+  /// Which button is being dragged, and how close it is to acting (0–1). A notifier so a drag
+  /// frame repaints only the fading neighbours, not the whole panel.
+  final _dragged = ValueNotifier<(String?, double)>((null, 0));
 
   CallInfo get call => widget.call;
   bool Function()? get isCurrent => widget.isCurrent;
   bool get compact => widget.compact;
 
-  void _progress(String label, double armed) {
-    if (_active == label && _armed == armed) return;
-    setState(() {
-      _active = armed > 0 ? label : null;
-      _armed = armed;
-    });
-  }
+  void _progress(String label, double armed) => _dragged.value = (armed > 0 ? label : null, armed);
 
   /// Everything but the dragged button fades as it arms.
-  double _opacityFor(String? label) => _active == null || _active == label ? 1 : 1 - _armed;
+  Widget _fading(String? label, {required Widget child}) => ValueListenableBuilder(
+    valueListenable: _dragged,
+    builder: (context, dragged, child) {
+      final (active, armed) = dragged;
+      return Opacity(opacity: active == null || active == label ? 1 : 1 - armed, child: child);
+    },
+    child: child,
+  );
+
+  @override
+  void dispose() {
+    _dragged.dispose();
+    super.dispose();
+  }
 
   Future<void> _declineWithMessage(BuildContext context) async {
     // Edited in Settings › Quick decline messages.
@@ -156,8 +163,8 @@ class _IncomingControlsState extends State<IncomingControls> {
                   : Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Opacity(
-                          opacity: _opacityFor('Decline'),
+                        _fading(
+                          'Decline',
                           child: SwipeUpButton(
                             // The connected screen's End red.
                             color: endRed,
@@ -168,8 +175,8 @@ class _IncomingControlsState extends State<IncomingControls> {
                             onTriggered: (_, _) => telecom.reject(call.id),
                           ),
                         ),
-                        Opacity(
-                          opacity: _opacityFor('Answer'),
+                        _fading(
+                          'Answer',
                           child: SwipeUpButton(
                             color: answerGreen,
                             icon: Icons.call_rounded,
@@ -197,8 +204,8 @@ class _IncomingControlsState extends State<IncomingControls> {
                 SizedBox(height: (compact ? 12 : 28) + (style == 'one' ? (compact ? 40 : 116) : 0)),
           ),
           if (canText)
-            Opacity(
-              opacity: _opacityFor(null),
+            _fading(
+              null,
               // Frosted like the connected screen's buttons, with the same glass press.
               child: CallBody(
                 pill: true,
@@ -439,125 +446,164 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
           child: SizedBox(
             width: size + 40,
             height: travel + size,
-            child: AnimatedBuilder(
-              animation: Listenable.merge([_hold, _hint]),
-              builder: (context, _) {
-                final offset = _offset;
-                final armed = _armedFraction(offset);
-                // The dash drifts up 10 px and fades out, once per cycle.
-                final phase = (_hint.value + widget.hintPhase) % 1;
-                final still = !_dragging && !_fired && offset == Offset.zero;
-                // Idle, every ball's arcs drift away from it and fade, once per cycle. The 1-button arcs
-                // hold still while the ball is held, so the one it's pulled over can fade, and go once it's let go.
-                final rise = _twoWay && !still ? 0.0 : Curves.easeOut.transform((phase / .7).clamp(0.0, 1.0));
-                final dash = reduceMotion
-                    ? (_twoWay && _fired ? 0.0 : .6)
-                    : _twoWay && !still
-                    ? (_fired ? 0.0 : .9)
-                    : (!still || phase >= .7 ? 0.0 : .9 * (1 - rise));
-                // Swiping down turns the ball into Decline.
-                // A two-way ball takes on the look of the action it's heading for.
-                final goingDown = offset.dy > 0;
-                // The 1-button ball turns red or green as it follows the finger toward that side.
-                final turn = !_twoWay ? 0.0 : (_fired ? 1.0 : armed);
-                final color = Color.lerp(
-                  widget.color,
-                  goingDown ? widget.downColor : widget.upColor ?? widget.color,
-                  turn,
-                )!;
-                final iconColor = Color.lerp(widget.iconColor, Colors.white, turn)!;
-                final upHint = ArcHint(widget.upColor ?? widget.color, radius: size / 2);
-                // The arc the 1-button ball is pulled over fades, rather than showing through its tint.
-                final upDash = _twoWay && !goingDown ? dash * (1 - armed) : dash;
-                final downDash = goingDown ? dash * (1 - armed) : dash;
-                final downHint = ArcHint(widget.downColor, radius: size / 2);
-                final target = goingDown ? widget.downIcon : widget.upIcon ?? widget.icon;
-                // Toward Decline the handset crossfades into the hang-up glyph alongside the colour.
-                final morph = target == widget.icon ? 0.0 : turn;
-                return Stack(
-                  clipBehavior: Clip.none,
-                  alignment: Alignment.topCenter,
-                  children: [
-                    Positioned(
-                      top: travel - 22 - (reduceMotion ? 0 : 10 * rise),
-                      child: Opacity(
-                        opacity: upDash,
-                        child: CustomPaint(size: upHint.size, painter: upHint),
-                      ),
+            // Three layers that each repaint only for what moves them: the arcs and the icon with the
+            // idle hint, the ball's blurred glass only with the drag, so a ringing ball isn't repainted
+            // every frame.
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.topCenter,
+              children: [
+                Positioned.fill(
+                  child: RepaintBoundary(
+                    child: AnimatedBuilder(
+                      animation: Listenable.merge([_hold, _hint]),
+                      builder: (context, _) => _arcs(size, travel, reduceMotion),
                     ),
-                    if (_twoWay)
-                      Positioned(
-                        // The same dash mirrored under the ball, drifting down.
-                        top: travel + size + 22 - downHint.size.height + (reduceMotion ? 0 : 10 * rise),
-                        child: Opacity(
-                          opacity: downDash,
-                          child: RotatedBox(
-                            quarterTurns: 2,
-                            child: CustomPaint(size: downHint.size, painter: downHint),
-                          ),
-                        ),
-                      ),
-                    Positioned(
-                      top: travel,
-                      child: Transform.translate(
-                        offset: offset,
-                        child: AnimatedScale(
-                          scale: _pressed && !_fired ? 1.08 : 1,
-                          duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 180),
-                          curve: _pressed ? Curves.easeOutCubic : Curves.easeOutBack,
-                          child: Transform.scale(
-                            scale: 1 + .1 * armed,
-                            child: Opacity(
-                              opacity: widget.hidden ? 0 : 1,
-                              child: KeyedSubtree(
-                                key: _ball,
-                                child: Container(
-                                  key: ValueKey('swipe-${widget.label}'),
-                                  width: size,
-                                  height: size,
-                                  // The connected screen's End pill finish, lit from below, its glow
-                                  // brightening as the drag arms.
-                                  decoration: glassBody(
-                                    color,
-                                    const CircleBorder(),
-                                    glow: .3 + .25 * armed,
-                                    blur: 22 + 10 * armed,
-                                    flat: callFlat(context),
-                                  ),
-                                  foregroundDecoration: glassGlow(const CircleBorder(), flat: callFlat(context)),
-                                  child: Transform.rotate(
-                                    // A decaying wiggle over the first 40% of each cycle, then still.
-                                    angle: widget.shake && still && !reduceMotion && phase < .4
-                                        ? .3 * math.sin(phase / .4 * 6 * math.pi) * (1 - phase / .4)
-                                        : 0,
-                                    child: Stack(
-                                      alignment: Alignment.center,
-                                      children: [
-                                        Opacity(
-                                          opacity: 1 - morph,
-                                          child: Icon(widget.icon, color: iconColor, size: size * .52),
-                                        ),
-                                        if (morph > 0)
-                                          Opacity(
-                                            opacity: morph,
-                                            child: Icon(target, color: iconColor, size: size * .52),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
+                  ),
+                ),
+                Positioned(
+                  top: travel,
+                  child: RepaintBoundary(
+                    child: AnimatedBuilder(
+                      animation: _hold,
+                      builder: (context, icon) => _body(size, reduceMotion, icon!),
+                      child: RepaintBoundary(
+                        child: AnimatedBuilder(
+                          animation: Listenable.merge([_hold, _hint]),
+                          builder: (context, _) => _icon(size, reduceMotion),
                         ),
                       ),
                     ),
-                  ],
-                );
-              },
+                  ),
+                ),
+              ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// Where the idle hint is in its cycle.
+  double get _phase => (_hint.value + widget.hintPhase) % 1;
+
+  bool get _still => !_dragging && !_fired && _offset == Offset.zero;
+
+  // Swiping down turns the ball into Decline.
+  bool get _goingDown => _offset.dy > 0;
+
+  /// A two-way ball takes on the look of the action it's heading for: the 1-button ball turns red
+  /// or green as it follows the finger toward that side.
+  double get _turn => !_twoWay ? 0.0 : (_fired ? 1.0 : _armedFraction(_offset));
+
+  Widget _arcs(double size, double travel, bool reduceMotion) {
+    final armed = _armedFraction(_offset);
+    // The dash drifts up 10 px and fades out, once per cycle.
+    final phase = _phase;
+    final still = _still;
+    // Idle, every ball's arcs drift away from it and fade, once per cycle. The 1-button arcs
+    // hold still while the ball is held, so the one it's pulled over can fade, and go once it's let go.
+    final rise = _twoWay && !still ? 0.0 : Curves.easeOut.transform((phase / .7).clamp(0.0, 1.0));
+    final dash = reduceMotion
+        ? (_twoWay && _fired ? 0.0 : .6)
+        : _twoWay && !still
+        ? (_fired ? 0.0 : .9)
+        : (!still || phase >= .7 ? 0.0 : .9 * (1 - rise));
+    final goingDown = _goingDown;
+    // The arc the 1-button ball is pulled over fades, rather than showing through its tint.
+    final upDash = _twoWay && !goingDown ? dash * (1 - armed) : dash;
+    final downDash = goingDown ? dash * (1 - armed) : dash;
+    // The fade is the stroke's alpha: one stroke, so no layer is needed for it.
+    final upHint = ArcHint((widget.upColor ?? widget.color).withValues(alpha: upDash), radius: size / 2);
+    final downHint = ArcHint(widget.downColor.withValues(alpha: downDash), radius: size / 2);
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.topCenter,
+      children: [
+        Positioned(
+          top: travel - 22 - (reduceMotion ? 0 : 10 * rise),
+          child: CustomPaint(size: upHint.size, painter: upHint),
+        ),
+        if (_twoWay)
+          Positioned(
+            // The same dash mirrored under the ball, drifting down.
+            top: travel + size + 22 - downHint.size.height + (reduceMotion ? 0 : 10 * rise),
+            child: RotatedBox(
+              quarterTurns: 2,
+              child: CustomPaint(size: downHint.size, painter: downHint),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _body(double size, bool reduceMotion, Widget icon) {
+    final offset = _offset;
+    final armed = _armedFraction(offset);
+    final color = Color.lerp(widget.color, _goingDown ? widget.downColor : widget.upColor ?? widget.color, _turn)!;
+    return Transform.translate(
+      offset: offset,
+      child: AnimatedScale(
+        scale: _pressed && !_fired ? 1.08 : 1,
+        duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 180),
+        curve: _pressed ? Curves.easeOutCubic : Curves.easeOutBack,
+        child: Transform.scale(
+          scale: 1 + .1 * armed,
+          child: Opacity(
+            opacity: widget.hidden ? 0 : 1,
+            child: KeyedSubtree(
+              key: _ball,
+              child: Container(
+                key: ValueKey('swipe-${widget.label}'),
+                width: size,
+                height: size,
+                // The connected screen's End pill finish, lit from below, its glow
+                // brightening as the drag arms.
+                decoration: glassBody(
+                  color,
+                  const CircleBorder(),
+                  glow: .3 + .25 * armed,
+                  blur: 22 + 10 * armed,
+                  flat: callFlat(context),
+                ),
+                foregroundDecoration: glassGlow(const CircleBorder(), flat: callFlat(context)),
+                child: icon,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _icon(double size, bool reduceMotion) {
+    final phase = _phase;
+    final turn = _turn;
+    final iconColor = Color.lerp(widget.iconColor, Colors.white, turn)!;
+    final target = _goingDown ? widget.downIcon : widget.upIcon ?? widget.icon;
+    // Toward Decline the handset crossfades into the hang-up glyph alongside the colour, each
+    // glyph faded by its colour's alpha.
+    final morph = target == widget.icon ? 0.0 : turn;
+    return Transform.rotate(
+      // A decaying wiggle over the first 40% of each cycle, then still.
+      angle: widget.shake && _still && !reduceMotion && phase < .4
+          ? .3 * math.sin(phase / .4 * 6 * math.pi) * (1 - phase / .4)
+          : 0,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Icon(
+            widget.icon,
+            color: iconColor.withValues(alpha: iconColor.a * (1 - morph)),
+            size: size * .52,
+          ),
+          if (morph > 0)
+            Icon(
+              target,
+              color: iconColor.withValues(alpha: iconColor.a * morph),
+              size: size * .52,
+            ),
+        ],
       ),
     );
   }

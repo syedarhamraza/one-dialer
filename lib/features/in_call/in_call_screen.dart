@@ -290,17 +290,20 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
               ),
               // The handset tips over, then End's hang-up glyph fades in over it and only then does
               // the handset fade out underneath: never dimmed, and it lands already as End's icon.
-              Opacity(
-                // The 1-button handset simply crossfades into the hang-up glyph alongside the colour.
-                opacity: _oneButton ? 1 - red : 1 - _handsetOut.transform(t),
-                child: Transform.rotate(
-                  angle: _oneButton ? 0 : 2.36 * red,
-                  child: Icon(Icons.call_rounded, color: Colors.white, size: iconSize),
+              // Each glyph fades by its colour's alpha, so no layer is needed for it.
+              Transform.rotate(
+                angle: _oneButton ? 0 : 2.36 * red,
+                child: Icon(
+                  Icons.call_rounded,
+                  // The 1-button handset simply crossfades into the hang-up glyph alongside the colour.
+                  color: Colors.white.withValues(alpha: _oneButton ? 1 - red : 1 - _handsetOut.transform(t)),
+                  size: iconSize,
                 ),
               ),
-              Opacity(
-                opacity: _oneButton ? red : _hangUpIn.transform(t),
-                child: Icon(Icons.call_end_rounded, color: Colors.white, size: iconSize),
+              Icon(
+                Icons.call_end_rounded,
+                color: Colors.white.withValues(alpha: _oneButton ? red : _hangUpIn.transform(t)),
+                size: iconSize,
               ),
             ],
           ),

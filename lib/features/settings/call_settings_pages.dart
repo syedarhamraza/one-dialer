@@ -14,6 +14,8 @@ import 'quick_replies_screen.dart';
 class _CallSettings {
   _CallSettings() {
     TelecomBridge.instance.getCallSettings().then((s) {
+      // The page may have closed before the settings arrived.
+      if (_disposed) return;
       if (s['incomingStyle'] case final String v) incomingStyle.value = v;
       if (s['vibrateAnswerEnd'] case final bool v) vibrate.value = v;
       if (s['speakerDefault'] case final bool v) speaker.value = v;
@@ -29,6 +31,15 @@ class _CallSettings {
   final autoAnswer = ValueNotifier(false);
   final delay = ValueNotifier<String?>('5');
   final announce = ValueNotifier('off');
+
+  bool _disposed = false;
+
+  void dispose() {
+    _disposed = true;
+    for (final n in [incomingStyle, vibrate, speaker, autoAnswer, delay, announce]) {
+      n.dispose();
+    }
+  }
 
   void set<T extends Object>(ValueNotifier<T> notifier, String key, T value) {
     notifier.value = value;
@@ -100,6 +111,12 @@ class _IncomingCallRemindersScreenState extends State<IncomingCallRemindersScree
   final _announceKey = GlobalKey();
 
   static const _announce = {'off': 'Off', 'always': 'Always', 'headset': 'Only with headphones'};
+
+  @override
+  void dispose() {
+    _settings.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -268,6 +285,12 @@ class _AnswerEndCallsScreenState extends State<AnswerEndCallsScreen> {
   final _delayKey = GlobalKey();
 
   static const _delays = {'3': '3 seconds', '5': '5 seconds', '10': '10 seconds'};
+
+  @override
+  void dispose() {
+    _settings.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
