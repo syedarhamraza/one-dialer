@@ -144,6 +144,11 @@ class DialerInCallService : InCallService() {
     private fun headsetConnected() = getSystemService(AudioManager::class.java)
         .getDevices(AudioManager.GET_DEVICES_OUTPUTS).any { CallPrefs.isHeadset(it.type) }
 
+    /** TelecomManager.showInCallScreen (the return-to-call banner) lands here; without it nothing opens. */
+    override fun onBringToForeground(showDialpad: Boolean) {
+        if (CallManager.all().isNotEmpty()) InCallActivity.start(this)
+    }
+
     @Deprecated("Replaced by onCallEndpointChanged on API 34+, still delivered on all versions")
     override fun onCallAudioStateChanged(audioState: CallAudioState) {
         CallManager.notifyChanged()
