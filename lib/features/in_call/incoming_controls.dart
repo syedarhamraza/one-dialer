@@ -481,7 +481,10 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                 final upDash = _twoWay && !goingDown ? dash * (1 - armed) : dash;
                 final downDash = goingDown ? dash * (1 - armed) : dash;
                 final downHint = ArcHint(widget.downColor);
-                final icon = turn <= .5 ? widget.icon : (goingDown ? widget.downIcon : widget.upIcon ?? widget.icon);
+                final target = goingDown ? widget.downIcon : widget.upIcon ?? widget.icon;
+                // Toward Decline the handset morphs as in the Answer → End flight: it tips over, then
+                // the hang-up glyph fades in over it before the handset fades out underneath.
+                final morph = target == widget.icon ? 0.0 : turn;
                 return Stack(
                   clipBehavior: Clip.none,
                   alignment: Alignment.topCenter,
@@ -538,7 +541,23 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                                     angle: widget.shake && still && !reduceMotion && phase < .4
                                         ? .3 * math.sin(phase / .4 * 6 * math.pi) * (1 - phase / .4)
                                         : 0,
-                                    child: Icon(icon, color: iconColor, size: size * .52),
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        Opacity(
+                                          opacity: 1 - ((morph - .6) / .4).clamp(0.0, 1.0),
+                                          child: Transform.rotate(
+                                            angle: 2.36 * Curves.easeInOut.transform(morph),
+                                            child: Icon(widget.icon, color: iconColor, size: size * .52),
+                                          ),
+                                        ),
+                                        if (morph > .4)
+                                          Opacity(
+                                            opacity: ((morph - .4) / .4).clamp(0.0, 1.0),
+                                            child: Icon(target, color: iconColor, size: size * .52),
+                                          ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),

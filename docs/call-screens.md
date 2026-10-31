@@ -97,9 +97,10 @@ the other button and the pill fade out as it arms.
   (`oneButtonWhite`), `SwipeUpButton` with `onSwipeDown`. Matched frame by frame to a ColorOS 17
   recording: the ball rests about 260 dp above the bottom edge with a steady green arc on the
   answering side and a red one on the declining side. It follows the finger like the 2-button
-  balls, turning green or red toward that side's colour and growing as it arms, while the arc it's pulled over fades; it arms after 80 dp.
-  Released, it glides the rest of the way to 1.85 diameters (170 ms, as with 2 buttons) and lands about half a diameter under the End pill. It holds there
-  green for 200 ms (and until Telecom connects), then springs up into End on the 2-button flight's
+  balls, its colour blending to that side's green or red (toward Decline the handset tips over into
+  the hang-up glyph, as in the flight into End) and growing as it arms, while the arc it's pulled over fades; it arms after 80 dp.
+  Released, it glides the rest of the way to 1.85 diameters (170 ms, as with 2 buttons) and lands about half a diameter under the End pill. Once Telecom
+  connects it springs up into End on the 2-button flight's
   700 ms timeline (stretching into the pill a touch past its size, then settling, turning red) while the connected controls rise in, held back until
   then. Swiping up to answer throws it up and flies it down into End as with 2 buttons.
   Screen readers get the up

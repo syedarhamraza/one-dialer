@@ -209,8 +209,6 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // Let the ball settle in its spot before it flies.
       if (_rise.isAnimating) await _rise.forward().orCancel.catchError((_) {});
-      // ColorOS 17 holds the green ball still a beat before it becomes End.
-      if (_oneButton) await Future<void>.delayed(const Duration(milliseconds: 200));
       if (mounted && _ball != null && !_fly.isAnimating) {
         _fly.forward(from: 0);
         _enter();
