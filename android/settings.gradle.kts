@@ -24,6 +24,8 @@ plugins {
     // Firebase: reads android/app/google-services.json; uploads Crashlytics symbol info.
     id("com.google.gms.google-services") version "4.5.0" apply false
     id("com.google.firebase.crashlytics") version "3.0.8" apply false
+    // Performance Monitoring (beta-only, docs/beta-only.md): times native HTTP/S requests.
+    id("com.google.firebase.firebase-perf") version "2.0.2" apply false
 }
 
 include(":app")

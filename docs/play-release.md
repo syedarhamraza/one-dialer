@@ -27,6 +27,8 @@ Application id `com.syedarhamraza.onedialer` (can't change once on Play). The Ko
 
 ## Each release
 
+Before the first production (non-beta) release, work through [beta-only.md](beta-only.md): it lists what comes out of the app (Performance Monitoring first).
+
 For beta 5 diagnostics, follow [the diagnostics verification guide](lag-diagnostics.md) before uploading. Publish the updated privacy policy and review the Play Data safety declarations for diagnostics/performance data. Filter Crashlytics **non-fatal** issues for `SevereFrameDelay`, `NativeMainStall`, `DartStall`, `RenderStall`, `InputStall`, and `UserReportedLag`; the crash-free release chart is not a lag metric. Do not include the diagnostics integration-test entrypoint or `LAG_DIAGNOSTICS_TEST_HOOKS` in a release command. Version bump, signing, upload, and publishing remain the release workflow below.
 
 From a clean tree on a `release/<version>` branch (main only changes through PRs):
@@ -69,10 +71,10 @@ Declare **"Calling"**: the full-screen intent shows incoming calls over the lock
 
 ### Data safety
 
-- **Data collected:** App info and performance → Crash logs and Diagnostics, plus Device or other IDs (the Firebase installation ID Crashlytics attaches) — all Crashlytics, *not* linked to the user, not used for ads, collection required.
+- **Data collected:** App info and performance → Crash logs and Diagnostics, plus Device or other IDs (the Firebase installation ID Crashlytics and Performance Monitoring attach) — Crashlytics, plus Performance Monitoring in betas (Approximate location is *not* collected: Firebase only derives the country from the IP address), *not* linked to the user, not used for ads, collection required.
 - **Data shared:** none.
 - Calls, call history, contacts and SMS: **not collected** (processed on the device only; nothing leaves it).
-- Encrypted in transit: yes (Crashlytics uses HTTPS). Users can't request deletion of crash logs (they contain no personal data).
+- Encrypted in transit: yes (Firebase uses HTTPS). Users can't request deletion of crash logs (they contain no personal data).
 
 ### Other
 
