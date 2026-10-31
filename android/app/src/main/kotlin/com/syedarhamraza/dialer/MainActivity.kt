@@ -4,6 +4,7 @@ import android.app.role.RoleManager
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.MotionEvent
 import androidx.core.view.WindowCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -19,6 +20,11 @@ class MainActivity : FlutterActivity() {
     override fun onPause() {
         LagDiagnostics.foreground("main", false)
         super.onPause()
+    }
+
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        LagDiagnostics.touch("main", event)
+        return super.dispatchTouchEvent(event)
     }
 
     private var bridge: CallBridge? = null

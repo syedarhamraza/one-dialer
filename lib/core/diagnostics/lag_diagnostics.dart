@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' show Timeline;
 import 'dart:ui';
 
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -23,14 +25,41 @@ const _actionNames = {
   DiagnosticAction.callLogLoad: 'call_log_load',
 };
 
+/// Taps whose next second of frames is attached to the action in the report history.
+const _userActions = {
+  DiagnosticAction.keypad,
+  DiagnosticAction.backspace,
+  DiagnosticAction.tabCalls,
+  DiagnosticAction.tabContacts,
+};
+
+/// The worst frames drawn in the second after a user action.
+class _ActionWindow {
+  _ActionWindow(this.name, this.startUs);
+  final String name;
+  final int startUs;
+  int frames = 0;
+  double buildMaxMs = 0;
+  double rasterMaxMs = 0;
+}
+
 class LagDiagnostics with WidgetsBindingObserver {
-  LagDiagnostics({MethodChannel? channel, Future<void> Function(Map<String, dynamic>)? upload})
-    : _channel = channel ?? const MethodChannel('com.syedarhamraza.dialer/diagnostics'),
-      _upload = upload ?? uploadToFirebase;
+  LagDiagnostics({
+    MethodChannel? channel,
+    Future<void> Function(Map<String, dynamic>)? upload,
+    int Function()? monotonicMicros,
+  }) : _channel = channel ?? const MethodChannel('com.syedarhamraza.dialer/diagnostics'),
+       _upload = upload ?? uploadToFirebase,
+       // FrameTiming timestamps use the engine's monotonic clock, the same one as Timeline.now.
+       _nowUs = monotonicMicros ?? (() => Timeline.now);
 
   static final instance = LagDiagnostics();
   final MethodChannel _channel;
   final Future<void> Function(Map<String, dynamic>) _upload;
+  final int Function() _nowUs;
+  final _windows = <_ActionWindow>[];
+  Map<String, Object>? _shellSummary;
+  int _pointerDowns = 0;
   final metrics = LagMetrics();
   final _clock = Stopwatch()..start();
   bool _enabled = false;
@@ -66,6 +95,7 @@ class LagDiagnostics with WidgetsBindingObserver {
     _tab = _screen;
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addTimingsCallback(_frames);
+    GestureBinding.instance.pointerRouter.addGlobalRoute(_pointer);
     didChangeAppLifecycleState(WidgetsBinding.instance.lifecycleState ?? AppLifecycleState.resumed);
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!_resumed) return;
@@ -96,15 +126,41 @@ class LagDiagnostics with WidgetsBindingObserver {
   }
 
   void routeDepth(int depth) {
+    // Walking to Help & feedback › Report lag pushes the tab's frames out of the 600-frame
+    // window; keep what they were when the first page opened over the tabs.
+    if (_routeDepth == 0 && depth > 0) _shellSummary = metrics.summary();
     _routeDepth = depth;
     _screen = depth > 0 ? 'subpage' : _tab;
   }
 
   void action(DiagnosticAction action, {Duration? elapsed}) {
     if (!_enabled) return;
+    final name = _actionNames[action]!;
+    unawaited(_invoke<void>('action', {'name': name, if (elapsed != null) 'elapsedMs': elapsed.inMilliseconds}));
+    if (elapsed != null || !_userActions.contains(action) || _windows.length >= 8) return;
+    final window = _ActionWindow(name, _nowUs());
+    _windows.add(window);
+    // FrameTimings arrive in batches up to a second late, so close the window after 2.5 s.
+    Timer(const Duration(milliseconds: 2500), () => _closeWindow(window));
+  }
+
+  void _closeWindow(_ActionWindow window) {
+    if (!_windows.remove(window) || !_enabled) return;
     unawaited(
-      _invoke<void>('action', {'name': _actionNames[action], if (elapsed != null) 'elapsedMs': elapsed.inMilliseconds}),
+      _invoke<void>('actionFrames', {
+        'name': window.name,
+        'frames': window.frames,
+        'buildMaxMs': window.buildMaxMs,
+        'rasterMaxMs': window.rasterMaxMs,
+      }),
     );
+  }
+
+  @visibleForTesting
+  void closeActionWindows() => List.of(_windows).forEach(_closeWindow);
+
+  void _pointer(PointerEvent event) {
+    if (event is PointerDownEvent) _pointerDowns++;
   }
 
   Future<void> _heartbeat() async {
@@ -119,6 +175,9 @@ class LagDiagnostics with WidgetsBindingObserver {
         'callEffects': prefs.callEffects.value,
         'refreshRate': views.isEmpty ? 60.0 : views.first.display.refreshRate,
         'frames': _summary,
+        if (_routeDepth > 0 && _shellSummary != null) 'shellFrames': _shellSummary,
+        // Native compares this with the touches Android delivered (InputStall).
+        'pointerDowns': _pointerDowns,
       });
     } finally {
       _beating = false;
@@ -137,8 +196,22 @@ class LagDiagnostics with WidgetsBindingObserver {
     unawaited(_report('RenderStall').then((id) => id == null ? _lastRenderStall = -600000 : null));
   }
 
+  @visibleForTesting
+  void addTimings(List<FrameTiming> timings) => _frames(timings);
+
   void _frames(List<FrameTiming> timings) {
     _lastFrameAt = _clock.elapsedMilliseconds;
+    for (final window in _windows) {
+      for (final frame in timings) {
+        final at = frame.timestampInMicroseconds(FramePhase.vsyncStart);
+        if (at < window.startUs || at >= window.startUs + 1000000) continue;
+        window.frames++;
+        final build = frame.buildDuration.inMicroseconds / 1000;
+        final raster = frame.rasterDuration.inMicroseconds / 1000;
+        if (build > window.buildMaxMs) window.buildMaxMs = build;
+        if (raster > window.rasterMaxMs) window.rasterMaxMs = raster;
+      }
+    }
     if (!_enabled || !_resumed || _clock.elapsedMilliseconds - _resumedAt < 5000) return;
     var severe = false;
     for (final frame in timings) {
@@ -209,22 +282,51 @@ class LagDiagnostics with WidgetsBindingObserver {
     for (final key in ['screen', 'visualEffects', 'callEffects', 'refreshRate']) {
       await crashlytics.setCustomKey('lag_${engine}_$key', context[key] ?? 'unknown');
     }
+    final category = payload['category'] as String;
+    // The Java main stack, when there is one, stays in the JSON below.
     await crashlytics.recordError(
-      _LagIncident(payload['category'] as String),
-      StackTrace.fromString(payload['mainStack'] as String? ?? ''),
-      reason: payload['category'] as String,
+      _LagIncident(category),
+      incidentTrace(category),
+      reason: category,
       information: [jsonEncode(payload)],
       fatal: false,
     );
   }
+
+  /// Crashlytics groups issues by stack, so each category gets a trace from its own function.
+  @visibleForTesting
+  static StackTrace incidentTrace(String category) => switch (category) {
+    'SevereFrameDelay' => _severeFrameDelay(),
+    'NativeMainStall' => _nativeMainStall(),
+    'DartStall' => _dartStall(),
+    'RenderStall' => _renderStall(),
+    'InputStall' => _inputStall(),
+    'UserReportedLag' => _userReportedLag(),
+    _ => StackTrace.current,
+  };
+
+  @pragma('vm:never-inline')
+  static StackTrace _severeFrameDelay() => StackTrace.current;
+  @pragma('vm:never-inline')
+  static StackTrace _nativeMainStall() => StackTrace.current;
+  @pragma('vm:never-inline')
+  static StackTrace _dartStall() => StackTrace.current;
+  @pragma('vm:never-inline')
+  static StackTrace _renderStall() => StackTrace.current;
+  @pragma('vm:never-inline')
+  static StackTrace _inputStall() => StackTrace.current;
+  @pragma('vm:never-inline')
+  static StackTrace _userReportedLag() => StackTrace.current;
 
   @visibleForTesting
   void dispose() {
     if (!_enabled) return;
     _enabled = false;
     _timer?.cancel();
+    _windows.clear();
     WidgetsBinding.instance.removeObserver(this);
     WidgetsBinding.instance.removeTimingsCallback(_frames);
+    GestureBinding.instance.pointerRouter.removeGlobalRoute(_pointer);
     unawaited(_invoke<void>('register', {'enabled': false}));
   }
 

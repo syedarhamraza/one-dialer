@@ -27,6 +27,24 @@ class DiagnosticsPolicyTest {
         assertTrue(DiagnosticsPolicy.stalled(8000, 0, 5000, true, false))
     }
 
+    @Test fun inputStallNeedsThreeSecondsOfUncountedTouchesWhileDartIsAlive() {
+        assertFalse(DiagnosticsPolicy.inputStalled(9000, 0, 8000, 8500)) // Dart counted every touch
+        assertFalse(DiagnosticsPolicy.inputStalled(9000, 5000, 5000, 8500)) // one tap, then nothing
+        assertFalse(DiagnosticsPolicy.inputStalled(9000, 5000, 7999, 8500))
+        assertFalse(DiagnosticsPolicy.inputStalled(9000, 5000, 8000, 6000)) // Dart is stuck: DartStall's job
+        assertTrue(DiagnosticsPolicy.inputStalled(9000, 5000, 8000, 8500))
+    }
+
+    @Test fun actionFramesAndShellFramesKeepOnlyValidNumbers() {
+        assertEquals(mapOf("frames" to 12, "buildMaxMs" to 3.0, "rasterMaxMs" to 53.5),
+            DiagnosticsPolicy.actionFrames(mapOf("name" to "tab_calls", "frames" to 12, "buildMaxMs" to 3,
+                "rasterMaxMs" to 53.5, "number" to "03001234567")))
+        assertNull(DiagnosticsPolicy.actionFrames(mapOf("frames" to 12, "buildMaxMs" to Double.NaN, "rasterMaxMs" to 1)))
+        assertNull(DiagnosticsPolicy.actionFrames(mapOf("frames" to -1, "buildMaxMs" to 1, "rasterMaxMs" to 1)))
+        val context = DiagnosticsPolicy.context(mapOf("shellFrames" to mapOf("rasterMaxMs" to 53.5, "phone" to "1")))
+        assertEquals(mapOf("rasterMaxMs" to 53.5), context["shellFrames"])
+    }
+
     @Test fun limitsArePerCategoryAndManualReportsHaveTheirOwnCooldown() {
         val policy = DiagnosticsPolicy()
         assertTrue(policy.allow("DartStall", 0))

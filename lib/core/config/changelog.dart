@@ -25,6 +25,16 @@ class Changelog {
 
   static const List<ChangelogEntry> entries = [
     ChangelogEntry(
+      version: '1.0.0-beta.6',
+      date: inDevelopment,
+      changes: [
+        'Fixed the Calls list freezing with a long call history when Hide blocked calls is on',
+        'Fixed a crash when a call ends just as you tap a call button',
+        'Fixed rare crashes when opening the app, from a phone link, or in a cloned copy of the app',
+        'Performance reports now show how smooth each tap and tab switch was, and can tell when the screen stops responding to touches',
+      ],
+    ),
+    ChangelogEntry(
       version: '1.0.0-beta.5',
       date: 'Oct 2026',
       changes: [

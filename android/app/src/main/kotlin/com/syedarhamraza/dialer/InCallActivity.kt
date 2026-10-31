@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
+import android.view.MotionEvent
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import android.telecom.VideoProfile
@@ -27,6 +28,11 @@ class InCallActivity : FlutterActivity() {
     override fun onPause() {
         LagDiagnostics.foreground("in_call", false)
         super.onPause()
+    }
+
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        LagDiagnostics.touch("in_call", event)
+        return super.dispatchTouchEvent(event)
     }
 
     private val closeWhenIdle = { if (!CallManager.isShowingCalls) finish() }

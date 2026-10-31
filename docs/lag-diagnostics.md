@@ -8,7 +8,10 @@ Beta 5 adds bounded technical diagnostics to answer: which screen/engine stalled
 - `NativeMainStall`: Android's main-thread heartbeat is >=3 seconds old. A dedicated worker captures up to 64 stack frames.
 - `DartStall`: the engine heartbeat is >=3 seconds old while the main heartbeat is healthy. No Dart stack is claimed. Engines that share Android's main thread may instead produce `NativeMainStall`.
 - `RenderStall`: Dart is running but a requested frame has not been drawn for >=3 seconds (`hasScheduledFrame` with no new `FrameTiming`): a stuck raster thread or missing vsync, which the other signals miss. Reports include the SoC (`soc`), since the beta 4 vivo freeze was on a MediaTek/Mali phone.
+- `InputStall` (beta 6): Android delivered finger-downs to the activity (`dispatchTouchEvent`) for >=3 seconds that Dart's pointer router never counted, while Dart's heartbeat is healthy: touches lost between Android and Flutter (window focus, an OEM overlay). Only counts cross the channel, never positions.
 - `UserReportedLag`: Help & feedback's report action. The ID can be copied and sent with feedback.
+
+Each category is recorded from its own function (`LagDiagnostics.incidentTrace`), so Crashlytics files it as its own issue; `NativeMainStall`'s Java stack stays in the event's JSON. Each tap in `history` (keypad, backspace, tab switches) carries `frames`, `buildMaxMs` and `rasterMaxMs` for the frames drawn in the second after it. While a page is open over the tabs, `context.shellFrames` keeps the tabs' frame summary from when that page opened, since walking to Report lag otherwise pushes them out of the 600-frame window.
 
 Automatic checks require a resumed activity, five seconds of startup/resume grace, and no attached native debugger. The watcher stops when no monitored activity is resumed. Reports are suspected stalls, not Android-confirmed ANRs. A process killed before detection or persistence, a raster stall while Dart is also blocked, or a diagnostics worker blocked on disk can leave gaps. Native ANR reporting remains enabled through Crashlytics.
 
