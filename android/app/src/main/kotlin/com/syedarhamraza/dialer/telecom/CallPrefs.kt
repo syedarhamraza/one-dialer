@@ -18,6 +18,7 @@ object CallPrefs {
         "speakerDefault" to false,
         "autoAnswer" to false,
         "autoAnswerDelay" to 5, // seconds
+        "announceCalls" to "off", // "always", or "headset" (only with headphones)
     )
 
     fun read(context: Context): Map<String, Any> {

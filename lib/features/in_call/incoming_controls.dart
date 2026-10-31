@@ -109,10 +109,29 @@ class _IncomingControlsState extends State<IncomingControls> {
           Padding(
             // Near the edges like ColorOS, leaving room between the two targets.
             padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 20),
-            child: ValueListenableBuilder(
-              // Settings › Incoming call reminders › 1 button: one ball, up answers and down declines.
-              valueListenable: DialerPrefs.instance.answerStyle,
-              builder: (context, style, _) => style == 'one'
+            child: ListenableBuilder(
+              // Settings › Answer buttons › 1 button: one ball, up answers and down declines, or the
+              // other way round with "Swipe down to answer".
+              listenable: Listenable.merge([DialerPrefs.instance.answerStyle, DialerPrefs.instance.answerDirection]),
+              builder: (context, _) =>
+                  DialerPrefs.instance.answerStyle.value == 'one' &&
+                      DialerPrefs.instance.answerDirection.value == 'down'
+                  ? SwipeUpButton(
+                      color: answerGreen,
+                      icon: Icons.call_rounded,
+                      shake: true,
+                      label: 'Decline',
+                      upColor: endRed,
+                      upIcon: Icons.call_end_rounded,
+                      compact: compact,
+                      onProgress: (armed) => _progress('Answer', armed),
+                      onTriggered: (_, _) => telecom.reject(call.id),
+                      onSwipeDown: () => telecom.answer(call.id),
+                      downLabel: 'Answer',
+                      downColor: answerGreen,
+                      downIcon: Icons.call_rounded,
+                    )
+                  : DialerPrefs.instance.answerStyle.value == 'one'
                   ? SwipeUpButton(
                       color: answerGreen,
                       icon: Icons.call_rounded,
@@ -208,6 +227,11 @@ class SwipeUpButton extends StatefulWidget {
     this.hintPhase = 0,
     this.shake = false,
     this.onSwipeDown,
+    this.downLabel = 'Decline',
+    this.downColor = endRed,
+    this.downIcon = Icons.call_end_rounded,
+    this.upColor,
+    this.upIcon,
   });
 
   final Color color;
@@ -228,8 +252,14 @@ class SwipeUpButton extends StatefulWidget {
   /// Wiggles the icon once per hint cycle while the ball rests, as a ringing handset.
   final bool shake;
 
-  /// Makes a downward swipe act too (1-button answering: down declines); the ball turns End red on the way.
+  /// Makes a downward swipe act too (1-button answering); the ball turns [downColor] with
+  /// [downIcon] on the way down, and [upColor] with [upIcon] (if set) on the way up.
   final VoidCallback? onSwipeDown;
+  final String downLabel;
+  final Color downColor;
+  final IconData downIcon;
+  final Color? upColor;
+  final IconData? upIcon;
 
   static const double size = 72;
   static const double threshold = 96;
@@ -365,9 +395,13 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
     return Semantics(
       button: true,
       label: widget.label,
-      hint: _twoWay ? 'Swipe up to answer, down to decline' : 'Swipe up to ${widget.label.toLowerCase()}',
+      hint: _twoWay
+          ? 'Swipe up to ${widget.label.toLowerCase()}, down to ${widget.downLabel.toLowerCase()}'
+          : 'Swipe up to ${widget.label.toLowerCase()}',
       onTap: _fire,
-      customSemanticsActions: _twoWay ? {const CustomSemanticsAction(label: 'Decline'): () => _fire(down: true)} : null,
+      customSemanticsActions: _twoWay
+          ? {CustomSemanticsAction(label: widget.downLabel): () => _fire(down: true)}
+          : null,
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -400,8 +434,11 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                 final still = !_dragging && !_fired && offset == Offset.zero;
                 final dash = reduceMotion ? .6 : (!still || phase >= .7 ? 0.0 : .9 * (1 - rise));
                 // Swiping down turns the ball into Decline.
-                final down = _twoWay && offset.dy > 0 ? armed : 0.0;
-                final color = Color.lerp(widget.color, endRed, down)!;
+                // A two-way ball takes on the look of the action it's heading for.
+                final goingDown = offset.dy > 0;
+                final turn = _twoWay && (goingDown || widget.upColor != null) ? armed : 0.0;
+                final color = Color.lerp(widget.color, goingDown ? widget.downColor : widget.upColor, turn)!;
+                final icon = turn <= .5 ? widget.icon : (goingDown ? widget.downIcon : widget.upIcon ?? widget.icon);
                 return Stack(
                   clipBehavior: Clip.none,
                   alignment: Alignment.topCenter,
@@ -410,7 +447,7 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                       top: travel - 22 - (reduceMotion ? 0 : 10 * rise),
                       child: Opacity(
                         opacity: dash,
-                        child: CustomPaint(size: _ArcHint.size, painter: _ArcHint(widget.color)),
+                        child: CustomPaint(size: _ArcHint.size, painter: _ArcHint(widget.upColor ?? widget.color)),
                       ),
                     ),
                     if (_twoWay)
@@ -421,7 +458,7 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                           opacity: dash,
                           child: RotatedBox(
                             quarterTurns: 2,
-                            child: CustomPaint(size: _ArcHint.size, painter: const _ArcHint(endRed)),
+                            child: CustomPaint(size: _ArcHint.size, painter: _ArcHint(widget.downColor)),
                           ),
                         ),
                       ),
@@ -458,11 +495,7 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                                     angle: widget.shake && still && !reduceMotion && phase < .4
                                         ? .3 * math.sin(phase / .4 * 6 * math.pi) * (1 - phase / .4)
                                         : 0,
-                                    child: Icon(
-                                      down > .5 ? Icons.call_end_rounded : widget.icon,
-                                      color: Colors.white,
-                                      size: size * .52,
-                                    ),
+                                    child: Icon(icon, color: Colors.white, size: size * .52),
                                   ),
                                 ),
                               ),

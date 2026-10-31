@@ -182,11 +182,21 @@ class DialerPrefs {
   /// answer, down to decline). Loaded with [callEffects], for the call screen's engine.
   final answerStyle = ValueNotifier('two');
 
+  /// Settings › Answer buttons › Answer call, with 1 button: swipe `up` or `down` to answer.
+  final answerDirection = ValueNotifier('up');
+
   Future<void> loadCallEffects() async {
     final effects = await _prefs.getString('call_effects');
     if (effects == 'full' || effects == 'reduced' || effects == 'off') callEffects.value = effects!;
     final style = await _prefs.getString('answer_style');
     if (style == 'two' || style == 'one') answerStyle.value = style!;
+    final direction = await _prefs.getString('answer_direction');
+    if (direction == 'up' || direction == 'down') answerDirection.value = direction!;
+  }
+
+  Future<void> setAnswerDirection(String value) async {
+    answerDirection.value = value;
+    await _prefs.setString('answer_direction', value);
   }
 
   Future<void> setAnswerStyle(String value) async {

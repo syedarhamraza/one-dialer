@@ -1,7 +1,9 @@
 package com.syedarhamraza.dialer.telecom
 
 import android.app.KeyguardManager
+import android.media.AudioAttributes
 import android.media.AudioManager
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
@@ -11,6 +13,7 @@ import android.telecom.Call
 import android.telecom.CallAudioState
 import android.telecom.InCallService
 import android.telecom.VideoProfile
+import android.speech.tts.TextToSpeech
 import com.syedarhamraza.dialer.InCallActivity
 import com.syedarhamraza.dialer.InCallEngine
 
@@ -20,6 +23,10 @@ import com.syedarhamraza.dialer.InCallEngine
  * surfaces the UI; the screens themselves live in Flutter.
  */
 class DialerInCallService : InCallService() {
+    private companion object {
+        const val ANNOUNCE_EVERY_MS = 6000L
+    }
+
 
     private var proximityLock: PowerManager.WakeLock? = null
     private val handler = Handler(Looper.getMainLooper())
@@ -40,6 +47,7 @@ class DialerInCallService : InCallService() {
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
+        tts?.shutdown()
         CallManager.removeListener(onCallsChanged)
         CallManager.service = null
         CallNotifications.cancelIncoming(this)
@@ -67,6 +75,8 @@ class DialerInCallService : InCallService() {
                     ) CallNotifications.showIncoming(this, id, call)
                 }, 1500)
             }
+            val announce = prefs["announceCalls"]
+            if (announce == "always" || (announce == "headset" && headsetConnected())) announce(call)
             if (prefs["autoAnswer"] == true && CallManager.all().size == 1 && headsetConnected()) {
                 handler.postDelayed({
                     if (CallManager.idOf(call) != null && CallManager.stateOf(call) == Call.STATE_RINGING) {
@@ -89,6 +99,7 @@ class DialerInCallService : InCallService() {
 
     /** Settings › Answer/End calls: a buzz on answer and hang-up, and the speaker on answer. */
     fun onStateChanged(call: Call, from: Int?, to: Int) {
+        if (from == Call.STATE_RINGING) tts?.stop()
         if (!CallPrefs.buzzes(from, to)) return
         val prefs = CallPrefs.read(this)
         if (prefs["vibrateAnswerEnd"] == true) {
@@ -99,6 +110,35 @@ class DialerInCallService : InCallService() {
         if (CallPrefs.goesLive(from, to) && prefs["speakerDefault"] == true &&
             callAudioState?.route == CallAudioState.ROUTE_EARPIECE
         ) setAudioRoute(CallAudioState.ROUTE_SPEAKER)
+    }
+
+    private var tts: TextToSpeech? = null
+
+    /** Settings › Announce incoming calls: says who's calling, every few seconds while it rings. */
+    private fun announce(call: Call) {
+        val details = call.details
+        val text = ((if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) details.contactDisplayName else null)
+            ?: details.callerDisplayName?.takeIf { it.isNotBlank() }
+            // Digit by digit, not "three billion…".
+            ?: details.handle?.schemeSpecificPart?.takeIf { it.isNotBlank() }?.toList()?.joinToString(" ")
+            ?: "Unknown caller") + " calling"
+        val ringing = { CallManager.idOf(call) != null && CallManager.stateOf(call) == Call.STATE_RINGING }
+        val speak = object : Runnable {
+            override fun run() {
+                if (!ringing()) return
+                tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "announce")
+                handler.postDelayed(this, ANNOUNCE_EVERY_MS)
+            }
+        }
+        tts?.let { return speak.run() }
+        tts = TextToSpeech(this) { status ->
+            if (status != TextToSpeech.SUCCESS) return@TextToSpeech
+            tts?.setAudioAttributes(
+                AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build()
+            )
+            speak.run()
+        }
     }
 
     private fun headsetConnected() = getSystemService(AudioManager::class.java)

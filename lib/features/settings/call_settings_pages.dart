@@ -18,6 +18,7 @@ class _CallSettings {
       if (s['speakerDefault'] case final bool v) speaker.value = v;
       if (s['autoAnswer'] case final bool v) autoAnswer.value = v;
       if (s['autoAnswerDelay'] case final int v) delay.value = '$v';
+      if (s['announceCalls'] case final String v) announce.value = v;
     });
   }
 
@@ -26,12 +27,16 @@ class _CallSettings {
   final speaker = ValueNotifier(false);
   final autoAnswer = ValueNotifier(false);
   final delay = ValueNotifier<String?>('5');
+  final announce = ValueNotifier('off');
 
   void set<T extends Object>(ValueNotifier<T> notifier, String key, T value) {
     notifier.value = value;
     TelecomBridge.instance.setCallSetting(key, value);
   }
 }
+
+/// Settings' effect levels, for Reduce visual effects and Call screen effects.
+const effectsLabels = {'full': 'Full effects', 'reduced': 'Reduced effects', 'off': 'Effects off'};
 
 /// Decline and Answer at the bottom of a [PhonePreview].
 const _callButtons = Positioned(
@@ -57,6 +62,9 @@ class IncomingCallRemindersScreen extends StatefulWidget {
 
 class _IncomingCallRemindersScreenState extends State<IncomingCallRemindersScreen> {
   final _settings = _CallSettings();
+  final _announceKey = GlobalKey();
+
+  static const _announce = {'off': 'Off', 'always': 'Always', 'headset': 'Only with headphones'};
 
   @override
   Widget build(BuildContext context) {
@@ -108,17 +116,41 @@ class _IncomingCallRemindersScreenState extends State<IncomingCallRemindersScree
             ),
           ],
         ),
+        OneUIGroupCard(
+          items: [
+            choiceRow(
+              context,
+              title: 'Announce incoming calls',
+              subtitle: "Says the caller's name while it rings",
+              anchor: _announceKey,
+              value: _settings.announce,
+              labels: _announce,
+              onPick: (v) => _settings.set(_settings.announce, 'announceCalls', v),
+            ),
+          ],
+        ),
       ],
     );
   }
 }
 
 /// Settings › Answer buttons: whether the call screen answers with two buttons or one.
-class AnswerButtonsScreen extends StatelessWidget {
+class AnswerButtonsScreen extends StatefulWidget {
   const AnswerButtonsScreen({super.key});
 
   @override
+  State<AnswerButtonsScreen> createState() => _AnswerButtonsScreenState();
+}
+
+class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
+  final _directionKey = GlobalKey();
+  final _effectsKey = GlobalKey();
+
+  static const _directions = {'up': 'Swipe up to answer', 'down': 'Swipe down to answer'};
+
+  @override
   Widget build(BuildContext context) {
+    final prefs = DialerPrefs.instance;
     return CosSubpage(
       title: 'Answer buttons',
       children: [
@@ -154,6 +186,32 @@ class AnswerButtonsScreen extends StatelessWidget {
               ),
             ),
           ],
+        ),
+        ValueListenableBuilder(
+          valueListenable: prefs.answerStyle,
+          builder: (context, style, _) => OneUIGroupCard(
+            items: [
+              // Only 1 button has a direction to choose.
+              if (style == 'one')
+                choiceRow(
+                  context,
+                  title: 'Answer call',
+                  anchor: _directionKey,
+                  value: prefs.answerDirection,
+                  labels: _directions,
+                  onPick: prefs.setAnswerDirection,
+                ),
+              choiceRow(
+                context,
+                title: 'Call screen effects',
+                subtitle: 'Glass and glow on the call screen',
+                anchor: _effectsKey,
+                value: prefs.callEffects,
+                labels: effectsLabels,
+                onPick: prefs.setCallEffects,
+              ),
+            ],
+          ),
         ),
       ],
     );
