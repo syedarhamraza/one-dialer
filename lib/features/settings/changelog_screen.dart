@@ -11,7 +11,7 @@ import '../../widgets/version_mark.dart';
 import '../../widgets/one_ui_group_card.dart';
 import '../../widgets/one_ui_subpage.dart';
 
-/// Settings › What's new (also Software update › What's new), written like a release note:
+/// Software update › Changelog, written like a release note:
 /// the running version over the artwork, its notes as short paragraphs, then earlier versions,
 /// each opening its own page.
 class ChangelogScreen extends StatefulWidget {
@@ -47,7 +47,7 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
     final latest = Changelog.entries.first;
     final earlier = Changelog.entries.skip(1).toList();
     return OneUISubpage(
-      title: "What's new",
+      title: 'Changelog',
       builder: (context) => [
         FutureBuilder(
           future: _installed,
