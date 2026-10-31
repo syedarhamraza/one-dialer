@@ -92,10 +92,12 @@ the other button and the pill fade out as it arms.
   they loop, widget tests pump fixed durations instead of `pumpAndSettle` while
   ringing (or use reduced motion).
 - Screen readers activate Answer and Decline directly.
-- **1 button** (Settings › Answer buttons, `DialerPrefs.answerStyle == 'one'`; "Answer call" › Swipe down to answer swaps the directions): a single
-  green ball in the middle, `SwipeUpButton` with `onSwipeDown`. Up answers (with the same flight
-  into End), down declines; dragging down turns it End red and swaps in the hang-up glyph, and a
-  red dash drifts down under it. Screen readers get Answer as the tap and Decline as a custom action.
+- **1 button** (Settings › Answer buttons, `DialerPrefs.answerStyle == 'one'`; "Answer call" ›
+  Swipe down to answer swaps the directions): ColorOS 17's white ball with a dark handset
+  (`oneButtonWhite`), `SwipeUpButton` with `onSwipeDown`. A green arc pulses on the answering side
+  and a red one on the declining side; dragging tints the ball toward that side's colour and swaps in
+  its glyph. Swiping up to answer keeps the flight into End. Screen readers get the up action as the
+  tap and the down one as a custom action.
 
 ## Connected and keypad
 

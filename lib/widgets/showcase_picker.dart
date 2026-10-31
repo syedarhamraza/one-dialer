@@ -175,6 +175,7 @@ class PreviewCallButton extends StatelessWidget {
     width: size,
     height: size,
     decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-    child: Icon(icon, size: size * .55, color: color == Colors.white ? const Color(0xFF2E8A94) : Colors.white),
+    // A light button gets a dark glyph, as ColorOS's white 1-button ball.
+    child: Icon(icon, size: size * .55, color: color.computeLuminance() > .5 ? const Color(0xFF2C2C2E) : Colors.white),
   );
 }

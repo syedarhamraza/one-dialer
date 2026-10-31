@@ -12,6 +12,10 @@ import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/one_ui_floating_modal.dart';
 import 'call_controls.dart';
 
+/// ColorOS 17's 1-button ball: white with a dark handset, until a drag tints it.
+const oneButtonWhite = Color(0xFFF2F2F4);
+const oneButtonIcon = Color(0xFF2C2C2E);
+
 /// Incoming call, ColorOS 17 style: Decline and Answer side by side, each dragged away to act,
 /// with a "Decline with message" pill underneath. Dragging one fades out everything else.
 class IncomingControls extends StatefulWidget {
@@ -117,7 +121,8 @@ class _IncomingControlsState extends State<IncomingControls> {
                   DialerPrefs.instance.answerStyle.value == 'one' &&
                       DialerPrefs.instance.answerDirection.value == 'down'
                   ? SwipeUpButton(
-                      color: answerGreen,
+                      color: oneButtonWhite,
+                      iconColor: oneButtonIcon,
                       icon: Icons.call_rounded,
                       shake: true,
                       label: 'Decline',
@@ -133,7 +138,9 @@ class _IncomingControlsState extends State<IncomingControls> {
                     )
                   : DialerPrefs.instance.answerStyle.value == 'one'
                   ? SwipeUpButton(
-                      color: answerGreen,
+                      color: oneButtonWhite,
+                      iconColor: oneButtonIcon,
+                      upColor: answerGreen,
                       icon: Icons.call_rounded,
                       shake: true,
                       label: 'Answer',
@@ -180,7 +187,11 @@ class _IncomingControlsState extends State<IncomingControls> {
                     ),
             ),
           ),
-          SizedBox(height: compact ? 12 : 28),
+          // 1 button has an arc under the ball too, so it gets more room above the pill.
+          ValueListenableBuilder(
+            valueListenable: DialerPrefs.instance.answerStyle,
+            builder: (context, style, _) => SizedBox(height: (compact ? 12 : 28) + (style == 'one' ? 14 : 0)),
+          ),
           if (canText)
             Opacity(
               opacity: _opacityFor(null),
@@ -232,6 +243,7 @@ class SwipeUpButton extends StatefulWidget {
     this.downIcon = Icons.call_end_rounded,
     this.upColor,
     this.upIcon,
+    this.iconColor = Colors.white,
   });
 
   final Color color;
@@ -252,14 +264,16 @@ class SwipeUpButton extends StatefulWidget {
   /// Wiggles the icon once per hint cycle while the ball rests, as a ringing handset.
   final bool shake;
 
-  /// Makes a downward swipe act too (1-button answering); the ball turns [downColor] with
-  /// [downIcon] on the way down, and [upColor] with [upIcon] (if set) on the way up.
+  /// Makes a downward swipe act too (1-button answering): the ball rests in [color] and turns
+  /// [downColor] with [downIcon] on the way down, and [upColor] with [upIcon] on the way up,
+  /// like ColorOS 17's white ball between a red and a green arc.
   final VoidCallback? onSwipeDown;
   final String downLabel;
   final Color downColor;
   final IconData downIcon;
   final Color? upColor;
   final IconData? upIcon;
+  final Color iconColor;
 
   static const double size = 72;
   static const double threshold = 96;
@@ -436,8 +450,15 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                 // Swiping down turns the ball into Decline.
                 // A two-way ball takes on the look of the action it's heading for.
                 final goingDown = offset.dy > 0;
-                final turn = _twoWay && (goingDown || widget.upColor != null) ? armed : 0.0;
-                final color = Color.lerp(widget.color, goingDown ? widget.downColor : widget.upColor, turn)!;
+                final turn = _twoWay ? armed : 0.0;
+                final color = Color.lerp(
+                  widget.color,
+                  goingDown ? widget.downColor : widget.upColor ?? widget.color,
+                  turn,
+                )!;
+                final iconColor = Color.lerp(widget.iconColor, Colors.white, turn)!;
+                final upHint = ArcHint(widget.upColor ?? widget.color);
+                final downHint = ArcHint(widget.downColor);
                 final icon = turn <= .5 ? widget.icon : (goingDown ? widget.downIcon : widget.upIcon ?? widget.icon);
                 return Stack(
                   clipBehavior: Clip.none,
@@ -447,18 +468,18 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                       top: travel - 22 - (reduceMotion ? 0 : 10 * rise),
                       child: Opacity(
                         opacity: dash,
-                        child: CustomPaint(size: _ArcHint.size, painter: _ArcHint(widget.upColor ?? widget.color)),
+                        child: CustomPaint(size: upHint.size, painter: upHint),
                       ),
                     ),
                     if (_twoWay)
                       Positioned(
                         // The same dash mirrored under the ball, drifting down.
-                        top: travel + size + 22 - _ArcHint.size.height + (reduceMotion ? 0 : 10 * rise),
+                        top: travel + size + 22 - downHint.size.height + (reduceMotion ? 0 : 10 * rise),
                         child: Opacity(
                           opacity: dash,
                           child: RotatedBox(
                             quarterTurns: 2,
-                            child: CustomPaint(size: _ArcHint.size, painter: _ArcHint(widget.downColor)),
+                            child: CustomPaint(size: downHint.size, painter: downHint),
                           ),
                         ),
                       ),
@@ -495,7 +516,7 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                                     angle: widget.shake && still && !reduceMotion && phase < .4
                                         ? .3 * math.sin(phase / .4 * 6 * math.pi) * (1 - phase / .4)
                                         : 0,
-                                    child: Icon(icon, color: Colors.white, size: size * .52),
+                                    child: Icon(icon, color: iconColor, size: size * .52),
                                   ),
                                 ),
                               ),
@@ -515,30 +536,31 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
   }
 }
 
-// The ColorOS swipe hint: a true circular arc (a cap over the button), with rounded ends.
-class _ArcHint extends CustomPainter {
-  const _ArcHint(this.color);
+/// The ColorOS swipe hint: a true circular arc (a cap over the button), with rounded ends.
+/// Also drawn small in Settings' previews.
+class ArcHint extends CustomPainter {
+  const ArcHint(this.color, {this.radius = 15, this.stroke = 3});
   final Color color;
+  final double radius, stroke;
 
-  static const double _radius = 15, _sweep = 1.75, _stroke = 3; // 100 degrees
-  static final size = Size(
-    2 * _radius * math.sin(_sweep / 2) + _stroke,
-    _radius * (1 - math.cos(_sweep / 2)) + _stroke,
-  );
+  static const double _sweep = 1.75; // 100 degrees
+
+  Size get size => Size(2 * radius * math.sin(_sweep / 2) + stroke, radius * (1 - math.cos(_sweep / 2)) + stroke);
 
   @override
   void paint(Canvas canvas, Size size) => canvas.drawArc(
-    Rect.fromCircle(center: Offset(size.width / 2, _stroke / 2 + _radius), radius: _radius),
+    Rect.fromCircle(center: Offset(size.width / 2, stroke / 2 + radius), radius: radius),
     -math.pi / 2 - _sweep / 2,
     _sweep,
     false,
     Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = _stroke
+      ..strokeWidth = stroke
       ..strokeCap = StrokeCap.round,
   );
 
   @override
-  bool shouldRepaint(_ArcHint oldDelegate) => oldDelegate.color != color;
+  bool shouldRepaint(ArcHint oldDelegate) =>
+      oldDelegate.color != color || oldDelegate.radius != radius || oldDelegate.stroke != stroke;
 }

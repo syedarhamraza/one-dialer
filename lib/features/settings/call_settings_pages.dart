@@ -7,6 +7,7 @@ import '../../widgets/cos_subpage.dart';
 import '../../widgets/one_ui_group_card.dart';
 import '../../widgets/showcase_picker.dart';
 import '../in_call/call_controls.dart' show answerGreen, endRed;
+import '../in_call/incoming_controls.dart' show ArcHint, oneButtonWhite;
 import 'quick_replies_screen.dart';
 
 /// The native call settings (`CallPrefs.kt`) as notifiers, read once when a page opens.
@@ -38,19 +39,52 @@ class _CallSettings {
 /// Settings' effect levels, for Reduce visual effects and Call screen effects.
 const effectsLabels = {'full': 'Full effects', 'reduced': 'Reduced effects', 'off': 'Effects off'};
 
-/// Decline and Answer at the bottom of a [PhonePreview].
+/// Decline and Answer at the bottom of a [PhonePreview], each under its swipe arc.
 const _callButtons = Positioned(
   left: 0,
   right: 0,
-  bottom: 34,
+  bottom: 30,
   child: Row(
     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
     children: [
-      PreviewCallButton(color: endRed, icon: Icons.call_end_rounded),
-      PreviewCallButton(color: answerGreen, icon: Icons.call_rounded),
+      _Hinted(
+        PreviewCallButton(color: endRed, icon: Icons.call_end_rounded),
+        up: endRed,
+      ),
+      _Hinted(
+        PreviewCallButton(color: answerGreen, icon: Icons.call_rounded),
+        up: answerGreen,
+      ),
     ],
   ),
 );
+
+/// A preview button with the call screen's swipe arcs, small: [up] above it, [down] below.
+class _Hinted extends StatelessWidget {
+  const _Hinted(this.button, {required this.up, this.down});
+
+  final Widget button;
+  final Color up;
+  final Color? down;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget arc(Color c) {
+      final hint = ArcHint(c, radius: 7, stroke: 1.6);
+      return CustomPaint(size: hint.size, painter: hint);
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        arc(up),
+        const SizedBox(height: 3),
+        button,
+        if (down case final d?) ...[const SizedBox(height: 3), RotatedBox(quarterTurns: 2, child: arc(d))],
+      ],
+    );
+  }
+}
 
 /// Settings › Incoming call reminders: how a call rings while the phone is unlocked.
 class IncomingCallRemindersScreen extends StatefulWidget {
@@ -157,8 +191,8 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
         ShowcasePicker(
           value: DialerPrefs.instance.answerStyle,
           onPick: DialerPrefs.instance.setAnswerStyle,
-          options: const [
-            ShowcaseOption(
+          options: [
+            const ShowcaseOption(
               value: 'two',
               label: '2 buttons',
               preview: PhonePreview(child: Stack(children: [_callButtons])),
@@ -166,22 +200,24 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
             ShowcaseOption(
               value: 'one',
               label: '1 button',
+              // Follows Answer call: the green arc is on the answering side.
               preview: PhonePreview(
-                child: Stack(
-                  children: [
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 26,
-                      child: Column(
-                        children: [
-                          Icon(Icons.keyboard_arrow_up_rounded, size: 14, color: Colors.white70),
-                          PreviewCallButton(color: Colors.white, icon: Icons.call_rounded, size: 22),
-                          Icon(Icons.keyboard_arrow_down_rounded, size: 14, color: Colors.white70),
-                        ],
+                child: ValueListenableBuilder(
+                  valueListenable: prefs.answerDirection,
+                  builder: (context, direction, _) => Stack(
+                    children: [
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 22,
+                        child: _Hinted(
+                          const PreviewCallButton(color: oneButtonWhite, icon: Icons.call_rounded, size: 22),
+                          up: direction == 'down' ? endRed : answerGreen,
+                          down: direction == 'down' ? answerGreen : endRed,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
