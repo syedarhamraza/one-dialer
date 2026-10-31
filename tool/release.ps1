@@ -259,6 +259,18 @@ if (-not $SkipBuild) {
 
 if (-not (Invoke-Native { git tag --list "v$newName" })) { Invoke-Checked 'git tag' { git tag -a "v$newName" -m "One Dialer $newName" } }
 
+# --- Release notes for Software update ---------------------------------------------
+# Play doesn't say what's in an update, so the app reads this build's notes from the website.
+$website = 'D:\syedarhamraza.github.io'
+$notesJson = Join-Path $website 'public\one-dialer\changelog.json'
+if (Test-Path $website) {
+  Invoke-Checked 'Export release notes' { dart run tool/export_changelog.dart $newName $next.Code $notesJson }
+}
+else {
+  Write-Host "The website isn't at $website, so Software update won't show these notes. Export them with:" -ForegroundColor Yellow
+  Write-Host "  dart run tool/export_changelog.dart $newName $($next.Code) <website>\public\one-dialer\changelog.json" -ForegroundColor Yellow
+}
+
 # --- Next steps -------------------------------------------------------------------
 $track = 'Production'
 if ($next.Pre -eq 'beta') { $track = 'Open testing' }
@@ -272,3 +284,4 @@ if (-not $SkipBuild) {
   else { Write-Host '  1. Install or share build/app/outputs/flutter-apk/app-release.apk (Play needs the .aab).' }
 }
 Write-Host '  2. Push the release commit and tag:  git push --follow-tags'
+Write-Host "  3. Commit and push the website ($website) so Software update shows the notes."

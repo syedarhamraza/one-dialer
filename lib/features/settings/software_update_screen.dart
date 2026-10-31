@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 
 import '../../app/app_info.dart';
 import '../../core/config/app_version.dart';
-import '../../core/config/changelog.dart';
 import '../updates/data/update_service.dart';
 import '../updates/presentation/update_controller.dart';
 import '../../theme/one_ui_theme.dart';
@@ -302,9 +301,23 @@ class _UpdateCardsState extends State<_UpdateCards> {
   bool _open = true;
 
   @override
+  void initState() {
+    super.initState();
+    UpdateController.instance.addListener(_changed); // the notes arrive after the check
+  }
+
+  @override
+  void dispose() {
+    UpdateController.instance.removeListener(_changed);
+    super.dispose();
+  }
+
+  void _changed() => setState(() {});
+
+  @override
   Widget build(BuildContext context) {
-    // Play doesn't say what's in the update, so the notes are the newest written ones.
-    final notes = Changelog.entries.first;
+    // The update's own notes from the website: never the installed version's.
+    final notes = UpdateController.instance.updateNotes;
     final card = BoxDecoration(color: context.palette.card, borderRadius: OneUITheme.cardBorderRadius);
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.42),
@@ -324,69 +337,71 @@ class _UpdateCardsState extends State<_UpdateCards> {
                     children: [
                       const Text('Software version', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
                       const SizedBox(width: 8),
-                      if (notes.version.contains('-'))
+                      if (notes?.version.contains('-') ?? false)
                         Text('Closed beta', style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${AppInfo.name} ${notes.version}',
+                    notes == null ? 'A new version is available' : '${AppInfo.name} ${notes.version}',
                     style: TextStyle(fontSize: 14, color: context.palette.textSecondary),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
-            Container(
-              decoration: card,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  InkWell(
-                    borderRadius: OneUITheme.cardBorderRadius,
-                    onTap: () => setState(() => _open = !_open),
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(18, 16, 14, 16),
-                      child: Row(
-                        children: [
-                          const Expanded(
-                            child: Text(
-                              'About this update',
-                              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                          Icon(
-                            _open ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
-                            color: context.palette.textSecondary,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (_open)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          for (final change in notes.changes)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
+            if (notes != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                decoration: card,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    InkWell(
+                      borderRadius: OneUITheme.cardBorderRadius,
+                      onTap: () => setState(() => _open = !_open),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(18, 16, 14, 16),
+                        child: Row(
+                          children: [
+                            const Expanded(
                               child: Text(
-                                change,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  height: 1.35,
-                                  color: context.palette.textPrimary.withValues(alpha: .87),
-                                ),
+                                'About this update',
+                                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
                               ),
                             ),
-                        ],
+                            Icon(
+                              _open ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                              color: context.palette.textSecondary,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                ],
+                    if (_open)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            for (final change in notes.changes)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: Text(
+                                  change,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    height: 1.35,
+                                    color: context.palette.textPrimary.withValues(alpha: .87),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),

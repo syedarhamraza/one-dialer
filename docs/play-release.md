@@ -43,7 +43,7 @@ The script runs analyze and tests, bumps pubspec, adds a Changelog entry and wai
 
 Keep `symbols/<version>/` (git-ignored): it decodes that release's crashes (`flutter symbolize -i trace.txt -d symbols/<version>/app.android-arm64.symbols`; exception messages via `symbols/<version>.obfuscation-map.json`).
 
-Then upload `build/app/outputs/bundle/release/app-release.aab`, push the branch with `git push --follow-tags`, and open the PR.
+Then upload `build/app/outputs/bundle/release/app-release.aab`, push the branch with `git push --follow-tags`, and open the PR. The script also writes the release notes to the website (`public/one-dialer/changelog.json`) for Software update: commit and push the website too.
 
 ## Closed testing
 
