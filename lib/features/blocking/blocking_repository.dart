@@ -38,10 +38,20 @@ class BlockingRepository {
     }
   }
 
+  /// Called for every call on each Calls rebuild: comparing against every blocked number's
+  /// regex key there froze long lists for seconds (ANRs on vivo), so keys are built once.
   bool isBlocked(String number) {
     final key = numberKey(number);
-    return key.isNotEmpty && numbers.value.any((n) => numberKey(n) == key);
+    if (key.isEmpty) return false;
+    if (!identical(_keysFor, numbers.value)) {
+      _keysFor = numbers.value;
+      _keys = {for (final n in numbers.value) numberKey(n)}..remove('');
+    }
+    return _keys.contains(key);
   }
+
+  List<String>? _keysFor;
+  Set<String> _keys = const {};
 
   Future<void> setBlocked(String number, bool blocked) async {
     if (blocked) {

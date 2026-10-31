@@ -45,6 +45,9 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
+            <!-- tel: and contact intents are read by MainActivity itself; Flutter's own deep
+                 linking would push them as named routes the app doesn't have (null-check crash). -->
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -71,6 +74,8 @@
             android:exported="true"
             android:label="One Contacts"
             android:icon="@mipmap/ic_contacts">
+            <!-- FlutterActivity reads meta-data from the launched component, so the alias needs it too. -->
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

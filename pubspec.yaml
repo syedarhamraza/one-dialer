@@ -37,6 +37,10 @@ dependencies:
   permission_handler: ^13.0.2
   flutter_contacts: ^2.6.0
   shared_preferences: ^2.5.6
+  # shortcut: pinned below 2.5.0, whose JNI registrar keeps one "data_store" handler for the whole
+  # process: when either engine (main, in-call) detaches it unregisters the other's, and the next
+  # read throws "No instance named data_store". Unpin once the plugin registers per engine.
+  shared_preferences_android: 2.4.28
   intl: ^0.20.3
   share_plus: ^13.3.1
   qr_flutter: ^4.1.0

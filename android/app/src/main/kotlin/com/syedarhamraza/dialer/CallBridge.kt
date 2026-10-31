@@ -93,12 +93,20 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
     private fun watchCallLog() {
         if (watchingCallLog) return
         if (context.checkSelfPermission(Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED) return
-        context.contentResolver.registerContentObserver(CallLog.Calls.CONTENT_URI, true, callLogObserver)
-        // VoIP apps write their calls here; it may not notify the main URI.
-        if (android.os.Build.VERSION.SDK_INT >= 37) {
-            context.contentResolver.registerContentObserver(CallLog.Calls.CONTENT_VOIP_URI, true, callLogObserver)
+        try {
+            context.contentResolver.registerContentObserver(CallLog.Calls.CONTENT_URI, true, callLogObserver)
+        } catch (e: SecurityException) {
+            // A cloned copy of the app (OPPO/vivo "App clone", user 999) has no call log provider;
+            // reads there fail as NO_PERMISSION and Calls shows no access.
+            return
         }
         watchingCallLog = true
+        // VoIP apps write their calls here; it may not notify the main URI.
+        if (android.os.Build.VERSION.SDK_INT >= 37) {
+            runCatching {
+                context.contentResolver.registerContentObserver(CallLog.Calls.CONTENT_VOIP_URI, true, callLogObserver)
+            }
+        }
     }
 
     fun sendDialNumber(number: String) = methods.invokeMethod("onDialIntent", number)
