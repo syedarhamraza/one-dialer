@@ -232,6 +232,9 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   static const _slide = Cubic(.15, 0, .2, 1.14);
   static const _drop = Interval(0, .5, curve: Cubic(.25, .1, .25, 1));
   static const _stretch = Interval(0, .5, curve: Curves.easeOutCubic);
+  // The 1-button ball lands about half a diameter under End and springs up into it, squashing into
+  // the pill a touch past its size before settling (ColorOS 17's recording).
+  static const _springIn = Interval(0, .6, curve: Cubic(.3, 0, .2, 1.2));
   static const _turn = Interval(.14, .43, curve: Curves.easeInOut);
   static const _hangUpIn = Interval(.43, .6);
   static const _handsetOut = Interval(.6, .75);
@@ -248,8 +251,8 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     if (to == null) {
       rect = from;
     } else {
-      final down = _drop.transform(t);
-      final grow = _stretch.transform(t);
+      final down = (_oneButton ? _springIn : _drop).transform(t);
+      final grow = (_oneButton ? _springIn : _stretch).transform(t);
       rect = Rect.fromCenter(
         center: Offset(
           lerpDouble(from.center.dx, to.center.dx, _slide.transform(t))!,

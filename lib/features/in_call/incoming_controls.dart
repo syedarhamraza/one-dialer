@@ -300,8 +300,9 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
   // ColorOS 17's 1-button ball arms after a short pull (a few frames of the finger in its recording).
   double get _threshold => (_twoWay ? 80 : SwipeUpButton.threshold) * (widget.compact ? .75 : 1);
 
-  /// Where a released 1-button ball comes to rest, from its start: 1.6 diameters, as recorded.
-  double get _answerSpot => SwipeUpButton.size * (widget.compact ? .85 : 1) * 1.6;
+  /// Where a released 1-button ball comes to rest, from its start: 1.85 diameters, about half a
+  /// diameter under the End pill it then springs up into, as recorded.
+  double get _answerSpot => SwipeUpButton.size * (widget.compact ? .85 : 1) * 1.85;
 
   // The spring back may wobble just past rest, never fling through to the other side.
   Offset get _offset => _drag * math.max(_hold.value, -.08);
