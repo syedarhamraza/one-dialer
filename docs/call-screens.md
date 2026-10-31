@@ -99,11 +99,10 @@ the other button and the pill fade out as it arms.
   answering side and a red one on the declining side. It follows the finger like the 2-button
   balls, its colour blending to that side's green or red (toward Decline the handset crossfades into
   the hang-up glyph) and growing as it arms, while the arc it's pulled over fades; it arms after 80 dp.
-  Released, it glides the rest of the way to 1.85 diameters (170 ms, as with 2 buttons) and lands about half a diameter under the End pill. Once Telecom
-  connects it springs up into End on the 2-button flight's
-  700 ms timeline (stretching into the pill a touch past its size, then settling, turning red, its handset
+  Released, it stays where it was let go (no further glide either way) and, once Telecom connects,
+  springs from there into End on the 2-button flight's 700 ms timeline (stretching into the pill a touch past its size, then settling, turning red, its handset
   crossfading into the hang-up glyph without tipping over) while the connected controls rise in, held back until
-  then. Swiping up to answer throws it up and flies it down into End as with 2 buttons.
+  then. Swiping up to answer flies it down into End from where it was let go, the same way.
   Screen readers get the up
   action as the tap and the down one as a custom action. `IncomingControls` is keyed per call, as
   the cached engine keeps the screen between calls.

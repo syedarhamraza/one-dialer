@@ -190,7 +190,7 @@ class _IncomingControlsState extends State<IncomingControls> {
             ),
           ),
           // ColorOS 17 rests the 1-button ball high, about 260 dp above the screen's bottom edge,
-          // leaving room under it to glide down to the answer spot.
+          // leaving room under it to be pulled down toward End.
           ValueListenableBuilder(
             valueListenable: DialerPrefs.instance.answerStyle,
             builder: (context, style, _) =>
@@ -300,10 +300,6 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
   // ColorOS 17's 1-button ball arms after a short pull (a few frames of the finger in its recording).
   double get _threshold => (_twoWay ? 80 : SwipeUpButton.threshold) * (widget.compact ? .75 : 1);
 
-  /// Where a released 1-button ball comes to rest, from its start: 1.85 diameters, about half a
-  /// diameter under the End pill it then springs up into, as recorded.
-  double get _answerSpot => SwipeUpButton.size * (widget.compact ? .85 : 1) * 1.85;
-
   // The spring back may wobble just past rest, never fling through to the other side.
   Offset get _offset => _drag * math.max(_hold.value, -.08);
 
@@ -356,13 +352,11 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
     final rect = box == null || !box.hasSize
         ? Rect.zero
         : MatrixUtils.transformRect(box.getTransformTo(null), Offset.zero & box.size);
-    // The rest of the way to the travel cap (or the 1-button answer spot), in global px (the screen
-    // may be scaled to `DesignWidth`); negative is downward.
+    // The 1-button ball turns into End from where it's let go; the 2-button one glides on to the
+    // travel cap first, in global px (the screen may be scaled to `DesignWidth`).
+    if (down) return widget.onSwipeDown!(rect, 0);
     final scale = box == null || !box.hasSize ? 1.0 : rect.height / box.size.height;
-    final shown = _offset.dy;
-    if (down) return widget.onSwipeDown!(rect, -math.max(0.0, _answerSpot - shown) * scale);
-    final cap = _twoWay ? _answerSpot : _maxTravel;
-    widget.onTriggered(rect, math.max(0.0, cap + shown) * scale);
+    widget.onTriggered(rect, _twoWay ? 0 : math.max(0.0, _maxTravel + _offset.dy) * scale);
   }
 
   void _onStart(DragStartDetails _) {
