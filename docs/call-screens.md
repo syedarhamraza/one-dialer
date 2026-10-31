@@ -92,7 +92,7 @@ the other button and the pill fade out as it arms.
   they loop, widget tests pump fixed durations instead of `pumpAndSettle` while
   ringing (or use reduced motion).
 - Screen readers activate Answer and Decline directly.
-- **1 button** (Settings › Incoming call reminders, `DialerPrefs.answerStyle == 'one'`): a single
+- **1 button** (Settings › Answer buttons, `DialerPrefs.answerStyle == 'one'`): a single
   green ball in the middle, `SwipeUpButton` with `onSwipeDown`. Up answers (with the same flight
   into End), down declines; dragging down turns it End red and swaps in the hang-up glyph, and a
   red dash drifts down under it. Screen readers get Answer as the tap and Decline as a custom action.

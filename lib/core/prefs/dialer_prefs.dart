@@ -178,7 +178,7 @@ class DialerPrefs {
   /// screen's own engine (which reads it in `inCallMain` and on every resume, never awaited).
   final callEffects = ValueNotifier('full');
 
-  /// Settings › Incoming call reminders: `two` buttons (Decline | Answer) or `one` (swipe up to
+  /// Settings › Answer buttons: `two` buttons (Decline | Answer) or `one` (swipe up to
   /// answer, down to decline). Loaded with [callEffects], for the call screen's engine.
   final answerStyle = ValueNotifier('two');
 

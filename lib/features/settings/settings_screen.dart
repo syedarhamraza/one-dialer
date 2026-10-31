@@ -133,6 +133,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         OneUIGroupCard(
           items: [
             OneUIGroupItem(title: 'Incoming call reminders', onTap: () => _push(const IncomingCallRemindersScreen())),
+            OneUIGroupItem(title: 'Answer buttons', onTap: () => _push(const AnswerButtonsScreen())),
             OneUIGroupItem(title: 'Answer/End calls', onTap: () => _push(const AnswerEndCallsScreen())),
           ],
         ),

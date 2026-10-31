@@ -33,8 +33,21 @@ class _CallSettings {
   }
 }
 
-/// Settings › Incoming call reminders: how a call rings while the phone is unlocked, and
-/// whether the call screen answers with two buttons or one.
+/// Decline and Answer at the bottom of a [PhonePreview].
+const _callButtons = Positioned(
+  left: 0,
+  right: 0,
+  bottom: 34,
+  child: Row(
+    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    children: [
+      PreviewCallButton(color: endRed, icon: Icons.call_end_rounded),
+      PreviewCallButton(color: answerGreen, icon: Icons.call_rounded),
+    ],
+  ),
+);
+
+/// Settings › Incoming call reminders: how a call rings while the phone is unlocked.
 class IncomingCallRemindersScreen extends StatefulWidget {
   const IncomingCallRemindersScreen({super.key});
 
@@ -44,19 +57,6 @@ class IncomingCallRemindersScreen extends StatefulWidget {
 
 class _IncomingCallRemindersScreenState extends State<IncomingCallRemindersScreen> {
   final _settings = _CallSettings();
-
-  static const _buttons = Positioned(
-    left: 0,
-    right: 0,
-    bottom: 34,
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        PreviewCallButton(color: endRed, icon: Icons.call_end_rounded),
-        PreviewCallButton(color: answerGreen, icon: Icons.call_rounded),
-      ],
-    ),
-  );
 
   @override
   Widget build(BuildContext context) {
@@ -83,6 +83,7 @@ class _IncomingCallRemindersScreenState extends State<IncomingCallRemindersScree
                       children: [
                         Expanded(
                           child: Column(
+                            mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               SizedBox(width: 40, height: 4, child: ColoredBox(color: Colors.white54)),
@@ -103,10 +104,24 @@ class _IncomingCallRemindersScreenState extends State<IncomingCallRemindersScree
             const ShowcaseOption(
               value: 'full',
               label: 'Full screen',
-              preview: PhonePreview(child: Stack(children: [_buttons])),
+              preview: PhonePreview(child: Stack(children: [_callButtons])),
             ),
           ],
         ),
+      ],
+    );
+  }
+}
+
+/// Settings › Answer buttons: whether the call screen answers with two buttons or one.
+class AnswerButtonsScreen extends StatelessWidget {
+  const AnswerButtonsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return CosSubpage(
+      title: 'Answer buttons',
+      children: [
         ShowcasePicker(
           value: DialerPrefs.instance.answerStyle,
           onPick: DialerPrefs.instance.setAnswerStyle,
@@ -114,7 +129,7 @@ class _IncomingCallRemindersScreenState extends State<IncomingCallRemindersScree
             ShowcaseOption(
               value: 'two',
               label: '2 buttons',
-              preview: PhonePreview(child: Stack(children: [_buttons])),
+              preview: PhonePreview(child: Stack(children: [_callButtons])),
             ),
             ShowcaseOption(
               value: 'one',
