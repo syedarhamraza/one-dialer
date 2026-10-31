@@ -130,8 +130,10 @@ class _IncomingControlsState extends State<IncomingControls> {
                       upIcon: Icons.call_end_rounded,
                       compact: compact,
                       onProgress: (armed) => _progress('Answer', armed),
+                      hidden: widget.answerHidden,
                       onTriggered: (_, _) => telecom.reject(call.id),
-                      onSwipeDown: () => telecom.answer(call.id),
+                      onSwipeDown: (ball, lift) =>
+                          widget.onAnswer != null ? widget.onAnswer!(ball, lift) : telecom.answer(call.id),
                       downLabel: 'Answer',
                       downColor: answerGreen,
                       downIcon: Icons.call_rounded,
@@ -149,7 +151,7 @@ class _IncomingControlsState extends State<IncomingControls> {
                       onProgress: (armed) => _progress('Answer', armed),
                       onTriggered: (ball, lift) =>
                           widget.onAnswer != null ? widget.onAnswer!(ball, lift) : telecom.answer(call.id),
-                      onSwipeDown: () => telecom.reject(call.id),
+                      onSwipeDown: (_, _) => telecom.reject(call.id),
                     )
                   : Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -187,10 +189,12 @@ class _IncomingControlsState extends State<IncomingControls> {
                     ),
             ),
           ),
-          // 1 button has an arc under the ball too, so it gets more room above the pill.
+          // ColorOS 17 rests the 1-button ball high, about 260 dp above the screen's bottom edge,
+          // leaving room under it to glide down to the answer spot.
           ValueListenableBuilder(
             valueListenable: DialerPrefs.instance.answerStyle,
-            builder: (context, style, _) => SizedBox(height: (compact ? 12 : 28) + (style == 'one' ? 14 : 0)),
+            builder: (context, style, _) =>
+                SizedBox(height: (compact ? 12 : 28) + (style == 'one' ? (compact ? 40 : 116) : 0)),
           ),
           if (canText)
             Opacity(
@@ -267,7 +271,7 @@ class SwipeUpButton extends StatefulWidget {
   /// Makes a downward swipe act too (1-button answering): the ball rests in [color] and turns
   /// [downColor] with [downIcon] on the way down, and [upColor] with [upIcon] on the way up,
   /// like ColorOS 17's white ball between a red and a green arc.
-  final VoidCallback? onSwipeDown;
+  final void Function(Rect ball, double lift)? onSwipeDown;
   final String downLabel;
   final Color downColor;
   final IconData downIcon;
@@ -293,7 +297,15 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
   bool _dragging = false;
   bool _fired = false;
 
-  double get _threshold => SwipeUpButton.threshold * (widget.compact ? .75 : 1);
+  // ColorOS 17's 1-button ball arms after a short pull (a few frames of the finger in its recording).
+  double get _threshold => (_twoWay ? 56 : SwipeUpButton.threshold) * (widget.compact ? .75 : 1);
+
+  /// How much of the finger's travel the ball shows: ColorOS's 1-button ball barely follows,
+  /// then glides the rest of the way to [_answerSpot] once released.
+  double get _follow => _twoWay ? .5 : 1;
+
+  /// Where a released 1-button ball comes to rest, from its start: 1.6 diameters, as recorded.
+  double get _answerSpot => SwipeUpButton.size * (widget.compact ? .85 : 1) * 1.6;
 
   // The spring back may wobble just past rest, never fling through to the other side.
   Offset get _offset => _drag * math.max(_hold.value, -.08);
@@ -343,14 +355,17 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
     _fired = true;
     _syncHint();
     HapticFeedback.heavyImpact();
-    if (down) return widget.onSwipeDown!();
     final box = _ball.currentContext?.findRenderObject() as RenderBox?;
     final rect = box == null || !box.hasSize
         ? Rect.zero
         : MatrixUtils.transformRect(box.getTransformTo(null), Offset.zero & box.size);
-    // The rest of the way to the travel cap, in global px (the screen may be scaled to `DesignWidth`).
+    // The rest of the way to the travel cap (or the 1-button answer spot), in global px (the screen
+    // may be scaled to `DesignWidth`); negative is downward.
     final scale = box == null || !box.hasSize ? 1.0 : rect.height / box.size.height;
-    widget.onTriggered(rect, math.max(0.0, _maxTravel + _offset.dy) * scale);
+    final shown = _offset.dy * _follow;
+    if (down) return widget.onSwipeDown!(rect, -math.max(0.0, _answerSpot - shown) * scale);
+    final cap = _twoWay ? _answerSpot : _maxTravel;
+    widget.onTriggered(rect, math.max(0.0, cap + shown) * scale);
   }
 
   void _onStart(DragStartDetails _) {
@@ -486,7 +501,7 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                     Positioned(
                       top: travel,
                       child: Transform.translate(
-                        offset: offset,
+                        offset: offset * _follow,
                         child: AnimatedScale(
                           scale: _pressed && !_fired ? 1.08 : 1,
                           duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 180),

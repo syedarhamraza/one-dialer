@@ -361,7 +361,9 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
                       ? const SizedBox(key: ValueKey('ended'), width: double.infinity)
                       : ringing
                       ? IncomingControls(
-                          key: const ValueKey('incoming'),
+                          // Per call: the cached engine keeps this screen, so the next call's ball
+                          // would otherwise start where the last one was released.
+                          key: ValueKey('incoming-${call.id}'),
                           call: call,
                           compact: compact,
                           isCurrent: () => mounted && widget.call.state == CallState.ringing,

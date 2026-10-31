@@ -18,7 +18,7 @@ void main() {
               fired.add('answer');
               released = ball;
             },
-            onSwipeDown: oneButton ? () => fired.add('decline') : null,
+            onSwipeDown: oneButton ? (_, _) => fired.add('decline') : null,
           ),
         ),
       ),
