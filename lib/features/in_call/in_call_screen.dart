@@ -193,7 +193,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     });
     // The ball takes its time to spring into End, longest for the 1-button swiped up, from furthest away.
     _fly.duration = Duration(
-      milliseconds: _oneButton && DialerPrefs.instance.answerDirection.value == 'up' ? 1100 : 900,
+      milliseconds: !_oneButton ? 1000 : (DialerPrefs.instance.answerDirection.value == 'up' ? 1100 : 900),
     );
     _springIn = GlassSpringCurve(GlassSpring.bouncy(duration: _fly.duration! * .6), _fly.duration!);
     // The 2-button ball drops ahead of sliding across, so it curves in from above instead of a straight line.

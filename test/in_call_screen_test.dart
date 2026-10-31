@@ -167,8 +167,8 @@ void main() {
     expect(tester.getRect(ball), isNot(released));
     expect(endOpacity(), 0);
 
-    // The flight has landed well within a second.
-    for (var i = 0; i < 10; i++) {
+    // The flight has landed within about a second.
+    for (var i = 0; i < 12; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
     expect(ball, findsNothing);

@@ -71,7 +71,7 @@ the other button and the pill fade out as it arms.
 - **Answer → End** (timed frame by frame off a ColorOS 17 recording): the released Answer ball
   glides on up to the top of its travel (1.4× the threshold, about 1.85 diameters; 170 ms,
   ease-out) and waits there until Telecom connects. Then the session flies it into the End pill
-  in 900 ms on the glass package's bouncy spring (the 1-button ball's too), dropping ahead of
+  in 1 s (the 1-button one in 900 ms) on the glass package's bouncy spring (the 1-button ball's too), dropping ahead of
   sliding across so it curves in from above (the 1-button one goes straight): it
   stretches into the pill as it goes, softly overshooting its size and place, then settles. It stays green for the first
   14%, then crossfades (two stacked layers, not a colour tween, so mid-way it reads as a
