@@ -191,9 +191,9 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
       _lift = lift;
       _oneButton = DialerPrefs.instance.answerStyle.value == 'one';
     });
-    // The 1-button ball takes its time to spring into End, longest swiped up, from furthest away.
+    // The ball takes its time to spring into End, longest for the 1-button swiped up, from furthest away.
     _fly.duration = Duration(
-      milliseconds: !_oneButton ? 700 : (DialerPrefs.instance.answerDirection.value == 'up' ? 1100 : 900),
+      milliseconds: _oneButton && DialerPrefs.instance.answerDirection.value == 'up' ? 1100 : 900,
     );
     _springIn = GlassSpringCurve(GlassSpring.bouncy(duration: _fly.duration! * .6), _fly.duration!);
     _rise.forward(from: 0);
@@ -228,15 +228,9 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     return MatrixUtils.transformRect(stack.getTransformTo(null)..invert(), global);
   }
 
-  // Fitted frame by frame to a ColorOS 17 recording: the ball drops in ~350 ms (fast from the start)
-  // while it slides across over the whole 700 ms, so it curves in from above, carrying ~1% past End
-  // to the left and drifting slowly back. It stretches to the pill alongside the drop, stays green
-  // for the first ~100 ms, then crossfades to red as the handset tips over.
-  static const _slide = Cubic(.15, 0, .2, 1.14);
-  static const _drop = Interval(0, .5, curve: Cubic(.25, .1, .25, 1));
-  static const _stretch = Interval(0, .5, curve: Curves.easeOutCubic);
-  // The 1-button ball springs into End on the glass package's bouncy spring over the whole flight:
-  // a soft, unhurried overshoot past the pill's size and place, then settling.
+  // The ball springs into End on the glass package's bouncy spring over the whole flight: a soft,
+  // unhurried overshoot past the pill's size and place, then settling. It stays green for the first
+  // ~120 ms, then crossfades to red (the 2-button handset tipping over meanwhile).
   Curve _springIn = Curves.linear;
   static const _turn = Interval(.14, .43, curve: Curves.easeInOut);
   static const _hangUpIn = Interval(.43, .6);
@@ -254,15 +248,14 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     if (to == null) {
       rect = from;
     } else {
-      final down = (_oneButton ? _springIn : _drop).transform(t);
-      final grow = (_oneButton ? _springIn : _stretch).transform(t);
+      final move = _springIn.transform(t);
       rect = Rect.fromCenter(
         center: Offset(
-          lerpDouble(from.center.dx, to.center.dx, _slide.transform(t))!,
-          lerpDouble(from.center.dy, to.center.dy, down)!,
+          lerpDouble(from.center.dx, to.center.dx, move)!,
+          lerpDouble(from.center.dy, to.center.dy, move)!,
         ),
-        width: lerpDouble(from.width, to.width, grow)!,
-        height: lerpDouble(from.height, to.height, grow)!,
+        width: lerpDouble(from.width, to.width, move)!,
+        height: lerpDouble(from.height, to.height, move)!,
       );
     }
     // Green crossfades to End's red (not a colour tween): half way both layers are half see-through,
