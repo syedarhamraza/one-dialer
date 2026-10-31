@@ -17,7 +17,6 @@ import '../blocking/blocking_screen.dart';
 import '../keypad/speed_dial_screen.dart';
 import '../updates/presentation/update_controller.dart';
 import 'about_screen.dart';
-import 'changelog_screen.dart';
 import 'help_feedback_screen.dart';
 import 'quick_replies_screen.dart';
 import 'software_update_screen.dart';
@@ -168,7 +167,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               ),
               onTap: () => SoftwareUpdateScreen.open(context),
             ),
-            OneUIGroupItem(title: "What's new", onTap: () => ChangelogScreen.open(context)),
             OneUIGroupItem(title: 'Help & feedback', onTap: () => _push(const HelpFeedbackScreen())),
             OneUIGroupItem(
               title: 'Privacy policy',

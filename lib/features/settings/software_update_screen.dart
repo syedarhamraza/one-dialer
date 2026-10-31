@@ -124,7 +124,7 @@ class _SoftwareUpdateScreenState extends State<SoftwareUpdateScreen> {
             Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const _AutoDownloadScreen()));
           },
         ),
-        OneUIFloatingMenuItem(label: "What's new", onTap: () => ChangelogScreen.open(context)),
+        OneUIFloatingMenuItem(label: 'Changelog', onTap: () => ChangelogScreen.open(context)),
       ],
     );
   }
