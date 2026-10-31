@@ -298,7 +298,7 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
   bool _fired = false;
 
   // ColorOS 17's 1-button ball arms after a short pull (a few frames of the finger in its recording).
-  double get _threshold => (_twoWay ? 56 : SwipeUpButton.threshold) * (widget.compact ? .75 : 1);
+  double get _threshold => (_twoWay ? 80 : SwipeUpButton.threshold) * (widget.compact ? .75 : 1);
 
   /// How much of the finger's travel the ball shows: ColorOS's 1-button ball barely follows,
   /// then glides the rest of the way to [_answerSpot] once released.
@@ -459,13 +459,21 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                 final armed = _armedFraction(offset);
                 // The dash drifts up 10 px and fades out, once per cycle.
                 final phase = (_hint.value + widget.hintPhase) % 1;
-                final rise = Curves.easeOut.transform((phase / .7).clamp(0.0, 1.0));
+                // The 1-button arcs hold still, as on ColorOS 17; the 2-button dashes drift up and fade.
+                final rise = _twoWay ? 0.0 : Curves.easeOut.transform((phase / .7).clamp(0.0, 1.0));
                 final still = !_dragging && !_fired && offset == Offset.zero;
-                final dash = reduceMotion ? .6 : (!still || phase >= .7 ? 0.0 : .9 * (1 - rise));
+                // As on ColorOS 17, the 1-button arcs stay put while the ball is held and go once it's let go.
+                final dash = _twoWay
+                    ? (_fired ? 0.0 : (reduceMotion ? .6 : .9))
+                    : reduceMotion
+                    ? .6
+                    : (!still || phase >= .7 ? 0.0 : .9 * (1 - rise));
                 // Swiping down turns the ball into Decline.
                 // A two-way ball takes on the look of the action it's heading for.
                 final goingDown = offset.dy > 0;
-                final turn = _twoWay ? armed : 0.0;
+                // The 1-button ball stays white while held and only takes its action's colour once
+                // released (answering, the screen's flying ball carries on in green).
+                final turn = _twoWay && _fired ? 1.0 : 0.0;
                 final color = Color.lerp(
                   widget.color,
                   goingDown ? widget.downColor : widget.upColor ?? widget.color,
