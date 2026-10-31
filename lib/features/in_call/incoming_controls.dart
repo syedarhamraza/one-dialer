@@ -17,7 +17,7 @@ const oneButtonWhite = Color(0xFFF2F2F4);
 const oneButtonIcon = Color(0xFF2C2C2E);
 
 /// Incoming call, ColorOS 17 style: Decline and Answer side by side, each dragged away to act,
-/// with a "Decline with SMS" pill underneath. Dragging one fades out everything else.
+/// with a text-only "Decline with SMS" pill underneath. Dragging one fades out everything else.
 class IncomingControls extends StatefulWidget {
   const IncomingControls({
     super.key,
@@ -202,13 +202,8 @@ class _IncomingControlsState extends State<IncomingControls> {
               // Frosted like the connected screen's buttons, with the same glass press.
               child: CallBody(
                 pill: true,
-                child: TextButton.icon(
+                child: TextButton(
                   onPressed: () => _declineWithMessage(context),
-                  icon: const Icon(Icons.chat_bubble_rounded, size: 15),
-                  label: const Text(
-                    'Decline with SMS',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-                  ),
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.white,
                     minimumSize: const Size(0, 36),
@@ -216,6 +211,7 @@ class _IncomingControlsState extends State<IncomingControls> {
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     shape: const StadiumBorder(),
                   ),
+                  child: const Text('Decline with SMS', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
                 ),
               ),
             ),
@@ -470,11 +466,11 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                   turn,
                 )!;
                 final iconColor = Color.lerp(widget.iconColor, Colors.white, turn)!;
-                final upHint = ArcHint(widget.upColor ?? widget.color);
+                final upHint = ArcHint(widget.upColor ?? widget.color, radius: size / 2);
                 // The arc the 1-button ball is pulled over fades, rather than showing through its tint.
                 final upDash = _twoWay && !goingDown ? dash * (1 - armed) : dash;
                 final downDash = goingDown ? dash * (1 - armed) : dash;
-                final downHint = ArcHint(widget.downColor);
+                final downHint = ArcHint(widget.downColor, radius: size / 2);
                 final target = goingDown ? widget.downIcon : widget.upIcon ?? widget.icon;
                 // Toward Decline the handset crossfades into the hang-up glyph alongside the colour.
                 final morph = target == widget.icon ? 0.0 : turn;
@@ -567,22 +563,23 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
   }
 }
 
-/// The ColorOS swipe hint: a true circular arc (a cap over the button), with rounded ends.
-/// Also drawn small in Settings' previews.
+/// The ColorOS swipe hint: a true circular arc with rounded ends, as round as the ball it caps
+/// ([radius] is the ball's). Also drawn small in Settings' previews.
 class ArcHint extends CustomPainter {
-  const ArcHint(this.color, {this.radius = 15, this.stroke = 3});
+  const ArcHint(this.color, {required this.radius, this.stroke = 3, this.sweep = .75});
   final Color color;
   final double radius, stroke;
 
-  static const double _sweep = 1.75; // 100 degrees
+  /// In radians: .75 is about 43 degrees, a short cap.
+  final double sweep;
 
-  Size get size => Size(2 * radius * math.sin(_sweep / 2) + stroke, radius * (1 - math.cos(_sweep / 2)) + stroke);
+  Size get size => Size(2 * radius * math.sin(sweep / 2) + stroke, radius * (1 - math.cos(sweep / 2)) + stroke);
 
   @override
   void paint(Canvas canvas, Size size) => canvas.drawArc(
     Rect.fromCircle(center: Offset(size.width / 2, stroke / 2 + radius), radius: radius),
-    -math.pi / 2 - _sweep / 2,
-    _sweep,
+    -math.pi / 2 - sweep / 2,
+    sweep,
     false,
     Paint()
       ..color = color
@@ -593,5 +590,8 @@ class ArcHint extends CustomPainter {
 
   @override
   bool shouldRepaint(ArcHint oldDelegate) =>
-      oldDelegate.color != color || oldDelegate.radius != radius || oldDelegate.stroke != stroke;
+      oldDelegate.color != color ||
+      oldDelegate.radius != radius ||
+      oldDelegate.stroke != stroke ||
+      oldDelegate.sweep != sweep;
 }

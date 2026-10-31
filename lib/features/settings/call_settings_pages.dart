@@ -70,7 +70,8 @@ class _Hinted extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget arc(Color c) {
-      final hint = ArcHint(c, radius: 7, stroke: 1.6);
+      // As round as the 20 px preview ball, and as short against it as on the call screen.
+      final hint = ArcHint(c, radius: 10, stroke: 1.2, sweep: .6);
       return CustomPaint(size: hint.size, painter: hint);
     }
 
