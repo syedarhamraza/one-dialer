@@ -4,6 +4,7 @@ import 'package:dialer/theme/one_ui_theme.dart';
 import 'package:dialer/widgets/call_glass.dart';
 import 'package:dialer/widgets/one_ui_glass_surface.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
@@ -29,6 +30,23 @@ void main() {
     SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.withData({'visual_effects': 'fancy'});
     await prefs.loadAppearance();
     expect(prefs.visualEffects.value, 'reduced');
+  });
+
+  test('low-end phones default to reduced until a level is saved', () async {
+    const channel = MethodChannel('com.syedarhamraza.dialer/telecom');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(channel, (call) async => call.method == 'isLowEndDevice');
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+    await prefs.loadAppearance();
+    await prefs.loadCallEffects();
+    expect((prefs.visualEffects.value, prefs.callEffects.value), ('reduced', 'reduced'));
+
+    await prefs.setVisualEffects('full');
+    await prefs.setCallEffects('full');
+    await prefs.loadAppearance();
+    await prefs.loadCallEffects();
+    expect((prefs.visualEffects.value, prefs.callEffects.value), ('full', 'full'));
   });
 
   test('each level is told apart in one place', () {

@@ -201,6 +201,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 result.success(null)
             }
             "getCallHealth" -> result.success(callHealth())
+            "isLowEndDevice" -> result.success(isLowEndDevice())
             "openSystemSettings" -> openSystemSettings(call.argument<String>("page"), result)
             "getBlocking" -> BlockingPrefs.read(context).let {
                 result.success(mapOf("blockHidden" to it.blockHidden, "blockNonContacts" to it.blockNonContacts))
@@ -316,6 +317,14 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
         ?: result.error("NO_ACTIVITY", "Roles can only be requested from the main screen", null)
 
     /** What incoming calls need to work, plus the app version for Settings › About. */
+    // shortcut: RAM stands in for GPU class (a 4 GB phone reports ~3.7e9 bytes, a 6 GB one ~5.6e9);
+    // measure frame times instead if mid-range phones turn out to lag on full.
+    private fun isLowEndDevice(): Boolean {
+        val activities = context.getSystemService(android.app.ActivityManager::class.java)
+        val memory = android.app.ActivityManager.MemoryInfo().also(activities::getMemoryInfo)
+        return activities.isLowRamDevice || memory.totalMem < 5_000_000_000L
+    }
+
     private fun callHealth(): Map<String, Any?> {
         val notifications = context.getSystemService(android.app.NotificationManager::class.java)
         val roles = context.getSystemService(RoleManager::class.java)
