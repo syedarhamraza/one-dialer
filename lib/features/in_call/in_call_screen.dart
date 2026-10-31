@@ -170,8 +170,8 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   /// How far (global px) the released ball glides on up to the top of its travel, as on ColorOS.
   double _lift = 0;
 
-  /// The 1-button ball: thrown white, it turns green on the way and, answered downward, becomes End
-  /// where it lands instead of flying across (ColorOS 17).
+  /// The 1-button ball: answered downward, it springs up into End from just under it instead of
+  /// flying across (ColorOS 17).
   bool _oneButton = false;
   late final AnimationController _rise = AnimationController(vsync: this, duration: const Duration(milliseconds: 170));
 
@@ -268,8 +268,6 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     // The same shared finish as the End pill, so the hand-off on landing is invisible.
     final shape = RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(rect.shortestSide / 2));
     final iconSize = lerpDouble(from.shortestSide * .52, 46, red)!;
-    // Thrown white, it's already green by the time it lands.
-    final white = _oneButton ? 1 - const Interval(0, .5, curve: Curves.easeOut).transform(_rise.value) : 0.0;
     return Positioned.fromRect(
       rect: rect,
       child: IgnorePointer(
@@ -289,22 +287,13 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
                 opacity: red,
                 child: DecoratedBox(decoration: glassBody(endRed, shape, flat: callFlat(context))),
               ),
-              if (white > 0)
-                Opacity(
-                  opacity: white,
-                  child: DecoratedBox(decoration: glassBody(oneButtonWhite, shape, flat: callFlat(context))),
-                ),
               // The handset tips over, then End's hang-up glyph fades in over it and only then does
               // the handset fade out underneath: never dimmed, and it lands already as End's icon.
               Opacity(
                 opacity: 1 - _handsetOut.transform(t),
                 child: Transform.rotate(
                   angle: 2.36 * red,
-                  child: Icon(
-                    Icons.call_rounded,
-                    color: Color.lerp(Colors.white, oneButtonIcon, white),
-                    size: iconSize,
-                  ),
+                  child: Icon(Icons.call_rounded, color: Colors.white, size: iconSize),
                 ),
               ),
               Opacity(

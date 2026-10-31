@@ -468,9 +468,8 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                 // Swiping down turns the ball into Decline.
                 // A two-way ball takes on the look of the action it's heading for.
                 final goingDown = offset.dy > 0;
-                // The 1-button ball stays white while held and only takes its action's colour once
-                // released (answering, the screen's flying ball carries on in green).
-                final turn = _twoWay && _fired ? 1.0 : 0.0;
+                // The 1-button ball turns red or green as it follows the finger toward that side.
+                final turn = !_twoWay ? 0.0 : (_fired ? 1.0 : armed);
                 final color = Color.lerp(
                   widget.color,
                   goingDown ? widget.downColor : widget.upColor ?? widget.color,
@@ -478,9 +477,9 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                 )!;
                 final iconColor = Color.lerp(widget.iconColor, Colors.white, turn)!;
                 final upHint = ArcHint(widget.upColor ?? widget.color);
-                // As the 1-button pull arms, a second arc appears outside that side's arc.
-                final upMore = _twoWay && !goingDown ? dash * armed : 0.0;
-                final downMore = _twoWay && goingDown ? dash * armed : 0.0;
+                // The arc the 1-button ball is pulled over fades, rather than showing through its tint.
+                final upDash = _twoWay && !goingDown ? dash * (1 - armed) : dash;
+                final downDash = goingDown ? dash * (1 - armed) : dash;
                 final downHint = ArcHint(widget.downColor);
                 final icon = turn <= .5 ? widget.icon : (goingDown ? widget.downIcon : widget.upIcon ?? widget.icon);
                 return Stack(
@@ -490,35 +489,16 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                     Positioned(
                       top: travel - 22 - (reduceMotion ? 0 : 10 * rise),
                       child: Opacity(
-                        opacity: dash,
+                        opacity: upDash,
                         child: CustomPaint(size: upHint.size, painter: upHint),
                       ),
                     ),
-                    if (upMore > 0)
-                      Positioned(
-                        top: travel - 30,
-                        child: Opacity(
-                          opacity: upMore,
-                          child: CustomPaint(size: upHint.size, painter: upHint),
-                        ),
-                      ),
-                    if (downMore > 0)
-                      Positioned(
-                        top: travel + size + 30 - downHint.size.height,
-                        child: Opacity(
-                          opacity: downMore,
-                          child: RotatedBox(
-                            quarterTurns: 2,
-                            child: CustomPaint(size: downHint.size, painter: downHint),
-                          ),
-                        ),
-                      ),
                     if (_twoWay)
                       Positioned(
                         // The same dash mirrored under the ball, drifting down.
                         top: travel + size + 22 - downHint.size.height + (reduceMotion ? 0 : 10 * rise),
                         child: Opacity(
-                          opacity: dash,
+                          opacity: downDash,
                           child: RotatedBox(
                             quarterTurns: 2,
                             child: CustomPaint(size: downHint.size, painter: downHint),
