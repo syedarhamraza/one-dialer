@@ -98,10 +98,12 @@ class LagDiagnostics with WidgetsBindingObserver {
     GestureBinding.instance.pointerRouter.addGlobalRoute(_pointer);
     didChangeAppLifecycleState(WidgetsBinding.instance.lifecycleState ?? AppLifecycleState.resumed);
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      // Flutter goes inactive when the window loses focus (the proximity screen-off in a call)
+      // while Android still counts the activity resumed, so keep beating or native sees a DartStall.
+      if (_resumed || WidgetsBinding.instance.lifecycleState == AppLifecycleState.inactive) unawaited(_heartbeat());
       if (!_resumed) return;
       if (++_ticks % 5 == 0) _summary = metrics.summary();
       _checkRender();
-      unawaited(_heartbeat());
       if (_ticks % 5 == 0) unawaited(flush());
     });
     unawaited(flush());
