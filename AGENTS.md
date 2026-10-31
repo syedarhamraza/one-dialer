@@ -27,6 +27,7 @@ Floating chrome is OneSpend's, 1:1 (no liquid glass; it was tried and removed). 
 
   (0 = idle, 1 = ringing, 2 = off-hook.) An install during a call kills the InCallService and Android hands the call to another dialer or drops it. With two phones attached, pass `-s <serial>` to every adb command.
 - **Release:** the app is prepared for Google Play closed testing (Crashlytics, Software update, `tool/release.ps1`, `docs/play-release.md`). The upload key is `C:/Users/trans/keys/onedialer-upload.jks`; its password is only in the git-ignored `android/key.properties`. Never print, log or commit it.
+- **Beta-only:** anything meant only for testing (Firebase Performance Monitoring, ...) gets a row in `docs/beta-only.md` in the same PR; that list is what comes out before the production release.
 - **Two agents side by side:** work on separate branches, ideally in separate git worktrees; don't edit the same checkout at the same time.
 
 ## Git workflow

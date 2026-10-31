@@ -11,6 +11,7 @@ plugins {
 if (file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
     apply(plugin = "com.google.firebase.crashlytics")
+    apply(plugin = "com.google.firebase.firebase-perf") // beta-only: docs/beta-only.md
 }
 
 // Release signing: android/key.properties (never committed) points at the upload keystore.
