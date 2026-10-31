@@ -196,6 +196,10 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
       milliseconds: _oneButton && DialerPrefs.instance.answerDirection.value == 'up' ? 1100 : 900,
     );
     _springIn = GlassSpringCurve(GlassSpring.bouncy(duration: _fly.duration! * .6), _fly.duration!);
+    // The 2-button ball drops ahead of sliding across, so it curves in from above instead of a straight line.
+    _springDrop = _oneButton
+        ? _springIn
+        : GlassSpringCurve(GlassSpring.bouncy(duration: _fly.duration! * .35), _fly.duration!);
     _rise.forward(from: 0);
     // If Telecom never connects, don't leave the ball hanging.
     _ballTimeout = Timer(const Duration(seconds: 4), _land);
@@ -232,6 +236,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   // unhurried overshoot past the pill's size and place, then settling. It stays green for the first
   // ~120 ms, then crossfades to red (the 2-button handset tipping over meanwhile).
   Curve _springIn = Curves.linear;
+  Curve _springDrop = Curves.linear;
   static const _turn = Interval(.14, .43, curve: Curves.easeInOut);
   static const _hangUpIn = Interval(.43, .6);
   static const _handsetOut = Interval(.6, .75);
@@ -252,7 +257,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
       rect = Rect.fromCenter(
         center: Offset(
           lerpDouble(from.center.dx, to.center.dx, move)!,
-          lerpDouble(from.center.dy, to.center.dy, move)!,
+          lerpDouble(from.center.dy, to.center.dy, _springDrop.transform(t))!,
         ),
         width: lerpDouble(from.width, to.width, move)!,
         height: lerpDouble(from.height, to.height, move)!,
