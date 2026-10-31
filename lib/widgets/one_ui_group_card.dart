@@ -94,8 +94,9 @@ class OneUIGroupItemTile extends StatelessWidget {
                     item.onTap!();
                   },
             onLongPress: item.onLongPress,
-            splashColor: Colors.white.withValues(alpha: 0.06),
-            highlightColor: Colors.white.withValues(alpha: 0.03),
+            // Black on light cards, white on dark ones.
+            splashColor: context.palette.textPrimary.withValues(alpha: 0.06),
+            highlightColor: context.palette.textPrimary.withValues(alpha: 0.03),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 17),
               child: Row(
@@ -155,7 +156,7 @@ class OneUIGroupItemTile extends StatelessWidget {
             // Under the text, as ColorOS insets them.
             indent: item.leading != null ? 70 : 18,
             endIndent: 18,
-            color: Colors.white.withValues(alpha: 0.08),
+            color: context.palette.divider,
           ),
       ],
     );

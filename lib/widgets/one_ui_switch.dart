@@ -16,14 +16,16 @@ class OneUISwitch extends StatelessWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
   final Color activeTrackColor;
-  final Color inactiveTrackColor;
+
+  /// Defaults to a dark slate on dark pages and ColorOS's light grey on light ones.
+  final Color? inactiveTrackColor;
 
   const OneUISwitch({
     super.key,
     required this.value,
     required this.onChanged,
     this.activeTrackColor = OneUITheme.accentBlue,
-    this.inactiveTrackColor = const Color(0xFF38383A),
+    this.inactiveTrackColor,
   });
 
   @override
@@ -44,7 +46,9 @@ class OneUISwitch extends StatelessWidget {
           padding: const EdgeInsets.all(3),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(11.5),
-            color: value ? activeTrackColor : inactiveTrackColor,
+            color: value
+                ? activeTrackColor
+                : inactiveTrackColor ?? (context.palette.isLight ? const Color(0xFFD1D1D6) : const Color(0xFF38383A)),
           ),
           alignment: value ? Alignment.centerRight : Alignment.centerLeft,
           child: Container(
