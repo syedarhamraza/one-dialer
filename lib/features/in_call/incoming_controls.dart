@@ -300,10 +300,6 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
   // ColorOS 17's 1-button ball arms after a short pull (a few frames of the finger in its recording).
   double get _threshold => (_twoWay ? 80 : SwipeUpButton.threshold) * (widget.compact ? .75 : 1);
 
-  /// How much of the finger's travel the ball shows: ColorOS's 1-button ball holds still under the
-  /// finger, then is thrown the whole way to [_answerSpot] once released.
-  double get _follow => _twoWay ? 0 : 1;
-
   /// Where a released 1-button ball comes to rest, from its start: 1.6 diameters, as recorded.
   double get _answerSpot => SwipeUpButton.size * (widget.compact ? .85 : 1) * 1.6;
 
@@ -362,7 +358,7 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
     // The rest of the way to the travel cap (or the 1-button answer spot), in global px (the screen
     // may be scaled to `DesignWidth`); negative is downward.
     final scale = box == null || !box.hasSize ? 1.0 : rect.height / box.size.height;
-    final shown = _offset.dy * _follow;
+    final shown = _offset.dy;
     if (down) return widget.onSwipeDown!(rect, -math.max(0.0, _answerSpot - shown) * scale);
     final cap = _twoWay ? _answerSpot : _maxTravel;
     widget.onTriggered(rect, math.max(0.0, cap + shown) * scale);
@@ -531,13 +527,13 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                     Positioned(
                       top: travel,
                       child: Transform.translate(
-                        offset: offset * _follow,
+                        offset: offset,
                         child: AnimatedScale(
                           scale: _pressed && !_fired ? 1.08 : 1,
                           duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 180),
                           curve: _pressed ? Curves.easeOutCubic : Curves.easeOutBack,
                           child: Transform.scale(
-                            scale: 1 + (_twoWay ? 0 : .1) * armed,
+                            scale: 1 + .1 * armed,
                             child: Opacity(
                               opacity: widget.hidden ? 0 : 1,
                               child: KeyedSubtree(

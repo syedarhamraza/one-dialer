@@ -96,12 +96,13 @@ the other button and the pill fade out as it arms.
   Swipe down to answer swaps the directions): ColorOS 17's white ball with a dark handset
   (`oneButtonWhite`), `SwipeUpButton` with `onSwipeDown`. Matched frame by frame to a ColorOS 17
   recording: the ball rests about 260 dp above the bottom edge with a steady green arc on the
-  answering side and a red one on the declining side. It holds still under the finger (only the
-  press grow); pulling 80 dp toward a side adds a second arc outside that side's. Released, it's
-  thrown 1.6 diameters in 150 ms, white turning green in the first half, and lands just under the
-  End pill. It holds there green for 200 ms (and until Telecom connects), then becomes End where it
-  is: it stretches into the pill and turns red in 400 ms while the connected controls fade in, held
-  back until then. Swiping up to answer throws it up and flies it down into End as with 2 buttons.
+  answering side and a red one on the declining side. It follows the finger like the 2-button
+  balls (and grows as it arms); pulling 80 dp toward a side adds a second arc outside that side's.
+  Released, it glides the rest of the way to 1.6 diameters (170 ms, as with 2 buttons), white turning
+  green in the first half, and lands just under the End pill. It holds there green for 200 ms (and
+  until Telecom connects), then becomes End where it is, on the 2-button flight's 700 ms timeline
+  (stretching into the pill and turning red) while the connected controls rise in, held back until
+  then. Swiping up to answer throws it up and flies it down into End as with 2 buttons.
   Screen readers get the up
   action as the tap and the down one as a custom action. `IncomingControls` is keyed per call, as
   the cached engine keeps the screen between calls.

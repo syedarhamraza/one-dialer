@@ -147,7 +147,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
       return;
     } else if (_entrance.value == 0 && !_entrance.isAnimating) {
       // Just answered by swipe: the controls fade in quickly as the ball flies (ColorOS).
-      _entrance.animateTo(1, duration: _ball != null ? const Duration(milliseconds: 150) : null);
+      _entrance.animateTo(1, duration: _ball != null && !_oneButton ? const Duration(milliseconds: 150) : null);
     }
   }
 
@@ -191,9 +191,6 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
       _lift = lift;
       _oneButton = DialerPrefs.instance.answerStyle.value == 'one';
     });
-    _rise.duration = Duration(milliseconds: _oneButton ? 150 : 170);
-    // Landing just under End, it only has to stretch into the pill.
-    _fly.duration = Duration(milliseconds: _oneButton && lift < 0 ? 400 : 700);
     _rise.forward(from: 0);
     // If Telecom never connects, don't leave the ball hanging.
     _ballTimeout = Timer(const Duration(seconds: 4), _land);
