@@ -283,13 +283,14 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
                 opacity: red,
                 child: DecoratedBox(decoration: glassBody(endRed, shape, flat: callFlat(context))),
               ),
-              // The handset turns into End's hang-up glyph in the middle of the colour change.
-              IconSwap(
-                from: Icons.call_rounded,
-                to: Icons.call_end_rounded,
-                t: const Interval(.3, .7).transform(red),
-                color: Colors.white,
-                size: iconSize,
+              // The handset crossfades into End's hang-up glyph alongside the colour.
+              Opacity(
+                opacity: 1 - red,
+                child: Icon(Icons.call_rounded, color: Colors.white, size: iconSize),
+              ),
+              Opacity(
+                opacity: red,
+                child: Icon(Icons.call_end_rounded, color: Colors.white, size: iconSize),
               ),
             ],
           ),

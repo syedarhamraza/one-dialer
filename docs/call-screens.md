@@ -77,8 +77,7 @@ the other button and the pill fade out as it arms.
   alongside the drop (first 350 ms, ease-out). It stays green for the first
   14%, then crossfades (two stacked layers, not a colour tween, so mid-way it reads as a
   see-through amber) to End's red by 43%, while the
-  handset turns into End's hang-up glyph (`IconSwap`: it shrinks and fades out as the hang-up
-  grows in, overlapping only briefly, so no double image shows). The ball wears the End
+  handset crossfades into End's hang-up glyph, upright. The ball wears the End
   pill's finish the whole way (the shared `solidBody`/`solidGlow`, squircle shape), and the
   connected controls fade in over 150 ms as it flies. The real pill stays hidden until it lands.
   If the call never connects, the ball is dropped after 4 s. Answering from the notification, or
@@ -97,7 +96,7 @@ the other button and the pill fade out as it arms.
   (`oneButtonWhite`), `SwipeUpButton` with `onSwipeDown`. Matched frame by frame to a ColorOS 17
   recording: the ball rests about 260 dp above the bottom edge with a steady green arc on the
   answering side and a red one on the declining side. It follows the finger like the 2-button
-  balls, its colour blending to that side's green or red (toward Decline the handset turns into
+  balls, its colour blending to that side's green or red (toward Decline the handset crossfades into
   the hang-up glyph, as in the flight into End) and growing as it arms, while the arc it's pulled over fades; it arms after 80 dp.
   Released, it glides the rest of the way to 1.85 diameters (170 ms, as with 2 buttons) and lands about half a diameter under the End pill. Once Telecom
   connects it springs up into End on the 2-button flight's

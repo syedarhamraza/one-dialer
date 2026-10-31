@@ -540,12 +540,19 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                                     angle: widget.shake && still && !reduceMotion && phase < .4
                                         ? .3 * math.sin(phase / .4 * 6 * math.pi) * (1 - phase / .4)
                                         : 0,
-                                    child: IconSwap(
-                                      from: widget.icon,
-                                      to: target,
-                                      t: const Interval(.4, .7).transform(morph),
-                                      color: iconColor,
-                                      size: size * .52,
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        Opacity(
+                                          opacity: 1 - morph,
+                                          child: Icon(widget.icon, color: iconColor, size: size * .52),
+                                        ),
+                                        if (morph > 0)
+                                          Opacity(
+                                            opacity: morph,
+                                            child: Icon(target, color: iconColor, size: size * .52),
+                                          ),
+                                      ],
                                     ),
                                   ),
                                 ),
@@ -568,54 +575,6 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
 
 /// The ColorOS swipe hint: a true circular arc (a cap over the button), with rounded ends.
 /// Also drawn small in Settings' previews.
-/// One glyph turning into another without a visible double image: the old one shrinks and fades
-/// out as the new one grows in, overlapping only briefly, so the eye reads one icon changing shape.
-class IconSwap extends StatelessWidget {
-  const IconSwap({
-    super.key,
-    required this.from,
-    required this.to,
-    required this.t,
-    required this.color,
-    required this.size,
-  });
-
-  final IconData from;
-  final IconData to;
-
-  /// 0 shows [from], 1 shows [to].
-  final double t;
-  final Color color;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    final out = Curves.easeIn.transform((t / .6).clamp(0.0, 1.0));
-    final into = Curves.easeOut.transform(((t - .4) / .6).clamp(0.0, 1.0));
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        if (out < 1)
-          Opacity(
-            opacity: 1 - out,
-            child: Transform.scale(
-              scale: 1 - .35 * out,
-              child: Icon(from, color: color, size: size),
-            ),
-          ),
-        if (into > 0)
-          Opacity(
-            opacity: into,
-            child: Transform.scale(
-              scale: .65 + .35 * into,
-              child: Icon(to, color: color, size: size),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
 class ArcHint extends CustomPainter {
   const ArcHint(this.color, {this.radius = 15, this.stroke = 3});
   final Color color;
