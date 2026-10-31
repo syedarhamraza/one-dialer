@@ -94,8 +94,8 @@ the other button and the pill fade out as it arms.
 - **1 button** (Settings › Answer buttons, `DialerPrefs.answerStyle == 'one'`; "Answer call" ›
   Swipe down to answer swaps the directions): ColorOS 17's white ball with a dark handset
   (`oneButtonWhite`), `SwipeUpButton` with `onSwipeDown`. Matched frame by frame to a ColorOS 17
-  recording: the ball rests about 260 dp above the bottom edge with a steady green arc on the
-  answering side and a red one on the declining side (short arcs as round as the ball itself). It follows the finger like the 2-button
+  recording: the ball rests about 260 dp above the bottom edge with a green arc on the
+  answering side and a red one on the declining side (short arcs as round as the ball itself, which drift away and fade once a cycle like the 2-button dashes until it is touched). It follows the finger like the 2-button
   balls, its colour blending to that side's green or red (toward Decline the handset crossfades into
   the hang-up glyph) and growing as it arms, while the arc it's pulled over fades; it arms after 80 dp.
   Released, it stays where it was let go (no further glide either way) and, once Telecom connects,

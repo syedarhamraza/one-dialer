@@ -446,14 +446,14 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                 final armed = _armedFraction(offset);
                 // The dash drifts up 10 px and fades out, once per cycle.
                 final phase = (_hint.value + widget.hintPhase) % 1;
-                // The 1-button arcs hold still, as on ColorOS 17; the 2-button dashes drift up and fade.
-                final rise = _twoWay ? 0.0 : Curves.easeOut.transform((phase / .7).clamp(0.0, 1.0));
                 final still = !_dragging && !_fired && offset == Offset.zero;
-                // As on ColorOS 17, the 1-button arcs stay put while the ball is held and go once it's let go.
-                final dash = _twoWay
-                    ? (_fired ? 0.0 : (reduceMotion ? .6 : .9))
-                    : reduceMotion
-                    ? .6
+                // Idle, every ball's arcs drift away from it and fade, once per cycle. The 1-button arcs
+                // hold still while the ball is held, so the one it's pulled over can fade, and go once it's let go.
+                final rise = _twoWay && !still ? 0.0 : Curves.easeOut.transform((phase / .7).clamp(0.0, 1.0));
+                final dash = reduceMotion
+                    ? (_twoWay && _fired ? 0.0 : .6)
+                    : _twoWay && !still
+                    ? (_fired ? 0.0 : .9)
                     : (!still || phase >= .7 ? 0.0 : .9 * (1 - rise));
                 // Swiping down turns the ball into Decline.
                 // A two-way ball takes on the look of the action it's heading for.
