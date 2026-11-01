@@ -26,7 +26,7 @@ class Changelog {
   static const List<ChangelogEntry> entries = [
     ChangelogEntry(
       version: '1.0.0-beta.6',
-      date: inDevelopment,
+      date: 'Nov 2026',
       changes: [
         'New ColorOS 17 incoming call ball: drag it to answer or decline, and it springs into End',
         'Settings › Incoming call reminders, Answer/End calls and Answer buttons pages, with Answer call direction and Announce incoming calls',
