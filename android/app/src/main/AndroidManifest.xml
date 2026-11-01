@@ -151,6 +151,10 @@
             </intent-filter>
         </receiver>
 
+        <!-- Firebase Analytics without the advertising ID or ad signals (the AD_ID permissions are removed above). -->
+        <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false" />
+        <meta-data android:name="google_analytics_default_allow_ad_personalization_signals" android:value="false" />
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

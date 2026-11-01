@@ -1,6 +1,6 @@
 # One Dialer — Privacy Policy
 
-_Last updated: 31 October 2026_
+_Last updated: 1 November 2026_
 
 One Dialer is a phone app for Android made by Syed Arham Raza. This policy explains what the app accesses and what it does with it.
 
@@ -25,9 +25,11 @@ When Google Play has an update for One Dialer, Software update downloads that up
 
 "Decline with SMS" sends the text you pick as an SMS to the caller, through your carrier, only when you choose to.
 
-## Crash and performance reports
+## Crash, usage and performance reports
 
 If the app crashes, it sends a crash report to Firebase Crashlytics (Google) so the bug can be fixed. A crash report contains technical details only: the app version, your phone model and Android version, and where in the app's code the crash happened. It does **not** include phone numbers, contact names, call history or messages. See [Google's privacy policy](https://policies.google.com/privacy).
+
+The app also sends usage statistics to Firebase Analytics (Google): when the app is installed, opened and updated, how long it is used, and which of its screens (main app or call screen) is open. This data includes the app version, phone model, Android version, language, the country (worked out from the IP address) and a Firebase app instance ID. It does **not** include phone numbers, contact names, call history or messages, and it does not use your advertising ID. Google keeps it for 2 months.
 
 Beta versions also send performance data to Firebase Performance Monitoring (Google): how long the app takes to start, how smoothly its screens draw, and how long the release-notes request takes. This data includes the app version, phone model, Android version, network type, the country (worked out from the IP address) and a Firebase installation ID. It does **not** include phone numbers, contact names, call history or messages. Performance Monitoring will be removed before the app leaves beta.
 
