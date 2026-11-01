@@ -24,8 +24,14 @@ internal class DiagnosticsPolicy {
             val result = mutableMapOf<String, Any>()
             val screens = setOf("calls", "contacts", "keypad", "in_call", "subpage", "help_feedback", "setup")
             (values["screen"] as? String)?.takeIf { it in screens }?.let { result["screen"] = it }
-            for (key in listOf("visualEffects", "callEffects")) {
-                (values[key] as? String)?.takeIf { it in setOf("full", "reduced", "off") }?.let { result[key] = it }
+            val allowed = mapOf(
+                "visualEffects" to setOf("full", "reduced", "off"),
+                "callEffects" to setOf("full", "reduced", "off"),
+                "glassDark" to setOf("classic", "soft", "bold"),
+                "glassLight" to setOf("classic", "soft", "bold"),
+            )
+            for ((key, levels) in allowed) {
+                (values[key] as? String)?.takeIf { it in levels }?.let { result[key] = it }
             }
             (values["refreshRate"] as? Number)?.toDouble()?.takeIf { it.isFinite() && it in 1.0..1000.0 }
                 ?.let { result["refreshRate"] = it }

@@ -281,6 +281,8 @@ class _PopoverMenu extends StatelessWidget {
                                             ? CallBodyArtwork(
                                                 radius: OneUIFloatingMenu._radius * size,
                                                 glow: kMainGlassGlow,
+                                                opacity: mainGlass(context).opacity,
+                                                edges: mainGlass(context).edges,
                                                 spread: .5,
                                                 child: items!,
                                               )

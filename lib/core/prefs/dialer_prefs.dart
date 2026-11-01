@@ -166,6 +166,13 @@ class DialerPrefs {
   /// blurs); read through `OneUIEffectsController`.
   final visualEffects = ValueNotifier('full');
 
+  /// Settings › "Dark mode edge glow", with full effects: `classic`, `soft` or `bold`; read
+  /// through `OneUIEffectsController.glassStyle`.
+  final glassDark = ValueNotifier('soft');
+
+  /// Settings › "Light mode edge glow", with full effects: the same three styles.
+  final glassLight = ValueNotifier('soft');
+
   /// Awaited before the first frame, so the app doesn't open dark and then turn light, or
   /// frosted and then flat.
   Future<void> loadAppearance() async {
@@ -174,6 +181,10 @@ class DialerPrefs {
     final effects = await _prefs.getString('visual_effects');
     if (effects == null) visualEffects.value = await _effectsDefault();
     if (effects == 'full' || effects == 'reduced' || effects == 'off') visualEffects.value = effects!;
+    final dark = await _prefs.getString('glass_dark');
+    if (dark == 'classic' || dark == 'soft' || dark == 'bold') glassDark.value = dark!;
+    final light = await _prefs.getString('glass_light');
+    if (light == 'classic' || light == 'soft' || light == 'bold') glassLight.value = light!;
   }
 
   /// The level until the user picks one: never saved, so a later cutoff still reaches them.
@@ -224,6 +235,16 @@ class DialerPrefs {
   Future<void> setVisualEffects(String value) async {
     visualEffects.value = value;
     await _prefs.setString('visual_effects', value);
+  }
+
+  Future<void> setGlassDark(String value) async {
+    glassDark.value = value;
+    await _prefs.setString('glass_dark', value);
+  }
+
+  Future<void> setGlassLight(String value) async {
+    glassLight.value = value;
+    await _prefs.setString('glass_light', value);
   }
 
   Future<void> setThemeMode(String value) async {

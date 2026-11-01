@@ -10,6 +10,17 @@ import 'press_glow.dart';
 /// the call screen, where the controls sit on a dark gradient.
 const double kMainGlassGlow = .6;
 
+/// The main app's call glass at full effects, by Settings › "Dark/Light mode edge glow": how
+/// strongly the body (wash, glow and lips) is drawn, and its 3D edges. Classic is the
+/// original look ([classicOpacity] per control); soft (the default) is half the glass, like
+/// ColorOS 17's Phone, with brighter edges; bold brightens and thickens them more.
+({double opacity, GlassEdges edges}) mainGlass(BuildContext context, {double classicOpacity = 1}) =>
+    switch (OneUIEffectsController.instance.glassStyle(light: context.palette.isLight)) {
+      'classic' => (opacity: classicOpacity, edges: GlassEdges.callScreen),
+      'soft' => (opacity: .5, edges: const GlassEdges(strength: 2)),
+      _ => (opacity: .5, edges: const GlassEdges(strength: 3, bottomLip: 3, lip: 2)),
+    };
+
 /// The connected call screen's control look for floating chrome: the backdrop blurred
 /// behind, the call body's milky wash, all-round edge glow and top lip, and its press
 /// (squeeze, stretch toward the finger, glow). A circle, or squircle-ended with [radius].
@@ -27,13 +38,20 @@ class CallGlass extends StatelessWidget {
     final fx = OneUIEffectsController.instance;
     Widget body(BuildContext context) {
       if (fx.isFull) {
+        final look = mainGlass(context);
         // Grouped: inside the shell's tabs, every glass control shares one backdrop read (see
         // MainShell), as do a pushed page's (DialerApp's page transition); the nav bar blurs on its own.
         return BackdropFilter.grouped(
           filter: ImageFilter.blur(sigmaX: fx.blurSigma, sigmaY: fx.blurSigma),
           // From a cached image, like the keypad keys: drawn live, its blurred strokes were
           // re-rendered every frame of a press (the press scales them).
-          child: CallBodyArtwork(radius: radius, glow: kMainGlassGlow, child: const SizedBox.expand()),
+          child: CallBodyArtwork(
+            radius: radius,
+            glow: kMainGlassGlow,
+            opacity: look.opacity,
+            edges: look.edges,
+            child: const SizedBox.expand(),
+          ),
         );
       }
       final fill = ColoredBox(

@@ -98,6 +98,7 @@ class CallBodyArtwork extends StatefulWidget {
     this.glow = 1,
     this.spread = 1,
     this.opacity = 1,
+    this.edges = GlassEdges.callScreen,
     required this.child,
   });
   final double? radius;
@@ -109,6 +110,9 @@ class CallBodyArtwork extends StatefulWidget {
 
   /// How strongly the whole body (wash, glow and lips) is drawn.
   final double opacity;
+
+  /// The 3D lips and the bottom glow (see [GlassEdges]).
+  final GlassEdges edges;
   final Widget child;
 
   @override
@@ -128,9 +132,18 @@ class _CallBodyArtworkState extends State<CallBodyArtwork> {
         _painter!.ratio != ratio ||
         _painter!.glow != widget.glow ||
         _painter!.spread != widget.spread ||
-        _painter!.opacity != widget.opacity) {
+        _painter!.opacity != widget.opacity ||
+        _painter!.edges != widget.edges) {
       _painter?.dispose();
-      _painter = _CachedBodyPainter(widget.radius, ratio, widget.glow, widget.spread, widget.opacity, light);
+      _painter = _CachedBodyPainter(
+        widget.radius,
+        ratio,
+        widget.glow,
+        widget.spread,
+        widget.opacity,
+        widget.edges,
+        light,
+      );
     }
     return CustomPaint(painter: _painter, child: widget.child);
   }
@@ -143,12 +156,13 @@ class _CallBodyArtworkState extends State<CallBodyArtwork> {
 }
 
 class _CachedBodyPainter extends CustomPainter {
-  _CachedBodyPainter(this.radius, this.ratio, this.glow, this.spread, this.opacity, this.light);
+  _CachedBodyPainter(this.radius, this.ratio, this.glow, this.spread, this.opacity, this.edges, this.light);
   final double? radius;
   final double ratio;
   final double glow;
   final double spread;
   final double opacity;
+  final GlassEdges edges;
   final bool light;
   ui.Image? _image;
   Size? _size;
@@ -159,7 +173,7 @@ class _CachedBodyPainter extends CustomPainter {
     if (_image == null || _size != size) {
       final recorder = ui.PictureRecorder();
       final recording = Canvas(recorder)..scale(ratio);
-      TintedCallBody(radius, glow: glow, spread: spread, light: light).paint(recording, size);
+      TintedCallBody(radius, glow: glow, spread: spread, edges: edges, light: light).paint(recording, size);
       final picture = recorder.endRecording();
       final image = picture.toImageSync((size.width * ratio).ceil(), (size.height * ratio).ceil());
       picture.dispose();
@@ -186,12 +200,43 @@ class _CachedBodyPainter extends CustomPainter {
       glow != oldDelegate.glow ||
       spread != oldDelegate.spread ||
       opacity != oldDelegate.opacity ||
+      edges != oldDelegate.edges ||
       light != oldDelegate.light;
+}
+
+/// How strongly a [TintedCallBody] draws its 3D edges; the call screen's is the default.
+@immutable
+class GlassEdges {
+  const GlassEdges({this.strength = 1, this.bottomLip = 1, this.lip = 1});
+
+  static const callScreen = GlassEdges();
+
+  /// The top lip and the glow along the bottom.
+  final double strength;
+
+  /// The fainter lip along the bottom.
+  final double bottomLip;
+
+  /// The lips' width, in logical pixels.
+  final double lip;
+
+  @override
+  bool operator ==(Object other) =>
+      other is GlassEdges && other.strength == strength && other.bottomLip == bottomLip && other.lip == lip;
+
+  @override
+  int get hashCode => Object.hash(strength, bottomLip, lip);
 }
 
 /// The milky wash, edge glow and lips drawn over each control's frosted blur.
 class TintedCallBody extends CustomPainter {
-  const TintedCallBody(this.radius, {this.glow = 1, this.spread = 1, this.light = false});
+  const TintedCallBody(
+    this.radius, {
+    this.glow = 1,
+    this.spread = 1,
+    this.edges = GlassEdges.callScreen,
+    this.light = false,
+  });
   final double? radius;
 
   /// Light mode: a denser white wash and a bright white rim (the press draws its shadow).
@@ -203,10 +248,15 @@ class TintedCallBody extends CustomPainter {
   /// How far the soft edge glow reaches in from the edge (1 = the call screen's).
   final double spread;
 
+  /// The 3D lips and the glow along the bottom.
+  final GlassEdges edges;
+
   Color _g(int argb) {
     final c = Color(argb);
     return c.withValues(alpha: c.a * glow);
   }
+
+  Color _e(Color c) => _scaled(c, edges.strength);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -248,7 +298,7 @@ class TintedCallBody extends CustomPainter {
           ..shader = LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [_g(0x10FFFFFF), _g(0x2BFFFFFF), _g(0x3DFFFFFF)],
+            colors: [_g(0x10FFFFFF), _g(0x2BFFFFFF), _e(_g(0x3DFFFFFF))],
             stops: const [0, .5, 1],
           ).createShader(rect),
       )
@@ -267,37 +317,12 @@ class TintedCallBody extends CustomPainter {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             // Top a little softer, the sides softer still, the bottom brightest.
-            colors: [_g(0x33FFFFFF), _g(0x26FFFFFF), _g(0x26FFFFFF), _g(0x6EFFFFFF)],
+            colors: [_g(0x33FFFFFF), _g(0x26FFFFFF), _g(0x26FFFFFF), _e(_g(0x6EFFFFFF))],
             stops: const [0, .25, .75, 1],
           ).createShader(rect),
       )
       ..restore();
-    // The 3D lip: clearer along the top edge, fainter along the bottom, and faded out toward the
-    // sides so it doesn't wrap round the rounded ends.
-    canvas
-      ..saveLayer(rect, Paint())
-      ..drawPath(
-        bodyPath(rect.deflate(.5), radius == null ? null : radius! - .5),
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1
-          ..shader = const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0x3BFFFFFF), Color(0x00FFFFFF), Color(0x00FFFFFF), Color(0x1FFFFFFF)],
-            stops: [0, .3, .7, 1],
-          ).createShader(rect),
-      )
-      ..drawRect(
-        rect,
-        Paint()
-          ..blendMode = BlendMode.dstIn
-          ..shader = const LinearGradient(
-            colors: [Color(0x00000000), Color(0xFF000000), Color(0xFF000000), Color(0x00000000)],
-            stops: [.12, .32, .68, .88],
-          ).createShader(rect),
-      )
-      ..restore();
+    paintGlassLips(canvas, rect, radius, edges);
   }
 
   @override
@@ -305,7 +330,59 @@ class TintedCallBody extends CustomPainter {
       oldDelegate.radius != radius ||
       oldDelegate.glow != glow ||
       oldDelegate.spread != spread ||
+      oldDelegate.edges != edges ||
       oldDelegate.light != light;
+}
+
+/// The 3D lips of a [TintedCallBody], on their own for bodies with no milky wash (the green
+/// [LitButton]s): clearer along the top edge, fainter along the bottom, and faded out toward the
+/// sides so they don't wrap round the rounded ends.
+void paintGlassLips(Canvas canvas, Rect rect, double? radius, GlassEdges edges) {
+  final lip = edges.lip;
+  canvas
+    ..saveLayer(rect, Paint())
+    ..drawPath(
+      bodyPath(rect.deflate(lip / 2), radius == null ? null : radius - lip / 2),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = lip
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            _scaled(const Color(0x3BFFFFFF), edges.strength),
+            const Color(0x00FFFFFF),
+            const Color(0x00FFFFFF),
+            _scaled(const Color(0x1FFFFFFF), edges.bottomLip),
+          ],
+          stops: const [0, .3, .7, 1],
+        ).createShader(rect),
+    )
+    ..drawRect(
+      rect,
+      Paint()
+        ..blendMode = BlendMode.dstIn
+        ..shader = const LinearGradient(
+          colors: [Color(0x00000000), Color(0xFF000000), Color(0xFF000000), Color(0x00000000)],
+          stops: [.12, .32, .68, .88],
+        ).createShader(rect),
+    )
+    ..restore();
+}
+
+Color _scaled(Color c, double by) => c.withValues(alpha: (c.a * by).clamp(0.0, 1.0));
+
+/// [paintGlassLips] as a painter, drawn over a lit button.
+class GlassLips extends CustomPainter {
+  const GlassLips(this.radius, this.edges);
+  final double? radius;
+  final GlassEdges edges;
+
+  @override
+  void paint(Canvas canvas, Size size) => paintGlassLips(canvas, Offset.zero & size, radius, edges);
+
+  @override
+  bool shouldRepaint(GlassLips oldDelegate) => oldDelegate.radius != radius || oldDelegate.edges != edges;
 }
 
 /// A circle, a superellipse whose ends are ColorOS's soft oval rather than a true semicircle, or
@@ -732,15 +809,16 @@ ShapeDecoration solidBody(Color color, OutlinedBorder shape, {double glow = .3, 
       );
 
 /// The glow rising from a solid button's bottom edge; nothing when [flat].
-ShapeDecoration solidGlow(OutlinedBorder shape, {bool flat = false}) => flat
+/// [strength] scales it like [GlassEdges.strength].
+ShapeDecoration solidGlow(OutlinedBorder shape, {bool flat = false, double strength = 1}) => flat
     ? ShapeDecoration(shape: shape)
     : ShapeDecoration(
         shape: shape.copyWith(side: BorderSide.none),
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0x00FFFFFF), Color(0x00FFFFFF), Color(0x3DFFFFFF)],
-          stops: [0, .5, 1],
+          colors: [const Color(0x00FFFFFF), const Color(0x00FFFFFF), _scaled(const Color(0x3DFFFFFF), strength)],
+          stops: const [0, .5, 1],
         ),
       );
 

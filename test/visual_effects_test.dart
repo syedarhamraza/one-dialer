@@ -19,6 +19,51 @@ void main() {
   tearDown(() {
     prefs.visualEffects.value = 'full';
     prefs.callEffects.value = 'full';
+    prefs.glassDark.value = 'soft';
+    prefs.glassLight.value = 'soft';
+  });
+
+  test('glass styles are saved, reloaded, and unknown values are ignored', () async {
+    await prefs.setGlassDark('soft');
+    await prefs.setGlassLight('classic');
+    prefs.glassDark.value = 'bold';
+    prefs.glassLight.value = 'bold';
+    await prefs.loadAppearance();
+    expect(prefs.glassDark.value, 'soft');
+    expect(prefs.glassLight.value, 'classic');
+
+    await prefs.setGlassLight('fancy');
+    prefs.glassLight.value = 'bold';
+    await prefs.loadAppearance();
+    expect(prefs.glassLight.value, 'bold');
+  });
+
+  testWidgets('each glass style resolves to its look in each theme', (tester) async {
+    Future<({double opacity, GlassEdges edges})> look(Brightness brightness, {double classic = 1}) async {
+      late ({double opacity, GlassEdges edges}) result;
+      await tester.pumpWidget(
+        // A plain Theme: MaterialApp would animate between brightnesses.
+        Theme(
+          data: ThemeData(brightness: brightness),
+          child: Builder(
+            builder: (context) {
+              result = mainGlass(context, classicOpacity: classic);
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+      return result;
+    }
+
+    prefs.glassDark.value = 'classic';
+    expect(await look(Brightness.dark, classic: .75), (opacity: .75, edges: GlassEdges.callScreen));
+    prefs.glassDark.value = 'soft';
+    expect(await look(Brightness.dark), (opacity: .5, edges: const GlassEdges(strength: 2)));
+    prefs.glassDark.value = 'bold';
+    expect(await look(Brightness.dark), (opacity: .5, edges: const GlassEdges(strength: 3, bottomLip: 3, lip: 2)));
+    prefs.glassLight.value = 'classic';
+    expect(await look(Brightness.light), (opacity: 1.0, edges: GlassEdges.callScreen));
   });
 
   test('the level is saved, reloaded, and unknown values are ignored', () async {

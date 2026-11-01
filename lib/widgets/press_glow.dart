@@ -3,6 +3,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../features/in_call/call_controls.dart';
 import '../theme/one_ui_theme.dart';
+import 'call_glass.dart';
 
 /// The call screen's press for ordinary buttons: the glass package's glow and stretch with no
 /// glass body (the transparent style draws no shader, so the main engine needs no
@@ -73,15 +74,37 @@ class LitButton extends StatelessWidget {
     final fx = OneUIEffectsController.instance;
     return ListenableBuilder(
       listenable: fx,
-      builder: (context, child) => PressGlow(
-        radius: radius,
-        glowColor: fx.isFull ? color : null,
-        child: Container(
-          decoration: fx.isFull ? solidBody(color, shape, glow: 0) : ShapeDecoration(color: color, shape: shape),
-          foregroundDecoration: fx.isFull ? solidGlow(shape) : null,
-          child: child,
-        ),
-      ),
+      builder: (context, child) {
+        // The glass style's 3D edges, so the green buttons match the glass around them (none
+        // past the solid button's own glow with classic). At the glass's opacity too: the glass
+        // draws its edges through it, and a little softer still: over solid green they read stronger.
+        final look = fx.isFull ? mainGlass(context) : null;
+        final scale = (look?.opacity ?? 1) * .7;
+        final edges = look == null || look.edges == GlassEdges.callScreen
+            ? GlassEdges.callScreen
+            : GlassEdges(
+                strength: look.edges.strength * scale,
+                bottomLip: look.edges.bottomLip * scale,
+                lip: look.edges.lip,
+              );
+        return PressGlow(
+          radius: radius,
+          glowColor: fx.isFull ? color : null,
+          child: Container(
+            decoration: fx.isFull ? solidBody(color, shape, glow: 0) : ShapeDecoration(color: color, shape: shape),
+            foregroundDecoration: fx.isFull ? solidGlow(shape, strength: edges.strength) : null,
+            child: edges == GlassEdges.callScreen
+                ? child
+                // Its own layer: the press scales it every frame, and the lips' fade is a save layer.
+                : RepaintBoundary(
+                    child: CustomPaint(
+                      foregroundPainter: GlassLips(shape is CircleBorder ? null : double.infinity, edges),
+                      child: child,
+                    ),
+                  ),
+          ),
+        );
+      },
       child: child,
     );
   }

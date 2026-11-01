@@ -241,8 +241,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
                                   builder: (blur) => DecoratedBox(
                                     key: const ValueKey('keypad-panel'),
                                     decoration: BoxDecoration(
-                                      color: (context.palette.isLight ? context.palette.page : context.palette.card)
-                                          .withValues(alpha: blur ? .75 : 1),
+                                      color: _sheetColor(context).withValues(alpha: blur ? .75 : 1),
                                       borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
                                     ),
                                     // Scrolls only when a small or landscape screen can't fit it.
@@ -593,7 +592,13 @@ class _Pill extends StatelessWidget {
           child: fx.isFull
               // The nav bar's call glass without its backdrop blur (a save layer per key), rasterized
               // once so presses and the sheet's slide only draw an image.
-              ? CallBodyArtwork(radius: height / 2, glow: kMainGlassGlow, opacity: .75, child: _ink())
+              ? CallBodyArtwork(
+                  radius: height / 2,
+                  glow: kMainGlassGlow,
+                  opacity: mainGlass(context, classicOpacity: .75).opacity,
+                  edges: mainGlass(context).edges,
+                  child: _ink(),
+                )
               // Below full: a flat One UI key, translucent over the sheet when reduced, solid when off.
               : _ink(fx.oneUIFill(light: context.palette.isLight)),
         );
@@ -745,6 +750,16 @@ List<OneUIFloatingMenuItem> keypadMenuItems(
 
 /// The sheet's frosted backing: Calls blurred behind the keys, and a solid backing with
 /// visual effects off. Switches live.
+/// The sheet behind the keys: the page grey in light mode, the card grey in dark mode, or (with the
+/// soft and bold dark glass) that grey halfway to black, so the half-strength keys still stand out.
+Color _sheetColor(BuildContext context) {
+  final palette = context.palette;
+  if (palette.isLight) return palette.page;
+  final fx = OneUIEffectsController.instance;
+  if (!fx.isFull || fx.glassStyle(light: false) == 'classic') return palette.card;
+  return Color.lerp(palette.card, Colors.black, .5)!;
+}
+
 class _Frosted extends StatelessWidget {
   const _Frosted({required this.builder});
   final Widget Function(bool blur) builder;

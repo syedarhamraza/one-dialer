@@ -210,6 +210,10 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
   final _simKey = GlobalKey();
   final _themeKey = GlobalKey();
   final _effectsKey = GlobalKey();
+  final _glassDarkKey = GlobalKey();
+  final _glassLightKey = GlobalKey();
+
+  static const _glassLabels = {'classic': 'Classic', 'soft': 'Soft', 'bold': 'Bold'};
 
   static const _themeLabels = {'system': 'Same as phone', 'light': 'Light', 'dark': 'Dark'};
   static const _tapLabels = {'details': 'Open details', 'dial': 'Write in keypad'};
@@ -223,6 +227,7 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
   @override
   void initState() {
     super.initState();
+    DialerPrefs.instance.visualEffects.addListener(_rebuild);
     _telecom.getSims().then((s) {
       if (mounted) setState(() => _dualSim = s.length > 1);
     });
@@ -230,6 +235,14 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
       if (mounted) setState(() => _appCallLog = (h['sdk'] as int? ?? 0) >= 37);
     });
   }
+
+  @override
+  void dispose() {
+    DialerPrefs.instance.visualEffects.removeListener(_rebuild);
+    super.dispose();
+  }
+
+  void _rebuild() => setState(() {});
 
   static const _simLabels = {'buttons': 'Two Call buttons', 'menu': 'Ask every time'};
 
@@ -274,6 +287,25 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
               labels: effectsLabels,
               onPick: DialerPrefs.instance.setVisualEffects,
             ),
+            // The glass styles only change the full-effects glass; below it the rows go away.
+            if (DialerPrefs.instance.visualEffects.value == 'full') ...[
+              choiceRow(
+                context,
+                title: 'Dark mode edge glow',
+                anchor: _glassDarkKey,
+                value: DialerPrefs.instance.glassDark,
+                labels: _glassLabels,
+                onPick: DialerPrefs.instance.setGlassDark,
+              ),
+              choiceRow(
+                context,
+                title: 'Light mode edge glow',
+                anchor: _glassLightKey,
+                value: DialerPrefs.instance.glassLight,
+                labels: _glassLabels,
+                onPick: DialerPrefs.instance.setGlassLight,
+              ),
+            ],
             if (_appCallLog)
               OneUIGroupItem(
                 title: 'Calls from other apps',

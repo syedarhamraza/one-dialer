@@ -25,6 +25,8 @@ class OneUIEffectsController extends ChangeNotifier {
   OneUIEffectsController._() {
     DialerPrefs.instance.visualEffects.addListener(notifyListeners);
     DialerPrefs.instance.callEffects.addListener(notifyListeners);
+    DialerPrefs.instance.glassDark.addListener(notifyListeners);
+    DialerPrefs.instance.glassLight.addListener(notifyListeners);
   }
 
   static final OneUIEffectsController instance = OneUIEffectsController._();
@@ -73,6 +75,11 @@ class OneUIEffectsController extends ChangeNotifier {
   /// Full effects: the call glass (cached glow artwork over the blur), the header's
   /// progressive blur, and separate backdrop reads where one glass must blur another.
   bool get isFull => level == 'full';
+
+  /// The main app's call glass style at full effects (Settings › "Dark/Light mode edge glow"):
+  /// `classic`, `soft` or `bold`.
+  String glassStyle({required bool light}) =>
+      light ? DialerPrefs.instance.glassLight.value : DialerPrefs.instance.glassDark.value;
 
   /// Effects off: solid One UI fills, no blur anywhere.
   bool get isOff => level == 'off';
