@@ -95,12 +95,12 @@ class LitButton extends StatelessWidget {
             foregroundDecoration: fx.isFull ? solidGlow(shape, strength: edges.strength) : null,
             child: edges == GlassEdges.callScreen
                 ? child
-                // Its own layer: the press scales it every frame, and the lips' fade is a save layer.
-                : RepaintBoundary(
-                    child: CustomPaint(
-                      foregroundPainter: GlassLips(shape is CircleBorder ? null : double.infinity, edges),
-                      child: child,
-                    ),
+                // From a cached image: drawn live, the lips' side fade was a save layer every frame.
+                : CallBodyArtwork(
+                    radius: shape is CircleBorder ? null : double.infinity,
+                    edges: edges,
+                    lipsOnly: true,
+                    child: child!,
                   ),
           ),
         );

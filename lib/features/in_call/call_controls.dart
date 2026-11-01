@@ -99,6 +99,7 @@ class CallBodyArtwork extends StatefulWidget {
     this.spread = 1,
     this.opacity = 1,
     this.edges = GlassEdges.callScreen,
+    this.lipsOnly = false,
     required this.child,
   });
   final double? radius;
@@ -113,6 +114,9 @@ class CallBodyArtwork extends StatefulWidget {
 
   /// The 3D lips and the bottom glow (see [GlassEdges]).
   final GlassEdges edges;
+
+  /// Only the 3D lips ([paintGlassLips]), for solid bodies with no milky wash (the green [LitButton]s).
+  final bool lipsOnly;
   final Widget child;
 
   @override
@@ -133,7 +137,8 @@ class _CallBodyArtworkState extends State<CallBodyArtwork> {
         _painter!.glow != widget.glow ||
         _painter!.spread != widget.spread ||
         _painter!.opacity != widget.opacity ||
-        _painter!.edges != widget.edges) {
+        _painter!.edges != widget.edges ||
+        _painter!.lipsOnly != widget.lipsOnly) {
       _painter?.dispose();
       _painter = _CachedBodyPainter(
         widget.radius,
@@ -143,6 +148,7 @@ class _CallBodyArtworkState extends State<CallBodyArtwork> {
         widget.opacity,
         widget.edges,
         light,
+        lipsOnly: widget.lipsOnly,
       );
     }
     return CustomPaint(painter: _painter, child: widget.child);
@@ -156,7 +162,16 @@ class _CallBodyArtworkState extends State<CallBodyArtwork> {
 }
 
 class _CachedBodyPainter extends CustomPainter {
-  _CachedBodyPainter(this.radius, this.ratio, this.glow, this.spread, this.opacity, this.edges, this.light);
+  _CachedBodyPainter(
+    this.radius,
+    this.ratio,
+    this.glow,
+    this.spread,
+    this.opacity,
+    this.edges,
+    this.light, {
+    this.lipsOnly = false,
+  });
   final double? radius;
   final double ratio;
   final double glow;
@@ -164,6 +179,7 @@ class _CachedBodyPainter extends CustomPainter {
   final double opacity;
   final GlassEdges edges;
   final bool light;
+  final bool lipsOnly;
   ui.Image? _image;
   Size? _size;
 
@@ -173,7 +189,11 @@ class _CachedBodyPainter extends CustomPainter {
     if (_image == null || _size != size) {
       final recorder = ui.PictureRecorder();
       final recording = Canvas(recorder)..scale(ratio);
-      TintedCallBody(radius, glow: glow, spread: spread, edges: edges, light: light).paint(recording, size);
+      if (lipsOnly) {
+        paintGlassLips(recording, Offset.zero & size, radius, edges);
+      } else {
+        TintedCallBody(radius, glow: glow, spread: spread, edges: edges, light: light).paint(recording, size);
+      }
       final picture = recorder.endRecording();
       final image = picture.toImageSync((size.width * ratio).ceil(), (size.height * ratio).ceil());
       picture.dispose();
@@ -201,6 +221,7 @@ class _CachedBodyPainter extends CustomPainter {
       spread != oldDelegate.spread ||
       opacity != oldDelegate.opacity ||
       edges != oldDelegate.edges ||
+      lipsOnly != oldDelegate.lipsOnly ||
       light != oldDelegate.light;
 }
 
@@ -334,8 +355,7 @@ class TintedCallBody extends CustomPainter {
       oldDelegate.light != light;
 }
 
-/// The 3D lips of a [TintedCallBody], on their own for bodies with no milky wash (the green
-/// [LitButton]s): clearer along the top edge, fainter along the bottom, and faded out toward the
+/// The 3D lips of a [TintedCallBody], also drawn on their own ([CallBodyArtwork.lipsOnly]): clearer along the top edge, fainter along the bottom, and faded out toward the
 /// sides so they don't wrap round the rounded ends.
 void paintGlassLips(Canvas canvas, Rect rect, double? radius, GlassEdges edges) {
   final lip = edges.lip;
@@ -371,19 +391,6 @@ void paintGlassLips(Canvas canvas, Rect rect, double? radius, GlassEdges edges) 
 }
 
 Color _scaled(Color c, double by) => c.withValues(alpha: (c.a * by).clamp(0.0, 1.0));
-
-/// [paintGlassLips] as a painter, drawn over a lit button.
-class GlassLips extends CustomPainter {
-  const GlassLips(this.radius, this.edges);
-  final double? radius;
-  final GlassEdges edges;
-
-  @override
-  void paint(Canvas canvas, Size size) => paintGlassLips(canvas, Offset.zero & size, radius, edges);
-
-  @override
-  bool shouldRepaint(GlassLips oldDelegate) => oldDelegate.radius != radius || oldDelegate.edges != edges;
-}
 
 /// A circle, a superellipse whose ends are ColorOS's soft oval rather than a true semicircle, or
 /// (an infinite [radius]) a stadium with round ends.
