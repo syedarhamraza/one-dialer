@@ -115,6 +115,11 @@ class TelecomBridge {
   Future<Map<Object?, Object?>> getCallHealth() async =>
       await _methods.invokeMapMethod<Object?, Object?>('getCallHealth') ?? const {};
 
+  /// The launcher icon style (`default`, which is Glossy, or `classic`) for both Phone and Contacts.
+  Future<String> getLauncherIcon() async => await _methods.invokeMethod<String>('getLauncherIcon') ?? 'default';
+
+  Future<void> setLauncherIcon(String style) => _methods.invokeMethod('setLauncherIcon', {'style': style});
+
   /// Phones with 4 GB of RAM or less, whose GPUs can't keep up with the full blurs.
   Future<bool> isLowEndDevice() async => await _methods.invokeMethod<bool>('isLowEndDevice') ?? false;
 

@@ -1,4 +1,5 @@
-"""Renders the launcher icons (Phone, Contacts), the Play Store icon and the vivo island images from SVG.
+"""Renders the launcher icons (Phone, Contacts) in Glossy (the default) and Classic, their Settings
+previews, the Play Store icon and the vivo island images from SVG.
 
 The design is the flat green pair from Figma ("One Dialer — App Icons"), with a light glass rim
 on the glyphs. Adaptive icon layers are 108 dp with the middle 72 dp visible, so the 1024-unit
@@ -13,6 +14,7 @@ import subprocess
 import tempfile
 
 RES = pathlib.Path("android/app/src/main/res/drawable-nodpi")
+PREVIEW = pathlib.Path("assets/app_icons")
 PLAY = pathlib.Path("docs/play-icon.png")
 L, T, O = 1536, 1024, 256  # layer, tile, tile offset in the layer
 PX = 648  # 108 dp at 6x, headroom over xxxhdpi for launchers that enlarge icons
@@ -152,12 +154,62 @@ def render(markup, out, size):
     assert out.exists(), out
 
 
+# Glossy, the default launcher pair since beta 7: the same glyphs, glossy white-to-mint with a soft
+# shadow on a brighter green; the Contacts tile has three address-book tabs down its right edge.
+# The original frosted pair stays as Classic (Settings › More settings › App icon, AppIcons.kt).
+def tile_grad(top, bottom):
+    return (f'<defs><linearGradient id="bg" x1="0" y1="{O}" x2="0" y2="{O + T}" gradientUnits="userSpaceOnUse">'
+            f'<stop stop-color="{top}"/><stop offset="1" stop-color="{bottom}"/></linearGradient></defs>'
+            f'<rect width="{L}" height="{L}" fill="url(#bg)"/>')
+
+
+def tabs():
+    x, cuts = O + .86 * T, (O + .38 * T, O + .69 * T)
+    return ('<defs><linearGradient id="shade" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#005A1E" stop-opacity=".28"/>'
+            '<stop offset="1" stop-color="#005A1E" stop-opacity="0"/></linearGradient></defs>'
+            f'<rect x="{x:.0f}" width="{L}" height="{cuts[0]:.0f}" fill="#00C640"/>'
+            f'<rect x="{x:.0f}" y="{cuts[0]:.0f}" width="{L}" height="{cuts[1] - cuts[0]:.0f}" fill="#00B532"/>'
+            f'<rect x="{x:.0f}" y="{cuts[1]:.0f}" width="{L}" height="{L}" fill="#00A529"/>'
+            f'<rect x="{x:.0f}" width="{.036 * T:.0f}" height="{L}" fill="url(#shade)"/>')
+
+
+GLOSS = ('<linearGradient id="gloss" x1="0" y1="0" x2=".4" y2="1"><stop stop-color="#FFFFFF"/>'
+         '<stop offset=".55" stop-color="#EEFCF4"/><stop offset="1" stop-color="#BDF0D8"/></linearGradient>'
+         '<linearGradient id="head" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F2FFF8"/><stop offset="1" stop-color="#B5F2D0"/></linearGradient>'
+         '<linearGradient id="body" x1="0" y1="0" x2="1" y2=".6"><stop stop-color="#F2FCF6"/>'
+         '<stop offset=".6" stop-color="#CBF4DD"/><stop offset="1" stop-color="#95E6B8"/></linearGradient>'
+         '<filter id="drop" x="-20%" y="-20%" width="140%" height="150%">'
+         '<feDropShadow dx="0" dy="11" stdDeviation="13" flood-color="#006E2A" flood-opacity=".35"/></filter>'
+         # Thins the handset evenly; the blur and threshold round the corners the erosion squares off.
+         '<filter id="thin" x="-20%" y="-20%" width="140%" height="150%">'
+         '<feMorphology in="SourceAlpha" operator="erode" radius="13" result="e"/>'
+         '<feGaussianBlur in="e" stdDeviation="10" result="b"/>'
+         '<feComponentTransfer in="b" result="m"><feFuncA type="linear" slope="12" intercept="-5.5"/></feComponentTransfer>'
+         '<feComposite in="SourceGraphic" in2="m" operator="in" result="t"/>'
+         '<feDropShadow in="t" dx="0" dy="11" stdDeviation="13" flood-color="#006E2A" flood-opacity=".35"/></filter>')
+
+GLOSSY_PHONE_BG = tile_grad("#14DD5E", "#00C23A")
+GLOSSY_CONTACTS_BG = tile_grad("#10DE68", "#00C43F") + tabs()
+# Slimmer than Classic: less rounding on the handset, a smaller head and a narrower body.
+GLOSSY_PHONE_FG = (f'<defs>{GLOSS}</defs><g filter="url(#thin)">'
+                   + handset(O + T / 2, O + T / 2, 0.62 * T, "url(#gloss)", W) + '</g>')
+GLOSSY_PERSON_FG = (f'<defs>{GLOSS}</defs><g filter="url(#drop)" transform="translate({px:.2f} {py:.2f}) scale({pk:.4f})">'
+                    f'<circle cx="280" cy="178" r="112" fill="url(#head)"/>'
+                    f'<path d="{BODY}" fill="url(#body)" transform="translate(280 0) scale(.86 .92) translate(-280 42)"/></g>')
+
 RES.mkdir(parents=True, exist_ok=True)
-for name, body in {"ic_launcher_background": PHONE_BG, "ic_launcher_foreground": HANDSET_FG,
-                   "ic_contacts_background": CONTACTS_BG, "ic_contacts_foreground": PERSON_FG}.items():
+PREVIEW.mkdir(parents=True, exist_ok=True)
+for name, body in {"ic_launcher_background": GLOSSY_PHONE_BG, "ic_launcher_foreground": GLOSSY_PHONE_FG,
+                   "ic_contacts_background": GLOSSY_CONTACTS_BG, "ic_contacts_foreground": GLOSSY_PERSON_FG,
+                   "ic_classic_phone_background": PHONE_BG, "ic_classic_phone_foreground": HANDSET_FG,
+                   "ic_classic_contacts_background": CONTACTS_BG, "ic_classic_contacts_foreground": PERSON_FG}.items():
     render(svg(body), RES / f"{name}.png", PX)
+# Settings previews: the visible tile, which the app rounds itself.
+for name, body in {"default_phone": GLOSSY_PHONE_BG + GLOSSY_PHONE_FG, "default_contacts": GLOSSY_CONTACTS_BG + GLOSSY_PERSON_FG,
+                   "classic_phone": PHONE_BG + HANDSET_FG, "classic_contacts": CONTACTS_BG + PERSON_FG}.items():
+    render(svg(body, f"{O} {O} {T} {T}", 192), PREVIEW / f"{name}.png", 192)
 # Play wants the full square (it rounds the corners itself): the visible tile of both layers.
-render(svg(PHONE_BG + HANDSET_FG, f"{O} {O} {T} {T}", 512), PLAY, 512)
+render(svg(GLOSSY_PHONE_BG + GLOSSY_PHONE_FG, f"{O} {O} {T} {T}", 512), PLAY, 512)
 for name, body in ISLAND.items():
     render(svg(body, f"0 0 {ISL} {ISL}", ISL), RES / f"{name}.png", ISL)
 print("rendered to", RES, "and", PLAY)
