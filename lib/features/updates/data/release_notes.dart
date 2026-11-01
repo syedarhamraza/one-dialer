@@ -5,6 +5,9 @@ import 'dart:io';
 import 'package:firebase_performance/firebase_performance.dart';
 
 import '../../../core/config/changelog.dart';
+import 'release_notes_json.dart';
+
+export 'release_notes_json.dart';
 
 /// Play doesn't say what's in an update, so `tool/release.ps1` publishes each release's notes
 /// here (via `tool/export_changelog.dart`).
@@ -35,20 +38,3 @@ Future<ChangelogEntry?> fetchReleaseNotes(int code) async {
     unawaited(metric?.stop().catchError((_) {}));
   }
 }
-
-/// Reads `changelog.json` ({version, code, date, changes}); null unless it's build [code]'s.
-ChangelogEntry? parseReleaseNotes(String json, int code) {
-  if (jsonDecode(json) case {'version': String version, 'code': int c, 'date': String date, 'changes': List changes}
-      when c == code) {
-    return ChangelogEntry(version: version, date: date, changes: changes.whereType<String>().toList());
-  }
-  return null;
-}
-
-/// What `tool/export_changelog.dart` writes for [entry], built as [code].
-Map<String, Object> releaseNotesJson(ChangelogEntry entry, int code) => {
-  'version': entry.version,
-  'code': code,
-  'date': entry.date,
-  'changes': entry.changes,
-};

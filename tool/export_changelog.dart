@@ -5,7 +5,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dialer/core/config/changelog.dart';
-import 'package:dialer/features/updates/data/release_notes.dart';
+import 'package:dialer/features/updates/data/release_notes_json.dart';
 
 void main(List<String> args) {
   if (args.length != 3 || int.tryParse(args[1]) == null) {

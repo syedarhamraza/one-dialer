@@ -71,10 +71,10 @@ Declare **"Calling"**: the full-screen intent shows incoming calls over the lock
 
 ### Data safety
 
-- **Data collected:** App info and performance → Crash logs and Diagnostics, plus Device or other IDs (the Firebase installation ID Crashlytics and Performance Monitoring attach) — Crashlytics, plus Performance Monitoring in betas (Approximate location is *not* collected: Firebase only derives the country from the IP address), *not* linked to the user, not used for ads, collection required.
+- **Data collected:** App info and performance → Crash logs and Diagnostics, plus Device or other IDs (the Firebase installation and app instance IDs) — Crashlytics, plus Performance Monitoring in betas — and App activity → App interactions (Firebase Analytics: opens, sessions, screens; no advertising ID) (Approximate location is *not* collected: Firebase only derives the country from the IP address), *not* linked to the user, not used for ads, collection required.
 - **Data shared:** none.
 - Calls, call history, contacts and SMS: **not collected** (processed on the device only; nothing leaves it).
-- Encrypted in transit: yes (Firebase uses HTTPS). Users can't request deletion of crash logs (they contain no personal data).
+- Encrypted in transit: yes (Firebase uses HTTPS). Users can't request deletion of crash logs or usage stats (they contain no personal data; Analytics keeps them 2 months).
 
 ### Other
 
