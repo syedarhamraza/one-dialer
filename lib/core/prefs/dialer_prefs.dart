@@ -170,9 +170,6 @@ class DialerPrefs {
   /// through `OneUIEffectsController.glassStyle`.
   final glassDark = ValueNotifier('soft');
 
-  /// Settings › "Light mode edge glow", with full effects: the same three styles.
-  final glassLight = ValueNotifier('soft');
-
   /// Awaited before the first frame, so the app doesn't open dark and then turn light, or
   /// frosted and then flat.
   Future<void> loadAppearance() async {
@@ -183,8 +180,6 @@ class DialerPrefs {
     if (effects == 'full' || effects == 'reduced' || effects == 'off') visualEffects.value = effects!;
     final dark = await _prefs.getString('glass_dark');
     if (dark == 'classic' || dark == 'soft' || dark == 'bold') glassDark.value = dark!;
-    final light = await _prefs.getString('glass_light');
-    if (light == 'classic' || light == 'soft' || light == 'bold') glassLight.value = light!;
   }
 
   /// Settings › Language: `system` or a language tag. Kept natively (`AppLanguage.kt`), where
@@ -267,11 +262,6 @@ class DialerPrefs {
   Future<void> setGlassDark(String value) async {
     glassDark.value = value;
     await _prefs.setString('glass_dark', value);
-  }
-
-  Future<void> setGlassLight(String value) async {
-    glassLight.value = value;
-    await _prefs.setString('glass_light', value);
   }
 
   Future<void> setThemeMode(String value) async {

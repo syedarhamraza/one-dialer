@@ -765,7 +765,7 @@ Color _sheetColor(BuildContext context) {
   final palette = context.palette;
   if (palette.isLight) return palette.page;
   final fx = OneUIEffectsController.instance;
-  if (!fx.isFull || fx.glassStyle(light: false) == 'classic') return palette.card;
+  if (!fx.isFull || fx.glassStyle == 'classic') return palette.card;
   return Color.lerp(palette.card, Colors.black, .5)!;
 }
 

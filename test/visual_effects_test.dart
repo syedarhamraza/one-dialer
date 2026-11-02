@@ -21,22 +21,18 @@ void main() {
     prefs.visualEffects.value = 'full';
     prefs.callEffects.value = 'full';
     prefs.glassDark.value = 'soft';
-    prefs.glassLight.value = 'soft';
   });
 
-  test('glass styles are saved, reloaded, and unknown values are ignored', () async {
-    await prefs.setGlassDark('soft');
-    await prefs.setGlassLight('classic');
+  test('the glass style is saved, reloaded, and unknown values are ignored', () async {
+    await prefs.setGlassDark('classic');
     prefs.glassDark.value = 'bold';
-    prefs.glassLight.value = 'bold';
     await prefs.loadAppearance();
-    expect(prefs.glassDark.value, 'soft');
-    expect(prefs.glassLight.value, 'classic');
+    expect(prefs.glassDark.value, 'classic');
 
-    await prefs.setGlassLight('fancy');
-    prefs.glassLight.value = 'bold';
+    await prefs.setGlassDark('fancy');
+    prefs.glassDark.value = 'bold';
     await prefs.loadAppearance();
-    expect(prefs.glassLight.value, 'bold');
+    expect(prefs.glassDark.value, 'bold');
   });
 
   test('the call screen edge glow is saved with the call effects, and unknown values are ignored', () async {
@@ -82,8 +78,8 @@ void main() {
     expect(await look(Brightness.dark), (opacity: .5, edges: const GlassEdges(strength: 2)));
     prefs.glassDark.value = 'bold';
     expect(await look(Brightness.dark), (opacity: .5, edges: const GlassEdges(strength: 3, bottomLip: 3, lip: 2)));
-    prefs.glassLight.value = 'classic';
-    expect(await look(Brightness.light), (opacity: 1.0, edges: GlassEdges.callScreen));
+    // Light mode ignores the dark style: one look, soft's edges at full strength.
+    expect(await look(Brightness.light), (opacity: 1.0, edges: const GlassEdges(strength: 2)));
   });
 
   test('the level is saved, reloaded, and unknown values are ignored', () async {

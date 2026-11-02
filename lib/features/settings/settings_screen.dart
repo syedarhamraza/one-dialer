@@ -217,7 +217,6 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
   final _effectsKey = GlobalKey();
   final _languageKey = GlobalKey();
   final _glassDarkKey = GlobalKey();
-  final _glassLightKey = GlobalKey();
 
   static Map<String, String> _themeLabels(AppLocalizations l10n) => {
     'system': l10n.settingsLanguageSystem,
@@ -326,9 +325,10 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
             OneUIGroupItem(
               title: context.l10n.appIcon,
               value: AppIconScreen.labels(context.l10n)[_icon],
-              onTap: () => Navigator.of(context)
-                  .push(MaterialPageRoute<void>(builder: (_) => const AppIconScreen()))
-                  .then((_) => _loadIcon()),
+              onTap: () =>
+                  Navigator.of(context)
+                      .push(MaterialPageRoute<void>(builder: (_) => const AppIconScreen()))
+                      .then((_) => _loadIcon()),
             ),
             choiceRow(
               context,
@@ -348,14 +348,6 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
                 value: DialerPrefs.instance.glassDark,
                 labels: edgeGlowLabels(context.l10n),
                 onPick: DialerPrefs.instance.setGlassDark,
-              ),
-              choiceRow(
-                context,
-                title: context.l10n.lightModeEdgeGlow,
-                anchor: _glassLightKey,
-                value: DialerPrefs.instance.glassLight,
-                labels: edgeGlowLabels(context.l10n),
-                onPick: DialerPrefs.instance.setGlassLight,
               ),
             ],
             if (_appCallLog)

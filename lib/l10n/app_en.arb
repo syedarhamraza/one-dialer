@@ -706,7 +706,6 @@
   "appIconFootnote": "Changes both the Phone and Contacts icons. The launcher may take a few seconds, and icons on the home screen may need adding again from the app drawer.",
   "callScreenEdgeGlow": "Call screen edge glow",
   "darkModeEdgeGlow": "Dark mode edge glow",
-  "lightModeEdgeGlow": "Light mode edge glow",
   "edgeGlowClassic": "Classic",
   "edgeGlowSoft": "Soft",
   "edgeGlowBold": "Bold",

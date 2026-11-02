@@ -10,16 +10,15 @@ import 'press_glow.dart';
 /// the call screen, where the controls sit on a dark gradient.
 const double kMainGlassGlow = .6;
 
-/// The main app's call glass at full effects, by Settings › "Dark/Light mode edge glow": how
+/// The main app's call glass at full effects, by Settings › "Dark mode edge glow": how
 /// strongly the body (wash, glow and lips) is drawn, and its 3D edges. Classic is the
 /// original look ([classicOpacity] per control); soft (the default) is half the glass, like
 /// ColorOS 17's Phone, with brighter edges; bold brightens and thickens them more.
-GlassLook mainGlass(BuildContext context, {double classicOpacity = 1}) {
-  final light = context.palette.isLight;
-  final look = glassLook(OneUIEffectsController.instance.glassStyle(light: light), classicOpacity: classicOpacity);
-  // Light glass is milky white at full strength: halved, it reads as a see-through grey.
-  return light && look.edges != GlassEdges.callScreen ? (opacity: 1, edges: look.edges) : look;
-}
+GlassLook mainGlass(BuildContext context, {double classicOpacity = 1}) =>
+    // Light mode has one look: soft's edges at full strength (halved, the light wash reads grey).
+    context.palette.isLight
+    ? (opacity: 1, edges: glassLook('soft').edges)
+    : glassLook(OneUIEffectsController.instance.glassStyle, classicOpacity: classicOpacity);
 
 /// The connected call screen's control look for floating chrome: the backdrop blurred
 /// behind, the call body's milky wash, all-round edge glow and top lip, and its press

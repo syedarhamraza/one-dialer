@@ -1340,9 +1340,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get darkModeEdgeGlow => 'Bagliore bordi in tema scuro';
 
   @override
-  String get lightModeEdgeGlow => 'Bagliore bordi in tema chiaro';
-
-  @override
   String get edgeGlowClassic => 'Classico';
 
   @override
