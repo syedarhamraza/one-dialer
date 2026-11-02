@@ -48,10 +48,10 @@ class _ContactHistoryScreenState extends State<ContactHistoryScreen> {
   }
 
   /// "1"/"2" badge, only on dual-SIM phones (as on the contact page).
-  (String, Color)? _simBadge(String? simId) {
+  String? _simBadge(String? simId) {
     if (_sims.length < 2 || simId == null) return null;
     final i = _sims.indexWhere((s) => s.id == simId);
-    return i < 0 ? null : ('${i + 1}', _sims[i].color);
+    return i < 0 ? null : '${i + 1}';
   }
 
   @override

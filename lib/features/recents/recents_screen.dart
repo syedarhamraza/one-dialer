@@ -221,10 +221,10 @@ class _RecentsScreenState extends State<RecentsScreen> {
   }
 
   /// "1"/"2" badge, only on dual-SIM phones.
-  (String, Color)? _simBadge(String? simId) {
+  String? _simBadge(String? simId) {
     if (_sims.length < 2 || simId == null) return null;
     final i = _sims.indexWhere((s) => s.id == simId);
-    return i < 0 ? null : ('${i + 1}', _sims[i].color);
+    return i < 0 ? null : '${i + 1}';
   }
 
   @override
@@ -694,7 +694,7 @@ class _CallRow extends StatelessWidget {
   });
 
   final CallGroup group;
-  final (String, Color)? simBadge;
+  final String? simBadge;
 
   /// A note taken during one of the group's calls, shown under the number.
   final String? note;
@@ -744,9 +744,9 @@ class _CallRow extends StatelessWidget {
                   const SizedBox(height: 2),
                   Row(
                     children: [
-                      CallTypeIcon(type: call.type, muted: true),
+                      CallTypeIcon(type: call.type),
                       const SizedBox(width: 6),
-                      if (simBadge != null && !call.isApp) ...[SimBadge(badge: simBadge!), const SizedBox(width: 6)],
+                      if (simBadge != null && !call.isApp) ...[SimBadge(label: simBadge!), const SizedBox(width: 6)],
                       Flexible(
                         child: Text(
                           call.isApp
@@ -797,28 +797,27 @@ class _CallRow extends StatelessWidget {
   }
 }
 
-/// Small arrow showing incoming / outgoing / missed, Samsung style.
+/// Small grey arrow showing incoming / outgoing / missed; only missed is red.
 class CallTypeIcon extends StatelessWidget {
-  const CallTypeIcon({super.key, required this.type, this.muted = false});
+  const CallTypeIcon({super.key, required this.type, this.size = 18});
 
   final CallType type;
-
-  /// Grey arrows with only missed calls in red, for the flat Recents rows.
-  final bool muted;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
-    final (icon, color) = switch (type) {
-      CallType.outgoing => (Icons.call_made_rounded, OneUITheme.accentGreen),
-      CallType.missed => (Icons.call_missed_rounded, OneUITheme.accentRed),
-      CallType.rejected || CallType.blocked => (Icons.block_rounded, context.palette.textSecondary),
-      CallType.voicemail => (Icons.voicemail_rounded, OneUITheme.accentBlue),
-      _ => (Icons.call_received_rounded, OneUITheme.accentBlue),
+    final icon = switch (type) {
+      CallType.outgoing => Icons.call_made_rounded,
+      CallType.missed => Icons.call_missed_rounded,
+      CallType.rejected || CallType.blocked => Icons.block_rounded,
+      CallType.voicemail => Icons.voicemail_rounded,
+      _ => Icons.call_received_rounded,
     };
-    if (muted) {
-      return Icon(icon, size: 18, color: type == CallType.missed ? color : context.palette.textSecondary);
-    }
-    return Icon(icon, size: 15, color: color);
+    return Icon(
+      icon,
+      size: size,
+      color: type == CallType.missed ? OneUITheme.accentRed : context.palette.textSecondary,
+    );
   }
 }
 
@@ -831,15 +830,15 @@ String callTypeLabel(AppLocalizations l10n, CallType type) => switch (type) {
   _ => l10n.callTypeIncoming,
 };
 
-/// SIM slot number in its SIM colour.
+/// SIM slot number, grey like the text beside it.
 class SimBadge extends StatelessWidget {
-  const SimBadge({super.key, required this.badge});
+  const SimBadge({super.key, required this.label});
 
-  final (String, Color) badge;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
-    final (label, color) = badge;
+    final color = context.palette.textSecondary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(

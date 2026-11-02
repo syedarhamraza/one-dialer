@@ -192,6 +192,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get callTypeVoicemail => 'Voicemail';
 
   @override
+  String get callNotConnected => '(Not connected)';
+
+  @override
   String get callTypeIncoming => 'Incoming call';
 
   @override

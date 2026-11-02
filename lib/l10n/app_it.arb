@@ -55,6 +55,7 @@
   "callTypeRejected": "Chiamata rifiutata",
   "callTypeBlocked": "Chiamata bloccata",
   "callTypeVoicemail": "Segreteria",
+  "callNotConnected": "(Non connesso)",
   "callTypeIncoming": "Chiamata in arrivo",
   "speedDialNoNumber": "Nessun numero di chiamata rapida",
   "speedDialAssignPrompt": "Assegnare un contatto al tasto {digit}?",

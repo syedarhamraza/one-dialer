@@ -428,6 +428,12 @@ abstract class AppLocalizations {
   /// **'Voicemail'**
   String get callTypeVoicemail;
 
+  /// No description provided for @callNotConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'(Not connected)'**
+  String get callNotConnected;
+
   /// No description provided for @callTypeIncoming.
   ///
   /// In en, this message translates to:

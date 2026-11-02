@@ -20,6 +20,7 @@ import '../../widgets/round_header_controls.dart';
 import '../blocking/blocking_repository.dart';
 import '../recents/call_details_screen.dart' show CallNotesCard;
 import '../recents/call_log.dart';
+import '../recents/app_calls.dart' show appCallLabel;
 import '../recents/call_log_repository.dart';
 import '../recents/recents_screen.dart' show CallTypeIcon, SimBadge, callTypeLabel;
 import 'contact_actions.dart';
@@ -331,10 +332,10 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   String? get _simLabel => _sims.length < 2 ? null : _sims.where((s) => s.id == _simId).map((s) => s.label).firstOrNull;
 
   /// "1"/"2" badge, only on dual-SIM phones (as in Calls).
-  (String, Color)? _simBadge(String? simId) {
+  String? _simBadge(String? simId) {
     if (_sims.length < 2 || simId == null) return null;
     final i = _sims.indexWhere((s) => s.id == simId);
-    return i < 0 ? null : ('${i + 1}', _sims[i].color);
+    return i < 0 ? null : '${i + 1}';
   }
 
   /// Every number (tap to call; Message is the tile above), then the contact's ringtone.
@@ -641,55 +642,57 @@ class _ValueRow extends StatelessWidget {
   }
 }
 
-/// One logged call on the contact page and its Call logs page: muted arrow, when, SIM badge
-/// and number, then talk time (or the type when there was none).
+/// One logged call on the contact, Call logs and unsaved-number pages: the time, then one grey
+/// line with the arrow, SIM badge, number, type and talk time.
 class ContactCallLogRow extends StatelessWidget {
   const ContactCallLogRow({super.key, required this.call, required this.simBadge, required this.now});
 
   final CallLogEntry call;
-  final (String, Color)? simBadge;
+  final String? simBadge;
   final DateTime now;
 
   @override
   Widget build(BuildContext context) {
     final c = call;
+    final l10n = context.l10n;
+    final grey = context.palette.textSecondary;
+    // Missed and rejected calls log ring time as duration; only talk time is shown.
+    final talked = c.type == CallType.incoming || c.type == CallType.outgoing;
+    final talk = !talked
+        ? null
+        : c.duration > Duration.zero
+        ? durationLabel(l10n, c.duration)
+        : l10n.callNotConnected;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 40, child: CallTypeIcon(type: c.type, muted: true)),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${dayLabel(context.l10n, c.date, now)}, ${timeLabel(context.l10n, c.date)}',
-                  style: const TextStyle(fontSize: 17),
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  children: [
-                    if (simBadge case final badge?) ...[SimBadge(badge: badge), const SizedBox(width: 6)],
-                    Flexible(
-                      child: Text(
-                        c.number,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
+          Text('${dayLabel(l10n, c.date, now)}, ${timeLabel(l10n, c.date)}', style: const TextStyle(fontSize: 17)),
+          const SizedBox(height: 2),
+          Row(
+            children: [
+              CallTypeIcon(type: c.type, size: 14),
+              const SizedBox(width: 6),
+              if (simBadge case final badge? when !c.isApp) ...[SimBadge(label: badge), const SizedBox(width: 6)],
+              Flexible(
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(text: c.isApp ? appCallLabel(l10n, c) : c.number),
+                      TextSpan(
+                        text: '  ${callTypeLabel(l10n, c.type)}',
+                        style: c.type == CallType.missed ? const TextStyle(color: OneUITheme.accentRed) : null,
                       ),
-                    ),
-                  ],
+                      if (talk != null) TextSpan(text: '  $talk'),
+                    ],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 13, color: grey),
                 ),
-              ],
-            ),
-          ),
-          Text(
-            c.type != CallType.missed && c.duration > Duration.zero
-                ? durationLabel(context.l10n, c.duration)
-                : callTypeLabel(context.l10n, c.type),
-            style: TextStyle(
-              fontSize: 13,
-              color: c.type == CallType.missed ? OneUITheme.accentRed : context.palette.textSecondary,
-            ),
+              ),
+            ],
           ),
         ],
       ),

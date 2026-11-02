@@ -120,6 +120,7 @@
   "callTypeRejected": "Rejected call",
   "callTypeBlocked": "Blocked call",
   "callTypeVoicemail": "Voicemail",
+  "callNotConnected": "(Not connected)",
   "callTypeIncoming": "Incoming call",
   "speedDialNoNumber": "No speed dial number",
   "speedDialAssignPrompt": "Assign a contact to key {digit}?",

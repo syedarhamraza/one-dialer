@@ -101,8 +101,8 @@ void main() {
     await tester.scrollUntilVisible(find.text('View all'), 200);
     expect(find.text('Call logs'), findsOneWidget);
     expect(find.text('View all'), findsOneWidget);
-    expect(find.text('+92 311 1234567'), findsNWidgets(3));
-    expect(find.text('0399999999'), findsNothing);
+    expect(find.textContaining('+92 311 1234567', findRichText: true), findsNWidgets(3));
+    expect(find.textContaining('0399999999', findRichText: true), findsNothing);
   });
 
   const fontPath = String.fromEnvironment('PREVIEW_FONT');
