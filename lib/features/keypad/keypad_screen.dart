@@ -605,7 +605,6 @@ class _Pill extends StatelessWidget {
               // Below full: a flat One UI key, translucent over the sheet when reduced, solid when off.
               : _ink(
                   fill: fx.oneUIFill(light: light),
-                  edge: fx.oneUIEdge(light: light),
                   light: light,
                 ),
         );
@@ -613,9 +612,9 @@ class _Pill extends StatelessWidget {
     ),
   );
 
-  Widget _ink({Color fill = Colors.transparent, BorderSide edge = BorderSide.none, bool light = false}) => Material(
+  Widget _ink({Color fill = Colors.transparent, bool light = false}) => Material(
     color: fill,
-    shape: StadiumBorder(side: edge),
+    shape: const StadiumBorder(),
     clipBehavior: Clip.antiAlias,
     child: InkWell(
       onTap: onTap,

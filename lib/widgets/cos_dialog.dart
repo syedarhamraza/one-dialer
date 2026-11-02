@@ -128,8 +128,7 @@ class _Frame extends StatelessWidget {
   static const _shape = RoundedSuperellipseBorder(borderRadius: BorderRadius.all(Radius.circular(_radius)));
 
   /// ColorOS 17's alert card: light grey (white glass pills vanish on white) brightening toward
-  /// the top, with a bright rim and a soft shadow (full effects only: below it light mode is flat,
-  /// so a hairline sets it off instead); in dark, the card grey with a faint rim.
+  /// the top, with a bright rim and a soft shadow; in dark, the card grey with a faint rim.
   static ShapeDecoration _card(OneUIPalette palette) => palette.isLight
       ? ShapeDecoration(
           gradient: LinearGradient(
@@ -137,12 +136,8 @@ class _Frame extends StatelessWidget {
             end: Alignment.bottomCenter,
             colors: [const Color(0xFFFAFAFC), palette.page],
           ),
-          shape: _shape.copyWith(
-            side: OneUIEffectsController.instance.isFull
-                ? const BorderSide(color: Colors.white)
-                : OneUIEffectsController.instance.oneUIEdge(light: true),
-          ),
-          shadows: OneUIEffectsController.instance.isFull ? OneUIPalette.lightMenuShadow : null,
+          shape: _shape.copyWith(side: const BorderSide(color: Colors.white)),
+          shadows: OneUIPalette.lightMenuShadow,
         )
       : ShapeDecoration(
           color: palette.card,

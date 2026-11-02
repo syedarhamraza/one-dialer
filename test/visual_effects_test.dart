@@ -135,9 +135,7 @@ void main() {
       ),
     );
     final fx = OneUIEffectsController.instance;
-    Finder oneUI(Color c) => find.byWidgetPredicate(
-      (w) => w is DecoratedBox && w.decoration is ShapeDecoration && (w.decoration as ShapeDecoration).color == c,
-    );
+    Finder oneUI(Color c) => find.byWidgetPredicate((w) => w is ColoredBox && w.color == c);
     expect(find.byType(BackdropFilter), findsNWidgets(2));
     expect(oneUI(fx.floatingColor), findsNothing);
 

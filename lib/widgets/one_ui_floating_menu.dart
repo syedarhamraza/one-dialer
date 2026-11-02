@@ -268,23 +268,14 @@ class _PopoverMenu extends StatelessWidget {
                                       alignment: Alignment.topLeft,
                                       // A dark base keeps the items legible over list text; the call-glass
                                       // wash, edge glow and lip go on top, as on the header buttons.
-                                      child: DecoratedBox(
-                                        decoration: ShapeDecoration(
-                                          // Below full, light mode's flat menu gets a hairline (it has no shadow).
-                                          shape: RoundedSuperellipseBorder(
-                                            side: fx.oneUIEdge(light: context.palette.isLight),
-                                            borderRadius: BorderRadius.all(
-                                              Radius.circular(OneUIFloatingMenu._radius * size),
-                                            ),
-                                          ),
-                                          color: !fx.isFull
-                                              ? fx.oneUIFill(light: context.palette.isLight)
-                                              // Light: a thin base, so with the glass's own wash it stays
-                                              // see-through like the buttons; the blur keeps rows legible.
-                                              : context.palette.isLight
-                                              ? const Color(0x4DFFFFFF)
-                                              : const Color(0xB3141416),
-                                        ),
+                                      child: ColoredBox(
+                                        color: !fx.isFull
+                                            ? fx.oneUIFill(light: context.palette.isLight)
+                                            // Light: a thin base, so with the glass's own wash it stays
+                                            // see-through like the buttons; the blur keeps rows legible.
+                                            : context.palette.isLight
+                                            ? const Color(0x4DFFFFFF)
+                                            : const Color(0xB3141416),
                                         // The same glow as the buttons, but reaching less far in: across a card
                                         // this much bigger the button's spread reads as a wide haze. From a cached
                                         // image: drawn live, its blurred strokes were re-rendered every frame of a
