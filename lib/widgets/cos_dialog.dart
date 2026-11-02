@@ -9,7 +9,7 @@ import '../l10n/l10n.dart';
 /// One button of a [showCosActions] dialog.
 typedef CosAction<T> = ({String label, T value, bool destructive});
 
-/// ColorOS 17's alert: a flat card floating above the bottom edge, the
+/// ColorOS 17's alert: a rounded card floating above the bottom edge, the
 /// message centred, and the choices as call-glass pills. Two choices sit side by side (Cancel first),
 /// more stack. Back or a tap outside returns null. Choosers (SIM, numbers) are not alerts:
 /// they keep their own sheets.
@@ -100,6 +100,10 @@ final _spring = GlassSpringCurve(
   const Duration(milliseconds: 400),
 );
 
+/// Light mode below full effects keeps the original flat One UI alert: a white card, smaller
+/// corners and text, and the darker dim.
+bool _flat(BuildContext context) => identical(context.palette, OneUIPalette.lightFlat);
+
 /// Shows [content] in the alerts' card, for popups that aren't plain alerts (the contact QR).
 Future<T?> showCosCard<T>(BuildContext context, WidgetBuilder content) {
   HapticFeedback.lightImpact();
@@ -107,7 +111,8 @@ Future<T?> showCosCard<T>(BuildContext context, WidgetBuilder content) {
     PageRouteBuilder<T>(
       opaque: false,
       barrierDismissible: true,
-      barrierColor: Colors.black54,
+      // ColorOS 17 dims a light page only lightly; the card's shadow lifts it.
+      barrierColor: identical(context.palette, OneUIPalette.light) ? const Color(0x4D000000) : Colors.black54,
       barrierLabel: context.l10n.dismiss,
       transitionDuration: const Duration(milliseconds: 400),
       reverseTransitionDuration: const Duration(milliseconds: 170),
@@ -122,11 +127,36 @@ class _Frame extends StatelessWidget {
   final Animation<double> animation;
   final Widget child;
 
-  static const double _radius = 28;
+  /// Concentric with the pills: their 26 plus the card's 20 of padding.
+  static const double _radius = 46;
+  static const _shape = RoundedSuperellipseBorder(borderRadius: BorderRadius.all(Radius.circular(_radius)));
+
+  /// ColorOS 17's alert card: light grey (white glass pills vanish on white) brightening toward
+  /// the top, with a bright rim and a soft shadow; in dark, the card grey with a faint rim.
+  static ShapeDecoration _card(OneUIPalette palette) => identical(palette, OneUIPalette.lightFlat)
+      ? ShapeDecoration(
+          color: palette.card,
+          shape: const RoundedSuperellipseBorder(borderRadius: BorderRadius.all(Radius.circular(28))),
+        )
+      : palette.isLight
+      ? ShapeDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [const Color(0xFFFAFAFC), palette.page],
+          ),
+          shape: _shape.copyWith(side: const BorderSide(color: Colors.white)),
+          shadows: OneUIPalette.lightMenuShadow,
+        )
+      : ShapeDecoration(
+          color: palette.card,
+          shape: _shape.copyWith(side: const BorderSide(color: Color(0x14FFFFFF), width: .8)),
+        );
 
   @override
   Widget build(BuildContext context) {
     final still = MediaQuery.disableAnimationsOf(context);
+    final flat = _flat(context);
     return Padding(
       // Rides above the keyboard while typing.
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
@@ -134,7 +164,7 @@ class _Frame extends StatelessWidget {
         child: Align(
           alignment: Alignment.bottomCenter,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            padding: flat ? const EdgeInsets.fromLTRB(16, 0, 16, 16) : const EdgeInsets.fromLTRB(12, 0, 12, 12),
             child: AnimatedBuilder(
               animation: animation,
               builder: (context, child) {
@@ -148,15 +178,13 @@ class _Frame extends StatelessWidget {
                   child: Opacity(opacity: fade, child: child),
                 );
               },
-              // A flat card, as ColorOS draws it; the glass is on the buttons.
+              // No blur of its own: a backdrop read under the open spring's scale costs tens of ms
+              // a frame on Adreno. The glass is on the buttons.
               child: DecoratedBox(
-                decoration: ShapeDecoration(
-                  color: context.palette.card,
-                  shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.all(Radius.circular(_radius))),
-                ),
+                decoration: _card(context.palette),
                 child: Material(
                   type: MaterialType.transparency,
-                  child: Padding(padding: const EdgeInsets.fromLTRB(20, 28, 20, 20), child: child),
+                  child: Padding(padding: EdgeInsets.fromLTRB(20, flat ? 28 : 30, 20, 20), child: child),
                 ),
               ),
             ),
@@ -174,28 +202,31 @@ class _Texts extends StatelessWidget {
   final String message;
 
   @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      if (title != null) ...[
+  Widget build(BuildContext context) {
+    final flat = _flat(context);
+    return Column(
+      children: [
+        if (title != null) ...[
+          Text(title!, textAlign: TextAlign.center, style: _titleStyle(context)),
+          SizedBox(height: flat ? 8 : 10),
+        ],
         Text(
-          title!,
+          message,
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
+          style: TextStyle(
+            fontSize: title == null ? 18 : (flat ? 15.5 : 15),
+            height: flat ? 1.35 : 1.4,
+            color: title == null ? context.palette.textPrimary : context.palette.textSecondary,
+          ),
         ),
-        const SizedBox(height: 8),
       ],
-      Text(
-        message,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: title == null ? 18 : 15.5,
-          height: 1.35,
-          color: title == null ? context.palette.textPrimary : context.palette.textSecondary,
-        ),
-      ),
-    ],
-  );
+    );
+  }
 }
+
+TextStyle _titleStyle(BuildContext context) => _flat(context)
+    ? TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: context.palette.textPrimary)
+    : TextStyle(fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.2, color: context.palette.textPrimary);
 
 /// An alert button in the app's own style: a frosted call-glass pill like the header and
 /// nav buttons (it carries the press); red text when it destroys something.
@@ -273,16 +304,13 @@ class _TextInputState extends State<_TextInput> {
     mainAxisSize: MainAxisSize.min,
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      Text(
-        widget.title,
-        textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
-      ),
+      Text(widget.title, textAlign: TextAlign.center, style: _titleStyle(context)),
       const SizedBox(height: 18),
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 18),
         decoration: ShapeDecoration(
-          color: context.palette.pill,
+          // White on the light card's grey.
+          color: identical(context.palette, OneUIPalette.light) ? context.palette.card : context.palette.pill,
           shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.all(Radius.circular(18))),
         ),
         child: TextField(

@@ -1326,9 +1326,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get darkModeEdgeGlow => 'Dark mode edge glow';
 
   @override
-  String get lightModeEdgeGlow => 'Light mode edge glow';
-
-  @override
   String get edgeGlowClassic => 'Classic';
 
   @override

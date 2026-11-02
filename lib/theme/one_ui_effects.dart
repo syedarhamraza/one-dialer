@@ -26,7 +26,6 @@ class OneUIEffectsController extends ChangeNotifier {
     DialerPrefs.instance.visualEffects.addListener(notifyListeners);
     DialerPrefs.instance.callEffects.addListener(notifyListeners);
     DialerPrefs.instance.glassDark.addListener(notifyListeners);
-    DialerPrefs.instance.glassLight.addListener(notifyListeners);
     DialerPrefs.instance.callGlass.addListener(notifyListeners);
   }
 
@@ -77,10 +76,9 @@ class OneUIEffectsController extends ChangeNotifier {
   /// progressive blur, and separate backdrop reads where one glass must blur another.
   bool get isFull => level == 'full';
 
-  /// The main app's call glass style at full effects (Settings › "Dark/Light mode edge glow"):
-  /// `classic`, `soft` or `bold`.
-  String glassStyle({required bool light}) =>
-      light ? DialerPrefs.instance.glassLight.value : DialerPrefs.instance.glassDark.value;
+  /// The main app's dark call glass style at full effects (Settings › "Dark mode edge glow"):
+  /// `classic`, `soft` or `bold`. Light mode has one look (see `mainGlass`).
+  String get glassStyle => DialerPrefs.instance.glassDark.value;
 
   /// The call screen's edge glow style (Settings › "Call screen edge glow").
   String get callGlassStyle => DialerPrefs.instance.callGlass.value;
@@ -92,7 +90,7 @@ class OneUIEffectsController extends ChangeNotifier {
   /// shadows): translucent over a blur when reduced (every blur on a page sharing one backdrop
   /// read), solid when off.
   Color oneUIFill({required bool light}) {
-    final fill = light ? OneUIPalette.light.pill.withValues(alpha: .8) : floatingColor;
+    final fill = light ? OneUIPalette.lightFlat.pill.withValues(alpha: .8) : floatingColor;
     return isOff ? fill.withValues(alpha: 1) : fill;
   }
 

@@ -62,8 +62,8 @@ class ContactRow extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       onLongPress: onLongPress,
-      splashColor: Colors.white.withValues(alpha: 0.06),
-      highlightColor: Colors.white.withValues(alpha: 0.03),
+      splashColor: context.palette.textPrimary.withValues(alpha: 0.06),
+      highlightColor: context.palette.textPrimary.withValues(alpha: 0.03),
       child: Padding(
         padding: const EdgeInsets.only(left: 20),
         child: Row(

@@ -27,8 +27,12 @@ class PressGlow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final full = OneUIEffectsController.instance.isFull;
     final press = GlassButton.custom(
       style: GlassButtonStyle.transparent,
+      // Below full effects there's no glass, so no glass lighting on press either (the even white
+      // lift while held, and the finger glow below): just the squeeze.
+      ambientBaseLight: full ? null : 0,
       onTap: _noTap,
       excludeFromSemantics: true,
       canRequestFocus: false,
@@ -38,7 +42,12 @@ class PressGlow extends StatelessWidget {
       // circle 1.6× the button offscreen on every pointer move (~30 ms a frame on the menu card).
       glowRadius: 1.6,
       glowBlurRadius: 0,
-      glowColor: GlassTheme.brightnessOf(context) == Brightness.dark
+      // Light mode's white glass hides a white glow: a faint shade instead.
+      glowColor: !full
+          ? Colors.transparent
+          : context.palette.isLight
+          ? const Color(0x0F000000)
+          : GlassTheme.brightnessOf(context) == Brightness.dark
           ? const Color(0x12FFFFFF)
           : const Color(0x1AFFFFFF),
       child: child,
@@ -49,7 +58,10 @@ class PressGlow extends StatelessWidget {
     return DecoratedBox(
       decoration: ShapeDecoration(
         shape: shape,
-        shadows: [...?shadows, if (color != null) ...?solidBody(color, shape, glow: .22).shadows],
+        shadows: [
+          ...?shadows,
+          if (color != null) ...?solidBody(color, shape, glow: .22, light: context.palette.isLight).shadows,
+        ],
       ),
       child: press,
     );
@@ -81,7 +93,9 @@ class LitButton extends StatelessWidget {
           radius: radius,
           glowColor: fx.isFull ? color : null,
           child: Container(
-            decoration: fx.isFull ? solidBody(color, shape, glow: 0) : ShapeDecoration(color: color, shape: shape),
+            decoration: fx.isFull
+                ? solidBody(color, shape, glow: 0, light: context.palette.isLight)
+                : ShapeDecoration(color: color, shape: shape),
             foregroundDecoration: fx.isFull ? solidGlow(shape, strength: edges.strength) : null,
             child: edges == GlassEdges.callScreen
                 ? child

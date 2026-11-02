@@ -66,10 +66,13 @@ class OneUITheme {
   static Border? get subtleBorder => null;
 
   static final ThemeData darkTheme = _theme(Brightness.dark);
-  static final ThemeData lightTheme = _theme(Brightness.light);
+  static final ThemeData _lightFull = _theme(Brightness.light, OneUIPalette.light);
+  static final ThemeData _lightFlat = _theme(Brightness.light, OneUIPalette.lightFlat);
 
-  static ThemeData _theme(Brightness brightness) {
-    final p = brightness == Brightness.light ? OneUIPalette.light : OneUIPalette.dark;
+  /// Light mode's page colours follow the effects level (see [OneUIPalette.lightFlat]).
+  static ThemeData get lightTheme => OneUIEffectsController.instance.isFull ? _lightFull : _lightFlat;
+
+  static ThemeData _theme(Brightness brightness, [OneUIPalette p = OneUIPalette.dark]) {
     return ThemeData(
       brightness: brightness,
       scaffoldBackgroundColor: p.page,
@@ -140,7 +143,7 @@ class OneUIPalette {
   /// one that defines its edge on a white page.
   static const lightGlassShadow = [
     BoxShadow(color: Color(0x12000000), blurRadius: 24, offset: Offset(0, 6)),
-    BoxShadow(color: Color(0x0A000000), blurRadius: 6, offset: Offset(0, 1)),
+    BoxShadow(color: Color(0x10000000), blurRadius: 6, offset: Offset(0, 1)),
   ];
 
   /// Deeper for menus, which open over white cards as often as over the grey page.
@@ -149,7 +152,7 @@ class OneUIPalette {
     BoxShadow(color: Color(0x14000000), blurRadius: 8, offset: Offset(0, 2)),
   ];
 
-  bool get isLight => identical(this, light);
+  bool get isLight => identical(this, light) || identical(this, lightFlat);
 
   /// [g], a black page fade, redrawn in the light page colour (same alphas).
   LinearGradient tint(LinearGradient g) => isLight
@@ -176,6 +179,21 @@ class OneUIPalette {
 
   /// ColorOS 17 light: grey page, white cards, black text.
   static const light = OneUIPalette._(
+    page: Color(0xFFF2F3F5),
+    card: Color(0xFFFFFFFF),
+    cardHighlight: Color(0xFFF0F0F3),
+    pill: Color(0xFFF5F5F8),
+    textPrimary: Color(0xFF000000),
+    textSecondary: Color(0xFF5E5E63),
+    textTertiary: Color(0xFF8E8E93),
+    sectionHeader: Color(0xFF3C3C43),
+    divider: Color(0x1A000000),
+    pillActive: Color(0xFFFFFFFF),
+  );
+
+  /// Light mode below full effects: the original flat One UI light (a darker grey page, so the
+  /// shadowless pills still stand out).
+  static const lightFlat = OneUIPalette._(
     page: Color(0xFFE9E9EE),
     card: Color(0xFFFFFFFF),
     cardHighlight: Color(0xFFF0F0F3),
@@ -190,5 +208,9 @@ class OneUIPalette {
 }
 
 extension OneUIPaletteContext on BuildContext {
-  OneUIPalette get palette => Theme.of(this).brightness == Brightness.light ? OneUIPalette.light : OneUIPalette.dark;
+  // The light theme is rebuilt per effects level (DialerApp), so reading the level here still
+  // rebuilds dependents through Theme.of when it changes.
+  OneUIPalette get palette => Theme.of(this).brightness == Brightness.light
+      ? (OneUIEffectsController.instance.isFull ? OneUIPalette.light : OneUIPalette.lightFlat)
+      : OneUIPalette.dark;
 }

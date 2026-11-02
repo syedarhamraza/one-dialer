@@ -295,7 +295,8 @@ class TintedCallBody extends CustomPainter {
   });
   final double? radius;
 
-  /// Light mode: a denser white wash and a bright white rim (the press draws its shadow).
+  /// Light mode: a translucent white wash with a top sheen, a bright rim and a shaded bottom
+  /// edge (the press draws its shadow).
   final bool light;
 
   /// Strength of the edge glow and the brighter border glow (1 = the call screen's).
@@ -326,18 +327,23 @@ class TintedCallBody extends CustomPainter {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: light
-              ? const [Color(0xB8FFFFFF), Color(0xA8FFFFFF), Color(0xC2FFFFFF)]
+              ? const [Color(0x99FFFFFF), Color(0x6BFFFFFF), Color(0x85FFFFFF)]
               : const [Color(0x33FFFFFF), Color(0x2BFFFFFF), Color(0x3DFFFFFF)],
           stops: const [0, .5, 1],
         ).createShader(rect),
     );
     if (light) {
+      // A sheen over the top half: light glass catches the light from above, while the
+      // translucent wash keeps the blur behind it showing through.
       canvas.drawPath(
-        bodyPath(rect.deflate(.4), radius == null ? null : radius! - .4),
+        shape,
         Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = .8
-          ..color = const Color(0xE6FFFFFF),
+          ..shader = const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0x80FFFFFF), Color(0x00FFFFFF)],
+            stops: [0, .5],
+          ).createShader(rect),
       );
     }
     // The ColorOS glow: a soft light hugging every edge, shallow so the centre stays clear, and
@@ -378,7 +384,33 @@ class TintedCallBody extends CustomPainter {
           ).createShader(rect),
       )
       ..restore();
-    paintGlassLips(canvas, rect, radius, edges);
+    if (light) {
+      final inner = bodyPath(rect.deflate(.5), radius == null ? null : radius! - .5);
+      canvas
+        // A bright rim, as light glass's edge catches the light.
+        ..drawPath(
+          inner,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1
+            ..color = const Color(0xF2FFFFFF),
+        )
+        // White alone vanishes on a light page: a hairline shade deepening toward the bottom
+        // gives the edge its thickness.
+        ..drawPath(
+          inner,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = .8
+            ..shader = const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0x00000000), Color(0x00000000), Color(0x1A000000)],
+              stops: [0, .5, 1],
+            ).createShader(rect),
+        );
+    }
+    paintGlassLips(canvas, rect, radius, edges, light: light);
   }
 
   @override
@@ -391,8 +423,9 @@ class TintedCallBody extends CustomPainter {
 }
 
 /// The 3D lips of a [TintedCallBody], also drawn on their own ([CallBodyArtwork.lipsOnly]): clearer along the top edge, fainter along the bottom, and faded out toward the
-/// sides so they don't wrap round the rounded ends.
-void paintGlassLips(Canvas canvas, Rect rect, double? radius, GlassEdges edges) {
+/// sides so they don't wrap round the rounded ends. [light]: the bottom lip is a faint shade, since
+/// a white one vanishes on light glass.
+void paintGlassLips(Canvas canvas, Rect rect, double? radius, GlassEdges edges, {bool light = false}) {
   final lip = edges.lip;
   canvas
     ..saveLayer(rect, Paint())
@@ -408,7 +441,7 @@ void paintGlassLips(Canvas canvas, Rect rect, double? radius, GlassEdges edges) 
             _scaled(const Color(0x3BFFFFFF), edges.strength),
             const Color(0x00FFFFFF),
             const Color(0x00FFFFFF),
-            _scaled(const Color(0x1FFFFFFF), edges.bottomLip),
+            _scaled(light ? const Color(0x0F000000) : const Color(0x1FFFFFFF), edges.bottomLip),
           ],
           stops: const [0, .3, .7, 1],
         ).createShader(rect),
@@ -828,23 +861,33 @@ const answerGreen = Color(0xFF2FAE52);
 
 /// ColorOS 17's solid buttons (End, Decline, Answer), lit from below like the frosted ones: a
 /// shade deeper at the top, lighter toward the bottom, a light rim and a soft drop glow in their
-/// own colour. Pair with [solidGlow] as the foreground.
-ShapeDecoration solidBody(Color color, OutlinedBorder shape, {double glow = .3, double blur = 22, bool flat = false}) =>
-    flat
+/// own colour. Pair with [solidGlow] as the foreground. [light] (the main app's light mode): lit
+/// from above instead, with a tighter drop glow, since a dark top and a wide halo look muddy on a
+/// light page.
+ShapeDecoration solidBody(
+  Color color,
+  OutlinedBorder shape, {
+  double glow = .3,
+  double blur = 22,
+  bool flat = false,
+  bool light = false,
+}) => flat
     ? ShapeDecoration(color: color, shape: shape)
     : ShapeDecoration(
         shape: shape.copyWith(side: const BorderSide(color: Color(0x2EFFFFFF), width: .8)),
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color.lerp(color, Colors.black, .1)!, color, Color.lerp(color, Colors.white, .14)!],
+          colors: light
+              ? [Color.lerp(color, Colors.white, .1)!, color, color]
+              : [Color.lerp(color, Colors.black, .1)!, color, Color.lerp(color, Colors.white, .14)!],
           stops: const [0, .55, 1],
         ),
         shadows: [
           BoxShadow(
-            color: color.withValues(alpha: glow),
-            blurRadius: blur,
-            offset: const Offset(0, 6),
+            color: color.withValues(alpha: light && glow > 0 ? .28 : glow),
+            blurRadius: light ? 14 : blur,
+            offset: Offset(0, light ? 4 : 6),
           ),
         ],
       );

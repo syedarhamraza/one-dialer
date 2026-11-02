@@ -350,8 +350,8 @@ class _ResultTile extends StatelessWidget {
     );
     return InkWell(
       onTap: onTap,
-      splashColor: Colors.white.withValues(alpha: 0.06),
-      highlightColor: Colors.white.withValues(alpha: 0.03),
+      splashColor: context.palette.textPrimary.withValues(alpha: 0.06),
+      highlightColor: context.palette.textPrimary.withValues(alpha: 0.03),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
         child: Row(
@@ -587,6 +587,8 @@ class _Pill extends StatelessWidget {
       builder: (context, _) {
         final fx = OneUIEffectsController.instance;
         if (lit) return LitButton(color: color, shape: const StadiumBorder(), child: _ink());
+        // White glass keys in light mode press dark.
+        final light = context.palette.isLight;
         return PressGlow(
           // Below full visual effects light mode is flat One UI: no shadows.
           shadows: context.palette.isLight && fx.isFull ? OneUIPalette.lightGlassShadow : null,
@@ -598,24 +600,27 @@ class _Pill extends StatelessWidget {
                   glow: kMainGlassGlow,
                   opacity: mainGlass(context, classicOpacity: .75).opacity,
                   edges: mainGlass(context).edges,
-                  child: _ink(),
+                  child: _ink(light: light),
                 )
               // Below full: a flat One UI key, translucent over the sheet when reduced, solid when off.
-              : _ink(fx.oneUIFill(light: context.palette.isLight)),
+              : _ink(
+                  fill: fx.oneUIFill(light: light),
+                  light: light,
+                ),
         );
       },
     ),
   );
 
-  Widget _ink([Color fill = Colors.transparent]) => Material(
+  Widget _ink({Color fill = Colors.transparent, bool light = false}) => Material(
     color: fill,
     shape: const StadiumBorder(),
     clipBehavior: Clip.antiAlias,
     child: InkWell(
       onTap: onTap,
       onLongPress: onLongPress,
-      splashColor: Colors.white.withValues(alpha: 0.08),
-      highlightColor: Colors.white.withValues(alpha: 0.15),
+      splashColor: light ? Colors.black.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.08),
+      highlightColor: light ? Colors.black.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.15),
       child: SizedBox(
         height: height,
         child: Center(
@@ -760,7 +765,7 @@ Color _sheetColor(BuildContext context) {
   final palette = context.palette;
   if (palette.isLight) return palette.page;
   final fx = OneUIEffectsController.instance;
-  if (!fx.isFull || fx.glassStyle(light: false) == 'classic') return palette.card;
+  if (!fx.isFull || fx.glassStyle == 'classic') return palette.card;
   return Color.lerp(palette.card, Colors.black, .5)!;
 }
 

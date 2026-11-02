@@ -2324,12 +2324,6 @@ abstract class AppLocalizations {
   /// **'Dark mode edge glow'**
   String get darkModeEdgeGlow;
 
-  /// No description provided for @lightModeEdgeGlow.
-  ///
-  /// In en, this message translates to:
-  /// **'Light mode edge glow'**
-  String get lightModeEdgeGlow;
-
   /// No description provided for @edgeGlowClassic.
   ///
   /// In en, this message translates to:
