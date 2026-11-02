@@ -26,11 +26,17 @@ class Changelog {
   static const List<ChangelogEntry> entries = [
     ChangelogEntry(
       version: '1.0.0-beta.6',
-      date: inDevelopment,
+      date: 'Nov 2026',
       changes: [
+        'New ColorOS 17 incoming call ball: drag it to answer or decline, and it springs into End',
+        'Settings › Incoming call reminders, Answer/End calls and Answer buttons pages, with Answer call direction and Announce incoming calls',
+        'Active call buttons get the Answer ball\'s glass finish',
+        'Return to call opens the call screen and sits beside the nav bar',
+        'Phones with 4 GB of RAM start with reduced visual and call screen effects',
         'Fixed the Calls list freezing with a long call history when Hide blocked calls is on',
         'Fixed a crash when a call ends just as you tap a call button',
         'Fixed rare crashes when opening the app, from a phone link, or in a cloned copy of the app',
+        'The app sends anonymous usage statistics (Firebase Analytics, no advertising ID) to help improve it',
         'Performance reports now show how smooth each tap and tab switch was, and can tell when the screen stops responding to touches',
       ],
     ),
