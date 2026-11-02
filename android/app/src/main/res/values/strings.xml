@@ -6,6 +6,7 @@
     <string name="channel_ongoing">Ongoing calls</string>
     <string name="channel_missed">Missed calls</string>
     <string name="unknown">Unknown</string>
+    <string name="conference_call">Conference call</string>
     <string name="unknown_caller">Unknown caller</string>
     <string name="announce_calling">%1$s calling</string>
     <string name="incoming_call">Incoming call</string>
