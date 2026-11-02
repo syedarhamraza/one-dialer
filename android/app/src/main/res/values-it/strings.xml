@@ -5,6 +5,7 @@
     <string name="channel_ongoing">Chiamate in corso</string>
     <string name="channel_missed">Chiamate perse</string>
     <string name="unknown">Sconosciuto</string>
+    <string name="conference_call">Chiamata in conferenza</string>
     <string name="unknown_caller">Chiamante sconosciuto</string>
     <string name="announce_calling">%1$s ti sta chiamando</string>
     <string name="incoming_call">Chiamata in arrivo</string>

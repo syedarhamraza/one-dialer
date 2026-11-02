@@ -233,7 +233,7 @@ object CallNotifications {
         )
         val state = CallManager.stateOf(call)
         val details = call.details
-        val caller = (if (details.hasProperty(Call.Details.PROPERTY_CONFERENCE)) "Conference call" else null)
+        val caller = (if (details.hasProperty(Call.Details.PROPERTY_CONFERENCE)) res.getString(R.string.conference_call) else null)
             ?: (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) details.contactDisplayName else null)
             ?: details.callerDisplayName?.takeIf { it.isNotBlank() }
             ?: details.handle?.schemeSpecificPart?.takeIf { it.isNotBlank() }
