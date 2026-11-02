@@ -271,8 +271,10 @@ class _PopoverMenu extends StatelessWidget {
                                       child: ColoredBox(
                                         color: !fx.isFull
                                             ? fx.oneUIFill(light: context.palette.isLight)
+                                            // Light: a thin base, so with the glass's own wash it stays
+                                            // see-through like the buttons; the blur keeps rows legible.
                                             : context.palette.isLight
-                                            ? const Color(0xCCFFFFFF)
+                                            ? const Color(0x4DFFFFFF)
                                             : const Color(0xB3141416),
                                         // The same glow as the buttons, but reaching less far in: across a card
                                         // this much bigger the button's spread reads as a wide haze. From a cached
