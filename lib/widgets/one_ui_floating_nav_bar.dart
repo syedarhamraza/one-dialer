@@ -135,8 +135,8 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
   }
 
   /// Settings › Nav bar style › Liquid glass: the glass package's tab bar. A tab's docked
-  /// actions get a glass pill of the same material; the two hand over with the package's
-  /// materialize (GlassTabBar can't host other content, so it can't stretch into them).
+  /// actions get a glass pill of the same material; one slides down as the other rises
+  /// (GlassTabBar can't host other content, so it can't stretch into them).
   Widget _liquidPill(Widget? docked, bool reduceMotion) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final settings = dark ? LiquidGlassSettings.ios27Dark : LiquidGlassSettings.ios27Light;
@@ -148,8 +148,15 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
       duration: duration,
       curve: const _SpringCurve(),
       child: AnimatedSwitcher(
-        duration: duration,
-        transitionBuilder: GlassMaterializeTransition.switcherBuilder,
+        duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 550),
+        reverseDuration: reduceMotion ? Duration.zero : const Duration(milliseconds: 260),
+        switchInCurve: const _SpringCurve(),
+        switchOutCurve: Curves.easeInCubic,
+        // The leaving pill drops below the screen while the new one rises into place.
+        transitionBuilder: (child, animation) => SlideTransition(
+          position: Tween(begin: const Offset(0, 1.6), end: Offset.zero).animate(animation),
+          child: child,
+        ),
         child: docked != null
             ? GlassContainer(
                 key: const ValueKey('docked'),
