@@ -215,6 +215,8 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
   final _themeKey = GlobalKey();
   final _effectsKey = GlobalKey();
   final _languageKey = GlobalKey();
+  final _glassDarkKey = GlobalKey();
+  final _glassLightKey = GlobalKey();
 
   static Map<String, String> _themeLabels(AppLocalizations l10n) => {
     'system': l10n.settingsLanguageSystem,
@@ -235,6 +237,7 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
   @override
   void initState() {
     super.initState();
+    DialerPrefs.instance.visualEffects.addListener(_rebuild);
     _telecom.getSims().then((s) {
       if (mounted) setState(() => _dualSim = s.length > 1);
     });
@@ -242,6 +245,14 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
       if (mounted) setState(() => _appCallLog = (h['sdk'] as int? ?? 0) >= 37);
     });
   }
+
+  @override
+  void dispose() {
+    DialerPrefs.instance.visualEffects.removeListener(_rebuild);
+    super.dispose();
+  }
+
+  void _rebuild() => setState(() {});
 
   static Map<String, String> _simLabels(AppLocalizations l10n) => {
     'buttons': l10n.twoCallButtons,
@@ -313,6 +324,25 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
               labels: effectsLabels(context.l10n),
               onPick: DialerPrefs.instance.setVisualEffects,
             ),
+            // The glass styles only change the full-effects glass; below it the rows go away.
+            if (DialerPrefs.instance.visualEffects.value == 'full') ...[
+              choiceRow(
+                context,
+                title: context.l10n.darkModeEdgeGlow,
+                anchor: _glassDarkKey,
+                value: DialerPrefs.instance.glassDark,
+                labels: edgeGlowLabels(context.l10n),
+                onPick: DialerPrefs.instance.setGlassDark,
+              ),
+              choiceRow(
+                context,
+                title: context.l10n.lightModeEdgeGlow,
+                anchor: _glassLightKey,
+                value: DialerPrefs.instance.glassLight,
+                labels: edgeGlowLabels(context.l10n),
+                onPick: DialerPrefs.instance.setGlassLight,
+              ),
+            ],
             if (_appCallLog)
               OneUIGroupItem(
                 title: context.l10n.callsFromOtherApps,

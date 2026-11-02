@@ -2288,6 +2288,42 @@ abstract class AppLocalizations {
   /// **'Less blur runs smoother on slower phones'**
   String get reduceVisualEffectsSubtitle;
 
+  /// No description provided for @callScreenEdgeGlow.
+  ///
+  /// In en, this message translates to:
+  /// **'Call screen edge glow'**
+  String get callScreenEdgeGlow;
+
+  /// No description provided for @darkModeEdgeGlow.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark mode edge glow'**
+  String get darkModeEdgeGlow;
+
+  /// No description provided for @lightModeEdgeGlow.
+  ///
+  /// In en, this message translates to:
+  /// **'Light mode edge glow'**
+  String get lightModeEdgeGlow;
+
+  /// No description provided for @edgeGlowClassic.
+  ///
+  /// In en, this message translates to:
+  /// **'Classic'**
+  String get edgeGlowClassic;
+
+  /// No description provided for @edgeGlowSoft.
+  ///
+  /// In en, this message translates to:
+  /// **'Soft'**
+  String get edgeGlowSoft;
+
+  /// No description provided for @edgeGlowBold.
+  ///
+  /// In en, this message translates to:
+  /// **'Bold'**
+  String get edgeGlowBold;
+
   /// No description provided for @callsFromOtherApps.
   ///
   /// In en, this message translates to:

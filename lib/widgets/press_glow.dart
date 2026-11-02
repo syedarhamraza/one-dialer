@@ -3,6 +3,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../features/in_call/call_controls.dart';
 import '../theme/one_ui_theme.dart';
+import 'call_glass.dart';
 
 /// The call screen's press for ordinary buttons: the glass package's glow and stretch with no
 /// glass body (the transparent style draws no shader, so the main engine needs no
@@ -73,15 +74,27 @@ class LitButton extends StatelessWidget {
     final fx = OneUIEffectsController.instance;
     return ListenableBuilder(
       listenable: fx,
-      builder: (context, child) => PressGlow(
-        radius: radius,
-        glowColor: fx.isFull ? color : null,
-        child: Container(
-          decoration: fx.isFull ? solidBody(color, shape, glow: 0) : ShapeDecoration(color: color, shape: shape),
-          foregroundDecoration: fx.isFull ? solidGlow(shape) : null,
-          child: child,
-        ),
-      ),
+      builder: (context, child) {
+        // The glass style's 3D edges, so the green buttons match the glass around them.
+        final edges = (fx.isFull ? litEdges(mainGlass(context)) : null) ?? GlassEdges.callScreen;
+        return PressGlow(
+          radius: radius,
+          glowColor: fx.isFull ? color : null,
+          child: Container(
+            decoration: fx.isFull ? solidBody(color, shape, glow: 0) : ShapeDecoration(color: color, shape: shape),
+            foregroundDecoration: fx.isFull ? solidGlow(shape, strength: edges.strength) : null,
+            child: edges == GlassEdges.callScreen
+                ? child
+                // From a cached image: drawn live, the lips' side fade was a save layer every frame.
+                : CallBodyArtwork(
+                    radius: shape is CircleBorder ? null : double.infinity,
+                    edges: edges,
+                    lipsOnly: true,
+                    child: child!,
+                  ),
+          ),
+        );
+      },
       child: child,
     );
   }

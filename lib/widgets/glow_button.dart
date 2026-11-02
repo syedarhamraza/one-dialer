@@ -103,7 +103,13 @@ class GlowButton extends StatelessWidget {
                 return PressGlow(
                   shadows: context.palette.isLight && full ? OneUIPalette.lightGlassShadow : null,
                   child: full
-                      ? CallBodyArtwork(radius: height / 2, glow: kMainGlassGlow, child: body!)
+                      ? CallBodyArtwork(
+                          radius: height / 2,
+                          glow: kMainGlassGlow,
+                          opacity: mainGlass(context).opacity,
+                          edges: mainGlass(context).edges,
+                          child: body!,
+                        )
                       : DecoratedBox(
                           decoration: ShapeDecoration(
                             color: OneUIEffectsController.instance.oneUIFill(light: context.palette.isLight),

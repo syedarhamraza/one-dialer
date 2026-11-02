@@ -1321,6 +1321,24 @@ class AppLocalizationsIt extends AppLocalizations {
       'Meno sfocatura, più fluidità sui telefoni lenti';
 
   @override
+  String get callScreenEdgeGlow => 'Bagliore bordi nella chiamata';
+
+  @override
+  String get darkModeEdgeGlow => 'Bagliore bordi in tema scuro';
+
+  @override
+  String get lightModeEdgeGlow => 'Bagliore bordi in tema chiaro';
+
+  @override
+  String get edgeGlowClassic => 'Classico';
+
+  @override
+  String get edgeGlowSoft => 'Tenue';
+
+  @override
+  String get edgeGlowBold => 'Intenso';
+
+  @override
   String get callsFromOtherApps => 'Chiamate da altre app';
 
   @override

@@ -572,7 +572,7 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
                   blur: 22 + 10 * armed,
                   flat: callFlat(context),
                 ),
-                foregroundDecoration: glassGlow(const CircleBorder(), flat: callFlat(context)),
+                foregroundDecoration: callGlassGlow(context, const CircleBorder()),
                 child: icon,
               ),
             ),

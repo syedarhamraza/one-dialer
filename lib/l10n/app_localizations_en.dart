@@ -1307,6 +1307,24 @@ class AppLocalizationsEn extends AppLocalizations {
       'Less blur runs smoother on slower phones';
 
   @override
+  String get callScreenEdgeGlow => 'Call screen edge glow';
+
+  @override
+  String get darkModeEdgeGlow => 'Dark mode edge glow';
+
+  @override
+  String get lightModeEdgeGlow => 'Light mode edge glow';
+
+  @override
+  String get edgeGlowClassic => 'Classic';
+
+  @override
+  String get edgeGlowSoft => 'Soft';
+
+  @override
+  String get edgeGlowBold => 'Bold';
+
+  @override
   String get callsFromOtherApps => 'Calls from other apps';
 
   @override

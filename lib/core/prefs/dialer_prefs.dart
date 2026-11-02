@@ -166,6 +166,13 @@ class DialerPrefs {
   /// blurs); read through `OneUIEffectsController`.
   final visualEffects = ValueNotifier('full');
 
+  /// Settings › "Dark mode edge glow", with full effects: `classic`, `soft` or `bold`; read
+  /// through `OneUIEffectsController.glassStyle`.
+  final glassDark = ValueNotifier('soft');
+
+  /// Settings › "Light mode edge glow", with full effects: the same three styles.
+  final glassLight = ValueNotifier('soft');
+
   /// Awaited before the first frame, so the app doesn't open dark and then turn light, or
   /// frosted and then flat.
   Future<void> loadAppearance() async {
@@ -174,6 +181,10 @@ class DialerPrefs {
     final effects = await _prefs.getString('visual_effects');
     if (effects == null) visualEffects.value = await _effectsDefault();
     if (effects == 'full' || effects == 'reduced' || effects == 'off') visualEffects.value = effects!;
+    final dark = await _prefs.getString('glass_dark');
+    if (dark == 'classic' || dark == 'soft' || dark == 'bold') glassDark.value = dark!;
+    final light = await _prefs.getString('glass_light');
+    if (light == 'classic' || light == 'soft' || light == 'bold') glassLight.value = light!;
   }
 
   /// Settings › Language: `system` or a language tag. Kept natively (`AppLanguage.kt`), where
@@ -205,6 +216,10 @@ class DialerPrefs {
   /// screen's own engine (which reads it in `inCallMain` and on every resume, never awaited).
   final callEffects = ValueNotifier('full');
 
+  /// Settings › "Call screen edge glow", with full call screen effects: `classic`, `soft` or
+  /// `bold`, like the main app's. Loaded with [callEffects].
+  final callGlass = ValueNotifier('soft');
+
   /// Settings › Answer buttons: `two` buttons (Decline | Answer) or `one` (swipe up to
   /// answer, down to decline). Loaded with [callEffects], for the call screen's engine.
   final answerStyle = ValueNotifier('two');
@@ -216,6 +231,8 @@ class DialerPrefs {
     final effects = await _prefs.getString('call_effects');
     if (effects == null) callEffects.value = await _effectsDefault();
     if (effects == 'full' || effects == 'reduced' || effects == 'off') callEffects.value = effects!;
+    final glass = await _prefs.getString('call_glass');
+    if (glass == 'classic' || glass == 'soft' || glass == 'bold') callGlass.value = glass!;
     final style = await _prefs.getString('answer_style');
     if (style == 'two' || style == 'one') answerStyle.value = style!;
     final direction = await _prefs.getString('answer_direction');
@@ -232,6 +249,11 @@ class DialerPrefs {
     await _prefs.setString('answer_style', value);
   }
 
+  Future<void> setCallGlass(String value) async {
+    callGlass.value = value;
+    await _prefs.setString('call_glass', value);
+  }
+
   Future<void> setCallEffects(String value) async {
     callEffects.value = value;
     await _prefs.setString('call_effects', value);
@@ -240,6 +262,16 @@ class DialerPrefs {
   Future<void> setVisualEffects(String value) async {
     visualEffects.value = value;
     await _prefs.setString('visual_effects', value);
+  }
+
+  Future<void> setGlassDark(String value) async {
+    glassDark.value = value;
+    await _prefs.setString('glass_dark', value);
+  }
+
+  Future<void> setGlassLight(String value) async {
+    glassLight.value = value;
+    await _prefs.setString('glass_light', value);
   }
 
   Future<void> setThemeMode(String value) async {

@@ -49,6 +49,12 @@ class _CallSettings {
 }
 
 /// Settings' effect levels, for Reduce visual effects and Call screen effects.
+Map<String, String> edgeGlowLabels(AppLocalizations l10n) => {
+  'classic': l10n.edgeGlowClassic,
+  'soft': l10n.edgeGlowSoft,
+  'bold': l10n.edgeGlowBold,
+};
+
 Map<String, String> effectsLabels(AppLocalizations l10n) => {
   'full': l10n.effectsFull,
   'reduced': l10n.effectsReduced,
@@ -206,6 +212,7 @@ class AnswerButtonsScreen extends StatefulWidget {
 class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
   final _directionKey = GlobalKey();
   final _effectsKey = GlobalKey();
+  final _glassKey = GlobalKey();
 
   static Map<String, String> _directions(AppLocalizations l10n) => {
     'up': l10n.swipeUpToAnswer,
@@ -253,12 +260,12 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
             ),
           ],
         ),
-        ValueListenableBuilder(
-          valueListenable: prefs.answerStyle,
-          builder: (context, style, _) => OneUIGroupCard(
+        ListenableBuilder(
+          listenable: Listenable.merge([prefs.answerStyle, prefs.callEffects]),
+          builder: (context, _) => OneUIGroupCard(
             items: [
               // Only 1 button has a direction to choose.
-              if (style == 'one')
+              if (prefs.answerStyle.value == 'one')
                 choiceRow(
                   context,
                   title: context.l10n.answerCall,
@@ -276,6 +283,16 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
                 labels: effectsLabels(context.l10n),
                 onPick: prefs.setCallEffects,
               ),
+              // Styles the full-effects glass only.
+              if (prefs.callEffects.value == 'full')
+                choiceRow(
+                  context,
+                  title: context.l10n.callScreenEdgeGlow,
+                  anchor: _glassKey,
+                  value: prefs.callGlass,
+                  labels: edgeGlowLabels(context.l10n),
+                  onPick: prefs.setCallGlass,
+                ),
             ],
           ),
         ),
