@@ -228,8 +228,9 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             }
             "openDialer" -> {
                 // "Add call": the keypad places the next call and Telecom holds the current one.
+                // An empty tel: lands on Calls with the keypad up, whichever tab was open.
                 context.startActivity(
-                    android.content.Intent(context, MainActivity::class.java)
+                    android.content.Intent(android.content.Intent.ACTION_DIAL, Uri.parse("tel:"), context, MainActivity::class.java)
                         .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
                 )
                 result.success(null)
