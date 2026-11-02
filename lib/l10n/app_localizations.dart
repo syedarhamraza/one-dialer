@@ -2288,6 +2288,30 @@ abstract class AppLocalizations {
   /// **'Less blur runs smoother on slower phones'**
   String get reduceVisualEffectsSubtitle;
 
+  /// No description provided for @appIcon.
+  ///
+  /// In en, this message translates to:
+  /// **'App icon'**
+  String get appIcon;
+
+  /// No description provided for @appIconGlossy.
+  ///
+  /// In en, this message translates to:
+  /// **'Glossy'**
+  String get appIconGlossy;
+
+  /// No description provided for @appIconClassic.
+  ///
+  /// In en, this message translates to:
+  /// **'Classic'**
+  String get appIconClassic;
+
+  /// No description provided for @appIconFootnote.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes both the Phone and Contacts icons. The launcher may take a few seconds, and icons on the home screen may need adding again from the app drawer.'**
+  String get appIconFootnote;
+
   /// No description provided for @callScreenEdgeGlow.
   ///
   /// In en, this message translates to:

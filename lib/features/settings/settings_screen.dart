@@ -17,6 +17,7 @@ import '../blocking/blocking_screen.dart';
 import '../keypad/speed_dial_screen.dart';
 import '../updates/presentation/update_controller.dart';
 import 'about_screen.dart';
+import 'app_icon_screen.dart';
 import 'call_settings_pages.dart';
 import 'help_feedback_screen.dart';
 import 'software_update_screen.dart';
@@ -234,9 +235,16 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
   /// Android 17 lets VoIP apps share their calls with Recents; earlier phones have no switch for it.
   bool _appCallLog = false;
 
+  String _icon = 'default';
+
+  void _loadIcon() => _telecom.getLauncherIcon().then((s) {
+    if (mounted) setState(() => _icon = s);
+  });
+
   @override
   void initState() {
     super.initState();
+    _loadIcon();
     DialerPrefs.instance.visualEffects.addListener(_rebuild);
     _telecom.getSims().then((s) {
       if (mounted) setState(() => _dualSim = s.length > 1);
@@ -314,6 +322,13 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
               value: DialerPrefs.instance.themeMode,
               labels: _themeLabels(context.l10n),
               onPick: DialerPrefs.instance.setThemeMode,
+            ),
+            OneUIGroupItem(
+              title: context.l10n.appIcon,
+              value: AppIconScreen.labels(context.l10n)[_icon],
+              onTap: () => Navigator.of(context)
+                  .push(MaterialPageRoute<void>(builder: (_) => const AppIconScreen()))
+                  .then((_) => _loadIcon()),
             ),
             choiceRow(
               context,

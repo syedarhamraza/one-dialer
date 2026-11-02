@@ -49,10 +49,7 @@
             <!-- tel: and contact intents are read by MainActivity itself; Flutter's own deep
                  linking would push them as named routes the app doesn't have (null-check crash). -->
             <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
+            <!-- Its launcher icons are the PhoneIcon* aliases below (Settings › App icon, AppIcons.kt). -->
             <!-- Both DIAL filters are required for Android to offer this app as the default dialer -->
             <intent-filter>
                 <action android:name="android.intent.action.DIAL" />
@@ -65,22 +62,8 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="tel" />
             </intent-filter>
-        </activity>
-
-        <!-- One app, two icons (like vivo's Phone and Contacts): opens on the Contacts tab,
-             and lets other apps show, edit or add a contact here. -->
-        <activity-alias
-            android:name=".ContactsLauncher"
-            android:targetActivity=".MainActivity"
-            android:exported="true"
-            android:label="One Contacts"
-            android:icon="@mipmap/ic_contacts">
-            <!-- FlutterActivity reads meta-data from the launched component, so the alias needs it too. -->
-            <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+            <!-- Other apps show, edit or add a contact here (on the activity, not an icon alias,
+                 so switching icons never turns these off). -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.EDIT" />
@@ -98,6 +81,43 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="vnd.android.cursor.item/contact" />
                 <data android:mimeType="vnd.android.cursor.item/raw_contact" />
+            </intent-filter>
+        </activity>
+
+        <!-- One app, two icons (like vivo's Phone and Contacts); the Contacts one opens on the
+             Contacts tab. One pair per style in Settings › App icon (Glossy, Classic), only the chosen pair enabled
+             (AppIcons.kt). FlutterActivity reads meta-data from the launched component, so each
+             alias needs it too. -->
+        <activity-alias android:name=".PhoneIcon" android:targetActivity=".MainActivity"
+            android:exported="true" android:label="One Dialer" android:icon="@mipmap/ic_launcher">
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias android:name=".PhoneIconClassic" android:targetActivity=".MainActivity" android:enabled="false"
+            android:exported="true" android:label="One Dialer" android:icon="@mipmap/ic_classic_phone">
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias android:name=".ContactsLauncher" android:targetActivity=".MainActivity"
+            android:exported="true" android:label="One Contacts" android:icon="@mipmap/ic_contacts">
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias android:name=".ContactsIconClassic" android:targetActivity=".MainActivity" android:enabled="false"
+            android:exported="true" android:label="One Contacts" android:icon="@mipmap/ic_classic_contacts">
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity-alias>
 
@@ -142,6 +162,13 @@
         <receiver
             android:name=".telecom.CallActionReceiver"
             android:exported="false" />
+
+        <!-- Keeps a launcher icon after an update (AppIcons.repair). -->
+        <receiver android:name=".AppIconsRepairReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
 
         <!-- Telecom sends this to the default dialer; content comes from the call log, not extras -->
         <receiver

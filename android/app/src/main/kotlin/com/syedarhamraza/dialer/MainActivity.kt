@@ -37,6 +37,7 @@ class MainActivity : FlutterActivity() {
         super.onCreate(savedInstanceState)
         // Android 15 forces edge-to-edge for SDK 35; opting in on older versions too keeps them the same.
         WindowCompat.enableEdgeToEdge(window)
+        Thread { AppIcons.repair(applicationContext) }.start()
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -215,7 +216,9 @@ class MainActivity : FlutterActivity() {
      */
     private fun contactActionFrom(intent: Intent?): Map<String, String?>? {
         intent ?: return null
-        val fromContactsIcon = intent.component?.className?.endsWith(".ContactsLauncher") == true
+        val fromContactsIcon = intent.component?.className?.let {
+            it.endsWith(".ContactsLauncher") || it.contains(".ContactsIcon")
+        } == true
         return when (intent.action) {
             Intent.ACTION_VIEW, Intent.ACTION_EDIT, Intent.ACTION_INSERT_OR_EDIT -> {
                 val id = intent.data?.let(::contactIdOf)

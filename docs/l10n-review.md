@@ -32,6 +32,7 @@ The UI is laid out for English lengths; check these on the phone in Italian, esp
 | `hang_up` (`values-it`) | "Riaggancia" on the ongoing-call notification. |
 | `callScreenEffectsSubtitle` ★, `effectsFull/Reduced/Off`, `reduceVisualEffects` | ColorOS design names with no AOSP equivalent. |
 | `callScreenEdgeGlow`, `darkModeEdgeGlow`, `lightModeEdgeGlow`, `edgeGlowClassic/Soft/Bold` | "Bagliore bordi"; Tenue and Intenso for Soft and Bold. ColorOS names with no AOSP equivalent. |
+| `appIcon`, `appIconGlossy`, `appIconClassic` | "Lucida" and "Classica" (feminine, agreeing with icona). |
 | `contactLabel` ★ | Contact field labels; several are gendered (Figlio, Amico) where Android's own Italian uses the masculine. |
 | `contactsMerged` ★ | `=1` means one *group* merged ("Contatti uniti"). |
 | `selectedCount`, `foundCount` | Masculine plural agreement (selezionati, trovati). |

@@ -1307,6 +1307,19 @@ class AppLocalizationsEn extends AppLocalizations {
       'Less blur runs smoother on slower phones';
 
   @override
+  String get appIcon => 'App icon';
+
+  @override
+  String get appIconGlossy => 'Glossy';
+
+  @override
+  String get appIconClassic => 'Classic';
+
+  @override
+  String get appIconFootnote =>
+      'Changes both the Phone and Contacts icons. The launcher may take a few seconds, and icons on the home screen may need adding again from the app drawer.';
+
+  @override
   String get callScreenEdgeGlow => 'Call screen edge glow';
 
   @override

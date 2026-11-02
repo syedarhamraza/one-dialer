@@ -25,6 +25,14 @@ class Changelog {
 
   static const List<ChangelogEntry> entries = [
     ChangelogEntry(
+      version: '1.0.0',
+      date: Changelog.inDevelopment,
+      changes: [
+        'New glossy Phone and Contacts icons; the previous ones are still in Settings › More settings › App icon as Classic',
+        'After this update, add the Phone icon to your home screen again from the app drawer',
+      ],
+    ),
+    ChangelogEntry(
       version: '1.0.0-beta.6',
       date: 'Nov 2026',
       changes: [
