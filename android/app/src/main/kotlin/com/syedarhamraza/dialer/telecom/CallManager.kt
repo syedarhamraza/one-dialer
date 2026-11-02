@@ -87,7 +87,9 @@ object CallManager {
 
     /** Serialized for the Flutter side: `{calls: [...], audio: {...}}`. */
     fun snapshot(): Map<String, Any?> = mapOf(
-        "calls" to (if (calls.isEmpty()) listOfNotNull(ended) else calls.map { (id, call) -> serialize(id, call) }),
+        // A conference's members stay inside it (hung up with it), so the screen shows one call.
+        "calls" to (if (calls.isEmpty()) listOfNotNull(ended)
+            else calls.filter { it.value.parent == null }.map { (id, call) -> serialize(id, call) }),
         "audio" to audioSnapshot(),
     )
 
