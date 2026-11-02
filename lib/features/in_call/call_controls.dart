@@ -295,7 +295,8 @@ class TintedCallBody extends CustomPainter {
   });
   final double? radius;
 
-  /// Light mode: a denser white wash and a bright white rim (the press draws its shadow).
+  /// Light mode: a translucent white wash with a top sheen, a bright rim and a shaded bottom
+  /// edge (the press draws its shadow).
   final bool light;
 
   /// Strength of the edge glow and the brighter border glow (1 = the call screen's).
@@ -326,36 +327,24 @@ class TintedCallBody extends CustomPainter {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: light
-              ? const [Color(0xF2FFFFFF), Color(0xE6FFFFFF), Color(0xEBFFFFFF)]
+              ? const [Color(0x99FFFFFF), Color(0x6BFFFFFF), Color(0x85FFFFFF)]
               : const [Color(0x33FFFFFF), Color(0x2BFFFFFF), Color(0x3DFFFFFF)],
           stops: const [0, .5, 1],
         ).createShader(rect),
     );
     if (light) {
-      final inner = bodyPath(rect.deflate(.4), radius == null ? null : radius! - .4);
-      canvas
-        ..drawPath(
-          inner,
-          Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = .8
-            ..color = const Color(0xE6FFFFFF),
-        )
-        // ColorOS 17 light's edge: white glows vanish on a white wash, so a hairline shade that
-        // deepens toward the bottom defines it instead.
-        ..drawPath(
-          inner,
-          Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = .8
-            ..shader = const LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0x00000000), Color(0x14000000)],
-            ).createShader(rect),
-        );
-      paintGlassLips(canvas, rect, radius, edges, light: true);
-      return;
+      // A sheen over the top half: light glass catches the light from above, while the
+      // translucent wash keeps the blur behind it showing through.
+      canvas.drawPath(
+        shape,
+        Paint()
+          ..shader = const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0x80FFFFFF), Color(0x00FFFFFF)],
+            stops: [0, .5],
+          ).createShader(rect),
+      );
     }
     // The ColorOS glow: a soft light hugging every edge, shallow so the centre stays clear, and
     // weaker along the top. A blurred stroke clipped to the shape keeps it inside.
@@ -395,7 +384,33 @@ class TintedCallBody extends CustomPainter {
           ).createShader(rect),
       )
       ..restore();
-    paintGlassLips(canvas, rect, radius, edges);
+    if (light) {
+      final inner = bodyPath(rect.deflate(.5), radius == null ? null : radius! - .5);
+      canvas
+        // A bright rim, as light glass's edge catches the light.
+        ..drawPath(
+          inner,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1
+            ..color = const Color(0xF2FFFFFF),
+        )
+        // White alone vanishes on a light page: a hairline shade deepening toward the bottom
+        // gives the edge its thickness.
+        ..drawPath(
+          inner,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = .8
+            ..shader = const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0x00000000), Color(0x00000000), Color(0x1A000000)],
+              stops: [0, .5, 1],
+            ).createShader(rect),
+        );
+    }
+    paintGlassLips(canvas, rect, radius, edges, light: light);
   }
 
   @override
