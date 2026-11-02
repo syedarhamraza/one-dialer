@@ -272,6 +272,8 @@ class CallNotesCard extends StatelessWidget {
             ),
             DetailsCard(
               padding: const EdgeInsets.symmetric(vertical: 4),
+              dividerIndent: 18,
+              dividerEndIndent: 18,
               children: [
                 for (final (at, text, number) in notes)
                   InkWell(

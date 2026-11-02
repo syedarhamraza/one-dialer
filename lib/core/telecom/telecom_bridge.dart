@@ -99,6 +99,10 @@ class TelecomBridge {
   Future<String?> getRingtone(String contactId) =>
       _methods.invokeMethod<String>('getRingtone', {'contactId': contactId});
 
+  /// The contact's custom ringtone's name, or null when it follows the system.
+  Future<String?> getRingtoneTitle(String contactId) =>
+      _methods.invokeMethod<String>('getRingtoneTitle', {'contactId': contactId});
+
   Future<void> setRingtone(String contactId, String? uri) =>
       _methods.invokeMethod('setRingtone', {'contactId': contactId, 'uri': uri});
 

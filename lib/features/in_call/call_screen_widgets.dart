@@ -429,7 +429,7 @@ class _SimMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => CustomPaint(
-    painter: const _SimOutline(),
+    painter: const SimOutline(),
     child: SizedBox(
       width: 12,
       height: 15,
@@ -443,12 +443,15 @@ class _SimMark extends StatelessWidget {
   );
 }
 
-class _SimOutline extends CustomPainter {
-  const _SimOutline();
+/// ColorOS's SIM card outline, clipped at one corner; also the contact page's SIM icon.
+class SimOutline extends CustomPainter {
+  const SimOutline({this.color = Colors.white70, this.strokeWidth = 1.3, this.corner = 2, this.cut = 4});
+
+  final Color color;
+  final double strokeWidth, corner, cut;
 
   @override
   void paint(Canvas canvas, Size size) {
-    const corner = 2.0, cut = 4.0;
     final r = Offset.zero & size;
     canvas.drawPath(
       Path()
@@ -464,14 +467,14 @@ class _SimOutline extends CustomPainter {
         ..close(),
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.3
+        ..strokeWidth = strokeWidth
         ..strokeJoin = StrokeJoin.round
-        ..color = Colors.white70,
+        ..color = color,
     );
   }
 
   @override
-  bool shouldRepaint(_SimOutline oldDelegate) => false;
+  bool shouldRepaint(SimOutline oldDelegate) => oldDelegate.color != color || oldDelegate.strokeWidth != strokeWidth;
 }
 
 /// ColorOS's HD call mark: a handset with a small "HD" beside its top.

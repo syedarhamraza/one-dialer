@@ -7,6 +7,8 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.media.RingtoneManager
+import android.net.Uri
 import android.provider.ContactsContract.AggregationExceptions
 import android.provider.ContactsContract.Contacts
 import android.provider.ContactsContract.Data
@@ -137,6 +139,11 @@ object ContactExtras {
             ContentUris.withAppendedId(Contacts.CONTENT_URI, contactId.toLong()),
             arrayOf(Contacts.CUSTOM_RINGTONE), null, null, null,
         )?.use { c -> if (c.moveToFirst()) c.getString(0) else null }
+
+    /** The custom ringtone's name, or null when the contact follows the system (or it's gone). */
+    fun ringtoneTitle(context: Context, contactId: String): String? = ringtone(context, contactId)?.let { uri ->
+        runCatching { RingtoneManager.getRingtone(context, Uri.parse(uri))?.getTitle(context) }.getOrNull()
+    }
 
     /** Sets (or with null, clears back to the default) the contact's ringtone. */
     fun setRingtone(context: Context, contactId: String, uri: String?) {

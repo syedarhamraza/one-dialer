@@ -153,6 +153,7 @@ class _StorageLocationsScreenState extends State<StorageLocationsScreen> {
         if (raw != null)
           DetailsCard(
             padding: const EdgeInsets.fromLTRB(18, 6, 12, 6),
+            dividerIndent: 58, // under the name, past the avatar
             children: [
               for (final r in raw)
                 Padding(

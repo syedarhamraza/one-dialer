@@ -56,6 +56,7 @@ void main() {
     expect(find.text('03111234567'), findsOneWidget);
     expect(find.text('03001234567'), findsOneWidget);
     expect(find.text('Ringtone'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Storage locations'), 200);
     expect(find.text('Storage locations'), findsOneWidget); // on the page, not in More
     expect(find.text('Call logs'), findsNothing); // no calls yet
   });
