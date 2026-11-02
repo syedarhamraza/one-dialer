@@ -62,7 +62,7 @@ Future<void> inCallMain() async {
       DialerPrefs.instance.loadLanguage();
     },
   );
-  // Pre-warms the call screen's glass shaders so its first frame doesn't flash.
-  await LiquidGlassWidgets.initialize();
+  // No LiquidGlassWidgets.initialize(): it preloads the package's glass shaders before runApp,
+  // and the call screen draws none (its glass is our own; the package only supplies the press).
   runApp(LiquidGlassWidgets.wrap(brightnessResolver: Theme.maybeBrightnessOf, child: const InCallApp()));
 }

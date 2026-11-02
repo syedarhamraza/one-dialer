@@ -34,6 +34,9 @@ class CallBody extends StatelessWidget {
     onTap: _taps,
     excludeFromSemantics: true,
     canRequestFocus: false,
+    // Below full call screen effects: no glass lighting on press, just the squeeze.
+    glowColor: callFlat(context) ? Colors.transparent : null,
+    ambientBaseLight: callFlat(context) ? 0 : null,
     shape: pill
         ? const LiquidRoundedRectangle(borderRadius: 999)
         : radius == null

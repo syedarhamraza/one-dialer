@@ -440,6 +440,9 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                                   onTap: _noTap,
                                   excludeFromSemantics: true,
                                   canRequestFocus: false,
+                                  // Below full call screen effects: no glass lighting on press.
+                                  glowColor: callFlat(context) ? Colors.transparent : null,
+                                  ambientBaseLight: callFlat(context) ? 0 : null,
                                   shape: LiquidRoundedRectangle(borderRadius: actionSize / 2),
                                   child: AnimatedContainer(
                                     // While ending, the pill draws in to a circle.
