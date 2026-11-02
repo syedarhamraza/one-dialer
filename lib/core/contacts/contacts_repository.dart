@@ -270,7 +270,7 @@ class ContactsRepository {
     final custom = label.customLabel?.trim();
     if (custom != null && custom.isNotEmpty) return custom;
     final name = label.label.name;
-    return name == 'custom' ? 'Phone' : '${name[0].toUpperCase()}${name.substring(1)}';
+    return name == 'custom' ? 'phone' : name; // shown through labelDisplay
   }
 
   /// Asks for contacts access; opens app settings if it was denied for good. Returns whether granted.

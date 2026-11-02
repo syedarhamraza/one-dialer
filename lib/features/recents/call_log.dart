@@ -1,6 +1,10 @@
 /// Call log entries (from `CallLogSource.kt`) and Samsung-style grouping for Recents.
 library;
 
+import 'package:intl/intl.dart';
+
+import '../../l10n/l10n.dart';
+
 enum CallType { incoming, outgoing, missed, voicemail, rejected, blocked, answeredExternally, unknown }
 
 class CallLogEntry {
@@ -108,43 +112,36 @@ List<(DateTime, List<CallGroup>)> groupByDay(List<CallLogEntry> calls) {
   return days;
 }
 
-const _weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
 /// "Today", "Yesterday", a weekday within the last week, else "12 Mar" (plus year if not this year).
-String dayLabel(DateTime day, DateTime now) {
+String dayLabel(AppLocalizations l10n, DateTime day, DateTime now) {
   final diff = _day(now).difference(_day(day)).inDays;
-  if (diff == 0) return 'Today';
-  if (diff == 1) return 'Yesterday';
-  if (diff < 7) return _weekdays[day.weekday - 1];
-  final label = '${day.day} ${_months[day.month - 1]}';
-  return day.year == now.year ? label : '$label ${day.year}';
+  if (diff == 0) return l10n.today;
+  if (diff == 1) return l10n.yesterday;
+  final label = DateFormat(
+    diff < 7 ? 'EEEE' : (day.year == now.year ? 'd MMM' : 'd MMM y'),
+    l10n.localeName,
+  ).format(day);
+  return label[0].toUpperCase() + label.substring(1); // Italian weekdays are lowercase
 }
 
-/// "9:05 AM" style time.
-String timeLabel(DateTime t) {
-  final h = t.hour % 12 == 0 ? 12 : t.hour % 12;
-  return '$h:${t.minute.toString().padLeft(2, '0')} ${t.hour < 12 ? 'AM' : 'PM'}';
-}
+/// "9:05 AM" (or "21:05" where the language uses 24-hour time).
+String timeLabel(AppLocalizations l10n, DateTime t) =>
+    DateFormat.jm(l10n.localeName).format(t).replaceAll(' ', ' '); // intl's narrow space before AM/PM
 
 /// "1 hr 2 min", "3 min 5 sec", "45 sec".
-String durationLabel(Duration d) {
-  if (d.inHours > 0) return '${d.inHours} hr ${d.inMinutes.remainder(60)} min';
-  if (d.inMinutes > 0) return '${d.inMinutes} min ${d.inSeconds.remainder(60)} sec';
-  return '${d.inSeconds} sec';
+String durationLabel(AppLocalizations l10n, Duration d) {
+  if (d.inHours > 0) return l10n.durationHoursMinutes('${d.inHours}', '${d.inMinutes.remainder(60)}');
+  if (d.inMinutes > 0) return l10n.durationMinutesSeconds('${d.inMinutes}', '${d.inSeconds.remainder(60)}');
+  return l10n.durationSeconds('${d.inSeconds}');
 }
 
 /// Samsung's "Filter calls" choices in Recents.
 enum CallFilter {
-  all('All calls'),
-  missed('Missed calls'),
-  rejected('Rejected calls'),
-  outgoing('Outgoing calls'),
-  incoming('Incoming calls');
-
-  const CallFilter(this.label);
-
-  final String label;
+  all,
+  missed,
+  rejected,
+  outgoing,
+  incoming;
 
   /// Whether [call] shows under this filter. Blocked calls show only when not hidden
   /// (they always appear in Block numbers › Blocked calls).

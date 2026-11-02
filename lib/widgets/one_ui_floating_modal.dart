@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/one_ui_theme.dart';
 import 'one_ui_glass_surface.dart';
+import '../l10n/l10n.dart';
 
 /// Samsung One UI 9 Signature Floating Modal Container & Dialog System.
 ///
@@ -45,8 +46,8 @@ class OneUIFloatingModal extends StatelessWidget {
     String? message,
     String initialValue = '',
     String? prefixText,
-    String cancelLabel = 'Cancel',
-    String confirmLabel = 'Save',
+    String? cancelLabel,
+    String? confirmLabel,
     TextInputType keyboardType = TextInputType.text,
     bool autofocus = true,
   }) async {
@@ -62,8 +63,8 @@ class OneUIFloatingModal extends StatelessWidget {
           message: message,
           initialValue: initialValue,
           prefixText: prefixText,
-          cancelLabel: cancelLabel,
-          confirmLabel: confirmLabel,
+          cancelLabel: cancelLabel ?? context.l10n.cancel,
+          confirmLabel: confirmLabel ?? context.l10n.save,
           keyboardType: keyboardType,
           autofocus: autofocus,
         ),
@@ -79,8 +80,8 @@ class OneUIFloatingModal extends StatelessWidget {
     required String title,
     String? message,
     Widget? customContent,
-    String cancelLabel = 'Cancel',
-    String confirmLabel = 'Delete',
+    String? cancelLabel,
+    String? confirmLabel,
     Color? confirmTextColor,
     VoidCallback? onConfirm,
   }) async {
@@ -133,7 +134,7 @@ class OneUIFloatingModal extends StatelessWidget {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       child: Text(
-                        cancelLabel,
+                        cancelLabel ?? context.l10n.cancel,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -155,7 +156,7 @@ class OneUIFloatingModal extends StatelessWidget {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       child: Text(
-                        confirmLabel,
+                        confirmLabel ?? context.l10n.delete,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,

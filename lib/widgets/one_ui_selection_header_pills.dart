@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/one_ui_theme.dart';
 import 'one_ui_glass_surface.dart';
 import '../core/haptics/haptics.dart';
+import '../l10n/l10n.dart';
 
 /// Frosted floating capsule shared by the selection header pills.
 class _SelectionHeaderCapsule extends StatelessWidget {
@@ -42,7 +43,7 @@ class OneUISelectionCountPill extends StatelessWidget {
     final allSelected = selectedCount > 0 && selectedCount == totalCount;
     return Semantics(
       button: true,
-      label: allSelected ? 'Deselect all' : 'Select all',
+      label: allSelected ? context.l10n.deselectAll : context.l10n.selectAll,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () {
@@ -106,7 +107,7 @@ class OneUISelectionCancelPill extends StatelessWidget {
       child: _SelectionHeaderCapsule(
         padding: EdgeInsets.symmetric(horizontal: 18),
         child: Text(
-          'Cancel',
+          context.l10n.cancel,
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,

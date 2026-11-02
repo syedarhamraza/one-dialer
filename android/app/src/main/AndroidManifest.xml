@@ -29,6 +29,7 @@
         android:label="One Dialer"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
+        android:localeConfig="@xml/locales_config"
         android:enableOnBackInvokedCallback="true">
 
         <!-- Main UI: dial pad, recents, contacts -->

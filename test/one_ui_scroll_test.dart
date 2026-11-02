@@ -2,6 +2,7 @@ import 'package:dialer/theme/one_ui_scroll.dart';
 import 'package:dialer/widgets/one_ui_subpage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dialer/l10n/app_localizations.dart';
 
 void main() {
   testWidgets('short pages bounce back without stretch notifications', (tester) async {
@@ -10,6 +11,8 @@ void main() {
     var overscroll = 0;
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: ThemeData(platform: TargetPlatform.android),
         scrollBehavior: const OneUIScrollBehavior(),
         home: Scaffold(
@@ -42,6 +45,8 @@ void main() {
   testWidgets('subpages fill the screen, so a bounce does not cut off short content', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         scrollBehavior: const OneUIScrollBehavior(),
         home: OneUISubpage(title: 'T', builder: (_) => const [SizedBox(height: 80)]),
       ),
@@ -57,6 +62,8 @@ void main() {
     addTearDown(controller.dispose);
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         scrollBehavior: const OneUIScrollBehavior(),
         home: Scaffold(
           body: ListView(
@@ -80,6 +87,8 @@ void main() {
     var overscroll = 0;
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         scrollBehavior: const OneUIScrollBehavior(),
         home: NotificationListener<OverscrollNotification>(
           onNotification: (_) {
@@ -104,6 +113,8 @@ void main() {
   testWidgets('a text field whose text fits takes no sideways drag', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         scrollBehavior: OneUIScrollBehavior(),
         home: Scaffold(body: TextField()),
       ),

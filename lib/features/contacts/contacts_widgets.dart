@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../../core/contacts/contacts_repository.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/letter_avatar.dart';
+import '../../l10n/l10n.dart';
 
 /// Favourites' star, shared by their section header and the letter index.
 const kFavoritesMark = '★';
@@ -146,7 +147,7 @@ class _FastScrollerState extends State<FastScroller> {
               height: column,
               width: 28,
               child: Semantics(
-                label: 'Alphabet index',
+                label: context.l10n.alphabetIndex,
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTapDown: (d) => _pick(d.localPosition.dy, column),

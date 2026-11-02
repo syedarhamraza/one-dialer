@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 
+import '../../../l10n/l10n.dart';
+
 /// A labelled value (phone, email, website, relation). [label] is a label enum's name
 /// (`mobile`) or, for a custom label, the user's own text.
 class LabeledValue {
@@ -260,9 +262,12 @@ Label<T> toLabel<T extends Enum>(List<T> values, T custom, String text) {
   return Label(custom, text.trim().isEmpty ? 'Other' : text.trim());
 }
 
-/// "workMobile" → "Work mobile"; custom labels are shown as typed.
-String labelDisplay(String label) {
-  if (label.isEmpty) return 'Other';
+/// A label in the app's language ("mobile" → "Mobile"/"Cellulare"); custom labels as typed,
+/// and enum names without a translation spaced out ("workMms" → "Work mms").
+String labelDisplay(AppLocalizations l10n, String label) {
+  if (label.isEmpty) return l10n.contactLabel('other');
+  final known = l10n.contactLabel(label[0].toLowerCase() + label.substring(1));
+  if (label.toLowerCase() == 'other' || known != l10n.contactLabel('other')) return known;
   final spaced = label.replaceAllMapped(RegExp(r'(?<=[a-z])([A-Z])'), (m) => ' ${m[1]!.toLowerCase()}');
   return spaced[0].toUpperCase() + spaced.substring(1);
 }

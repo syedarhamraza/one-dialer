@@ -8,6 +8,7 @@ import '../core/telecom/telecom_bridge.dart';
 import '../features/blocking/blocking_repository.dart';
 import '../features/recents/call_log_repository.dart';
 import '../features/setup/setup_screen.dart';
+import '../l10n/l10n.dart';
 import '../theme/one_ui_theme.dart';
 import 'layout.dart';
 import 'main_shell.dart';
@@ -19,15 +20,19 @@ class DialerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const transitions = PageTransitionsTheme(builders: {TargetPlatform.android: _GroupedSlide()});
-    return ValueListenableBuilder(
-      valueListenable: DialerPrefs.instance.themeMode,
-      builder: (context, mode, _) => MaterialApp(
+    final prefs = DialerPrefs.instance;
+    return ListenableBuilder(
+      listenable: Listenable.merge([prefs.themeMode, prefs.language]),
+      builder: (context, _) => MaterialApp(
         title: 'One Dialer',
+        locale: appLocale(prefs.language.value),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         navigatorObservers: [_diagnosticsObserver],
         debugShowCheckedModeBanner: false,
         theme: OneUITheme.lightTheme.copyWith(pageTransitionsTheme: transitions),
         darkTheme: OneUITheme.darkTheme.copyWith(pageTransitionsTheme: transitions),
-        themeMode: switch (mode) {
+        themeMode: switch (prefs.themeMode.value) {
           'light' => ThemeMode.light,
           'dark' => ThemeMode.dark,
           _ => ThemeMode.system,

@@ -15,14 +15,15 @@ import '../../widgets/one_ui_toast.dart';
 import 'contact_actions.dart';
 import 'contact_sections.dart';
 import 'contact_subpages.dart' show accountApp;
+import '../../l10n/l10n.dart';
 
 /// "This device", "SIM card", "Google · me@gmail.com" for an account key (`type|name`).
-String accountLabel(String key) {
+String accountLabel(AppLocalizations l10n, String key) {
   final type = key.substring(0, key.indexOf('|'));
   final name = key.substring(key.indexOf('|') + 1);
-  final app = accountApp(type);
+  final app = accountApp(l10n, type);
   // Other apps' and carriers' accounts go by their own name, not "This device".
-  if (type.isNotEmpty && app == 'This device') return name.isNotEmpty ? name : type;
+  if (type.isNotEmpty && app == l10n.accountThisDevice) return name.isNotEmpty ? name : type;
   return app == 'Google' && name.isNotEmpty ? 'Google · $name' : app;
 }
 
@@ -62,7 +63,7 @@ class _ManageContactsScreenState extends State<ManageContactsScreen> {
       setState(
         () => _saveLabels = {
           for (final a in all)
-            if ('${a['type'] ?? ''}|${a['name'] ?? ''}' case final key) key: accountLabel(key),
+            if ('${a['type'] ?? ''}|${a['name'] ?? ''}' case final key) key: accountLabel(context.l10n, key),
         },
       );
     }, onError: (Object _) {});
@@ -71,12 +72,13 @@ class _ManageContactsScreenState extends State<ManageContactsScreen> {
   void _push(Widget page) => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
 
   Future<void> _export() async {
+    final l10n = context.l10n;
     final all = await FlutterContacts.getAll(properties: ContactProperties.all);
     if (all.isEmpty) {
-      if (mounted) OneUIToast.show(context, 'No contacts to export');
+      if (mounted) OneUIToast.show(context, l10n.noContactsToExport);
       return;
     }
-    await ContactActions.shareVCards(all);
+    await ContactActions.shareVCards(l10n, all);
   }
 
   Future<void> _import() async {
@@ -84,30 +86,30 @@ class _ManageContactsScreenState extends State<ManageContactsScreen> {
     try {
       text = await TelecomBridge.instance.pickVcf();
     } on PlatformException {
-      if (mounted) OneUIToast.show(context, "Couldn't open the file");
+      if (mounted) OneUIToast.show(context, context.l10n.couldNotOpenFile);
       return;
     }
     if (text == null || !mounted) return;
     final contacts = FlutterContacts.vCard.import(text);
     if (contacts.isEmpty) {
-      OneUIToast.show(context, 'No contacts in this file');
+      OneUIToast.show(context, context.l10n.noContactsInFile);
       return;
     }
     final ok = await showCosConfirm(
       context,
-      title: contacts.length == 1 ? 'Import 1 contact?' : 'Import ${contacts.length} contacts?',
-      message: 'They will be saved to ${accountLabel(_prefs.saveAccount.value ?? '|')}.',
-      confirmLabel: 'Import',
+      title: context.l10n.importContactsTitle(contacts.length),
+      message: context.l10n.importContactsMessage(accountLabel(context.l10n, _prefs.saveAccount.value ?? '|')),
+      confirmLabel: context.l10n.import,
     );
     if (!ok || !mounted) return;
     setState(() => _busy = true);
     try {
       await FlutterContacts.createAll(contacts, account: _saveAccount());
       if (mounted) {
-        OneUIToast.show(context, contacts.length == 1 ? 'Contact imported' : '${contacts.length} contacts imported');
+        OneUIToast.show(context, context.l10n.contactsImported(contacts.length));
       }
     } on Object {
-      if (mounted) OneUIToast.show(context, "Couldn't import these contacts");
+      if (mounted) OneUIToast.show(context, context.l10n.couldNotImportContacts);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -116,33 +118,33 @@ class _ManageContactsScreenState extends State<ManageContactsScreen> {
   @override
   Widget build(BuildContext context) {
     return OneUISubpage(
-      title: 'Manage contacts',
+      title: context.l10n.manageContacts,
       listenable: Listenable.merge([_prefs.hiddenAccounts, ContactsRepository.instance.allContacts]),
       builder: (context) => [
         OneUIGroupCard(
-          headerTitle: 'Display',
+          headerTitle: context.l10n.display,
           items: [
-            switchRow("Show contact's profile picture", _prefs.showPhotos, _prefs.setShowPhotos),
-            switchRow('Only display contacts with numbers', _prefs.onlyWithNumbers, _prefs.setOnlyWithNumbers),
+            switchRow(context.l10n.showContactPhotos, _prefs.showPhotos, _prefs.setShowPhotos),
+            switchRow(context.l10n.onlyContactsWithNumbers, _prefs.onlyWithNumbers, _prefs.setOnlyWithNumbers),
             OneUIGroupItem(
-              title: 'Contacts to display',
-              value: _prefs.hiddenAccounts.value.isEmpty ? 'All' : 'Custom',
+              title: context.l10n.contactsToDisplay,
+              value: _prefs.hiddenAccounts.value.isEmpty ? context.l10n.all : context.l10n.custom,
               onTap: () => _push(const _ContactsToDisplayScreen()),
             ),
             choiceRow(
               context,
-              title: 'Sort by',
+              title: context.l10n.sortBy,
               anchor: _sortKey,
               value: _prefs.sortBy,
-              labels: const {'first': 'First name', 'last': 'Last name'},
+              labels: {'first': context.l10n.firstName, 'last': context.l10n.lastName},
               onPick: _prefs.setSortBy,
             ),
             choiceRow(
               context,
-              title: 'Name format',
+              title: context.l10n.nameFormat,
               anchor: _orderKey,
               value: _prefs.nameOrder,
-              labels: const {'first': 'First name first', 'last': 'Last name first'},
+              labels: {'first': context.l10n.firstNameFirst, 'last': context.l10n.lastNameFirst},
               onPick: _prefs.setNameOrder,
             ),
           ],
@@ -151,24 +153,28 @@ class _ManageContactsScreenState extends State<ManageContactsScreen> {
           items: [
             choiceRow(
               context,
-              title: 'Default save location',
+              title: context.l10n.defaultSaveLocation,
               anchor: _saveKey,
               value: _prefs.saveAccount,
               labels: _saveLabels,
-              fallback: 'Phone default',
+              fallback: context.l10n.phoneDefault,
               onPick: _prefs.setSaveAccount,
             ),
           ],
         ),
         OneUIGroupCard(
           items: [
-            OneUIGroupItem(title: 'Import contacts', subtitle: 'From a .vcf file', onTap: _busy ? null : _import),
-            OneUIGroupItem(title: 'Export contacts', subtitle: 'As a .vcf file', onTap: _export),
-            OneUIGroupItem(title: 'SIM card contacts', onTap: () => _push(const _SimContactsScreen())),
+            OneUIGroupItem(
+              title: context.l10n.importContacts,
+              subtitle: context.l10n.fromVcf,
+              onTap: _busy ? null : _import,
+            ),
+            OneUIGroupItem(title: context.l10n.exportContacts, subtitle: context.l10n.asVcf, onTap: _export),
+            OneUIGroupItem(title: context.l10n.simContacts, onTap: () => _push(const _SimContactsScreen())),
           ],
         ),
         OneUIGroupCard(
-          items: [OneUIGroupItem(title: 'Merge duplicate contacts', onTap: () => _push(const _DuplicatesScreen()))],
+          items: [OneUIGroupItem(title: context.l10n.mergeDuplicates, onTap: () => _push(const _DuplicatesScreen()))],
         ),
       ],
     );
@@ -183,7 +189,7 @@ class _ContactsToDisplayScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final prefs = DialerPrefs.instance;
     return OneUISubpage(
-      title: 'Contacts to display',
+      title: context.l10n.contactsToDisplay,
       listenable: Listenable.merge([prefs.hiddenAccounts, ContactsRepository.instance.allContacts]),
       builder: (context) {
         final accounts = <String>{
@@ -196,7 +202,7 @@ class _ContactsToDisplayScreen extends StatelessWidget {
             items: [
               for (final a in accounts)
                 OneUIGroupItem(
-                  title: accountLabel(a),
+                  title: accountLabel(context.l10n, a),
                   onTap: () => _set(a, hidden.contains(a)),
                   trailing: OneUISwitch(value: !hidden.contains(a), onChanged: (show) => _set(a, show)),
                 ),
@@ -233,10 +239,10 @@ class _SimContactsScreenState extends State<_SimContactsScreen> {
     try {
       await FlutterContacts.createAll(missing, account: _saveAccount());
       if (mounted) {
-        OneUIToast.show(context, missing.length == 1 ? 'Contact imported' : '${missing.length} contacts imported');
+        OneUIToast.show(context, context.l10n.contactsImported(missing.length));
       }
     } on Object {
-      if (mounted) OneUIToast.show(context, "Couldn't import these contacts");
+      if (mounted) OneUIToast.show(context, context.l10n.couldNotImportContacts);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -247,13 +253,13 @@ class _SimContactsScreenState extends State<_SimContactsScreen> {
     return FutureBuilder(
       future: _sim,
       builder: (context, snapshot) => OneUISubpage(
-        title: 'SIM card contacts',
+        title: context.l10n.simContacts,
         listenable: ContactsRepository.instance.contacts,
         builder: (context) {
-          if (snapshot.hasError) return [const _Message("Couldn't read the SIM card")];
+          if (snapshot.hasError) return [_Message(context.l10n.simReadError)];
           final sim = snapshot.data;
-          if (sim == null) return [const _Message('Reading the SIM card…')];
-          if (sim.isEmpty) return [const _Message('No contacts on the SIM card')];
+          if (sim == null) return [_Message(context.l10n.simReading)];
+          if (sim.isEmpty) return [_Message(context.l10n.simEmpty)];
           final repo = ContactsRepository.instance;
           final missing = [
             for (final c in sim)
@@ -264,7 +270,9 @@ class _SimContactsScreenState extends State<_SimContactsScreen> {
               items: [
                 OneUIGroupItem(
                   leading: Icon(Icons.download_rounded, color: context.palette.textPrimary),
-                  title: missing.isEmpty ? 'All saved in Contacts' : 'Import ${missing.length} to Contacts',
+                  title: missing.isEmpty
+                      ? context.l10n.allSavedInContacts
+                      : context.l10n.importToContacts(missing.length),
                   onTap: missing.isEmpty || _busy ? null : () => _import(missing),
                 ),
               ],
@@ -303,12 +311,12 @@ class _DuplicatesScreenState extends State<_DuplicatesScreen> {
     final ok = await showCosConfirm(
       context,
       title: groups.length == 1
-          ? 'Merge ${groups.single.length} contacts?'
-          : 'Merge $count contacts into ${groups.length}?',
+          ? context.l10n.mergeGroupTitle('${groups.single.length}')
+          : context.l10n.mergeGroupsTitle('$count', '${groups.length}'),
       message: groups.length == 1
-          ? 'They become one contact named ${groups.single.first.name}, with all their numbers and details.'
-          : 'Each group becomes one contact, with all its numbers and details.',
-      confirmLabel: 'Merge',
+          ? context.l10n.mergeGroupMessage(groups.single.first.name)
+          : context.l10n.mergeGroupsMessage,
+      confirmLabel: context.l10n.merge,
     );
     if (!ok || !mounted) return;
     setState(() => _busy = true);
@@ -318,10 +326,10 @@ class _DuplicatesScreenState extends State<_DuplicatesScreen> {
       }
       ContactsRepository.instance.reload();
       if (mounted) {
-        OneUIToast.show(context, groups.length == 1 ? 'Contacts merged' : '${groups.length} contacts merged');
+        OneUIToast.show(context, context.l10n.contactsMerged(groups.length));
       }
     } on PlatformException {
-      if (mounted) OneUIToast.show(context, "Couldn't merge these contacts");
+      if (mounted) OneUIToast.show(context, context.l10n.couldNotMergeContacts);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -330,17 +338,17 @@ class _DuplicatesScreenState extends State<_DuplicatesScreen> {
   @override
   Widget build(BuildContext context) {
     return OneUISubpage(
-      title: 'Merge duplicate contacts',
+      title: context.l10n.mergeDuplicates,
       listenable: ContactsRepository.instance.allContacts,
       builder: (context) {
         final groups = duplicateGroups(ContactsRepository.instance.allContacts.value);
-        if (groups.isEmpty) return [const _Message('No duplicate contacts')];
+        if (groups.isEmpty) return [_Message(context.l10n.noDuplicateContacts)];
         return [
           OneUIGroupCard(
             items: [
               OneUIGroupItem(
                 leading: Icon(Icons.merge_rounded, color: context.palette.textPrimary),
-                title: 'Merge all (${groups.length})',
+                title: context.l10n.mergeAll('${groups.length}'),
                 onTap: _busy ? null : () => _merge(groups),
               ),
             ],
@@ -350,7 +358,7 @@ class _DuplicatesScreenState extends State<_DuplicatesScreen> {
               items: [
                 for (final c in g) OneUIGroupItem(title: c.name, subtitle: c.numbers.join(', ')),
                 OneUIGroupItem(
-                  title: 'Merge',
+                  title: context.l10n.merge,
                   leading: const Icon(Icons.merge_rounded, color: OneUITheme.accentGreen),
                   onTap: _busy ? null : () => _merge([g]),
                 ),

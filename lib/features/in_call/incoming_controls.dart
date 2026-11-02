@@ -11,6 +11,7 @@ import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/one_ui_floating_modal.dart';
 import 'call_controls.dart';
+import '../../l10n/l10n.dart';
 
 /// ColorOS 17's 1-button ball: white with a dark handset, until a drag tints it.
 const oneButtonWhite = Color(0xFFF2F2F4);
@@ -81,7 +82,7 @@ class _IncomingControlsState extends State<IncomingControls> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Decline with SMS', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+            Text(context.l10n.declineWithSms, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
             const SizedBox(height: 16),
             ConstrainedBox(
               constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.5),
@@ -89,7 +90,7 @@ class _IncomingControlsState extends State<IncomingControls> {
                 shrinkWrap: true,
                 children: [
                   if (quickReplies.isEmpty)
-                    const Padding(padding: EdgeInsets.all(16), child: Text('No quick replies saved')),
+                    Padding(padding: const EdgeInsets.all(16), child: Text(context.l10n.noQuickReplies)),
                   for (final m in quickReplies)
                     ListTile(
                       contentPadding: EdgeInsets.zero,
@@ -132,7 +133,7 @@ class _IncomingControlsState extends State<IncomingControls> {
                       iconColor: oneButtonIcon,
                       icon: Icons.call_rounded,
                       shake: true,
-                      label: 'Decline',
+                      label: context.l10n.decline,
                       upColor: endRed,
                       upIcon: Icons.call_end_rounded,
                       compact: compact,
@@ -141,7 +142,7 @@ class _IncomingControlsState extends State<IncomingControls> {
                       onTriggered: (_, _) => telecom.reject(call.id),
                       onSwipeDown: (ball, lift) =>
                           widget.onAnswer != null ? widget.onAnswer!(ball, lift) : telecom.answer(call.id),
-                      downLabel: 'Answer',
+                      downLabel: context.l10n.answer,
                       downColor: answerGreen,
                       downIcon: Icons.call_rounded,
                     )
@@ -152,7 +153,7 @@ class _IncomingControlsState extends State<IncomingControls> {
                       upColor: answerGreen,
                       icon: Icons.call_rounded,
                       shake: true,
-                      label: 'Answer',
+                      label: context.l10n.answer,
                       compact: compact,
                       hidden: widget.answerHidden,
                       onProgress: (armed) => _progress('Answer', armed),
@@ -169,7 +170,7 @@ class _IncomingControlsState extends State<IncomingControls> {
                             // The connected screen's End red.
                             color: endRed,
                             icon: Icons.call_end_rounded,
-                            label: 'Decline',
+                            label: context.l10n.decline,
                             compact: compact,
                             onProgress: (armed) => _progress('Decline', armed),
                             onTriggered: (_, _) => telecom.reject(call.id),
@@ -182,7 +183,7 @@ class _IncomingControlsState extends State<IncomingControls> {
                             icon: Icons.call_rounded,
                             // The handset rings, like ColorOS's Answer.
                             shake: true,
-                            label: 'Answer',
+                            label: context.l10n.answer,
                             compact: compact,
                             hidden: widget.answerHidden,
                             // Offset so the two hints don't pulse in lockstep.
@@ -218,7 +219,10 @@ class _IncomingControlsState extends State<IncomingControls> {
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     shape: const StadiumBorder(),
                   ),
-                  child: const Text('Decline with SMS', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                  child: Text(
+                    context.l10n.declineWithSms,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                  ),
                 ),
               ),
             ),
@@ -245,7 +249,7 @@ class SwipeUpButton extends StatefulWidget {
     this.hintPhase = 0,
     this.shake = false,
     this.onSwipeDown,
-    this.downLabel = 'Decline',
+    this.downLabel,
     this.downColor = endRed,
     this.downIcon = Icons.call_end_rounded,
     this.upColor,
@@ -275,7 +279,7 @@ class SwipeUpButton extends StatefulWidget {
   /// [downColor] with [downIcon] on the way down, and [upColor] with [upIcon] on the way up,
   /// like ColorOS 17's white ball between a red and a green arc.
   final void Function(Rect ball, double lift)? onSwipeDown;
-  final String downLabel;
+  final String? downLabel;
   final Color downColor;
   final IconData downIcon;
   final Color? upColor;
@@ -410,21 +414,23 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
     super.dispose();
   }
 
+  /// "answer" or "decline" for the swipe hint, in the app's language.
+  String _verb(String label) => label == context.l10n.answer ? context.l10n.answerVerb : context.l10n.declineVerb;
+
   @override
   Widget build(BuildContext context) {
     final size = SwipeUpButton.size * (widget.compact ? .85 : 1);
     final travel = _threshold + 28;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final downLabel = widget.downLabel ?? context.l10n.decline;
     return Semantics(
       button: true,
       label: widget.label,
       hint: _twoWay
-          ? 'Swipe up to ${widget.label.toLowerCase()}, down to ${widget.downLabel.toLowerCase()}'
-          : 'Swipe up to ${widget.label.toLowerCase()}',
+          ? context.l10n.swipeUpDownHint(_verb(widget.label), _verb(downLabel))
+          : context.l10n.swipeUpHint(_verb(widget.label)),
       onTap: _fire,
-      customSemanticsActions: _twoWay
-          ? {CustomSemanticsAction(label: widget.downLabel): () => _fire(down: true)}
-          : null,
+      customSemanticsActions: _twoWay ? {CustomSemanticsAction(label: downLabel): () => _fire(down: true)} : null,
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,

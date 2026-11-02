@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../theme/one_ui_theme.dart';
 import 'one_ui_glass_surface.dart';
+import '../l10n/l10n.dart';
 
 class OneUIFloatingSearchPill extends StatelessWidget {
-  final String hintText;
+  final String? hintText;
   final VoidCallback? onTap;
 
-  const OneUIFloatingSearchPill({super.key, this.hintText = 'Search', this.onTap});
+  const OneUIFloatingSearchPill({super.key, this.hintText, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +28,7 @@ class OneUIFloatingSearchPill extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      hintText,
+                      hintText ?? context.l10n.search,
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, color: context.palette.textSecondary),
                     ),
                   ),

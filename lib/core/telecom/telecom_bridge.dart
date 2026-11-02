@@ -137,6 +137,11 @@ class TelecomBridge {
 
   /// Settings › Incoming call reminders and Answer/End calls (`CallPrefs.kt`, read by the call service):
   /// `incomingStyle`, `vibrateAnswerEnd`, `speakerDefault`, `autoAnswer`, `autoAnswerDelay`.
+  /// Settings › Language: `system` or a language tag (`AppLanguage.kt`).
+  Future<String> getAppLanguage() async => await _methods.invokeMethod<String>('getAppLanguage') ?? 'system';
+
+  Future<void> setAppLanguage(String tag) => _methods.invokeMethod('setAppLanguage', {'tag': tag});
+
   Future<Map<Object?, Object?>> getCallSettings() async =>
       await _methods.invokeMapMethod<Object?, Object?>('getCallSettings') ?? const {};
 

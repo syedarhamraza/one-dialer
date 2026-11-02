@@ -1,6 +1,7 @@
 import 'package:dialer/features/in_call/incoming_controls.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dialer/l10n/app_localizations.dart';
 
 void main() {
   Rect? released;
@@ -9,6 +10,8 @@ void main() {
     final fired = <String>[];
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Center(
           child: SwipeUpButton(
             color: Colors.green,

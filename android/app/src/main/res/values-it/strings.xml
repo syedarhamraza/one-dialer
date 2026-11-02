@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="channel_incoming">Chiamate in arrivo</string>
+    <string name="channel_incoming_quiet">Chiamate in arrivo (silenziose)</string>
+    <string name="channel_ongoing">Chiamate in corso</string>
+    <string name="channel_missed">Chiamate perse</string>
+    <string name="unknown">Sconosciuto</string>
+    <string name="unknown_caller">Chiamante sconosciuto</string>
+    <string name="announce_calling">%1$s ti sta chiamando</string>
+    <string name="incoming_call">Chiamata in arrivo</string>
+    <string name="island_incoming">In arrivo</string>
+    <string name="decline">Rifiuta</string>
+    <string name="answer">Rispondi</string>
+    <string name="ongoing_call">Chiamata in corso</string>
+    <string name="on_hold">In attesa</string>
+    <string name="calling_ellipsis">Chiamata in uscita…</string>
+    <string name="island_calling">Chiamata</string>
+    <string name="hang_up">Riaggancia</string>
+    <string name="missed_call">Chiamata persa</string>
+    <plurals name="missed_calls">
+        <item quantity="one">%d chiamata persa</item>
+        <item quantity="many">%d chiamate perse</item>
+        <item quantity="other">%d chiamate perse</item>
+    </plurals>
+    <string name="missed_latest">Ultima: %1$s</string>
+    <string name="call_back">Richiama</string>
+    <string name="message">Messaggio</string>
+    <string-array name="quick_replies">
+        <item>Non posso parlare ora. Che succede?</item>
+        <item>Ti richiamo subito.</item>
+        <item>Ti chiamo più tardi.</item>
+        <item>Non posso parlare ora. Mi chiami più tardi?</item>
+    </string-array>
+</resources>

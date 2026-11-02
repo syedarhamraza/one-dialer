@@ -216,6 +216,11 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 )
                 result.success(null)
             }
+            "getAppLanguage" -> result.success(AppLanguage.get(context))
+            "setAppLanguage" -> {
+                AppLanguage.set(context, call.argument<String>("tag")!!)
+                result.success(null)
+            }
             "getCallSettings" -> result.success(com.syedarhamraza.dialer.telecom.CallPrefs.read(context))
             "setCallSetting" -> {
                 com.syedarhamraza.dialer.telecom.CallPrefs.write(context, call.argument<String>("key")!!, call.argument<Any>("value"))
@@ -351,6 +356,9 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 android.content.Intent(android.provider.Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:$pkg"))
             // Android 17's per-app switches for calls VoIP apps share with the call log.
             page == "voipCallLog" -> android.content.Intent(android.telecom.TelecomManager.ACTION_CONFIGURE_CALL_LOG_INTEGRATION)
+            page == "language" && android.os.Build.VERSION.SDK_INT >= 33 ->
+                android.content.Intent(android.provider.Settings.ACTION_APP_LOCALE_SETTINGS, Uri.parse("package:$pkg"))
+            page == "language" -> android.content.Intent(android.provider.Settings.ACTION_LOCALE_SETTINGS)
             page == "defaultApps" -> android.content.Intent(android.provider.Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
             // The SIM provider's call settings (forwarding, waiting, caller ID), from the phone service.
             page == "carrier" -> android.content.Intent(android.telecom.TelecomManager.ACTION_SHOW_CALL_SETTINGS)

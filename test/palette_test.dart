@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dialer/l10n/app_localizations.dart';
 import 'package:dialer/theme/one_ui_theme.dart';
 import 'package:dialer/widgets/one_ui_glass_surface.dart';
 
@@ -8,6 +9,8 @@ void main() {
     late OneUIPalette page, glass;
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: OneUITheme.lightTheme,
         home: Builder(
           builder: (context) {

@@ -1,0 +1,41 @@
+# Italian: strings for human review
+
+The Italian was written to AOSP Dialer/Contacts terminology but has not been checked by a native speaker. These need one, roughly in order of risk. Keys are in `lib/l10n/app_it.arb` unless a file is named; the ones marked ★ also carry a `REVIEW:` description in `app_en.arb`.
+
+## Legal and privacy (must be exact)
+
+| Key | Why |
+| --- | --- |
+| `setupDisclosure` ★ | Google Play prominent disclosure. Must match the privacy policy and Android's Italian permission names (Telefono, Registro chiamate, Contatti, Notifiche). |
+| `reportLagMessage` ★ | States what a lag report sends; must stay accurate. |
+| `importContactsMessage`, `deleteContactMessage`, `deleteContactsMessage`, `deleteCallsMessage` | Describe data being removed or saved. |
+
+## May not fit (short controls)
+
+The UI is laid out for English lengths; check these on the phone in Italian, especially on a 360 dp screen.
+
+| Key | English → Italian |
+| --- | --- |
+| `addCall` ★ | Add call → Aggiungi chiamata (in-call round button label) |
+| `mute` ★ | Mute → Muto (AOSP: "Disattiva audio", too long for the button) |
+| `hold` ★ / `resume` | Hold → Attesa / Riprendi |
+| `soon` ★ | Soon → Presto (badge) |
+| `keypadDeleteHint`, `keypadDigitHint`, `keypadZeroHint` | Screen reader only, length doesn't matter; check wording |
+| `recentsFilterMissed` | Missed → Perse (filter tab) |
+| `defaultSaveLocation`, `vibrateAnswerEnd`, `autoAnswer`, `speakerDefault` | Long settings rows |
+
+## Wording choices to confirm
+
+| Key | Note |
+| --- | --- |
+| `calling` ★, `calling_ellipsis` (`values-it`) | "Chiamata in uscita": AOSP uses "Chiamata in corso" for both dialing and connected calls; this keeps them apart. |
+| `hang_up` (`values-it`) | "Riaggancia" on the ongoing-call notification. |
+| `callScreenEffectsSubtitle` ★, `effectsFull/Reduced/Off`, `reduceVisualEffects` | ColorOS design names with no AOSP equivalent. |
+| `contactLabel` ★ | Contact field labels; several are gendered (Figlio, Amico) where Android's own Italian uses the masculine. |
+| `contactsMerged` ★ | `=1` means one *group* merged ("Contatti uniti"). |
+| `selectedCount`, `foundCount` | Masculine plural agreement (selezionati, trovati). |
+| `announce_calling` (`values-it`) | Spoken by text-to-speech: "{name} ti sta chiamando". TTS speaks in the phone's TTS language, not the app's. |
+| `quick_replies` (`values-it`) | Android's Italian quick responses; only shown until the user edits the list. |
+| `durationHoursMinutes/MinutesSeconds/Seconds` | "1 h 2 min", "3 min 5 s" |
+| `tapRecentCall`, `chooseSimForCalls` | Setting titles phrased as nouns ("Tocco su una chiamata recente"). |
+| `changelog` | "Novità" rather than a literal "Registro modifiche". |
