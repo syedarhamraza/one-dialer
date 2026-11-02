@@ -170,6 +170,14 @@ class DialerPrefs {
   /// through `OneUIEffectsController.glassStyle`.
   final glassDark = ValueNotifier('soft');
 
+  /// Settings › "Nav bar style", with full effects: `frosted` (our call glass) or `liquid`
+  /// (the glass package's `GlassTabBar`).
+  final navStyle = ValueNotifier('frosted');
+
+  /// Settings › "Glass effect", for the `liquid` nav bar: a `GlassQuality` name, `premium`
+  /// or `standard`.
+  final navGlass = ValueNotifier('premium');
+
   /// Awaited before the first frame, so the app doesn't open dark and then turn light, or
   /// frosted and then flat.
   Future<void> loadAppearance() async {
@@ -180,6 +188,10 @@ class DialerPrefs {
     if (effects == 'full' || effects == 'reduced' || effects == 'off') visualEffects.value = effects!;
     final dark = await _prefs.getString('glass_dark');
     if (dark == 'classic' || dark == 'soft' || dark == 'bold') glassDark.value = dark!;
+    final nav = await _prefs.getString('nav_style');
+    if (nav == 'frosted' || nav == 'liquid') navStyle.value = nav!;
+    final navEffect = await _prefs.getString('nav_glass');
+    if (navEffect == 'premium' || navEffect == 'standard') navGlass.value = navEffect!;
   }
 
   /// Settings › Language: `system` or a language tag. Kept natively (`AppLanguage.kt`), where
@@ -262,6 +274,16 @@ class DialerPrefs {
   Future<void> setGlassDark(String value) async {
     glassDark.value = value;
     await _prefs.setString('glass_dark', value);
+  }
+
+  Future<void> setNavStyle(String value) async {
+    navStyle.value = value;
+    await _prefs.setString('nav_style', value);
+  }
+
+  Future<void> setNavGlass(String value) async {
+    navGlass.value = value;
+    await _prefs.setString('nav_glass', value);
   }
 
   Future<void> setThemeMode(String value) async {

@@ -2342,6 +2342,42 @@ abstract class AppLocalizations {
   /// **'Bold'**
   String get edgeGlowBold;
 
+  /// No description provided for @navBarStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nav bar style'**
+  String get navBarStyle;
+
+  /// No description provided for @navBarFrosted.
+  ///
+  /// In en, this message translates to:
+  /// **'Frosted'**
+  String get navBarFrosted;
+
+  /// No description provided for @navBarLiquid.
+  ///
+  /// In en, this message translates to:
+  /// **'Liquid glass'**
+  String get navBarLiquid;
+
+  /// No description provided for @navBarGlass.
+  ///
+  /// In en, this message translates to:
+  /// **'Glass effect'**
+  String get navBarGlass;
+
+  /// No description provided for @navGlassPremium.
+  ///
+  /// In en, this message translates to:
+  /// **'Full refraction'**
+  String get navGlassPremium;
+
+  /// No description provided for @navGlassStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get navGlassStandard;
+
   /// No description provided for @callsFromOtherApps.
   ///
   /// In en, this message translates to:

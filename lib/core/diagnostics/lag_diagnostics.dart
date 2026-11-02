@@ -177,6 +177,8 @@ class LagDiagnostics with WidgetsBindingObserver {
         'callEffects': prefs.callEffects.value,
         'glassDark': prefs.glassDark.value,
         'callGlass': prefs.callGlass.value,
+        'navStyle': prefs.navStyle.value,
+        'navGlass': prefs.navGlass.value,
         'refreshRate': views.isEmpty ? 60.0 : views.first.display.refreshRate,
         'frames': _summary,
         if (_routeDepth > 0 && _shellSummary != null) 'shellFrames': _shellSummary,
@@ -283,7 +285,7 @@ class LagDiagnostics with WidgetsBindingObserver {
     await crashlytics.setCustomKey('lag_${engine}_report_id', payload['reportId'] as String);
     await crashlytics.setCustomKey('lag_${engine}_category', payload['category'] as String);
     final context = payload['context'] as Map<String, dynamic>? ?? {};
-    for (final key in ['screen', 'visualEffects', 'callEffects', 'glassDark', 'callGlass', 'refreshRate']) {
+    for (final key in ['screen', 'visualEffects', 'callEffects', 'glassDark', 'callGlass', 'navStyle', 'navGlass', 'refreshRate']) {
       await crashlytics.setCustomKey('lag_${engine}_$key', context[key] ?? 'unknown');
     }
     final category = payload['category'] as String;

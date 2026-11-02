@@ -21,17 +21,28 @@ Future<void> main() async {
   // Not awaited: rows use the defaults until the saved choices arrive a moment later.
   DialerPrefs.instance.loadChoices();
   await DialerPrefs.instance.loadAppearance();
+  DialerPrefs.instance.navStyle.addListener(_warmLiquidGlass);
+  _warmLiquidGlass();
   await DialerPrefs.instance.loadLanguage();
   AppLifecycleListener(onResume: DialerPrefs.instance.loadLanguage);
   // The bundled Roboto (the glass version numeral) under About › Open source licences.
   LicenseRegistry.addLicense(() async* {
     yield LicenseEntryWithLineBreaks(['Roboto'], await rootBundle.loadString('assets/fonts/Roboto-LICENSE.txt'));
   });
-  runApp(const DialerApp());
+  runApp(LiquidGlassWidgets.wrap(brightnessResolver: Theme.maybeBrightnessOf, child: const DialerApp()));
   // Play's update API needs a foreground activity, so ask after the first frame.
   WidgetsBinding.instance.addPostFrameCallback(
     (_) => UpdateController.instance.loadPreferences().then((_) => UpdateController.instance.autoCheck()),
   );
+}
+
+/// The glass package's shaders, loaded once and only when Settings › Nav bar style is Liquid glass
+/// (the one place the main app draws the package's glass). Its frame monitor stays off: our lag
+/// diagnostics already watch frames, and its warnings would reach Crashlytics.
+void _warmLiquidGlass() {
+  if (DialerPrefs.instance.navStyle.value != 'liquid') return;
+  DialerPrefs.instance.navStyle.removeListener(_warmLiquidGlass);
+  unawaited(LiquidGlassWidgets.initialize(enablePerformanceMonitor: false));
 }
 
 void _profileServiceAddress() {
@@ -62,7 +73,7 @@ Future<void> inCallMain() async {
       DialerPrefs.instance.loadLanguage();
     },
   );
-  // No LiquidGlassWidgets.initialize(): it preloads the package's glass shaders before runApp,
+  // No LiquidGlassWidgets.initialize(): it preloads the package's glass shaders,
   // and the call screen draws none (its glass is our own; the package only supplies the press).
   runApp(LiquidGlassWidgets.wrap(brightnessResolver: Theme.maybeBrightnessOf, child: const InCallApp()));
 }
