@@ -429,7 +429,7 @@ class _SimMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => CustomPaint(
-    painter: const _SimOutline(),
+    painter: const SimOutline(),
     child: SizedBox(
       width: 12,
       height: 15,
@@ -443,13 +443,42 @@ class _SimMark extends StatelessWidget {
   );
 }
 
-class _SimOutline extends CustomPainter {
-  const _SimOutline();
+/// ColorOS's SIM card outline, clipped at one corner; also the contact page's SIM icon.
+class SimOutline extends CustomPainter {
+  const SimOutline({
+    this.color = Colors.white70,
+    this.strokeWidth = 1.3,
+    this.corner = 2,
+    this.cut = 4,
+    this.chip = false,
+  });
+
+  final Color color;
+  final double strokeWidth, corner, cut;
+
+  /// Adds the chip's outline, so the card doesn't look empty without a slot number.
+  final bool chip;
 
   @override
   void paint(Canvas canvas, Size size) {
-    const corner = 2.0, cut = 4.0;
     final r = Offset.zero & size;
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeJoin = StrokeJoin.round
+      ..strokeCap = StrokeCap.round
+      ..color = color;
+    if (chip) {
+      final pad = Rect.fromCenter(
+        center: r.center.translate(0, size.height * .1),
+        width: size.width * .5,
+        height: size.height * .38,
+      );
+      canvas
+        ..drawRRect(RRect.fromRectAndRadius(pad, Radius.circular(strokeWidth)), paint)
+        ..drawLine(pad.centerLeft, pad.centerRight, paint)
+        ..drawLine(pad.topCenter, pad.bottomCenter, paint);
+    }
     canvas.drawPath(
       Path()
         ..moveTo(r.left + corner, r.top)
@@ -462,16 +491,13 @@ class _SimOutline extends CustomPainter {
         ..lineTo(r.left, r.top + corner)
         ..quadraticBezierTo(r.left, r.top, r.left + corner, r.top)
         ..close(),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.3
-        ..strokeJoin = StrokeJoin.round
-        ..color = Colors.white70,
+      paint,
     );
   }
 
   @override
-  bool shouldRepaint(_SimOutline oldDelegate) => false;
+  bool shouldRepaint(SimOutline oldDelegate) =>
+      oldDelegate.color != color || oldDelegate.strokeWidth != strokeWidth || oldDelegate.chip != chip;
 }
 
 /// ColorOS's HD call mark: a handset with a small "HD" beside its top.

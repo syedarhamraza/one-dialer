@@ -56,6 +56,7 @@ void main() {
     expect(find.text('03111234567'), findsOneWidget);
     expect(find.text('03001234567'), findsOneWidget);
     expect(find.text('Ringtone'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Storage locations'), 200);
     expect(find.text('Storage locations'), findsOneWidget); // on the page, not in More
     expect(find.text('Call logs'), findsNothing); // no calls yet
   });
@@ -101,8 +102,8 @@ void main() {
     await tester.scrollUntilVisible(find.text('View all'), 200);
     expect(find.text('Call logs'), findsOneWidget);
     expect(find.text('View all'), findsOneWidget);
-    expect(find.text('+92 311 1234567'), findsNWidgets(3));
-    expect(find.text('0399999999'), findsNothing);
+    expect(find.textContaining('+92 311 1234567', findRichText: true), findsNWidgets(3));
+    expect(find.textContaining('0399999999', findRichText: true), findsNothing);
   });
 
   const fontPath = String.fromEnvironment('PREVIEW_FONT');

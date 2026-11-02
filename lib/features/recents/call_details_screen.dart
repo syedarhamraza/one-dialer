@@ -17,7 +17,6 @@ import '../contacts/editor/add_to_contacts.dart';
 import 'app_calls.dart';
 import 'call_log.dart';
 import 'call_log_repository.dart';
-import 'recents_screen.dart';
 import 'delete_calls.dart';
 import '../../l10n/l10n.dart';
 
@@ -155,9 +154,10 @@ class CallDetailsScreen extends StatelessWidget {
                         ),
                         // Lazy: a number called every day has hundreds of rows.
                         DetailsCardSliver(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          padding: const EdgeInsets.fromLTRB(18, 6, 18, 6),
                           itemCount: history.length,
-                          itemBuilder: (context, i) => _HistoryRow(call: history[i]),
+                          itemBuilder: (context, i) =>
+                              ContactCallLogRow(call: history[i], simBadge: null, now: DateTime.now()),
                         ),
                       ],
                     ),
@@ -272,6 +272,8 @@ class CallNotesCard extends StatelessWidget {
             ),
             DetailsCard(
               padding: const EdgeInsets.symmetric(vertical: 4),
+              dividerIndent: 18,
+              dividerEndIndent: 18,
               children: [
                 for (final (at, text, number) in notes)
                   InkWell(
@@ -303,49 +305,4 @@ class CallNotesCard extends StatelessWidget {
       },
     ),
   );
-}
-
-class _HistoryRow extends StatelessWidget {
-  const _HistoryRow({required this.call});
-
-  final CallLogEntry call;
-
-  @override
-  Widget build(BuildContext context) {
-    // Missed and rejected calls log ring time as duration; only talk time is shown.
-    final answered =
-        (call.type == CallType.incoming || call.type == CallType.outgoing) && call.duration > Duration.zero;
-    // Laid out like the contact page's call logs: grey arrow, the time, then talk time or type.
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 10, 18, 10),
-      child: Row(
-        children: [
-          SizedBox(width: 40, child: CallTypeIcon(type: call.type, muted: true)),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${dayLabel(context.l10n, call.date, DateTime.now())}, ${timeLabel(context.l10n, call.date)}',
-                  style: const TextStyle(fontSize: 17),
-                ),
-                if (call.isApp)
-                  Text(
-                    appCallLabel(context.l10n, call),
-                    style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
-                  ),
-              ],
-            ),
-          ),
-          Text(
-            answered ? durationLabel(context.l10n, call.duration) : callTypeLabel(context.l10n, call.type),
-            style: TextStyle(
-              fontSize: 13,
-              color: call.type == CallType.missed ? OneUITheme.accentRed : context.palette.textSecondary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

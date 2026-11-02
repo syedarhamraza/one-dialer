@@ -192,6 +192,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get callTypeVoicemail => 'Segreteria';
 
   @override
+  String get callNotConnected => '(Non connesso)';
+
+  @override
   String get callTypeIncoming => 'Chiamata in arrivo';
 
   @override
