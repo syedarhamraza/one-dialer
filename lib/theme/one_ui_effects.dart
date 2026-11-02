@@ -94,6 +94,12 @@ class OneUIEffectsController extends ChangeNotifier {
     return isOff ? fill.withValues(alpha: 1) : fill;
   }
 
+  /// The outline of [oneUIFill]'s pills: light mode's white has no shadow below full effects,
+  /// so a faint hairline sets it off from the light page. None in dark or at full.
+  BorderSide oneUIEdge({required bool light}) => light && !isFull
+      ? const BorderSide(color: Color(0x1A000000), width: .8, strokeAlign: BorderSide.strokeAlignInside)
+      : BorderSide.none;
+
   Color get activePillColor => const Color(0xFF3E3E42);
   Gradient? get activePillGradient => null;
   Gradient? get activePillRimGradient => null;

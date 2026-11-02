@@ -114,7 +114,9 @@ class GlowButton extends StatelessWidget {
                       : DecoratedBox(
                           decoration: ShapeDecoration(
                             color: OneUIEffectsController.instance.oneUIFill(light: context.palette.isLight),
-                            shape: const StadiumBorder(),
+                            shape: StadiumBorder(
+                              side: OneUIEffectsController.instance.oneUIEdge(light: context.palette.isLight),
+                            ),
                           ),
                           child: body,
                         ),

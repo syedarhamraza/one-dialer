@@ -92,6 +92,12 @@ class OneUIGlassSurface extends StatelessWidget {
                           t,
                         ),
                   gradient: (isModal ? fx.modalGradient : fx.floatingGradient)?.scale(t),
+                  // Dialer: light mode's flat pills get a hairline below full effects (no shadow there).
+                  border: light && !isModal && !fx.isFull
+                      ? Border.fromBorderSide(
+                          fx.oneUIEdge(light: true).copyWith(color: _fade(const Color(0x1A000000), t)),
+                        )
+                      : null,
                   borderRadius: borderRadius,
                 ),
           child: child,

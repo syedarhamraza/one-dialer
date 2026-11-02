@@ -53,8 +53,15 @@ class CallGlass extends StatelessWidget {
           ),
         );
       }
-      final fill = ColoredBox(
-        color: fx.oneUIFill(light: context.palette.isLight),
+      final light = context.palette.isLight;
+      final edge = fx.oneUIEdge(light: light);
+      final fill = DecoratedBox(
+        decoration: ShapeDecoration(
+          color: fx.oneUIFill(light: light),
+          shape: radius == null
+              ? CircleBorder(side: edge)
+              : RoundedSuperellipseBorder(side: edge, borderRadius: BorderRadius.all(Radius.circular(radius!))),
+        ),
         child: const SizedBox.expand(),
       );
       if (fx.isOff) return fill;
