@@ -1578,7 +1578,4 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get keypadAndRecents => 'Tastierino e recenti';
-
-  @override
-  String get visualEffects => 'Effetti visivi';
 }

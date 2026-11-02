@@ -805,6 +805,5 @@
   "settingsGeneral": "General",
   "settingsAbout": "About",
   "displayAndEffects": "Display & effects",
-  "keypadAndRecents": "Keypad & recents",
-  "visualEffects": "Visual effects"
+  "keypadAndRecents": "Keypad & recents"
 }

@@ -2761,12 +2761,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Keypad & recents'**
   String get keypadAndRecents;
-
-  /// No description provided for @visualEffects.
-  ///
-  /// In en, this message translates to:
-  /// **'Visual effects'**
-  String get visualEffects;
 }
 
 class _AppLocalizationsDelegate

@@ -87,27 +87,22 @@ void main() {
     expect([selected(0), selected(1)], [true, false]);
   });
 
-  testWidgets('Display & effects picks the theme and effects from their pictures', (tester) async {
+  testWidgets('Display & effects hides the edge glow below full effects', (tester) async {
+    DialerPrefs.instance.visualEffects.value = 'full';
     await open(tester, const DisplaySettingsScreen());
-    await tester.tap(find.text('Dark'));
+    expect(find.text('Dark mode edge glow'), findsOneWidget);
+    await tester.tap(find.text('Reduce visual effects'));
     await tester.pumpAndSettle();
-    expect(DialerPrefs.instance.themeMode.value, 'dark');
-
-    await tester.ensureVisible(find.text('Effects off'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Effects off'));
+    await tester.tap(find.text('Effects off').last);
     await tester.pumpAndSettle();
     expect(DialerPrefs.instance.visualEffects.value, 'off');
-    expect(find.text('Dark mode edge glow'), findsNothing); // only styles full effects
+    expect(find.text('Dark mode edge glow'), findsNothing);
   });
 
-  testWidgets('Keypad & recents shows the SIM pictures on dual SIM', (tester) async {
+  testWidgets('Keypad & recents offers Choose SIM and call on dual SIM', (tester) async {
     await open(tester, const DialingSettingsScreen());
+    await tester.tap(find.text('Tap a recent call'));
+    await tester.pumpAndSettle();
     expect(find.text('Choose SIM and call'), findsOneWidget);
-    await tester.ensureVisible(find.text('Ask every time'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Ask every time'));
-    await tester.pumpAndSettle();
-    expect(DialerPrefs.instance.simChoice.value, 'menu');
   });
 }

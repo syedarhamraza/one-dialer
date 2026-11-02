@@ -1562,7 +1562,4 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get keypadAndRecents => 'Keypad & recents';
-
-  @override
-  String get visualEffects => 'Visual effects';
 }
