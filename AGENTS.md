@@ -29,6 +29,7 @@ Floating chrome is OneSpend's, 1:1 (no liquid glass; it was tried and removed). 
 - **Release:** the app is prepared for Google Play closed testing (Crashlytics, Software update, `tool/release.ps1`, `docs/play-release.md`). The upload key is `C:/Users/trans/keys/onedialer-upload.jks`; its password is only in the git-ignored `android/key.properties`. Never print, log or commit it.
 - **Beta-only:** anything meant only for testing (Firebase Performance Monitoring, ...) gets a row in `docs/beta-only.md` in the same PR; that list is what comes out before the production release.
 - **Two agents side by side:** work on separate branches, ideally in separate git worktrees; don't edit the same checkout at the same time.
+- **Localization (English, Italian):** no user-facing literal in Dart or Kotlin. UI text is `context.l10n.key` from `lib/l10n/app_en.arb` + `app_it.arb` (add the key to both; `test/l10n_test.dart` checks parity); notification text is `res/values*/strings.xml` read through `AppLanguage.localized(context)`. The OneSpend-verbatim widgets' default labels (Cancel, Save, Search...) now come from `context.l10n`: keep that edit when re-copying one. Settings › More settings › Language and how to add a language: `docs/localization.md`; Italian still to be checked by a native speaker: `docs/l10n-review.md`.
 
 ## Git workflow
 

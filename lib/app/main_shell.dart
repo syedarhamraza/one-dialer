@@ -14,6 +14,7 @@ import '../theme/one_ui_theme.dart';
 import '../widgets/press_glow.dart';
 import 'layout.dart';
 import 'return_to_call_banner.dart';
+import '../l10n/l10n.dart';
 
 /// A tab's selection actions (a docked `OneUIFloatingActionBar`). While set, the nav
 /// bar morphs into them (OneSpend's `dockedContent`).
@@ -45,9 +46,13 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     child: RecentsScreen(dialInput: _input, keypadOpen: _keypadOpen),
   );
 
-  static const _items = [
-    OneUINavItem(activeIcon: Icons.call_rounded, inactiveIcon: Icons.call_outlined, label: 'Calls'),
-    OneUINavItem(activeIcon: Icons.people_alt_rounded, inactiveIcon: Icons.people_alt_outlined, label: 'Contacts'),
+  List<OneUINavItem> _items(BuildContext context) => [
+    OneUINavItem(activeIcon: Icons.call_rounded, inactiveIcon: Icons.call_outlined, label: context.l10n.navCalls),
+    OneUINavItem(
+      activeIcon: Icons.people_alt_rounded,
+      inactiveIcon: Icons.people_alt_outlined,
+      label: context.l10n.navContacts,
+    ),
   ];
 
   @override
@@ -172,14 +177,14 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
                     Haptics.tap();
                     _select(index);
                   },
-                  items: _items,
+                  items: _items(context),
                   leading: ongoingCall(calls.data) == null
                       ? null
                       : _RoundAction(
                           key: const ValueKey('call'),
                           // The handset with sound waves: an ongoing call, not a call key.
                           icon: Icons.phone_in_talk_rounded,
-                          tooltip: 'Return to call',
+                          tooltip: context.l10n.returnToCall,
                           onPressed: TelecomBridge.instance.showInCallScreen,
                         ),
                   trailing: navDock.value != null
@@ -188,7 +193,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
                       ? _RoundAction(
                           key: const ValueKey('action'),
                           icon: Icons.add_rounded,
-                          tooltip: 'Create contact',
+                          tooltip: context.l10n.createContact,
                           // New contact rises from the bottom, like the keypad sheet.
                           onPressed: () => openContactEditor(context, rise: true),
                         )
@@ -197,7 +202,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
                       : _RoundAction(
                           key: const ValueKey('action'),
                           icon: Icons.dialpad_rounded,
-                          tooltip: 'Show keypad',
+                          tooltip: context.l10n.showKeypad,
                           onPressed: () => _keypadOpen.value = true,
                         ),
                 ),

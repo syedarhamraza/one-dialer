@@ -6,6 +6,7 @@ import 'package:dialer/widgets/one_ui_glass_surface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dialer/l10n/app_localizations.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
@@ -19,6 +20,70 @@ void main() {
   tearDown(() {
     prefs.visualEffects.value = 'full';
     prefs.callEffects.value = 'full';
+    prefs.glassDark.value = 'soft';
+    prefs.glassLight.value = 'soft';
+  });
+
+  test('glass styles are saved, reloaded, and unknown values are ignored', () async {
+    await prefs.setGlassDark('soft');
+    await prefs.setGlassLight('classic');
+    prefs.glassDark.value = 'bold';
+    prefs.glassLight.value = 'bold';
+    await prefs.loadAppearance();
+    expect(prefs.glassDark.value, 'soft');
+    expect(prefs.glassLight.value, 'classic');
+
+    await prefs.setGlassLight('fancy');
+    prefs.glassLight.value = 'bold';
+    await prefs.loadAppearance();
+    expect(prefs.glassLight.value, 'bold');
+  });
+
+  test('the call screen edge glow is saved with the call effects, and unknown values are ignored', () async {
+    await prefs.setCallGlass('bold');
+    prefs.callGlass.value = 'soft';
+    await prefs.loadCallEffects();
+    expect(prefs.callGlass.value, 'bold');
+
+    await prefs.setCallGlass('fancy');
+    prefs.callGlass.value = 'classic';
+    await prefs.loadCallEffects();
+    expect(prefs.callGlass.value, 'classic');
+    prefs.callGlass.value = 'soft';
+  });
+
+  test('solid buttons take the glass edges at its opacity, softer, and none with classic', () {
+    expect(litEdges(glassLook('classic')), isNull);
+    expect(litEdges(glassLook('soft')), const GlassEdges(strength: 2 * .5 * .7, bottomLip: .5 * .7));
+    expect(litEdges(glassLook('bold')), const GlassEdges(strength: 3 * .5 * .7, bottomLip: 3 * .5 * .7, lip: 2));
+  });
+
+  testWidgets('each glass style resolves to its look in each theme', (tester) async {
+    Future<({double opacity, GlassEdges edges})> look(Brightness brightness, {double classic = 1}) async {
+      late ({double opacity, GlassEdges edges}) result;
+      await tester.pumpWidget(
+        // A plain Theme: MaterialApp would animate between brightnesses.
+        Theme(
+          data: ThemeData(brightness: brightness),
+          child: Builder(
+            builder: (context) {
+              result = mainGlass(context, classicOpacity: classic);
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+      return result;
+    }
+
+    prefs.glassDark.value = 'classic';
+    expect(await look(Brightness.dark, classic: .75), (opacity: .75, edges: GlassEdges.callScreen));
+    prefs.glassDark.value = 'soft';
+    expect(await look(Brightness.dark), (opacity: .5, edges: const GlassEdges(strength: 2)));
+    prefs.glassDark.value = 'bold';
+    expect(await look(Brightness.dark), (opacity: .5, edges: const GlassEdges(strength: 3, bottomLip: 3, lip: 2)));
+    prefs.glassLight.value = 'classic';
+    expect(await look(Brightness.light), (opacity: 1.0, edges: GlassEdges.callScreen));
   });
 
   test('the level is saved, reloaded, and unknown values are ignored', () async {
@@ -60,6 +125,8 @@ void main() {
   testWidgets('glass switches live: call glass, One UI fill over a blur, then solid', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: OneUITheme.darkTheme,
         home: BackdropGroup(
           child: Column(
@@ -102,6 +169,8 @@ void main() {
   testWidgets('the call screen follows its own setting, live', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: OneUITheme.darkTheme,
         home: CallEffects(
           child: const SizedBox.square(dimension: 60, child: CallFrost(radius: null, child: SizedBox())),

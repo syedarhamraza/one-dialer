@@ -39,15 +39,7 @@ enum UpdateDownloadState { pending, downloading, downloaded, failed, canceled }
 
 /// When One Dialer checks Google Play for updates on its own, at launch
 /// (Software update › Auto download).
-enum AutoUpdateCheck {
-  never('Never'),
-  wifiOnly('Using Wi-Fi only'),
-  always('Using Wi-Fi or mobile data');
-
-  final String label;
-
-  const AutoUpdateCheck(this.label);
-}
+enum AutoUpdateCheck { never, wifiOnly, always }
 
 /// What network the phone is on: any at all (a check needs one), and whether it's
 /// unmetered (for [AutoUpdateCheck.wifiOnly]).

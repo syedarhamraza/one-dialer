@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 
 import 'package:dialer/features/contacts/editor/contact_form.dart';
+import 'package:dialer/l10n/app_localizations_en.dart';
+import 'package:dialer/l10n/app_localizations_it.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -64,8 +66,11 @@ void main() {
     final custom = toLabel(PhoneLabel.values, PhoneLabel.custom, 'Grandma');
     expect(custom.label, PhoneLabel.custom);
     expect(custom.customLabel, 'Grandma');
-    expect(labelDisplay('workMobile'), 'Work mobile');
-    expect(labelDisplay('Grandma'), 'Grandma');
+    expect(labelDisplay(AppLocalizationsEn(), 'workMobile'), 'Work mobile');
+    expect(labelDisplay(AppLocalizationsEn(), 'Grandma'), 'Grandma');
+    expect(labelDisplay(AppLocalizationsEn(), 'Mobile'), 'Mobile');
+    expect(labelDisplay(AppLocalizationsIt(), 'mobile'), 'Cellulare');
+    expect(labelDisplay(AppLocalizationsIt(), 'Grandma'), 'Grandma');
   });
 
   test('signature changes on edits; empty form is empty', () {

@@ -33,6 +33,9 @@ object CallManager {
 
         override fun onDetailsChanged(call: Call, details: Call.Details) = notifyChanged()
         override fun onChildrenChanged(call: Call, children: List<Call>) = notifyChanged()
+
+        // Telecom says which calls can merge here, often after the second call connects.
+        override fun onConferenceableCallsChanged(call: Call, conferenceableCalls: List<Call>) = notifyChanged()
     }
 
     val hasCalls: Boolean get() = calls.isNotEmpty()
@@ -72,7 +75,8 @@ object CallManager {
     fun get(id: String): Call? = calls[id]
 
     /** All current calls with their ids, oldest first. */
-    fun all(): List<Pair<String, Call>> = calls.map { it.key to it.value }
+    /** Top-level calls: a conference stands in for its members. */
+    fun all(): List<Pair<String, Call>> = calls.filter { it.value.parent == null }.map { it.key to it.value }
 
     fun idOf(call: Call): String? = ids[call]
 
@@ -84,7 +88,8 @@ object CallManager {
 
     /** Serialized for the Flutter side: `{calls: [...], audio: {...}}`. */
     fun snapshot(): Map<String, Any?> = mapOf(
-        "calls" to (if (calls.isEmpty()) listOfNotNull(ended) else calls.map { (id, call) -> serialize(id, call) }),
+        // A conference's members stay inside it (hung up with it), so the screen shows one call.
+        "calls" to (if (calls.isEmpty()) listOfNotNull(ended) else all().map { (id, call) -> serialize(id, call) }),
         "audio" to audioSnapshot(),
     )
 

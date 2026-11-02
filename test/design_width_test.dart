@@ -2,6 +2,7 @@ import 'package:dialer/app/layout.dart';
 import 'package:dialer/widgets/one_ui_floating_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dialer/l10n/app_localizations.dart';
 
 void main() {
   Future<(Size, EdgeInsets, Size)> layOut(WidgetTester tester, Size screen) async {
@@ -13,6 +14,8 @@ void main() {
     final probe = GlobalKey();
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         builder: (context, child) => DesignWidth(child: child!),
         home: Builder(
           builder: (context) {
@@ -57,6 +60,8 @@ void main() {
       late double ratio;
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => DesignWidth(child: child!),
           home: Builder(
             builder: (context) {
@@ -89,6 +94,8 @@ void main() {
       final button = GlobalKey();
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => DesignWidth(child: child!),
           home: Builder(
             builder: (context) => Align(

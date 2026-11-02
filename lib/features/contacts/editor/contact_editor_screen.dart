@@ -23,6 +23,7 @@ import '../../../widgets/one_ui_floating_modal.dart';
 import '../../../widgets/press_glow.dart';
 import 'contact_form.dart';
 import 'editor_widgets.dart';
+import '../../../l10n/l10n.dart';
 
 /// Opens the editor: a new contact (optionally with [number] and [name], as another app's
 /// "add contact" sends) or [contactId] (optionally adding [number] to it). Returns the saved contact's id, or null if cancelled. With
@@ -295,9 +296,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
       setState(() => _saving = false);
       OneUIToast.show(
         context,
-        e.code == 'read_only_contact'
-            ? "This contact's account is read-only, so it can't be changed here"
-            : "Couldn't save the contact",
+        e.code == 'read_only_contact' ? context.l10n.contactReadOnly : context.l10n.couldNotSaveContact,
         long: true,
       );
     }
@@ -331,8 +330,8 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
     final existing = byNumber?.$1 ?? byName;
     if (existing == null) return null;
     return byNumber != null
-        ? '${byNumber.$2} is already saved as ${existing.name}.'
-        : '${existing.name} is already in your contacts.';
+        ? context.l10n.alreadySavedAs(byNumber.$2, existing.name)
+        : context.l10n.alreadyInContacts(existing.name);
   }
 
   /// Says who already has it before making a second copy. True to save anyway.
@@ -340,11 +339,11 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
     _confirming = true;
     final choice = await showCosActions<bool>(
       context,
-      title: 'Already in contacts',
-      message: '$duplicate Save another contact anyway?',
+      title: context.l10n.alreadyInContactsTitle,
+      message: context.l10n.saveAnotherAnyway(duplicate),
       actions: [
-        (label: 'Save anyway', value: true, destructive: false),
-        (label: 'Cancel', value: false, destructive: false),
+        (label: context.l10n.saveAnyway, value: true, destructive: false),
+        (label: context.l10n.cancel, value: false, destructive: false),
       ],
     );
     _confirming = false;
@@ -356,12 +355,12 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
     _confirming = true;
     final choice = await showCosActions<String?>(
       context,
-      message: 'Save your changes or discard them?',
+      message: context.l10n.saveOrDiscard,
       actions: [
         // Saving needs the form loaded; until then only Discard and Cancel make sense.
-        if (_loadReady.value) (label: 'Save', value: 'save', destructive: false),
-        (label: 'Discard', value: 'discard', destructive: true),
-        (label: 'Cancel', value: null, destructive: false),
+        if (_loadReady.value) (label: context.l10n.save, value: 'save', destructive: false),
+        (label: context.l10n.discard, value: 'discard', destructive: true),
+        (label: context.l10n.cancel, value: null, destructive: false),
       ],
     );
     _confirming = false;
@@ -391,7 +390,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
               child: form == null
                   ? Center(
                       child: _loadFailed
-                          ? TextButton(onPressed: _retryLoad, child: const Text("Couldn't load the contact. Retry"))
+                          ? TextButton(onPressed: _retryLoad, child: Text(context.l10n.couldNotLoadContactRetry))
                           : const CircularProgressIndicator(),
                     )
                   : ListView(
@@ -406,8 +405,8 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                         _groupsCard(form),
                         _listCard(
                           icon: Icons.mail_outline_rounded,
-                          title: 'Email',
-                          addLabel: 'Add email',
+                          title: context.l10n.email,
+                          addLabel: context.l10n.addEmail,
                           rows: form.emails,
                           options: EditorLabels.email,
                           keyboard: TextInputType.emailAddress,
@@ -419,8 +418,8 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                           _datesCard(form),
                           _listCard(
                             icon: Icons.language_rounded,
-                            title: 'Website',
-                            addLabel: 'Add website',
+                            title: context.l10n.website,
+                            addLabel: context.l10n.addWebsite,
                             rows: form.websites,
                             options: EditorLabels.website,
                             keyboard: TextInputType.url,
@@ -428,8 +427,8 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                           ),
                           _listCard(
                             icon: Icons.diversity_3_outlined,
-                            title: 'Relationships',
-                            addLabel: 'Add relationship',
+                            title: context.l10n.relationships,
+                            addLabel: context.l10n.addRelationship,
                             rows: form.relations,
                             options: EditorLabels.relation,
                             newLabel: 'friend',
@@ -440,7 +439,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                               EditorRow(
                                 icon: Icons.sticky_note_2_outlined,
                                 child: EditorField(
-                                  hint: 'Notes',
+                                  hint: context.l10n.notes,
                                   value: form.notes,
                                   maxLines: null,
                                   onChanged: (v) {
@@ -457,7 +456,10 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                             onPressed: () => setState(() => _more = !_more),
                             iconAlignment: IconAlignment.end,
                             icon: Icon(_more ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded),
-                            label: Text(_more ? 'Show less' : 'Show more', style: const TextStyle(fontSize: 17)),
+                            label: Text(
+                              _more ? context.l10n.showLess : context.l10n.showMore,
+                              style: const TextStyle(fontSize: 17),
+                            ),
                             style: TextButton.styleFrom(foregroundColor: context.palette.textPrimary),
                           ),
                         ),
@@ -507,12 +509,12 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
       child: SizedBox(
         height: 48,
         child: NavigationToolbar(
-          leading: pill('Cancel', _requestLeave, OneUITheme.accentRed),
+          leading: pill(context.l10n.cancel, _requestLeave, OneUITheme.accentRed),
           middle: Text(
-            _isNew ? 'New contact' : 'Edit contact',
+            _isNew ? context.l10n.newContact : context.l10n.editContact,
             style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
           ),
-          trailing: pill('Done', canSave ? _save : null, OneUITheme.accentGreen),
+          trailing: pill(context.l10n.done, canSave ? _save : null, OneUITheme.accentGreen),
           middleSpacing: 12,
         ),
       ),
@@ -543,8 +545,10 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
               Flexible(
                 child: Text(
                   !_ready
-                      ? (_loadFailed ? "Couldn't load accounts" : 'Loading accounts…')
-                      : 'Save to ${account == null ? 'This device' : _accountName(account)}',
+                      ? (_loadFailed ? context.l10n.couldNotLoadAccounts : context.l10n.loadingAccounts)
+                      : context.l10n.saveToAccount(
+                          account == null ? context.l10n.accountThisDevice : _accountName(account),
+                        ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: 16, color: context.palette.textSecondary),
@@ -599,11 +603,11 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
 
   /// "This device", "SIM card", or the Google account's email.
   String _accountName(Account a) {
-    if (_isDevice(a)) return 'This device';
+    if (_isDevice(a)) return context.l10n.accountThisDevice;
     if (a.type.toLowerCase().contains('sim')) {
       // Dual SIM: tell the cards apart by their account name.
       final sims = _accounts.where((x) => x.type.toLowerCase().contains('sim')).length;
-      return sims > 1 ? 'SIM card (${a.name})' : 'SIM card';
+      return sims > 1 ? '${context.l10n.accountSimCard} (${a.name})' : context.l10n.accountSimCard;
     }
     return a.name;
   }
@@ -626,7 +630,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
               minimumSize: const Size(88, 40),
               padding: const EdgeInsets.symmetric(horizontal: 22),
             ),
-            child: const Text('Change', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+            child: Text(context.l10n.change, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
           ),
         ),
       ],
@@ -651,10 +655,10 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                   child: TextButton(
                     onPressed: () => Navigator.pop(ctx),
                     style: TextButton.styleFrom(foregroundColor: context.palette.textPrimary),
-                    child: const Text('Cancel', style: TextStyle(fontSize: 16)),
+                    child: Text(context.l10n.cancel, style: const TextStyle(fontSize: 16)),
                   ),
                 ),
-                const Text('Profile picture', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700)),
+                Text(context.l10n.profilePicture, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w700)),
               ],
             ),
           ),
@@ -662,8 +666,8 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
           Row(
             children: [
               for (final (icon, label, value) in [
-                (Icons.photo_camera_outlined, 'Camera', 'camera'),
-                (Icons.photo_library_outlined, 'Select photos', 'gallery'),
+                (Icons.photo_camera_outlined, context.l10n.camera, 'camera'),
+                (Icons.photo_library_outlined, context.l10n.selectPhotos, 'gallery'),
               ]) ...[
                 if (value == 'gallery') const SizedBox(width: 12),
                 Expanded(
@@ -697,9 +701,12 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
               child: InkWell(
                 borderRadius: BorderRadius.circular(20),
                 onTap: () => Navigator.pop(ctx, 'delete'),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                  child: Text('Delete profile picture', style: TextStyle(fontSize: 16, color: OneUITheme.accentRed)),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                  child: Text(
+                    context.l10n.deleteProfilePicture,
+                    style: const TextStyle(fontSize: 16, color: OneUITheme.accentRed),
+                  ),
                 ),
               ),
             ),
@@ -720,7 +727,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
     try {
       bytes = choice == 'camera' ? await TelecomBridge.instance.takePhoto() : await TelecomBridge.instance.pickPhoto();
     } on PlatformException {
-      if (mounted) OneUIToast.show(context, "Couldn't open the camera");
+      if (mounted) OneUIToast.show(context, context.l10n.couldNotOpenCamera);
       return;
     }
     if (bytes != null && _active) {
@@ -749,7 +756,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Text(
-                _ringtone.isEmpty ? 'Follow system' : 'Custom ringtone',
+                _ringtone.isEmpty ? context.l10n.followSystem : context.l10n.customRingtone,
                 style: const TextStyle(fontSize: 18),
               ),
             ),
@@ -763,14 +770,17 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
   List<Widget> _accountsCard() {
     final byAccount = <(String, String?), int>{};
     for (final r in _raw) {
-      final key = (accountApp(r['accountType'] as String?), r['accountName'] as String?);
+      final key = (accountApp(context.l10n, r['accountType'] as String?), r['accountName'] as String?);
       byAccount[key] = (byAccount[key] ?? 0) + 1;
     }
     return [
       const SizedBox(height: 16),
       Padding(
         padding: EdgeInsets.only(left: 18, bottom: 8),
-        child: Text('From the following account', style: TextStyle(fontSize: 14, color: context.palette.textSecondary)),
+        child: Text(
+          context.l10n.fromFollowingAccount,
+          style: TextStyle(fontSize: 14, color: context.palette.textSecondary),
+        ),
       ),
       EditorCard(
         children: [
@@ -793,7 +803,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                       ),
                     ),
                     Text(
-                      count == 1 ? '1 contact' : '$count contacts',
+                      context.l10n.contactsCount(count),
                       style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
                     ),
                   ],
@@ -814,7 +824,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
           EditorRow(
             icon: Icons.person_outline_rounded,
             trailing: IconButton(
-              tooltip: _nameExpanded ? 'Fewer name fields' : 'More name fields',
+              tooltip: _nameExpanded ? context.l10n.fewerNameFields : context.l10n.moreNameFields,
               onPressed: () => setState(() => _nameExpanded = !_nameExpanded),
               icon: Icon(_nameExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded, size: 30),
             ),
@@ -823,14 +833,14 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                     key: const ValueKey('name-parts'),
                     children: [
                       for (final (hint, get, set) in <(String, String Function(), void Function(String))>[
-                        ('Name prefix', () => form.prefix, (v) => form.prefix = v),
-                        ('First name', () => form.first, (v) => form.first = v),
-                        ('Middle name', () => form.middle, (v) => form.middle = v),
-                        ('Last name', () => form.last, (v) => form.last = v),
-                        ('Name suffix', () => form.suffix, (v) => form.suffix = v),
+                        (context.l10n.namePrefix, () => form.prefix, (v) => form.prefix = v),
+                        (context.l10n.firstName, () => form.first, (v) => form.first = v),
+                        (context.l10n.middleName, () => form.middle, (v) => form.middle = v),
+                        (context.l10n.lastName, () => form.last, (v) => form.last = v),
+                        (context.l10n.nameSuffix, () => form.suffix, (v) => form.suffix = v),
                       ])
                         EditorField(
-                          divider: hint != 'Name suffix',
+                          divider: hint != context.l10n.nameSuffix,
                           hint: hint,
                           value: get(),
                           capitalization: TextCapitalization.words,
@@ -843,7 +853,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                   )
                 : EditorField(
                     key: const ValueKey('name-full'),
-                    hint: 'Name',
+                    hint: context.l10n.name,
                     value: form.fullName,
                     focusNode: _nameFocus,
                     capitalization: TextCapitalization.words,
@@ -871,7 +881,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                   onChanged: (l) => setState(() => phone.label = l),
                 ),
                 field: EditorField(
-                  hint: 'Number',
+                  hint: context.l10n.number,
                   value: phone.value,
                   keyboardType: TextInputType.phone,
                   onChanged: (v) {
@@ -896,7 +906,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
         if (!_workOpen)
           PlaceholderRow(
             icon: Icons.work_outline_rounded,
-            label: 'Work info',
+            label: context.l10n.workInfo,
             onTap: () => setState(() => _workOpen = true),
           )
         else
@@ -906,7 +916,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
               children: [
                 EditorField(
                   divider: true,
-                  hint: 'Company',
+                  hint: context.l10n.company,
                   value: form.company,
                   onChanged: (v) {
                     form.company = v;
@@ -915,7 +925,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                 ),
                 EditorField(
                   divider: true,
-                  hint: 'Job title',
+                  hint: context.l10n.jobTitle,
                   value: form.jobTitle,
                   onChanged: (v) {
                     form.jobTitle = v;
@@ -923,7 +933,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                   },
                 ),
                 EditorField(
-                  hint: 'Department',
+                  hint: context.l10n.department,
                   value: form.department,
                   onChanged: (v) {
                     form.department = v;
@@ -998,7 +1008,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
         children: [
           PlaceholderRow(
             icon: Icons.location_on_outlined,
-            label: 'Address',
+            label: context.l10n.address,
             onTap: () => setState(() => form.addresses.add(AddressValue())),
           ),
         ],
@@ -1020,7 +1030,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                   onChanged: (l) => setState(() => a.label = l),
                 ),
                 EditorField(
-                  hint: 'Street',
+                  hint: context.l10n.street,
                   value: a.street,
                   maxLines: null,
                   onChanged: (v) {
@@ -1029,7 +1039,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                   },
                 ),
                 EditorField(
-                  hint: 'City',
+                  hint: context.l10n.city,
                   value: a.city,
                   onChanged: (v) {
                     a.city = v;
@@ -1037,7 +1047,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                   },
                 ),
                 EditorField(
-                  hint: 'State/Province',
+                  hint: context.l10n.stateProvince,
                   value: a.region,
                   onChanged: (v) {
                     a.region = v;
@@ -1045,7 +1055,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                   },
                 ),
                 EditorField(
-                  hint: 'Postal code',
+                  hint: context.l10n.postalCode,
                   value: a.postcode,
                   keyboardType: TextInputType.streetAddress,
                   onChanged: (v) {
@@ -1054,7 +1064,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                   },
                 ),
                 EditorField(
-                  hint: 'Country',
+                  hint: context.l10n.country,
                   value: a.country,
                   onChanged: (v) {
                     a.country = v;
@@ -1064,7 +1074,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
               ],
             ),
           ),
-        AddRow(label: 'Add address', onTap: () => setState(() => form.addresses.add(AddressValue()))),
+        AddRow(label: context.l10n.addAddress, onTap: () => setState(() => form.addresses.add(AddressValue()))),
       ],
     );
   }
@@ -1085,7 +1095,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Important date', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+            Text(context.l10n.importantDate, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
             const SizedBox(height: 12),
             OneUIDateWheel(
               date: chosen,
@@ -1097,10 +1107,10 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
             Row(
               children: [
                 Expanded(
-                  child: TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                  child: TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(context.l10n.cancel)),
                 ),
                 Expanded(
-                  child: TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Done')),
+                  child: TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(context.l10n.done)),
                 ),
               ],
             ),
@@ -1122,7 +1132,9 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
 
     if (form.dates.isEmpty) {
       return EditorCard(
-        children: [PlaceholderRow(icon: Icons.event_note_outlined, label: 'Important dates', onTap: () => pick(null))],
+        children: [
+          PlaceholderRow(icon: Icons.event_note_outlined, label: context.l10n.importantDates, onTap: () => pick(null)),
+        ],
       );
     }
     return EditorCard(
@@ -1146,7 +1158,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
               ],
             ),
           ),
-        AddRow(label: 'Add important date', onTap: () => pick(null)),
+        AddRow(label: context.l10n.addImportantDate, onTap: () => pick(null)),
       ],
     );
   }
@@ -1168,7 +1180,9 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Text(
-                names.isEmpty ? (_groups.isEmpty ? 'No groups in this account' : 'Groups') : names.join(', '),
+                names.isEmpty
+                    ? (_groups.isEmpty ? context.l10n.noGroupsInAccount : context.l10n.groups)
+                    : names.join(', '),
                 style: TextStyle(
                   fontSize: 18,
                   color: names.isEmpty ? context.palette.textSecondary : context.palette.textPrimary,
@@ -1190,7 +1204,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Groups', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+            Text(context.l10n.groups, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
             ConstrainedBox(
               constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(ctx).height * 0.5),
@@ -1212,10 +1226,10 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
             Row(
               children: [
                 Expanded(
-                  child: TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                  child: TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(context.l10n.cancel)),
                 ),
                 Expanded(
-                  child: TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Done')),
+                  child: TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(context.l10n.done)),
                 ),
               ],
             ),

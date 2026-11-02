@@ -9,6 +9,7 @@ import '../theme/one_ui_theme.dart';
 import 'call_glass.dart';
 import 'press_glow.dart';
 import 'round_header_controls.dart';
+import '../l10n/l10n.dart';
 
 /// Item definition for the floating menu.
 class OneUIFloatingMenuItem {
@@ -103,7 +104,7 @@ class OneUIFloatingMenu {
           requestFocus: false,
           barrierDismissible: true,
           barrierColor: Colors.transparent,
-          barrierLabel: 'Dismiss menu',
+          barrierLabel: context.l10n.dismissMenu,
           transitionDuration: const Duration(milliseconds: 400),
           reverseTransitionDuration: const Duration(milliseconds: 170),
           pageBuilder: (context, animation, _) => _PopoverMenu(
@@ -281,6 +282,8 @@ class _PopoverMenu extends StatelessWidget {
                                             ? CallBodyArtwork(
                                                 radius: OneUIFloatingMenu._radius * size,
                                                 glow: kMainGlassGlow,
+                                                opacity: mainGlass(context).opacity,
+                                                edges: mainGlass(context).edges,
                                                 spread: .5,
                                                 child: items!,
                                               )

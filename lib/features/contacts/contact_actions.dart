@@ -10,19 +10,21 @@ import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/cos_dialog.dart';
 import 'contact_qr.dart';
+import '../../l10n/l10n.dart';
+import 'editor/contact_form.dart' show labelDisplay;
 
 /// Contact-page actions behind Share and More.
 abstract final class ContactActions {
   /// Share › vCard file (VCF).
-  static Future<void> shareVCard(Contact contact) => shareVCards([contact]);
+  static Future<void> shareVCard(AppLocalizations l10n, Contact contact) => shareVCards(l10n, [contact]);
 
   /// Several contacts in one .vcf (selection mode's Share).
-  static Future<void> shareVCards(List<Contact> contacts) async {
+  static Future<void> shareVCards(AppLocalizations l10n, List<Contact> contacts) async {
     if (contacts.isEmpty) return;
     final vcard = contacts.map((c) => FlutterContacts.vCard.export(c)).join('\n');
     final first = contacts.first;
     final name = contacts.length > 1
-        ? '${contacts.length} contacts'
+        ? l10n.contactsCount(contacts.length)
         : (first.displayName?.trim().isNotEmpty ?? false)
         ? first.displayName!.trim()
         : 'contact';
@@ -35,9 +37,12 @@ abstract final class ContactActions {
   }
 
   /// Share › Text: name and numbers, one per line.
-  static Future<void> shareText(DialerContact contact) => SharePlus.instance.share(
+  static Future<void> shareText(AppLocalizations l10n, DialerContact contact) => SharePlus.instance.share(
     ShareParams(
-      text: [contact.name, for (final (i, n) in contact.numbers.indexed) '${contact.labels[i]}: $n'].join('\n'),
+      text: [
+        contact.name,
+        for (final (i, n) in contact.numbers.indexed) '${labelDisplay(l10n, contact.labels[i])}: $n',
+      ].join('\n'),
     ),
   );
 
@@ -71,12 +76,12 @@ abstract final class ContactActions {
         ),
         const SizedBox(height: 14),
         Text(
-          'Scan with a phone camera to add this contact',
+          context.l10n.qrScanHint,
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 15.5, height: 1.35, color: context.palette.textSecondary),
         ),
         const SizedBox(height: 24),
-        CosPill(label: 'Close', onTap: () => Navigator.pop(ctx)),
+        CosPill(label: context.l10n.close, onTap: () => Navigator.pop(ctx)),
       ],
     ),
   );
@@ -93,9 +98,9 @@ abstract final class ContactActions {
   static Future<bool> delete(BuildContext context, String contactId, String name) async {
     final ok = await showCosConfirm(
       context,
-      title: 'Delete $name?',
-      message: 'This contact will be removed from this phone and from its accounts.',
-      confirmLabel: 'Delete',
+      title: context.l10n.deleteContactTitle(name),
+      message: context.l10n.deleteContactMessage,
+      confirmLabel: context.l10n.delete,
       destructive: true,
     );
     if (!ok) return false;

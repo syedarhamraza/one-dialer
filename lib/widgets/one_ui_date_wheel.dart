@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../theme/one_ui_theme.dart';
 import 'one_ui_wheel_column.dart';
 import '../core/haptics/haptics.dart';
+import '../l10n/l10n.dart';
 
 /// Samsung One UI style scroll-wheel date picker (month  day  year), the date counterpart
 /// of [OneUITimeWheel]. Keeps the selection inside [firstDate]..[lastDate] by springing
@@ -174,7 +175,7 @@ class OneUIDateWheelState extends State<OneUIDateWheel> {
             looping: false,
             width: 84,
             label: (i) => '${i + 1}',
-            semanticsLabel: (i) => 'Day ${i + 1}',
+            semanticsLabel: (i) => context.l10n.dateWheelDay('${i + 1}'),
             onSelected: (i) {
               _day = i + 1;
               _onWheelChanged();
@@ -188,7 +189,7 @@ class OneUIDateWheelState extends State<OneUIDateWheel> {
             looping: false,
             width: 140,
             label: (i) => '${_first.year + i}',
-            semanticsLabel: (i) => 'Year ${_first.year + i}',
+            semanticsLabel: (i) => context.l10n.dateWheelYear('${_first.year + i}'),
             onSelected: (i) {
               _year = _first.year + i;
               _onWheelChanged();

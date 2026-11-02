@@ -6,6 +6,7 @@ import 'package:dialer/theme/one_ui_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dialer/l10n/app_localizations.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -28,7 +29,14 @@ void main() {
   });
 
   Future<void> open(WidgetTester tester, Widget page) async {
-    await tester.pumpWidget(MaterialApp(theme: OneUITheme.darkTheme, home: page));
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: OneUITheme.darkTheme,
+        home: page,
+      ),
+    );
     await tester.pumpAndSettle();
   }
 

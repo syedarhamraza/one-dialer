@@ -9,6 +9,7 @@ import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import 'call_controls.dart';
+import '../../l10n/l10n.dart';
 
 /// Actions recede while the keypad rises within one reversible animated panel.
 /// The bottom row is outside the changing panel, so it never moves.
@@ -93,10 +94,18 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
       items: [
         // With two calls Merge takes Add call's place in the row, so Add call moves here.
         if (merging)
-          OneUIFloatingMenuItem(label: 'Add call', icon: Icons.add_call, onTap: TelecomBridge.instance.openDialer),
-        OneUIFloatingMenuItem(label: _hasNote ? 'Edit note' : 'Note', icon: Icons.edit_note_rounded, onTap: _editNote),
+          OneUIFloatingMenuItem(
+            label: context.l10n.addCall,
+            icon: Icons.add_call,
+            onTap: TelecomBridge.instance.openDialer,
+          ),
         OneUIFloatingMenuItem(
-          label: 'Video call',
+          label: _hasNote ? context.l10n.editNote : context.l10n.note,
+          icon: Icons.edit_note_rounded,
+          onTap: _editNote,
+        ),
+        OneUIFloatingMenuItem(
+          label: context.l10n.videoCall,
           icon: Icons.videocam_rounded,
           enabled: canVideo,
           onTap: () => TelecomBridge.instance.meetCall(number),
@@ -244,14 +253,14 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
       (
         // ColorOS shows the slashed mic either way; muted lights the circle.
         icon: Icons.mic_off_rounded,
-        label: 'Mute',
+        label: context.l10n.mute,
         active: widget.audio.muted,
         tap: () => telecom.setMuted(!widget.audio.muted),
         key: null,
       ),
       (
         icon: Icons.pause_rounded,
-        label: holding ? 'Resume' : 'Hold',
+        label: holding ? context.l10n.resume : context.l10n.hold,
         active: holding,
         tap: widget.call.canHold || holding
             ? () => holding ? telecom.unhold(widget.call.id) : telecom.hold(widget.call.id)
@@ -261,20 +270,26 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
       if (canMerge)
         (
           icon: Icons.call_merge_rounded,
-          label: 'Merge',
+          label: context.l10n.merge,
           active: false,
           tap: () => telecom.merge(widget.call.id),
           key: null,
         )
       else
-        (icon: Icons.add_call, label: 'Add call', active: false, tap: telecom.openDialer, key: null),
-      (icon: Icons.more_vert_rounded, label: 'More', active: false, tap: () => _openMore(canMerge), key: _moreKey),
+        (icon: Icons.add_call, label: context.l10n.addCall, active: false, tap: telecom.openDialer, key: null),
+      (
+        icon: Icons.more_vert_rounded,
+        label: context.l10n.more,
+        active: false,
+        tap: () => _openMore(canMerge),
+        key: _moreKey,
+      ),
     ];
     final route = widget.audio.route;
     final routeLabel = switch (route) {
       AudioRoute.bluetooth => widget.audio.activeBluetoothLabel,
-      AudioRoute.wiredHeadset => 'Headset',
-      _ => 'Speaker',
+      AudioRoute.wiredHeadset => context.l10n.headset,
+      _ => context.l10n.speaker,
     };
     final upper = IgnorePointer(
       ignoring: widget.animating || (!widget.keypadOpen && p > 0),
@@ -436,9 +451,9 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                                     height: actionSize,
                                     // ColorOS 17's tomato red, lit from below like the other buttons, with
                                     // squircle ends like the keys.
-                                    foregroundDecoration: glassGlow(
+                                    foregroundDecoration: callGlassGlow(
+                                      context,
                                       RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(actionSize / 2)),
-                                      flat: callFlat(context),
                                     ),
                                     decoration: glassBody(
                                       endRed,
@@ -447,7 +462,7 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                                       flat: callFlat(context),
                                     ),
                                     child: Semantics(
-                                      label: 'End call',
+                                      label: context.l10n.endCall,
                                       child: IconButton(
                                         iconSize: 46,
                                         style: IconButton.styleFrom(
@@ -466,8 +481,11 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                           ),
                         ),
                         const SizedBox(height: 6),
-                        const ExcludeSemantics(
-                          child: Text('End', style: TextStyle(fontSize: 12, height: 1.1, color: Color(0xC7FFFFFF))),
+                        ExcludeSemantics(
+                          child: Text(
+                            context.l10n.end,
+                            style: const TextStyle(fontSize: 12, height: 1.1, color: Color(0xC7FFFFFF)),
+                          ),
                         ),
                       ],
                     ),
@@ -479,7 +497,7 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                     // As on ColorOS: same button either way, lit white while the keypad is open.
                     icon: Icons.dialpad_rounded,
                     glyph: (color) => DialPadGlyph(color: color),
-                    label: 'Dial pad',
+                    label: context.l10n.dialPad,
                     active: widget.keypadOpen,
                     size: actionSize,
                     onPressed: widget.onToggle,

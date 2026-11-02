@@ -5,6 +5,7 @@ import 'one_ui_bottom_vignette.dart';
 import 'one_ui_status_bar_scrim.dart';
 import 'round_header_controls.dart';
 import '../theme/one_ui_scroll.dart';
+import '../l10n/l10n.dart';
 
 /// A ColorOS 17 subpage, laid out like the contact page: black, the round glass Back
 /// button with the title beside it pinned at the top, the content (cards) scrolling under
@@ -86,7 +87,7 @@ class OneUISubpage extends StatelessWidget {
                   children: [
                     RoundIconButton(
                       icon: Icons.arrow_back_rounded,
-                      tooltip: 'Back',
+                      tooltip: context.l10n.back,
                       onTap: onBack ?? () => Navigator.of(context).maybePop(),
                     ),
                     const SizedBox(width: 14),
@@ -135,7 +136,7 @@ class OneUISoonChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(OneUITheme.radiusBadge),
       ),
       child: Text(
-        'Soon',
+        context.l10n.soon,
         style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.palette.textSecondary),
       ),
     );

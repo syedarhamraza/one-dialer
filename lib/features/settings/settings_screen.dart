@@ -21,6 +21,7 @@ import 'app_icon_screen.dart';
 import 'call_settings_pages.dart';
 import 'help_feedback_screen.dart';
 import 'software_update_screen.dart';
+import '../../l10n/l10n.dart';
 
 /// Call settings, plus a health check of everything incoming calls depend on.
 class SettingsScreen extends StatefulWidget {
@@ -79,7 +80,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     try {
       await _telecom.openSystemSettings(page);
     } on PlatformException {
-      if (mounted) OneUIToast.show(context, "This phone doesn't have that setting");
+      if (mounted) OneUIToast.show(context, context.l10n.settingNotAvailable);
     }
   }
 
@@ -91,26 +92,26 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     final rules = BlockingRepository.instance.rules.value;
     return [
       if (_health['isDefaultDialer'] != true)
-        _problem('Not your default phone app', 'Incoming calls use another app', () async {
+        _problem(context.l10n.notDefaultApp, context.l10n.notDefaultAppSubtitle, () async {
           await _telecom.requestDefaultDialer();
           _refresh();
         }),
       if (_health['notificationsEnabled'] != true)
         _problem(
-          'Notifications are off',
-          'You won\'t see incoming or missed calls',
+          context.l10n.notificationsOff,
+          context.l10n.notificationsOffSubtitle,
           () => _telecom.openSystemSettings('notifications'),
         ),
       if (_health['fullScreenAllowed'] != true)
         _problem(
-          'Full-screen calls are off',
-          'Incoming calls only show as a notification',
+          context.l10n.fullScreenOff,
+          context.l10n.fullScreenOffSubtitle,
           () => _telecom.openSystemSettings('fullScreen'),
         ),
       if ((rules.blockHidden || rules.blockNonContacts) && _health['screensCalls'] != true)
-        _problem('Blocking rules are paused', 'Another app screens your calls', () => _push(const BlockingScreen())),
+        _problem(context.l10n.blockingPaused, context.l10n.blockingPausedShort, () => _push(const BlockingScreen())),
       if (!_bluetoothNames)
-        _problem('Bluetooth names hidden', "Calls can't tell your watch from your earbuds", _allowBluetoothNames),
+        _problem(context.l10n.bluetoothNamesHidden, context.l10n.bluetoothNamesHiddenSubtitle, _allowBluetoothNames),
     ];
   }
 
@@ -120,7 +121,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     subtitle: subtitle,
     subtitleColor: OneUITheme.accentRed,
     onTap: onFix,
-    value: 'Fix',
+    value: context.l10n.fix,
   );
 
   @override
@@ -128,39 +129,42 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     final problems = _problems;
     // Grouped like ColorOS's Call settings; the rarely changed rest is under More settings.
     return OneUISubpage(
-      title: 'Call settings',
+      title: context.l10n.callSettings,
       builder: (context) => [
-        if (problems.isNotEmpty) OneUIGroupCard(headerTitle: 'Needs attention', items: problems),
+        if (problems.isNotEmpty) OneUIGroupCard(headerTitle: context.l10n.needsAttention, items: problems),
         OneUIGroupCard(
           items: [
-            OneUIGroupItem(title: 'Incoming call reminders', onTap: () => _push(const IncomingCallRemindersScreen())),
-            OneUIGroupItem(title: 'Answer buttons', onTap: () => _push(const AnswerButtonsScreen())),
-            OneUIGroupItem(title: 'Answer/End calls', onTap: () => _push(const AnswerEndCallsScreen())),
+            OneUIGroupItem(
+              title: context.l10n.incomingCallReminders,
+              onTap: () => _push(const IncomingCallRemindersScreen()),
+            ),
+            OneUIGroupItem(title: context.l10n.answerButtons, onTap: () => _push(const AnswerButtonsScreen())),
+            OneUIGroupItem(title: context.l10n.answerEndCalls, onTap: () => _push(const AnswerEndCallsScreen())),
           ],
         ),
         OneUIGroupCard(
           items: [
             OneUIGroupItem(
-              title: 'Caller identification',
-              subtitle: 'Caller ID & spam app',
+              title: context.l10n.callerIdentification,
+              subtitle: context.l10n.callerIdSpamApp,
               onTap: () => _telecom.openSystemSettings('defaultApps'),
             ),
-            OneUIGroupItem(title: 'Speed dial', onTap: () => _push(const SpeedDialScreen())),
+            OneUIGroupItem(title: context.l10n.speedDial, onTap: () => _push(const SpeedDialScreen())),
           ],
         ),
         OneUIGroupCard(
-          items: [OneUIGroupItem(title: 'Block & filter', onTap: () => _push(const BlockingScreen()))],
+          items: [OneUIGroupItem(title: context.l10n.blockAndFilter, onTap: () => _push(const BlockingScreen()))],
         ),
         OneUIGroupCard(
           items: [
-            OneUIGroupItem(title: 'Carrier-related settings', onTap: () => _openSystem('carrier')),
-            OneUIGroupItem(title: 'More settings', onTap: () => _push(const _MoreSettingsScreen())),
+            OneUIGroupItem(title: context.l10n.carrierSettings, onTap: () => _openSystem('carrier')),
+            OneUIGroupItem(title: context.l10n.moreSettings, onTap: () => _push(const _MoreSettingsScreen())),
           ],
         ),
         OneUIGroupCard(
           items: [
             OneUIGroupItem(
-              title: 'Software update',
+              title: context.l10n.softwareUpdate,
               value: _version?.label,
               trailing: ListenableBuilder(
                 listenable: UpdateController.instance,
@@ -174,12 +178,12 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               ),
               onTap: () => SoftwareUpdateScreen.open(context),
             ),
-            OneUIGroupItem(title: 'Help & feedback', onTap: () => _push(const HelpFeedbackScreen())),
+            OneUIGroupItem(title: context.l10n.helpFeedback, onTap: () => _push(const HelpFeedbackScreen())),
             OneUIGroupItem(
-              title: 'Privacy policy',
+              title: context.l10n.privacyPolicy,
               onTap: () => _telecom.openSystemSettings('url:${AppInfo.privacyPolicyUrl}'),
             ),
-            OneUIGroupItem(title: 'About One Dialer', onTap: () => _push(const AboutScreen())),
+            OneUIGroupItem(title: context.l10n.aboutOneDialer, onTap: () => _push(const AboutScreen())),
           ],
         ),
       ],
@@ -203,7 +207,7 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
     try {
       await _telecom.openSystemSettings(page);
     } on PlatformException {
-      if (mounted) OneUIToast.show(context, "This phone doesn't have that setting");
+      if (mounted) OneUIToast.show(context, context.l10n.settingNotAvailable);
     }
   }
 
@@ -211,9 +215,19 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
   final _simKey = GlobalKey();
   final _themeKey = GlobalKey();
   final _effectsKey = GlobalKey();
+  final _languageKey = GlobalKey();
+  final _glassDarkKey = GlobalKey();
+  final _glassLightKey = GlobalKey();
 
-  static const _themeLabels = {'system': 'Same as phone', 'light': 'Light', 'dark': 'Dark'};
-  static const _tapLabels = {'details': 'Open details', 'dial': 'Write in keypad'};
+  static Map<String, String> _themeLabels(AppLocalizations l10n) => {
+    'system': l10n.settingsLanguageSystem,
+    'light': l10n.themeLight,
+    'dark': l10n.themeDark,
+  };
+  static Map<String, String> _tapLabels(AppLocalizations l10n) => {
+    'details': l10n.openDetails,
+    'dial': l10n.writeInKeypad,
+  };
 
   /// "Choose SIM and call" is offered only with two SIMs; with one, a saved `sim` reads as details.
   bool _dualSim = false;
@@ -231,6 +245,7 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
   void initState() {
     super.initState();
     _loadIcon();
+    DialerPrefs.instance.visualEffects.addListener(_rebuild);
     _telecom.getSims().then((s) {
       if (mounted) setState(() => _dualSim = s.length > 1);
     });
@@ -239,80 +254,137 @@ class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
     });
   }
 
-  static const _simLabels = {'buttons': 'Two Call buttons', 'menu': 'Ask every time'};
+  @override
+  void dispose() {
+    DialerPrefs.instance.visualEffects.removeListener(_rebuild);
+    super.dispose();
+  }
+
+  void _rebuild() => setState(() {});
+
+  static Map<String, String> _simLabels(AppLocalizations l10n) => {
+    'buttons': l10n.twoCallButtons,
+    'menu': l10n.askEveryTime,
+  };
 
   @override
   Widget build(BuildContext context) {
     return OneUISubpage(
-      title: 'More settings',
+      title: context.l10n.moreSettings,
       builder: (context) => [
+        OneUIGroupCard(
+          headerTitle: context.l10n.settingsLanguageHeader,
+          items: [
+            choiceRow(
+              context,
+              title: context.l10n.settingsAppLanguage,
+              subtitle: context.l10n.settingsAppLanguageSubtitle,
+              anchor: _languageKey,
+              value: DialerPrefs.instance.language,
+              // Each language named in itself, so a new app_xx.arb shows up here on its own.
+              labels: {
+                'system': context.l10n.settingsLanguageSystem,
+                for (final locale in AppLocalizations.supportedLocales)
+                  locale.languageCode: lookupAppLocalizations(locale).languageName,
+              },
+              onPick: DialerPrefs.instance.setLanguage,
+            ),
+            OneUIGroupItem(
+              title: context.l10n.settingsAndroidLanguage,
+              subtitle: context.l10n.settingsAndroidLanguageSubtitle,
+              onTap: () => _openSystem('language'),
+            ),
+          ],
+        ),
         OneUIGroupCard(
           items: [
             choiceRow(
               context,
-              title: 'Tap a recent call',
+              title: context.l10n.tapRecentCall,
               anchor: _tapKey,
               value: DialerPrefs.instance.recentTap,
-              labels: _dualSim ? {..._tapLabels, 'sim': 'Choose SIM and call'} : _tapLabels,
+              labels: {..._tapLabels(context.l10n), if (_dualSim) 'sim': context.l10n.chooseSimAndCall},
               onPick: DialerPrefs.instance.setRecentTap,
             ),
             choiceRow(
               context,
-              title: 'Choose SIM for calls',
-              subtitle: 'Dual SIM with no default SIM',
+              title: context.l10n.chooseSimForCalls,
+              subtitle: context.l10n.chooseSimSubtitle,
               anchor: _simKey,
               value: DialerPrefs.instance.simChoice,
-              labels: _simLabels,
+              labels: _simLabels(context.l10n),
               onPick: DialerPrefs.instance.setSimChoice,
             ),
             choiceRow(
               context,
-              title: 'Appearance',
+              title: context.l10n.appearance,
               anchor: _themeKey,
               value: DialerPrefs.instance.themeMode,
-              labels: _themeLabels,
+              labels: _themeLabels(context.l10n),
               onPick: DialerPrefs.instance.setThemeMode,
             ),
             OneUIGroupItem(
-              title: 'App icon',
-              value: AppIconScreen.labels[_icon],
+              title: context.l10n.appIcon,
+              value: AppIconScreen.labels(context.l10n)[_icon],
               onTap: () => Navigator.of(context)
                   .push(MaterialPageRoute<void>(builder: (_) => const AppIconScreen()))
                   .then((_) => _loadIcon()),
             ),
             choiceRow(
               context,
-              title: 'Reduce visual effects',
-              subtitle: 'Less blur runs smoother on slower phones',
+              title: context.l10n.reduceVisualEffects,
+              subtitle: context.l10n.reduceVisualEffectsSubtitle,
               anchor: _effectsKey,
               value: DialerPrefs.instance.visualEffects,
-              labels: effectsLabels,
+              labels: effectsLabels(context.l10n),
               onPick: DialerPrefs.instance.setVisualEffects,
             ),
+            // The glass styles only change the full-effects glass; below it the rows go away.
+            if (DialerPrefs.instance.visualEffects.value == 'full') ...[
+              choiceRow(
+                context,
+                title: context.l10n.darkModeEdgeGlow,
+                anchor: _glassDarkKey,
+                value: DialerPrefs.instance.glassDark,
+                labels: edgeGlowLabels(context.l10n),
+                onPick: DialerPrefs.instance.setGlassDark,
+              ),
+              choiceRow(
+                context,
+                title: context.l10n.lightModeEdgeGlow,
+                anchor: _glassLightKey,
+                value: DialerPrefs.instance.glassLight,
+                labels: edgeGlowLabels(context.l10n),
+                onPick: DialerPrefs.instance.setGlassLight,
+              ),
+            ],
             if (_appCallLog)
               OneUIGroupItem(
-                title: 'Calls from other apps',
-                subtitle: "Show WhatsApp and other apps' calls in Recents",
+                title: context.l10n.callsFromOtherApps,
+                subtitle: context.l10n.callsFromOtherAppsSubtitle,
                 onTap: () => _openSystem('voipCallLog'),
               ),
           ],
         ),
         OneUIGroupCard(
-          headerTitle: 'Contacts',
+          headerTitle: context.l10n.navContacts,
           items: [
             OneUIGroupItem(
-              title: 'Manage contacts',
-              subtitle: 'Display, save location, import and export, SIM, duplicates',
+              title: context.l10n.manageContacts,
+              subtitle: context.l10n.manageContactsSubtitle,
               onTap: () =>
                   Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ManageContactsScreen())),
             ),
             OneUIGroupItem(
-              title: 'Google Contacts sync',
-              subtitle: 'Which accounts sync, and backing up phone contacts',
+              title: context.l10n.googleContactsSync,
+              subtitle: context.l10n.googleContactsSyncSubtitle,
               onTap: () => _openSystem('googleContactsSync'),
             ),
-            OneUIGroupItem(title: 'Default apps', onTap: () => _telecom.openSystemSettings('defaultApps')),
-            OneUIGroupItem(title: 'Notifications', onTap: () => _telecom.openSystemSettings('notifications')),
+            OneUIGroupItem(title: context.l10n.defaultApps, onTap: () => _telecom.openSystemSettings('defaultApps')),
+            OneUIGroupItem(
+              title: context.l10n.notifications,
+              onTap: () => _telecom.openSystemSettings('notifications'),
+            ),
           ],
         ),
       ],

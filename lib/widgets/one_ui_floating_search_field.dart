@@ -5,6 +5,7 @@ import '../theme/one_ui_theme.dart';
 import 'one_ui_glass_surface.dart';
 import '../core/haptics/haptics.dart';
 import '../core/speech/voice_input.dart';
+import '../l10n/l10n.dart';
 
 /// Floating glass search capsule that sits above the keyboard (Subscriptions, Settings).
 /// Shows a clear button while [controller] has text. While it's empty, and the phone has a
@@ -88,7 +89,7 @@ class OneUIFloatingSearchField extends StatelessWidget {
             builder: (context, _) {
               if (controller.text.isNotEmpty) {
                 return _button(
-                  label: 'Clear search',
+                  label: context.l10n.clearSearch,
                   icon: Icons.close_rounded,
                   onTap: () {
                     Haptics.tap();
@@ -102,7 +103,7 @@ class OneUIFloatingSearchField extends StatelessWidget {
               return FutureBuilder<bool>(
                 future: VoiceInput.available(),
                 builder: (context, snapshot) => snapshot.data == true
-                    ? _button(label: 'Search by voice', icon: Icons.mic_rounded, onTap: _listen)
+                    ? _button(label: context.l10n.searchByVoice, icon: Icons.mic_rounded, onTap: _listen)
                     : const SizedBox.shrink(),
               );
             },

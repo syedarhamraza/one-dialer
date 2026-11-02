@@ -1,12 +1,22 @@
 import 'package:dialer/features/recents/call_log.dart';
 import 'package:dialer/features/recents/call_log_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:dialer/l10n/app_localizations_en.dart';
+import 'package:dialer/l10n/app_localizations_it.dart';
 
 CallLogEntry call(int id, String number, DateTime date, {CallType type = CallType.incoming, bool private = false}) =>
     CallLogEntry(id: id, number: number, type: type, date: date, isPrivate: private);
 
 void main() {
   final now = DateTime(2026, 10, 17, 12);
+  final l10n = AppLocalizationsEn();
+  final it = AppLocalizationsIt();
+  // The app gets this from Flutter's localization delegates.
+  setUpAll(() async {
+    await initializeDateFormatting('en');
+    await initializeDateFormatting('it');
+  });
 
   test('consecutive same-number calls on a day merge; missed stays separate', () {
     final days = groupByDay([
@@ -50,27 +60,32 @@ void main() {
     expect((whatsApp.isApp, whatsApp.app, whatsApp.isVideo), (true, 'WhatsApp', true));
     expect(call(1, '1', now).isApp, false);
 
-    final days = groupByDay([
-      whatsApp,
-      call(2, '03001234567', DateTime(2026, 10, 17, 10)),
-    ]);
+    final days = groupByDay([whatsApp, call(2, '03001234567', DateTime(2026, 10, 17, 10))]);
     expect(days.single.$2.length, 2);
   });
 
   test('day labels', () {
-    expect(dayLabel(DateTime(2026, 10, 17), now), 'Today');
-    expect(dayLabel(DateTime(2026, 10, 16), now), 'Yesterday');
-    expect(dayLabel(DateTime(2026, 10, 13), now), 'Tuesday');
-    expect(dayLabel(DateTime(2026, 9, 2), now), '2 Sep');
-    expect(dayLabel(DateTime(2025, 9, 2), now), '2 Sep 2025');
+    expect(dayLabel(l10n, DateTime(2026, 10, 17), now), 'Today');
+    expect(dayLabel(l10n, DateTime(2026, 10, 16), now), 'Yesterday');
+    expect(dayLabel(l10n, DateTime(2026, 10, 13), now), 'Tuesday');
+    expect(dayLabel(l10n, DateTime(2026, 9, 2), now), '2 Sep');
+    expect(dayLabel(l10n, DateTime(2025, 9, 2), now), '2 Sep 2025');
   });
 
   test('time and duration labels', () {
-    expect(timeLabel(DateTime(2026, 1, 1, 0, 5)), '12:05 AM');
-    expect(timeLabel(DateTime(2026, 1, 1, 13, 30)), '1:30 PM');
-    expect(durationLabel(const Duration(seconds: 45)), '45 sec');
-    expect(durationLabel(const Duration(minutes: 3, seconds: 5)), '3 min 5 sec');
-    expect(durationLabel(const Duration(hours: 1, minutes: 2)), '1 hr 2 min');
+    expect(timeLabel(l10n, DateTime(2026, 1, 1, 0, 5)), '12:05 AM');
+    expect(timeLabel(l10n, DateTime(2026, 1, 1, 13, 30)), '1:30 PM');
+    expect(durationLabel(l10n, const Duration(seconds: 45)), '45 sec');
+    expect(durationLabel(l10n, const Duration(minutes: 3, seconds: 5)), '3 min 5 sec');
+    expect(durationLabel(l10n, const Duration(hours: 1, minutes: 2)), '1 hr 2 min');
+  });
+
+  test('Italian day, time and duration labels', () {
+    expect(dayLabel(it, DateTime(2026, 10, 16), now), 'Ieri');
+    expect(dayLabel(it, DateTime(2026, 10, 13), now), 'Martedì');
+    expect(dayLabel(it, DateTime(2026, 9, 2), now), '2 set');
+    expect(timeLabel(it, DateTime(2026, 1, 1, 13, 30)), '13:30');
+    expect(durationLabel(it, const Duration(minutes: 3, seconds: 5)), '3 min 5 s');
   });
 
   test('numberKey matches international and local formats', () {

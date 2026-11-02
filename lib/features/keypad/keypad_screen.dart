@@ -24,6 +24,7 @@ import '../../widgets/press_glow.dart';
 import '../../widgets/rise_route.dart';
 import 't9.dart';
 import '../in_call/call_controls.dart';
+import '../../l10n/l10n.dart';
 
 /// Samsung-style dial pad as a sheet over Calls: T9 contact search above while
 /// typing, then the typed number, pill keys and one call button. Hidden, the shell
@@ -107,9 +108,9 @@ class _KeypadScreenState extends State<KeypadScreen> {
     if (!mounted) return;
     final assign = await showCosConfirm(
       context,
-      title: 'No speed dial number',
-      message: 'Assign a contact to key $digit?',
-      confirmLabel: 'Assign',
+      title: context.l10n.speedDialNoNumber,
+      message: context.l10n.speedDialAssignPrompt(digit),
+      confirmLabel: context.l10n.assign,
     );
     if (assign && mounted) _openSpeedDial();
   }
@@ -143,7 +144,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
       if (called && widget.input.value == number) widget.input.value = '';
     } on PlatformException {
       if (mounted) {
-        OneUIToast.show(context, "Couldn't place the call");
+        OneUIToast.show(context, context.l10n.couldNotPlaceCall);
       }
     } finally {
       if (mounted) setState(() => _calling = false);
@@ -241,8 +242,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
                                   builder: (blur) => DecoratedBox(
                                     key: const ValueKey('keypad-panel'),
                                     decoration: BoxDecoration(
-                                      color: (context.palette.isLight ? context.palette.page : context.palette.card)
-                                          .withValues(alpha: blur ? .75 : 1),
+                                      color: _sheetColor(context).withValues(alpha: blur ? .75 : 1),
                                       borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
                                     ),
                                     // Scrolls only when a small or landscape screen can't fit it.
@@ -416,7 +416,7 @@ class _NumberDisplay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: number.isEmpty ? 'Number, empty. Long-press to paste' : 'Number $number',
+      label: number.isEmpty ? context.l10n.keypadNumberEmpty : context.l10n.keypadNumber(number),
       child: GestureDetector(
         onLongPress: onPaste,
         behavior: HitTestBehavior.opaque,
@@ -519,8 +519,8 @@ class _Keypad extends StatelessWidget {
                     child: _Pill(
                       height: keyHeight,
                       label: switch (digit) {
-                        '0' => '0, long-press for plus',
-                        '2' || '3' || '4' || '5' || '6' || '7' || '8' || '9' => '$digit, long-press for speed dial',
+                        '0' => context.l10n.keypadZeroHint,
+                        '2' || '3' || '4' || '5' || '6' || '7' || '8' || '9' => context.l10n.keypadDigitHint(digit),
                         _ => digit,
                       },
                       onTap: () => onKey(digit),
@@ -593,7 +593,13 @@ class _Pill extends StatelessWidget {
           child: fx.isFull
               // The nav bar's call glass without its backdrop blur (a save layer per key), rasterized
               // once so presses and the sheet's slide only draw an image.
-              ? CallBodyArtwork(radius: height / 2, glow: kMainGlassGlow, opacity: .75, child: _ink())
+              ? CallBodyArtwork(
+                  radius: height / 2,
+                  glow: kMainGlassGlow,
+                  opacity: mainGlass(context, classicOpacity: .75).opacity,
+                  edges: mainGlass(context).edges,
+                  child: _ink(),
+                )
               // Below full: a flat One UI key, translucent over the sheet when reduced, solid when off.
               : _ink(fx.oneUIFill(light: context.palette.isLight)),
         );
@@ -651,7 +657,7 @@ class _CallRow extends StatelessWidget {
           Expanded(
             child: _Pill(
               height: keyHeight,
-              label: 'Hide keypad',
+              label: context.l10n.hideKeypad,
               onTap: onHide,
               child: Icon(Icons.dialpad_rounded, color: context.palette.textPrimary, size: 30),
             ),
@@ -661,7 +667,7 @@ class _CallRow extends StatelessWidget {
               child: _Pill(
                 key: callKey,
                 height: keyHeight,
-                label: 'Call',
+                label: context.l10n.call,
                 color: OneUITheme.dialGreen,
                 lit: true,
                 onTap: onCall,
@@ -680,7 +686,7 @@ class _CallRow extends StatelessWidget {
                     Expanded(
                       child: _Pill(
                         height: keyHeight,
-                        label: 'Call with SIM ${i + 1}, ${sim.label}',
+                        label: context.l10n.callWithSim('${i + 1}', sim.label),
                         color: OneUITheme.dialGreen,
                         lit: true,
                         onTap: onCall == null ? null : () => onCall!(sim.id),
@@ -703,7 +709,7 @@ class _CallRow extends StatelessWidget {
           Expanded(
             child: _Pill(
               height: keyHeight,
-              label: 'Delete, long-press to clear',
+              label: context.l10n.keypadDeleteHint,
               onTap: onBackspace,
               onLongPress: onClear,
               child: Icon(Icons.backspace_rounded, color: context.palette.textSecondary, size: 30),
@@ -727,17 +733,20 @@ List<OneUIFloatingMenuItem> keypadMenuItems(
   final typing = input.value.isNotEmpty;
   return [
     if (typing) ...[
-      OneUIFloatingMenuItem(label: open.value ? 'Hide keypad' : 'Show keypad', onTap: () => open.value = !open.value),
-      OneUIFloatingMenuItem(label: 'Add 2-sec pause', onTap: () => input.value += ','),
-      OneUIFloatingMenuItem(label: 'Add wait', onTap: () => input.value += ';'),
-      OneUIFloatingMenuItem(label: 'Send message', onTap: () => TelecomBridge.instance.sendSms(input.value)),
+      OneUIFloatingMenuItem(
+        label: open.value ? context.l10n.hideKeypad : context.l10n.showKeypad,
+        onTap: () => open.value = !open.value,
+      ),
+      OneUIFloatingMenuItem(label: context.l10n.addPause, onTap: () => input.value += ','),
+      OneUIFloatingMenuItem(label: context.l10n.addWait, onTap: () => input.value += ';'),
+      OneUIFloatingMenuItem(label: context.l10n.sendMessage, onTap: () => TelecomBridge.instance.sendSms(input.value)),
     ],
     OneUIFloatingMenuItem(
-      label: 'Speed dial numbers',
+      label: context.l10n.speedDialNumbers,
       onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SpeedDialScreen())),
     ),
     OneUIFloatingMenuItem(
-      label: 'Settings',
+      label: context.l10n.settings,
       onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),
     ),
   ];
@@ -745,6 +754,16 @@ List<OneUIFloatingMenuItem> keypadMenuItems(
 
 /// The sheet's frosted backing: Calls blurred behind the keys, and a solid backing with
 /// visual effects off. Switches live.
+/// The sheet behind the keys: the page grey in light mode, the card grey in dark mode, or (with the
+/// soft and bold dark glass) that grey halfway to black, so the half-strength keys still stand out.
+Color _sheetColor(BuildContext context) {
+  final palette = context.palette;
+  if (palette.isLight) return palette.page;
+  final fx = OneUIEffectsController.instance;
+  if (!fx.isFull || fx.glassStyle(light: false) == 'classic') return palette.card;
+  return Color.lerp(palette.card, Colors.black, .5)!;
+}
+
 class _Frosted extends StatelessWidget {
   const _Frosted({required this.builder});
   final Widget Function(bool blur) builder;

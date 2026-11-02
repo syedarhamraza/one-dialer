@@ -6,29 +6,35 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 import '../../core/telecom/telecom_bridge.dart';
+import '../../l10n/l10n.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import 'call_log.dart';
 
 /// "WhatsApp" or "WhatsApp video", where SIM calls show the number.
-String appCallLabel(CallLogEntry call) => call.isVideo ? '${call.app} video' : call.app ?? '';
+String appCallLabel(AppLocalizations l10n, CallLogEntry call) =>
+    call.isVideo ? l10n.appVideo(call.app ?? '') : call.app ?? '';
 
 /// A one-item menu so a tap never calls by accident; its Call hands the call back to the app.
-Future<void> showAppCallBack(BuildContext context, CallLogEntry call, {GlobalKey? anchorKey, BuildContext? anchorContext}) =>
-    OneUIFloatingMenu.show(
-      context: context,
-      anchorKey: anchorKey,
-      anchorContext: anchorContext,
-      centered: true,
-      fallbackBottom: 120,
-      width: 240,
-      items: [
-        OneUIFloatingMenuItem(
-          label: call.isVideo ? 'Video call on ${call.app}' : 'Call on ${call.app}',
-          icon: call.isVideo ? Icons.videocam_rounded : Icons.call_rounded,
-          onTap: () => TelecomBridge.instance.callBack(call.id),
-        ),
-      ],
-    );
+Future<void> showAppCallBack(
+  BuildContext context,
+  CallLogEntry call, {
+  GlobalKey? anchorKey,
+  BuildContext? anchorContext,
+}) => OneUIFloatingMenu.show(
+  context: context,
+  anchorKey: anchorKey,
+  anchorContext: anchorContext,
+  centered: true,
+  fallbackBottom: 120,
+  width: 240,
+  items: [
+    OneUIFloatingMenuItem(
+      label: call.isVideo ? context.l10n.videoCallOnApp(call.app ?? '') : context.l10n.callOnApp(call.app ?? ''),
+      icon: call.isVideo ? Icons.videocam_rounded : Icons.call_rounded,
+      onTap: () => TelecomBridge.instance.callBack(call.id),
+    ),
+  ],
+);
 
 /// [child] (an avatar) with [package]'s app icon on its bottom-right corner; just [child] for SIM calls.
 class AppBadged extends StatelessWidget {
@@ -59,7 +65,13 @@ class AppBadged extends StatelessWidget {
                 padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, shape: BoxShape.circle),
                 child: ClipOval(
-                  child: Image.memory(png, width: size, height: size, gaplessPlayback: true, filterQuality: FilterQuality.medium),
+                  child: Image.memory(
+                    png,
+                    width: size,
+                    height: size,
+                    gaplessPlayback: true,
+                    filterQuality: FilterQuality.medium,
+                  ),
                 ),
               );
             },

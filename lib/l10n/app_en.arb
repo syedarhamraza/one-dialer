@@ -1,0 +1,803 @@
+{
+  "@@locale": "en",
+  "languageName": "English",
+  "cancel": "Cancel",
+  "save": "Save",
+  "delete": "Delete",
+  "dismiss": "Dismiss",
+  "dismissMenu": "Dismiss menu",
+  "share": "Share",
+  "more": "More",
+  "back": "Back",
+  "soon": "Soon",
+  "@soon": {
+    "description": "REVIEW: Badge for features not available yet; keep it short"
+  },
+  "all": "All",
+  "selectAll": "Select all",
+  "deselectAll": "Deselect all",
+  "search": "Search",
+  "searchContacts": "Search contacts",
+  "clear": "Clear",
+  "clearSearch": "Clear search",
+  "searchByVoice": "Search by voice",
+  "scrollToTop": "Scroll to top",
+  "dateWheelDay": "Day {day}",
+  "@dateWheelDay": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "dateWheelYear": "Year {year}",
+  "@dateWheelYear": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      }
+    }
+  },
+  "navCalls": "Calls",
+  "navContacts": "Contacts",
+  "returnToCall": "Return to call",
+  "createContact": "Create contact",
+  "showKeypad": "Show keypad",
+  "settingsLanguageHeader": "Language",
+  "settingsAppLanguage": "App language",
+  "settingsAppLanguageSubtitle": "Only changes this app",
+  "settingsLanguageSystem": "Same as phone",
+  "settingsAndroidLanguage": "Android language settings",
+  "settingsAndroidLanguageSubtitle": "Choose the language in Android's settings",
+  "call": "Call",
+  "message": "Message",
+  "add": "Add",
+  "block": "Block",
+  "unblock": "Unblock",
+  "settings": "Settings",
+  "notes": "Notes",
+  "moreOptions": "More options",
+  "voicemail": "Voicemail",
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "durationHoursMinutes": "{hours} hr {minutes} min",
+  "@durationHoursMinutes": {
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "durationMinutesSeconds": "{minutes} min {seconds} sec",
+  "@durationMinutesSeconds": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      },
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "durationSeconds": "{seconds} sec",
+  "@durationSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "privateNumber": "Private number",
+  "appVideo": "{app} video",
+  "@appVideo": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "videoCallOnApp": "Video call on {app}",
+  "@videoCallOnApp": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "callOnApp": "Call on {app}",
+  "@callOnApp": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "callTypeOutgoing": "Outgoing call",
+  "callTypeMissed": "Missed call",
+  "callTypeRejected": "Rejected call",
+  "callTypeBlocked": "Blocked call",
+  "callTypeVoicemail": "Voicemail",
+  "callTypeIncoming": "Incoming call",
+  "speedDialNoNumber": "No speed dial number",
+  "speedDialAssignPrompt": "Assign a contact to key {digit}?",
+  "@speedDialAssignPrompt": {
+    "placeholders": {
+      "digit": {
+        "type": "String"
+      }
+    }
+  },
+  "assign": "Assign",
+  "couldNotPlaceCall": "Couldn't place the call",
+  "keypadNumberEmpty": "Number, empty. Long-press to paste",
+  "keypadNumber": "Number {number}",
+  "@keypadNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "keypadZeroHint": "0, long-press for plus",
+  "keypadDigitHint": "{digit}, long-press for speed dial",
+  "@keypadDigitHint": {
+    "placeholders": {
+      "digit": {
+        "type": "String"
+      }
+    }
+  },
+  "hideKeypad": "Hide keypad",
+  "callWithSim": "Call with SIM {slot}, {sim}",
+  "@callWithSim": {
+    "placeholders": {
+      "slot": {
+        "type": "String"
+      },
+      "sim": {
+        "type": "String"
+      }
+    }
+  },
+  "keypadDeleteHint": "Delete, long-press to clear",
+  "addPause": "Add 2-sec pause",
+  "addWait": "Add wait",
+  "sendMessage": "Send message",
+  "speedDialNumbers": "Speed dial numbers",
+  "speedDialKey": "Speed dial {digit}",
+  "@speedDialKey": {
+    "placeholders": {
+      "digit": {
+        "type": "String"
+      }
+    }
+  },
+  "speedDial": "Speed dial",
+  "speedDialAssignContacts": "Assign contacts",
+  "speedDialRemoved": "Removed {name} from {digit}",
+  "@speedDialRemoved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "digit": {
+        "type": "String"
+      }
+    }
+  },
+  "callLogs": "Call logs",
+  "deleteCallHistory": "Delete call history",
+  "deleteCallsTitle": "{count, plural, =1{Delete call?} other{Delete {count} calls?}}",
+  "@deleteCallsTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteCallsMessage": "The selected call history will be removed from this phone.",
+  "couldNotDeleteCalls": "Couldn't delete call history. Try again.",
+  "showAllCalls": "Show all calls",
+  "showAppCallsOnly": "Show app calls only",
+  "showBlockedCalls": "Show blocked calls",
+  "hideBlockedCalls": "Hide blocked calls",
+  "blockNumberTitle": "Block {number}?",
+  "@blockNumberTitle": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "blockNumbersTitle": "{count, plural, =1{Block 1 number?} other{Block {count} numbers?}}",
+  "@blockNumbersTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "blockNumbersMessage": "You won't get calls from blocked numbers.",
+  "selectedCount": "{count, plural, other{{count} selected}}",
+  "@selectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recentsSetDefaultMessage": "Set Dialer as your default phone app to see recent calls",
+  "setAsDefault": "Set as default",
+  "recentsNoAppCalls": "No app calls",
+  "recentsNoRecentCalls": "No recent calls",
+  "recentsNoMissedCalls": "No missed calls",
+  "recentsFilterMissed": "Missed",
+  "addToContacts": "Add to Contacts",
+  "callDetails": "Call details",
+  "contactLabel": "{label, select, mobile{Mobile} home{Home} work{Work} workMobile{Work mobile} main{Main} phone{Phone} faxHome{Home fax} faxWork{Work fax} faxOther{Other fax} pager{Pager} workPager{Work pager} school{School} car{Car} companyMain{Company main} callback{Callback} assistant{Assistant} birthday{Birthday} anniversary{Anniversary} homepage{Homepage} blog{Blog} profile{Profile} brother{Brother} sister{Sister} child{Child} father{Father} mother{Mother} parent{Parent} friend{Friend} manager{Manager} partner{Partner} relative{Relative} spouse{Spouse} domesticPartner{Domestic partner} referredBy{Referred by} other{Other}}",
+  "@contactLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    },
+    "description": "REVIEW: Android contact field labels (phone, email, event, relation types); several are gendered in Italian (Figlio, Amico)"
+  },
+  "addressLabel": "{label} address",
+  "@addressLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "accountSamsung": "Samsung account",
+  "accountSimServiceNumbers": "SIM service numbers",
+  "accountSimCard": "SIM card",
+  "accountThisDevice": "This device",
+  "contactsCount": "{count, plural, =1{1 contact} other{{count} contacts}}",
+  "@contactsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "justOnce": "Just once",
+  "close": "Close",
+  "ok": "OK",
+  "edit": "Edit",
+  "video": "Video",
+  "remove": "Remove",
+  "custom": "Custom",
+  "allow": "Allow",
+  "select": "Select",
+  "merge": "Merge",
+  "import": "Import",
+  "qrScanHint": "Scan with a phone camera to add this contact",
+  "deleteContactTitle": "Delete {name}?",
+  "@deleteContactTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteContactMessage": "This contact will be removed from this phone and from its accounts.",
+  "shareVcf": "vCard file (VCF)",
+  "shareText": "Text",
+  "qrCode": "QR code",
+  "blockContact": "Block contact",
+  "unblockContact": "Unblock contact",
+  "askEveryTime": "Ask every time",
+  "contactNotFound": "Contact not found",
+  "addToFavourites": "Add to favourites",
+  "removeFromFavourites": "Remove from favourites",
+  "defaultNumber": "Default",
+  "ringtone": "Ringtone",
+  "organization": "Work",
+  "website": "Website",
+  "simForCalls": "SIM card for calls",
+  "storageLocations": "Storage locations",
+  "viewAll": "View all",
+  "selectContact": "Select contact",
+  "noMatchingContacts": "No matching contacts",
+  "noCallsWithContact": "No calls with this contact yet",
+  "unlink": "Unlink",
+  "unlinkAll": "Unlink all",
+  "deleteContactsTitle": "{count, plural, =1{Delete contact?} other{Delete {count} contacts?}}",
+  "@deleteContactsTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteContactsMessage": "They will be removed from this phone and from their accounts.",
+  "manageContacts": "Manage contacts",
+  "contactsAccessMessage": "Allow access to your contacts to see them here and show names for calls",
+  "alphabetIndex": "Alphabet index",
+  "createNewContact": "Create new contact",
+  "updateExistingContact": "Update existing contact",
+  "customLabel": "Custom label",
+  "noContactsToExport": "No contacts to export",
+  "couldNotOpenFile": "Couldn't open the file",
+  "noContactsInFile": "No contacts in this file",
+  "importContactsTitle": "{count, plural, =1{Import 1 contact?} other{Import {count} contacts?}}",
+  "@importContactsTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importContactsMessage": "They will be saved to {account}.",
+  "@importContactsMessage": {
+    "placeholders": {
+      "account": {
+        "type": "String"
+      }
+    }
+  },
+  "contactsImported": "{count, plural, =1{Contact imported} other{{count} contacts imported}}",
+  "@contactsImported": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "couldNotImportContacts": "Couldn't import these contacts",
+  "display": "Display",
+  "showContactPhotos": "Show contact's profile picture",
+  "onlyContactsWithNumbers": "Only display contacts with numbers",
+  "contactsToDisplay": "Contacts to display",
+  "sortBy": "Sort by",
+  "firstName": "First name",
+  "lastName": "Last name",
+  "nameFormat": "Name format",
+  "firstNameFirst": "First name first",
+  "lastNameFirst": "Last name first",
+  "defaultSaveLocation": "Default save location",
+  "phoneDefault": "Phone default",
+  "importContacts": "Import contacts",
+  "fromVcf": "From a .vcf file",
+  "exportContacts": "Export contacts",
+  "asVcf": "As a .vcf file",
+  "simContacts": "SIM card contacts",
+  "mergeDuplicates": "Merge duplicate contacts",
+  "simReadError": "Couldn't read the SIM card",
+  "simReading": "Reading the SIM card…",
+  "simEmpty": "No contacts on the SIM card",
+  "allSavedInContacts": "All saved in Contacts",
+  "importToContacts": "{count, plural, other{Import {count} to Contacts}}",
+  "@importToContacts": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mergeGroupTitle": "Merge {count} contacts?",
+  "@mergeGroupTitle": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "mergeGroupsTitle": "Merge {count} contacts into {groups}?",
+  "@mergeGroupsTitle": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "groups": {
+        "type": "String"
+      }
+    }
+  },
+  "mergeGroupMessage": "They become one contact named {name}, with all their numbers and details.",
+  "@mergeGroupMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "mergeGroupsMessage": "Each group becomes one contact, with all its numbers and details.",
+  "contactsMerged": "{count, plural, =1{Contacts merged} other{{count} contacts merged}}",
+  "@contactsMerged": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    },
+    "description": "REVIEW: English \"=1\" means one group merged, check the Italian reads naturally"
+  },
+  "couldNotMergeContacts": "Couldn't merge these contacts",
+  "noDuplicateContacts": "No duplicate contacts",
+  "mergeAll": "Merge all ({count})",
+  "@mergeAll": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "recentSearches": "Recent searches",
+  "clearAll": "Clear all",
+  "noResultsFound": "No results found",
+  "foundCount": "{count, plural, other{{count} found}}",
+  "@foundCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "removeItem": "Remove {item}",
+  "@removeItem": {
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "done": "Done",
+  "discard": "Discard",
+  "change": "Change",
+  "contactReadOnly": "This contact's account is read-only, so it can't be changed here",
+  "couldNotSaveContact": "Couldn't save the contact",
+  "alreadySavedAs": "{number} is already saved as {name}.",
+  "@alreadySavedAs": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "alreadyInContacts": "{name} is already in your contacts.",
+  "@alreadyInContacts": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "alreadyInContactsTitle": "Already in contacts",
+  "saveAnotherAnyway": "{duplicate} Save another contact anyway?",
+  "@saveAnotherAnyway": {
+    "placeholders": {
+      "duplicate": {
+        "type": "String"
+      }
+    }
+  },
+  "saveAnyway": "Save anyway",
+  "saveOrDiscard": "Save your changes or discard them?",
+  "couldNotLoadContactRetry": "Couldn't load the contact. Retry",
+  "email": "Email",
+  "addEmail": "Add email",
+  "addWebsite": "Add website",
+  "relationships": "Relationships",
+  "addRelationship": "Add relationship",
+  "showLess": "Show less",
+  "showMore": "Show more",
+  "newContact": "New contact",
+  "editContact": "Edit contact",
+  "couldNotLoadAccounts": "Couldn't load accounts",
+  "loadingAccounts": "Loading accounts…",
+  "saveToAccount": "Save to {account}",
+  "@saveToAccount": {
+    "placeholders": {
+      "account": {
+        "type": "String"
+      }
+    }
+  },
+  "profilePicture": "Profile picture",
+  "camera": "Camera",
+  "selectPhotos": "Select photos",
+  "deleteProfilePicture": "Delete profile picture",
+  "couldNotOpenCamera": "Couldn't open the camera",
+  "followSystem": "Follow system",
+  "customRingtone": "Custom ringtone",
+  "fromFollowingAccount": "From the following account",
+  "fewerNameFields": "Fewer name fields",
+  "moreNameFields": "More name fields",
+  "namePrefix": "Name prefix",
+  "middleName": "Middle name",
+  "nameSuffix": "Name suffix",
+  "name": "Name",
+  "number": "Number",
+  "workInfo": "Work info",
+  "company": "Company",
+  "jobTitle": "Job title",
+  "department": "Department",
+  "address": "Address",
+  "street": "Street",
+  "city": "City",
+  "stateProvince": "State/Province",
+  "postalCode": "Postal code",
+  "country": "Country",
+  "addAddress": "Add address",
+  "importantDate": "Important date",
+  "importantDates": "Important dates",
+  "addImportantDate": "Add important date",
+  "noGroupsInAccount": "No groups in this account",
+  "groups": "Groups",
+  "enterNumber": "Enter number",
+  "chooseFromContacts": "Choose from contacts",
+  "blockingNeedsScreeningRole": "Set Dialer as your caller ID & spam app to block these calls",
+  "blockNumber": "Block number",
+  "phoneNumber": "Phone number",
+  "blockAndFilter": "Block & filter",
+  "searchBlockedNumbers": "Search blocked numbers",
+  "blockingPaused": "Blocking rules are paused",
+  "blockingPausedSubtitle": "Another app screens your calls. Tap to let Dialer screen them.",
+  "blockUnknown": "Block unknown/private numbers",
+  "blockUnknownSubtitle": "Callers who hide their number",
+  "blockNonContacts": "Block calls from numbers not in Contacts",
+  "blockNonContactsSubtitle": "Only your contacts can ring you",
+  "blockedNumbers": "Blocked numbers",
+  "addNumber": "Add number",
+  "noMatchingBlocked": "No matching blocked numbers",
+  "blockedCalls": "Blocked calls",
+  "addCall": "Add call",
+  "@addCall": {
+    "description": "REVIEW: In-call control label under a round button; check it fits"
+  },
+  "note": "Note",
+  "editNote": "Edit note",
+  "videoCall": "Video call",
+  "mute": "Mute",
+  "@mute": {
+    "description": "REVIEW: In-call control label; AOSP uses \"Disattiva audio\", shortened to fit the button"
+  },
+  "hold": "Hold",
+  "@hold": {
+    "description": "REVIEW: In-call control label; AOSP uses \"Metti in attesa\", shortened to fit the button"
+  },
+  "resume": "Resume",
+  "headset": "Headset",
+  "speaker": "Speaker",
+  "audioPhone": "Phone",
+  "wiredHeadset": "Wired headset",
+  "endCall": "End call",
+  "end": "End",
+  "dialPad": "Dial pad",
+  "callNote": "Call note",
+  "callNoteHint": "Write something to remember from this call",
+  "conferenceCall": "Conference call",
+  "unknown": "Unknown",
+  "lineBusy": "Line busy",
+  "callDeclined": "Call declined",
+  "callCancelled": "Call cancelled",
+  "callFailed": "Call failed",
+  "callEnded": "Call ended",
+  "connected": "Connected",
+  "calling": "Calling",
+  "@calling": {
+    "description": "REVIEW: followed by animated dots while dialing; AOSP uses \"Chiamata in corso\" for both dialing and active calls, \"in uscita\" keeps them apart"
+  },
+  "onHold": "On hold",
+  "phoneCall": "Phone call",
+  "hdCall": "HD call",
+  "switchToOnHold": "Switch to {name}, on hold",
+  "@switchToOnHold": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "switchCall": "Switch",
+  "declineWithSms": "Decline with SMS",
+  "noQuickReplies": "No quick replies saved",
+  "answer": "Answer",
+  "decline": "Decline",
+  "answerVerb": "answer",
+  "declineVerb": "decline",
+  "swipeUpDownHint": "Swipe up to {up}, down to {down}",
+  "@swipeUpDownHint": {
+    "placeholders": {
+      "up": {
+        "type": "String"
+      },
+      "down": {
+        "type": "String"
+      }
+    }
+  },
+  "swipeUpHint": "Swipe up to {action}",
+  "@swipeUpHint": {
+    "placeholders": {
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "effectsFull": "Full effects",
+  "effectsReduced": "Reduced effects",
+  "effectsOff": "Effects off",
+  "off": "Off",
+  "always": "Always",
+  "onlyWithHeadphones": "Only with headphones",
+  "incomingCallReminders": "Incoming call reminders",
+  "incomingFootnote": "Applies only to incoming calls received when your device is unlocked.",
+  "banner": "Banner",
+  "fullScreen": "Full screen",
+  "announceCalls": "Announce incoming calls",
+  "announceCallsSubtitle": "Says the caller's name while it rings",
+  "swipeUpToAnswer": "Swipe up to answer",
+  "swipeDownToAnswer": "Swipe down to answer",
+  "answerButtons": "Answer buttons",
+  "twoButtons": "2 buttons",
+  "oneButton": "1 button",
+  "answerCall": "Answer call",
+  "callScreenEffects": "Call screen effects",
+  "callScreenEffectsSubtitle": "Glass and glow on the call screen",
+  "@callScreenEffectsSubtitle": {
+    "description": "REVIEW: \"Glass and glow\" names the design's frosted-glass look; keep it short"
+  },
+  "secondsCount": "{count, plural, =1{1 second} other{{count} seconds}}",
+  "@secondsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "answerEndCalls": "Answer/End calls",
+  "vibrateAnswerEnd": "Vibrate when your calls are answered/ended",
+  "autoAnswer": "Auto-answer calls when connected to external audio device",
+  "autoAnswerSubtitle": "Includes Bluetooth and wired headphones",
+  "autoAnswerDelay": "Delay auto answer",
+  "replyWithSms": "Reply with SMS",
+  "speakerDefault": "Calls default to speaker",
+  "speakerDefaultSubtitle": "Doesn't take effect when external devices are connected.",
+  "quickDeclineMessage": "Quick decline message",
+  "quickDeclineMessages": "Quick decline messages",
+  "quickDeclineHint": "Sent when you decline a call with a message",
+  "addMessage": "Add message",
+  "settingNotAvailable": "This phone doesn't have that setting",
+  "notDefaultApp": "Not your default phone app",
+  "notDefaultAppSubtitle": "Incoming calls use another app",
+  "notificationsOff": "Notifications are off",
+  "notificationsOffSubtitle": "You won't see incoming or missed calls",
+  "fullScreenOff": "Full-screen calls are off",
+  "fullScreenOffSubtitle": "Incoming calls only show as a notification",
+  "blockingPausedShort": "Another app screens your calls",
+  "bluetoothNamesHidden": "Bluetooth names hidden",
+  "bluetoothNamesHiddenSubtitle": "Calls can't tell your watch from your earbuds",
+  "fix": "Fix",
+  "callSettings": "Call settings",
+  "needsAttention": "Needs attention",
+  "callerIdentification": "Caller identification",
+  "callerIdSpamApp": "Caller ID & spam app",
+  "carrierSettings": "Carrier-related settings",
+  "moreSettings": "More settings",
+  "softwareUpdate": "Software update",
+  "helpFeedback": "Help & feedback",
+  "privacyPolicy": "Privacy policy",
+  "aboutOneDialer": "About One Dialer",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "openDetails": "Open details",
+  "writeInKeypad": "Write in keypad",
+  "twoCallButtons": "Two Call buttons",
+  "chooseSimAndCall": "Choose SIM and call",
+  "tapRecentCall": "Tap a recent call",
+  "chooseSimForCalls": "Choose SIM for calls",
+  "chooseSimSubtitle": "Dual SIM with no default SIM",
+  "appearance": "Appearance",
+  "reduceVisualEffects": "Reduce visual effects",
+  "reduceVisualEffectsSubtitle": "Less blur runs smoother on slower phones",
+  "appIcon": "App icon",
+  "appIconGlossy": "Glossy",
+  "appIconClassic": "Classic",
+  "appIconFootnote": "Changes both the Phone and Contacts icons. The launcher may take a few seconds, and icons on the home screen may need adding again from the app drawer.",
+  "callScreenEdgeGlow": "Call screen edge glow",
+  "darkModeEdgeGlow": "Dark mode edge glow",
+  "lightModeEdgeGlow": "Light mode edge glow",
+  "edgeGlowClassic": "Classic",
+  "edgeGlowSoft": "Soft",
+  "edgeGlowBold": "Bold",
+  "callsFromOtherApps": "Calls from other apps",
+  "callsFromOtherAppsSubtitle": "Show WhatsApp and other apps' calls in Recents",
+  "manageContactsSubtitle": "Display, save location, import and export, SIM, duplicates",
+  "googleContactsSync": "Google Contacts sync",
+  "googleContactsSyncSubtitle": "Which accounts sync, and backing up phone contacts",
+  "defaultApps": "Default apps",
+  "notifications": "Notifications",
+  "setupTitle": "Set One Dialer as your default phone app",
+  "setupBody": "Needed to make and answer calls, show your call history and contacts, and block numbers.",
+  "settingUp": "Setting up…",
+  "setupDisclosure": "One Dialer uses Phone to make and manage calls on your SIMs, Call history for Recents and missed calls, Contacts for names, photos and search, and Notifications for incoming, ongoing and missed calls. Your calls, call history and contacts never leave your phone. Crash reports (no personal data) help fix bugs.",
+  "@setupDisclosure": {
+    "description": "REVIEW: Google Play prominent disclosure: must match the privacy policy and Android's Italian permission names"
+  },
+  "installedDirectly": "Installed directly",
+  "anotherAppStore": "Another app store",
+  "aboutApp": "About {app}",
+  "@aboutApp": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "updateAvailable": "Update available",
+  "versionUpToDate": "Version up to date",
+  "checkForUpdates": "Check for updates",
+  "checking": "Checking…",
+  "version": "Version",
+  "build": "Build",
+  "installedFrom": "Installed from",
+  "device": "Device",
+  "androidVersion": "Android version",
+  "openSourceLicences": "Open source licences",
+  "changelog": "Changelog",
+  "installedOn": "Installed {date}",
+  "@installedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "earlierVersions": "Earlier versions",
+  "aboutThisUpdate": "About this update",
+  "reportLag": "Report lag",
+  "reportLagMessage": "Send recent performance timings, screen and action names, and device details to help find slowdowns. Phone numbers, contacts and messages are not included.",
+  "@reportLagMessage": {
+    "description": "REVIEW: Privacy wording: must stay accurate to what the report sends"
+  },
+  "sendReport": "Send report",
+  "reportUnavailable": "Reporting unavailable or recently requested. Try again in a minute.",
+  "reportQueued": "Report queued",
+  "reportQueuedMessage": "Your report is saved for upload when reporting is available. Share this ID with your feedback:\\n\\n{id}",
+  "@reportQueuedMessage": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "copyId": "Copy ID",
+  "reportIdCopied": "Report ID copied",
+  "noEmailApp": "No email app found",
+  "noBrowser": "No browser found",
+  "sendFeedback": "Send feedback",
+  "developer": "Developer",
+  "downloadStopped": "The download stopped. Try again when you're connected.",
+  "couldNotInstallUpdate": "Couldn't install the update. Try again.",
+  "updateCancelled": "Update cancelled. You can download it any time from here.",
+  "noInternet": "No internet connection. Connect and try again.",
+  "couldNotDownloadUpdate": "Couldn't download the update. Try again.",
+  "softwareInformation": "Software information",
+  "autoDownload": "Auto download",
+  "downloadAndInstall": "Download and install",
+  "installAndRestart": "Install and restart",
+  "tryAgain": "Try again",
+  "downloading": "Downloading…",
+  "noNetwork": "No network connection",
+  "notFromPlay": "Updates come from Google Play. This copy wasn't installed from Play.",
+  "couldNotReachPlay": "Couldn't reach Google Play",
+  "softwareVersion": "Software version",
+  "closedBeta": "Closed beta",
+  "newVersionAvailable": "A new version is available",
+  "autoDownloadExplainer": "When One Dialer checks Google Play for updates as you open it. Updates only install when you tap Download and install.",
+  "autoUpdateNeverSubtitle": "Only when you tap Check for updates",
+  "autoUpdateAlwaysSubtitle": "Checking uses very little data",
+  "autoUpdateNever": "Never",
+  "autoUpdateWifiOnly": "Using Wi-Fi only",
+  "autoUpdateAlways": "Using Wi-Fi or mobile data"
+}

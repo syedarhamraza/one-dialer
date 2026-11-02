@@ -2,20 +2,31 @@ import 'package:dialer/widgets/one_ui_radio.dart';
 import 'package:dialer/widgets/showcase_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dialer/l10n/app_localizations.dart';
 
 void main() {
   testWidgets('tapping an option picks it and moves the radio', (tester) async {
     final value = ValueNotifier('banner');
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: ShowcasePicker(
             value: value,
             onPick: (v) => value.value = v,
             footnote: 'Only while unlocked.',
             options: const [
-              ShowcaseOption(value: 'banner', label: 'Banner', preview: PhonePreview(child: SizedBox())),
-              ShowcaseOption(value: 'full', label: 'Full screen', preview: PhonePreview(child: SizedBox())),
+              ShowcaseOption(
+                value: 'banner',
+                label: 'Banner',
+                preview: PhonePreview(child: SizedBox()),
+              ),
+              ShowcaseOption(
+                value: 'full',
+                label: 'Full screen',
+                preview: PhonePreview(child: SizedBox()),
+              ),
             ],
           ),
         ),

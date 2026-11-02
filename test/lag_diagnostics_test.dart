@@ -7,6 +7,7 @@ import 'package:dialer/theme/one_ui_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dialer/l10n/app_localizations.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -91,7 +92,14 @@ void main() {
   });
 
   test('each category is recorded from its own function, so Crashlytics keeps them apart', () {
-    const categories = ['SevereFrameDelay', 'NativeMainStall', 'DartStall', 'RenderStall', 'InputStall', 'UserReportedLag'];
+    const categories = [
+      'SevereFrameDelay',
+      'NativeMainStall',
+      'DartStall',
+      'RenderStall',
+      'InputStall',
+      'UserReportedLag',
+    ];
     final tops = {for (final c in categories) LagDiagnostics.incidentTrace(c).toString().split('\n').first};
     expect(tops.length, categories.length);
     expect(LagDiagnostics.incidentTrace('RenderStall').toString(), contains('_renderStall'));
@@ -126,7 +134,14 @@ void main() {
   });
 
   testWidgets('report button explains data and cancel does not submit', (tester) async {
-    await tester.pumpWidget(MaterialApp(theme: OneUITheme.darkTheme, home: const HelpFeedbackScreen()));
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: OneUITheme.darkTheme,
+        home: const HelpFeedbackScreen(),
+      ),
+    );
     await tester.tap(find.text('Report lag'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Phone numbers, contacts and messages are not included.'), findsOneWidget);
@@ -139,7 +154,14 @@ void main() {
     pending = false;
     await tester.runAsync(() => LagDiagnostics.instance.start(engine: 'main', enabled: true));
     try {
-      await tester.pumpWidget(MaterialApp(theme: OneUITheme.darkTheme, home: const HelpFeedbackScreen()));
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: OneUITheme.darkTheme,
+          home: const HelpFeedbackScreen(),
+        ),
+      );
       await tester.tap(find.text('Report lag'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Send report'));
@@ -150,6 +172,8 @@ void main() {
       expect(calls.where((c) => c.method == 'report').length, 1);
       await tester.tap(find.text('Done'));
       await tester.pumpAndSettle();
-    } finally { LagDiagnostics.instance.dispose(); }
+    } finally {
+      LagDiagnostics.instance.dispose();
+    }
   });
 }

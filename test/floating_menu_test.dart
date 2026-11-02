@@ -2,6 +2,7 @@ import 'package:dialer/theme/one_ui_theme.dart';
 import 'package:dialer/widgets/one_ui_floating_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dialer/l10n/app_localizations.dart';
 
 void main() {
   // A button mid-screen, where a long menu fits neither above nor below.
@@ -13,6 +14,8 @@ void main() {
     final key = GlobalKey();
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: OneUITheme.darkTheme,
         home: Scaffold(
           body: Stack(

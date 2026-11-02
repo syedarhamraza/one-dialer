@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/telecom/telecom_bridge.dart';
+import '../../l10n/l10n.dart';
 import '../../widgets/cos_subpage.dart';
 import '../../widgets/showcase_picker.dart';
 
@@ -9,7 +10,10 @@ import '../../widgets/showcase_picker.dart';
 class AppIconScreen extends StatefulWidget {
   const AppIconScreen({super.key});
 
-  static const labels = {'default': 'Glossy', 'classic': 'Classic'};
+  static Map<String, String> labels(AppLocalizations l10n) => {
+    'default': l10n.appIconGlossy,
+    'classic': l10n.appIconClassic,
+  };
 
   @override
   State<AppIconScreen> createState() => _AppIconScreenState();
@@ -39,16 +43,14 @@ class _AppIconScreenState extends State<AppIconScreen> {
 
   @override
   Widget build(BuildContext context) => CosSubpage(
-    title: 'App icon',
+    title: context.l10n.appIcon,
     children: [
       ShowcasePicker(
         value: _style,
         onPick: _pick,
-        footnote:
-            'Changes both the Phone and Contacts icons. The launcher may take a few seconds, '
-            'and icons on the home screen may need adding again from the app drawer.',
+        footnote: context.l10n.appIconFootnote,
         options: [
-          for (final MapEntry(key: style, value: label) in AppIconScreen.labels.entries)
+          for (final MapEntry(key: style, value: label) in AppIconScreen.labels(context.l10n).entries)
             ShowcaseOption(
               value: style,
               label: label,
