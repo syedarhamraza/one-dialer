@@ -48,7 +48,8 @@ class GlowButton extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: busy ? null : onTap,
-        splashColor: Colors.white.withValues(alpha: 0.08),
+        // Unlit glass is white in light mode: press it dark.
+        splashColor: (lit ? Colors.white : context.palette.textPrimary).withValues(alpha: 0.08),
         highlightColor: Colors.transparent,
         child: SizedBox(
           width: width,

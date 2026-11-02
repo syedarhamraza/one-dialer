@@ -14,10 +14,12 @@ const double kMainGlassGlow = .6;
 /// strongly the body (wash, glow and lips) is drawn, and its 3D edges. Classic is the
 /// original look ([classicOpacity] per control); soft (the default) is half the glass, like
 /// ColorOS 17's Phone, with brighter edges; bold brightens and thickens them more.
-GlassLook mainGlass(BuildContext context, {double classicOpacity = 1}) => glassLook(
-  OneUIEffectsController.instance.glassStyle(light: context.palette.isLight),
-  classicOpacity: classicOpacity,
-);
+GlassLook mainGlass(BuildContext context, {double classicOpacity = 1}) {
+  final light = context.palette.isLight;
+  final look = glassLook(OneUIEffectsController.instance.glassStyle(light: light), classicOpacity: classicOpacity);
+  // Light glass is milky white at full strength: halved, it reads as a see-through grey.
+  return light && look.edges != GlassEdges.callScreen ? (opacity: 1, edges: look.edges) : look;
+}
 
 /// The connected call screen's control look for floating chrome: the backdrop blurred
 /// behind, the call body's milky wash, all-round edge glow and top lip, and its press

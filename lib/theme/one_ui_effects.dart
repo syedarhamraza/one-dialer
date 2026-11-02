@@ -88,11 +88,11 @@ class OneUIEffectsController extends ChangeNotifier {
   /// Effects off: solid One UI fills, no blur anywhere.
   bool get isOff => level == 'off';
 
-  /// Below full effects, glass is OneSpend's flat One UI fill (light mode: flat grey, with no
+  /// Below full effects, glass is OneSpend's flat One UI fill (light mode: flat white, with no
   /// shadows): translucent over a blur when reduced (every blur on a page sharing one backdrop
   /// read), solid when off.
   Color oneUIFill({required bool light}) {
-    final fill = light ? OneUIPalette.light.pill.withValues(alpha: .8) : floatingColor;
+    final fill = light ? OneUIPalette.light.card.withValues(alpha: .8) : floatingColor;
     return isOff ? fill.withValues(alpha: 1) : fill;
   }
 

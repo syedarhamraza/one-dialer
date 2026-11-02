@@ -140,7 +140,7 @@ class OneUIPalette {
   /// one that defines its edge on a white page.
   static const lightGlassShadow = [
     BoxShadow(color: Color(0x12000000), blurRadius: 24, offset: Offset(0, 6)),
-    BoxShadow(color: Color(0x0A000000), blurRadius: 6, offset: Offset(0, 1)),
+    BoxShadow(color: Color(0x10000000), blurRadius: 6, offset: Offset(0, 1)),
   ];
 
   /// Deeper for menus, which open over white cards as often as over the grey page.
@@ -176,13 +176,13 @@ class OneUIPalette {
 
   /// ColorOS 17 light: grey page, white cards, black text.
   static const light = OneUIPalette._(
-    page: Color(0xFFE9E9EE),
+    page: Color(0xFFF2F3F5),
     card: Color(0xFFFFFFFF),
     cardHighlight: Color(0xFFF0F0F3),
     pill: Color(0xFFF5F5F8),
     textPrimary: Color(0xFF000000),
-    textSecondary: Color(0xFF6E6E73),
-    textTertiary: Color(0xFFA1A1A6),
+    textSecondary: Color(0xFF5E5E63),
+    textTertiary: Color(0xFF8E8E93),
     sectionHeader: Color(0xFF3C3C43),
     divider: Color(0x1A000000),
     pillActive: Color(0xFFFFFFFF),

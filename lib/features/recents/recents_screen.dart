@@ -714,8 +714,8 @@ class _CallRow extends StatelessWidget {
     final row = InkWell(
       onTap: onTap,
       onLongPress: onLongPress,
-      splashColor: Colors.white.withValues(alpha: 0.06),
-      highlightColor: Colors.white.withValues(alpha: 0.03),
+      splashColor: context.palette.textPrimary.withValues(alpha: 0.06),
+      highlightColor: context.palette.textPrimary.withValues(alpha: 0.03),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 10, 8, 10),
         child: Row(
