@@ -715,7 +715,6 @@
   "navBarGlass": "Glass effect",
   "navGlassPremium": "Full refraction",
   "navGlassStandard": "Light",
-  "navGlassMinimal": "Blur only",
   "callsFromOtherApps": "Calls from other apps",
   "callsFromOtherAppsSubtitle": "Show WhatsApp and other apps' calls in Recents",
   "manageContactsSubtitle": "Display, save location, import and export, SIM, duplicates",

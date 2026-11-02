@@ -2378,12 +2378,6 @@ abstract class AppLocalizations {
   /// **'Light'**
   String get navGlassStandard;
 
-  /// No description provided for @navGlassMinimal.
-  ///
-  /// In en, this message translates to:
-  /// **'Blur only'**
-  String get navGlassMinimal;
-
   /// No description provided for @callsFromOtherApps.
   ///
   /// In en, this message translates to:

@@ -87,7 +87,6 @@ class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
                     labels: {
                       'premium': context.l10n.navGlassPremium,
                       'standard': context.l10n.navGlassStandard,
-                      'minimal': context.l10n.navGlassMinimal,
                     },
                     onPick: prefs.setNavGlass,
                   ),

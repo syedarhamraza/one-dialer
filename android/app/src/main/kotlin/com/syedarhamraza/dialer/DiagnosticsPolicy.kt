@@ -30,7 +30,7 @@ internal class DiagnosticsPolicy {
                 "glassDark" to setOf("classic", "soft", "bold"),
                 "callGlass" to setOf("classic", "soft", "bold"),
                 "navStyle" to setOf("frosted", "liquid"),
-                "navGlass" to setOf("premium", "standard", "minimal"),
+                "navGlass" to setOf("premium", "standard"),
             )
             for ((key, levels) in allowed) {
                 (values[key] as? String)?.takeIf { it in levels }?.let { result[key] = it }

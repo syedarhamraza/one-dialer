@@ -174,8 +174,8 @@ class DialerPrefs {
   /// (the glass package's `GlassTabBar`).
   final navStyle = ValueNotifier('frosted');
 
-  /// Settings › "Glass effect", for the `liquid` nav bar: a `GlassQuality` name (`premium`,
-  /// `standard` or `minimal`).
+  /// Settings › "Glass effect", for the `liquid` nav bar: a `GlassQuality` name, `premium`
+  /// or `standard`.
   final navGlass = ValueNotifier('premium');
 
   /// Awaited before the first frame, so the app doesn't open dark and then turn light, or
@@ -191,7 +191,7 @@ class DialerPrefs {
     final nav = await _prefs.getString('nav_style');
     if (nav == 'frosted' || nav == 'liquid') navStyle.value = nav!;
     final navEffect = await _prefs.getString('nav_glass');
-    if (navEffect == 'premium' || navEffect == 'standard' || navEffect == 'minimal') navGlass.value = navEffect!;
+    if (navEffect == 'premium' || navEffect == 'standard') navGlass.value = navEffect!;
   }
 
   /// Settings › Language: `system` or a language tag. Kept natively (`AppLanguage.kt`), where

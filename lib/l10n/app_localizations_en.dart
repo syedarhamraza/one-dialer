@@ -1353,9 +1353,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navGlassStandard => 'Light';
 
   @override
-  String get navGlassMinimal => 'Blur only';
-
-  @override
   String get callsFromOtherApps => 'Calls from other apps';
 
   @override
