@@ -1349,6 +1349,27 @@ class AppLocalizationsIt extends AppLocalizations {
   String get edgeGlowBold => 'Intenso';
 
   @override
+  String get navBarStyle => 'Stile barra di navigazione';
+
+  @override
+  String get navBarFrosted => 'Smerigliato';
+
+  @override
+  String get navBarLiquid => 'Vetro liquido';
+
+  @override
+  String get navBarGlass => 'Effetto vetro';
+
+  @override
+  String get navGlassPremium => 'Rifrazione completa';
+
+  @override
+  String get navGlassStandard => 'Leggero';
+
+  @override
+  String get navGlassMinimal => 'Solo sfocatura';
+
+  @override
   String get callsFromOtherApps => 'Chiamate da altre app';
 
   @override

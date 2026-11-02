@@ -56,3 +56,5 @@ Run it three times per phone and compare the median of each number. Read it like
 ## Results
 
 No device numbers have been recorded yet. Add each phone's medians here (device, refresh rate, Android version, level, Calls scroll raster p90/p95, janky frames).
+
+Nav bar style › Liquid glass (Full effects only) draws the glass package's `GlassTabBar` instead of our call glass pill. Its Full refraction effect (`GlassQuality.premium`) is a multi-pass shader with its own backdrop read every frame; Light (`standard`) is one lightweight shader, Blur only (`minimal`) a `BackdropFilter`. It's the user's opt-in, off by default: judge it in a `--profile` build on the Snapdragon phone.

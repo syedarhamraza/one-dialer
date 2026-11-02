@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
+import '../core/prefs/dialer_prefs.dart';
 import '../theme/one_ui_theme.dart';
 import 'call_glass.dart';
 import 'one_ui_morph_switcher.dart';
@@ -81,7 +83,19 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
                   ),
                 ),
               ),
-              RepaintBoundary(child: _pill(docked, reduceMotion)),
+              RepaintBoundary(
+                child: ListenableBuilder(
+                  listenable: Listenable.merge([
+                    DialerPrefs.instance.navStyle,
+                    DialerPrefs.instance.navGlass,
+                    OneUIEffectsController.instance,
+                  ]),
+                  builder: (context, _) =>
+                      DialerPrefs.instance.navStyle.value == 'liquid' && OneUIEffectsController.instance.isFull
+                      ? _liquidPill(docked, reduceMotion)
+                      : _pill(docked, reduceMotion),
+                ),
+              ),
               SizedBox(
                 width: _slot,
                 child: Align(
@@ -116,6 +130,59 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
               ? KeyedSubtree(key: const ValueKey('docked'), child: docked)
               : KeyedSubtree(key: const ValueKey('tabs'), child: _buildTabs(context, reduceMotion)),
         ),
+      ),
+    );
+  }
+
+  /// Settings › Nav bar style › Liquid glass: the glass package's tab bar. A tab's docked
+  /// actions get a glass pill of the same material; the two hand over with the package's
+  /// materialize (GlassTabBar can't host other content, so it can't stretch into them).
+  Widget _liquidPill(Widget? docked, bool reduceMotion) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final settings = dark ? LiquidGlassSettings.ios27Dark : LiquidGlassSettings.ios27Light;
+    final quality = GlassQuality.values.byName(DialerPrefs.instance.navGlass.value);
+    final palette = context.palette;
+    final items = widget.items;
+    final duration = reduceMotion ? Duration.zero : const Duration(milliseconds: 350);
+    return AnimatedSize(
+      duration: duration,
+      curve: const _SpringCurve(),
+      child: AnimatedSwitcher(
+        duration: duration,
+        transitionBuilder: GlassMaterializeTransition.switcherBuilder,
+        child: docked != null
+            ? GlassContainer(
+                key: const ValueKey('docked'),
+                height: OneUIFloatingNavBar._barHeight,
+                shape: const LiquidRoundedSuperellipse(borderRadius: OneUIFloatingNavBar._barHeight / 2),
+                settings: settings,
+                quality: quality,
+                useOwnLayer: true,
+                child: docked,
+              )
+            : SizedBox(
+                key: const ValueKey('tabs'),
+                width: items.length * 96,
+                child: GlassTabBar.bottom(
+                  tabs: [
+                    for (final item in items)
+                      GlassTab(icon: Icon(item.inactiveIcon), activeIcon: Icon(item.activeIcon), label: item.label),
+                  ],
+                  selectedIndex: widget.currentIndex,
+                  onTabSelected: widget.onTap,
+                  barHeight: OneUIFloatingNavBar._barHeight,
+                  horizontalPadding: 0,
+                  verticalPadding: 0,
+                  settings: settings,
+                  quality: quality,
+                  iconSize: 26,
+                  labelFontSize: 12,
+                  selectedIconColor: palette.textPrimary,
+                  selectedLabelColor: palette.textPrimary,
+                  unselectedIconColor: palette.textSecondary,
+                  unselectedLabelColor: palette.textSecondary,
+                ),
+              ),
       ),
     );
   }
