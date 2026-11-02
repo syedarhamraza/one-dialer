@@ -359,7 +359,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             ),
           ),
         _ValueRow(
-          icon: Icons.notifications_none_rounded,
+          icon: Icons.notifications_none_outlined,
           value: context.l10n.ringtone,
           onTap: () => ContactActions.changeRingtone(contact.id),
         ),
@@ -627,15 +627,21 @@ class _ValueRow extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // As tall as the title's line, so the icon sits level with the title, not the caption.
             if (numberRow)
-              SizedBox(width: 40, child: !showIcon ? null : leading ?? (icon == null ? null : Icon(icon, size: 24))),
+              SizedBox(
+                width: 40,
+                height: MediaQuery.textScalerOf(context).scale(19) * 1.3,
+                child: !showIcon ? null : leading ?? (icon == null ? null : Icon(icon, size: 22)),
+              ),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (!numberRow && caption != null) ...[caption, const SizedBox(height: 2)],
-                  Text(value, style: const TextStyle(fontSize: 19)),
+                  Text(value, style: const TextStyle(fontSize: 19, height: 1.3)),
                   if (numberRow && caption != null) ...[const SizedBox(height: 2), caption],
                 ],
               ),
