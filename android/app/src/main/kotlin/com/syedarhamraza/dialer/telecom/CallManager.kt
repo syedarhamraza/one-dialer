@@ -33,6 +33,9 @@ object CallManager {
 
         override fun onDetailsChanged(call: Call, details: Call.Details) = notifyChanged()
         override fun onChildrenChanged(call: Call, children: List<Call>) = notifyChanged()
+
+        // Telecom says which calls can merge here, often after the second call connects.
+        override fun onConferenceableCallsChanged(call: Call, conferenceableCalls: List<Call>) = notifyChanged()
     }
 
     val hasCalls: Boolean get() = calls.isNotEmpty()
