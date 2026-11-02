@@ -22,7 +22,8 @@ class DialerApp extends StatelessWidget {
     const transitions = PageTransitionsTheme(builders: {TargetPlatform.android: _GroupedSlide()});
     final prefs = DialerPrefs.instance;
     return ListenableBuilder(
-      listenable: Listenable.merge([prefs.themeMode, prefs.language]),
+      // The effects level too: light mode's page colours follow it (OneUITheme.lightTheme).
+      listenable: Listenable.merge([prefs.themeMode, prefs.language, prefs.visualEffects]),
       builder: (context, _) => MaterialApp(
         title: 'One Dialer',
         locale: appLocale(prefs.language.value),

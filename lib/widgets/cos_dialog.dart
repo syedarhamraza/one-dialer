@@ -100,6 +100,10 @@ final _spring = GlassSpringCurve(
   const Duration(milliseconds: 400),
 );
 
+/// Light mode below full effects keeps the original flat One UI alert: a white card, smaller
+/// corners and text, and the darker dim.
+bool _flat(BuildContext context) => identical(context.palette, OneUIPalette.lightFlat);
+
 /// Shows [content] in the alerts' card, for popups that aren't plain alerts (the contact QR).
 Future<T?> showCosCard<T>(BuildContext context, WidgetBuilder content) {
   HapticFeedback.lightImpact();
@@ -108,7 +112,7 @@ Future<T?> showCosCard<T>(BuildContext context, WidgetBuilder content) {
       opaque: false,
       barrierDismissible: true,
       // ColorOS 17 dims a light page only lightly; the card's shadow lifts it.
-      barrierColor: context.palette.isLight ? const Color(0x4D000000) : Colors.black54,
+      barrierColor: identical(context.palette, OneUIPalette.light) ? const Color(0x4D000000) : Colors.black54,
       barrierLabel: context.l10n.dismiss,
       transitionDuration: const Duration(milliseconds: 400),
       reverseTransitionDuration: const Duration(milliseconds: 170),
@@ -129,7 +133,12 @@ class _Frame extends StatelessWidget {
 
   /// ColorOS 17's alert card: light grey (white glass pills vanish on white) brightening toward
   /// the top, with a bright rim and a soft shadow; in dark, the card grey with a faint rim.
-  static ShapeDecoration _card(OneUIPalette palette) => palette.isLight
+  static ShapeDecoration _card(OneUIPalette palette) => identical(palette, OneUIPalette.lightFlat)
+      ? ShapeDecoration(
+          color: palette.card,
+          shape: const RoundedSuperellipseBorder(borderRadius: BorderRadius.all(Radius.circular(28))),
+        )
+      : palette.isLight
       ? ShapeDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -147,6 +156,7 @@ class _Frame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final still = MediaQuery.disableAnimationsOf(context);
+    final flat = _flat(context);
     return Padding(
       // Rides above the keyboard while typing.
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
@@ -154,7 +164,7 @@ class _Frame extends StatelessWidget {
         child: Align(
           alignment: Alignment.bottomCenter,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            padding: flat ? const EdgeInsets.fromLTRB(16, 0, 16, 16) : const EdgeInsets.fromLTRB(12, 0, 12, 12),
             child: AnimatedBuilder(
               animation: animation,
               builder: (context, child) {
@@ -174,7 +184,7 @@ class _Frame extends StatelessWidget {
                 decoration: _card(context.palette),
                 child: Material(
                   type: MaterialType.transparency,
-                  child: Padding(padding: const EdgeInsets.fromLTRB(20, 30, 20, 20), child: child),
+                  child: Padding(padding: EdgeInsets.fromLTRB(20, flat ? 28 : 30, 20, 20), child: child),
                 ),
               ),
             ),
@@ -192,33 +202,31 @@ class _Texts extends StatelessWidget {
   final String message;
 
   @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      if (title != null) ...[
+  Widget build(BuildContext context) {
+    final flat = _flat(context);
+    return Column(
+      children: [
+        if (title != null) ...[
+          Text(title!, textAlign: TextAlign.center, style: _titleStyle(context)),
+          SizedBox(height: flat ? 8 : 10),
+        ],
         Text(
-          title!,
+          message,
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.2,
-            color: context.palette.textPrimary,
+            fontSize: title == null ? 18 : (flat ? 15.5 : 15),
+            height: flat ? 1.35 : 1.4,
+            color: title == null ? context.palette.textPrimary : context.palette.textSecondary,
           ),
         ),
-        const SizedBox(height: 10),
       ],
-      Text(
-        message,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: title == null ? 18 : 15,
-          height: 1.4,
-          color: title == null ? context.palette.textPrimary : context.palette.textSecondary,
-        ),
-      ),
-    ],
-  );
+    );
+  }
 }
+
+TextStyle _titleStyle(BuildContext context) => _flat(context)
+    ? TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: context.palette.textPrimary)
+    : TextStyle(fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.2, color: context.palette.textPrimary);
 
 /// An alert button in the app's own style: a frosted call-glass pill like the header and
 /// nav buttons (it carries the press); red text when it destroys something.
@@ -296,22 +304,13 @@ class _TextInputState extends State<_TextInput> {
     mainAxisSize: MainAxisSize.min,
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      Text(
-        widget.title,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
-          letterSpacing: -0.2,
-          color: context.palette.textPrimary,
-        ),
-      ),
+      Text(widget.title, textAlign: TextAlign.center, style: _titleStyle(context)),
       const SizedBox(height: 18),
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 18),
         decoration: ShapeDecoration(
           // White on the light card's grey.
-          color: context.palette.isLight ? context.palette.card : context.palette.pill,
+          color: identical(context.palette, OneUIPalette.light) ? context.palette.card : context.palette.pill,
           shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.all(Radius.circular(18))),
         ),
         child: TextField(
