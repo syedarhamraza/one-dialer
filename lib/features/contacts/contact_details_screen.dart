@@ -486,7 +486,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   Expanded(
                     child: Text(
                       context.l10n.callLogs,
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: context.palette.textSecondary),
+                      style: TextStyle(fontSize: 15, color: context.palette.textSecondary),
                     ),
                   ),
                   TextButton(
@@ -497,7 +497,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(context.l10n.viewAll, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                        // The button's own label style is medium weight; match the plain "Call logs".
+                        Text(context.l10n.viewAll, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400)),
                         const Icon(Icons.chevron_right_rounded, size: 20),
                       ],
                     ),
