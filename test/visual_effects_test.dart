@@ -6,6 +6,7 @@ import 'package:dialer/widgets/one_ui_glass_surface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dialer/l10n/app_localizations.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
@@ -124,6 +125,8 @@ void main() {
   testWidgets('glass switches live: call glass, One UI fill over a blur, then solid', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: OneUITheme.darkTheme,
         home: BackdropGroup(
           child: Column(
@@ -166,6 +169,8 @@ void main() {
   testWidgets('the call screen follows its own setting, live', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: OneUITheme.darkTheme,
         home: CallEffects(
           child: const SizedBox.square(dimension: 60, child: CallFrost(radius: null, child: SizedBox())),

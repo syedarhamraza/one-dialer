@@ -9,6 +9,7 @@ import '../../widgets/showcase_picker.dart';
 import '../in_call/call_controls.dart' show answerGreen, endRed;
 import '../in_call/incoming_controls.dart' show ArcHint, oneButtonWhite;
 import 'quick_replies_screen.dart';
+import '../../l10n/l10n.dart';
 
 /// The native call settings (`CallPrefs.kt`) as notifiers, read once when a page opens.
 class _CallSettings {
@@ -48,7 +49,17 @@ class _CallSettings {
 }
 
 /// Settings' effect levels, for Reduce visual effects and Call screen effects.
-const effectsLabels = {'full': 'Full effects', 'reduced': 'Reduced effects', 'off': 'Effects off'};
+Map<String, String> edgeGlowLabels(AppLocalizations l10n) => {
+  'classic': l10n.edgeGlowClassic,
+  'soft': l10n.edgeGlowSoft,
+  'bold': l10n.edgeGlowBold,
+};
+
+Map<String, String> effectsLabels(AppLocalizations l10n) => {
+  'full': l10n.effectsFull,
+  'reduced': l10n.effectsReduced,
+  'off': l10n.effectsOff,
+};
 
 /// Decline and Answer at the bottom of a [PhonePreview], each under its swipe arc.
 const _callButtons = Positioned(
@@ -110,7 +121,11 @@ class _IncomingCallRemindersScreenState extends State<IncomingCallRemindersScree
   final _settings = _CallSettings();
   final _announceKey = GlobalKey();
 
-  static const _announce = {'off': 'Off', 'always': 'Always', 'headset': 'Only with headphones'};
+  static Map<String, String> _announce(AppLocalizations l10n) => {
+    'off': l10n.off,
+    'always': l10n.always,
+    'headset': l10n.onlyWithHeadphones,
+  };
 
   @override
   void dispose() {
@@ -121,16 +136,16 @@ class _IncomingCallRemindersScreenState extends State<IncomingCallRemindersScree
   @override
   Widget build(BuildContext context) {
     return CosSubpage(
-      title: 'Incoming call reminders',
+      title: context.l10n.incomingCallReminders,
       children: [
         ShowcasePicker(
           value: _settings.incomingStyle,
           onPick: (v) => _settings.set(_settings.incomingStyle, 'incomingStyle', v),
-          footnote: 'Applies only to incoming calls received when your device is unlocked.',
+          footnote: context.l10n.incomingFootnote,
           options: [
             ShowcaseOption(
               value: 'banner',
-              label: 'Banner',
+              label: context.l10n.banner,
               preview: PhonePreview(
                 showCaller: false,
                 child: Align(
@@ -161,10 +176,10 @@ class _IncomingCallRemindersScreenState extends State<IncomingCallRemindersScree
                 ),
               ),
             ),
-            const ShowcaseOption(
+            ShowcaseOption(
               value: 'full',
-              label: 'Full screen',
-              preview: PhonePreview(child: Stack(children: [_callButtons])),
+              label: context.l10n.fullScreen,
+              preview: const PhonePreview(child: Stack(children: [_callButtons])),
             ),
           ],
         ),
@@ -172,11 +187,11 @@ class _IncomingCallRemindersScreenState extends State<IncomingCallRemindersScree
           items: [
             choiceRow(
               context,
-              title: 'Announce incoming calls',
-              subtitle: "Says the caller's name while it rings",
+              title: context.l10n.announceCalls,
+              subtitle: context.l10n.announceCallsSubtitle,
               anchor: _announceKey,
               value: _settings.announce,
-              labels: _announce,
+              labels: _announce(context.l10n),
               onPick: (v) => _settings.set(_settings.announce, 'announceCalls', v),
             ),
           ],
@@ -198,28 +213,30 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
   final _directionKey = GlobalKey();
   final _effectsKey = GlobalKey();
   final _glassKey = GlobalKey();
-  static const _glassStyles = {'classic': 'Classic', 'soft': 'Soft', 'bold': 'Bold'};
 
-  static const _directions = {'up': 'Swipe up to answer', 'down': 'Swipe down to answer'};
+  static Map<String, String> _directions(AppLocalizations l10n) => {
+    'up': l10n.swipeUpToAnswer,
+    'down': l10n.swipeDownToAnswer,
+  };
 
   @override
   Widget build(BuildContext context) {
     final prefs = DialerPrefs.instance;
     return CosSubpage(
-      title: 'Answer buttons',
+      title: context.l10n.answerButtons,
       children: [
         ShowcasePicker(
           value: DialerPrefs.instance.answerStyle,
           onPick: DialerPrefs.instance.setAnswerStyle,
           options: [
-            const ShowcaseOption(
+            ShowcaseOption(
               value: 'two',
-              label: '2 buttons',
-              preview: PhonePreview(child: Stack(children: [_callButtons])),
+              label: context.l10n.twoButtons,
+              preview: const PhonePreview(child: Stack(children: [_callButtons])),
             ),
             ShowcaseOption(
               value: 'one',
-              label: '1 button',
+              label: context.l10n.oneButton,
               // Follows Answer call: the green arc is on the answering side.
               preview: PhonePreview(
                 child: ValueListenableBuilder(
@@ -251,29 +268,29 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
               if (prefs.answerStyle.value == 'one')
                 choiceRow(
                   context,
-                  title: 'Answer call',
+                  title: context.l10n.answerCall,
                   anchor: _directionKey,
                   value: prefs.answerDirection,
-                  labels: _directions,
+                  labels: _directions(context.l10n),
                   onPick: prefs.setAnswerDirection,
                 ),
               choiceRow(
                 context,
-                title: 'Call screen effects',
-                subtitle: 'Glass and glow on the call screen',
+                title: context.l10n.callScreenEffects,
+                subtitle: context.l10n.callScreenEffectsSubtitle,
                 anchor: _effectsKey,
                 value: prefs.callEffects,
-                labels: effectsLabels,
+                labels: effectsLabels(context.l10n),
                 onPick: prefs.setCallEffects,
               ),
               // Styles the full-effects glass only.
               if (prefs.callEffects.value == 'full')
                 choiceRow(
                   context,
-                  title: 'Call screen edge glow',
+                  title: context.l10n.callScreenEdgeGlow,
                   anchor: _glassKey,
                   value: prefs.callGlass,
-                  labels: _glassStyles,
+                  labels: edgeGlowLabels(context.l10n),
                   onPick: prefs.setCallGlass,
                 ),
             ],
@@ -296,7 +313,9 @@ class _AnswerEndCallsScreenState extends State<AnswerEndCallsScreen> {
   final _settings = _CallSettings();
   final _delayKey = GlobalKey();
 
-  static const _delays = {'3': '3 seconds', '5': '5 seconds', '10': '10 seconds'};
+  static Map<String, String> _delays(AppLocalizations l10n) => {
+    for (final s in [3, 5, 10]) '$s': l10n.secondsCount(s),
+  };
 
   @override
   void dispose() {
@@ -308,16 +327,10 @@ class _AnswerEndCallsScreenState extends State<AnswerEndCallsScreen> {
   Widget build(BuildContext context) {
     final s = _settings;
     return CosSubpage(
-      title: 'Answer/End calls',
+      title: context.l10n.answerEndCalls,
       children: [
         OneUIGroupCard(
-          items: [
-            switchRow(
-              'Vibrate when your calls are answered/ended',
-              s.vibrate,
-              (v) => s.set(s.vibrate, 'vibrateAnswerEnd', v),
-            ),
-          ],
+          items: [switchRow(context.l10n.vibrateAnswerEnd, s.vibrate, (v) => s.set(s.vibrate, 'vibrateAnswerEnd', v))],
         ),
         // Delay only matters while auto-answer is on, so it shows only then.
         ValueListenableBuilder(
@@ -325,18 +338,18 @@ class _AnswerEndCallsScreenState extends State<AnswerEndCallsScreen> {
           builder: (context, auto, _) => OneUIGroupCard(
             items: [
               switchRow(
-                'Auto-answer calls when connected to external audio device',
+                context.l10n.autoAnswer,
                 s.autoAnswer,
                 (v) => s.set(s.autoAnswer, 'autoAnswer', v),
-                subtitle: 'Includes Bluetooth and wired headphones',
+                subtitle: context.l10n.autoAnswerSubtitle,
               ),
               if (auto)
                 choiceRow(
                   context,
-                  title: 'Delay auto answer',
+                  title: context.l10n.autoAnswerDelay,
                   anchor: _delayKey,
                   value: s.delay,
-                  labels: _delays,
+                  labels: _delays(context.l10n),
                   onPick: (v) {
                     s.delay.value = v;
                     TelecomBridge.instance.setCallSetting('autoAnswerDelay', int.parse(v));
@@ -348,15 +361,15 @@ class _AnswerEndCallsScreenState extends State<AnswerEndCallsScreen> {
         OneUIGroupCard(
           items: [
             OneUIGroupItem(
-              title: 'Reply with SMS',
+              title: context.l10n.replyWithSms,
               onTap: () =>
                   Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const QuickRepliesScreen())),
             ),
             switchRow(
-              'Calls default to speaker',
+              context.l10n.speakerDefault,
               s.speaker,
               (v) => s.set(s.speaker, 'speakerDefault', v),
-              subtitle: "Doesn't take effect when external devices are connected.",
+              subtitle: context.l10n.speakerDefaultSubtitle,
             ),
           ],
         ),

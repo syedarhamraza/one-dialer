@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.telecom.Conference
 import android.telecom.Connection
 import android.telecom.ConnectionRequest
 import android.telecom.ConnectionService
@@ -39,6 +40,8 @@ class FakeCallService : ConnectionService() {
                 Connection.CAPABILITY_MUTE
             setInitializing()
             setRinging()
+            live += this
+            linkConferenceable()
         }
     }
 
@@ -46,7 +49,40 @@ class FakeCallService : ConnectionService() {
         Log.w(TAG, "Telecom rejected the fake incoming call (is the account enabled?)")
     }
 
-    private class FakeConnection : Connection() {
+    // Two test calls can merge, so the call screen's Merge and conference look can be tested.
+    private val live = mutableListOf<FakeConnection>()
+
+    private fun linkConferenceable() =
+        live.forEach { c -> c.setConferenceableConnections(live.filter { it !== c && it.conference == null }) }
+
+    override fun onConference(a: Connection, b: Connection) {
+        addConference(FakeConference(handle(this)).apply {
+            addConnection(a)
+            addConnection(b)
+            setActive()
+        })
+        a.setActive()
+        b.setActive()
+        linkConferenceable()
+    }
+
+    // shortcut: no Separate, and a conference left with one call stays a conference; enough to see the look.
+    private class FakeConference(handle: PhoneAccountHandle) : Conference(handle) {
+        init {
+            connectionCapabilities = Connection.CAPABILITY_HOLD or Connection.CAPABILITY_SUPPORT_HOLD or
+                Connection.CAPABILITY_MUTE
+        }
+
+        override fun onDisconnect() {
+            connections.toList().forEach { it.onDisconnect() }
+            setDisconnected(DisconnectCause(DisconnectCause.LOCAL))
+            destroy()
+        }
+        override fun onHold() = setOnHold()
+        override fun onUnhold() = setActive()
+    }
+
+    private inner class FakeConnection : Connection() {
         override fun onAnswer() = setActive()
         override fun onAnswer(videoState: Int) = setActive()
         override fun onReject() = end(DisconnectCause.REJECTED)
@@ -62,6 +98,8 @@ class FakeCallService : ConnectionService() {
         private fun end(cause: Int) {
             setDisconnected(DisconnectCause(cause))
             destroy()
+            live -= this
+            linkConferenceable()
         }
     }
 

@@ -26,6 +26,7 @@ import 'contact_actions.dart';
 import 'contact_subpages.dart';
 import 'editor/contact_editor_screen.dart';
 import 'editor/contact_form.dart' show labelDisplay, labelText;
+import '../../l10n/l10n.dart';
 
 /// ColorOS-style contact page in the Calls look: round glass Back / Favourite / Edit / More
 /// buttons over a big avatar and name, Call and Message tiles, the numbers and ringtone,
@@ -75,7 +76,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       _simId = simId;
       _apps = apps;
       // Where it's stored, e.g. "Google · WhatsApp".
-      _storage = {for (final r in raw) accountApp(r['accountType'] as String?)}.join(' · ');
+      _storage = {for (final r in raw) accountApp(context.l10n, r['accountType'] as String?)}.join(' · ');
     });
     await _loadFull();
   }
@@ -108,14 +109,17 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     width: 230,
     items: [
       OneUIFloatingMenuItem(
-        label: 'vCard file (VCF)',
+        label: context.l10n.shareVcf,
         onTap: () {
-          if (_full != null) ContactActions.shareVCard(_full!);
+          if (_full != null) ContactActions.shareVCard(context.l10n, _full!);
         },
       ),
-      OneUIFloatingMenuItem(label: 'Text', onTap: () => ContactActions.shareText(contact)),
       OneUIFloatingMenuItem(
-        label: 'QR code',
+        label: context.l10n.shareText,
+        onTap: () => ContactActions.shareText(context.l10n, contact),
+      ),
+      OneUIFloatingMenuItem(
+        label: context.l10n.qrCode,
         onTap: () {
           if (_full != null) ContactActions.showQr(context, _full!);
         },
@@ -131,9 +135,9 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       anchorKey: _moreKey,
       width: 270,
       items: [
-        OneUIFloatingMenuItem(label: 'Share', onTap: () => _share(contact)),
+        OneUIFloatingMenuItem(label: context.l10n.share, onTap: () => _share(contact)),
         OneUIFloatingMenuItem(
-          label: blocked ? 'Unblock contact' : 'Block contact',
+          label: blocked ? context.l10n.unblockContact : context.l10n.blockContact,
           onTap: () async {
             for (final n in contact.numbers) {
               await blocking.setBlocked(n, !blocked);
@@ -141,7 +145,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           },
         ),
         OneUIFloatingMenuItem(
-          label: 'Delete',
+          label: context.l10n.delete,
           onTap: () async {
             if (await ContactActions.delete(context, contact.id, contact.name) && mounted) Navigator.of(context).pop();
           },
@@ -160,7 +164,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       anchorKey: _simRowKey,
       width: 240,
       items: [
-        for (final (id, label) in [(null, 'Ask every time'), for (final s in _sims) (s.id, s.label)])
+        for (final (id, label) in [(null, context.l10n.askEveryTime), for (final s in _sims) (s.id, s.label)])
           OneUIFloatingMenuItem(
             label: label,
             icon: id == _simId ? Icons.radio_button_checked_rounded : Icons.radio_button_unchecked_rounded,
@@ -191,14 +195,14 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             body: Stack(
               children: [
                 Center(
-                  child: Text('Contact not found', style: TextStyle(color: context.palette.textSecondary)),
+                  child: Text(context.l10n.contactNotFound, style: TextStyle(color: context.palette.textSecondary)),
                 ),
                 Positioned(
                   left: 16,
                   top: MediaQuery.paddingOf(context).top + 8,
                   child: RoundIconButton(
                     icon: Icons.arrow_back_rounded,
-                    tooltip: 'Back',
+                    tooltip: context.l10n.back,
                     onTap: () => Navigator.of(context).maybePop(),
                   ),
                 ),
@@ -239,14 +243,14 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                         child: DetailsActionTile(
                           key: _callTileKey,
                           icon: Icons.call_rounded,
-                          label: 'Call',
+                          label: context.l10n.call,
                           onTap: () => _call(primary, _callTileKey),
                         ),
                       ),
                       Expanded(
                         child: DetailsActionTile(
                           icon: Icons.chat_bubble_rounded,
-                          label: 'Message',
+                          label: context.l10n.message,
                           onTap: () => _bridge.sendSms(primary),
                         ),
                       ),
@@ -254,7 +258,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                       Expanded(
                         child: DetailsActionTile(
                           icon: Icons.videocam_rounded,
-                          label: 'Video',
+                          label: context.l10n.video,
                           onTap: switch (_meet) {
                             final meet? => () => _openApp(meet),
                             null => null,
@@ -281,14 +285,14 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   children: [
                     RoundIconButton(
                       icon: Icons.arrow_back_rounded,
-                      tooltip: 'Back',
+                      tooltip: context.l10n.back,
                       onTap: () => Navigator.of(context).maybePop(),
                     ),
                     const Spacer(),
                     // RoundIconButton with an orange star when it's a favourite.
                     CallGlass(
                       child: IconButton(
-                        tooltip: contact.isFavorite ? 'Remove from favourites' : 'Add to favourites',
+                        tooltip: contact.isFavorite ? context.l10n.removeFromFavourites : context.l10n.addToFavourites,
                         onPressed: () => repo.setFavorite(contact.id, !contact.isFavorite),
                         style: IconButton.styleFrom(
                           foregroundColor: contact.isFavorite ? const Color(0xFFF7A93B) : context.palette.textPrimary,
@@ -301,7 +305,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                     const SizedBox(width: 8),
                     RoundIconButton(
                       icon: Icons.edit_outlined,
-                      tooltip: 'Edit',
+                      tooltip: context.l10n.edit,
                       onTap: () => openContactEditor(context, contactId: contact.id),
                     ),
                     const SizedBox(width: 8),
@@ -310,7 +314,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                       key: _moreKey,
                       child: RoundIconButton(
                         icon: Icons.more_vert_rounded,
-                        tooltip: 'More options',
+                        tooltip: context.l10n.moreOptions,
                         onTap: () => _more(contact),
                       ),
                     ),
@@ -345,8 +349,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               icon: Icons.call_outlined,
               showIcon: i == 0,
               label: [
-                contact.labels[i],
-                if (contact.numbers.length > 1 && i == contact.primaryIndex) 'Default',
+                labelDisplay(context.l10n, contact.labels[i]),
+                if (contact.numbers.length > 1 && i == contact.primaryIndex) context.l10n.defaultNumber,
                 ?simLabel,
               ].join(' · '),
               value: n,
@@ -355,7 +359,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           ),
         _ValueRow(
           icon: Icons.notifications_none_rounded,
-          value: 'Ringtone',
+          value: context.l10n.ringtone,
           onTap: () => ContactActions.changeRingtone(contact.id),
         ),
       ],
@@ -367,13 +371,13 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     final rows = <Widget>[
       for (final e in c.emails)
         _ValueRow(
-          label: labelDisplay(labelText(e.label)),
+          label: labelDisplay(context.l10n, labelText(e.label)),
           value: e.address,
           onTap: () => _bridge.openSystemSettings('url:mailto:${e.address}'),
         ),
       for (final a in c.addresses)
         _ValueRow(
-          label: '${labelDisplay(labelText(a.label))} address',
+          label: context.l10n.addressLabel(labelDisplay(context.l10n, labelText(a.label))),
           value: [
             a.street,
             a.city,
@@ -387,7 +391,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         ),
       for (final d in c.events)
         _ValueRow(
-          label: labelDisplay(labelText(d.label)),
+          label: labelDisplay(context.l10n, labelText(d.label)),
           value: d.year == null
               ? DateFormat.MMMMd().format(DateTime(2000, d.month, d.day))
               : DateFormat.yMMMMd().format(DateTime(d.year!, d.month, d.day)),
@@ -395,18 +399,18 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       for (final o in c.organizations)
         if ([o.name, o.jobTitle, o.departmentName].any((s) => s?.isNotEmpty ?? false))
           _ValueRow(
-            label: 'Work',
+            label: context.l10n.organization,
             value: [o.jobTitle, o.departmentName, o.name].whereType<String>().where((s) => s.isNotEmpty).join(', '),
           ),
       for (final w in c.websites)
         _ValueRow(
-          label: 'Website',
+          label: context.l10n.website,
           value: w.url,
           onTap: () => _bridge.openSystemSettings('url:${w.url.contains('://') ? w.url : 'https://${w.url}'}'),
         ),
-      for (final r in c.relations) _ValueRow(label: labelDisplay(labelText(r.label)), value: r.name),
+      for (final r in c.relations) _ValueRow(label: labelDisplay(context.l10n, labelText(r.label)), value: r.name),
       for (final n in c.notes)
-        if (n.note.trim().isNotEmpty) _ValueRow(label: 'Notes', value: n.note.trim()),
+        if (n.note.trim().isNotEmpty) _ValueRow(label: context.l10n.notes, value: n.note.trim()),
     ];
     return rows.isEmpty ? const [] : [DetailsCard(children: rows)];
   }
@@ -442,14 +446,14 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             key: _simRowKey,
             child: _ValueRow(
               icon: Icons.sim_card_outlined,
-              value: 'SIM card for calls',
-              label: _sims.where((s) => s.id == _simId).map((s) => s.label).firstOrNull ?? 'Ask every time',
+              value: context.l10n.simForCalls,
+              label: _sims.where((s) => s.id == _simId).map((s) => s.label).firstOrNull ?? context.l10n.askEveryTime,
               onTap: _chooseSim,
             ),
           ),
         _ValueRow(
           icon: Icons.inventory_2_outlined,
-          value: 'Storage locations',
+          value: context.l10n.storageLocations,
           label: _storage,
           onTap: () async {
             await Navigator.of(context)
@@ -479,14 +483,17 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text('Call logs', style: TextStyle(fontSize: 15, color: context.palette.textSecondary)),
+                    child: Text(
+                      context.l10n.callLogs,
+                      style: TextStyle(fontSize: 15, color: context.palette.textSecondary),
+                    ),
                   ),
                   TextButton(
                     onPressed: () =>
                         Navigator.of(context)
                             .push(MaterialPageRoute<void>(builder: (_) => ContactHistoryScreen(contact: contact))),
-                    child: const Text(
-                      'View all',
+                    child: Text(
+                      context.l10n.viewAll,
                       style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: OneUITheme.accentGreen),
                     ),
                   ),
@@ -655,7 +662,10 @@ class ContactCallLogRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('${dayLabel(c.date, now)}, ${timeLabel(c.date)}', style: const TextStyle(fontSize: 17)),
+                Text(
+                  '${dayLabel(context.l10n, c.date, now)}, ${timeLabel(context.l10n, c.date)}',
+                  style: const TextStyle(fontSize: 17),
+                ),
                 const SizedBox(height: 2),
                 Row(
                   children: [
@@ -673,7 +683,9 @@ class ContactCallLogRow extends StatelessWidget {
             ),
           ),
           Text(
-            c.type != CallType.missed && c.duration > Duration.zero ? durationLabel(c.duration) : callTypeLabel(c.type),
+            c.type != CallType.missed && c.duration > Duration.zero
+                ? durationLabel(context.l10n, c.duration)
+                : callTypeLabel(context.l10n, c.type),
             style: TextStyle(
               fontSize: 13,
               color: c.type == CallType.missed ? OneUITheme.accentRed : context.palette.textSecondary,

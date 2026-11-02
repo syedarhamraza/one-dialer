@@ -19,6 +19,7 @@ import 'call_log.dart';
 import 'call_log_repository.dart';
 import 'recents_screen.dart';
 import 'delete_calls.dart';
+import '../../l10n/l10n.dart';
 
 /// (i) on a call: a saved contact's own page, else this number's page.
 void openCallDetails(BuildContext context, CallLogEntry call) {
@@ -61,7 +62,7 @@ class CallDetailsScreen extends StatelessWidget {
                       for (final c in repo.calls.value)
                         if (numberKey(c.number) == key) c,
                     ];
-              final name = callerName(call);
+              final name = callerName(context.l10n, call);
               final isContact = ContactsRepository.instance.nameFor(call.number) != null;
               return CustomScrollView(
                 physics: const OneUIScrollPhysics(),
@@ -116,7 +117,7 @@ class CallDetailsScreen extends StatelessWidget {
                                     child: DetailsActionTile(
                                       key: callTileKey,
                                       icon: Icons.call_rounded,
-                                      label: 'Call',
+                                      label: context.l10n.call,
                                       // The SIM menu (no SIM logged for this call) pops from the tile.
                                       onTap: () =>
                                           placeCall(context, call.number, simId: call.simId, anchorKey: callTileKey),
@@ -125,7 +126,7 @@ class CallDetailsScreen extends StatelessWidget {
                                   Expanded(
                                     child: DetailsActionTile(
                                       icon: Icons.chat_bubble_rounded,
-                                      label: 'Message',
+                                      label: context.l10n.message,
                                       onTap: () => TelecomBridge.instance.sendSms(call.number),
                                     ),
                                   ),
@@ -134,7 +135,7 @@ class CallDetailsScreen extends StatelessWidget {
                                       child: DetailsActionTile(
                                         key: addTileKey,
                                         icon: Icons.person_add_alt_1_rounded,
-                                        label: 'Add',
+                                        label: context.l10n.add,
                                         onTap: () => showAddToContacts(context, call.number, anchorKey: addTileKey),
                                       ),
                                     ),
@@ -146,7 +147,7 @@ class CallDetailsScreen extends StatelessWidget {
                             Padding(
                               padding: EdgeInsets.only(left: 18, bottom: 8),
                               child: Text(
-                                'Call logs',
+                                context.l10n.callLogs,
                                 style: TextStyle(fontSize: 15, color: context.palette.textSecondary),
                               ),
                             ),
@@ -175,7 +176,7 @@ class CallDetailsScreen extends StatelessWidget {
               children: [
                 RoundIconButton(
                   icon: Icons.arrow_back_rounded,
-                  tooltip: 'Back',
+                  tooltip: context.l10n.back,
                   onTap: () => Navigator.of(context).maybePop(),
                 ),
                 const Spacer(),
@@ -187,7 +188,7 @@ class CallDetailsScreen extends StatelessWidget {
                       final blocked = BlockingRepository.instance.isBlocked(call.number);
                       return CallGlass(
                         child: IconButton(
-                          tooltip: blocked ? 'Unblock' : 'Block',
+                          tooltip: blocked ? context.l10n.unblock : context.l10n.block,
                           onPressed: () => BlockingRepository.instance.setBlocked(call.number, !blocked),
                           style: IconButton.styleFrom(
                             foregroundColor: blocked ? OneUITheme.accentRed : context.palette.textPrimary,
@@ -202,7 +203,7 @@ class CallDetailsScreen extends StatelessWidget {
                 ],
                 RoundIconButton(
                   icon: Icons.delete_outline_rounded,
-                  tooltip: 'Delete call history',
+                  tooltip: context.l10n.deleteCallHistory,
                   onTap: () async {
                     final ids = call.isPrivate || call.number.isEmpty
                         ? [call.id]
@@ -267,7 +268,7 @@ class CallNotesCard extends StatelessWidget {
           children: [
             Padding(
               padding: EdgeInsets.only(left: 18, bottom: 8),
-              child: Text('Notes', style: TextStyle(fontSize: 15, color: context.palette.textSecondary)),
+              child: Text(context.l10n.notes, style: TextStyle(fontSize: 15, color: context.palette.textSecondary)),
             ),
             DetailsCard(
               padding: const EdgeInsets.symmetric(vertical: 4),
@@ -288,7 +289,7 @@ class CallNotesCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${dayLabel(at, now)}, ${timeLabel(at)}',
+                            '${dayLabel(context.l10n, at, now)}, ${timeLabel(context.l10n, at)}',
                             style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
                           ),
                         ],
@@ -325,16 +326,19 @@ class _HistoryRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${dayLabel(call.date, DateTime.now())}, ${timeLabel(call.date)}',
+                  '${dayLabel(context.l10n, call.date, DateTime.now())}, ${timeLabel(context.l10n, call.date)}',
                   style: const TextStyle(fontSize: 17),
                 ),
                 if (call.isApp)
-                  Text(appCallLabel(call), style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
+                  Text(
+                    appCallLabel(context.l10n, call),
+                    style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
+                  ),
               ],
             ),
           ),
           Text(
-            answered ? durationLabel(call.duration) : callTypeLabel(call.type),
+            answered ? durationLabel(context.l10n, call.duration) : callTypeLabel(context.l10n, call.type),
             style: TextStyle(
               fontSize: 13,
               color: call.type == CallType.missed ? OneUITheme.accentRed : context.palette.textSecondary,

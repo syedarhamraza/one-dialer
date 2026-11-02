@@ -14,6 +14,7 @@ import '../../widgets/version_mark.dart';
 import '../updates/data/update_service.dart';
 import '../updates/presentation/update_controller.dart';
 import 'software_update_screen.dart';
+import '../../l10n/l10n.dart';
 
 /// Settings › About One Dialer (also Software update › Software information): the artwork card
 /// with the version and a button to Software update, then the details (where it came from too).
@@ -61,9 +62,9 @@ class _AboutScreenState extends State<AboutScreen> {
     PlayUpdateService.playStoreInstaller => 'Google Play',
     'com.sec.android.app.samsungapps' => 'Galaxy Store',
     // A file opened on the phone, or adb.
-    null || 'com.android.shell' => 'Installed directly',
-    final i when i.contains('packageinstaller') => 'Installed directly',
-    _ => 'Another app store',
+    null || 'com.android.shell' => context.l10n.installedDirectly,
+    final i when i.contains('packageinstaller') => context.l10n.installedDirectly,
+    _ => context.l10n.anotherAppStore,
   };
 
   @override
@@ -72,7 +73,7 @@ class _AboutScreenState extends State<AboutScreen> {
     OneUIGroupItem row(String title, String? value) =>
         OneUIGroupItem(title: title, value: value, trailing: const SizedBox.shrink());
     return OneUISubpage(
-      title: 'About ${AppInfo.name}',
+      title: context.l10n.aboutApp(AppInfo.name),
       builder: (context) => [
         // The artwork card (softly blurred) with the version mark centred in it and, under
         // the channel, the way to Software update.
@@ -102,12 +103,12 @@ class _AboutScreenState extends State<AboutScreen> {
                           // does; lit green only when there's something to get.
                           return GlowButton(
                             label: update
-                                ? 'Update available'
+                                ? context.l10n.updateAvailable
                                 : updates.status == UpdateStatus.upToDate
-                                ? 'Version up to date'
-                                : 'Check for updates',
+                                ? context.l10n.versionUpToDate
+                                : context.l10n.checkForUpdates,
                             busy: updates.status == UpdateStatus.checking,
-                            busyLabel: 'Checking…',
+                            busyLabel: context.l10n.checking,
                             lit: update,
                             height: 44,
                             fontSize: 15,
@@ -125,18 +126,18 @@ class _AboutScreenState extends State<AboutScreen> {
         const SizedBox(height: 20),
         OneUIGroupCard(
           items: [
-            row('Version', v?.label ?? AppVersion.describe(Changelog.entries.first.version)),
-            if (v?.code != null) row('Build', '${v!.code}'),
-            row('Installed from', _installer == null && v == null ? null : _source),
-            row('Device', _device),
-            row('Android version', _android),
+            row(context.l10n.version, v?.label ?? AppVersion.describe(Changelog.entries.first.version)),
+            if (v?.code != null) row(context.l10n.build, '${v!.code}'),
+            row(context.l10n.installedFrom, _installer == null && v == null ? null : _source),
+            row(context.l10n.device, _device),
+            row(context.l10n.androidVersion, _android),
             if (kDebugMode && BuildInfo.commit.isNotEmpty) row('Commit', BuildInfo.commit),
           ],
         ),
         OneUIGroupCard(
           items: [
             OneUIGroupItem(
-              title: 'Open source licences',
+              title: context.l10n.openSourceLicences,
               onTap: () =>
                   showLicensePage(context: context, applicationName: AppInfo.name, applicationVersion: v?.label),
             ),

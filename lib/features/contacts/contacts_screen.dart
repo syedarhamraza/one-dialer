@@ -22,6 +22,7 @@ import 'contact_details_screen.dart';
 import 'contact_sections.dart';
 import 'contacts_widgets.dart';
 import 'manage_contacts_screen.dart';
+import '../../l10n/l10n.dart';
 
 /// The Contacts tab in the Calls tab's style (ColorOS layout): glass search and menu,
 /// a big title, a card with My contact card and Groups, favourites under a star, then
@@ -144,13 +145,13 @@ class _ContactsScreenState extends State<ContactsScreen> {
       items: [
         OneUIFloatingActionBarItem(
           icon: Icons.share_outlined,
-          label: 'Share',
+          label: context.l10n.share,
           isEnabled: count > 0,
           onTap: _shareSelected,
         ),
         OneUIFloatingActionBarItem(
           icon: Icons.delete_outline_rounded,
-          label: 'Delete',
+          label: context.l10n.delete,
           color: OneUITheme.accentRed,
           isEnabled: count > 0,
           onTap: _deleteSelected,
@@ -171,8 +172,9 @@ class _ContactsScreenState extends State<ContactsScreen> {
   Future<void> _shareSelected() async {
     final ids = _selected?.toList() ?? const <String>[];
     if (ids.isEmpty) return;
+    final l10n = context.l10n;
     final contacts = await FlutterContacts.getAll(properties: ContactProperties.all, filter: ContactFilter.ids(ids));
-    await ContactActions.shareVCards(contacts);
+    await ContactActions.shareVCards(l10n, contacts);
   }
 
   Future<void> _deleteSelected() async {
@@ -180,9 +182,9 @@ class _ContactsScreenState extends State<ContactsScreen> {
     if (ids.isEmpty) return;
     final ok = await showCosConfirm(
       context,
-      title: ids.length == 1 ? 'Delete contact?' : 'Delete ${ids.length} contacts?',
-      message: 'They will be removed from this phone and from their accounts.',
-      confirmLabel: 'Delete',
+      title: context.l10n.deleteContactsTitle(ids.length),
+      message: context.l10n.deleteContactsMessage,
+      confirmLabel: context.l10n.delete,
       destructive: true,
     );
     if (!ok) return;
@@ -195,13 +197,13 @@ class _ContactsScreenState extends State<ContactsScreen> {
     anchorKey: _menuKey,
     width: 250,
     items: [
-      OneUIFloatingMenuItem(label: 'Select', onTap: _startSelection),
+      OneUIFloatingMenuItem(label: context.l10n.select, onTap: _startSelection),
       OneUIFloatingMenuItem(
-        label: 'Manage contacts',
+        label: context.l10n.manageContacts,
         onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ManageContactsScreen())),
       ),
       OneUIFloatingMenuItem(
-        label: 'Settings',
+        label: context.l10n.settings,
         onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),
       ),
     ],
@@ -260,7 +262,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                   valueListenable: _selectionChanged,
                   builder: (context, _, _) => Stack(
                     children: [
-                      HeaderTitle(collapse: _collapse, text: 'Contacts', hidden: selecting),
+                      HeaderTitle(collapse: _collapse, text: context.l10n.navContacts, hidden: selecting),
                       _Header(
                         selecting: selecting,
                         allSelected: _allSelected,
@@ -283,10 +285,13 @@ class _ContactsScreenState extends State<ContactsScreen> {
                       builder: (context, _, _) => Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          BigTitle(collapse: _collapse, text: selecting ? '${_selected!.length} selected' : 'Contacts'),
+                          BigTitle(
+                            collapse: _collapse,
+                            text: selecting ? context.l10n.selectedCount(_selected!.length) : context.l10n.navContacts,
+                          ),
                           const SizedBox(height: 2),
                           Text(
-                            '${all.length} contacts',
+                            context.l10n.contactsCount(all.length),
                             style: TextStyle(fontSize: 15, color: context.palette.textSecondary),
                           ),
                         ],
@@ -302,12 +307,12 @@ class _ContactsScreenState extends State<ContactsScreen> {
                     child: Column(
                       children: [
                         Text(
-                          'Allow access to your contacts to see them here and show names for calls',
+                          context.l10n.contactsAccessMessage,
                           textAlign: TextAlign.center,
                           style: TextStyle(color: context.palette.textSecondary),
                         ),
                         const SizedBox(height: 16),
-                        FilledButton(onPressed: repo.requestAccess, child: const Text('Allow')),
+                        FilledButton(onPressed: repo.requestAccess, child: Text(context.l10n.allow)),
                       ],
                     ),
                   ),
@@ -394,17 +399,25 @@ class _Header extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
-                  RoundIconButton(icon: Icons.close_rounded, tooltip: 'Cancel', onTap: onCancel),
+                  RoundIconButton(icon: Icons.close_rounded, tooltip: context.l10n.cancel, onTap: onCancel),
                 ]
               : [
                   const Spacer(),
-                  RoundIconButton(icon: Icons.search_rounded, tooltip: 'Search', onTap: () => openSearch(context)),
+                  RoundIconButton(
+                    icon: Icons.search_rounded,
+                    tooltip: context.l10n.search,
+                    onTap: () => openSearch(context),
+                  ),
                   const SizedBox(width: 8),
                   // The menu measures this wrapper, outside the glass press, so holding the
                   // button doesn't shift where the menu opens.
                   KeyedSubtree(
                     key: menuKey,
-                    child: RoundIconButton(icon: Icons.more_vert_rounded, tooltip: 'More options', onTap: onMenu),
+                    child: RoundIconButton(
+                      icon: Icons.more_vert_rounded,
+                      tooltip: context.l10n.moreOptions,
+                      onTap: onMenu,
+                    ),
                   ),
                 ],
         ),

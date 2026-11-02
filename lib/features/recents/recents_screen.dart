@@ -30,6 +30,7 @@ import 'delete_calls.dart';
 import '../search/search_screen.dart';
 import '../../widgets/select_mark.dart';
 import '../blocking/blocking_repository.dart';
+import '../../l10n/l10n.dart';
 
 /// Samsung-style Recents: calls grouped by day, All / Missed filter, swipe right to
 /// call and left to message, tap for details, long-press to multi-select and delete.
@@ -121,15 +122,15 @@ class _RecentsScreenState extends State<RecentsScreen> {
     // Only offered once an app has shared calls (Android 16.1+ with the app's call-log integration).
     if (_appsOnly || _repo.calls.value.any((c) => c.isApp))
       OneUIFloatingMenuItem(
-        label: _appsOnly ? 'Show all calls' : 'Show app calls only',
+        label: _appsOnly ? context.l10n.showAllCalls : context.l10n.showAppCallsOnly,
         onTap: () => setState(() => _appsOnly = !_appsOnly),
       ),
     OneUIFloatingMenuItem(
-      label: _hideBlocked ? 'Show blocked calls' : 'Hide blocked calls',
+      label: _hideBlocked ? context.l10n.showBlockedCalls : context.l10n.hideBlockedCalls,
       onTap: () => DialerPrefs.instance.setHideBlockedCalls(!_hideBlocked),
     ),
     OneUIFloatingMenuItem(
-      label: 'Settings',
+      label: context.l10n.settings,
       onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),
     ),
   ];
@@ -168,10 +169,10 @@ class _RecentsScreenState extends State<RecentsScreen> {
     navDock.value = OneUIFloatingActionBar(
       docked: true,
       items: [
-        OneUIFloatingActionBarItem(icon: Icons.block_rounded, label: 'Block', onTap: _blockSelected),
+        OneUIFloatingActionBarItem(icon: Icons.block_rounded, label: context.l10n.block, onTap: _blockSelected),
         OneUIFloatingActionBarItem(
           icon: Icons.delete_outline_rounded,
-          label: 'Delete',
+          label: context.l10n.delete,
           color: OneUITheme.accentRed,
           onTap: _deleteSelected,
         ),
@@ -205,9 +206,11 @@ class _RecentsScreenState extends State<RecentsScreen> {
     if (numbers.isEmpty) return;
     final ok = await showCosConfirm(
       context,
-      title: numbers.length == 1 ? 'Block ${numbers.single}?' : 'Block ${numbers.length} numbers?',
-      message: "You won't get calls from blocked numbers.",
-      confirmLabel: 'Block',
+      title: numbers.length == 1
+          ? context.l10n.blockNumberTitle(numbers.single)
+          : context.l10n.blockNumbersTitle(numbers.length),
+      message: context.l10n.blockNumbersMessage,
+      confirmLabel: context.l10n.block,
       destructive: true,
     );
     if (!ok) return;
@@ -314,7 +317,11 @@ class _RecentsScreenState extends State<RecentsScreen> {
                 );
                 return Stack(
                   children: [
-                    HeaderTitle(collapse: _collapse, text: 'Calls', hidden: selecting || number.isNotEmpty),
+                    HeaderTitle(
+                      collapse: _collapse,
+                      text: context.l10n.navCalls,
+                      hidden: selecting || number.isNotEmpty,
+                    ),
                     controls,
                   ],
                 );
@@ -346,7 +353,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
                             Stack(alignment: Alignment.centerLeft, children: [...previous, ?current]),
                         child: BigTitle(
                           collapse: _collapse,
-                          text: selecting ? '$_selectedRows selected' : 'Calls',
+                          text: selecting ? context.l10n.selectedCount(_selectedRows) : context.l10n.navCalls,
                           // Keyed on the mode only, so the count updates in place.
                           key: ValueKey(selecting),
                         ),
@@ -357,9 +364,9 @@ class _RecentsScreenState extends State<RecentsScreen> {
                 if (!_repo.hasAccess.value)
                   _Empty(
                     icon: Icons.lock_outline_rounded,
-                    text: 'Set Dialer as your default phone app to see recent calls',
+                    text: context.l10n.recentsSetDefaultMessage,
                     action: (
-                      'Set as default',
+                      context.l10n.setAsDefault,
                       () async {
                         await TelecomBridge.instance.requestDefaultDialer();
                         await _repo.start();
@@ -369,10 +376,10 @@ class _RecentsScreenState extends State<RecentsScreen> {
                 else if (groups.isEmpty)
                   _Empty(
                     text: _appsOnly
-                        ? 'No app calls'
+                        ? context.l10n.recentsNoAppCalls
                         : _filter == CallFilter.all
-                        ? 'No recent calls'
-                        : 'No ${_filter.label.toLowerCase()}',
+                        ? context.l10n.recentsNoRecentCalls
+                        : context.l10n.recentsNoMissedCalls, // the tabs offer only All and Missed
                   )
                 else
                   // Lazy: only the rows on screen are built.
@@ -392,7 +399,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
   Widget _row(BuildContext context, List<CallGroup> groups, int i, DateTime now) {
     final group = groups[i];
     final call = group.latest;
-    final day = dayLabel(call.date, now);
+    final day = dayLabel(context.l10n, call.date, now);
     void details() => openCallDetails(context, call);
     // What a tap does is the Settings choice (DialerPrefs.recentTap): open the details page,
     // write the number in the keypad so the call is one more, deliberate tap, or (dual SIM)
@@ -426,7 +433,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
             group: group,
             simBadge: _simBadge(call.simId),
             note: _noteFor(group),
-            when: day == 'Today' ? timeLabel(call.date) : day,
+            when: day == context.l10n.today ? timeLabel(context.l10n, call.date) : day,
             selecting: _selected != null,
             // Only the circle listens to selection taps; the rest of the row stays built.
             selectMark: ValueListenableBuilder(
@@ -479,7 +486,7 @@ class _HeaderControls extends StatelessWidget {
   final GlobalKey menuKey;
   final List<OneUIFloatingMenuItem> Function() menuItems;
 
-  static const _labels = ['All', 'Missed'];
+  static const _tabCount = 2; // All | Missed
   static const double _button = 48;
   static const double _gap = 8;
   static const double _edge = 16;
@@ -516,7 +523,7 @@ class _HeaderControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tabs = FilterTabs.sizeFor(_labels.length);
+    final tabs = FilterTabs.sizeFor(_tabCount);
     return SizedBox(
       height: _button,
       child: LayoutBuilder(
@@ -545,7 +552,7 @@ class _HeaderControls extends StatelessWidget {
                           opacity: (1 - sel * 1.5).clamp(0.0, 1.0),
                           child: _glassIcon(
                             icon: Icons.search_rounded,
-                            tooltip: 'Search',
+                            tooltip: context.l10n.search,
                             onTap: () => openSearch(context),
                           ),
                         ),
@@ -571,7 +578,7 @@ class _HeaderControls extends StatelessWidget {
                                 opacity: _out(sel),
                                 child: _glassIcon(
                                   icon: Icons.more_vert_rounded,
-                                  tooltip: 'More options',
+                                  tooltip: context.l10n.moreOptions,
                                   onTap: () => OneUIFloatingMenu.show(
                                     context: context,
                                     anchorKey: menuKey,
@@ -585,7 +592,11 @@ class _HeaderControls extends StatelessWidget {
                               ignoring: !selecting,
                               child: Opacity(
                                 opacity: _in(sel),
-                                child: _glassIcon(icon: Icons.close_rounded, tooltip: 'Cancel', onTap: onCancel),
+                                child: _glassIcon(
+                                  icon: Icons.close_rounded,
+                                  tooltip: context.l10n.cancel,
+                                  onTap: onCancel,
+                                ),
                               ),
                             ),
                           ],
@@ -623,7 +634,7 @@ class _HeaderControls extends StatelessWidget {
                                   minWidth: tabs.width,
                                   maxWidth: tabs.width,
                                   child: FilterTabs(
-                                    labels: _labels,
+                                    labels: [context.l10n.all, context.l10n.recentsFilterMissed],
                                     index: filterIndex,
                                     onChanged: onFilter,
                                     bare: true,
@@ -638,7 +649,7 @@ class _HeaderControls extends StatelessWidget {
                                 child: _glassIcon(
                                   key: addKey,
                                   icon: Icons.person_add_alt_rounded,
-                                  tooltip: 'Add to Contacts',
+                                  tooltip: context.l10n.addToContacts,
                                   onTap: onAdd,
                                 ),
                               ),
@@ -698,7 +709,7 @@ class _CallRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final call = group.latest;
-    final name = callerName(call);
+    final name = callerName(context.l10n, call);
     final count = group.calls.length;
     final row = InkWell(
       onTap: onTap,
@@ -739,9 +750,9 @@ class _CallRow extends StatelessWidget {
                       Flexible(
                         child: Text(
                           call.isApp
-                              ? appCallLabel(call)
+                              ? appCallLabel(context.l10n, call)
                               : name == call.number || call.isPrivate
-                              ? callTypeLabel(call.type)
+                              ? callTypeLabel(context.l10n, call.type)
                               : call.number,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -773,7 +784,7 @@ class _CallRow extends StatelessWidget {
             const SizedBox(width: 8),
             Text(when, style: TextStyle(fontSize: 14, color: context.palette.textSecondary)),
             IconButton(
-              tooltip: 'Call details',
+              tooltip: context.l10n.callDetails,
               onPressed: selecting ? null : onInfo,
               icon: Icon(Icons.info_outline_rounded, size: 24, color: context.palette.textPrimary),
             ),
@@ -811,13 +822,13 @@ class CallTypeIcon extends StatelessWidget {
   }
 }
 
-String callTypeLabel(CallType type) => switch (type) {
-  CallType.outgoing => 'Outgoing call',
-  CallType.missed => 'Missed call',
-  CallType.rejected => 'Rejected call',
-  CallType.blocked => 'Blocked call',
-  CallType.voicemail => 'Voicemail',
-  _ => 'Incoming call',
+String callTypeLabel(AppLocalizations l10n, CallType type) => switch (type) {
+  CallType.outgoing => l10n.callTypeOutgoing,
+  CallType.missed => l10n.callTypeMissed,
+  CallType.rejected => l10n.callTypeRejected,
+  CallType.blocked => l10n.callTypeBlocked,
+  CallType.voicemail => l10n.callTypeVoicemail,
+  _ => l10n.callTypeIncoming,
 };
 
 /// SIM slot number in its SIM colour.

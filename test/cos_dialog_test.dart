@@ -2,12 +2,15 @@ import 'package:dialer/theme/one_ui_theme.dart';
 import 'package:dialer/widgets/cos_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dialer/l10n/app_localizations.dart';
 
 void main() {
   Future<BuildContext> open(WidgetTester tester) async {
     late BuildContext context;
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: OneUITheme.darkTheme,
         home: Builder(
           builder: (c) {

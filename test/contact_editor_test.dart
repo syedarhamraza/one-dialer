@@ -6,6 +6,7 @@ import 'package:dialer/theme/one_ui_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dialer/l10n/app_localizations.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -61,6 +62,8 @@ void main() {
   Future<void> open(WidgetTester tester, {String? contactId, String? number}) async {
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: OneUITheme.darkTheme.copyWith(platform: TargetPlatform.android),
         home: Builder(
           builder: (context) => Scaffold(
@@ -105,6 +108,8 @@ void main() {
     accounts.complete(<Object?>[]);
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: OneUITheme.darkTheme.copyWith(platform: TargetPlatform.android),
         home: Scaffold(
           body: Builder(
@@ -155,6 +160,8 @@ void main() {
     accounts.complete(<Object?>[]);
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: OneUITheme.darkTheme.copyWith(platform: TargetPlatform.android),
         home: Scaffold(
           body: Builder(

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../features/in_call/call_controls.dart';
 import '../theme/one_ui_theme.dart';
 import 'call_glass.dart';
+import '../l10n/l10n.dart';
 
 /// One button of a [showCosActions] dialog.
 typedef CosAction<T> = ({String label, T value, bool destructive});
@@ -56,7 +57,7 @@ Future<bool> showCosConfirm(
   BuildContext context, {
   String? title,
   required String message,
-  String cancelLabel = 'Cancel',
+  String? cancelLabel,
   required String confirmLabel,
   bool destructive = false,
 }) async =>
@@ -65,7 +66,7 @@ Future<bool> showCosConfirm(
       title: title,
       message: message,
       actions: [
-        (label: cancelLabel, value: false, destructive: false),
+        (label: cancelLabel ?? context.l10n.cancel, value: false, destructive: false),
         (label: confirmLabel, value: true, destructive: destructive),
       ],
     ) ??
@@ -77,7 +78,7 @@ Future<String?> showCosTextInput(
   required String title,
   String initialValue = '',
   String hint = '',
-  String confirmLabel = 'Save',
+  String? confirmLabel,
   TextInputType keyboardType = TextInputType.text,
   int? maxLength,
 }) => showCosCard<String>(
@@ -86,7 +87,7 @@ Future<String?> showCosTextInput(
     title: title,
     initialValue: initialValue,
     hint: hint,
-    confirmLabel: confirmLabel,
+    confirmLabel: confirmLabel ?? context.l10n.save,
     keyboardType: keyboardType,
     maxLength: maxLength,
   ),
@@ -107,7 +108,7 @@ Future<T?> showCosCard<T>(BuildContext context, WidgetBuilder content) {
       opaque: false,
       barrierDismissible: true,
       barrierColor: Colors.black54,
-      barrierLabel: 'Dismiss',
+      barrierLabel: context.l10n.dismiss,
       transitionDuration: const Duration(milliseconds: 400),
       reverseTransitionDuration: const Duration(milliseconds: 170),
       pageBuilder: (context, animation, _) => _Frame(animation: animation, child: content(context)),
@@ -307,7 +308,7 @@ class _TextInputState extends State<_TextInput> {
         spacing: 12,
         children: [
           Expanded(
-            child: CosPill(label: 'Cancel', onTap: () => Navigator.pop(context)),
+            child: CosPill(label: context.l10n.cancel, onTap: () => Navigator.pop(context)),
           ),
           Expanded(
             child: CosPill(label: widget.confirmLabel, onTap: _submit),

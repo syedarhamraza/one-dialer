@@ -26,6 +26,7 @@ import android.telecom.Call
 import android.telecom.CallAudioState
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
+import com.syedarhamraza.dialer.AppLanguage
 import com.syedarhamraza.dialer.InCallActivity
 import com.syedarhamraza.dialer.R
 
@@ -43,6 +44,7 @@ object CallNotifications {
     /** [screenOpening]: Settings › Incoming call reminders › Full screen is opening the call screen. */
     fun showIncoming(context: Context, callId: String, call: Call, screenOpening: Boolean = false) {
         postedForScreen = screenOpening
+        val res = AppLanguage.localized(context).resources
         val manager = context.getSystemService(NotificationManager::class.java)
         // On an unlocked vivo the Atomic Island card is the pop-up, and with the call screen up
         // (call waiting) the screen itself rings; a heads-up banner would double either.
@@ -55,7 +57,7 @@ object CallNotifications {
         manager.createNotificationChannel(
             NotificationChannel(
                 channel,
-                if (quiet) "Incoming calls (quiet)" else "Incoming calls",
+                res.getString(if (quiet) R.string.channel_incoming_quiet else R.string.channel_incoming),
                 if (quiet) NotificationManager.IMPORTANCE_DEFAULT else NotificationManager.IMPORTANCE_HIGH,
             ).apply {
                 // Telecom plays the ringtone; the notification itself stays silent.
@@ -69,7 +71,7 @@ object CallNotifications {
         val caller = (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) details.contactDisplayName else null)
             ?: details.callerDisplayName?.takeIf { it.isNotBlank() }
             ?: details.handle?.schemeSpecificPart?.takeIf { it.isNotBlank() }
-            ?: "Unknown"
+            ?: res.getString(R.string.unknown)
 
         val fullScreen = PendingIntent.getActivity(
             context, 0, InCallActivity.intent(context),
@@ -82,7 +84,7 @@ object CallNotifications {
             .setSmallIcon(R.drawable.ic_stat_call)
             .setColor(ANSWER_GREEN)
             .setContentTitle(caller)
-            .setContentText("Incoming call")
+            .setContentText(res.getString(R.string.incoming_call))
             .setCategory(Notification.CATEGORY_CALL)
             .setOngoing(true)
             .setContentIntent(fullScreen)
@@ -94,8 +96,8 @@ object CallNotifications {
                 .setImportant(true).build()
             builder.setStyle(Notification.CallStyle.forIncomingCall(person, decline, answer))
         } else {
-            builder.addAction(Notification.Action.Builder(null, "Decline", decline).build())
-            builder.addAction(Notification.Action.Builder(null, "Answer", answer).build())
+            builder.addAction(Notification.Action.Builder(null, res.getString(R.string.decline), decline).build())
+            builder.addAction(Notification.Action.Builder(null, res.getString(R.string.answer), answer).build())
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA && !vivoIsland) {
             // Asks for a Live Update (status bar chip); on vivo it'd be a second island next to the card.
@@ -108,7 +110,7 @@ object CallNotifications {
             val answerHere = CallActionReceiver.pendingIntent(context, CallActionReceiver.ACTION_ANSWER_IN_ISLAND, callId)
             builder.addExtras(
                 vivoIslandExtras(
-                    create = true, caller, "Incoming call", icon, fullScreen,
+                    create = true, caller, res.getString(R.string.incoming_call), icon, fullScreen,
                     buttons = listOf(
                         Icon.createWithResource(context, R.drawable.island_decline) to decline,
                         Icon.createWithResource(context, R.drawable.island_answer) to answerHere,
@@ -117,7 +119,7 @@ object CallNotifications {
                     rightTemplate = 4, // text + image; text only here
                     rightInfo = Bundle().apply {
                         // Like vivo's connected-call island: green glyph left, green text (its timer) right.
-                        putCharSequence("island.superx.rightInfo.content", green("Incoming"))
+                        putCharSequence("island.superx.rightInfo.content", green(res.getString(R.string.island_incoming)))
                     },
                 )
             )
@@ -210,6 +212,7 @@ object CallNotifications {
      * removes it when there's none or an incoming call is ringing (that one has its own).
      */
     fun updateOngoing(context: Context, calls: List<Pair<String, Call>>) {
+        val res = AppLanguage.localized(context).resources
         val manager = context.getSystemService(NotificationManager::class.java)
         val states = calls.map { CallManager.stateOf(it.second) }
         val (callId, call) = calls.indices
@@ -223,17 +226,18 @@ object CallNotifications {
         // which left no way back to a call there. An existing channel's importance can't change.
         manager.deleteNotificationChannel("ongoing_calls")
         manager.createNotificationChannel(
-            NotificationChannel(CHANNEL_ONGOING, "Ongoing calls", NotificationManager.IMPORTANCE_DEFAULT).apply {
+            NotificationChannel(CHANNEL_ONGOING, res.getString(R.string.channel_ongoing), NotificationManager.IMPORTANCE_DEFAULT).apply {
                 setSound(null, null)
                 enableVibration(false)
             }
         )
         val state = CallManager.stateOf(call)
         val details = call.details
-        val caller = (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) details.contactDisplayName else null)
+        val caller = (if (details.hasProperty(Call.Details.PROPERTY_CONFERENCE)) res.getString(R.string.conference_call) else null)
+            ?: (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) details.contactDisplayName else null)
             ?: details.callerDisplayName?.takeIf { it.isNotBlank() }
             ?: details.handle?.schemeSpecificPart?.takeIf { it.isNotBlank() }
-            ?: "Unknown"
+            ?: res.getString(R.string.unknown)
         val open = PendingIntent.getActivity(
             context, 1, InCallActivity.intent(context),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
@@ -241,9 +245,9 @@ object CallNotifications {
         val hangUp = CallActionReceiver.pendingIntent(context, CallActionReceiver.ACTION_HANG_UP, callId)
 
         val status = when (state) {
-            Call.STATE_ACTIVE -> "Ongoing call"
-            Call.STATE_HOLDING -> "On hold"
-            else -> "Calling…"
+            Call.STATE_ACTIVE -> res.getString(R.string.ongoing_call)
+            Call.STATE_HOLDING -> res.getString(R.string.on_hold)
+            else -> res.getString(R.string.calling_ellipsis)
         }
         val builder = Notification.Builder(context, CHANNEL_ONGOING)
             // vivo's call island shows this as-is: the same green glyph as the incoming island.
@@ -269,7 +273,7 @@ object CallNotifications {
                 .setImportant(true).build()
             builder.setStyle(Notification.CallStyle.forOngoingCall(person, hangUp))
         } else {
-            builder.addAction(Notification.Action.Builder(null, "Hang up", hangUp).build())
+            builder.addAction(Notification.Action.Builder(null, res.getString(R.string.hang_up), hangUp).build())
         }
         if (vivoIsland) {
             @Suppress("DEPRECATION") // CallAudioState still reports the route on API 34+
@@ -301,7 +305,7 @@ object CallNotifications {
                     // Like vivo's own call island: green text, a live timer once the call connects.
                     rightTemplate = 4, // text + image; text only here
                     rightInfo = Bundle().apply {
-                        val text = timer ?: if (state == Call.STATE_HOLDING) "On hold" else "Calling"
+                        val text = timer ?: res.getString(if (state == Call.STATE_HOLDING) R.string.on_hold else R.string.island_calling)
                         putCharSequence("island.superx.rightInfo.content", green(text))
                     },
                 )

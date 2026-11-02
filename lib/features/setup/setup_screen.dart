@@ -7,6 +7,7 @@ import '../../theme/one_ui_theme.dart';
 import '../../widgets/cos_artwork.dart';
 import '../../widgets/glow_button.dart';
 import '../in_call/call_controls.dart';
+import '../../l10n/l10n.dart';
 
 /// Shown while One Dialer isn't the default phone app (first run, or after another app took the
 /// role): without it Android grants no calls, call log or contacts, so there's nothing to skip to.
@@ -70,7 +71,7 @@ class _SetupScreenState extends State<SetupScreen> {
                       ),
                       const SizedBox(height: 40),
                       Text(
-                        'Set One Dialer as your default phone app',
+                        context.l10n.setupTitle,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 24,
@@ -81,15 +82,15 @@ class _SetupScreenState extends State<SetupScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'Needed to make and answer calls, show your call history and contacts, and block numbers.',
+                        context.l10n.setupBody,
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 15, color: context.palette.textSecondary, height: 1.4),
                       ),
                       const SizedBox(height: 40),
                       GlowButton(
-                        label: 'Set as default',
+                        label: context.l10n.setAsDefault,
                         busy: _asking,
-                        busyLabel: 'Setting up…',
+                        busyLabel: context.l10n.settingUp,
                         width: double.infinity,
                         height: 56,
                         onTap: _asking ? null : _becomeDefault,
@@ -97,10 +98,7 @@ class _SetupScreenState extends State<SetupScreen> {
                       const SizedBox(height: 24),
                       // Prominent disclosure (Google Play): what each permission is used for.
                       Text(
-                        'One Dialer uses Phone to make and manage calls on your SIMs, Call history for Recents '
-                        'and missed calls, Contacts for names, photos and search, and Notifications for incoming, '
-                        'ongoing and missed calls. Your calls, call history and contacts never leave your phone. '
-                        'Crash reports (no personal data) help fix bugs.',
+                        context.l10n.setupDisclosure,
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 12, color: context.palette.textSecondary, height: 1.4),
                       ),

@@ -10,6 +10,7 @@ import '../../widgets/cos_artwork.dart';
 import '../../widgets/version_mark.dart';
 import '../../widgets/one_ui_group_card.dart';
 import '../../widgets/one_ui_subpage.dart';
+import '../../l10n/l10n.dart';
 
 /// Software update › Changelog, written like a release note:
 /// the running version over the artwork, its notes as short paragraphs, then earlier versions,
@@ -27,8 +28,6 @@ class ChangelogScreen extends StatefulWidget {
 }
 
 class _ChangelogScreenState extends State<ChangelogScreen> {
-  static final DateFormat _installedFormat = DateFormat('MMM d, y');
-
   late final Future<({AppVersion? version, DateTime? installed})> _installed = _loadInstalled();
 
   static Future<({AppVersion? version, DateTime? installed})> _loadInstalled() async {
@@ -47,7 +46,7 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
     final latest = Changelog.entries.first;
     final earlier = Changelog.entries.skip(1).toList();
     return OneUISubpage(
-      title: 'Changelog',
+      title: context.l10n.changelog,
       builder: (context) => [
         FutureBuilder(
           future: _installed,
@@ -57,7 +56,9 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
               entry: latest,
               // The notes ship with the app, so the newest entry is the running version
               // (app_version_test checks it).
-              note: installed == null ? latest.date : 'Installed ${_installedFormat.format(installed)}',
+              note: installed == null
+                  ? latest.date
+                  : context.l10n.installedOn(DateFormat.yMMMd(context.l10n.localeName).format(installed)),
             );
           },
         ),
@@ -65,7 +66,7 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
         _ReleaseNotes(latest),
         if (earlier.isNotEmpty)
           OneUIGroupCard(
-            headerTitle: 'Earlier versions',
+            headerTitle: context.l10n.earlierVersions,
             items: [
               for (final entry in earlier)
                 OneUIGroupItem(
@@ -163,7 +164,7 @@ class _ReleaseNotes extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('About this update', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+          Text(context.l10n.aboutThisUpdate, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
           const SizedBox(height: 14),
           for (final change in entry.changes)
             Padding(

@@ -9,6 +9,7 @@ import '../../widgets/one_ui_status_bar_scrim.dart';
 import '../../widgets/search_bar_row.dart';
 import '../contacts/contact_details_screen.dart';
 import 'search.dart';
+import '../../l10n/l10n.dart';
 
 Future<void> openSearch(BuildContext context) =>
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SearchScreen()));
@@ -112,15 +113,15 @@ class _SearchScreenState extends State<SearchScreen> {
             children: [
               Row(
                 children: [
-                  const Expanded(child: _Label('Recent searches')),
+                  Expanded(child: _Label(context.l10n.recentSearches)),
                   TextButton(
                     onPressed: () async {
                       await DialerPrefs.instance.clearRecentSearches();
                       await _loadRecent();
                     },
-                    child: const Text(
-                      'Clear all',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: OneUITheme.accentBlue),
+                    child: Text(
+                      context.l10n.clearAll,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: OneUITheme.accentBlue),
                     ),
                   ),
                 ],
@@ -148,14 +149,17 @@ class _SearchScreenState extends State<SearchScreen> {
           child: Padding(
             padding: EdgeInsets.only(top: 200),
             child: Center(
-              child: Text('No results found', style: TextStyle(fontSize: 22, color: context.palette.textSecondary)),
+              child: Text(
+                context.l10n.noResultsFound,
+                style: TextStyle(fontSize: 22, color: context.palette.textSecondary),
+              ),
             ),
           ),
         ),
       // Lazy card: a short query can match hundreds of contacts.
       if (hits.isNotEmpty) ...[
         SliverToBoxAdapter(
-          child: _SectionHeader(title: 'Contacts', count: hits.length),
+          child: _SectionHeader(title: context.l10n.navContacts, count: hits.length),
         ),
         _CardSliver(
           itemCount: hits.length,
@@ -210,7 +214,7 @@ class _SectionHeader extends StatelessWidget {
       child: Row(
         children: [
           Expanded(child: Text(title, style: style)),
-          Text('$count found', style: style),
+          Text(context.l10n.foundCount(count), style: style),
         ],
       ),
     );
@@ -274,7 +278,7 @@ class _RecentChip extends StatelessWidget {
               const SizedBox(width: 10),
               Semantics(
                 button: true,
-                label: 'Remove $label',
+                label: context.l10n.removeItem(label),
                 child: GestureDetector(
                   onTap: onRemove,
                   child: Container(

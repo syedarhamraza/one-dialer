@@ -187,6 +187,22 @@ class DialerPrefs {
     if (light == 'classic' || light == 'soft' || light == 'bold') glassLight.value = light!;
   }
 
+  /// Settings › Language: `system` or a language tag. Kept natively (`AppLanguage.kt`), where
+  /// Android 13+ keeps its own per-app language, so it's read again on every resume.
+  final language = ValueNotifier('system');
+
+  Future<void> loadLanguage() async {
+    try {
+      final tag = await TelecomBridge.instance.getAppLanguage();
+      language.value = tag == 'system' ? tag : tag.split(RegExp('[-_]')).first; // Android's page may add a region
+    } catch (_) {} // no bridge (tests): keep the system language
+  }
+
+  Future<void> setLanguage(String tag) async {
+    language.value = tag;
+    await TelecomBridge.instance.setAppLanguage(tag);
+  }
+
   /// The level until the user picks one: never saved, so a later cutoff still reaches them.
   Future<String> _effectsDefault() async {
     try {

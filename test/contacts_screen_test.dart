@@ -5,6 +5,7 @@ import 'package:dialer/theme/one_ui_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dialer/l10n/app_localizations.dart';
 
 class _Pushes extends NavigatorObserver {
   final routes = <Route<dynamic>>[];
@@ -39,6 +40,8 @@ void main() {
     final pushes = _Pushes();
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: OneUITheme.darkTheme,
         navigatorObservers: [pushes],
         home: const Scaffold(body: ContactsScreen()),

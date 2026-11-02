@@ -7,6 +7,7 @@ import '../../core/contacts/contacts_repository.dart';
 import '../../core/telecom/call_info.dart';
 import '../../widgets/letter_avatar.dart';
 import 'call_controls.dart';
+import '../../l10n/l10n.dart';
 
 /// The call backdrop: a soft aurora tinted from the caller's avatar colour, under black fades at
 /// the top and bottom.
@@ -101,20 +102,23 @@ class CallBackdrop extends StatelessWidget {
   }
 }
 
-String callerName(CallInfo call) {
-  if (call.isConference) return 'Conference call';
-  if (call.isPrivate) return 'Private number';
+String callerName(AppLocalizations l10n, CallInfo call) {
+  if (call.isConference) return l10n.conferenceCall;
+  if (call.isPrivate) return l10n.privateNumber;
   final number = call.number ?? '';
   return ContactsRepository.instance.nameFor(number) ??
       ((call.name?.trim().isNotEmpty ?? false)
           ? call.name!.trim()
-          : (call.formattedNumber ?? (number.isEmpty ? 'Unknown' : number)));
+          : (call.formattedNumber ?? (number.isEmpty ? l10n.unknown : number)));
 }
 
 /// The caller's name when there is one worth tinting by; null for private, conference and bare numbers.
 String? backdropSeed(CallInfo call) {
   if (call.isPrivate || call.isConference) return null;
-  final name = callerName(call);
+  final name = callerName(
+    lookupAppLocalizations(const Locale('en')),
+    call,
+  ); // English: the tint stays the same in every language
   return LetterAvatar.initials(name).isEmpty ? null : name;
 }
 
@@ -127,7 +131,7 @@ class CallHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = callerName(call);
+    final name = callerName(context.l10n, call);
     final number = call.number ?? '';
     final shownNumber = call.formattedNumber ?? number;
     final sim = sims.where((s) => s.id == call.simId).firstOrNull;
@@ -326,12 +330,12 @@ class _CallStatusState extends State<CallStatus> with SingleTickerProviderStateM
 
   String _endedText(CallInfo call) {
     final reason = switch (call.disconnectCode) {
-      'busy' => 'Line busy',
-      'rejected' => 'Call declined',
-      'missed' => 'Missed call',
-      'canceled' => 'Call cancelled',
-      'error' => call.disconnectLabel ?? 'Call failed',
-      _ => 'Call ended',
+      'busy' => context.l10n.lineBusy,
+      'rejected' => context.l10n.callDeclined,
+      'missed' => context.l10n.callTypeMissed,
+      'canceled' => context.l10n.callCancelled,
+      'error' => call.disconnectLabel ?? context.l10n.callFailed,
+      _ => context.l10n.callEnded,
     };
     final start = call.connectTime;
     return start == null ? reason : '$reason · ${_format((_endedAt ?? DateTime.now()).difference(start))}';
@@ -342,12 +346,15 @@ class _CallStatusState extends State<CallStatus> with SingleTickerProviderStateM
     final call = widget.call;
     final text = switch (call.state) {
       CallState.active when call.connectTime != null => _format(DateTime.now().difference(call.connectTime!)),
-      CallState.active => 'Connected',
-      CallState.dialing || CallState.connecting || CallState.newCall || CallState.selectPhoneAccount => 'Calling',
-      CallState.ringing => 'Incoming call',
-      CallState.holding => 'On hold',
+      CallState.active => context.l10n.connected,
+      CallState.dialing ||
+      CallState.connecting ||
+      CallState.newCall ||
+      CallState.selectPhoneAccount => context.l10n.calling,
+      CallState.ringing => context.l10n.callTypeIncoming,
+      CallState.holding => context.l10n.onHold,
       CallState.disconnecting || CallState.disconnected => _endedText(call),
-      CallState.unknown => 'Phone call',
+      CallState.unknown => context.l10n.phoneCall,
     };
     final style = TextStyle(
       fontSize: 20,
@@ -355,11 +362,11 @@ class _CallStatusState extends State<CallStatus> with SingleTickerProviderStateM
       color: call.state == CallState.active ? Colors.white : Colors.white.withValues(alpha: .85),
       fontFeatures: const [FontFeature.tabularFigures()],
     );
-    final Widget label = text == 'Calling'
+    final Widget label = text == context.l10n.calling
         // Dots fill in one by one; the hidden ones keep the width steady.
         ? Text.rich(
             TextSpan(
-              text: 'Calling',
+              text: context.l10n.calling,
               children: [
                 for (var i = 0; i < 3; i++)
                   TextSpan(
@@ -473,7 +480,7 @@ class _HdCallGlyph extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Semantics(
-    label: 'HD call',
+    label: context.l10n.hdCall,
     child: const ExcludeSemantics(
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -499,10 +506,10 @@ class HeldCallCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = callerName(call);
+    final name = callerName(context.l10n, call);
     return Semantics(
       button: true,
-      label: 'Switch to $name, on hold',
+      label: context.l10n.switchToOnHold(name),
       excludeSemantics: true,
       onTap: onSwitch,
       child: CallBody(
@@ -528,23 +535,23 @@ class HeldCallCard extends StatelessWidget {
                         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white),
                       ),
                       const SizedBox(height: 2),
-                      const Text('On hold', style: TextStyle(fontSize: 13, color: Colors.white60)),
+                      Text(context.l10n.onHold, style: const TextStyle(fontSize: 13, color: Colors.white60)),
                     ],
                   ),
                 ),
                 const SizedBox(width: 8),
-                const DecoratedBox(
-                  decoration: ShapeDecoration(color: Color(0x29FFFFFF), shape: StadiumBorder()),
+                DecoratedBox(
+                  decoration: const ShapeDecoration(color: Color(0x29FFFFFF), shape: StadiumBorder()),
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.swap_vert_rounded, size: 18, color: Colors.white),
-                        SizedBox(width: 6),
+                        const Icon(Icons.swap_vert_rounded, size: 18, color: Colors.white),
+                        const SizedBox(width: 6),
                         Text(
-                          'Switch',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.white),
+                          context.l10n.switchCall,
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.white),
                         ),
                       ],
                     ),

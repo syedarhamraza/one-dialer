@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/one_ui_theme.dart';
 import 'one_ui_glass_surface.dart';
 import '../core/haptics/haptics.dart';
+import '../l10n/l10n.dart';
 
 /// Bottom multi-selection floating action bar.
 /// Streamlined according to user instructions:
@@ -78,7 +79,7 @@ class OneUISelectionActionBar extends StatelessWidget {
             context,
             key: shareButtonKey,
             icon: Icons.share_outlined,
-            label: 'Share',
+            label: context.l10n.share,
             isEnabled: hasSelection,
             onTap: onShare,
           ),
@@ -87,7 +88,7 @@ class OneUISelectionActionBar extends StatelessWidget {
           _buildActionItem(
             context,
             icon: Icons.delete_outline_rounded,
-            label: 'Delete',
+            label: context.l10n.delete,
             isEnabled: hasSelection,
             color: hasSelection ? OneUITheme.accentRed : null,
             onTap: onDelete,
@@ -98,7 +99,7 @@ class OneUISelectionActionBar extends StatelessWidget {
             context,
             key: moreButtonKey,
             icon: Icons.more_vert_rounded,
-            label: 'More',
+            label: context.l10n.more,
             isEnabled: hasSelection,
             onTap: onMore,
           ),
