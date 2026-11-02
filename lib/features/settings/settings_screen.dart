@@ -7,6 +7,7 @@ import '../../core/config/app_version.dart';
 import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
+import '../../widgets/cos_subpage.dart';
 import '../../widgets/one_ui_subpage.dart';
 import '../../widgets/choice_row.dart';
 import '../contacts/manage_contacts_screen.dart';
@@ -19,6 +20,8 @@ import '../updates/presentation/update_controller.dart';
 import 'about_screen.dart';
 import 'app_icon_screen.dart';
 import 'call_settings_pages.dart';
+import 'dialing_settings_screen.dart';
+import 'display_settings_screen.dart';
 import 'help_feedback_screen.dart';
 import 'software_update_screen.dart';
 import '../../l10n/l10n.dart';
@@ -36,12 +39,20 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   Map<Object?, Object?> _health = const {};
   bool _bluetoothNames = true;
   AppVersion? _version;
+  String _icon = 'default';
+
+  /// Android 17 lets VoIP apps share their calls with Recents; earlier phones have no switch for it.
+  bool get _appCallLog => (_health['sdk'] as int? ?? 0) >= 37;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _refresh();
+    _loadIcon();
+    // Their values show on the Display and Language rows.
+    DialerPrefs.instance.themeMode.addListener(_rebuild);
+    DialerPrefs.instance.language.addListener(_rebuild);
     AppVersion.current().then((v) {
       if (mounted) setState(() => _version = v);
     });
@@ -55,8 +66,16 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    DialerPrefs.instance.themeMode.removeListener(_rebuild);
+    DialerPrefs.instance.language.removeListener(_rebuild);
     super.dispose();
   }
+
+  void _rebuild() => setState(() {});
+
+  void _loadIcon() => _telecom.getLauncherIcon().then((s) {
+    if (mounted) setState(() => _icon = s);
+  });
 
   Future<void> _refresh() async {
     final health = await _telecom.getCallHealth();
@@ -73,15 +92,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     // Android stops asking after two refusals; then only the app's settings page can grant it.
     if (await Permission.bluetoothConnect.request().isPermanentlyDenied) await openAppSettings();
     _refresh();
-  }
-
-  /// A system screen that not every phone has (Contacts storage, Google's sync).
-  Future<void> _openSystem(String page) async {
-    try {
-      await _telecom.openSystemSettings(page);
-    } on PlatformException {
-      if (mounted) OneUIToast.show(context, context.l10n.settingNotAvailable);
-    }
   }
 
   void _push(Widget page) => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
@@ -127,44 +137,81 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   @override
   Widget build(BuildContext context) {
     final problems = _problems;
-    // Grouped like ColorOS's Call settings; the rarely changed rest is under More settings.
+    final l10n = context.l10n;
+    // Grouped like ColorOS's Settings: one titled card per topic.
     return OneUISubpage(
-      title: context.l10n.callSettings,
+      title: l10n.callSettings,
       builder: (context) => [
-        if (problems.isNotEmpty) OneUIGroupCard(headerTitle: context.l10n.needsAttention, items: problems),
+        if (problems.isNotEmpty) OneUIGroupCard(headerTitle: l10n.needsAttention, items: problems),
         OneUIGroupCard(
+          headerTitle: l10n.settingsCalls,
           items: [
-            OneUIGroupItem(
-              title: context.l10n.incomingCallReminders,
-              onTap: () => _push(const IncomingCallRemindersScreen()),
-            ),
-            OneUIGroupItem(title: context.l10n.answerButtons, onTap: () => _push(const AnswerButtonsScreen())),
-            OneUIGroupItem(title: context.l10n.answerEndCalls, onTap: () => _push(const AnswerEndCallsScreen())),
+            OneUIGroupItem(title: l10n.incomingCallReminders, onTap: () => _push(const IncomingCallRemindersScreen())),
+            OneUIGroupItem(title: l10n.answerButtons, onTap: () => _push(const AnswerButtonsScreen())),
+            OneUIGroupItem(title: l10n.answerEndCalls, onTap: () => _push(const AnswerEndCallsScreen())),
           ],
         ),
         OneUIGroupCard(
+          headerTitle: l10n.settingsDialing,
           items: [
+            OneUIGroupItem(title: l10n.keypadAndRecents, onTap: () => _push(const DialingSettingsScreen())),
+            OneUIGroupItem(title: l10n.speedDial, onTap: () => _push(const SpeedDialScreen())),
+          ],
+        ),
+        OneUIGroupCard(
+          headerTitle: l10n.settingsSpamBlocking,
+          items: [
+            OneUIGroupItem(title: l10n.blockAndFilter, onTap: () => _push(const BlockingScreen())),
             OneUIGroupItem(
-              title: context.l10n.callerIdentification,
-              subtitle: context.l10n.callerIdSpamApp,
+              title: l10n.callerIdentification,
+              subtitle: l10n.callerIdSpamApp,
               onTap: () => _telecom.openSystemSettings('defaultApps'),
             ),
-            OneUIGroupItem(title: context.l10n.speedDial, onTap: () => _push(const SpeedDialScreen())),
           ],
         ),
         OneUIGroupCard(
-          items: [OneUIGroupItem(title: context.l10n.blockAndFilter, onTap: () => _push(const BlockingScreen()))],
-        ),
-        OneUIGroupCard(
-          items: [
-            OneUIGroupItem(title: context.l10n.carrierSettings, onTap: () => _openSystem('carrier')),
-            OneUIGroupItem(title: context.l10n.moreSettings, onTap: () => _push(const _MoreSettingsScreen())),
-          ],
-        ),
-        OneUIGroupCard(
+          headerTitle: l10n.settingsPersonalisation,
           items: [
             OneUIGroupItem(
-              title: context.l10n.softwareUpdate,
+              title: l10n.displayAndEffects,
+              value: DisplaySettingsScreen.themeLabels(l10n)[DialerPrefs.instance.themeMode.value],
+              onTap: () => _push(const DisplaySettingsScreen()),
+            ),
+            OneUIGroupItem(
+              title: l10n.appIcon,
+              value: AppIconScreen.labels(l10n)[_icon],
+              onTap: () =>
+                  Navigator.of(context)
+                      .push(MaterialPageRoute<void>(builder: (_) => const AppIconScreen()))
+                      .then((_) => _loadIcon()),
+            ),
+          ],
+        ),
+        OneUIGroupCard(
+          headerTitle: l10n.settingsGeneral,
+          items: [
+            OneUIGroupItem(
+              title: l10n.settingsLanguageHeader,
+              value: _languageLabels(l10n)[DialerPrefs.instance.language.value],
+              onTap: () => _push(const _LanguageScreen()),
+            ),
+            OneUIGroupItem(title: l10n.navContacts, onTap: () => _push(const _ContactsSettingsScreen())),
+            OneUIGroupItem(title: l10n.notifications, onTap: () => _telecom.openSystemSettings('notifications')),
+            OneUIGroupItem(title: l10n.defaultApps, onTap: () => _telecom.openSystemSettings('defaultApps')),
+            OneUIGroupItem(title: l10n.carrierSettings, onTap: () => openSystemSetting(context, 'carrier')),
+            if (_appCallLog)
+              OneUIGroupItem(
+                title: l10n.callsFromOtherApps,
+                subtitle: l10n.callsFromOtherAppsSubtitle,
+                onTap: () => openSystemSetting(context, 'voipCallLog'),
+              ),
+          ],
+        ),
+        OneUIGroupCard(
+          headerTitle: l10n.settingsAbout,
+          items: [
+            OneUIGroupItem(
+              title: l10n.softwareUpdate,
               value: _version?.label,
               trailing: ListenableBuilder(
                 listenable: UpdateController.instance,
@@ -178,12 +225,12 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               ),
               onTap: () => SoftwareUpdateScreen.open(context),
             ),
-            OneUIGroupItem(title: context.l10n.helpFeedback, onTap: () => _push(const HelpFeedbackScreen())),
+            OneUIGroupItem(title: l10n.helpFeedback, onTap: () => _push(const HelpFeedbackScreen())),
             OneUIGroupItem(
-              title: context.l10n.privacyPolicy,
+              title: l10n.privacyPolicy,
               onTap: () => _telecom.openSystemSettings('url:${AppInfo.privacyPolicyUrl}'),
             ),
-            OneUIGroupItem(title: context.l10n.aboutOneDialer, onTap: () => _push(const AboutScreen())),
+            OneUIGroupItem(title: l10n.aboutOneDialer, onTap: () => _push(const AboutScreen())),
           ],
         ),
       ],
@@ -191,195 +238,82 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   }
 }
 
-/// Settings › More settings: how taps and SIMs behave, contacts storage, and About.
-class _MoreSettingsScreen extends StatefulWidget {
-  const _MoreSettingsScreen();
-
-  @override
-  State<_MoreSettingsScreen> createState() => _MoreSettingsScreenState();
+/// A system screen that not every phone has (carrier settings, Contacts storage, Google's sync).
+Future<void> openSystemSetting(BuildContext context, String page) async {
+  try {
+    await TelecomBridge.instance.openSystemSettings(page);
+  } on PlatformException {
+    if (context.mounted) OneUIToast.show(context, context.l10n.settingNotAvailable);
+  }
 }
 
-class _MoreSettingsScreenState extends State<_MoreSettingsScreen> {
-  final _telecom = TelecomBridge.instance;
+/// Each language named in itself, so a new app_xx.arb shows up here on its own.
+Map<String, String> _languageLabels(AppLocalizations l10n) => {
+  'system': l10n.settingsLanguageSystem,
+  for (final locale in AppLocalizations.supportedLocales)
+    locale.languageCode: lookupAppLocalizations(locale).languageName,
+};
 
-  /// A system screen that not every phone has (Contacts storage, Google's sync).
-  Future<void> _openSystem(String page) async {
-    try {
-      await _telecom.openSystemSettings(page);
-    } on PlatformException {
-      if (mounted) OneUIToast.show(context, context.l10n.settingNotAvailable);
-    }
-  }
+/// Settings › Language: the app's own language, or Android's per-app page for it.
+class _LanguageScreen extends StatefulWidget {
+  const _LanguageScreen();
 
-  final _tapKey = GlobalKey();
-  final _simKey = GlobalKey();
-  final _themeKey = GlobalKey();
-  final _effectsKey = GlobalKey();
+  @override
+  State<_LanguageScreen> createState() => _LanguageScreenState();
+}
+
+class _LanguageScreenState extends State<_LanguageScreen> {
   final _languageKey = GlobalKey();
-  final _glassDarkKey = GlobalKey();
-
-  static Map<String, String> _themeLabels(AppLocalizations l10n) => {
-    'system': l10n.settingsLanguageSystem,
-    'light': l10n.themeLight,
-    'dark': l10n.themeDark,
-  };
-  static Map<String, String> _tapLabels(AppLocalizations l10n) => {
-    'details': l10n.openDetails,
-    'dial': l10n.writeInKeypad,
-  };
-
-  /// "Choose SIM and call" is offered only with two SIMs; with one, a saved `sim` reads as details.
-  bool _dualSim = false;
-
-  /// Android 17 lets VoIP apps share their calls with Recents; earlier phones have no switch for it.
-  bool _appCallLog = false;
-
-  String _icon = 'default';
-
-  void _loadIcon() => _telecom.getLauncherIcon().then((s) {
-    if (mounted) setState(() => _icon = s);
-  });
 
   @override
-  void initState() {
-    super.initState();
-    _loadIcon();
-    DialerPrefs.instance.visualEffects.addListener(_rebuild);
-    _telecom.getSims().then((s) {
-      if (mounted) setState(() => _dualSim = s.length > 1);
-    });
-    _telecom.getCallHealth().then((h) {
-      if (mounted) setState(() => _appCallLog = (h['sdk'] as int? ?? 0) >= 37);
-    });
-  }
+  Widget build(BuildContext context) => CosSubpage(
+    title: context.l10n.settingsLanguageHeader,
+    children: [
+      OneUIGroupCard(
+        items: [
+          choiceRow(
+            context,
+            title: context.l10n.settingsAppLanguage,
+            subtitle: context.l10n.settingsAppLanguageSubtitle,
+            anchor: _languageKey,
+            value: DialerPrefs.instance.language,
+            labels: _languageLabels(context.l10n),
+            onPick: DialerPrefs.instance.setLanguage,
+          ),
+          OneUIGroupItem(
+            title: context.l10n.settingsAndroidLanguage,
+            subtitle: context.l10n.settingsAndroidLanguageSubtitle,
+            onTap: () => openSystemSetting(context, 'language'),
+          ),
+        ],
+      ),
+    ],
+  );
+}
+
+/// Settings › Contacts: which contacts show, and where they're stored and synced.
+class _ContactsSettingsScreen extends StatelessWidget {
+  const _ContactsSettingsScreen();
 
   @override
-  void dispose() {
-    DialerPrefs.instance.visualEffects.removeListener(_rebuild);
-    super.dispose();
-  }
-
-  void _rebuild() => setState(() {});
-
-  static Map<String, String> _simLabels(AppLocalizations l10n) => {
-    'buttons': l10n.twoCallButtons,
-    'menu': l10n.askEveryTime,
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    return OneUISubpage(
-      title: context.l10n.moreSettings,
-      builder: (context) => [
-        OneUIGroupCard(
-          headerTitle: context.l10n.settingsLanguageHeader,
-          items: [
-            choiceRow(
-              context,
-              title: context.l10n.settingsAppLanguage,
-              subtitle: context.l10n.settingsAppLanguageSubtitle,
-              anchor: _languageKey,
-              value: DialerPrefs.instance.language,
-              // Each language named in itself, so a new app_xx.arb shows up here on its own.
-              labels: {
-                'system': context.l10n.settingsLanguageSystem,
-                for (final locale in AppLocalizations.supportedLocales)
-                  locale.languageCode: lookupAppLocalizations(locale).languageName,
-              },
-              onPick: DialerPrefs.instance.setLanguage,
-            ),
-            OneUIGroupItem(
-              title: context.l10n.settingsAndroidLanguage,
-              subtitle: context.l10n.settingsAndroidLanguageSubtitle,
-              onTap: () => _openSystem('language'),
-            ),
-          ],
-        ),
-        OneUIGroupCard(
-          items: [
-            choiceRow(
-              context,
-              title: context.l10n.tapRecentCall,
-              anchor: _tapKey,
-              value: DialerPrefs.instance.recentTap,
-              labels: {..._tapLabels(context.l10n), if (_dualSim) 'sim': context.l10n.chooseSimAndCall},
-              onPick: DialerPrefs.instance.setRecentTap,
-            ),
-            choiceRow(
-              context,
-              title: context.l10n.chooseSimForCalls,
-              subtitle: context.l10n.chooseSimSubtitle,
-              anchor: _simKey,
-              value: DialerPrefs.instance.simChoice,
-              labels: _simLabels(context.l10n),
-              onPick: DialerPrefs.instance.setSimChoice,
-            ),
-            choiceRow(
-              context,
-              title: context.l10n.appearance,
-              anchor: _themeKey,
-              value: DialerPrefs.instance.themeMode,
-              labels: _themeLabels(context.l10n),
-              onPick: DialerPrefs.instance.setThemeMode,
-            ),
-            OneUIGroupItem(
-              title: context.l10n.appIcon,
-              value: AppIconScreen.labels(context.l10n)[_icon],
-              onTap: () =>
-                  Navigator.of(context)
-                      .push(MaterialPageRoute<void>(builder: (_) => const AppIconScreen()))
-                      .then((_) => _loadIcon()),
-            ),
-            choiceRow(
-              context,
-              title: context.l10n.reduceVisualEffects,
-              subtitle: context.l10n.reduceVisualEffectsSubtitle,
-              anchor: _effectsKey,
-              value: DialerPrefs.instance.visualEffects,
-              labels: effectsLabels(context.l10n),
-              onPick: DialerPrefs.instance.setVisualEffects,
-            ),
-            // The glass styles only change the full-effects glass; below it the rows go away.
-            if (DialerPrefs.instance.visualEffects.value == 'full') ...[
-              choiceRow(
-                context,
-                title: context.l10n.darkModeEdgeGlow,
-                anchor: _glassDarkKey,
-                value: DialerPrefs.instance.glassDark,
-                labels: edgeGlowLabels(context.l10n),
-                onPick: DialerPrefs.instance.setGlassDark,
-              ),
-            ],
-            if (_appCallLog)
-              OneUIGroupItem(
-                title: context.l10n.callsFromOtherApps,
-                subtitle: context.l10n.callsFromOtherAppsSubtitle,
-                onTap: () => _openSystem('voipCallLog'),
-              ),
-          ],
-        ),
-        OneUIGroupCard(
-          headerTitle: context.l10n.navContacts,
-          items: [
-            OneUIGroupItem(
-              title: context.l10n.manageContacts,
-              subtitle: context.l10n.manageContactsSubtitle,
-              onTap: () =>
-                  Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ManageContactsScreen())),
-            ),
-            OneUIGroupItem(
-              title: context.l10n.googleContactsSync,
-              subtitle: context.l10n.googleContactsSyncSubtitle,
-              onTap: () => _openSystem('googleContactsSync'),
-            ),
-            OneUIGroupItem(title: context.l10n.defaultApps, onTap: () => _telecom.openSystemSettings('defaultApps')),
-            OneUIGroupItem(
-              title: context.l10n.notifications,
-              onTap: () => _telecom.openSystemSettings('notifications'),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => CosSubpage(
+    title: context.l10n.navContacts,
+    children: [
+      OneUIGroupCard(
+        items: [
+          OneUIGroupItem(
+            title: context.l10n.manageContacts,
+            subtitle: context.l10n.manageContactsSubtitle,
+            onTap: () =>
+                Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ManageContactsScreen())),
+          ),
+          OneUIGroupItem(
+            title: context.l10n.googleContactsSync,
+            subtitle: context.l10n.googleContactsSyncSubtitle,
+            onTap: () => openSystemSetting(context, 'googleContactsSync'),
+          ),
+        ],
+      ),
+    ],
+  );
 }

@@ -17,7 +17,7 @@ Code without a `BuildContext` takes an `AppLocalizations` argument from its call
 
 ## Choosing the language
 
-Settings › More settings › Language:
+Settings › General › Language:
 
 - **App language**: Same as phone, or one of the app's languages (each named in itself, from its ARB's `languageName`). Only this app changes.
 - **Android language settings**: opens Android's own page for this app (Android 13+), or the system language page on Android 10–12.

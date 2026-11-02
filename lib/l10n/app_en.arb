@@ -683,7 +683,6 @@
   "callerIdentification": "Caller identification",
   "callerIdSpamApp": "Caller ID & spam app",
   "carrierSettings": "Carrier-related settings",
-  "moreSettings": "More settings",
   "softwareUpdate": "Software update",
   "helpFeedback": "Help & feedback",
   "privacyPolicy": "Privacy policy",
@@ -798,5 +797,13 @@
   "autoUpdateAlwaysSubtitle": "Checking uses very little data",
   "autoUpdateNever": "Never",
   "autoUpdateWifiOnly": "Using Wi-Fi only",
-  "autoUpdateAlways": "Using Wi-Fi or mobile data"
+  "autoUpdateAlways": "Using Wi-Fi or mobile data",
+  "settingsCalls": "Calls",
+  "settingsDialing": "Dialing",
+  "settingsSpamBlocking": "Spam & blocking",
+  "settingsPersonalisation": "Personalisation",
+  "settingsGeneral": "General",
+  "settingsAbout": "About",
+  "displayAndEffects": "Display & effects",
+  "keypadAndRecents": "Keypad & recents"
 }

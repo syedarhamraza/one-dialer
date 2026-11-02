@@ -5,7 +5,7 @@ import '../../l10n/l10n.dart';
 import '../../widgets/cos_subpage.dart';
 import '../../widgets/showcase_picker.dart';
 
-/// Settings › More settings › App icon: the Phone and Contacts launcher icons switch together
+/// Settings › App icon: the Phone and Contacts launcher icons switch together
 /// (AppIcons.kt). Previews are rendered by tool/icons/render_icons.py.
 class AppIconScreen extends StatefulWidget {
   const AppIconScreen({super.key});
