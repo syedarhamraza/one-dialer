@@ -38,8 +38,11 @@ class PressGlow extends StatelessWidget {
       // circle 1.6× the button offscreen on every pointer move (~30 ms a frame on the menu card).
       glowRadius: 1.6,
       glowBlurRadius: 0,
-      // Light mode's white glass hides a white glow: a faint shade instead.
-      glowColor: context.palette.isLight
+      // Below full effects there's no glass, so no glow either: just the squeeze. Light mode's
+      // white glass hides a white glow: a faint shade instead.
+      glowColor: !OneUIEffectsController.instance.isFull
+          ? Colors.transparent
+          : context.palette.isLight
           ? const Color(0x0F000000)
           : GlassTheme.brightnessOf(context) == Brightness.dark
           ? const Color(0x12FFFFFF)
