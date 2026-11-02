@@ -482,7 +482,13 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               leading: Padding(
                 padding: const EdgeInsets.only(left: 4),
                 child: CustomPaint(
-                  painter: SimOutline(color: context.palette.textPrimary, strokeWidth: 1.4, corner: 2.5, cut: 5),
+                  painter: SimOutline(
+                    color: context.palette.textPrimary,
+                    strokeWidth: 1.4,
+                    corner: 2.5,
+                    cut: 5,
+                    chip: true,
+                  ),
                   size: const Size(16, 21),
                 ),
               ),
@@ -701,12 +707,9 @@ class _ValueRow extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // As tall as the value's line, so the icon sits level with the value, not the label.
             SizedBox(
               width: 40,
-              height: MediaQuery.textScalerOf(context).scale(19) * 1.3,
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: leading ?? (icon == null ? null : Icon(icon, size: 24)),
