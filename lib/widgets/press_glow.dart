@@ -27,8 +27,12 @@ class PressGlow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final full = OneUIEffectsController.instance.isFull;
     final press = GlassButton.custom(
       style: GlassButtonStyle.transparent,
+      // Below full effects there's no glass, so no glass lighting on press either (the even white
+      // lift while held, and the finger glow below): just the squeeze.
+      ambientBaseLight: full ? null : 0,
       onTap: _noTap,
       excludeFromSemantics: true,
       canRequestFocus: false,
@@ -38,9 +42,8 @@ class PressGlow extends StatelessWidget {
       // circle 1.6× the button offscreen on every pointer move (~30 ms a frame on the menu card).
       glowRadius: 1.6,
       glowBlurRadius: 0,
-      // Below full effects there's no glass, so no glow either: just the squeeze. Light mode's
-      // white glass hides a white glow: a faint shade instead.
-      glowColor: !OneUIEffectsController.instance.isFull
+      // Light mode's white glass hides a white glow: a faint shade instead.
+      glowColor: !full
           ? Colors.transparent
           : context.palette.isLight
           ? const Color(0x0F000000)
