@@ -436,9 +436,9 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                                     height: actionSize,
                                     // ColorOS 17's tomato red, lit from below like the other buttons, with
                                     // squircle ends like the keys.
-                                    foregroundDecoration: glassGlow(
+                                    foregroundDecoration: callGlassGlow(
+                                      context,
                                       RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(actionSize / 2)),
-                                      flat: callFlat(context),
                                     ),
                                     decoration: glassBody(
                                       endRed,

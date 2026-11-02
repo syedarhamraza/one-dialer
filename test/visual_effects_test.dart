@@ -38,6 +38,25 @@ void main() {
     expect(prefs.glassLight.value, 'bold');
   });
 
+  test('the call screen edge glow is saved with the call effects, and unknown values are ignored', () async {
+    await prefs.setCallGlass('bold');
+    prefs.callGlass.value = 'soft';
+    await prefs.loadCallEffects();
+    expect(prefs.callGlass.value, 'bold');
+
+    await prefs.setCallGlass('fancy');
+    prefs.callGlass.value = 'classic';
+    await prefs.loadCallEffects();
+    expect(prefs.callGlass.value, 'classic');
+    prefs.callGlass.value = 'soft';
+  });
+
+  test('solid buttons take the glass edges at its opacity, softer, and none with classic', () {
+    expect(litEdges(glassLook('classic')), isNull);
+    expect(litEdges(glassLook('soft')), const GlassEdges(strength: 2 * .5 * .7, bottomLip: .5 * .7));
+    expect(litEdges(glassLook('bold')), const GlassEdges(strength: 3 * .5 * .7, bottomLip: 3 * .5 * .7, lip: 2));
+  });
+
   testWidgets('each glass style resolves to its look in each theme', (tester) async {
     Future<({double opacity, GlassEdges edges})> look(Brightness brightness, {double classic = 1}) async {
       late ({double opacity, GlassEdges edges}) result;

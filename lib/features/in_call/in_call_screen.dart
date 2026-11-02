@@ -274,7 +274,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
       child: IgnorePointer(
         child: Container(
           key: const ValueKey('answer-flight'),
-          foregroundDecoration: glassGlow(shape, flat: callFlat(context)),
+          foregroundDecoration: callGlassGlow(context, shape),
           alignment: Alignment.center,
           child: Stack(
             fit: StackFit.expand,

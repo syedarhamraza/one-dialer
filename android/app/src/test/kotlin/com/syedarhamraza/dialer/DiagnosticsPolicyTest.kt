@@ -8,9 +8,9 @@ class DiagnosticsPolicyTest {
     @Test fun contextRejectsUserDataUnknownFieldsAndInvalidNumbers() {
         val result = DiagnosticsPolicy.context(mapOf("screen" to "contact/123", "phone" to "03001234567",
             "contactName" to "Private name", "visualEffects" to "full", "refreshRate" to Double.NaN,
-            "glassDark" to "soft", "glassLight" to "fancy",
+            "glassDark" to "soft", "glassLight" to "fancy", "callGlass" to "bold",
             "frames" to mapOf("buildP95Ms" to 15, "number" to "03001234567", "rasterMaxMs" to -1)))
-        assertEquals(mapOf("visualEffects" to "full", "glassDark" to "soft",
+        assertEquals(mapOf("visualEffects" to "full", "glassDark" to "soft", "callGlass" to "bold",
             "frames" to mapOf("buildP95Ms" to 15.0)), result)
     }
 

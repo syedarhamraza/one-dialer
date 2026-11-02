@@ -75,18 +75,8 @@ class LitButton extends StatelessWidget {
     return ListenableBuilder(
       listenable: fx,
       builder: (context, child) {
-        // The glass style's 3D edges, so the green buttons match the glass around them (none
-        // past the solid button's own glow with classic). At the glass's opacity too: the glass
-        // draws its edges through it, and a little softer still: over solid green they read stronger.
-        final look = fx.isFull ? mainGlass(context) : null;
-        final scale = (look?.opacity ?? 1) * .7;
-        final edges = look == null || look.edges == GlassEdges.callScreen
-            ? GlassEdges.callScreen
-            : GlassEdges(
-                strength: look.edges.strength * scale,
-                bottomLip: look.edges.bottomLip * scale,
-                lip: look.edges.lip,
-              );
+        // The glass style's 3D edges, so the green buttons match the glass around them.
+        final edges = (fx.isFull ? litEdges(mainGlass(context)) : null) ?? GlassEdges.callScreen;
         return PressGlow(
           radius: radius,
           glowColor: fx.isFull ? color : null,

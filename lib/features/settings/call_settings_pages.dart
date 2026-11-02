@@ -197,6 +197,8 @@ class AnswerButtonsScreen extends StatefulWidget {
 class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
   final _directionKey = GlobalKey();
   final _effectsKey = GlobalKey();
+  final _glassKey = GlobalKey();
+  static const _glassStyles = {'classic': 'Classic', 'soft': 'Soft', 'bold': 'Bold'};
 
   static const _directions = {'up': 'Swipe up to answer', 'down': 'Swipe down to answer'};
 
@@ -241,12 +243,12 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
             ),
           ],
         ),
-        ValueListenableBuilder(
-          valueListenable: prefs.answerStyle,
-          builder: (context, style, _) => OneUIGroupCard(
+        ListenableBuilder(
+          listenable: Listenable.merge([prefs.answerStyle, prefs.callEffects]),
+          builder: (context, _) => OneUIGroupCard(
             items: [
               // Only 1 button has a direction to choose.
-              if (style == 'one')
+              if (prefs.answerStyle.value == 'one')
                 choiceRow(
                   context,
                   title: 'Answer call',
@@ -264,6 +266,16 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
                 labels: effectsLabels,
                 onPick: prefs.setCallEffects,
               ),
+              // Styles the full-effects glass only.
+              if (prefs.callEffects.value == 'full')
+                choiceRow(
+                  context,
+                  title: 'Call screen edge glow',
+                  anchor: _glassKey,
+                  value: prefs.callGlass,
+                  labels: _glassStyles,
+                  onPick: prefs.setCallGlass,
+                ),
             ],
           ),
         ),

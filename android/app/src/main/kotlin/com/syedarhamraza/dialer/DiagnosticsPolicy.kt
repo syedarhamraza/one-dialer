@@ -29,6 +29,7 @@ internal class DiagnosticsPolicy {
                 "callEffects" to setOf("full", "reduced", "off"),
                 "glassDark" to setOf("classic", "soft", "bold"),
                 "glassLight" to setOf("classic", "soft", "bold"),
+                "callGlass" to setOf("classic", "soft", "bold"),
             )
             for ((key, levels) in allowed) {
                 (values[key] as? String)?.takeIf { it in levels }?.let { result[key] = it }

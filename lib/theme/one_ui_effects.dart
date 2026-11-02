@@ -27,6 +27,7 @@ class OneUIEffectsController extends ChangeNotifier {
     DialerPrefs.instance.callEffects.addListener(notifyListeners);
     DialerPrefs.instance.glassDark.addListener(notifyListeners);
     DialerPrefs.instance.glassLight.addListener(notifyListeners);
+    DialerPrefs.instance.callGlass.addListener(notifyListeners);
   }
 
   static final OneUIEffectsController instance = OneUIEffectsController._();
@@ -80,6 +81,9 @@ class OneUIEffectsController extends ChangeNotifier {
   /// `classic`, `soft` or `bold`.
   String glassStyle({required bool light}) =>
       light ? DialerPrefs.instance.glassLight.value : DialerPrefs.instance.glassDark.value;
+
+  /// The call screen's edge glow style (Settings › "Call screen edge glow").
+  String get callGlassStyle => DialerPrefs.instance.callGlass.value;
 
   /// Effects off: solid One UI fills, no blur anywhere.
   bool get isOff => level == 'off';

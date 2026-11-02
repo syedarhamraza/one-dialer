@@ -200,6 +200,10 @@ class DialerPrefs {
   /// screen's own engine (which reads it in `inCallMain` and on every resume, never awaited).
   final callEffects = ValueNotifier('full');
 
+  /// Settings › "Call screen edge glow", with full call screen effects: `classic`, `soft` or
+  /// `bold`, like the main app's. Loaded with [callEffects].
+  final callGlass = ValueNotifier('soft');
+
   /// Settings › Answer buttons: `two` buttons (Decline | Answer) or `one` (swipe up to
   /// answer, down to decline). Loaded with [callEffects], for the call screen's engine.
   final answerStyle = ValueNotifier('two');
@@ -211,6 +215,8 @@ class DialerPrefs {
     final effects = await _prefs.getString('call_effects');
     if (effects == null) callEffects.value = await _effectsDefault();
     if (effects == 'full' || effects == 'reduced' || effects == 'off') callEffects.value = effects!;
+    final glass = await _prefs.getString('call_glass');
+    if (glass == 'classic' || glass == 'soft' || glass == 'bold') callGlass.value = glass!;
     final style = await _prefs.getString('answer_style');
     if (style == 'two' || style == 'one') answerStyle.value = style!;
     final direction = await _prefs.getString('answer_direction');
@@ -225,6 +231,11 @@ class DialerPrefs {
   Future<void> setAnswerStyle(String value) async {
     answerStyle.value = value;
     await _prefs.setString('answer_style', value);
+  }
+
+  Future<void> setCallGlass(String value) async {
+    callGlass.value = value;
+    await _prefs.setString('call_glass', value);
   }
 
   Future<void> setCallEffects(String value) async {
