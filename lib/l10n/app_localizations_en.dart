@@ -1255,9 +1255,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get carrierSettings => 'Carrier-related settings';
 
   @override
-  String get moreSettings => 'More settings';
-
-  @override
   String get softwareUpdate => 'Software update';
 
   @override
@@ -1541,4 +1538,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get autoUpdateAlways => 'Using Wi-Fi or mobile data';
+
+  @override
+  String get settingsCalls => 'Calls';
+
+  @override
+  String get settingsDialing => 'Dialing';
+
+  @override
+  String get settingsSpamBlocking => 'Spam & blocking';
+
+  @override
+  String get settingsPersonalisation => 'Personalisation';
+
+  @override
+  String get settingsGeneral => 'General';
+
+  @override
+  String get settingsAbout => 'About';
+
+  @override
+  String get displayAndEffects => 'Display & effects';
+
+  @override
+  String get keypadAndRecents => 'Keypad & recents';
+
+  @override
+  String get visualEffects => 'Visual effects';
 }

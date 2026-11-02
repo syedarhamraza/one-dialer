@@ -62,6 +62,7 @@ class ShowcasePicker extends StatelessWidget {
                               const SizedBox(height: 16),
                               Text(
                                 o.label,
+                                textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: o.value == picked ? accent : context.palette.textSecondary,
@@ -89,13 +90,36 @@ class ShowcasePicker extends StatelessWidget {
   }
 }
 
+/// The grey title over a [ShowcasePicker], as ColorOS's Display page has.
+class ShowcaseTitle extends StatelessWidget {
+  const ShowcaseTitle(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(18, 0, 18, 8),
+    child: Text(text, style: TextStyle(fontSize: 14, color: context.palette.textSecondary)),
+  );
+}
+
 /// A small phone with a blue-to-teal screen and a caller's name and number as grey bars;
-/// [child] draws the choice on top (a banner, the call buttons).
+/// [child] draws the choice on top (a banner, the call buttons). [screen] replaces the call
+/// screen's gradient for previews of the app's own pages.
 class PhonePreview extends StatelessWidget {
-  const PhonePreview({super.key, required this.child, this.showCaller = true});
+  const PhonePreview({super.key, required this.child, this.showCaller = true, this.screen = callScreen});
 
   final Widget child;
   final bool showCaller;
+  final Decoration screen;
+
+  static const callScreen = BoxDecoration(
+    gradient: LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF3B6FB0), Color(0xFF2E8A94)],
+    ),
+  );
 
   static const width = 112.0, height = 232.0;
 
@@ -110,13 +134,7 @@ class PhonePreview extends StatelessWidget {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(17),
           child: DecoratedBox(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFF3B6FB0), Color(0xFF2E8A94)],
-              ),
-            ),
+            decoration: screen,
             child: Stack(
               children: [
                 if (showCaller)
@@ -126,17 +144,32 @@ class PhonePreview extends StatelessWidget {
                     right: 0,
                     child: Column(
                       children: [
-                        _Bar(46, 9, .55),
+                        PreviewBar(46, 9, .55),
                         SizedBox(height: 8),
-                        _Bar(70, 3, .4),
+                        PreviewBar(70, 3, .4),
                         SizedBox(height: 8),
-                        _Bar(18, 4, .4),
+                        PreviewBar(18, 4, .4),
                       ],
                     ),
                   ),
                 Positioned.fill(child: child),
-                // The gesture bar.
-                const Positioned(left: 0, right: 0, bottom: 6, child: Center(child: _Bar(36, 2, .4))),
+                // The gesture bar, dark on a light screen.
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 6,
+                  child: Center(
+                    child: PreviewBar(
+                      36,
+                      2,
+                      .4,
+                      color: switch (screen) {
+                        BoxDecoration(:final color?) when color.computeLuminance() > .5 => Colors.black,
+                        _ => Colors.white,
+                      },
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -146,17 +179,19 @@ class PhonePreview extends StatelessWidget {
   }
 }
 
-class _Bar extends StatelessWidget {
-  const _Bar(this.width, this.height, this.opacity);
+/// A rounded bar standing for text in a preview: [color] at [opacity].
+class PreviewBar extends StatelessWidget {
+  const PreviewBar(this.width, this.height, this.opacity, {super.key, this.color = Colors.white});
 
   final double width, height, opacity;
+  final Color color;
 
   @override
   Widget build(BuildContext context) => Container(
     width: width,
     height: height,
     decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: opacity),
+      color: color.withValues(alpha: opacity),
       borderRadius: BorderRadius.circular(height),
     ),
   );

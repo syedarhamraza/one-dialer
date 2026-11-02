@@ -348,7 +348,6 @@
   "callerIdentification": "Identificazione chiamante",
   "callerIdSpamApp": "App ID chiamante e spam",
   "carrierSettings": "Impostazioni dell'operatore",
-  "moreSettings": "Altre impostazioni",
   "softwareUpdate": "Aggiornamento software",
   "helpFeedback": "Guida e feedback",
   "privacyPolicy": "Informativa sulla privacy",
@@ -436,5 +435,14 @@
   "autoUpdateAlwaysSubtitle": "La verifica usa pochissimi dati",
   "autoUpdateNever": "Mai",
   "autoUpdateWifiOnly": "Solo con Wi-Fi",
-  "autoUpdateAlways": "Con Wi-Fi o dati mobili"
+  "autoUpdateAlways": "Con Wi-Fi o dati mobili",
+  "settingsCalls": "Chiamate",
+  "settingsDialing": "Composizione",
+  "settingsSpamBlocking": "Spam e blocco",
+  "settingsPersonalisation": "Personalizzazione",
+  "settingsGeneral": "Generali",
+  "settingsAbout": "Informazioni",
+  "displayAndEffects": "Schermo ed effetti",
+  "keypadAndRecents": "Tastierino e recenti",
+  "visualEffects": "Effetti visivi"
 }

@@ -2186,12 +2186,6 @@ abstract class AppLocalizations {
   /// **'Carrier-related settings'**
   String get carrierSettings;
 
-  /// No description provided for @moreSettings.
-  ///
-  /// In en, this message translates to:
-  /// **'More settings'**
-  String get moreSettings;
-
   /// No description provided for @softwareUpdate.
   ///
   /// In en, this message translates to:
@@ -2719,6 +2713,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Using Wi-Fi or mobile data'**
   String get autoUpdateAlways;
+
+  /// No description provided for @settingsCalls.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls'**
+  String get settingsCalls;
+
+  /// No description provided for @settingsDialing.
+  ///
+  /// In en, this message translates to:
+  /// **'Dialing'**
+  String get settingsDialing;
+
+  /// No description provided for @settingsSpamBlocking.
+  ///
+  /// In en, this message translates to:
+  /// **'Spam & blocking'**
+  String get settingsSpamBlocking;
+
+  /// No description provided for @settingsPersonalisation.
+  ///
+  /// In en, this message translates to:
+  /// **'Personalisation'**
+  String get settingsPersonalisation;
+
+  /// No description provided for @settingsGeneral.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get settingsGeneral;
+
+  /// No description provided for @settingsAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get settingsAbout;
+
+  /// No description provided for @displayAndEffects.
+  ///
+  /// In en, this message translates to:
+  /// **'Display & effects'**
+  String get displayAndEffects;
+
+  /// No description provided for @keypadAndRecents.
+  ///
+  /// In en, this message translates to:
+  /// **'Keypad & recents'**
+  String get keypadAndRecents;
+
+  /// No description provided for @visualEffects.
+  ///
+  /// In en, this message translates to:
+  /// **'Visual effects'**
+  String get visualEffects;
 }
 
 class _AppLocalizationsDelegate

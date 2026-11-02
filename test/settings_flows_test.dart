@@ -1,11 +1,16 @@
 import 'package:dialer/features/blocking/blocking_screen.dart';
+import 'package:dialer/core/prefs/dialer_prefs.dart';
 import 'package:dialer/features/settings/app_icon_screen.dart';
+import 'package:dialer/features/settings/dialing_settings_screen.dart';
+import 'package:dialer/features/settings/display_settings_screen.dart';
 import 'package:dialer/features/settings/quick_replies_screen.dart';
 import 'package:dialer/widgets/one_ui_radio.dart';
 import 'package:dialer/theme/one_ui_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 import 'package:dialer/l10n/app_localizations.dart';
 
 void main() {
@@ -14,6 +19,7 @@ void main() {
 
   setUp(() {
     telecom.clear();
+    SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.empty();
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     messenger.setMockMethodCallHandler(const MethodChannel('com.syedarhamraza.dialer/telecom'), (call) async {
       telecom.add(call);
@@ -22,6 +28,10 @@ void main() {
         'hasScreeningRole' => false,
         'getQuickReplies' => ['Hi'],
         'getLauncherIcon' => 'classic',
+        'getSims' => [
+          {'id': 'a', 'label': 'SIM 1'},
+          {'id': 'b', 'label': 'SIM 2'},
+        ],
         _ => null,
       };
     });
@@ -75,5 +85,29 @@ void main() {
     expect(telecom.last.method, 'setLauncherIcon');
     expect(telecom.last.arguments, {'style': 'default'});
     expect([selected(0), selected(1)], [true, false]);
+  });
+
+  testWidgets('Display & effects picks the theme and effects from their pictures', (tester) async {
+    await open(tester, const DisplaySettingsScreen());
+    await tester.tap(find.text('Dark'));
+    await tester.pumpAndSettle();
+    expect(DialerPrefs.instance.themeMode.value, 'dark');
+
+    await tester.ensureVisible(find.text('Effects off'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Effects off'));
+    await tester.pumpAndSettle();
+    expect(DialerPrefs.instance.visualEffects.value, 'off');
+    expect(find.text('Dark mode edge glow'), findsNothing); // only styles full effects
+  });
+
+  testWidgets('Keypad & recents shows the SIM pictures on dual SIM', (tester) async {
+    await open(tester, const DialingSettingsScreen());
+    expect(find.text('Choose SIM and call'), findsOneWidget);
+    await tester.ensureVisible(find.text('Ask every time'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Ask every time'));
+    await tester.pumpAndSettle();
+    expect(DialerPrefs.instance.simChoice.value, 'menu');
   });
 }
