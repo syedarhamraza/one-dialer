@@ -75,7 +75,8 @@ object CallManager {
     fun get(id: String): Call? = calls[id]
 
     /** All current calls with their ids, oldest first. */
-    fun all(): List<Pair<String, Call>> = calls.map { it.key to it.value }
+    /** Top-level calls: a conference stands in for its members. */
+    fun all(): List<Pair<String, Call>> = calls.filter { it.value.parent == null }.map { it.key to it.value }
 
     fun idOf(call: Call): String? = ids[call]
 
@@ -88,8 +89,7 @@ object CallManager {
     /** Serialized for the Flutter side: `{calls: [...], audio: {...}}`. */
     fun snapshot(): Map<String, Any?> = mapOf(
         // A conference's members stay inside it (hung up with it), so the screen shows one call.
-        "calls" to (if (calls.isEmpty()) listOfNotNull(ended)
-            else calls.filter { it.value.parent == null }.map { (id, call) -> serialize(id, call) }),
+        "calls" to (if (calls.isEmpty()) listOfNotNull(ended) else all().map { (id, call) -> serialize(id, call) }),
         "audio" to audioSnapshot(),
     )
 
