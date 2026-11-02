@@ -493,9 +493,13 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                     onPressed: () =>
                         Navigator.of(context)
                             .push(MaterialPageRoute<void>(builder: (_) => ContactHistoryScreen(contact: contact))),
-                    child: Text(
-                      context.l10n.viewAll,
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: OneUITheme.accentGreen),
+                    style: TextButton.styleFrom(foregroundColor: context.palette.textSecondary),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(context.l10n.viewAll, style: const TextStyle(fontSize: 15)),
+                        const Icon(Icons.chevron_right_rounded, size: 20),
+                      ],
                     ),
                   ),
                 ],
