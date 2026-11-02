@@ -6,6 +6,7 @@ import 'package:dialer/core/prefs/dialer_prefs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dialer/l10n/app_localizations.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
@@ -48,6 +49,8 @@ void main() {
       addTearDown(tester.view.reset);
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: OneUITheme.darkTheme,
           builder: (context, child) => DesignWidth(child: child!),
           home: Scaffold(
@@ -71,6 +74,8 @@ void main() {
     final open = ValueNotifier(true);
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: OneUITheme.darkTheme,
         home: Scaffold(
           body: KeypadScreen(open: open, input: input),
@@ -95,6 +100,8 @@ void main() {
     final input = ValueNotifier('');
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: OneUITheme.darkTheme,
         home: Scaffold(
           body: KeypadScreen(open: ValueNotifier(true), input: input),
@@ -131,6 +138,8 @@ void main() {
       final input = ValueNotifier('+');
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: OneUITheme.darkTheme,
           home: RepaintBoundary(
             key: boundary,
@@ -170,6 +179,8 @@ void main() {
     final open = ValueNotifier(true);
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: OneUITheme.darkTheme,
         home: Scaffold(
           body: KeypadScreen(open: open, input: input),
@@ -194,6 +205,8 @@ void main() {
     final input = ValueNotifier('');
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: OneUITheme.darkTheme,
         home: Scaffold(
           body: KeypadScreen(open: ValueNotifier(true), input: input),
@@ -216,6 +229,8 @@ void main() {
     final open = ValueNotifier(true);
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: OneUITheme.darkTheme,
         home: Scaffold(
           body: KeypadScreen(open: open, input: ValueNotifier('0333')),
@@ -249,6 +264,8 @@ void main() {
     final active = ValueNotifier(true);
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: OneUITheme.darkTheme,
         home: ValueListenableBuilder<bool>(
           valueListenable: active,
@@ -288,6 +305,8 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: OneUITheme.darkTheme,
         home: Scaffold(
           body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('03331234567')),
@@ -321,6 +340,8 @@ void main() {
     final input = ValueNotifier('5551234567');
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: OneUITheme.darkTheme,
         home: Scaffold(
           body: KeypadScreen(open: ValueNotifier(true), input: input),
@@ -353,6 +374,8 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: OneUITheme.darkTheme,
         home: Scaffold(
           body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('03331234567')),
@@ -381,6 +404,8 @@ void main() {
     });
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: OneUITheme.darkTheme,
         home: Scaffold(
           body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('5551234567')),
@@ -402,6 +427,8 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: OneUITheme.darkTheme,
         home: Scaffold(
           body: KeypadScreen(open: open, input: ValueNotifier('0333')),
@@ -425,6 +452,8 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: OneUITheme.darkTheme,
         home: MediaQuery(
           data: const MediaQueryData(size: Size(320, 568), textScaler: TextScaler.linear(1.5)),

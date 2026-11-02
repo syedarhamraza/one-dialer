@@ -7,6 +7,7 @@ import '../../core/contacts/contacts_repository.dart';
 import '../../core/diagnostics/lag_diagnostics.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import 'call_log.dart';
+import '../../l10n/l10n.dart';
 
 /// The system call log, reloaded whenever Android reports a change.
 class CallLogRepository {
@@ -130,8 +131,8 @@ class CallLogRepository {
 }
 
 /// What Recents shows for a call: live contact name, else Telecom's cached name, else the number.
-String callerName(CallLogEntry call) {
-  if (call.isPrivate || call.number.isEmpty) return 'Private number';
+String callerName(AppLocalizations l10n, CallLogEntry call) {
+  if (call.isPrivate || call.number.isEmpty) return l10n.privateNumber;
   final cached = call.name?.trim();
   return ContactsRepository.instance.nameFor(call.number) ??
       (cached != null && cached.isNotEmpty ? cached : call.number);

@@ -21,6 +21,8 @@ Future<void> main() async {
   // Not awaited: rows use the defaults until the saved choices arrive a moment later.
   DialerPrefs.instance.loadChoices();
   await DialerPrefs.instance.loadAppearance();
+  await DialerPrefs.instance.loadLanguage();
+  AppLifecycleListener(onResume: DialerPrefs.instance.loadLanguage);
   // The bundled Roboto (the glass version numeral) under About › Open source licences.
   LicenseRegistry.addLicense(() async* {
     yield LicenseEntryWithLineBreaks(['Roboto'], await rootBundle.loadString('assets/fonts/Roboto-LICENSE.txt'));
@@ -53,7 +55,13 @@ Future<void> inCallMain() async {
   // Settings › Call screen effects, never awaited: a ringing call must not wait on storage. It
   // can change while this engine is cached, so it's read again whenever the call screen resumes.
   unawaited(DialerPrefs.instance.loadCallEffects());
-  AppLifecycleListener(onResume: DialerPrefs.instance.loadCallEffects);
+  unawaited(DialerPrefs.instance.loadLanguage());
+  AppLifecycleListener(
+    onResume: () {
+      DialerPrefs.instance.loadCallEffects();
+      DialerPrefs.instance.loadLanguage();
+    },
+  );
   // Pre-warms the call screen's glass shaders so its first frame doesn't flash.
   await LiquidGlassWidgets.initialize();
   runApp(LiquidGlassWidgets.wrap(brightnessResolver: Theme.maybeBrightnessOf, child: const InCallApp()));

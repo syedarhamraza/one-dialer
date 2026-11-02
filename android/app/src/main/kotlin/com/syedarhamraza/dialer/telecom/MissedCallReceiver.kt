@@ -10,6 +10,7 @@ import android.content.Intent
 import android.net.Uri
 import android.text.format.DateUtils
 import com.syedarhamraza.dialer.MainActivity
+import com.syedarhamraza.dialer.AppLanguage
 import com.syedarhamraza.dialer.R
 
 /**
@@ -42,11 +43,12 @@ object MissedCallNotifier {
         val missed = runCatching { CallLogSource.unseenMissed(context) }.getOrDefault(emptyList())
         if (missed.isEmpty()) return manager.cancel(ID)
 
+        val res = AppLanguage.localized(context).resources
         manager.createNotificationChannel(
-            NotificationChannel(CHANNEL, "Missed calls", NotificationManager.IMPORTANCE_DEFAULT)
+            NotificationChannel(CHANNEL, res.getString(R.string.channel_missed), NotificationManager.IMPORTANCE_DEFAULT)
         )
         val (number, name, date) = missed.first()
-        val caller = name?.takeIf { it.isNotBlank() } ?: number.ifBlank { "Unknown" }
+        val caller = name?.takeIf { it.isNotBlank() } ?: number.ifBlank { res.getString(R.string.unknown) }
         val open = PendingIntent.getActivity(
             context, 0, MainActivity.openRecentsIntent(context),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
@@ -70,13 +72,14 @@ object MissedCallNotifier {
             .setShowWhen(true)
 
         if (missed.size == 1) {
-            builder.setContentTitle("Missed call").setContentText("$caller · ${time(context, date)}")
+            builder.setContentTitle(res.getString(R.string.missed_call)).setContentText("$caller · ${time(context, date)}")
             if (number.isNotBlank()) {
-                builder.addAction(action(context, "Call back", Intent(Intent.ACTION_CALL, Uri.fromParts("tel", number, null)), 1))
-                builder.addAction(action(context, "Message", Intent(Intent.ACTION_SENDTO, Uri.fromParts("smsto", number, null)), 2))
+                builder.addAction(action(context, res.getString(R.string.call_back), Intent(Intent.ACTION_CALL, Uri.fromParts("tel", number, null)), 1))
+                builder.addAction(action(context, res.getString(R.string.message), Intent(Intent.ACTION_SENDTO, Uri.fromParts("smsto", number, null)), 2))
             }
         } else {
-            builder.setContentTitle("${missed.size} missed calls").setContentText("Latest: $caller · ${time(context, date)}")
+            builder.setContentTitle(res.getQuantityString(R.plurals.missed_calls, missed.size, missed.size))
+                .setContentText(res.getString(R.string.missed_latest, "$caller · ${time(context, date)}"))
         }
         manager.notify(ID, builder.build())
     }

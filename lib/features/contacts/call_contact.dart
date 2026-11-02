@@ -6,6 +6,8 @@ import '../../widgets/one_ui_floating_modal.dart';
 import '../../widgets/one_ui_radio.dart';
 import '../../widgets/place_call.dart';
 import '../../widgets/press_glow.dart';
+import '../../l10n/l10n.dart';
+import 'editor/contact_form.dart' show labelDisplay;
 
 /// Calls [contact]: its default (or only) number straight away, otherwise after Samsung's
 /// chooser, whose "Set as default" remembers the pick as Android's default number.
@@ -40,7 +42,10 @@ Future<String?> chooseNumber(BuildContext context, DialerContact contact) async 
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(contact.labels[i], style: TextStyle(fontSize: 14, color: context.palette.textSecondary)),
+                          Text(
+                            labelDisplay(context.l10n, contact.labels[i]),
+                            style: TextStyle(fontSize: 14, color: context.palette.textSecondary),
+                          ),
                           Text(n, style: const TextStyle(fontSize: 20)),
                         ],
                       ),
@@ -53,11 +58,14 @@ Future<String?> chooseNumber(BuildContext context, DialerContact contact) async 
           Row(
             children: [
               Expanded(
-                child: _FooterButton(label: 'Just once', onTap: () => Navigator.pop(ctx, (selected, false))),
+                child: _FooterButton(label: context.l10n.justOnce, onTap: () => Navigator.pop(ctx, (selected, false))),
               ),
               Container(width: 1, height: 18, color: context.palette.divider),
               Expanded(
-                child: _FooterButton(label: 'Set as default', onTap: () => Navigator.pop(ctx, (selected, true))),
+                child: _FooterButton(
+                  label: context.l10n.setAsDefault,
+                  onTap: () => Navigator.pop(ctx, (selected, true)),
+                ),
               ),
             ],
           ),

@@ -7,10 +7,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dialer/l10n/app_localizations.dart';
 
 void main() {
   testWidgets('setup screen asks for the default role with no way to skip', (tester) async {
-    await tester.pumpWidget(MaterialApp(home: SetupScreen(onDone: () {})));
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: SetupScreen(onDone: () {}),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Set One Dialer as your default phone app'), findsOneWidget);
@@ -22,6 +29,8 @@ void main() {
     testWidgets('setup title follows the ${light ? 'light' : 'dark'} palette', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: light ? OneUITheme.lightTheme : OneUITheme.darkTheme,
           home: SetupScreen(onDone: () {}),
         ),
@@ -46,8 +55,13 @@ void main() {
         final boundary = GlobalKey();
         await tester.pumpWidget(
           MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
             theme: theme,
-            home: RepaintBoundary(key: boundary, child: SetupScreen(onDone: () {})),
+            home: RepaintBoundary(
+              key: boundary,
+              child: SetupScreen(onDone: () {}),
+            ),
           ),
         );
         await tester.pumpAndSettle();

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/one_ui_theme.dart';
 import 'one_ui_glass_surface.dart';
+import '../l10n/l10n.dart';
 
 /// Floating scroll-to-top circular button matching Screenshot 2.
 /// Appears when actively scrolling down past [threshold], and automatically
@@ -109,7 +110,7 @@ class _OneUIScrollToTopButtonState extends State<OneUIScrollToTopButton> {
           duration: const Duration(milliseconds: 180),
           child: Semantics(
             button: true,
-            label: 'Scroll to top',
+            label: context.l10n.scrollToTop,
             child: GestureDetector(
               onTap: _scrollToTop,
               child: OneUIGlassSurface.circle(

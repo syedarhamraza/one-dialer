@@ -4,6 +4,7 @@ import '../../../theme/one_ui_theme.dart';
 import '../../../widgets/cos_dialog.dart';
 import '../../../widgets/one_ui_floating_menu.dart';
 import 'contact_form.dart';
+import '../../../l10n/l10n.dart';
 
 /// ColorOS's rounded flat card holding editor rows.
 class EditorCard extends StatelessWidget {
@@ -121,9 +122,9 @@ class _LabelButtonState extends State<LabelButton> {
   Future<void> _custom() async {
     final text = await showCosTextInput(
       context,
-      title: 'Custom label',
+      title: context.l10n.customLabel,
       initialValue: widget.options.contains(widget.label) ? '' : widget.label,
-      confirmLabel: 'OK',
+      confirmLabel: context.l10n.ok,
     );
     if (text != null && text.trim().isNotEmpty) widget.onChanged(text.trim());
   }
@@ -140,8 +141,8 @@ class _LabelButtonState extends State<LabelButton> {
           anchorKey: _anchor,
           items: [
             for (final o in widget.options)
-              OneUIFloatingMenuItem(label: labelDisplay(o), onTap: () => widget.onChanged(o)),
-            OneUIFloatingMenuItem(label: 'Custom', onTap: _custom),
+              OneUIFloatingMenuItem(label: labelDisplay(context.l10n, o), onTap: () => widget.onChanged(o)),
+            OneUIFloatingMenuItem(label: context.l10n.custom, onTap: _custom),
           ],
         ),
         child: Padding(
@@ -149,7 +150,7 @@ class _LabelButtonState extends State<LabelButton> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(labelDisplay(widget.label), style: const TextStyle(fontSize: 17)),
+              Text(labelDisplay(context.l10n, widget.label), style: const TextStyle(fontSize: 17)),
               const SizedBox(width: 2),
               Icon(Icons.arrow_drop_down_rounded, size: 22, color: context.palette.textSecondary),
             ],
@@ -162,15 +163,15 @@ class _LabelButtonState extends State<LabelButton> {
 
 /// ColorOS's red ⊖ remove control.
 class RemoveButton extends StatelessWidget {
-  const RemoveButton({super.key, required this.onPressed, this.tooltip = 'Remove'});
+  const RemoveButton({super.key, required this.onPressed, this.tooltip});
 
   final VoidCallback onPressed;
-  final String tooltip;
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      tooltip: tooltip,
+      tooltip: tooltip ?? context.l10n.remove,
       onPressed: onPressed,
       icon: const Icon(Icons.remove_circle_rounded, size: 22, color: OneUITheme.accentRed),
     );

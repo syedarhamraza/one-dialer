@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/one_ui_theme.dart';
 import 'one_ui_glass_surface.dart';
 import '../core/haptics/haptics.dart';
+import '../l10n/l10n.dart';
 
 /// Standardized Samsung One UI 9 Floating Stadium "Cancel | Save" Pill
 /// Matches reference screenshots with translucent smoked glass backdrop,
@@ -11,8 +12,8 @@ class OneUIFloatingCancelSavePill extends StatelessWidget {
   final VoidCallback onCancel;
   final VoidCallback? onSave;
   final bool canSave;
-  final String cancelLabel;
-  final String saveLabel;
+  final String? cancelLabel;
+  final String? saveLabel;
 
   /// Render only the Cancel | Save row, for hosting inside a bar that morphs
   /// between it and other content (see OneUIMorphSwitcher).
@@ -23,8 +24,8 @@ class OneUIFloatingCancelSavePill extends StatelessWidget {
     required this.onCancel,
     required this.onSave,
     this.canSave = true,
-    this.cancelLabel = 'Cancel',
-    this.saveLabel = 'Save',
+    this.cancelLabel,
+    this.saveLabel,
     this.docked = false,
   });
 
@@ -67,7 +68,7 @@ class OneUIFloatingCancelSavePill extends StatelessWidget {
               alignment: Alignment.center,
               padding: const EdgeInsets.symmetric(horizontal: 28),
               child: Text(
-                cancelLabel,
+                cancelLabel ?? context.l10n.cancel,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -97,7 +98,7 @@ class OneUIFloatingCancelSavePill extends StatelessWidget {
               alignment: Alignment.center,
               padding: const EdgeInsets.symmetric(horizontal: 28),
               child: Text(
-                saveLabel,
+                saveLabel ?? context.l10n.save,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,

@@ -4,6 +4,7 @@ import '../core/haptics/haptics.dart';
 import '../features/in_call/call_controls.dart';
 import '../theme/one_ui_theme.dart';
 import 'call_glass.dart';
+import '../l10n/l10n.dart';
 
 /// A header icon on its own round grey background (search, menu, cancel).
 class RoundIconButton extends StatelessWidget {
@@ -165,7 +166,7 @@ class SelectAllCount extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: allSelected ? 'Deselect all' : 'Select all',
+      label: allSelected ? context.l10n.deselectAll : context.l10n.selectAll,
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -193,7 +194,7 @@ class SelectAllCount extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              'All',
+              context.l10n.all,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,

@@ -11,6 +11,7 @@ import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_floating_modal.dart';
+import '../../l10n/l10n.dart';
 
 /// A ColorOS 17 call-control body, a circle or (with [radius]) a squircle-ended key: frosted (the backdrop blurred behind it), milky, glowing up
 /// from every edge (least along the top), with a lip along the top edge and a fainter one below. The glass package supplies the press: it squeezes, stretches toward
@@ -453,11 +454,11 @@ class CallAction extends StatelessWidget {
   }
 }
 
-String audioRouteLabel(AudioRoute route) => switch (route) {
-  AudioRoute.earpiece => 'Phone',
-  AudioRoute.speaker => 'Speaker',
+String audioRouteLabel(AppLocalizations l10n, AudioRoute route) => switch (route) {
+  AudioRoute.earpiece => l10n.audioPhone,
+  AudioRoute.speaker => l10n.speaker,
   AudioRoute.bluetooth => 'Bluetooth',
-  AudioRoute.wiredHeadset => 'Wired headset',
+  AudioRoute.wiredHeadset => l10n.wiredHeadset,
 };
 
 IconData audioRouteIcon(AudioRoute route) => switch (route) {
@@ -488,7 +489,7 @@ Future<void> chooseCallAudioRoute(BuildContext context, AudioInfo audio, GlobalK
           )
       else
         OneUIFloatingMenuItem(
-          label: audioRouteLabel(route),
+          label: audioRouteLabel(context.l10n, route),
           icon: route == audio.route ? Icons.radio_button_checked_rounded : Icons.radio_button_unchecked_rounded,
           onTap: () => TelecomBridge.instance.setAudioRoute(route),
         ),
@@ -574,7 +575,6 @@ class _CallNoteSheetState extends State<_CallNoteSheet> {
     _save = Timer(const Duration(milliseconds: 400), _flush);
   }
 
-  static const _hint = 'Write something to remember from this call';
   static const _ink = Color(0xFF111418);
 
   @override
@@ -586,16 +586,16 @@ class _CallNoteSheetState extends State<_CallNoteSheet> {
     children: [
       Row(
         children: [
-          const Expanded(
-            child: Text('Call note', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+          Expanded(
+            child: Text(context.l10n.callNote, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
           ),
           if (widget.initial.isNotEmpty)
             TextButton(
               onPressed: _delete,
               style: TextButton.styleFrom(foregroundColor: OneUITheme.accentRed),
-              child: const Text('Delete'),
+              child: Text(context.l10n.delete),
             ),
-          TextButton(onPressed: _done, child: const Text('Done')),
+          TextButton(onPressed: _done, child: Text(context.l10n.done)),
         ],
       ),
       const SizedBox(height: 8),
@@ -605,7 +605,7 @@ class _CallNoteSheetState extends State<_CallNoteSheet> {
         minLines: 3,
         maxLines: 6,
         textCapitalization: TextCapitalization.sentences,
-        decoration: const InputDecoration(hintText: _hint),
+        decoration: InputDecoration(hintText: context.l10n.callNoteHint),
         onChanged: _changed,
       ),
     ],
@@ -617,10 +617,10 @@ class _CallNoteSheetState extends State<_CallNoteSheet> {
     mainAxisSize: MainAxisSize.min,
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const Text(
-        'Call note',
+      Text(
+        context.l10n.callNote,
         textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: _ink),
+        style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: _ink),
       ),
       const SizedBox(height: 16),
       TextField(
@@ -631,9 +631,9 @@ class _CallNoteSheetState extends State<_CallNoteSheet> {
         textCapitalization: TextCapitalization.sentences,
         style: const TextStyle(color: _ink, fontSize: 16, height: 1.35),
         cursorColor: answerGreen,
-        decoration: const InputDecoration(
-          hintText: _hint,
-          hintStyle: TextStyle(color: Color(0x80111418)),
+        decoration: InputDecoration(
+          hintText: context.l10n.callNoteHint,
+          hintStyle: const TextStyle(color: Color(0x80111418)),
           filled: true,
           fillColor: Color(0x0F000000),
           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -645,10 +645,10 @@ class _CallNoteSheetState extends State<_CallNoteSheet> {
       Row(
         children: [
           if (widget.initial.isNotEmpty) ...[
-            Expanded(child: _pill('Delete', const Color(0x0F000000), OneUITheme.accentRed, _delete)),
+            Expanded(child: _pill(context.l10n.delete, const Color(0x0F000000), OneUITheme.accentRed, _delete)),
             const SizedBox(width: 10),
           ],
-          Expanded(child: _pill('Done', answerGreen, Colors.white, _done)),
+          Expanded(child: _pill(context.l10n.done, answerGreen, Colors.white, _done)),
         ],
       ),
     ],

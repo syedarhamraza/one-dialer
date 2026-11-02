@@ -10,6 +10,7 @@ import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/one_ui_group_card.dart';
 import '../../widgets/one_ui_subpage.dart';
 import '../../widgets/one_ui_toast.dart';
+import '../../l10n/l10n.dart';
 
 /// Settings › Help & feedback: send feedback by email (with the app and phone details filled in),
 /// and who made the app.
@@ -19,26 +20,29 @@ class HelpFeedbackScreen extends StatelessWidget {
   static Future<void> _reportLag(BuildContext context) async {
     final send = await showCosConfirm(
       context,
-      title: 'Report lag',
-      message: 'Send recent performance timings, screen and action names, and device details to help find slowdowns. Phone numbers, contacts and messages are not included.',
-      confirmLabel: 'Send report',
+      title: context.l10n.reportLag,
+      message: context.l10n.reportLagMessage,
+      confirmLabel: context.l10n.sendReport,
     );
     if (!send || !context.mounted) return;
     final id = await LagDiagnostics.instance.reportLag();
     if (!context.mounted) return;
     if (id == null) {
-      OneUIToast.show(context, 'Reporting unavailable or recently requested. Try again in a minute.');
+      OneUIToast.show(context, context.l10n.reportUnavailable);
       return;
     }
     final copy = await showCosActions<bool>(
       context,
-      title: 'Report queued',
-      message: 'Your report is saved for upload when reporting is available. Share this ID with your feedback:\n\n$id',
-      actions: [(label: 'Done', value: false, destructive: false), (label: 'Copy ID', value: true, destructive: false)],
+      title: context.l10n.reportQueued,
+      message: context.l10n.reportQueuedMessage(id),
+      actions: [
+        (label: context.l10n.done, value: false, destructive: false),
+        (label: context.l10n.copyId, value: true, destructive: false),
+      ],
     );
     if (copy == true) {
       await Clipboard.setData(ClipboardData(text: id));
-      if (context.mounted) OneUIToast.show(context, 'Report ID copied');
+      if (context.mounted) OneUIToast.show(context, context.l10n.reportIdCopied);
     }
   }
 
@@ -69,28 +73,28 @@ class HelpFeedbackScreen extends StatelessWidget {
           'subject=${Uri.encodeComponent('${AppInfo.name} feedback')}'
           '&body=${Uri.encodeComponent('\n\n\n---\n$details')}',
     );
-    if (context.mounted) await _open(context, '$mail', 'No email app found');
+    if (context.mounted) await _open(context, '$mail', context.l10n.noEmailApp);
   }
 
   @override
   Widget build(BuildContext context) {
     return OneUISubpage(
-      title: 'Help & feedback',
+      title: context.l10n.helpFeedback,
       builder: (context) => [
         OneUIGroupCard(
           items: [
-            OneUIGroupItem(title: 'Send feedback', onTap: () => _sendFeedback(context)),
-            OneUIGroupItem(title: 'Report lag', onTap: () => _reportLag(context)),
+            OneUIGroupItem(title: context.l10n.sendFeedback, onTap: () => _sendFeedback(context)),
+            OneUIGroupItem(title: context.l10n.reportLag, onTap: () => _reportLag(context)),
           ],
         ),
         OneUIGroupCard(
-          headerTitle: 'Developer',
+          headerTitle: context.l10n.developer,
           items: [
-            const OneUIGroupItem(title: 'Name', value: AppInfo.developerName, trailing: SizedBox.shrink()),
+            OneUIGroupItem(title: context.l10n.name, value: AppInfo.developerName, trailing: const SizedBox.shrink()),
             OneUIGroupItem(
               title: 'GitHub',
               value: AppInfo.developerGithub,
-              onTap: () => _open(context, 'https://github.com/${AppInfo.developerGithub}', 'No browser found'),
+              onTap: () => _open(context, 'https://github.com/${AppInfo.developerGithub}', context.l10n.noBrowser),
             ),
           ],
         ),

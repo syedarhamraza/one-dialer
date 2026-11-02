@@ -11,18 +11,19 @@ import '../../widgets/press_glow.dart';
 import '../recents/call_log.dart';
 import '../recents/call_log_repository.dart';
 import 'contact_details_screen.dart';
+import '../../l10n/l10n.dart';
 
 /// The app a contact copy lives in, from its raw contact's account type.
-String accountApp(String? type) => switch (type?.toLowerCase() ?? '') {
+String accountApp(AppLocalizations l10n, String? type) => switch (type?.toLowerCase() ?? '') {
   final t when t.contains('w4b') => 'WhatsApp Business',
   final t when t.contains('whatsapp') => 'WhatsApp',
   final t when t.contains('tachyon') => 'Meet',
   final t when t.contains('google') => 'Google',
-  final t when t.contains('samsung') || t.contains('osp.app') => 'Samsung account',
+  final t when t.contains('samsung') || t.contains('osp.app') => l10n.accountSamsung,
   final t when t.contains('telegram') => 'Telegram',
-  final t when t.contains('sdn') => 'SIM service numbers',
-  final t when t.contains('sim') => 'SIM card',
-  _ => 'This device',
+  final t when t.contains('sdn') => l10n.accountSimServiceNumbers,
+  final t when t.contains('sim') => l10n.accountSimCard,
+  _ => l10n.accountThisDevice,
 };
 
 /// "Call logs" (the contact page's View all): every logged call with the contact's numbers.
@@ -66,7 +67,7 @@ class _ContactHistoryScreenState extends State<ContactHistoryScreen> {
         ];
         final now = DateTime.now();
         return OneUISubpage(
-          title: 'Call logs',
+          title: context.l10n.callLogs,
           slivers: (context) => [
             if (calls.isEmpty)
               SliverToBoxAdapter(
@@ -77,7 +78,7 @@ class _ContactHistoryScreenState extends State<ContactHistoryScreen> {
                       Icon(Icons.watch_later_outlined, size: 40, color: context.palette.textSecondary),
                       SizedBox(height: 12),
                       Text(
-                        'No calls with this contact yet',
+                        context.l10n.noCallsWithContact,
                         textAlign: TextAlign.center,
                         style: TextStyle(color: context.palette.textSecondary),
                       ),
@@ -136,8 +137,8 @@ class _StorageLocationsScreenState extends State<StorageLocationsScreen> {
   }
 
   /// "Google" with the account's email, "SIM card", "This device"...
-  static String _accountLabel(Map<Object?, Object?> r) {
-    final app = accountApp(r['accountType'] as String?);
+  static String _accountLabel(AppLocalizations l10n, Map<Object?, Object?> r) {
+    final app = accountApp(l10n, r['accountType'] as String?);
     final name = r['accountName'] as String?;
     return app == 'Google' && name != null && name.isNotEmpty ? 'Google · $name' : app;
   }
@@ -147,7 +148,7 @@ class _StorageLocationsScreenState extends State<StorageLocationsScreen> {
     final raw = _raw;
     final many = (raw?.length ?? 0) > 1;
     return CosSubpage(
-      title: 'Storage locations',
+      title: context.l10n.storageLocations,
       children: [
         if (raw != null)
           DetailsCard(
@@ -172,7 +173,7 @@ class _StorageLocationsScreenState extends State<StorageLocationsScreen> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              _accountLabel(r),
+                              _accountLabel(context.l10n, r),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
@@ -180,14 +181,18 @@ class _StorageLocationsScreenState extends State<StorageLocationsScreen> {
                           ],
                         ),
                       ),
-                      if (many) _PillButton(label: 'Unlink', onTap: () => _unlink([r['id']! as int])),
+                      if (many) _PillButton(label: context.l10n.unlink, onTap: () => _unlink([r['id']! as int])),
                     ],
                   ),
                 ),
             ],
           ),
         if (many)
-          _PillButton(label: 'Unlink all', wide: true, onTap: () => _unlink([for (final r in raw!) r['id']! as int])),
+          _PillButton(
+            label: context.l10n.unlinkAll,
+            wide: true,
+            onTap: () => _unlink([for (final r in raw!) r['id']! as int]),
+          ),
       ],
     );
   }

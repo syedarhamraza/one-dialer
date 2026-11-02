@@ -5,6 +5,7 @@ import '../../theme/one_ui_theme.dart';
 import '../../widgets/cos_dialog.dart';
 import '../../widgets/one_ui_subpage.dart';
 import '../../widgets/one_ui_group_card.dart';
+import '../../l10n/l10n.dart';
 
 /// Edit the "Decline with SMS" texts (up to [max]).
 class QuickRepliesScreen extends StatefulWidget {
@@ -37,7 +38,7 @@ class _QuickRepliesScreenState extends State<QuickRepliesScreen> {
     final replies = _replies!;
     final text = await showCosTextInput(
       context,
-      title: 'Quick decline message',
+      title: context.l10n.quickDeclineMessage,
       initialValue: index == null ? '' : replies[index],
       maxLength: 160, // one SMS
     );
@@ -51,12 +52,12 @@ class _QuickRepliesScreenState extends State<QuickRepliesScreen> {
   Widget build(BuildContext context) {
     final replies = _replies;
     return OneUISubpage(
-      title: 'Quick decline messages',
+      title: context.l10n.quickDeclineMessages,
       builder: (context) => [
         Padding(
           padding: EdgeInsets.fromLTRB(16, 0, 16, 4),
           child: Text(
-            'Sent when you decline a call with a message',
+            context.l10n.quickDeclineHint,
             style: TextStyle(fontSize: 13.5, color: context.palette.textSecondary),
           ),
         ),
@@ -68,7 +69,7 @@ class _QuickRepliesScreenState extends State<QuickRepliesScreen> {
                   title: replies[i],
                   onTap: () => _edit(i),
                   trailing: IconButton(
-                    tooltip: 'Delete',
+                    tooltip: context.l10n.delete,
                     icon: const Icon(Icons.remove_circle_outline_rounded, color: OneUITheme.accentRed),
                     onPressed: replies.length == 1 ? null : () => _save([...replies]..removeAt(i)),
                   ),
@@ -76,7 +77,7 @@ class _QuickRepliesScreenState extends State<QuickRepliesScreen> {
               if (replies.length < QuickRepliesScreen.max)
                 OneUIGroupItem(
                   leading: const Icon(Icons.add_rounded, color: OneUITheme.accentBlue),
-                  title: 'Add message',
+                  title: context.l10n.addMessage,
                   onTap: () => _edit(null),
                   trailing: const SizedBox.shrink(),
                 ),

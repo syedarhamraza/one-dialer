@@ -19,6 +19,7 @@ import '../../widgets/one_ui_toast.dart';
 import 'about_screen.dart';
 import 'changelog_screen.dart';
 import '../../core/haptics/haptics.dart';
+import '../../l10n/l10n.dart';
 
 /// Settings › Software update: the version over the artwork, the last check's result (or
 /// the update's cards), and one lit green button that shimmers while it works.
@@ -66,7 +67,7 @@ class _SoftwareUpdateScreenState extends State<SoftwareUpdateScreen> {
     final previous = _lastStatus;
     _lastStatus = _updates.status;
     if (previous == UpdateStatus.downloading && _lastStatus == UpdateStatus.available && !_downloadEnding && mounted) {
-      OneUIToast.show(context, "The download stopped. Try again when you're connected.");
+      OneUIToast.show(context, context.l10n.downloadStopped);
     }
   }
 
@@ -77,7 +78,7 @@ class _SoftwareUpdateScreenState extends State<SoftwareUpdateScreen> {
         await _download();
       case UpdateStatus.readyToInstall:
         if (!await _updates.installAndRestart() && mounted) {
-          OneUIToast.show(context, "Couldn't install the update. Try again.");
+          OneUIToast.show(context, context.l10n.couldNotInstallUpdate);
         }
       default:
         // The status line shows the result; a found update waits for "Download and install".
@@ -94,11 +95,11 @@ class _SoftwareUpdateScreenState extends State<SoftwareUpdateScreen> {
         case UpdateDownloadResult.started:
           break; // the page now says the update is ready to install
         case UpdateDownloadResult.declined:
-          OneUIToast.show(context, 'Update cancelled. You can download it any time from here.');
+          OneUIToast.show(context, context.l10n.updateCancelled);
         case UpdateDownloadResult.offline:
-          OneUIToast.show(context, 'No internet connection. Connect and try again.');
+          OneUIToast.show(context, context.l10n.noInternet);
         case UpdateDownloadResult.failed:
-          OneUIToast.show(context, "Couldn't download the update. Try again.");
+          OneUIToast.show(context, context.l10n.couldNotDownloadUpdate);
       }
     } finally {
       _downloadEnding = false;
@@ -113,17 +114,17 @@ class _SoftwareUpdateScreenState extends State<SoftwareUpdateScreen> {
       width: 220,
       items: [
         OneUIFloatingMenuItem(
-          label: 'Software information',
+          label: context.l10n.softwareInformation,
           onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const AboutScreen())),
         ),
         OneUIFloatingMenuItem(
-          label: 'Auto download',
+          label: context.l10n.autoDownload,
           onTap: () {
             Haptics.tap();
             Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const _AutoDownloadScreen()));
           },
         ),
-        OneUIFloatingMenuItem(label: 'Changelog', onTap: () => ChangelogScreen.open(context)),
+        OneUIFloatingMenuItem(label: context.l10n.changelog, onTap: () => ChangelogScreen.open(context)),
       ],
     );
   }
@@ -139,10 +140,10 @@ class _SoftwareUpdateScreenState extends State<SoftwareUpdateScreen> {
           final status = updates.status;
           final busy = status == UpdateStatus.checking || status == UpdateStatus.downloading || updates.installing;
           final buttonLabel = switch (status) {
-            UpdateStatus.notChecked || UpdateStatus.checking => 'Check for updates',
-            UpdateStatus.available || UpdateStatus.downloading => 'Download and install',
-            UpdateStatus.readyToInstall => 'Install and restart',
-            UpdateStatus.failed || UpdateStatus.offline => 'Try again',
+            UpdateStatus.notChecked || UpdateStatus.checking => context.l10n.checkForUpdates,
+            UpdateStatus.available || UpdateStatus.downloading => context.l10n.downloadAndInstall,
+            UpdateStatus.readyToInstall => context.l10n.installAndRestart,
+            UpdateStatus.failed || UpdateStatus.offline => context.l10n.tryAgain,
             UpdateStatus.upToDate || UpdateStatus.notFromPlay => null,
           };
           // ColorOS shows the version card and notes only while there's an update to get.
@@ -163,16 +164,16 @@ class _SoftwareUpdateScreenState extends State<SoftwareUpdateScreen> {
                         children: [
                           RoundIconButton(
                             icon: Icons.arrow_back_rounded,
-                            tooltip: 'Back',
+                            tooltip: context.l10n.back,
                             onTap: () => Navigator.of(context).maybePop(),
                           ),
                           const SizedBox(width: 14),
-                          const Expanded(
+                          Expanded(
                             child: Text(
-                              'Software update',
+                              context.l10n.softwareUpdate,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, letterSpacing: -0.3),
+                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600, letterSpacing: -0.3),
                             ),
                           ),
                           // The menu opens from this wrapper (see the Calls header's menu).
@@ -180,7 +181,7 @@ class _SoftwareUpdateScreenState extends State<SoftwareUpdateScreen> {
                             key: _moreKey,
                             child: RoundIconButton(
                               icon: Icons.more_vert_rounded,
-                              tooltip: 'More options',
+                              tooltip: context.l10n.moreOptions,
                               onTap: _showMenu,
                             ),
                           ),
@@ -213,9 +214,11 @@ class _SoftwareUpdateScreenState extends State<SoftwareUpdateScreen> {
                               ? const SizedBox.shrink()
                               : GlowButton(
                                   key: const ValueKey('button'),
-                                  label: buttonLabel ?? 'Check for updates',
+                                  label: buttonLabel ?? context.l10n.checkForUpdates,
                                   busy: busy,
-                                  busyLabel: status == UpdateStatus.downloading ? 'Downloading…' : 'Checking…',
+                                  busyLabel: status == UpdateStatus.downloading
+                                      ? context.l10n.downloading
+                                      : context.l10n.checking,
                                   width: MediaQuery.sizeOf(context).width - 48,
                                   onTap: _onButtonTap,
                                 ),
@@ -263,10 +266,10 @@ class _StatusLine extends StatelessWidget {
     final message = switch (status) {
       UpdateStatus.notChecked => '',
       UpdateStatus.checking => '',
-      UpdateStatus.upToDate => 'Version up to date',
-      UpdateStatus.offline => 'No network connection',
-      UpdateStatus.notFromPlay => "Updates come from Google Play. This copy wasn't installed from Play.",
-      UpdateStatus.failed => "Couldn't reach Google Play",
+      UpdateStatus.upToDate => context.l10n.versionUpToDate,
+      UpdateStatus.offline => context.l10n.noNetwork,
+      UpdateStatus.notFromPlay => context.l10n.notFromPlay,
+      UpdateStatus.failed => context.l10n.couldNotReachPlay,
       UpdateStatus.available || UpdateStatus.downloading || UpdateStatus.readyToInstall => '',
     };
     return Padding(
@@ -335,15 +338,21 @@ class _UpdateCardsState extends State<_UpdateCards> {
                 children: [
                   Row(
                     children: [
-                      const Text('Software version', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+                      Text(
+                        context.l10n.softwareVersion,
+                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                      ),
                       const SizedBox(width: 8),
                       if (notes?.version.contains('-') ?? false)
-                        Text('Closed beta', style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
+                        Text(
+                          context.l10n.closedBeta,
+                          style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
+                        ),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    notes == null ? 'A new version is available' : '${AppInfo.name} ${notes.version}',
+                    notes == null ? context.l10n.newVersionAvailable : '${AppInfo.name} ${notes.version}',
                     style: TextStyle(fontSize: 14, color: context.palette.textSecondary),
                   ),
                 ],
@@ -363,10 +372,10 @@ class _UpdateCardsState extends State<_UpdateCards> {
                         padding: const EdgeInsets.fromLTRB(18, 16, 14, 16),
                         child: Row(
                           children: [
-                            const Expanded(
+                            Expanded(
                               child: Text(
-                                'About this update',
-                                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                                context.l10n.aboutThisUpdate,
+                                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
                               ),
                             ),
                             Icon(
@@ -429,13 +438,12 @@ class _AutoDownloadScreenState extends State<_AutoDownloadScreen> {
   @override
   Widget build(BuildContext context) {
     return OneUISubpage(
-      title: 'Auto download',
+      title: context.l10n.autoDownload,
       builder: (context) => [
         Padding(
           padding: EdgeInsets.fromLTRB(18, 0, 18, 16),
           child: Text(
-            'When One Dialer checks Google Play for updates as you open it. Updates only '
-            'install when you tap Download and install.',
+            context.l10n.autoDownloadExplainer,
             style: TextStyle(fontSize: 15, height: 1.4, color: context.palette.textSecondary),
           ),
         ),
@@ -443,11 +451,15 @@ class _AutoDownloadScreenState extends State<_AutoDownloadScreen> {
           items: [
             for (final mode in AutoUpdateCheck.values)
               OneUIGroupItem(
-                title: mode.label,
+                title: switch (mode) {
+                  AutoUpdateCheck.never => context.l10n.autoUpdateNever,
+                  AutoUpdateCheck.wifiOnly => context.l10n.autoUpdateWifiOnly,
+                  AutoUpdateCheck.always => context.l10n.autoUpdateAlways,
+                },
                 subtitle: switch (mode) {
-                  AutoUpdateCheck.never => 'Only when you tap Check for updates',
+                  AutoUpdateCheck.never => context.l10n.autoUpdateNeverSubtitle,
                   AutoUpdateCheck.wifiOnly => null,
-                  AutoUpdateCheck.always => 'Checking uses very little data',
+                  AutoUpdateCheck.always => context.l10n.autoUpdateAlwaysSubtitle,
                 },
                 // ColorOS marks the choice with a check on the right.
                 trailing: mode == _mode

@@ -14,8 +14,10 @@ import android.telecom.CallAudioState
 import android.telecom.InCallService
 import android.telecom.VideoProfile
 import android.speech.tts.TextToSpeech
+import com.syedarhamraza.dialer.AppLanguage
 import com.syedarhamraza.dialer.InCallActivity
 import com.syedarhamraza.dialer.InCallEngine
+import com.syedarhamraza.dialer.R
 
 /**
  * Telecom binds to this service for every call once the app holds the default dialer role.
@@ -117,11 +119,15 @@ class DialerInCallService : InCallService() {
     /** Settings › Announce incoming calls: says who's calling, every few seconds while it rings. */
     private fun announce(call: Call) {
         val details = call.details
-        val text = ((if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) details.contactDisplayName else null)
-            ?: details.callerDisplayName?.takeIf { it.isNotBlank() }
-            // Digit by digit, not "three billion…".
-            ?: details.handle?.schemeSpecificPart?.takeIf { it.isNotBlank() }?.toList()?.joinToString(" ")
-            ?: "Unknown caller") + " calling"
+        val res = AppLanguage.localized(this).resources
+        val text = res.getString(
+            R.string.announce_calling,
+            (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) details.contactDisplayName else null)
+                ?: details.callerDisplayName?.takeIf { it.isNotBlank() }
+                // Digit by digit, not "three billion…".
+                ?: details.handle?.schemeSpecificPart?.takeIf { it.isNotBlank() }?.toList()?.joinToString(" ")
+                ?: res.getString(R.string.unknown_caller),
+        )
         val ringing = { CallManager.idOf(call) != null && CallManager.stateOf(call) == Call.STATE_RINGING }
         val speak = object : Runnable {
             override fun run() {

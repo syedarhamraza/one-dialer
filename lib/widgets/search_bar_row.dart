@@ -3,21 +3,16 @@ import 'package:flutter/material.dart';
 import '../theme/one_ui_theme.dart';
 import 'call_glass.dart';
 import 'round_header_controls.dart';
+import '../l10n/l10n.dart';
 
 /// ColorOS's search row: the glass search field across the top, Cancel beside it.
 class SearchBarRow extends StatelessWidget {
-  const SearchBarRow({
-    super.key,
-    required this.controller,
-    required this.onCancel,
-    this.onSubmitted,
-    this.hint = 'Search contacts',
-  });
+  const SearchBarRow({super.key, required this.controller, required this.onCancel, this.onSubmitted, this.hint});
 
   final TextEditingController controller;
   final VoidCallback onCancel;
   final ValueChanged<String>? onSubmitted;
-  final String hint;
+  final String? hint;
 
   static const double _bar = 48;
 
@@ -26,7 +21,11 @@ class SearchBarRow extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: _SearchField(controller: controller, onSubmitted: onSubmitted, hint: hint),
+          child: _SearchField(
+            controller: controller,
+            onSubmitted: onSubmitted,
+            hint: hint ?? context.l10n.searchContacts,
+          ),
         ),
         const SizedBox(width: 10),
         CallGlass(
@@ -40,7 +39,7 @@ class SearchBarRow extends StatelessWidget {
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               shape: const StadiumBorder(),
             ),
-            child: const Text('Cancel', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            child: Text(context.l10n.cancel, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           ),
         ),
       ],
@@ -87,7 +86,7 @@ class _SearchField extends StatelessWidget {
                 builder: (context, value, _) => value.text.isEmpty
                     ? const SizedBox(width: 12)
                     : IconButton(
-                        tooltip: 'Clear',
+                        tooltip: context.l10n.clear,
                         onPressed: controller.clear,
                         icon: Icon(Icons.cancel_rounded, size: 20, color: context.palette.textSecondary),
                       ),
@@ -103,15 +102,10 @@ class _SearchField extends StatelessWidget {
 /// In-place search for subpages and pickers: a search button beside [leading] that swaps the
 /// header for [SearchBarRow]; Back or Cancel closes search (and clears it) before leaving.
 class ExpandableSearchHeader extends StatefulWidget {
-  const ExpandableSearchHeader({
-    super.key,
-    required this.leading,
-    required this.controller,
-    this.hint = 'Search contacts',
-  });
+  const ExpandableSearchHeader({super.key, required this.leading, required this.controller, this.hint});
   final Widget leading;
   final TextEditingController controller;
-  final String hint;
+  final String? hint;
   @override
   State<ExpandableSearchHeader> createState() => _ExpandableSearchHeaderState();
 }
@@ -151,7 +145,7 @@ class _ExpandableSearchHeaderState extends State<ExpandableSearchHeader> {
                   const SizedBox(width: 8),
                   RoundIconButton(
                     icon: Icons.search_rounded,
-                    tooltip: 'Search',
+                    tooltip: context.l10n.search,
                     onTap: () => setState(() => _searching = true),
                   ),
                 ],

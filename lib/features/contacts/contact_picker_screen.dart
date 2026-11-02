@@ -9,14 +9,17 @@ import '../../widgets/one_ui_floating_modal.dart';
 import '../../widgets/search_bar_row.dart';
 import 'contact_sections.dart';
 import 'contacts_widgets.dart';
+import '../../l10n/l10n.dart';
+import 'editor/contact_form.dart' show labelDisplay;
 
 /// Picks a contact from our own list (instead of Android's picker). Returns the contact.
-Future<DialerContact?> pickContact(BuildContext context, {String title = 'Select contact'}) =>
-    Navigator.of(context).push<DialerContact>(MaterialPageRoute(builder: (_) => ContactPickerScreen(title: title)));
+Future<DialerContact?> pickContact(BuildContext context, {String? title}) => Navigator.of(context).push<DialerContact>(
+  MaterialPageRoute(builder: (_) => ContactPickerScreen(title: title ?? context.l10n.selectContact)),
+);
 
 /// Picks one number: the contact's only number, or the user's choice among several.
 /// Returns (contact, number).
-Future<(DialerContact, String)?> pickContactNumber(BuildContext context, {String title = 'Select contact'}) async {
+Future<(DialerContact, String)?> pickContactNumber(BuildContext context, {String? title}) async {
   final contact = await pickContact(context, title: title);
   if (contact == null || !context.mounted) return null;
   if (contact.numbers.length == 1) return (contact, contact.numbers.single);
@@ -44,7 +47,10 @@ Future<(DialerContact, String)?> pickContactNumber(BuildContext context, {String
                       children: [
                         Text(n, style: const TextStyle(fontSize: 19)),
                         const SizedBox(height: 2),
-                        Text(contact.labels[i], style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
+                        Text(
+                          labelDisplay(context.l10n, contact.labels[i]),
+                          style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
+                        ),
                       ],
                     ),
                   ),
@@ -97,8 +103,8 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
               // Room for the pinned Back row (as `OneUISubpage`).
               SliverToBoxAdapter(child: SizedBox(height: top + 8 + 48 + 16)),
               if (sections.isEmpty)
-                const SliverToBoxAdapter(
-                  child: Padding(padding: EdgeInsets.all(20), child: Text('No matching contacts')),
+                SliverToBoxAdapter(
+                  child: Padding(padding: const EdgeInsets.all(20), child: Text(context.l10n.noMatchingContacts)),
                 ),
               // The Contacts tab's A–Z sections and flat rows.
               for (final (letter, list) in sections) ...[
@@ -130,7 +136,7 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
                 children: [
                   RoundIconButton(
                     icon: Icons.arrow_back_rounded,
-                    tooltip: 'Back',
+                    tooltip: context.l10n.back,
                     onTap: () => Navigator.of(context).pop(),
                   ),
                   const SizedBox(width: 14),

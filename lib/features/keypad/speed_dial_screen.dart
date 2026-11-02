@@ -7,13 +7,14 @@ import '../../widgets/one_ui_subpage.dart';
 import '../../core/haptics/haptics.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_toast.dart';
+import '../../l10n/l10n.dart';
 
 /// Keypad keys 2–9: long-press calls the number assigned here.
 class SpeedDialScreen extends StatelessWidget {
   const SpeedDialScreen({super.key});
 
   Future<void> _assign(BuildContext context, String digit) async {
-    final picked = await pickContactNumber(context, title: 'Speed dial $digit');
+    final picked = await pickContactNumber(context, title: context.l10n.speedDialKey(digit));
     if (picked == null) return;
     await DialerPrefs.instance.setSpeedDial(digit, (picked.$1.name, picked.$2));
   }
@@ -28,11 +29,14 @@ class SpeedDialScreen extends StatelessWidget {
         builder: (context, snap) {
           final entries = snap.data;
           return OneUISubpage(
-            title: 'Speed dial',
+            title: context.l10n.speedDial,
             builder: (context) => [
               Padding(
                 padding: EdgeInsets.fromLTRB(14, 8, 14, 28),
-                child: Text('Assign contacts', style: TextStyle(fontSize: 15, color: context.palette.textSecondary)),
+                child: Text(
+                  context.l10n.speedDialAssignContacts,
+                  style: TextStyle(fontSize: 15, color: context.palette.textSecondary),
+                ),
               ),
               if (entries != null)
                 GridView.count(
@@ -41,7 +45,7 @@ class SpeedDialScreen extends StatelessWidget {
                   physics: const NeverScrollableScrollPhysics(),
                   childAspectRatio: 0.78,
                   children: [
-                    const _Cell(digit: '1', label: 'Voicemail', icon: Icons.voicemail_rounded),
+                    _Cell(digit: '1', label: context.l10n.voicemail, icon: Icons.voicemail_rounded),
                     for (var i = 0; i < entries.length; i++) _cell(context, DialerPrefs.speedDialDigits[i], entries[i]),
                   ],
                 ),
@@ -54,7 +58,7 @@ class SpeedDialScreen extends StatelessWidget {
 
   Widget _cell(BuildContext context, String digit, (String, String)? entry) => _Cell(
     digit: digit,
-    label: entry?.$1 ?? 'Add',
+    label: entry?.$1 ?? context.l10n.add,
     icon: entry == null ? Icons.add_rounded : null,
     name: entry?.$1,
     onTap: () => _assign(context, digit),
@@ -63,7 +67,7 @@ class SpeedDialScreen extends StatelessWidget {
         : () {
             Haptics.longPress();
             DialerPrefs.instance.setSpeedDial(digit, null);
-            OneUIToast.show(context, 'Removed ${entry.$1} from $digit');
+            OneUIToast.show(context, context.l10n.speedDialRemoved(entry.$1, digit));
           },
   );
 }
