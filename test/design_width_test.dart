@@ -80,6 +80,16 @@ void main() {
     expect(await ratioAt(const Size(780, 360)), 3);
   });
 
+  testWidgets('a window not sized yet lays out without NaN constraints', (tester) async {
+    await tester.pumpWidget(
+      const MediaQuery(
+        data: MediaQueryData(size: Size.zero),
+        child: DesignWidth(child: SizedBox()),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('landscape never scales', (tester) async {
     final (size, padding, _) = await layOut(tester, const Size(780, 360));
     expect(size, const Size(780, 360));

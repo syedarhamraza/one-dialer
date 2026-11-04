@@ -28,7 +28,8 @@ class DesignWidth extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
-    if (media.size.width > media.size.height) return child;
+    // A window not sized yet (0×0, seen on vivo in the background) would scale by 0/0 = NaN.
+    if (media.size.isEmpty || media.size.width > media.size.height) return child;
     final scale = (media.size.width / width).clamp(0.0, maxScale);
     if (scale == 1) return child;
     return FittedBox(

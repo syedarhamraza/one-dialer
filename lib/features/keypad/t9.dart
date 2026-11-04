@@ -152,7 +152,8 @@ List<(int, String, bool)> _letters(String name) {
   // the leading 0 standing in for a 1–3 digit country code.
   if (at < 0 && query.length >= 4 && query.startsWith('0') && digits.startsWith('+')) {
     final rest = query.substring(1);
-    for (var code = 1; code <= 3 && at < 0; code++) {
+    // A short saved number ("+92") can't hold a longer code; startsWith throws past its end.
+    for (var code = 1; code <= 3 && at < 0 && 1 + code <= digits.length; code++) {
       if (digits.startsWith(rest, 1 + code)) {
         at = 1 + code;
         length = rest.length;

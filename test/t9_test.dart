@@ -53,6 +53,11 @@ void main() {
     expect(t9Search('0380', [saved]), isEmpty);
   });
 
+  test('a saved number shorter than a country code does not throw', () {
+    const stub = T9Entry(name: 'Stub', numbers: ['+92']);
+    expect(t9Search('0370', [stub]), isEmpty);
+  });
+
   test('skips contacts without numbers and empty queries', () {
     expect(t9Search('', all), isEmpty);
     expect(t9Search('564669', all), isEmpty); // Johnny has no number

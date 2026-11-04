@@ -225,11 +225,20 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     });
   }
 
+  /// Whether [box] and every box above it are laid out: `getTransformTo` reads each one's size, and
+  /// `DesignWidth`'s FittedBox may not have laid out its child yet when this builds.
+  static bool _laidOut(RenderBox? box) {
+    for (RenderObject? o = box; o != null; o = o.parent) {
+      if (o is RenderBox && !o.hasSize) return false;
+    }
+    return box != null;
+  }
+
   Rect? _localRect(Rect global) {
     final stack = _stackKey.currentContext?.findRenderObject() as RenderBox?;
-    if (stack == null || !stack.hasSize) return null;
+    if (!_laidOut(stack)) return null;
     // A full inverse, not just a shift: on narrow phones `DesignWidth` scales the whole screen.
-    return MatrixUtils.transformRect(stack.getTransformTo(null)..invert(), global);
+    return MatrixUtils.transformRect(stack!.getTransformTo(null)..invert(), global);
   }
 
   // The ball springs into End on the glass package's bouncy spring over the whole flight: a soft,
@@ -244,9 +253,9 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   Widget _flyingBall() {
     final from = _localRect(_ball!.shift(Offset(0, -_lift * Curves.easeOutCubic.transform(_rise.value))));
     final endBox = _endKey.currentContext?.findRenderObject() as RenderBox?;
-    final to = endBox == null || !endBox.hasSize
+    final to = !_laidOut(endBox)
         ? null
-        : _localRect(MatrixUtils.transformRect(endBox.getTransformTo(null), Offset.zero & endBox.size));
+        : _localRect(MatrixUtils.transformRect(endBox!.getTransformTo(null), Offset.zero & endBox.size));
     if (from == null) return const SizedBox.shrink();
     final t = to == null ? 0.0 : _fly.value;
     final Rect rect;
