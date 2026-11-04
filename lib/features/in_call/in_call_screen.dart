@@ -44,8 +44,6 @@ class _InCallScreenState extends State<InCallScreen> {
   @override
   void initState() {
     super.initState();
-    // Caller lookup must not prevent answering if a contacts provider is unavailable.
-    ContactsRepository.instance.start().catchError((Object _) {});
     _loadSims();
   }
 
@@ -64,6 +62,8 @@ class _InCallScreenState extends State<InCallScreen> {
     backgroundColor: Colors.transparent,
     body: StreamBuilder<CallSnapshot>(
       stream: TelecomBridge.instance.callState,
+      // Already sent to CallerLookup's earlier listener; the broadcast stream won't repeat it.
+      initialData: CallerLookup.latest,
       builder: (context, snapshot) {
         // The ended summary goes before the screen closes; keep showing it rather than a second "Call ended".
         if (snapshot.data?.primary != null) _last = snapshot.data;

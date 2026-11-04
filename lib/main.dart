@@ -11,6 +11,7 @@ import 'app/dialer_app.dart';
 import 'app/in_call_app.dart';
 import 'core/crash_reporting.dart';
 import 'core/prefs/dialer_prefs.dart';
+import 'features/in_call/call_screen_widgets.dart';
 import 'features/updates/presentation/update_controller.dart';
 
 /// Main UI: dial pad, recents, contacts.
@@ -67,6 +68,7 @@ Future<void> inCallMain() async {
   // can change while this engine is cached, so it's read again whenever the call screen resumes.
   unawaited(DialerPrefs.instance.loadCallEffects());
   unawaited(DialerPrefs.instance.loadLanguage());
+  CallerLookup.start();
   AppLifecycleListener(
     onResume: () {
       DialerPrefs.instance.loadCallEffects();

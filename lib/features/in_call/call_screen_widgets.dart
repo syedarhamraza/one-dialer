@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/contacts/contacts_repository.dart';
 import '../../core/telecom/call_info.dart';
+import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/letter_avatar.dart';
 import 'call_controls.dart';
 import '../../l10n/l10n.dart';
@@ -99,6 +100,33 @@ class CallBackdrop extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Started by `inCallMain`, long before the call screen first draws (only once its activity
+/// shows): loads contacts and fetches each caller's photo as calls arrive, so [CallHeader] lays
+/// out the name and photo together.
+abstract final class CallerLookup {
+  /// The latest call state, for the screen to start from: it subscribes later, and the broadcast
+  /// stream doesn't replay what this listener already got.
+  static CallSnapshot? latest;
+
+  static void start() {
+    final repo = ContactsRepository.instance;
+    // Caller lookup must not prevent answering if a contacts provider is unavailable.
+    repo.start().catchError((Object _) {});
+    void prefetch() {
+      for (final call in latest?.calls ?? const <CallInfo>[]) {
+        if (call.isPrivate || call.isConference) continue;
+        if (repo.contactFor(call.number ?? '') case final contact?) repo.thumbnail(contact.id);
+      }
+    }
+
+    TelecomBridge.instance.callState.listen((s) {
+      latest = s;
+      prefetch();
+    }, onError: (Object _) {});
+    repo.contacts.addListener(prefetch);
   }
 }
 
