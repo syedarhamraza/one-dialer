@@ -131,11 +131,23 @@ class CallHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final number = call.number ?? '';
+    final contact = call.isPrivate || call.isConference ? null : ContactsRepository.instance.contactFor(number);
+    if (contact == null) return _header(context, null, null);
+    // Only the caller's photo, one row: reading every contact's photo froze the call screen.
+    final repo = ContactsRepository.instance;
+    return FutureBuilder(
+      future: repo.thumbnail(contact.id),
+      initialData: repo.cachedThumbnail(contact.id),
+      builder: (context, thumb) => _header(context, contact, thumb.data),
+    );
+  }
+
+  Widget _header(BuildContext context, DialerContact? contact, Uint8List? photo) {
     final name = callerName(context.l10n, call);
     final number = call.number ?? '';
     final shownNumber = call.formattedNumber ?? number;
     final sim = sims.where((s) => s.id == call.simId).firstOrNull;
-    final contact = call.isPrivate || call.isConference ? null : ContactsRepository.instance.contactFor(number);
     final k = keypadProgress.clamp(0.0, 1.0);
     final fade = 1 - Curves.easeOut.transform(k);
     final avatarSize = compact ? 60.0 : 76.0;
@@ -143,7 +155,6 @@ class CallHeader extends StatelessWidget {
     // a circle on the right; everyone else gets them centred with no circle. As the keypad opens
     // the photo folds away, the lines glide to the centre and the number and city fold up, all
     // with the keypad's progress.
-    final photo = contact?.thumbnail;
     final folded = k; // Already eased by the screen; easing it again made it lurch mid-way.
     final line = AlignmentDirectional(photo == null ? 0 : folded - 1, -1);
     final textAlign = photo == null || folded == 1 ? TextAlign.center : TextAlign.start;

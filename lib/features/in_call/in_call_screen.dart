@@ -45,7 +45,7 @@ class _InCallScreenState extends State<InCallScreen> {
   void initState() {
     super.initState();
     // Caller lookup must not prevent answering if a contacts provider is unavailable.
-    ContactsRepository.instance.start(preloadPhotos: true).catchError((Object _) {});
+    ContactsRepository.instance.start().catchError((Object _) {});
     _loadSims();
   }
 
