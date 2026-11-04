@@ -530,6 +530,8 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
   bool _hasNote = false;
 
   Future<void> _editNote() async {
+    // The menu item can fire after the call ended and took this panel with it.
+    if (!mounted) return;
     final at = _noteAt ??= DateTime.now();
     final hasNote = await editCallNote(context, widget.call.number ?? '', at, light: true);
     if (mounted) setState(() => _hasNote = hasNote);
