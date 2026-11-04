@@ -16,7 +16,6 @@ class DialerContact extends T9Entry {
     required super.name,
     required super.numbers,
     required this.labels,
-    this.thumbnail,
     this.isFavorite = false,
     this.primaryIndex = -1,
     this._sortKey,
@@ -26,9 +25,6 @@ class DialerContact extends T9Entry {
   /// "Mobile", "Home", ... for each of [numbers], same order.
   final List<String> labels;
 
-  /// Only with `start(preloadPhotos: true)` (the call screen); elsewhere use
-  /// [ContactsRepository.thumbnail], which loads a photo when its row first shows.
-  final Uint8List? thumbnail;
   final bool isFavorite;
 
   /// Index in [numbers] of Android's default number for this contact, or -1 if none is set.
@@ -82,11 +78,10 @@ class ContactsRepository {
   String? nameFor(String number) => contactFor(number)?.name;
 
   /// Loads contacts if READ_CONTACTS is granted (the dialer role grants it), then
-  /// reloads on every change to the contacts database. [preloadPhotos] also reads every
-  /// thumbnail up front, for the call screen, whose layout depends on there being a photo.
-  Future<void> start({bool preloadPhotos = false}) async {
+  /// reloads on every change to the contacts database. Photos load per contact through
+  /// [thumbnail]: reading them all here froze the call screen for seconds on each reload.
+  Future<void> start() async {
     if (_changes != null) return; // already loaded and following changes
-    _preloadPhotos = preloadPhotos;
     hasAccess.value = await FlutterContacts.permissions.has(PermissionType.read);
     if (!hasAccess.value) return;
     // Android fires bursts of changes (e.g. after every call); reload once they settle.
@@ -103,7 +98,6 @@ class ContactsRepository {
   }
 
   Timer? _reload;
-  var _preloadPhotos = false;
 
   final _thumbnails = <String, Uint8List?>{};
   final _thumbnailLoads = <String, Future<Uint8List?>>{};
@@ -145,7 +139,6 @@ class ContactsRepository {
           ContactProperty.name,
           ContactProperty.phone,
           ContactProperty.favorite,
-          if (_preloadPhotos) ContactProperty.photoThumbnail,
         },
       );
       final prefs = DialerPrefs.instance;
@@ -170,7 +163,6 @@ class ContactsRepository {
             sortKey: sortKey,
             numbers: [for (final p in phones) p.number],
             labels: [for (final p in phones) _label(p.label)],
-            thumbnail: c.photo?.thumbnail,
             isFavorite: c.android?.isFavorite ?? false,
             primaryIndex: phones.indexWhere((p) => p.isPrimary ?? false),
             accounts: [for (final a in c.metadata?.accounts ?? const <Account>[]) '${a.type}|${a.name}'],
@@ -211,7 +203,7 @@ class ContactsRepository {
     return (order == 'last' ? lastFirst : fallback, (sortBy == 'last' ? lastFirst : fallback).toLowerCase());
   }
 
-  /// Whether [a] and [b] list the same contacts, field for field (thumbnails by content).
+  /// Whether [a] and [b] list the same contacts, field for field.
   @visibleForTesting
   static bool sameContacts(List<DialerContact> a, List<DialerContact> b) {
     if (a.length != b.length) return false;
@@ -224,8 +216,7 @@ class ContactsRepository {
           x.isFavorite != y.isFavorite ||
           x.primaryIndex != y.primaryIndex ||
           !listEquals(x.numbers, y.numbers) ||
-          !listEquals(x.labels, y.labels) ||
-          !listEquals(x.thumbnail, y.thumbnail)) {
+          !listEquals(x.labels, y.labels)) {
         return false;
       }
     }
@@ -243,14 +234,11 @@ class ContactsRepository {
   }
 
   void _publish(List<DialerContact> entries) {
-    // Several contacts can share a number (duplicates across accounts); prefer one with a photo,
-    // else the first by name, so the call screen shows the photo when any copy has one.
+    // Several contacts can share a number (duplicates across accounts); the first by name wins.
     final byNumber = <String, DialerContact>{};
     for (final e in entries) {
       for (final n in e.numbers) {
-        final key = numberKey(n);
-        final current = byNumber[key];
-        if (current == null || (current.thumbnail == null && e.thumbnail != null)) byNumber[key] = e;
+        byNumber.putIfAbsent(numberKey(n), () => e);
       }
     }
     _byNumber = byNumber;

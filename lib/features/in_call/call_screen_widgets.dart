@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/contacts/contacts_repository.dart';
 import '../../core/telecom/call_info.dart';
+import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/letter_avatar.dart';
 import 'call_controls.dart';
 import '../../l10n/l10n.dart';
@@ -102,6 +103,33 @@ class CallBackdrop extends StatelessWidget {
   }
 }
 
+/// Started by `inCallMain`, long before the call screen first draws (only once its activity
+/// shows): loads contacts and fetches each caller's photo as calls arrive, so [CallHeader] lays
+/// out the name and photo together.
+abstract final class CallerLookup {
+  /// The latest call state, for the screen to start from: it subscribes later, and the broadcast
+  /// stream doesn't replay what this listener already got.
+  static CallSnapshot? latest;
+
+  static void start() {
+    final repo = ContactsRepository.instance;
+    // Caller lookup must not prevent answering if a contacts provider is unavailable.
+    repo.start().catchError((Object _) {});
+    void prefetch() {
+      for (final call in latest?.calls ?? const <CallInfo>[]) {
+        if (call.isPrivate || call.isConference) continue;
+        if (repo.contactFor(call.number ?? '') case final contact?) repo.thumbnail(contact.id);
+      }
+    }
+
+    TelecomBridge.instance.callState.listen((s) {
+      latest = s;
+      prefetch();
+    }, onError: (Object _) {});
+    repo.contacts.addListener(prefetch);
+  }
+}
+
 String callerName(AppLocalizations l10n, CallInfo call) {
   if (call.isConference) return l10n.conferenceCall;
   if (call.isPrivate) return l10n.privateNumber;
@@ -131,11 +159,23 @@ class CallHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final number = call.number ?? '';
+    final contact = call.isPrivate || call.isConference ? null : ContactsRepository.instance.contactFor(number);
+    if (contact == null) return _header(context, null, null);
+    // Only the caller's photo, one row: reading every contact's photo froze the call screen.
+    final repo = ContactsRepository.instance;
+    return FutureBuilder(
+      future: repo.thumbnail(contact.id),
+      initialData: repo.cachedThumbnail(contact.id),
+      builder: (context, thumb) => _header(context, contact, thumb.data),
+    );
+  }
+
+  Widget _header(BuildContext context, DialerContact? contact, Uint8List? photo) {
     final name = callerName(context.l10n, call);
     final number = call.number ?? '';
     final shownNumber = call.formattedNumber ?? number;
     final sim = sims.where((s) => s.id == call.simId).firstOrNull;
-    final contact = call.isPrivate || call.isConference ? null : ContactsRepository.instance.contactFor(number);
     final k = keypadProgress.clamp(0.0, 1.0);
     final fade = 1 - Curves.easeOut.transform(k);
     final avatarSize = compact ? 60.0 : 76.0;
@@ -143,7 +183,6 @@ class CallHeader extends StatelessWidget {
     // a circle on the right; everyone else gets them centred with no circle. As the keypad opens
     // the photo folds away, the lines glide to the centre and the number and city fold up, all
     // with the keypad's progress.
-    final photo = contact?.thumbnail;
     final folded = k; // Already eased by the screen; easing it again made it lurch mid-way.
     final line = AlignmentDirectional(photo == null ? 0 : folded - 1, -1);
     final textAlign = photo == null || folded == 1 ? TextAlign.center : TextAlign.start;
