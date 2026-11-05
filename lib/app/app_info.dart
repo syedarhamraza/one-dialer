@@ -6,6 +6,10 @@ abstract final class AppInfo {
   /// (source: `docs/privacy-policy.md`).
   static const privacyPolicyUrl = 'https://syedarhamraza.github.io/one-dialer/privacy/';
 
+  /// Where copies not installed from Google Play are sent (closed beta: the Play listing shows
+  /// nothing to non-testers).
+  static const officialUrl = 'https://syedarhamraza.github.io/one-dialer/';
+
   static const developerName = 'Syed Arham Raza';
   static const developerGithub = 'syedarhamraza';
 

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../app/app_info.dart';
+import '../../app/sideload_warning.dart';
 import '../../core/config/app_version.dart';
 import '../../core/config/changelog.dart';
 import '../../widgets/glow_button.dart';
@@ -128,7 +129,11 @@ class _AboutScreenState extends State<AboutScreen> {
           items: [
             row(context.l10n.version, v?.label ?? AppVersion.describe(Changelog.entries.first.version)),
             if (v?.code != null) row(context.l10n.build, '${v!.code}'),
-            row(context.l10n.installedFrom, _installer == null && v == null ? null : _source),
+            if (v != null && _installer != PlayUpdateService.playStoreInstaller)
+              // Not from Play: the row (with its chevron) leads to the official copy.
+              OneUIGroupItem(title: context.l10n.installedFrom, value: _source, onTap: openOfficialVersion)
+            else
+              row(context.l10n.installedFrom, _installer == null && v == null ? null : _source),
             row(context.l10n.device, _device),
             row(context.l10n.androidVersion, _android),
             if (kDebugMode && BuildInfo.commit.isNotEmpty) row('Commit', BuildInfo.commit),

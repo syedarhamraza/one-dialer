@@ -41,6 +41,11 @@ class DialerPrefs {
     changes.value++;
   }
 
+  /// Whether the one-time "Not from Google Play" warning was shown.
+  Future<bool> sideloadWarned() async => await _prefs.getBool('sideload_warned') ?? false;
+
+  Future<void> setSideloadWarned() => _prefs.setBool('sideload_warned', true);
+
   /// Search page "Recent searches", newest first.
   Future<List<String>> recentSearches() async => await _prefs.getStringList('recent_searches') ?? const [];
 

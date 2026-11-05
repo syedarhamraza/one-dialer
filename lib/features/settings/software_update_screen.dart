@@ -16,6 +16,7 @@ import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_group_card.dart';
 import '../../widgets/one_ui_subpage.dart';
 import '../../widgets/one_ui_toast.dart';
+import '../../app/sideload_warning.dart';
 import 'about_screen.dart';
 import 'changelog_screen.dart';
 import '../../core/haptics/haptics.dart';
@@ -76,6 +77,8 @@ class _SoftwareUpdateScreenState extends State<SoftwareUpdateScreen> {
     switch (_updates.status) {
       case UpdateStatus.available:
         await _download();
+      case UpdateStatus.notFromPlay:
+        openOfficialVersion();
       case UpdateStatus.readyToInstall:
         if (!await _updates.installAndRestart() && mounted) {
           OneUIToast.show(context, context.l10n.couldNotInstallUpdate);
@@ -144,7 +147,8 @@ class _SoftwareUpdateScreenState extends State<SoftwareUpdateScreen> {
             UpdateStatus.available || UpdateStatus.downloading => context.l10n.downloadAndInstall,
             UpdateStatus.readyToInstall => context.l10n.installAndRestart,
             UpdateStatus.failed || UpdateStatus.offline => context.l10n.tryAgain,
-            UpdateStatus.upToDate || UpdateStatus.notFromPlay => null,
+            UpdateStatus.notFromPlay => context.l10n.getOfficialVersion,
+            UpdateStatus.upToDate => null,
           };
           // ColorOS shows the version card and notes only while there's an update to get.
           final hasUpdate =

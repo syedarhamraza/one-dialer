@@ -2750,6 +2750,30 @@ abstract class AppLocalizations {
   /// **'Updates come from Google Play. This copy wasn\'t installed from Play.'**
   String get notFromPlay;
 
+  /// No description provided for @notFromPlayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Not from Google Play'**
+  String get notFromPlayTitle;
+
+  /// No description provided for @notFromPlayWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This copy wasn\'t installed from Google Play, so it won\'t get updates and may have been changed. You can keep using it, or get the official version from the beta.'**
+  String get notFromPlayWarning;
+
+  /// No description provided for @keepUsing.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep using'**
+  String get keepUsing;
+
+  /// No description provided for @getOfficialVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Get the official version'**
+  String get getOfficialVersion;
+
   /// No description provided for @couldNotReachPlay.
   ///
   /// In en, this message translates to:
