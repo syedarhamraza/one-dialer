@@ -687,7 +687,7 @@ class _CallRow extends StatelessWidget {
                 color: OneUITheme.callGreen,
                 lit: true,
                 onTap: onCall,
-                child: const ImageIcon(AssetImage('assets/icons/handset.png'), color: Colors.white, size: 30),
+                child: const ImageIcon(AssetImage('assets/icons/handset.png'), color: Colors.white, size: 34),
               ),
             )
           else
@@ -709,7 +709,7 @@ class _CallRow extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const ImageIcon(AssetImage('assets/icons/handset.png'), color: Colors.white, size: 26),
+                            const ImageIcon(AssetImage('assets/icons/handset.png'), color: Colors.white, size: 30),
                             const SizedBox(width: 2),
                             Text(
                               '${i + 1}',
