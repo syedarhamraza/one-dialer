@@ -170,13 +170,18 @@ class DialerPrefs {
   /// through `OneUIEffectsController.glassStyle`.
   final glassDark = ValueNotifier('soft');
 
-  /// Settings › "Nav bar style", with full effects: `frosted` (our call glass) or `liquid`
-  /// (the glass package's `GlassTabBar`).
+  /// Settings › "Glass style", with full effects: `frosted` (our call glass) or `liquid` (the
+  /// glass package's `GlassTabBar` and `GlassContainer` on all floating chrome; read through
+  /// `OneUIEffectsController.isLiquid`).
   final navStyle = ValueNotifier('frosted');
 
-  /// Settings › "Glass effect", for the `liquid` nav bar: a `GlassQuality` name, `premium`
-  /// or `standard`.
+  /// Settings › "Glass effect", for `liquid` glass: `premium`, `standard` or `auto` (the glass
+  /// package picks per phone; see `LiquidQualityScope`).
   final navGlass = ValueNotifier('premium');
+
+  /// Settings › Glass › "Liquid glass on", for `liquid` glass: `all`, `controls` (the nav bar and
+  /// buttons; menus and modals stay frosted) or `navbar` (the nav bar only).
+  final liquidScope = ValueNotifier('all');
 
   /// Awaited before the first frame, so the app doesn't open dark and then turn light, or
   /// frosted and then flat.
@@ -191,7 +196,9 @@ class DialerPrefs {
     final nav = await _prefs.getString('nav_style');
     if (nav == 'frosted' || nav == 'liquid') navStyle.value = nav!;
     final navEffect = await _prefs.getString('nav_glass');
-    if (navEffect == 'premium' || navEffect == 'standard') navGlass.value = navEffect!;
+    if (navEffect == 'premium' || navEffect == 'standard' || navEffect == 'auto') navGlass.value = navEffect!;
+    final scope = await _prefs.getString('liquid_scope');
+    if (scope == 'all' || scope == 'controls' || scope == 'navbar') liquidScope.value = scope!;
   }
 
   /// Settings › Language: `system` or a language tag. Kept natively (`AppLanguage.kt`), where
@@ -284,6 +291,11 @@ class DialerPrefs {
   Future<void> setNavGlass(String value) async {
     navGlass.value = value;
     await _prefs.setString('nav_glass', value);
+  }
+
+  Future<void> setLiquidScope(String value) async {
+    liquidScope.value = value;
+    await _prefs.setString('liquid_scope', value);
   }
 
   Future<void> setThemeMode(String value) async {

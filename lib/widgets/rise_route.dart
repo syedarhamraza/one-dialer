@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show PredictiveBackEvent;
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../features/in_call/call_controls.dart';
 
@@ -42,7 +43,7 @@ class RisePageRoute<T> extends PageRoute<T> {
   @override
   Widget buildPage(BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation) =>
       // Its glass pills share one backdrop read, like pages on the theme's slide.
-      BackdropGroup(child: builder(context));
+      BackdropGroup(child: GlassBackdropGroup(child: builder(context)));
 
   @override
   Widget buildTransitions(
@@ -55,10 +56,11 @@ class RisePageRoute<T> extends PageRoute<T> {
     if (MediaQuery.disableAnimationsOf(context)) return FadeTransition(opacity: animation, child: child);
     return SlideTransition(
       // Linear during Android's back swipe, so the page follows the finger down.
-      position: (popGestureInProgress
-              ? animation
-              : CurvedAnimation(parent: animation, curve: kSheetRise, reverseCurve: kSheetDrop.flipped))
-          .drive(Tween(begin: const Offset(0, 1), end: Offset.zero)),
+      position:
+          (popGestureInProgress
+                  ? animation
+                  : CurvedAnimation(parent: animation, curve: kSheetRise, reverseCurve: kSheetDrop.flipped))
+              .drive(Tween(begin: const Offset(0, 1), end: Offset.zero)),
       child: child,
     );
   }

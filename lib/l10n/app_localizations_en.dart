@@ -1323,7 +1323,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get callScreenEdgeGlow => 'Call screen edge glow';
 
   @override
-  String get darkModeEdgeGlow => 'Dark mode edge glow';
+  String get darkModeEdgeGlow => 'Glow strength';
 
   @override
   String get edgeGlowClassic => 'Classic';
@@ -1335,10 +1335,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get edgeGlowBold => 'Bold';
 
   @override
-  String get navBarStyle => 'Nav bar style';
+  String get glassStyle => 'Glass style';
 
   @override
-  String get navBarFrosted => 'Frosted';
+  String get navBarFrosted => 'Edge glow';
 
   @override
   String get navBarLiquid => 'Liquid glass';
@@ -1351,6 +1351,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get navGlassStandard => 'Light';
+
+  @override
+  String get navGlassAuto => 'Automatic';
+
+  @override
+  String get glassSettings => 'Glass & blur';
+
+  @override
+  String get liquidGlassOn => 'Liquid glass on';
+
+  @override
+  String get liquidScopeAll => 'Everything';
+
+  @override
+  String get liquidScopeControls => 'Nav bar and buttons';
+
+  @override
+  String get liquidScopeNavbar => 'Nav bar only';
+
+  @override
+  String get glassExperimentalNote =>
+      'Liquid glass is experimental and the heaviest style: it needs even more graphics power than Edge glow, which is already demanding. If scrolling stutters, try Nav bar only or Glass effect › Automatic, or go back to Edge glow. On slower phones, Display & effects › Reduce visual effects runs smoothest.';
 
   @override
   String get callsFromOtherApps => 'Calls from other apps';

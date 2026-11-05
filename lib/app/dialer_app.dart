@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../core/contacts/contacts_repository.dart';
 import '../core/diagnostics/lag_diagnostics.dart';
@@ -10,6 +11,7 @@ import '../features/recents/call_log_repository.dart';
 import '../features/setup/setup_screen.dart';
 import '../l10n/l10n.dart';
 import '../theme/one_ui_theme.dart';
+import '../widgets/liquid_body.dart';
 import 'layout.dart';
 import 'main_shell.dart';
 
@@ -42,7 +44,7 @@ class DialerApp extends StatelessWidget {
         // Status and navigation bar icons follow the page.
         builder: (context, child) => AnnotatedRegion(
           value: context.palette.isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light,
-          child: DesignWidth(child: child!),
+          child: DesignWidth(child: LiquidQualityScope(child: child!)),
         ),
         home: const _SetupGate(),
       ),
@@ -64,7 +66,14 @@ class _GroupedSlide extends PredictiveBackPageTransitionsBuilder {
     Animation<double> animation,
     Animation<double> secondaryAnimation,
     Widget child,
-  ) => super.buildTransitions(route, context, animation, secondaryAnimation, BackdropGroup(child: child));
+  ) => super.buildTransitions(
+    route,
+    context,
+    animation,
+    secondaryAnimation,
+    // Liquid glass shares its own read the same way.
+    BackdropGroup(child: GlassBackdropGroup(child: child)),
+  );
 }
 
 /// Shows [SetupScreen] until the app is the default phone app.

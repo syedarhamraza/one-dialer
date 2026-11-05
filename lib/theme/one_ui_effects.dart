@@ -27,6 +27,9 @@ class OneUIEffectsController extends ChangeNotifier {
     DialerPrefs.instance.callEffects.addListener(notifyListeners);
     DialerPrefs.instance.glassDark.addListener(notifyListeners);
     DialerPrefs.instance.callGlass.addListener(notifyListeners);
+    DialerPrefs.instance.navStyle.addListener(notifyListeners);
+    DialerPrefs.instance.navGlass.addListener(notifyListeners);
+    DialerPrefs.instance.liquidScope.addListener(notifyListeners);
   }
 
   static final OneUIEffectsController instance = OneUIEffectsController._();
@@ -75,6 +78,17 @@ class OneUIEffectsController extends ChangeNotifier {
   /// Full effects: the call glass (cached glow artwork over the blur), the header's
   /// progressive blur, and separate backdrop reads where one glass must blur another.
   bool get isFull => level == 'full';
+
+  /// Settings › "Glass style" › Liquid glass, at full effects: floating chrome draws the glass
+  /// package's `GlassContainer` (see `liquidBody`) instead of the call glass.
+  bool get isLiquid => isFull && DialerPrefs.instance.navStyle.value == 'liquid';
+
+  /// Liquid glass on the buttons too (Settings › Glass › "Liquid glass on" isn't Nav bar only):
+  /// `CallGlass` and the non-modal `OneUIGlassSurface`s.
+  bool get liquidControls => isLiquid && DialerPrefs.instance.liquidScope.value != 'navbar';
+
+  /// Liquid glass on menus and modals too ("Liquid glass on" › Everything).
+  bool get liquidPopups => isLiquid && DialerPrefs.instance.liquidScope.value == 'all';
 
   /// The main app's dark call glass style at full effects (Settings › "Dark mode edge glow"):
   /// `classic`, `soft` or `bold`. Light mode has one look (see `mainGlass`).

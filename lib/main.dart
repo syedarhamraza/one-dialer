@@ -37,8 +37,8 @@ Future<void> main() async {
   );
 }
 
-/// The glass package's shaders, loaded once and only when Settings › Nav bar style is Liquid glass
-/// (the one place the main app draws the package's glass). Its frame monitor stays off: our lag
+/// The glass package's shaders, loaded once and only when Settings › Glass style is Liquid glass
+/// (the only time the main app draws the package's glass). Its frame monitor stays off: our lag
 /// diagnostics already watch frames, and its warnings would reach Crashlytics.
 void _warmLiquidGlass() {
   if (DialerPrefs.instance.navStyle.value != 'liquid') return;

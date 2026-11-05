@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../theme/one_ui_theme.dart';
+import 'liquid_body.dart';
 
 /// The one floating "glass" surface used by every piece of floating chrome: the nav
 /// bar, header buttons, search capsules, Cancel | Save pills, action bars, menus,
@@ -65,6 +66,21 @@ class OneUIGlassSurface extends StatelessWidget {
         final t = progress.clamp(0.0, 1.0);
         final isModal = elevation == OneUIGlassElevation.modal;
         final light = context.palette.isLight;
+
+        // Dialer: Settings › "Glass style" › Liquid glass draws the glass package's own surface
+        // (uniform corners, which every caller uses; no caller fades it with [progress]); modals only
+        // with Liquid glass on › Everything.
+        if (isModal ? fx.liquidPopups : fx.liquidControls) {
+          return liquidBody(
+            context,
+            radius: borderRadius.topLeft.x,
+            width: width,
+            height: height,
+            padding: padding,
+            alignment: alignment,
+            child: child,
+          );
+        }
 
         final body = AnimatedContainer(
           duration: duration,

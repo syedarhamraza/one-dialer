@@ -7,6 +7,7 @@ import '../core/haptics/haptics.dart';
 import '../features/in_call/call_controls.dart';
 import '../theme/one_ui_theme.dart';
 import 'call_glass.dart';
+import 'liquid_body.dart';
 import 'press_glow.dart';
 import 'round_header_controls.dart';
 import '../l10n/l10n.dart';
@@ -243,6 +244,31 @@ class _PopoverMenu extends StatelessWidget {
                                     scale: scale,
                                     alignment: Alignment.topLeft,
                                     child: ColoredBox(color: Colors.white, child: items),
+                                  ),
+                                ),
+                              )
+                            // Glass style › Liquid glass: the package's glass, laid out at the grown
+                            // size like the blur below, with a thin base so rows read over list text.
+                            : fx.liquidPopups
+                            ? liquidBody(
+                                context,
+                                radius: OneUIFloatingMenu._radius * size * scale,
+                                child: Opacity(
+                                  opacity: fade,
+                                  child: OverflowBox(
+                                    alignment: Alignment.topLeft,
+                                    minWidth: menu.width,
+                                    maxWidth: menu.width,
+                                    minHeight: menu.height,
+                                    maxHeight: menu.height,
+                                    child: Transform.scale(
+                                      scale: scale,
+                                      alignment: Alignment.topLeft,
+                                      child: ColoredBox(
+                                        color: context.palette.isLight ? const Color(0x4DFFFFFF) : const Color(0x59141416),
+                                        child: items,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               )

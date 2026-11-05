@@ -1337,7 +1337,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get callScreenEdgeGlow => 'Bagliore bordi nella chiamata';
 
   @override
-  String get darkModeEdgeGlow => 'Bagliore bordi in tema scuro';
+  String get darkModeEdgeGlow => 'Intensità bagliore';
 
   @override
   String get edgeGlowClassic => 'Classico';
@@ -1349,10 +1349,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get edgeGlowBold => 'Intenso';
 
   @override
-  String get navBarStyle => 'Stile barra di navigazione';
+  String get glassStyle => 'Stile vetro';
 
   @override
-  String get navBarFrosted => 'Smerigliato';
+  String get navBarFrosted => 'Bagliore bordi';
 
   @override
   String get navBarLiquid => 'Vetro liquido';
@@ -1365,6 +1365,28 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get navGlassStandard => 'Leggero';
+
+  @override
+  String get navGlassAuto => 'Automatico';
+
+  @override
+  String get glassSettings => 'Vetro e sfocatura';
+
+  @override
+  String get liquidGlassOn => 'Vetro liquido su';
+
+  @override
+  String get liquidScopeAll => 'Tutto';
+
+  @override
+  String get liquidScopeControls => 'Barra e pulsanti';
+
+  @override
+  String get liquidScopeNavbar => 'Solo barra di navigazione';
+
+  @override
+  String get glassExperimentalNote =>
+      'Il vetro liquido è sperimentale ed è lo stile più pesante: richiede ancora più potenza grafica del Bagliore bordi, già impegnativo. Se lo scorrimento scatta, prova Solo barra di navigazione o Effetto vetro › Automatico, oppure torna a Bagliore bordi. Sui telefoni meno potenti, Schermo ed effetti › Riduci effetti visivi è la scelta più fluida.';
 
   @override
   String get callsFromOtherApps => 'Chiamate da altre app';

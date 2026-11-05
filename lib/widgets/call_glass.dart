@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../features/in_call/call_controls.dart';
 import '../theme/one_ui_theme.dart';
+import 'liquid_body.dart';
 import 'press_glow.dart';
 
 /// How strong the call-glass edge glow is on the main app's chrome: softer than on
@@ -36,6 +37,8 @@ class CallGlass extends StatelessWidget {
   Widget build(BuildContext context) {
     final fx = OneUIEffectsController.instance;
     Widget body(BuildContext context) {
+      // Settings › "Glass style" › Liquid glass: the glass package's own (its own backdrop read).
+      if (fx.liquidControls) return liquidBody(context, radius: radius ?? 999);
       if (fx.isFull) {
         final look = mainGlass(context);
         // Grouped: inside the shell's tabs, every glass control shares one backdrop read (see
@@ -73,14 +76,17 @@ class CallGlass extends StatelessWidget {
         child: PressGlow(
           radius: radius ?? 999,
           // Below full visual effects light mode is flat One UI: no shadows.
-          shadows: context.palette.isLight && fx.isFull ? OneUIPalette.lightGlassShadow : null,
+          shadows: context.palette.isLight && fx.isFull && !fx.liquidControls ? OneUIPalette.lightGlassShadow : null,
           // Only the frosted body is clipped; the content draws on top unclipped, so a
           // springy thumb can overshoot the edge.
           child: Stack(
             clipBehavior: Clip.none,
             children: [
               Positioned.fill(
-                child: radius == null
+                // Liquid glass shapes itself: a clip around it would only cost a layer.
+                child: fx.liquidControls
+                    ? body(context)
+                    : radius == null
                     ? ClipOval(child: body(context))
                     : ClipRSuperellipse(borderRadius: BorderRadius.all(Radius.circular(radius!)), child: body(context)),
               ),

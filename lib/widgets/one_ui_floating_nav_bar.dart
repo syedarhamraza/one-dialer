@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
-import '../core/prefs/dialer_prefs.dart';
 import '../theme/one_ui_theme.dart';
 import 'call_glass.dart';
+import 'liquid_body.dart';
 import 'one_ui_morph_switcher.dart';
 
 class OneUINavItem {
@@ -85,13 +85,8 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
               ),
               RepaintBoundary(
                 child: ListenableBuilder(
-                  listenable: Listenable.merge([
-                    DialerPrefs.instance.navStyle,
-                    DialerPrefs.instance.navGlass,
-                    OneUIEffectsController.instance,
-                  ]),
-                  builder: (context, _) =>
-                      DialerPrefs.instance.navStyle.value == 'liquid' && OneUIEffectsController.instance.isFull
+                  listenable: OneUIEffectsController.instance,
+                  builder: (context, _) => OneUIEffectsController.instance.isLiquid
                       ? _liquidPill(docked, reduceMotion)
                       : _pill(docked, reduceMotion),
                 ),
@@ -140,7 +135,7 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
   Widget _liquidPill(Widget? docked, bool reduceMotion) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final settings = dark ? LiquidGlassSettings.ios27Dark : LiquidGlassSettings.ios27Light;
-    final quality = GlassQuality.values.byName(DialerPrefs.instance.navGlass.value);
+    final quality = liquidQuality();
     final palette = context.palette;
     final items = widget.items;
     final duration = reduceMotion ? Duration.zero : const Duration(milliseconds: 350);
@@ -158,36 +153,39 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
           child: child,
         ),
         child: docked != null
-            ? GlassContainer(
+            ? KeyedSubtree(
                 key: const ValueKey('docked'),
-                height: OneUIFloatingNavBar._barHeight,
-                shape: const LiquidRoundedSuperellipse(borderRadius: OneUIFloatingNavBar._barHeight / 2),
-                settings: settings,
-                quality: quality,
-                useOwnLayer: true,
-                child: docked,
+                child: liquidBody(
+                  context,
+                  radius: OneUIFloatingNavBar._barHeight / 2,
+                  height: OneUIFloatingNavBar._barHeight,
+                  child: docked,
+                ),
               )
             : SizedBox(
                 key: const ValueKey('tabs'),
                 width: items.length * 96,
-                child: GlassTabBar.bottom(
-                  tabs: [
-                    for (final item in items)
-                      GlassTab(icon: Icon(item.inactiveIcon), activeIcon: Icon(item.activeIcon), label: item.label),
-                  ],
-                  selectedIndex: widget.currentIndex,
-                  onTabSelected: widget.onTap,
-                  barHeight: OneUIFloatingNavBar._barHeight,
-                  horizontalPadding: 0,
-                  verticalPadding: 0,
-                  settings: settings,
-                  quality: quality,
-                  iconSize: 26,
-                  labelFontSize: 12,
-                  selectedIconColor: palette.textPrimary,
-                  selectedLabelColor: palette.textPrimary,
-                  unselectedIconColor: palette.textSecondary,
-                  unselectedLabelColor: palette.textSecondary,
+                child: glassPixelRatio(
+                  context,
+                  GlassTabBar.bottom(
+                    tabs: [
+                      for (final item in items)
+                        GlassTab(icon: Icon(item.inactiveIcon), activeIcon: Icon(item.activeIcon), label: item.label),
+                    ],
+                    selectedIndex: widget.currentIndex,
+                    onTabSelected: widget.onTap,
+                    barHeight: OneUIFloatingNavBar._barHeight,
+                    horizontalPadding: 0,
+                    verticalPadding: 0,
+                    settings: settings,
+                    quality: quality,
+                    iconSize: 26,
+                    labelFontSize: 12,
+                    selectedIconColor: palette.textPrimary,
+                    selectedLabelColor: palette.textPrimary,
+                    unselectedIconColor: palette.textSecondary,
+                    unselectedLabelColor: palette.textSecondary,
+                  ),
                 ),
               ),
       ),
