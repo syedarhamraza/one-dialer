@@ -684,10 +684,10 @@ class _CallRow extends StatelessWidget {
                 key: callKey,
                 height: keyHeight,
                 label: context.l10n.call,
-                color: OneUITheme.dialGreen,
+                color: OneUITheme.callGreen,
                 lit: true,
                 onTap: onCall,
-                child: const Icon(Icons.call_rounded, color: Colors.white, size: 38),
+                child: const ImageIcon(AssetImage('assets/icons/handset.png'), color: Colors.white, size: 34),
               ),
             )
           else
@@ -703,13 +703,13 @@ class _CallRow extends StatelessWidget {
                       child: _Pill(
                         height: keyHeight,
                         label: context.l10n.callWithSim('${i + 1}', sim.label),
-                        color: OneUITheme.dialGreen,
+                        color: OneUITheme.callGreen,
                         lit: true,
                         onTap: onCall == null ? null : () => onCall!(sim.id),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.call_rounded, color: Colors.white, size: 34),
+                            const ImageIcon(AssetImage('assets/icons/handset.png'), color: Colors.white, size: 30),
                             const SizedBox(width: 2),
                             Text(
                               '${i + 1}',

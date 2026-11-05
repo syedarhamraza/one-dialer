@@ -212,4 +212,14 @@ for name, body in {"default_phone": GLOSSY_PHONE_BG + GLOSSY_PHONE_FG, "default_
 render(svg(GLOSSY_PHONE_BG + GLOSSY_PHONE_FG, f"{O} {O} {T} {T}", 512), PLAY, 512)
 for name, body in ISLAND.items():
     render(svg(body, f"0 0 {ISL} {ISL}", ISL), RES / f"{name}.png", ISL)
+# The keypad Call button's glyph: Glossy's slimmed handset, plain white (tinted in Flutter), no shadow.
+HS, hs = 144, 0.62 * T
+THIN = ('<filter id="thinw" x="-20%" y="-20%" width="140%" height="140%">'
+        '<feMorphology in="SourceAlpha" operator="erode" radius="13" result="e"/>'
+        '<feGaussianBlur in="e" stdDeviation="10" result="b"/>'
+        '<feComponentTransfer in="b" result="m"><feFuncA type="linear" slope="12" intercept="-5.5"/></feComponentTransfer>'
+        '<feComposite in="SourceGraphic" in2="m" operator="in"/></filter>')
+pathlib.Path("assets/icons").mkdir(parents=True, exist_ok=True)
+render(svg(f'<defs>{THIN}</defs><g filter="url(#thinw)">' + handset(O + T / 2, O + T / 2, hs, "#FFFFFF", W) + '</g>',
+           f"{O + (T - hs) / 2:.1f} {O + (T - hs) / 2:.1f} {hs:.1f} {hs:.1f}", HS), pathlib.Path("assets/icons/handset.png"), HS)
 print("rendered to", RES, "and", PLAY)
