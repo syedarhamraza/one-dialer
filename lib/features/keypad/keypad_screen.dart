@@ -706,16 +706,29 @@ class _CallRow extends StatelessWidget {
                         color: OneUITheme.callGreen,
                         lit: true,
                         onTap: onCall == null ? null : () => onCall!(sim.id),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const ImageIcon(AssetImage('assets/icons/handset.png'), color: Colors.white, size: 30),
-                            const SizedBox(width: 2),
-                            Text(
-                              '${i + 1}',
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white),
-                            ),
-                          ],
+                        // The SIM number sits where the return-to-call glyph's waves do, in the
+                        // handset's empty top-right corner, so the handset stays centred.
+                        child: SizedBox.square(
+                          dimension: 30,
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              const ImageIcon(AssetImage('assets/icons/handset.png'), color: Colors.white, size: 30),
+                              Positioned(
+                                top: -5,
+                                right: -3,
+                                child: Text(
+                                  '${i + 1}',
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    height: 1,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
