@@ -123,11 +123,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
     if (text.isNotEmpty) widget.input.value = text.substring(0, text.length - 1);
   }
 
-  Future<void> _paste() async {
-    final data = await Clipboard.getData(Clipboard.kTextPlain);
-    final digits = data?.text?.replaceAll(RegExp(r'[^0-9+*#,;]'), '') ?? '';
-    if (digits.isNotEmpty) widget.input.value += digits;
-  }
+  Future<void> _paste() => pasteNumber(widget.input);
 
   Future<void> _call([String? simId]) async {
     if (_calling) return;
@@ -413,12 +409,27 @@ class _NumberDisplay extends StatelessWidget {
   final String number;
   final VoidCallback onPaste;
 
+  void _menu(BuildContext context) => OneUIFloatingMenu.show(
+    context: context,
+    anchorContext: context,
+    centered: true,
+    items: [
+      OneUIFloatingMenuItem(
+        label: context.l10n.copy,
+        icon: Icons.copy_rounded,
+        onTap: () => Clipboard.setData(ClipboardData(text: number)),
+      ),
+      OneUIFloatingMenuItem(label: context.l10n.paste, icon: Icons.content_paste_rounded, onTap: onPaste),
+    ],
+  );
+
   @override
   Widget build(BuildContext context) {
     return Semantics(
       label: number.isEmpty ? context.l10n.keypadNumberEmpty : context.l10n.keypadNumber(number),
+      onLongPressHint: '${context.l10n.copy} / ${context.l10n.paste}',
       child: GestureDetector(
-        onLongPress: onPaste,
+        onLongPress: () => _menu(context),
         behavior: HitTestBehavior.opaque,
         child: SizedBox(
           height: 64,
@@ -726,6 +737,13 @@ class _CallRow extends StatelessWidget {
   }
 }
 
+/// Appends the clipboard's dialable characters to [input].
+Future<void> pasteNumber(ValueNotifier<String> input) async {
+  final data = await Clipboard.getData(Clipboard.kTextPlain);
+  final digits = data?.text?.replaceAll(RegExp(r'[^0-9+*#,;]'), '') ?? '';
+  if (digits.isNotEmpty) input.value += digits;
+}
+
 /// The keypad's menu: typing actions while a number is entered, then speed dial and
 /// settings. Shown from the Calls header's menu button while typing.
 /// The keypad's menu items: typing actions while a number is entered, then speed dial
@@ -742,6 +760,8 @@ List<OneUIFloatingMenuItem> keypadMenuItems(
         label: open.value ? context.l10n.hideKeypad : context.l10n.showKeypad,
         onTap: () => open.value = !open.value,
       ),
+      OneUIFloatingMenuItem(label: context.l10n.copy, onTap: () => Clipboard.setData(ClipboardData(text: input.value))),
+      OneUIFloatingMenuItem(label: context.l10n.paste, onTap: () => pasteNumber(input)),
       OneUIFloatingMenuItem(label: context.l10n.addPause, onTap: () => input.value += ','),
       OneUIFloatingMenuItem(label: context.l10n.addWait, onTap: () => input.value += ';'),
       OneUIFloatingMenuItem(label: context.l10n.sendMessage, onTap: () => TelecomBridge.instance.sendSms(input.value)),

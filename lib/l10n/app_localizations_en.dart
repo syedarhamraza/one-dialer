@@ -1490,6 +1490,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get copy => 'Copy';
+
+  @override
+  String get paste => 'Paste';
+
+  @override
   String get copyId => 'Copy ID';
 
   @override

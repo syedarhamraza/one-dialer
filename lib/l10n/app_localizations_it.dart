@@ -1504,6 +1504,12 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get copy => 'Copia';
+
+  @override
+  String get paste => 'Incolla';
+
+  @override
   String get copyId => 'Copia ID';
 
   @override
