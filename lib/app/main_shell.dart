@@ -16,6 +16,7 @@ import '../theme/one_ui_theme.dart';
 import '../widgets/press_glow.dart';
 import 'layout.dart';
 import 'return_to_call_banner.dart';
+import 'sideload_warning.dart';
 import '../l10n/l10n.dart';
 
 /// A tab's selection actions (a docked `OneUIFloatingActionBar`). While set, the nav
@@ -77,6 +78,9 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     TelecomBridge.instance.onContactAction = _contactAction;
     TelecomBridge.instance.consumeContactAction().then((action) {
       if (action != null) _contactAction(action);
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) warnIfSideloaded(context);
     });
   }
 

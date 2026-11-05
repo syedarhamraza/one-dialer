@@ -22,6 +22,7 @@ The UI is laid out for English lengths; check these on the phone in Italian, esp
 | `soon` ★ | Soon → Presto (badge) |
 | `keypadDeleteHint`, `keypadDigitHint`, `keypadZeroHint` | Screen reader only, length doesn't matter; check wording |
 | `recentsFilterMissed` | Missed → Perse (filter tab) |
+| `keepUsing`, `getOfficialVersion` | Keep using → Continua a usarla / Get the official version → Scarica la versione ufficiale (one-time sideload warning buttons, side by side) |
 | `defaultSaveLocation`, `vibrateAnswerEnd`, `autoAnswer`, `speakerDefault` | Long settings rows |
 
 ## Wording choices to confirm

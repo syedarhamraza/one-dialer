@@ -149,9 +149,9 @@ class PlayUpdateService implements UpdateService {
 
   PlayUpdateService({@visibleForTesting bool? isAndroid, @visibleForTesting Future<String?> Function()? installer})
     : _isAndroid = isAndroid ?? Platform.isAndroid,
-      _installer = installer ?? _installerStore;
+      _installer = installer ?? installerStore;
 
-  static Future<String?> _installerStore() async {
+  static Future<String?> installerStore() async {
     try {
       return (await PackageInfo.fromPlatform()).installerStore;
     } catch (_) {

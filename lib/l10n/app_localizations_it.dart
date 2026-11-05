@@ -1573,6 +1573,19 @@ class AppLocalizationsIt extends AppLocalizations {
       'Gli aggiornamenti arrivano da Google Play. Questa copia non è stata installata da Play.';
 
   @override
+  String get notFromPlayTitle => 'Non da Google Play';
+
+  @override
+  String get notFromPlayWarning =>
+      'Questa copia non è stata installata da Google Play, quindi non riceverà aggiornamenti e potrebbe essere stata modificata. Puoi continuare a usarla o scaricare la versione ufficiale dalla beta.';
+
+  @override
+  String get keepUsing => 'Continua a usarla';
+
+  @override
+  String get getOfficialVersion => 'Scarica la versione ufficiale';
+
+  @override
   String get couldNotReachPlay => 'Impossibile raggiungere Google Play';
 
   @override
