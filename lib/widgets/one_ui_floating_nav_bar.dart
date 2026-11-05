@@ -63,13 +63,31 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
         padding: const EdgeInsets.only(bottom: 8),
         child: Align(
           alignment: Alignment.bottomCenter,
-          // Equal slots either side keep the bar centred on screen. Laid out right to
-          // left so the action's slot paints first, under the bar it slides out from.
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            textDirection: TextDirection.rtl,
+          // Equal slots either side keep the bar centred on screen. Both actions paint first, under the
+          // bar they slide out from (and under the liquid bar's indicator when it stretches past it).
+          child: Stack(
             children: [
-              SizedBox(
+              Positioned(
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: _slot,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: AnimatedSwitcher(
+                    duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 550),
+                    reverseDuration: reduceMotion ? Duration.zero : const Duration(milliseconds: 220),
+                    switchInCurve: const _SpringCurve(),
+                    switchOutCurve: Curves.easeOutCubic,
+                    transitionBuilder: (child, animation) => _pop(child, animation, from: 1),
+                    child: widget.leading ?? const SizedBox.shrink(),
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 0,
+                top: 0,
+                bottom: 0,
                 width: _slot,
                 child: Align(
                   alignment: Alignment.centerRight,
@@ -83,25 +101,14 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
                   ),
                 ),
               ),
-              RepaintBoundary(
-                child: ListenableBuilder(
-                  listenable: OneUIEffectsController.instance,
-                  builder: (context, _) => OneUIEffectsController.instance.isLiquid
-                      ? _liquidPill(docked, reduceMotion)
-                      : _pill(docked, reduceMotion),
-                ),
-              ),
-              SizedBox(
-                width: _slot,
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: AnimatedSwitcher(
-                    duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 550),
-                    reverseDuration: reduceMotion ? Duration.zero : const Duration(milliseconds: 220),
-                    switchInCurve: const _SpringCurve(),
-                    switchOutCurve: Curves.easeOutCubic,
-                    transitionBuilder: (child, animation) => _pop(child, animation, from: 1),
-                    child: widget.leading ?? const SizedBox.shrink(),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: _slot),
+                child: RepaintBoundary(
+                  child: ListenableBuilder(
+                    listenable: OneUIEffectsController.instance,
+                    builder: (context, _) => OneUIEffectsController.instance.isLiquid
+                        ? _liquidPill(docked, reduceMotion)
+                        : _pill(docked, reduceMotion),
                   ),
                 ),
               ),
