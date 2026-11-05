@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
@@ -52,6 +53,36 @@ class OneUIFloatingNavBar extends StatefulWidget {
 class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
   /// Room for the trailing action (as wide as the bar is tall) plus its gap.
   static const double _slot = OneUIFloatingNavBar._barHeight + 10;
+
+  /// Pointers down on the liquid tab bar.
+  final _barPointers = <int>{};
+
+  /// Bumped to rebuild the liquid tab bar from [OneUIFloatingNavBar.currentIndex].
+  int _tabBarEpoch = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    GestureBinding.instance.pointerRouter.addGlobalRoute(_onGlobalPointer);
+  }
+
+  @override
+  void dispose() {
+    GestureBinding.instance.pointerRouter.removeGlobalRoute(_onGlobalPointer);
+    super.dispose();
+  }
+
+  /// A touch elsewhere while the liquid bar is held makes GlassTabBar drop the drag and snap its
+  /// indicator to the nearest tab without reporting it, so it can sit on a tab that isn't
+  /// selected (holding the bar and scrolling with another finger). Rebuild it from ours then.
+  // shortcut: works around liquid_glass_widgets' _handleGlobalPointer; drop once it reconciles itself.
+  void _onGlobalPointer(PointerEvent event) {
+    if (event is! PointerDownEvent || _barPointers.isEmpty || _barPointers.contains(event.pointer)) return;
+    _barPointers.clear();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _tabBarEpoch++);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -174,24 +205,30 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
                 width: items.length * 96,
                 child: glassPixelRatio(
                   context,
-                  GlassTabBar.bottom(
-                    tabs: [
-                      for (final item in items)
-                        GlassTab(icon: Icon(item.inactiveIcon), activeIcon: Icon(item.activeIcon), label: item.label),
-                    ],
-                    selectedIndex: widget.currentIndex,
-                    onTabSelected: widget.onTap,
-                    barHeight: OneUIFloatingNavBar._barHeight,
-                    horizontalPadding: 0,
-                    verticalPadding: 0,
-                    settings: settings,
-                    quality: quality,
-                    iconSize: 26,
-                    labelFontSize: 12,
-                    selectedIconColor: palette.textPrimary,
-                    selectedLabelColor: palette.textPrimary,
-                    unselectedIconColor: palette.textSecondary,
-                    unselectedLabelColor: palette.textSecondary,
+                  Listener(
+                    onPointerDown: (e) => _barPointers.add(e.pointer),
+                    onPointerUp: (e) => _barPointers.remove(e.pointer),
+                    onPointerCancel: (e) => _barPointers.remove(e.pointer),
+                    child: GlassTabBar.bottom(
+                      key: ValueKey(_tabBarEpoch),
+                      tabs: [
+                        for (final item in items)
+                          GlassTab(icon: Icon(item.inactiveIcon), activeIcon: Icon(item.activeIcon), label: item.label),
+                      ],
+                      selectedIndex: widget.currentIndex,
+                      onTabSelected: widget.onTap,
+                      barHeight: OneUIFloatingNavBar._barHeight,
+                      horizontalPadding: 0,
+                      verticalPadding: 0,
+                      settings: settings,
+                      quality: quality,
+                      iconSize: 26,
+                      labelFontSize: 12,
+                      selectedIconColor: palette.textPrimary,
+                      selectedLabelColor: palette.textPrimary,
+                      unselectedIconColor: palette.textSecondary,
+                      unselectedLabelColor: palette.textSecondary,
+                    ),
                   ),
                 ),
               ),
