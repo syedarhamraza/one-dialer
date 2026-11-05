@@ -95,6 +95,7 @@ flutter:
 
   assets:
     - assets/app_icons/
+    - assets/icons/
     - assets/fonts/Roboto-LICENSE.txt
     # The launcher icon's layers, for the setup page.
     - android/app/src/main/res/drawable-nodpi/ic_launcher_background.png

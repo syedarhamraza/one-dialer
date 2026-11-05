@@ -22,6 +22,9 @@ class OneUITheme {
 
   /// The main app's call green: the round dialpad button and the keypad's Call button.
   static const Color dialGreen = Color(0xFF5BB450);
+
+  /// The keypad's Call button: ColorOS's vivid flat green.
+  static const Color callGreen = Color(0xFF00C216);
   static const Color accentBlue = Color(0xFF5390F5);
   static const Color accentRed = Color(0xFFF07167);
   static const Color accentTeal = Color(0xFF48B5A0);

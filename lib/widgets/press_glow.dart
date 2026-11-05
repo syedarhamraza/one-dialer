@@ -72,13 +72,24 @@ class PressGlow extends StatelessWidget {
 /// coloured glow at full visual effects; a flat One UI [color] fill with the same press below.
 /// Switches live.
 class LitButton extends StatelessWidget {
-  const LitButton({super.key, required this.color, required this.shape, this.radius = 999, required this.child});
+  const LitButton({
+    super.key,
+    required this.color,
+    required this.shape,
+    this.radius = 999,
+    this.flatBody = false,
+    required this.child,
+  });
 
   final Color color;
   final OutlinedBorder shape;
 
   /// The press's corner radius (see [PressGlow.radius]).
   final double radius;
+
+  /// ColorOS's keypad Call look at full effects: a flat fill with a thin rim, light on top and
+  /// a brighter green underneath, instead of the call screen's shaded body.
+  final bool flatBody;
   final Widget child;
 
   @override
@@ -89,6 +100,20 @@ class LitButton extends StatelessWidget {
       builder: (context, child) {
         // The glass style's 3D edges, so the green buttons match the glass around them.
         final edges = (fx.isFull ? litEdges(mainGlass(context)) : null) ?? GlassEdges.callScreen;
+        if (flatBody && fx.isFull) {
+          return PressGlow(
+            radius: radius,
+            glowColor: color,
+            child: Container(
+              decoration: ShapeDecoration(
+                color: color,
+                shape: shape,
+                shadows: [BoxShadow(color: color.withValues(alpha: .25), blurRadius: 12, offset: const Offset(0, 4))],
+              ),
+              child: CustomPaint(foregroundPainter: _RimPainter(shape, color), child: child),
+            ),
+          );
+        }
         return PressGlow(
           radius: radius,
           glowColor: fx.isFull ? color : null,
@@ -112,4 +137,37 @@ class LitButton extends StatelessWidget {
       child: child,
     );
   }
+}
+
+/// [LitButton.flatBody]'s rim: faint white along the top, clear through the middle, a brighter
+/// green along the bottom.
+class _RimPainter extends CustomPainter {
+  _RimPainter(this.shape, this.color);
+
+  final OutlinedBorder shape;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const width = 1.5;
+    final rect = (Offset.zero & size).deflate(width / 2);
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = width
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Colors.white.withValues(alpha: .35),
+          Colors.white.withValues(alpha: 0),
+          Color.lerp(color, Colors.white, .12)!.withValues(alpha: 0),
+          Color.lerp(color, Colors.white, .12)!,
+        ],
+        stops: const [0, .3, .6, 1],
+      ).createShader(rect);
+    canvas.drawPath(shape.getOuterPath(rect), paint);
+  }
+
+  @override
+  bool shouldRepaint(_RimPainter old) => old.shape != shape || old.color != color;
 }
