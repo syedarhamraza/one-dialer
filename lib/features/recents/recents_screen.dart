@@ -119,6 +119,14 @@ class _RecentsScreenState extends State<RecentsScreen> {
   }
 
   List<OneUIFloatingMenuItem> _menuItems() => [
+    if (widget.dialInput case final input?)
+      OneUIFloatingMenuItem(
+        label: context.l10n.paste,
+        onTap: () async {
+          await pasteNumber(input);
+          if (input.value.isNotEmpty) widget.keypadOpen?.value = true;
+        },
+      ),
     // Only offered once an app has shared calls (Android 16.1+ with the app's call-log integration).
     if (_appsOnly || _repo.calls.value.any((c) => c.isApp))
       OneUIFloatingMenuItem(
