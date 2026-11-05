@@ -42,4 +42,5 @@ The UI is laid out for English lengths; check these on the phone in Italian, esp
 | `durationHoursMinutes/MinutesSeconds/Seconds` | "1 h 2 min", "3 min 5 s" |
 | `tapRecentCall`, `chooseSimForCalls` | Setting titles phrased as nouns ("Tocco su una chiamata recente"). |
 | `changelog` | "Novità" rather than a literal "Registro modifiche". |
-| `navBarStyle`, `navBarGlass`, `navGlass*` | Display & effects rows: "Stile barra di navigazione" is long for a row title; "Vetro liquido", "Rifrazione completa". |
+| `glassStyle`, `navBarGlass`, `navGlass*` | Display & effects rows: "Stile vetro"; "Vetro liquido", "Rifrazione completa". |
+| `glassSettings`, `navBarFrosted`, `darkModeEdgeGlow`, `liquidGlassOn`, `liquidScope*`, `navGlassAuto`, `glassExperimentalNote` | Glass & blur page: "Vetro e sfocatura", "Bagliore bordi", "Intensità bagliore", "Vetro liquido su", "Tutto", "Barra e pulsanti", "Solo barra di navigazione", "Automatico", and the experimental note. |

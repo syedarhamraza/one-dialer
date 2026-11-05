@@ -3,6 +3,7 @@ import 'package:dialer/core/prefs/dialer_prefs.dart';
 import 'package:dialer/features/settings/app_icon_screen.dart';
 import 'package:dialer/features/settings/dialing_settings_screen.dart';
 import 'package:dialer/features/settings/display_settings_screen.dart';
+import 'package:dialer/features/settings/glass_settings_screen.dart';
 import 'package:dialer/features/settings/quick_replies_screen.dart';
 import 'package:dialer/widgets/one_ui_radio.dart';
 import 'package:dialer/theme/one_ui_theme.dart';
@@ -87,16 +88,63 @@ void main() {
     expect([selected(0), selected(1)], [true, false]);
   });
 
-  testWidgets('Display & effects hides the edge glow below full effects', (tester) async {
+  testWidgets('Display & effects hides the Glass & blur row below full effects', (tester) async {
     DialerPrefs.instance.visualEffects.value = 'full';
     await open(tester, const DisplaySettingsScreen());
-    expect(find.text('Dark mode edge glow'), findsOneWidget);
+    expect(find.text('Glass & blur'), findsOneWidget);
+    expect(find.text('Glow strength'), findsNothing);
     await tester.tap(find.text('Reduce visual effects'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Effects off').last);
     await tester.pumpAndSettle();
     expect(DialerPrefs.instance.visualEffects.value, 'off');
-    expect(find.text('Dark mode edge glow'), findsNothing);
+    expect(find.text('Glass & blur'), findsNothing);
+    DialerPrefs.instance.visualEffects.value = 'full';
+  });
+
+  testWidgets('Glass & blur shows glow strength while edge glow is in use, liquid options only for liquid', (
+    tester,
+  ) async {
+    final note = find.textContaining('Liquid glass is experimental');
+    DialerPrefs.instance.navStyle.value = 'frosted';
+    await open(tester, const GlassSettingsScreen());
+    expect(find.text('Glow strength'), findsOneWidget);
+    expect(find.text('Liquid glass on'), findsNothing);
+    expect(find.text('Glass effect'), findsNothing);
+    expect(note, findsOneWidget);
+
+    // Liquid glass on everything: no edge glow left to style.
+    DialerPrefs.instance.navStyle.value = 'liquid';
+    await tester.pumpAndSettle();
+    expect(find.text('Liquid glass on'), findsOneWidget);
+    expect(find.text('Glass effect'), findsOneWidget);
+    expect(find.text('Glow strength'), findsNothing);
+    expect(note, findsOneWidget);
+
+    // Nav bar only: the rest still glows.
+    await tester.tap(find.text('Liquid glass on'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Nav bar only').last);
+    await tester.pumpAndSettle();
+    expect(DialerPrefs.instance.liquidScope.value, 'navbar');
+    expect(find.text('Glow strength'), findsOneWidget);
+    DialerPrefs.instance.navStyle.value = 'frosted';
+    DialerPrefs.instance.liquidScope.value = 'all';
+  });
+
+  testWidgets('Glass & blur hides glow strength in light mode', (tester) async {
+    DialerPrefs.instance.navStyle.value = 'frosted';
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: OneUITheme.lightTheme,
+        home: const GlassSettingsScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Glass style'), findsOneWidget);
+    expect(find.text('Glow strength'), findsNothing);
   });
 
   testWidgets('Keypad & recents offers Choose SIM and call on dual SIM', (tester) async {

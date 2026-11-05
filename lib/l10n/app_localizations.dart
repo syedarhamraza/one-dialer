@@ -2321,7 +2321,7 @@ abstract class AppLocalizations {
   /// No description provided for @darkModeEdgeGlow.
   ///
   /// In en, this message translates to:
-  /// **'Dark mode edge glow'**
+  /// **'Glow strength'**
   String get darkModeEdgeGlow;
 
   /// No description provided for @edgeGlowClassic.
@@ -2342,16 +2342,16 @@ abstract class AppLocalizations {
   /// **'Bold'**
   String get edgeGlowBold;
 
-  /// No description provided for @navBarStyle.
+  /// No description provided for @glassStyle.
   ///
   /// In en, this message translates to:
-  /// **'Nav bar style'**
-  String get navBarStyle;
+  /// **'Glass style'**
+  String get glassStyle;
 
   /// No description provided for @navBarFrosted.
   ///
   /// In en, this message translates to:
-  /// **'Frosted'**
+  /// **'Edge glow'**
   String get navBarFrosted;
 
   /// No description provided for @navBarLiquid.
@@ -2377,6 +2377,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Light'**
   String get navGlassStandard;
+
+  /// No description provided for @navGlassAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get navGlassAuto;
+
+  /// No description provided for @glassSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Glass & blur'**
+  String get glassSettings;
+
+  /// No description provided for @liquidGlassOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Liquid glass on'**
+  String get liquidGlassOn;
+
+  /// No description provided for @liquidScopeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything'**
+  String get liquidScopeAll;
+
+  /// No description provided for @liquidScopeControls.
+  ///
+  /// In en, this message translates to:
+  /// **'Nav bar and buttons'**
+  String get liquidScopeControls;
+
+  /// No description provided for @liquidScopeNavbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Nav bar only'**
+  String get liquidScopeNavbar;
+
+  /// No description provided for @glassExperimentalNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Liquid glass is experimental and the heaviest style: it needs even more graphics power than Edge glow, which is already demanding. If scrolling stutters, try Nav bar only or Glass effect › Automatic, or go back to Edge glow. On slower phones, Display & effects › Reduce visual effects runs smoothest.'**
+  String get glassExperimentalNote;
 
   /// No description provided for @callsFromOtherApps.
   ///

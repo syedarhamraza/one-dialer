@@ -5,9 +5,11 @@ import '../../l10n/l10n.dart';
 import '../../widgets/choice_row.dart';
 import '../../widgets/cos_subpage.dart';
 import '../../widgets/one_ui_group_card.dart';
-import 'call_settings_pages.dart' show edgeGlowLabels, effectsLabels;
+import 'call_settings_pages.dart' show effectsLabels;
+import 'glass_settings_screen.dart';
 
-/// Settings › Display & effects: the app's theme and how much glass it draws.
+/// Settings › Display & effects: the app's theme and how much glass it draws (the glass's own
+/// options are on [GlassSettingsScreen]).
 class DisplaySettingsScreen extends StatefulWidget {
   const DisplaySettingsScreen({super.key});
 
@@ -24,9 +26,6 @@ class DisplaySettingsScreen extends StatefulWidget {
 class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
   final _themeKey = GlobalKey();
   final _effectsKey = GlobalKey();
-  final _glassDarkKey = GlobalKey();
-  final _navStyleKey = GlobalKey();
-  final _navGlassKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -57,38 +56,14 @@ class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
                   labels: effectsLabels(context.l10n),
                   onPick: prefs.setVisualEffects,
                 ),
-                // The edge glow and the nav bar's glass only style the full-effects look; below
-                // it these rows go away.
+                // The glass only styles the full-effects look; below it the row goes away.
                 if (full)
-                  choiceRow(
-                    context,
-                    title: context.l10n.darkModeEdgeGlow,
-                    anchor: _glassDarkKey,
-                    value: prefs.glassDark,
-                    labels: edgeGlowLabels(context.l10n),
-                    onPick: prefs.setGlassDark,
-                  ),
-                if (full)
-                  choiceRow(
-                    context,
-                    title: context.l10n.navBarStyle,
-                    anchor: _navStyleKey,
-                    value: prefs.navStyle,
-                    labels: {'frosted': context.l10n.navBarFrosted, 'liquid': context.l10n.navBarLiquid},
-                    onPick: prefs.setNavStyle,
-                  ),
-                // The liquid bar's material: the glass package's GlassQuality.
-                if (full && prefs.navStyle.value == 'liquid')
-                  choiceRow(
-                    context,
-                    title: context.l10n.navBarGlass,
-                    anchor: _navGlassKey,
-                    value: prefs.navGlass,
-                    labels: {
-                      'premium': context.l10n.navGlassPremium,
-                      'standard': context.l10n.navGlassStandard,
-                    },
-                    onPick: prefs.setNavGlass,
+                  OneUIGroupItem(
+                    title: context.l10n.glassSettings,
+                    value: GlassSettingsScreen.styleLabels(context.l10n)[prefs.navStyle.value],
+                    onTap: () =>
+                        Navigator.of(context)
+                            .push(MaterialPageRoute<void>(builder: (_) => const GlassSettingsScreen())),
                   ),
               ],
             );

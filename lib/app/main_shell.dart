@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../core/haptics/haptics.dart';
 import '../core/diagnostics/lag_diagnostics.dart';
@@ -143,14 +144,15 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
           // its own (it must blur the sheet too). Reduced visual effects joins them all in the
           // page's one read: the nav bar then blurs Calls under the sheet, which the sheet's own
           // blur of the same Calls already matches. The key changes, not the tree, so the tabs
-          // keep their state.
+          // keep their state. Liquid glass (Full refraction) shares its own read the same way,
+          // through GlassBackdropGroup.
           ListenableBuilder(
             listenable: OneUIEffectsController.instance,
             builder: (context, tabs) => BackdropGroup(
               backdropKey: OneUIEffectsController.instance.isFull
                   ? _backdrop
                   : BackdropGroup.of(context)?.backdropKey ?? _backdrop,
-              child: tabs!,
+              child: GlassBackdropGroup(child: tabs!),
             ),
             child: Stack(
               children: [
