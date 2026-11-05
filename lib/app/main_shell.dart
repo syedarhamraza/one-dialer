@@ -224,7 +224,7 @@ class _RoundAction extends StatelessWidget {
   final String tooltip;
   final VoidCallback onPressed;
 
-  static const _green = OneUITheme.dialGreen;
+  static const _green = OneUITheme.callGreen;
 
   @override
   Widget build(BuildContext context) {

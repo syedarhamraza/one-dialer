@@ -3,7 +3,6 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../features/in_call/call_controls.dart';
 import '../theme/one_ui_theme.dart';
-import 'call_glass.dart';
 
 /// The call screen's press for ordinary buttons: the glass package's glow and stretch with no
 /// glass body (the transparent style draws no shader, so the main engine needs no
@@ -68,28 +67,17 @@ class PressGlow extends StatelessWidget {
   }
 }
 
-/// A lit (green) button's body and press: the call screen's shaded body, light from below and
-/// coloured glow at full visual effects; a flat One UI [color] fill with the same press below.
-/// Switches live.
+/// A lit (green) button's body and press, ColorOS's keypad Call look: at full visual effects a
+/// flat fill with a thin rim (light on top, a brighter green underneath), a soft shadow and a
+/// coloured press glow; a flat One UI [color] fill with the same press below. Switches live.
 class LitButton extends StatelessWidget {
-  const LitButton({
-    super.key,
-    required this.color,
-    required this.shape,
-    this.radius = 999,
-    this.flatBody = false,
-    required this.child,
-  });
+  const LitButton({super.key, required this.color, required this.shape, this.radius = 999, required this.child});
 
   final Color color;
   final OutlinedBorder shape;
 
   /// The press's corner radius (see [PressGlow.radius]).
   final double radius;
-
-  /// ColorOS's keypad Call look at full effects: a flat fill with a thin rim, light on top and
-  /// a brighter green underneath, instead of the call screen's shaded body.
-  final bool flatBody;
   final Widget child;
 
   @override
@@ -97,49 +85,26 @@ class LitButton extends StatelessWidget {
     final fx = OneUIEffectsController.instance;
     return ListenableBuilder(
       listenable: fx,
-      builder: (context, child) {
-        // The glass style's 3D edges, so the green buttons match the glass around them.
-        final edges = (fx.isFull ? litEdges(mainGlass(context)) : null) ?? GlassEdges.callScreen;
-        if (flatBody && fx.isFull) {
-          return PressGlow(
-            radius: radius,
-            glowColor: color,
-            child: Container(
-              decoration: ShapeDecoration(
-                color: color,
-                shape: shape,
-                shadows: [BoxShadow(color: color.withValues(alpha: .25), blurRadius: 12, offset: const Offset(0, 4))],
-              ),
-              child: CustomPaint(foregroundPainter: _RimPainter(shape, color), child: child),
-            ),
-          );
-        }
-        return PressGlow(
-          radius: radius,
-          glowColor: fx.isFull ? color : null,
-          child: Container(
-            decoration: fx.isFull
-                ? solidBody(color, shape, glow: 0, light: context.palette.isLight)
-                : ShapeDecoration(color: color, shape: shape),
-            foregroundDecoration: fx.isFull ? solidGlow(shape, strength: edges.strength) : null,
-            child: edges == GlassEdges.callScreen
-                ? child
-                // From a cached image: drawn live, the lips' side fade was a save layer every frame.
-                : CallBodyArtwork(
-                    radius: shape is CircleBorder ? null : double.infinity,
-                    edges: edges,
-                    lipsOnly: true,
-                    child: child!,
-                  ),
+      builder: (context, child) => PressGlow(
+        radius: radius,
+        glowColor: fx.isFull ? color : null,
+        child: Container(
+          decoration: ShapeDecoration(
+            color: color,
+            shape: shape,
+            shadows: fx.isFull
+                ? [BoxShadow(color: color.withValues(alpha: .25), blurRadius: 12, offset: const Offset(0, 4))]
+                : null,
           ),
-        );
-      },
+          child: fx.isFull ? CustomPaint(foregroundPainter: _RimPainter(shape, color), child: child) : child,
+        ),
+      ),
       child: child,
     );
   }
 }
 
-/// [LitButton.flatBody]'s rim: faint white along the top, clear through the middle, a brighter
+/// [LitButton]'s rim: faint white along the top, clear through the middle, a brighter
 /// green along the bottom.
 class _RimPainter extends CustomPainter {
   _RimPainter(this.shape, this.color);

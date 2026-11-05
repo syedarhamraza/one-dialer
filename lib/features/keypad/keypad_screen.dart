@@ -597,7 +597,7 @@ class _Pill extends StatelessWidget {
       listenable: OneUIEffectsController.instance,
       builder: (context, _) {
         final fx = OneUIEffectsController.instance;
-        if (lit) return LitButton(color: color, shape: const StadiumBorder(), flatBody: true, child: _ink());
+        if (lit) return LitButton(color: color, shape: const StadiumBorder(), child: _ink());
         // White glass keys in light mode press dark.
         final light = context.palette.isLight;
         return PressGlow(

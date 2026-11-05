@@ -15,7 +15,7 @@ class GlowButton extends StatelessWidget {
     super.key,
     required this.label,
     required this.onTap,
-    this.color = answerGreen,
+    this.color = OneUITheme.callGreen,
     this.lit = true,
     this.busy = false,
     this.busyLabel,
