@@ -25,11 +25,25 @@ class Changelog {
 
   static const List<ChangelogEntry> entries = [
     ChangelogEntry(
-      version: '1.0.0',
+      version: '1.0.0-beta.7',
       date: Changelog.inDevelopment,
       changes: [
-        'New glossy Phone and Contacts icons; the previous ones are still in Settings › More settings › App icon as Classic',
-        'After this update, add the Phone icon to your home screen again from the app drawer',
+        'New glossy Phone and Contacts icons. Prefer the old ones? Settings › App icon › Classic',
+        'After updating, add the Phone icon to your home screen again from the app drawer',
+        'Liquid glass: turn it on in Settings › Display & effects › Glass & blur, for the nav bar alone or for buttons and menus too',
+        'A new ColorOS-style green Call button with our own handset, on the keypad, the call screen and every green button',
+        'Dual SIM: each Call button shows its SIM number in the corner of the handset',
+        'Settings is grouped by topic, with pictures that preview display and dialing choices',
+        'Conference calls: Merge appears whenever two calls can be joined, and the merged call shows as one call',
+        'Call screen edge glow: Classic, Soft or Bold, in Settings › Answer buttons',
+        'Return to call shows a handset with sound waves, and always sits beside the nav bar',
+        'Contact pages get cleaner rows with thin icons, the ringtone\'s name and a two-line call log',
+        'Keypad: tap and hold the number to copy or paste, and numbers typed with 00 find your saved contacts',
+        'Light mode: clearer see-through glass and new ColorOS 17 alerts',
+        'Add call during a call opens the keypad',
+        'The call screen shows the caller\'s photo right away and opens faster',
+        'Fixed four crashes reported from earlier betas',
+        'A copy that wasn\'t installed from Google Play now says so once, since it won\'t get updates',
       ],
     ),
     ChangelogEntry(
