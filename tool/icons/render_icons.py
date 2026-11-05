@@ -53,6 +53,13 @@ def handset(cx, cy, size, fill, w, rotate=0, extra=""):
             f'fill="{fill}" stroke="{fill}" stroke-width="{2 * w / k:.3f}" stroke-linejoin="round" {extra}/>')
 
 
+def thin_handset(cx, cy, size, fill, w, rotate=0, extra=""):
+    """Glossy's slimmer handset as plain geometry: the same glyph with 15/28 of [w]'s rounding
+    (Glossy erodes Classic's 28-unit rounding by 13), so it also works in vector XML."""
+    t = w * 15 / 28
+    return handset(cx, cy, size - 2 * (w - t), fill, t, rotate, extra)
+
+
 FROST = ('<linearGradient id="frost" x1="0" y1="0" x2="0" y2="1">'
          '<stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#E6FAEE"/></linearGradient>')
 
@@ -85,7 +92,7 @@ PHONE_BG = tile_bg("#1ED760", "#009A3E")
 CONTACTS_BG = tile_bg("#14D16E", "#00964A", SPINE)
 
 # vivo Origin Island images (CallNotifications.kt): 72 dp at 3x. The balls are the call screen's
-# solidBody + solidGlow (call_controls.dart); the glyphs are the launcher's rounded handset, flat.
+# solidBody + solidGlow (call_controls.dart); the glyphs are the Glossy launcher's slim handset, flat.
 ISL = 216
 GS = ISL * .46 / (0.59 * T)  # island glyph : launcher glyph
 ANSWER, END = "#2FAE52", "#D2463A"
@@ -106,7 +113,7 @@ def ball(color, rotate):
             '<stop offset="1" stop-color="#FFFFFF" stop-opacity=".24"/></linearGradient></defs>'
             f'<circle cx="{r}" cy="{r}" r="{r}" fill="url(#body)"/><circle cx="{r}" cy="{r}" r="{r}" fill="url(#lit)"/>'
             f'<circle cx="{r}" cy="{r}" r="{r - 1.2}" fill="none" stroke="#FFFFFF" stroke-opacity=".18" stroke-width="2.4"/>'
-            + handset(r, r, ISL * .46, "#FFFFFF", W * GS, rotate))
+            + thin_handset(r, r, ISL * .46, "#FFFFFF", W * GS, rotate))
 
 
 def speaker(fill, glyph):
@@ -121,7 +128,7 @@ ISLAND = {
     "island_answer": ball(ANSWER, 0),
     "island_decline": ball(END, 135),  # the handset hung up
     # the collapsed island's glyph (also the ongoing call's small icon)
-    "island_phone": handset(ISL / 2, ISL / 2, ISL * .75, ANSWER, W * ISL / (0.59 * T)),  # the old Icon's 18 of 24
+    "island_phone": thin_handset(ISL / 2, ISL / 2, ISL * .75, ANSWER, W * ISL / (0.59 * T)),  # the old Icon's 18 of 24
     # LetterAvatar's no-photo person
     "island_caller": (f'<circle cx="{ISL / 2}" cy="{ISL / 2}" r="{ISL / 2}" fill="#2C2C2E"/>'
                       f'<g fill="#9E9EA4" transform="translate({ISL / 2 - 280 * cpk:.2f} {ISL / 2 - 282 * cpk:.2f}) scale({cpk:.4f})">'

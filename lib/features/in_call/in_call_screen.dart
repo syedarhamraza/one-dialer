@@ -15,6 +15,7 @@ import 'call_control_panel.dart';
 import 'call_controls.dart';
 import 'call_screen_widgets.dart';
 import 'incoming_controls.dart';
+import '../../widgets/call_glyph.dart';
 
 export 'call_screen_widgets.dart' show callerName;
 
@@ -302,14 +303,14 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
               // Each glyph fades by its colour's alpha, so no layer is needed for it.
               Transform.rotate(
                 angle: _oneButton ? 0 : 2.36 * red,
-                child: Icon(
+                child: CallGlyph(
                   Icons.call_rounded,
                   // The 1-button handset simply crossfades into the hang-up glyph alongside the colour.
                   color: Colors.white.withValues(alpha: _oneButton ? 1 - red : 1 - _handsetOut.transform(t)),
                   size: iconSize,
                 ),
               ),
-              Icon(
+              CallGlyph(
                 Icons.call_end_rounded,
                 color: Colors.white.withValues(alpha: _oneButton ? red : _hangUpIn.transform(t)),
                 size: iconSize,

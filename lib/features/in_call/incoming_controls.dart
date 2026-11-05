@@ -12,6 +12,7 @@ import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/one_ui_floating_modal.dart';
 import 'call_controls.dart';
 import '../../l10n/l10n.dart';
+import '../../widgets/call_glyph.dart';
 
 /// ColorOS 17's 1-button ball: white with a dark handset, until a drag tints it.
 const oneButtonWhite = Color(0xFFF2F2F4);
@@ -598,13 +599,13 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Icon(
+          CallGlyph(
             widget.icon,
             color: iconColor.withValues(alpha: iconColor.a * (1 - morph)),
             size: size * .52,
           ),
           if (morph > 0)
-            Icon(
+            CallGlyph(
               target,
               color: iconColor.withValues(alpha: iconColor.a * morph),
               size: size * .52,

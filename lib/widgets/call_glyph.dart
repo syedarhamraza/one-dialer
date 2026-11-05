@@ -1,0 +1,37 @@
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
+
+/// Draws [icon] like [Icon], but the call handset and hang-up glyphs are our own Glossy handset
+/// (`assets/icons/handset.png`, from `tool/icons/render_icons.py`); hang-up is it turned 135°.
+class CallGlyph extends StatelessWidget {
+  const CallGlyph(this.icon, {super.key, this.color, this.size});
+
+  final IconData icon;
+  final Color? color;
+  final double? size;
+
+  @override
+  Widget build(BuildContext context) {
+    final handset = icon == Icons.call_rounded;
+    if (!handset && icon != Icons.call_end_rounded) {
+      return Icon(icon, color: color, size: size);
+    }
+    final theme = IconTheme.of(context);
+    final box = size ?? theme.size ?? 24;
+    // Material's glyph fills about 18 of its 24; ours fills its whole image.
+    final glyph = ImageIcon(
+      const AssetImage('assets/icons/handset.png'),
+      color: color ?? theme.color,
+      size: box * .75,
+    );
+    return SizedBox.square(
+      dimension: box,
+      child: Center(
+        child: handset
+            ? glyph
+            : Transform.rotate(angle: 3 * math.pi / 4, child: glyph),
+      ),
+    );
+  }
+}

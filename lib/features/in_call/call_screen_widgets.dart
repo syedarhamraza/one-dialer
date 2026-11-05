@@ -9,6 +9,7 @@ import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/letter_avatar.dart';
 import 'call_controls.dart';
 import '../../l10n/l10n.dart';
+import '../../widgets/call_glyph.dart';
 
 /// The call backdrop: a soft aurora tinted from the caller's avatar colour, under black fades at
 /// the top and bottom.
@@ -551,7 +552,7 @@ class _HdCallGlyph extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.call_rounded, size: 16, color: Colors.white70),
+          CallGlyph(Icons.call_rounded, size: 16, color: Colors.white70),
           Text(
             'HD',
             style: TextStyle(fontSize: 8, height: 1, fontWeight: FontWeight.w800, color: Colors.white70),
