@@ -38,7 +38,12 @@ class CallGlyph extends StatelessWidget {
     return SizedBox.square(
       dimension: box,
       child: Center(
-        child: handset || talk ? glyph : Transform.rotate(angle: 3 * math.pi / 4, child: glyph),
+        child: talk
+            // Nudged up and right so the handset and waves sit optically centred.
+            ? Transform.translate(offset: const Offset(1, -1), child: glyph)
+            : handset
+            ? glyph
+            : Transform.rotate(angle: 3 * math.pi / 4, child: glyph),
       ),
     );
   }
