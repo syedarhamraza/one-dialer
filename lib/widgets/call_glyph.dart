@@ -28,11 +28,12 @@ class CallGlyph extends StatelessWidget {
     final theme = IconTheme.of(context);
     final box = size ?? theme.size ?? 24;
     // Material's glyph fills about 18 of its 24; ours fills its whole image. Turned to hang up, the
-    // handset lies across the diagonal and looks smaller, so it's drawn larger.
+    // handset lies across the diagonal and looks smaller, so it's drawn larger. The talk glyph's
+    // handset is smaller within its image (the waves share it), so it fills its whole box.
     final glyph = ImageIcon(
       AssetImage(talk ? 'assets/icons/handset_talk.png' : 'assets/icons/handset.png'),
       color: color ?? theme.color,
-      size: box * (handset || talk ? handsetScale : hangUpScale),
+      size: box * (talk ? 1 : (handset ? handsetScale : hangUpScale)),
     );
     return SizedBox.square(
       dimension: box,

@@ -234,11 +234,11 @@ print("rendered to", RES, "and", PLAY)
 
 # The return-to-call button's glyph: the same handset, smaller at the bottom left, with sound waves.
 def waves(x0, s, fill):
-    cx, cy, sw = x0 + .56 * s, x0 + .44 * s, .085 * s
+    cx, cy, sw = x0 + .46 * s, x0 + .54 * s, .085 * s
     return "".join(f'<path d="M{cx:.1f} {cy - r:.1f}A{r:.1f} {r:.1f} 0 0 1 {cx + r:.1f} {cy:.1f}" fill="none" stroke="{fill}" '
-                   f'stroke-width="{sw:.1f}" stroke-linecap="round"/>' for r in (.17 * s, .35 * s))
+                   f'stroke-width="{sw:.1f}" stroke-linecap="round"/>' for r in (.22 * s, .4 * s))
 
 
 x0 = O + (T - hs) / 2
-render(svg(f'<defs>{THIN}</defs><g filter="url(#thinw)">' + handset(x0 + .4 * hs, x0 + .6 * hs, .8 * hs, "#FFFFFF", W * .8) + '</g>'
+render(svg(f'<defs>{THIN}</defs><g filter="url(#thinw)">' + handset(x0 + .42 * hs, x0 + .58 * hs, .84 * hs, "#FFFFFF", W * .84) + '</g>'
            + waves(x0, hs, "#FFFFFF"), f"{x0:.1f} {x0:.1f} {hs:.1f} {hs:.1f}", HS), pathlib.Path("assets/icons/handset_talk.png"), HS)
