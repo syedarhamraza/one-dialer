@@ -18,7 +18,7 @@ Floating chrome is OneSpend's, 1:1 (no liquid glass; it was tried and removed). 
 ## Working rules
 
 - **Design language is ColorOS 17, not Samsung One UI.** The app was ported from OneSpend's One UI look (`D:\one-spend`); convert One UI leftovers (coloured icons, One UI fields, dialogs, popups, subpages) to the ColorOS 17 look when you touch them. ColorOS 16 screenshots the user shares are layout references, to be upgraded to the COS17 look (frosted call glass, springs).
-- **The user tests on the phone.** After a change: `flutter analyze`, `flutter test`, then `flutter build apk --debug` and install it. Don't drive the phone with adb taps or screenshots to verify UI unless asked. Build `--release` only when the user asks (a release build can't install over a debug one, or the reverse, without uninstalling, which wipes the app's data: ask first). For motion changes (transitions, morphs) install a `--profile` build instead: debug draws too few frames to judge (and lacks the fake "Test line").
+- **The user tests on the phone.** After a change: `flutter analyze`, `flutter test`, then `flutter build apk --debug` and install it. Don't drive the phone with adb taps or screenshots to verify UI unless asked. Build `--release` only when the user asks (a release build can't install over a debug one, or the reverse, without uninstalling, which wipes the app's data: ask first). For motion changes (transitions, morphs) install a `--profile` build instead: debug draws too few frames to judge (profile has the fake "Test line" too).
 - **Never install or force-stop the app during a call.** Every `adb install` or `am force-stop` must be conditional on every SIM being idle, with `&&`, never chained with `;` after a check that only prints:
 
   ```bash
@@ -55,7 +55,7 @@ Performance rules that keep the lists smooth: list content goes in lazy slivers 
 
 `OneUIScrollPhysics` (the app-wide `OneUIScrollBehavior`) is a softened `BouncingScrollPhysics`: every page bounces at its ends, even empty or short ones, with a weaker pull (`frictionFactor`) and a stiffer return spring than Flutter's iOS bounce; big-header pages keep their snap. Fitted content that must hold still uses `HoldStillScrollPhysics` (a plain `ClampingScrollPhysics` would inherit the bounce's always-accept and let a held key drag the keypad): the keypad sheet, inner panels, and the call screen (the in-call engine uses the plain `MaterialScrollBehavior`). The shared `placeCall` SIM chooser is a `OneUIFloatingMenu` anchored to the tapped control.
 
-Incoming calls can be tested without a second phone: debug builds include a fake "Test line" (`android/app/src/debug/.../FakeCalls.kt`, never in release). Enable it once, then ring the phone (add `--ez private true` for a hidden number):
+Incoming calls can be tested without a second phone: debug and profile builds include a fake "Test line" (`android/app/src/debug/.../FakeCalls.kt`; `build.gradle.kts` adds it to profile; never in release). Enable it once, then ring the phone (add `--ez private true` for a hidden number):
 
 ```bash
 adb shell telecom set-phone-account-enabled com.syedarhamraza.onedialer/com.syedarhamraza.dialer.debug.FakeCallService fake 0

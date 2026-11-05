@@ -57,6 +57,14 @@ android {
         }
     }
 
+    // Profile builds (for judging motion) get debug's fake "Test line" too; release never does.
+    sourceSets {
+        getByName("profile") {
+            java.srcDir("src/debug/kotlin")
+            manifest.srcFile("src/debug/AndroidManifest.xml")
+        }
+    }
+
     buildTypes {
         release {
             signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")

@@ -10,6 +10,7 @@ import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import 'call_controls.dart';
 import '../../l10n/l10n.dart';
+import '../../widgets/call_glyph.dart';
 
 /// Actions recede while the keypad rises within one reversible animated panel.
 /// The bottom row is outside the changing panel, so it never moves.
@@ -474,7 +475,7 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                                           shape: const StadiumBorder(),
                                         ),
                                         onPressed: _ending ? null : _endCall,
-                                        icon: const Icon(Icons.call_end_rounded),
+                                        icon: const CallGlyph(Icons.call_end_rounded),
                                       ),
                                     ),
                                   ),

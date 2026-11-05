@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../core/haptics/haptics.dart';
 import '../theme/one_ui_theme.dart';
 import 'one_ui_radio.dart';
+import 'call_glyph.dart';
 
 /// One choice of a [ShowcasePicker]: what the phone shows with it, under a label.
 class ShowcaseOption {
@@ -176,6 +177,6 @@ class PreviewCallButton extends StatelessWidget {
     height: size,
     decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     // A light button gets a dark glyph, as ColorOS's white 1-button ball.
-    child: Icon(icon, size: size * .55, color: color.computeLuminance() > .5 ? const Color(0xFF2C2C2E) : Colors.white),
+    child: CallGlyph(icon, size: size * .55, color: color.computeLuminance() > .5 ? const Color(0xFF2C2C2E) : Colors.white),
   );
 }
