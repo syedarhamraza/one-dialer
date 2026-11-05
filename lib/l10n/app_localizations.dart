@@ -2624,6 +2624,18 @@ abstract class AppLocalizations {
   /// **'Your report is saved for upload when reporting is available. Share this ID with your feedback:\\n\\n{id}'**
   String reportQueuedMessage(String id);
 
+  /// No description provided for @copy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get copy;
+
+  /// No description provided for @paste.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste'**
+  String get paste;
+
   /// No description provided for @copyId.
   ///
   /// In en, this message translates to:

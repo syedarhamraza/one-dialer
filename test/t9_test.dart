@@ -53,6 +53,13 @@ void main() {
     expect(t9Search('0380', [saved]), isEmpty);
   });
 
+  test('a typed national number finds the saved 00 international form', () {
+    const saved = T9Entry(name: 'Ali', numbers: ['00923211234567']);
+    final r = t9Search('03211234567', [saved]);
+    expect(r.single.entry, saved);
+    expect(r.single.numberRange, (4, 14)); // "3211234567" after "0092"
+  });
+
   test('a saved number shorter than a country code does not throw', () {
     const stub = T9Entry(name: 'Stub', numbers: ['+92']);
     expect(t9Search('0370', [stub]), isEmpty);

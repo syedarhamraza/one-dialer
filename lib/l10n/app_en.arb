@@ -783,6 +783,8 @@
       }
     }
   },
+  "copy": "Copy",
+  "paste": "Paste",
   "copyId": "Copy ID",
   "reportIdCopied": "Report ID copied",
   "noEmailApp": "No email app found",

@@ -421,6 +421,8 @@
   "reportUnavailable": "Segnalazione non disponibile o già richiesta di recente. Riprova tra un minuto.",
   "reportQueued": "Segnalazione in coda",
   "reportQueuedMessage": "La segnalazione è salvata e verrà caricata quando possibile. Condividi questo ID con il tuo feedback:\\n\\n{id}",
+  "copy": "Copia",
+  "paste": "Incolla",
   "copyId": "Copia ID",
   "reportIdCopied": "ID segnalazione copiato",
   "noEmailApp": "Nessuna app email trovata",

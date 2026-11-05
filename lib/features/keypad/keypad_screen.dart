@@ -252,7 +252,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           _Handle(onHide: _hide),
-                                          if (number.isNotEmpty) _NumberDisplay(number: number, onPaste: _paste),
+                                          _NumberDisplay(number: number, onPaste: _paste),
                                           _keys = _keys?.keyHeight == keyHeight
                                               ? _keys!
                                               : _Keypad(onKey: _type, onLongPress: _longPress, keyHeight: keyHeight),
@@ -413,12 +413,28 @@ class _NumberDisplay extends StatelessWidget {
   final String number;
   final VoidCallback onPaste;
 
+  void _menu(BuildContext context) => OneUIFloatingMenu.show(
+    context: context,
+    anchorContext: context,
+    centered: true,
+    items: [
+      if (number.isNotEmpty)
+        OneUIFloatingMenuItem(
+          label: context.l10n.copy,
+          icon: Icons.copy_rounded,
+          onTap: () => Clipboard.setData(ClipboardData(text: number)),
+        ),
+      OneUIFloatingMenuItem(label: context.l10n.paste, icon: Icons.content_paste_rounded, onTap: onPaste),
+    ],
+  );
+
   @override
   Widget build(BuildContext context) {
     return Semantics(
       label: number.isEmpty ? context.l10n.keypadNumberEmpty : context.l10n.keypadNumber(number),
+      onLongPressHint: '${context.l10n.copy} / ${context.l10n.paste}',
       child: GestureDetector(
-        onLongPress: onPaste,
+        onLongPress: () => _menu(context),
         behavior: HitTestBehavior.opaque,
         child: SizedBox(
           height: 64,

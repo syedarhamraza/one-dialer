@@ -149,13 +149,14 @@ List<(int, String, bool)> _letters(String name) {
   var at = digits.indexOf(query);
   var length = query.length;
   // Typed national form against a saved international one: "0370…" finds "+92 370…",
-  // the leading 0 standing in for a 1–3 digit country code.
-  if (at < 0 && query.length >= 4 && query.startsWith('0') && digits.startsWith('+')) {
+  // the leading 0 standing in for a 1–3 digit country code. "0092…" is the same as "+92…".
+  final intl = digits.startsWith('+') ? 1 : (digits.startsWith('00') ? 2 : 0);
+  if (at < 0 && query.length >= 4 && query.startsWith('0') && intl > 0) {
     final rest = query.substring(1);
     // A short saved number ("+92") can't hold a longer code; startsWith throws past its end.
-    for (var code = 1; code <= 3 && at < 0 && 1 + code <= digits.length; code++) {
-      if (digits.startsWith(rest, 1 + code)) {
-        at = 1 + code;
+    for (var code = 1; code <= 3 && at < 0 && intl + code <= digits.length; code++) {
+      if (digits.startsWith(rest, intl + code)) {
+        at = intl + code;
         length = rest.length;
       }
     }
