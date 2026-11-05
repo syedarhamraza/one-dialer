@@ -7,6 +7,12 @@ import 'package:flutter/material.dart';
 class CallGlyph extends StatelessWidget {
   const CallGlyph(this.icon, {super.key, this.color, this.size});
 
+  /// The glyph's share of its box: upright, and turned to hang up.
+  static const handsetScale = .85, hangUpScale = .9;
+
+  /// How much a handset grows as it tips over into the hang-up glyph.
+  static const tipGrowth = hangUpScale / handsetScale;
+
   final IconData icon;
   final Color? color;
   final double? size;
@@ -24,14 +30,12 @@ class CallGlyph extends StatelessWidget {
     final glyph = ImageIcon(
       const AssetImage('assets/icons/handset.png'),
       color: color ?? theme.color,
-      size: box * (handset ? .75 : .9),
+      size: box * (handset ? handsetScale : hangUpScale),
     );
     return SizedBox.square(
       dimension: box,
       child: Center(
-        child: handset
-            ? glyph
-            : Transform.rotate(angle: 3 * math.pi / 4, child: glyph),
+        child: handset ? glyph : Transform.rotate(angle: 3 * math.pi / 4, child: glyph),
       ),
     );
   }

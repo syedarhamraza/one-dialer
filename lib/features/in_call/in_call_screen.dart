@@ -301,7 +301,11 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
               // CallGlyph's hang-up size) and lands already as End's icon.
               Transform.rotate(
                 angle: 3 * math.pi / 4 * red,
-                child: CallGlyph(Icons.call_rounded, color: Colors.white, size: iconSize * lerpDouble(1, 1.2, red)!),
+                child: CallGlyph(
+                  Icons.call_rounded,
+                  color: Colors.white,
+                  size: iconSize * lerpDouble(1, CallGlyph.tipGrowth, red)!,
+                ),
               ),
             ],
           ),

@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
@@ -600,7 +601,11 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
       child: widget.icon == Icons.call_rounded && target == Icons.call_end_rounded
           ? Transform.rotate(
               angle: 3 * math.pi / 4 * morph,
-              child: CallGlyph(widget.icon, color: iconColor, size: size * .52 * (1 + .2 * morph)),
+              child: CallGlyph(
+                widget.icon,
+                color: iconColor,
+                size: size * .52 * lerpDouble(1, CallGlyph.tipGrowth, morph)!,
+              ),
             )
           : Stack(
               alignment: Alignment.center,
