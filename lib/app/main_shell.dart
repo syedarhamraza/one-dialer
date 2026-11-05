@@ -10,6 +10,7 @@ import '../features/contacts/editor/contact_editor_screen.dart';
 import '../features/keypad/keypad_screen.dart';
 import '../features/recents/call_log_repository.dart';
 import '../features/recents/recents_screen.dart';
+import '../widgets/call_glyph.dart';
 import '../widgets/one_ui_floating_nav_bar.dart';
 import '../theme/one_ui_theme.dart';
 import '../widgets/press_glow.dart';
@@ -245,7 +246,7 @@ class _RoundAction extends StatelessWidget {
           // Switching tabs keeps the button and cross-fades its icon.
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
-            child: Icon(icon, key: ValueKey(icon), size: icon == Icons.add_rounded ? 42 : 34, weight: 300),
+            child: CallGlyph(icon, key: ValueKey(icon), size: icon == Icons.add_rounded ? 42 : 34),
           ),
         ),
       ),

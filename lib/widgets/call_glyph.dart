@@ -3,7 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 /// Draws [icon] like [Icon], but the call handset and hang-up glyphs are our own Glossy handset
-/// (`assets/icons/handset.png`, from `tool/icons/render_icons.py`); hang-up is it turned 135°.
+/// (`assets/icons/handset.png`, from `tool/icons/render_icons.py`); hang-up is it turned 135°, and
+/// an ongoing call ([Icons.phone_in_talk_rounded]) is it with sound waves (`handset_talk.png`).
 class CallGlyph extends StatelessWidget {
   const CallGlyph(this.icon, {super.key, this.color, this.size});
 
@@ -20,22 +21,29 @@ class CallGlyph extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final handset = icon == Icons.call_rounded;
-    if (!handset && icon != Icons.call_end_rounded) {
+    final talk = icon == Icons.phone_in_talk_rounded;
+    if (!handset && !talk && icon != Icons.call_end_rounded) {
       return Icon(icon, color: color, size: size);
     }
     final theme = IconTheme.of(context);
     final box = size ?? theme.size ?? 24;
     // Material's glyph fills about 18 of its 24; ours fills its whole image. Turned to hang up, the
-    // handset lies across the diagonal and looks smaller, so it's drawn larger.
+    // handset lies across the diagonal and looks smaller, so it's drawn larger. The talk glyph's
+    // handset is smaller within its image (the waves share it), so it fills its whole box.
     final glyph = ImageIcon(
-      const AssetImage('assets/icons/handset.png'),
+      AssetImage(talk ? 'assets/icons/handset_talk.png' : 'assets/icons/handset.png'),
       color: color ?? theme.color,
-      size: box * (handset ? handsetScale : hangUpScale),
+      size: box * (talk ? 1 : (handset ? handsetScale : hangUpScale)),
     );
     return SizedBox.square(
       dimension: box,
       child: Center(
-        child: handset ? glyph : Transform.rotate(angle: 3 * math.pi / 4, child: glyph),
+        child: talk
+            // Nudged up and right so the handset and waves sit optically centred.
+            ? Transform.translate(offset: const Offset(1, -1), child: glyph)
+            : handset
+            ? glyph
+            : Transform.rotate(angle: 3 * math.pi / 4, child: glyph),
       ),
     );
   }

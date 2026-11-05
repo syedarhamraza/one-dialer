@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
@@ -53,6 +54,36 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
   /// Room for the trailing action (as wide as the bar is tall) plus its gap.
   static const double _slot = OneUIFloatingNavBar._barHeight + 10;
 
+  /// Pointers down on the liquid tab bar.
+  final _barPointers = <int>{};
+
+  /// Bumped to rebuild the liquid tab bar from [OneUIFloatingNavBar.currentIndex].
+  int _tabBarEpoch = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    GestureBinding.instance.pointerRouter.addGlobalRoute(_onGlobalPointer);
+  }
+
+  @override
+  void dispose() {
+    GestureBinding.instance.pointerRouter.removeGlobalRoute(_onGlobalPointer);
+    super.dispose();
+  }
+
+  /// A touch elsewhere while the liquid bar is held makes GlassTabBar drop the drag and snap its
+  /// indicator to the nearest tab without reporting it, so it can sit on a tab that isn't
+  /// selected (holding the bar and scrolling with another finger). Rebuild it from ours then.
+  // shortcut: works around liquid_glass_widgets' _handleGlobalPointer; drop once it reconciles itself.
+  void _onGlobalPointer(PointerEvent event) {
+    if (event is! PointerDownEvent || _barPointers.isEmpty || _barPointers.contains(event.pointer)) return;
+    _barPointers.clear();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _tabBarEpoch++);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
@@ -63,13 +94,31 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
         padding: const EdgeInsets.only(bottom: 8),
         child: Align(
           alignment: Alignment.bottomCenter,
-          // Equal slots either side keep the bar centred on screen. Laid out right to
-          // left so the action's slot paints first, under the bar it slides out from.
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            textDirection: TextDirection.rtl,
+          // Equal slots either side keep the bar centred on screen. Both actions paint first, under the
+          // bar they slide out from (and under the liquid bar's indicator when it stretches past it).
+          child: Stack(
             children: [
-              SizedBox(
+              Positioned(
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: _slot,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: AnimatedSwitcher(
+                    duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 550),
+                    reverseDuration: reduceMotion ? Duration.zero : const Duration(milliseconds: 220),
+                    switchInCurve: const _SpringCurve(),
+                    switchOutCurve: Curves.easeOutCubic,
+                    transitionBuilder: (child, animation) => _pop(child, animation, from: 1),
+                    child: widget.leading ?? const SizedBox.shrink(),
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 0,
+                top: 0,
+                bottom: 0,
                 width: _slot,
                 child: Align(
                   alignment: Alignment.centerRight,
@@ -83,25 +132,14 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
                   ),
                 ),
               ),
-              RepaintBoundary(
-                child: ListenableBuilder(
-                  listenable: OneUIEffectsController.instance,
-                  builder: (context, _) => OneUIEffectsController.instance.isLiquid
-                      ? _liquidPill(docked, reduceMotion)
-                      : _pill(docked, reduceMotion),
-                ),
-              ),
-              SizedBox(
-                width: _slot,
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: AnimatedSwitcher(
-                    duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 550),
-                    reverseDuration: reduceMotion ? Duration.zero : const Duration(milliseconds: 220),
-                    switchInCurve: const _SpringCurve(),
-                    switchOutCurve: Curves.easeOutCubic,
-                    transitionBuilder: (child, animation) => _pop(child, animation, from: 1),
-                    child: widget.leading ?? const SizedBox.shrink(),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: _slot),
+                child: RepaintBoundary(
+                  child: ListenableBuilder(
+                    listenable: OneUIEffectsController.instance,
+                    builder: (context, _) => OneUIEffectsController.instance.isLiquid
+                        ? _liquidPill(docked, reduceMotion)
+                        : _pill(docked, reduceMotion),
                   ),
                 ),
               ),
@@ -167,24 +205,30 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
                 width: items.length * 96,
                 child: glassPixelRatio(
                   context,
-                  GlassTabBar.bottom(
-                    tabs: [
-                      for (final item in items)
-                        GlassTab(icon: Icon(item.inactiveIcon), activeIcon: Icon(item.activeIcon), label: item.label),
-                    ],
-                    selectedIndex: widget.currentIndex,
-                    onTabSelected: widget.onTap,
-                    barHeight: OneUIFloatingNavBar._barHeight,
-                    horizontalPadding: 0,
-                    verticalPadding: 0,
-                    settings: settings,
-                    quality: quality,
-                    iconSize: 26,
-                    labelFontSize: 12,
-                    selectedIconColor: palette.textPrimary,
-                    selectedLabelColor: palette.textPrimary,
-                    unselectedIconColor: palette.textSecondary,
-                    unselectedLabelColor: palette.textSecondary,
+                  Listener(
+                    onPointerDown: (e) => _barPointers.add(e.pointer),
+                    onPointerUp: (e) => _barPointers.remove(e.pointer),
+                    onPointerCancel: (e) => _barPointers.remove(e.pointer),
+                    child: GlassTabBar.bottom(
+                      key: ValueKey(_tabBarEpoch),
+                      tabs: [
+                        for (final item in items)
+                          GlassTab(icon: Icon(item.inactiveIcon), activeIcon: Icon(item.activeIcon), label: item.label),
+                      ],
+                      selectedIndex: widget.currentIndex,
+                      onTabSelected: widget.onTap,
+                      barHeight: OneUIFloatingNavBar._barHeight,
+                      horizontalPadding: 0,
+                      verticalPadding: 0,
+                      settings: settings,
+                      quality: quality,
+                      iconSize: 26,
+                      labelFontSize: 12,
+                      selectedIconColor: palette.textPrimary,
+                      selectedLabelColor: palette.textPrimary,
+                      unselectedIconColor: palette.textSecondary,
+                      unselectedLabelColor: palette.textSecondary,
+                    ),
                   ),
                 ),
               ),
