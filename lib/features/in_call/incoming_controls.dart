@@ -596,22 +596,28 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
       angle: widget.shake && _still && !reduceMotion && phase < .4
           ? .3 * math.sin(phase / .4 * 6 * math.pi) * (1 - phase / .4)
           : 0,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          CallGlyph(
-            widget.icon,
-            color: iconColor.withValues(alpha: iconColor.a * (1 - morph)),
-            size: size * .52,
-          ),
-          if (morph > 0)
-            CallGlyph(
-              target,
-              color: iconColor.withValues(alpha: iconColor.a * morph),
-              size: size * .52,
+      // Our hang-up glyph is the handset turned 135°: tip the one handset over instead of crossfading.
+      child: widget.icon == Icons.call_rounded && target == Icons.call_end_rounded
+          ? Transform.rotate(
+              angle: 3 * math.pi / 4 * morph,
+              child: CallGlyph(widget.icon, color: iconColor, size: size * .52 * (1 + .2 * morph)),
+            )
+          : Stack(
+              alignment: Alignment.center,
+              children: [
+                CallGlyph(
+                  widget.icon,
+                  color: iconColor.withValues(alpha: iconColor.a * (1 - morph)),
+                  size: size * .52,
+                ),
+                if (morph > 0)
+                  CallGlyph(
+                    target,
+                    color: iconColor.withValues(alpha: iconColor.a * morph),
+                    size: size * .52,
+                  ),
+              ],
             ),
-        ],
-      ),
     );
   }
 }

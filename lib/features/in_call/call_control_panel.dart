@@ -475,7 +475,7 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                                           shape: const StadiumBorder(),
                                         ),
                                         onPressed: _ending ? null : _endCall,
-                                        icon: const CallGlyph(Icons.call_end_rounded, size: 56),
+                                        icon: const CallGlyph(Icons.call_end_rounded),
                                       ),
                                     ),
                                   ),

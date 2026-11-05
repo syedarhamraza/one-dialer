@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
@@ -244,12 +245,10 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
 
   // The ball springs into End on the glass package's bouncy spring over the whole flight: a soft,
   // unhurried overshoot past the pill's size and place, then settling. It stays green for the first
-  // ~120 ms, then crossfades to red (the 2-button handset tipping over meanwhile).
+  // ~120 ms, then crossfades to red (the handset tipping over meanwhile).
   Curve _springIn = Curves.linear;
   Curve _springDrop = Curves.linear;
   static const _turn = Interval(.14, .43, curve: Curves.easeInOut);
-  static const _hangUpIn = Interval(.43, .6);
-  static const _handsetOut = Interval(.6, .75);
 
   Widget _flyingBall() {
     final from = _localRect(_ball!.shift(Offset(0, -_lift * Curves.easeOutCubic.transform(_rise.value))));
@@ -298,22 +297,11 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
                 opacity: red,
                 child: DecoratedBox(decoration: glassBody(endRed, shape, flat: callFlat(context))),
               ),
-              // The handset tips over, then End's hang-up glyph fades in over it and only then does
-              // the handset fade out underneath: never dimmed, and it lands already as End's icon.
-              // Each glyph fades by its colour's alpha, so no layer is needed for it.
+              // Our hang-up glyph is the handset turned 135°, so the handset simply tips over (growing to
+              // CallGlyph's hang-up size) and lands already as End's icon.
               Transform.rotate(
-                angle: _oneButton ? 0 : 2.36 * red,
-                child: CallGlyph(
-                  Icons.call_rounded,
-                  // The 1-button handset simply crossfades into the hang-up glyph alongside the colour.
-                  color: Colors.white.withValues(alpha: _oneButton ? 1 - red : 1 - _handsetOut.transform(t)),
-                  size: iconSize,
-                ),
-              ),
-              CallGlyph(
-                Icons.call_end_rounded,
-                color: Colors.white.withValues(alpha: _oneButton ? red : _hangUpIn.transform(t)),
-                size: iconSize,
+                angle: 3 * math.pi / 4 * red,
+                child: CallGlyph(Icons.call_rounded, color: Colors.white, size: iconSize * lerpDouble(1, 1.2, red)!),
               ),
             ],
           ),
