@@ -6,6 +6,9 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
 import android.database.ContentObserver
+import android.opengl.EGL14
+import android.opengl.EGLConfig
+import android.opengl.GLES20
 import android.os.Handler
 import android.os.Looper
 import android.provider.CallLog
@@ -206,7 +209,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             "getCallHealth" -> result.success(callHealth())
             "getLauncherIcon" -> result.success(AppIcons.current(context))
             "setLauncherIcon" -> inBackground(result) { AppIcons.set(context, call.argument<String>("style")!!) }
-            "isLowEndDevice" -> result.success(isLowEndDevice())
+            "effectsDefault" -> inBackground(result) { effectsDefault() }
             "openSystemSettings" -> openSystemSettings(call.argument<String>("page"), result)
             "getBlocking" -> BlockingPrefs.read(context).let {
                 result.success(mapOf("blockHidden" to it.blockHidden, "blockNonContacts" to it.blockNonContacts))
@@ -327,15 +330,72 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
     private fun requestRole(role: String, result: MethodChannel.Result) = roleRequester?.invoke(role, result)
         ?: result.error("NO_ACTIVITY", "Roles can only be requested from the main screen", null)
 
-    /** What incoming calls need to work, plus the app version for Settings › About. */
-    // shortcut: RAM stands in for GPU class (a 4 GB phone reports ~3.7e9 bytes, a 6 GB one ~5.6e9);
-    // measure frame times instead if mid-range phones turn out to lag on full.
-    private fun isLowEndDevice(): Boolean {
+    /**
+     * The visual effects level this phone starts on, with what decided it and the raw chip strings
+     * (logged to Crashlytics). Runs off the main thread: the GPU probe can take a moment.
+     */
+    private fun effectsDefault(): Map<String, Any?> {
         val activities = context.getSystemService(android.app.ActivityManager::class.java)
         val memory = android.app.ActivityManager.MemoryInfo().also(activities::getMemoryInfo)
-        return activities.isLowRamDevice || memory.totalMem < 5_000_000_000L
+        val soc = if (android.os.Build.VERSION.SDK_INT >= 31) {
+            "${android.os.Build.SOC_MANUFACTURER} ${android.os.Build.SOC_MODEL}"
+        } else null
+        val platform = systemProperty("ro.board.platform")
+        val hardware = android.os.Build.HARDWARE
+        var gpu: String? = null
+        val pick = DeviceTier.ram(memory.totalMem, activities.isLowRamDevice)
+            ?: DeviceTier.chip(soc, platform, hardware)
+            ?: DeviceTier.gpu(glRenderer().also { gpu = it })
+            ?: DeviceTier.ramFallback(memory.totalMem)
+        return mapOf(
+            "tier" to pick.tier, "source" to pick.source, "soc" to soc,
+            "platform" to platform, "hardware" to hardware, "gpu" to gpu,
+        )
     }
 
+    private fun systemProperty(key: String): String? = runCatching {
+        Class.forName("android.os.SystemProperties").getMethod("get", String::class.java)
+            .invoke(null, key) as String
+    }.getOrNull()?.takeIf { it.isNotBlank() }
+
+    /** The GL renderer ("Mali-G57 MC2"), probed once per phone and OS build and kept. */
+    private fun glRenderer(): String? = synchronized(CallBridge) {
+        val prefs = context.getSharedPreferences("device_tier", Context.MODE_PRIVATE)
+        val fingerprint = android.os.Build.FINGERPRINT
+        if (prefs.getString("fingerprint", null) == fingerprint) return prefs.getString("gpu", null)
+        val renderer = runCatching { probeRenderer() }.getOrNull()
+        prefs.edit().putString("fingerprint", fingerprint).putString("gpu", renderer).apply()
+        renderer
+    }
+
+    /** A 1×1 offscreen GLES context, just long enough to ask its name. */
+    private fun probeRenderer(): String? {
+        val display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY)
+        if (display == EGL14.EGL_NO_DISPLAY || !EGL14.eglInitialize(display, IntArray(2), 0, IntArray(2), 1)) return null
+        val configs = arrayOfNulls<EGLConfig>(1)
+        val count = IntArray(1)
+        val wanted = intArrayOf(
+            EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT, EGL14.EGL_SURFACE_TYPE, EGL14.EGL_PBUFFER_BIT, EGL14.EGL_NONE,
+        )
+        if (!EGL14.eglChooseConfig(display, wanted, 0, configs, 0, 1, count, 0) || count[0] == 0) return null
+        val config = configs[0]
+        val gl = EGL14.eglCreateContext(
+            display, config, EGL14.EGL_NO_CONTEXT, intArrayOf(EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE), 0,
+        )
+        val surface = EGL14.eglCreatePbufferSurface(display, config, intArrayOf(EGL14.EGL_WIDTH, 1, EGL14.EGL_HEIGHT, 1, EGL14.EGL_NONE), 0)
+        return try {
+            if (gl == EGL14.EGL_NO_CONTEXT || surface == EGL14.EGL_NO_SURFACE) null
+            else if (!EGL14.eglMakeCurrent(display, surface, surface, gl)) null
+            else GLES20.glGetString(GLES20.GL_RENDERER)
+        } finally {
+            EGL14.eglMakeCurrent(display, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT)
+            if (surface != EGL14.EGL_NO_SURFACE) EGL14.eglDestroySurface(display, surface)
+            if (gl != EGL14.EGL_NO_CONTEXT) EGL14.eglDestroyContext(display, gl)
+            // No eglTerminate: the display is shared with Flutter's own GLES renderer in this process.
+        }
+    }
+
+    /** What incoming calls need to work, plus the app version for Settings › About. */
     private fun callHealth(): Map<String, Any?> {
         val notifications = context.getSystemService(android.app.NotificationManager::class.java)
         val roles = context.getSystemService(RoleManager::class.java)

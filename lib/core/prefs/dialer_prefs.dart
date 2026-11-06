@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -223,11 +226,32 @@ class DialerPrefs {
   }
 
   /// The level until the user picks one: never saved, so a later cutoff still reaches them.
+  /// Off on budget chips, reduced on midrange, full above (`DeviceTier.kt`), until a level is saved.
   Future<String> _effectsDefault() async {
+    final Map<String, Object?> pick;
     try {
-      return await TelecomBridge.instance.isLowEndDevice() ? 'reduced' : 'full';
+      pick = await TelecomBridge.instance.effectsDefault();
     } catch (_) {
       return 'full';
+    }
+    final tier = pick['tier'];
+    final level = tier == 'off' || tier == 'reduced' || tier == 'full' ? tier as String : 'full';
+    unawaited(_logDevice(pick, level));
+    return level;
+  }
+
+  /// Every crash and lag report then shows the chip and the level it was given. Not awaited, so
+  /// it never holds up the first frame.
+  Future<void> _logDevice(Map<String, Object?> pick, String level) async {
+    try {
+      final crashlytics = FirebaseCrashlytics.instance;
+      for (final key in ['soc', 'platform', 'hardware', 'gpu']) {
+        await crashlytics.setCustomKey('device_$key', '${pick[key] ?? ''}');
+      }
+      await crashlytics.setCustomKey('effects_default', level);
+      await crashlytics.setCustomKey('effects_source', '${pick['source'] ?? ''}');
+    } catch (_) {
+      // Firebase isn't set up (tests, builds without google-services.json).
     }
   }
 
