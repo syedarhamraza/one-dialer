@@ -825,5 +825,12 @@
   "settingsGeneral": "General",
   "settingsAbout": "About",
   "displayAndEffects": "Display & effects",
-  "keypadAndRecents": "Keypad & recents"
+  "keypadAndRecents": "Keypad & recents",
+  "logIncoming": "Incoming",
+  "logOutgoing": "Outgoing",
+  "logMissed": "Missed",
+  "logRejected": "Rejected",
+  "logBlocked": "Blocked",
+  "logRangFor": "{type} (Rang for {duration})",
+  "@logRangFor": {"description": "A missed or rejected call on the contact page's call history: its type, then how long it rang.", "placeholders": {"type": {"type": "String"}, "duration": {"type": "String"}}}
 }

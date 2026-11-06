@@ -1624,4 +1624,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get keypadAndRecents => 'Keypad & recents';
+
+  @override
+  String get logIncoming => 'Incoming';
+
+  @override
+  String get logOutgoing => 'Outgoing';
+
+  @override
+  String get logMissed => 'Missed';
+
+  @override
+  String get logRejected => 'Rejected';
+
+  @override
+  String get logBlocked => 'Blocked';
+
+  @override
+  String logRangFor(String type, String duration) {
+    return '$type (Rang for $duration)';
+  }
 }

@@ -273,3 +273,15 @@ typed('<path d="M13.5 10.5L21 3M15.5 3H21V8.5"/>', "call_out")
 typed('<path d="M21 3L13.5 10.5M13.5 5V10.5H19"/>', "call_in")
 typed('<path d="M12 4.5L16 8.5L21.5 3M18 3H21.5V6.5"/>', "call_missed")
 typed('<circle cx="17.3" cy="6.7" r="4.3"/><path d="M14.3 9.7L20.3 3.7"/>', "call_blocked")
+
+
+# The contact page's call history marks: a plain arrow (in or out) or a barred circle, like the
+# arrows beside the history's details line.
+def arrow(mark, name):
+    glyph(f'<g fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">{mark}</g>',
+          name)
+
+
+arrow('<path d="M6 6L17.5 17.5M8.5 17.5H17.5V8.5"/>', "arrow_in")
+arrow('<path d="M6 18L17.5 6.5M8.5 6.5H17.5V15.5"/>', "arrow_out")
+arrow('<circle cx="12" cy="12" r="7.5"/><path d="M6.7 17.3L17.3 6.7"/>', "arrow_blocked")

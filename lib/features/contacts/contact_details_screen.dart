@@ -25,7 +25,7 @@ import '../recents/call_details_screen.dart' show CallNotesCard;
 import '../recents/call_log.dart';
 import '../recents/app_calls.dart' show appCallLabel;
 import '../recents/call_log_repository.dart';
-import '../recents/recents_screen.dart' show CallTypeIcon, SimBadge, callTypeLabel;
+import '../recents/recents_screen.dart' show CallTypeIcon, SimBadge;
 import 'contact_actions.dart';
 import 'contact_subpages.dart';
 import 'editor/contact_editor_screen.dart';
@@ -520,16 +520,33 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         final calls = repo.calls.value.where((c) => keys.contains(numberKey(c.number))).take(3).toList();
         if (calls.isEmpty) return const SizedBox.shrink();
         final now = DateTime.now();
+        final grey = context.palette.textSecondary;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(18, 0, 18, 8),
-              child: Text(context.l10n.callLogs, style: TextStyle(fontSize: 14, color: context.palette.textSecondary)),
+              padding: const EdgeInsets.only(left: 18),
+              child: Row(
+                children: [
+                  Expanded(child: Text(context.l10n.callLogs, style: TextStyle(fontSize: 15, color: grey))),
+                  TextButton(
+                    onPressed: () => Navigator.of(context)
+                        .push(MaterialPageRoute<void>(builder: (_) => ContactHistoryScreen(contact: contact))),
+                    style: TextButton.styleFrom(foregroundColor: grey),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // The button's own label style is medium weight; match the plain "Call logs".
+                        Text(context.l10n.viewAll, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400)),
+                        const Icon(Icons.chevron_right_rounded, size: 20),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
             DetailsCard(
               padding: _cardPadding,
-              dividerIndent: 40,
               children: [
                 for (final c in calls)
                   ContactCallLogRow(
@@ -538,21 +555,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                     now: now,
                     numberLine: _numberLine(contact, c.number),
                   ),
-                InkWell(
-                  onTap: () => Navigator.of(context)
-                      .push(MaterialPageRoute<void>(builder: (_) => ContactHistoryScreen(contact: contact))),
-                  customBorder: SquircleBorder(borderRadius: BorderRadius.circular(16)),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(context.l10n.viewAll, style: TextStyle(fontSize: 16, color: context.palette.textSecondary)),
-                        Icon(Icons.chevron_right_rounded, size: 20, color: context.palette.textSecondary),
-                      ],
-                    ),
-                  ),
-                ),
               ],
             ),
           ],
@@ -742,57 +744,103 @@ class ContactCallLogRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = call;
     final l10n = context.l10n;
-    final grey = TextStyle(fontSize: 14, color: context.palette.textSecondary);
-    // Missed and rejected calls log ring time as duration; only talk time is shown.
+    final grey = context.palette.textSecondary;
+    final locale = l10n.localeName;
+    // ColorOS's history: "8/21/26 15:28", with the clock as the phone sets it.
+    final date = DateFormat(DateFormat.yMd(locale).pattern!.replaceAll(RegExp('y+'), 'yy'), locale).format(c.date);
+    final time = MediaQuery.alwaysUse24HourFormatOf(context)
+        ? DateFormat.Hm(locale).format(c.date)
+        : timeLabel(l10n, c.date);
+    final type = switch (c.type) {
+      CallType.outgoing => l10n.logOutgoing,
+      CallType.missed => l10n.logMissed,
+      CallType.rejected => l10n.logRejected,
+      CallType.blocked => l10n.logBlocked,
+      CallType.voicemail => l10n.callTypeVoicemail,
+      _ => l10n.logIncoming,
+    };
+    // Talk time for answered calls; for missed and rejected ones the log's duration is ring time.
     final talked = c.type == CallType.incoming || c.type == CallType.outgoing;
-    final talk = !talked
-        ? null
-        : c.duration > Duration.zero
-        ? durationLabel(l10n, c.duration)
-        : l10n.callNotConnected;
-    final day = dayLabel(l10n, c.date, now);
+    final rang = (c.type == CallType.missed || c.type == CallType.rejected) && c.duration > Duration.zero;
+    final detail = [
+      if (c.isApp)
+        appCallLabel(l10n, c)
+      else if (rang)
+        l10n.logRangFor(type, durationLabel(l10n, c.duration))
+      else if (talked)
+        '$type  ${c.duration > Duration.zero ? durationLabel(l10n, c.duration) : l10n.callNotConnected}'
+      else
+        type,
+      ?numberLine,
+    ].join('  ');
     final badge = c.isApp ? null : simBadge;
-    final detail = [?talk, ?numberLine].join(' · ');
-    // ColorOS's call history: what happened and when on one line, how long (and which number)
-    // under it; a missed call is a single line.
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      child: Row(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 40,
-            child: Align(alignment: Alignment.centerLeft, child: CallTypeIcon(type: c.type, size: 26)),
+          Text(
+            '$date $time',
+            style: TextStyle(fontSize: 18, color: c.type == CallType.missed ? OneUITheme.accentRed : null),
           ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        c.isApp ? appCallLabel(l10n, c) : callTypeLabel(l10n, c.type),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 17,
-                          color: c.type == CallType.missed ? OneUITheme.accentRed : context.palette.textPrimary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    if (badge != null) ...[SimBadge(label: badge), const SizedBox(width: 6)],
-                    Text(day == l10n.today ? timeLabel(l10n, c.date) : '$day ${timeLabel(l10n, c.date)}', style: grey),
-                  ],
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              CallTypeIcon(type: c.type, size: 15, arrow: true),
+              const SizedBox(width: 6),
+              if (badge != null) ...[SimBadge(label: badge), const SizedBox(width: 6)],
+              if (c.isVolte) ...[_VolteMark(color: grey), const SizedBox(width: 6)],
+              if (c.isHd) ...[_HdMark(color: grey), const SizedBox(width: 6)],
+              Flexible(
+                child: Text(
+                  detail,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 14, color: grey),
                 ),
-                if (detail.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(detail, maxLines: 1, overflow: TextOverflow.ellipsis, style: grey),
-                ],
-              ],
-            ),
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// The history's VoLTE mark: "Vo" over "LTE", tiny and grey.
+class _VolteMark extends StatelessWidget {
+  const _VolteMark({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = TextStyle(fontSize: 6.5, height: 1, fontWeight: FontWeight.w700, color: color);
+    return ExcludeSemantics(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [Text('Vo', style: style), Text('LTE', style: style)],
+      ),
+    );
+  }
+}
+
+/// The history's HD voice mark: "HD" knocked out of a small grey tag.
+class _HdMark extends StatelessWidget {
+  const _HdMark({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return ExcludeSemantics(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 2.5, vertical: 1),
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
+        child: Text(
+          'HD',
+          style: TextStyle(fontSize: 8, height: 1.1, fontWeight: FontWeight.w800, color: context.palette.card),
+        ),
       ),
     );
   }

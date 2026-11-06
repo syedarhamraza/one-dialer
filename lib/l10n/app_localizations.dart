@@ -2881,6 +2881,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Keypad & recents'**
   String get keypadAndRecents;
+
+  /// No description provided for @logIncoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming'**
+  String get logIncoming;
+
+  /// No description provided for @logOutgoing.
+  ///
+  /// In en, this message translates to:
+  /// **'Outgoing'**
+  String get logOutgoing;
+
+  /// No description provided for @logMissed.
+  ///
+  /// In en, this message translates to:
+  /// **'Missed'**
+  String get logMissed;
+
+  /// No description provided for @logRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected'**
+  String get logRejected;
+
+  /// No description provided for @logBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked'**
+  String get logBlocked;
+
+  /// A missed or rejected call on the contact page's call history: its type, then how long it rang.
+  ///
+  /// In en, this message translates to:
+  /// **'{type} (Rang for {duration})'**
+  String logRangFor(String type, String duration);
 }
 
 class _AppLocalizationsDelegate

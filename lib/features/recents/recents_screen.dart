@@ -808,20 +808,24 @@ class _CallRow extends StatelessWidget {
 /// Small grey handset with what happened (incoming / outgoing / missed / blocked), our own glyphs
 /// from `tool/icons/render_icons.py`; only missed is red.
 class CallTypeIcon extends StatelessWidget {
-  const CallTypeIcon({super.key, required this.type, this.size = 18});
+  const CallTypeIcon({super.key, required this.type, this.size = 18, this.arrow = false});
 
   final CallType type;
   final double size;
 
+  /// The contact history's plain grey arrow (in for missed too, as ColorOS draws it) instead of the
+  /// handset.
+  final bool arrow;
+
   @override
   Widget build(BuildContext context) {
-    final color = type == CallType.missed ? OneUITheme.accentRed : context.palette.textSecondary;
+    final color = type == CallType.missed && !arrow ? OneUITheme.accentRed : context.palette.textSecondary;
     final asset = switch (type) {
-      CallType.outgoing => 'call_out',
-      CallType.missed => 'call_missed',
-      CallType.rejected || CallType.blocked => 'call_blocked',
       CallType.voicemail => null,
-      _ => 'call_in',
+      CallType.outgoing => arrow ? 'arrow_out' : 'call_out',
+      CallType.missed => arrow ? 'arrow_in' : 'call_missed',
+      CallType.rejected || CallType.blocked => arrow ? 'arrow_blocked' : 'call_blocked',
+      _ => arrow ? 'arrow_in' : 'call_in',
     };
     return asset == null
         ? Icon(Icons.voicemail_rounded, size: size, color: color)

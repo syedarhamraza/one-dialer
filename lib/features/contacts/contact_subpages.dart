@@ -100,7 +100,6 @@ class _ContactHistoryScreenState extends State<ContactHistoryScreen> {
             else
               DetailsCardSliver(
                 padding: const EdgeInsets.fromLTRB(18, 6, 18, 6),
-                dividerIndent: 40,
                 itemCount: calls.length,
                 itemBuilder: (context, i) => ContactCallLogRow(
                   call: calls[i],

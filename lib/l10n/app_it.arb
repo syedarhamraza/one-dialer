@@ -463,5 +463,11 @@
   "settingsGeneral": "Generali",
   "settingsAbout": "Informazioni",
   "displayAndEffects": "Schermo ed effetti",
-  "keypadAndRecents": "Tastierino e recenti"
+  "keypadAndRecents": "Tastierino e recenti",
+  "logIncoming": "In entrata",
+  "logOutgoing": "In uscita",
+  "logMissed": "Persa",
+  "logRejected": "Rifiutata",
+  "logBlocked": "Bloccata",
+  "logRangFor": "{type} (ha squillato per {duration})"
 }

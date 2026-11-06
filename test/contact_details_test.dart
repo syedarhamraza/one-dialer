@@ -104,7 +104,7 @@ void main() {
     expect(find.text('View all'), findsOneWidget);
     // Only this contact's calls, the latest three, each with its number (the contact has two).
     expect(find.byType(ContactCallLogRow), findsNWidgets(3));
-    expect(find.text('Outgoing call'), findsNWidgets(3));
+    expect(find.textContaining('Outgoing'), findsNWidgets(3));
     expect(find.textContaining('0399999999'), findsNothing);
   });
 
