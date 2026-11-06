@@ -16,6 +16,7 @@ import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_status_bar_scrim.dart';
 import '../../widgets/place_call.dart';
+import '../../widgets/call_glyph.dart';
 import '../../widgets/press_glow.dart';
 import '../../widgets/round_header_controls.dart';
 import '../blocking/blocking_repository.dart';
@@ -563,7 +564,7 @@ class DetailsActionTile extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Column(
               children: [
-                Icon(icon, color: onTap == null ? context.palette.textTertiary : context.palette.textPrimary, size: 24),
+                CallGlyph(icon, color: onTap == null ? context.palette.textTertiary : context.palette.textPrimary, size: 24),
                 const SizedBox(height: 2),
                 Text(
                   label,

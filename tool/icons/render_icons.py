@@ -242,3 +242,19 @@ def waves(x0, s, fill):
 x0 = O + (T - hs) / 2
 render(svg(f'<defs>{THIN}</defs><g filter="url(#thinw)">' + handset(x0 + .42 * hs, x0 + .58 * hs, .84 * hs, "#FFFFFF", W * .84) + '</g>'
            + waves(x0, hs, "#FFFFFF"), f"{x0:.1f} {x0:.1f} {hs:.1f} {hs:.1f}", HS), pathlib.Path("assets/icons/handset_talk.png"), HS)
+
+
+# The contact page's Message and Video tiles: solid, softly rounded glyphs that sit with the handset
+# (ColorOS's filled set). Drawn on a 24-unit grid, white (tinted in Flutter), filling their image.
+def glyph(body, name):
+    render(svg(body, "0 0 24 24", HS), pathlib.Path(f"assets/icons/{name}.png"), HS)
+
+
+glyph('<mask id="m"><rect width="24" height="24" fill="#fff"/>'
+      '<path d="M7 8.2h10M7 12.8h6" stroke="#000" stroke-width="2.3" stroke-linecap="round"/></mask>'
+      '<g mask="url(#m)" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="1.2" stroke-linejoin="round">'
+      '<rect x="2.1" y="2.6" width="19.8" height="15.6" rx="5"/>'
+      '<path d="M6.4 16.5L5.4 21.5L12 17.6Z"/></g>', "message")
+glyph('<g fill="#FFFFFF" stroke="#FFFFFF" stroke-width="1.2" stroke-linejoin="round">'
+      '<rect x="1.6" y="5.4" width="14.4" height="13.2" rx="4"/>'
+      '<path d="M18 10.3L21.3 8.1Q22.4 7.4 22.4 8.7V15.3Q22.4 16.6 21.3 15.9L18 13.7Z"/></g>', "video")
