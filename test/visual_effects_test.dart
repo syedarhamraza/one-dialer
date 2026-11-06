@@ -23,6 +23,34 @@ void main() {
     prefs.glassDark.value = 'soft';
   });
 
+  // First: DialerPrefs keeps the first in-memory store for the whole file, so a level saved by a
+  // later test would hide the default.
+  test("the phone's chip sets the level until one is saved", () async {
+    const channel = MethodChannel('com.syedarhamraza.dialer/telecom');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    Object? tier = 'off';
+    messenger.setMockMethodCallHandler(
+      channel,
+      (call) async => call.method == 'effectsDefault' ? {'tier': tier, 'source': 'soc', 'soc': 'Mediatek MT6765'} : null,
+    );
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+    await prefs.loadAppearance();
+    await prefs.loadCallEffects();
+    expect((prefs.visualEffects.value, prefs.callEffects.value), ('off', 'off'));
+
+    tier = 'fancy'; // anything unexpected falls back to the full design
+    await prefs.loadAppearance();
+    expect(prefs.visualEffects.value, 'full');
+    tier = 'reduced';
+
+    await prefs.setVisualEffects('full');
+    await prefs.setCallEffects('full');
+    await prefs.loadAppearance();
+    await prefs.loadCallEffects();
+    expect((prefs.visualEffects.value, prefs.callEffects.value), ('full', 'full'));
+  });
+
   test('the glass style is saved, reloaded, and unknown values are ignored', () async {
     await prefs.setGlassDark('classic');
     prefs.glassDark.value = 'bold';
@@ -91,23 +119,6 @@ void main() {
     SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.withData({'visual_effects': 'fancy'});
     await prefs.loadAppearance();
     expect(prefs.visualEffects.value, 'reduced');
-  });
-
-  test('low-end phones default to reduced until a level is saved', () async {
-    const channel = MethodChannel('com.syedarhamraza.dialer/telecom');
-    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-    messenger.setMockMethodCallHandler(channel, (call) async => call.method == 'isLowEndDevice');
-    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
-
-    await prefs.loadAppearance();
-    await prefs.loadCallEffects();
-    expect((prefs.visualEffects.value, prefs.callEffects.value), ('reduced', 'reduced'));
-
-    await prefs.setVisualEffects('full');
-    await prefs.setCallEffects('full');
-    await prefs.loadAppearance();
-    await prefs.loadCallEffects();
-    expect((prefs.visualEffects.value, prefs.callEffects.value), ('full', 'full'));
   });
 
   test('each level is told apart in one place', () {

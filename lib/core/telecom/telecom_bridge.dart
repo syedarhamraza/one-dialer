@@ -124,8 +124,11 @@ class TelecomBridge {
 
   Future<void> setLauncherIcon(String style) => _methods.invokeMethod('setLauncherIcon', {'style': style});
 
-  /// Phones with 4 GB of RAM or less, whose GPUs can't keep up with the full blurs.
-  Future<bool> isLowEndDevice() async => await _methods.invokeMethod<bool>('isLowEndDevice') ?? false;
+  /// The visual effects level this phone starts on (`DeviceTier.kt`): `tier` (`off`, `reduced` or
+  /// `full`), `source` (`soc`, `platform`, `gpu` or `ram`) and the raw `soc`, `platform`,
+  /// `hardware` and `gpu` strings it was read from.
+  Future<Map<String, Object?>> effectsDefault() async =>
+      (await _methods.invokeMapMethod<String, Object?>('effectsDefault')) ?? const {};
 
   /// `notifications`, `fullScreen`, `defaultApps`, `contactsStorage`, `googleContactsSync`, `app`,
   /// or `url:https://…`. Throws `NO_ACTIVITY` when the phone has no such screen.
