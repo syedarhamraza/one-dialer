@@ -33,7 +33,10 @@ Floating chrome is OneSpend's, 1:1 (no liquid glass; it was tried and removed). 
 
 ## Git workflow
 
-Remote: `https://github.com/syedarhamraza/one-dialer` (private). Never commit to `main` directly: every change gets a branch (`feat/...`, `fix/...`), is pushed, and gets a pull request into `main` via `gh pr create`; merge only after the user approves.
+Remote: `https://github.com/syedarhamraza/one-dialer` (private). Never commit to `main` or the beta branch directly.
+
+- Each beta has its own long-lived branch cut from `main`, named `beta/<n>` (the current one is `beta/8`, for 1.0.0-beta.8). All work for that beta goes there: every change gets a branch (`feat/...`, `fix/...`, `docs/...`) cut from the beta branch, is pushed, and gets a pull request into the beta branch (`gh pr create --base beta/8`); merge only after the user approves.
+- `main` only moves when a beta ships: once the user says the beta is ready, the release commit (`tool/release.ps1`) goes on the beta branch, and the beta branch is merged into `main` with a pull request. Then cut `beta/<n+1>` from `main` and update the current branch name above.
 
 ## Commands
 
