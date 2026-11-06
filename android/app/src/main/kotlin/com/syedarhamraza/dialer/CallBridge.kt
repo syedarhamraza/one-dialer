@@ -25,6 +25,7 @@ import com.syedarhamraza.dialer.telecom.BlockingPrefs
 import com.syedarhamraza.dialer.telecom.CallLogSource
 import com.syedarhamraza.dialer.telecom.CallManager
 import com.syedarhamraza.dialer.telecom.MissedCallNotifier
+import com.syedarhamraza.dialer.telecom.NumberDisplay
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
@@ -190,6 +191,11 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             "getRingtone" -> inBackground(result) { ContactExtras.ringtone(context, call.argument<String>("contactId")!!) }
             "getRingtoneTitle" -> inBackground(result) {
                 ContactExtras.ringtoneTitle(context, call.argument<String>("contactId")!!)
+            }
+            "describeNumbers" -> inBackground(result) {
+                call.argument<List<String>>("numbers").orEmpty().map { n ->
+                    NumberDisplay.of(context, n).let { mapOf("formatted" to it?.formatted, "location" to it?.location) }
+                }
             }
             "setRingtone" -> inBackground(result) {
                 ContactExtras.setRingtone(context, call.argument<String>("contactId")!!, call.argument<String>("uri"))

@@ -19,7 +19,6 @@ import '../../widgets/place_call.dart';
 import '../../widgets/press_glow.dart';
 import '../../widgets/round_header_controls.dart';
 import '../blocking/blocking_repository.dart';
-import '../in_call/call_screen_widgets.dart' show SimOutline;
 import '../recents/call_details_screen.dart' show CallNotesCard;
 import '../recents/call_log.dart';
 import '../recents/app_calls.dart' show appCallLabel;
@@ -52,6 +51,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   String? _simId;
   String _storage = '';
   String? _ringtone; // the custom ringtone's name; null follows the system
+  Map<String, ({String? formatted, String? location})> _display = const {}; // number → grouped + country
 
   @override
   void initState() {
@@ -68,12 +68,17 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
   Future<void> _load() async {
     // Together, so the page rebuilds once, early in its slide-in.
-    final (sims, simId, apps, raw, ringtone) = await (
+    final numbers = [
+      for (final c in ContactsRepository.instance.contacts.value)
+        if (c.id == widget.contactId) ...c.numbers,
+    ];
+    final (sims, simId, apps, raw, ringtone, display) = await (
       _bridge.getSims(),
       DialerPrefs.instance.contactSim(widget.contactId),
       _bridge.getMessagingApps(widget.contactId),
       _bridge.getRawContacts(widget.contactId),
       _bridge.getRingtoneTitle(widget.contactId),
+      _bridge.describeNumbers(numbers),
     ).wait;
     if (!mounted) return;
     setState(() {
@@ -81,6 +86,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       _simId = simId;
       _apps = apps;
       _ringtone = ringtone;
+      _display = {for (final (i, n) in numbers.indexed) if (i < display.length) n: display[i]};
       // Where it's stored, e.g. "Google · WhatsApp".
       _storage = {for (final r in raw) accountApp(context.l10n, r['accountType'] as String?)}.join(' · ');
     });
@@ -255,7 +261,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                       ),
                       Expanded(
                         child: DetailsActionTile(
-                          icon: Icons.chat_bubble_rounded,
+                          icon: Icons.chat_rounded,
                           label: context.l10n.message,
                           onTap: () => _bridge.sendSms(primary),
                         ),
@@ -275,7 +281,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   ),
                   const SizedBox(height: 20),
                   _numbersCard(contact),
-                  _settingsCard(contact),
                   if (_full case final full?) ..._detailCards(full),
                   if (_chatApps.isNotEmpty) _appsCard(),
                   CallNotesCard(numbers: contact.numbers),
@@ -343,28 +348,28 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     return i < 0 ? null : '${i + 1}';
   }
 
-  /// Every number (tap to call; Message is the tile above), then the contact's ringtone.
+  /// ColorOS's main card: every number (tap to call; Message is the tile above), then the
+  /// contact's ringtone, SIM for calls and where it's saved, each value over its name.
   Widget _numbersCard(DialerContact contact) {
     final simLabel = _simLabel;
     return DetailsCard(
-      dividerIndent: 40,
+      padding: _cardPadding,
       children: [
         for (final (i, n) in contact.numbers.indexed)
           KeyedSubtree(
             key: _numberKeys.putIfAbsent(n, GlobalKey.new),
             child: _ValueRow(
-              icon: i == 0 ? CupertinoIcons.phone : null,
               label: [
                 labelDisplay(context.l10n, contact.labels[i]),
                 if (contact.numbers.length > 1 && i == contact.primaryIndex) context.l10n.defaultNumber,
-                ?simLabel,
-              ].join('  |  '),
-              value: n,
+                _display[n]?.location,
+                simLabel,
+              ].whereType<String>().where((s) => s.isNotEmpty).join('  |  '),
+              value: _display[n]?.formatted ?? n,
               onTap: () => _call(n, _numberKeys[n]!),
             ),
           ),
         _ValueRow(
-          icon: CupertinoIcons.bell,
           value: _ringtone ?? context.l10n.followSystem,
           label: context.l10n.ringtone,
           onTap: () async {
@@ -373,15 +378,34 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             if (mounted) setState(() => _ringtone = ringtone);
           },
         ),
+        if (_sims.length > 1)
+          KeyedSubtree(
+            key: _simRowKey,
+            child: _ValueRow(
+              value: _sims.where((s) => s.id == _simId).map((s) => s.label).firstOrNull ?? context.l10n.askEveryTime,
+              label: context.l10n.simForCalls,
+              onTap: _chooseSim,
+            ),
+          ),
+        _ValueRow(
+          value: _storage.isEmpty ? context.l10n.storageLocations : _storage,
+          label: _storage.isEmpty ? '' : context.l10n.storageLocations,
+          onTap: () async {
+            await Navigator.of(context)
+                .push(MaterialPageRoute<void>(builder: (_) => StorageLocationsScreen(contact: contact)));
+            _load(); // unlinking changes where it's stored
+          },
+        ),
       ],
     );
   }
 
-  /// Emails, addresses, dates, work, websites, relationships and notes, when present. Each
-  /// kind's first row carries its icon; the rest line up under it.
+  /// Text inset the same from both edges, so the hairlines are too.
+  static const _cardPadding = EdgeInsets.fromLTRB(18, 8, 18, 8);
+
+  /// Emails, addresses, dates, work, websites, relationships and notes, when present, in one card.
   List<Widget> _detailCards(Contact c) {
     final l10n = context.l10n;
-    IconData? first(int i, IconData icon) => i == 0 ? icon : null;
     final organizations = [
       for (final o in c.organizations)
         if ([o.name, o.jobTitle, o.departmentName].any((s) => s?.isNotEmpty ?? false)) o,
@@ -391,16 +415,14 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         if (n.note.trim().isNotEmpty) n.note.trim(),
     ];
     final rows = <Widget>[
-      for (final (i, e) in c.emails.indexed)
+      for (final e in c.emails)
         _ValueRow(
-          icon: first(i, CupertinoIcons.mail),
           label: labelDisplay(l10n, labelText(e.label)),
           value: e.address,
           onTap: () => _bridge.openSystemSettings('url:mailto:${e.address}'),
         ),
-      for (final (i, a) in c.addresses.indexed)
+      for (final a in c.addresses)
         _ValueRow(
-          icon: first(i, CupertinoIcons.location),
           label: l10n.addressLabel(labelDisplay(l10n, labelText(a.label))),
           value: [
             a.street,
@@ -413,37 +435,33 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             'url:geo:0,0?q=${Uri.encodeComponent([a.street, a.city, a.country].whereType<String>().join(' '))}',
           ),
         ),
-      for (final (i, d) in c.events.indexed)
+      for (final d in c.events)
         _ValueRow(
-          icon: first(i, CupertinoIcons.gift),
           label: labelDisplay(l10n, labelText(d.label)),
           value: d.year == null
               ? DateFormat.MMMMd().format(DateTime(2000, d.month, d.day))
               : DateFormat.yMMMMd().format(DateTime(d.year!, d.month, d.day)),
         ),
-      for (final (i, o) in organizations.indexed)
+      for (final o in organizations)
         _ValueRow(
-          icon: first(i, CupertinoIcons.briefcase),
           label: l10n.organization,
           value: [o.jobTitle, o.departmentName, o.name].whereType<String>().where((s) => s.isNotEmpty).join(', '),
         ),
-      for (final (i, w) in c.websites.indexed)
+      for (final w in c.websites)
         _ValueRow(
-          icon: first(i, CupertinoIcons.globe),
           label: l10n.website,
           value: w.url,
           onTap: () => _bridge.openSystemSettings('url:${w.url.contains('://') ? w.url : 'https://${w.url}'}'),
         ),
-      for (final (i, r) in c.relations.indexed)
+      for (final r in c.relations)
         _ValueRow(
-          icon: first(i, CupertinoIcons.person_2),
           label: labelDisplay(l10n, labelText(r.label)),
           value: r.name,
         ),
-      for (final (i, n) in notes.indexed)
-        _ValueRow(icon: first(i, CupertinoIcons.doc_text), label: l10n.notes, value: n),
+      for (final n in notes)
+        _ValueRow(label: l10n.notes, value: n),
     ];
-    return rows.isEmpty ? const [] : [DetailsCard(dividerIndent: 40, children: rows)];
+    return rows.isEmpty ? const [] : [DetailsCard(padding: _cardPadding, children: rows)];
   }
 
   /// Chat apps (WhatsApp...) as the details card's rows, the app's icon in the icon column.
@@ -465,48 +483,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             value: app['label']! as String,
             onTap: () => _openApp(app),
           ),
-      ],
-    );
-  }
-
-  /// SIM card for calls and Storage locations, on the page as on ColorOS (not in More).
-  Widget _settingsCard(DialerContact contact) {
-    return DetailsCard(
-      dividerIndent: 40,
-      children: [
-        if (_sims.length > 1)
-          KeyedSubtree(
-            key: _simRowKey,
-            child: _ValueRow(
-              // ColorOS's SIM outline: neither icon font has a thin SIM glyph.
-              leading: Padding(
-                padding: const EdgeInsets.only(left: 4),
-                child: CustomPaint(
-                  painter: SimOutline(
-                    color: context.palette.textPrimary,
-                    strokeWidth: 1.4,
-                    corner: 2.5,
-                    cut: 5,
-                    chip: true,
-                  ),
-                  size: const Size(16, 21),
-                ),
-              ),
-              value: context.l10n.simForCalls,
-              label: _sims.where((s) => s.id == _simId).map((s) => s.label).firstOrNull ?? context.l10n.askEveryTime,
-              onTap: _chooseSim,
-            ),
-          ),
-        _ValueRow(
-          icon: CupertinoIcons.archivebox,
-          value: context.l10n.storageLocations,
-          label: _storage,
-          onTap: () async {
-            await Navigator.of(context)
-                .push(MaterialPageRoute<void>(builder: (_) => StorageLocationsScreen(contact: contact)));
-            _load(); // unlinking changes where it's stored
-          },
-        ),
       ],
     );
   }
@@ -574,21 +550,21 @@ class DetailsActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PressGlow(
-      radius: OneUITheme.radiusCard,
+      radius: 999,
       child: Material(
         color: context.palette.card,
-        shape: OneUITheme.cardShape,
+        shape: const StadiumBorder(),
         child: InkWell(
           onTap: onTap,
-          customBorder: OneUITheme.cardShape,
+          customBorder: const StadiumBorder(),
           // Full width: the glass press hands its child loose constraints.
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: const EdgeInsets.symmetric(vertical: 10),
             child: Column(
               children: [
-                Icon(icon, color: onTap == null ? context.palette.textTertiary : context.palette.textPrimary, size: 26),
-                const SizedBox(height: 6),
+                Icon(icon, color: onTap == null ? context.palette.textTertiary : context.palette.textPrimary, size: 24),
+                const SizedBox(height: 2),
                 Text(
                   label,
                   style: TextStyle(
@@ -686,13 +662,11 @@ class RowDivider extends StatelessWidget {
       Divider(height: 1, thickness: 0.8, indent: indent, endIndent: endIndent, color: context.palette.divider);
 }
 
-/// A value over its grey label, ColorOS style: a thin icon (or [leading]) level with the value;
-/// tappable when [onTap] is set. A null icon keeps the column empty, so a contact's later numbers
-/// line up under the first.
+/// A value over its grey label, ColorOS style, with no icon column ([leading] is a chat app's own
+/// icon); tappable when [onTap] is set.
 class _ValueRow extends StatelessWidget {
-  const _ValueRow({this.icon, this.leading, this.label = '', required this.value, this.onTap});
+  const _ValueRow({this.leading, this.label = '', required this.value, this.onTap});
 
-  final IconData? icon;
   final Widget? leading;
   final String label;
   final String value;
@@ -708,13 +682,7 @@ class _ValueRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Row(
           children: [
-            SizedBox(
-              width: 40,
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: leading ?? (icon == null ? null : Icon(icon, size: 26)),
-              ),
-            ),
+            if (leading case final leading?) SizedBox(width: 40, child: leading),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
