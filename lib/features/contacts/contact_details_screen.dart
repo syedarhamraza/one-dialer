@@ -786,7 +786,7 @@ class ContactCallLogRow extends StatelessWidget {
           const SizedBox(height: 4),
           Row(
             children: [
-              CallTypeIcon(type: c.type, size: 15, arrow: true),
+              CallTypeIcon(type: c.type, size: 15),
               const SizedBox(width: 6),
               if (badge != null) ...[SimBadge(label: badge), const SizedBox(width: 6)],
               if (c.isVolte) ...[_VolteMark(color: grey), const SizedBox(width: 6)],
