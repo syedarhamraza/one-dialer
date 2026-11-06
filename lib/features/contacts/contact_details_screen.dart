@@ -785,7 +785,6 @@ class ContactCallLogRow extends StatelessWidget {
         '$type  ${c.duration > Duration.zero ? durationLabel(l10n, c.duration) : l10n.callNotConnected}'
       else
         type,
-      ?numberLine,
     ].join('  ');
     final badge = c.isApp ? null : simBadge;
     return Padding(
@@ -815,6 +814,11 @@ class ContactCallLogRow extends StatelessWidget {
               ),
             ],
           ),
+          // Its own line, so the badges and duration never cut the number off.
+          if (numberLine case final line?) ...[
+            const SizedBox(height: 2),
+            Text(line, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 14, color: grey)),
+          ],
         ],
       ),
     );
