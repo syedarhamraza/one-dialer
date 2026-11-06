@@ -349,6 +349,19 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     return i < 0 ? null : '${i + 1}';
   }
 
+  /// Which of a several-number contact's numbers a call used ("Mobile · 0311 1234567"); null
+  /// for a one-number contact, where the row needs no number.
+  String? _numberLine(DialerContact contact, String number) {
+    if (contact.numbers.length < 2) return null;
+    final i = contact.numbers.indexWhere((n) => numberKey(n) == numberKey(number));
+    if (i < 0) return number;
+    final n = contact.numbers[i];
+    return [
+      labelDisplay(context.l10n, contact.labels[i]),
+      _display[n]?.formatted ?? n,
+    ].where((s) => s.isNotEmpty).join(' · ');
+  }
+
   /// ColorOS's main card: every number (tap to call; Message is the tile above), then the
   /// contact's ringtone, SIM for calls and where it's saved, each value over its name.
   Widget _numbersCard(DialerContact contact) {
@@ -502,35 +515,36 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.only(left: 18),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      context.l10n.callLogs,
-                      style: TextStyle(fontSize: 15, color: context.palette.textSecondary),
-                    ),
+              padding: const EdgeInsets.fromLTRB(18, 0, 18, 8),
+              child: Text(context.l10n.callLogs, style: TextStyle(fontSize: 14, color: context.palette.textSecondary)),
+            ),
+            DetailsCard(
+              padding: _cardPadding,
+              dividerIndent: 40,
+              children: [
+                for (final c in calls)
+                  ContactCallLogRow(
+                    call: c,
+                    simBadge: _simBadge(c.simId),
+                    now: now,
+                    numberLine: _numberLine(contact, c.number),
                   ),
-                  TextButton(
-                    onPressed: () =>
-                        Navigator.of(context)
-                            .push(MaterialPageRoute<void>(builder: (_) => ContactHistoryScreen(contact: contact))),
-                    style: TextButton.styleFrom(foregroundColor: context.palette.textSecondary),
+                InkWell(
+                  onTap: () => Navigator.of(context)
+                      .push(MaterialPageRoute<void>(builder: (_) => ContactHistoryScreen(contact: contact))),
+                  customBorder: SquircleBorder(borderRadius: BorderRadius.circular(16)),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // The button's own label style is medium weight; match the plain "Call logs".
-                        Text(context.l10n.viewAll, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400)),
-                        const Icon(Icons.chevron_right_rounded, size: 20),
+                        Text(context.l10n.viewAll, style: TextStyle(fontSize: 16, color: context.palette.textSecondary)),
+                        Icon(Icons.chevron_right_rounded, size: 20, color: context.palette.textSecondary),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-            DetailsCard(
-              padding: const EdgeInsets.fromLTRB(18, 6, 18, 6),
-              children: [for (final c in calls) ContactCallLogRow(call: c, simBadge: _simBadge(c.simId), now: now)],
+                ),
+              ],
             ),
           ],
         );
@@ -706,17 +720,20 @@ class _ValueRow extends StatelessWidget {
 /// One logged call on the contact, Call logs and unsaved-number pages: the time, then one grey
 /// line with the arrow, SIM badge, number, type and talk time.
 class ContactCallLogRow extends StatelessWidget {
-  const ContactCallLogRow({super.key, required this.call, required this.simBadge, required this.now});
+  const ContactCallLogRow({super.key, required this.call, required this.simBadge, required this.now, this.numberLine});
 
   final CallLogEntry call;
   final String? simBadge;
   final DateTime now;
 
+  /// Which number the call used, for a contact with several; null leaves it out.
+  final String? numberLine;
+
   @override
   Widget build(BuildContext context) {
     final c = call;
     final l10n = context.l10n;
-    final grey = context.palette.textSecondary;
+    final grey = TextStyle(fontSize: 14, color: context.palette.textSecondary);
     // Missed and rejected calls log ring time as duration; only talk time is shown.
     final talked = c.type == CallType.incoming || c.type == CallType.outgoing;
     final talk = !talked
@@ -724,35 +741,49 @@ class ContactCallLogRow extends StatelessWidget {
         : c.duration > Duration.zero
         ? durationLabel(l10n, c.duration)
         : l10n.callNotConnected;
+    final day = dayLabel(l10n, c.date, now);
+    final badge = c.isApp ? null : simBadge;
+    // ColorOS's call history: what happened leads, when and how long sit on the right.
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
         children: [
-          Text('${dayLabel(l10n, c.date, now)}, ${timeLabel(l10n, c.date)}', style: const TextStyle(fontSize: 17)),
-          const SizedBox(height: 2),
-          Row(
-            children: [
-              CallTypeIcon(type: c.type, size: 14),
-              const SizedBox(width: 6),
-              if (simBadge case final badge? when !c.isApp) ...[SimBadge(label: badge), const SizedBox(width: 6)],
-              Flexible(
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(text: c.isApp ? appCallLabel(l10n, c) : c.number),
-                      TextSpan(
-                        text: '  ${callTypeLabel(l10n, c.type)}',
-                        style: c.type == CallType.missed ? const TextStyle(color: OneUITheme.accentRed) : null,
-                      ),
-                      if (talk != null) TextSpan(text: '  $talk'),
-                    ],
-                  ),
+          SizedBox(
+            width: 40,
+            child: Align(alignment: Alignment.centerLeft, child: CallTypeIcon(type: c.type, size: 22)),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  c.isApp ? appCallLabel(l10n, c) : callTypeLabel(l10n, c.type),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 13, color: grey),
+                  style: TextStyle(
+                    fontSize: 17,
+                    color: c.type == CallType.missed ? OneUITheme.accentRed : context.palette.textPrimary,
+                  ),
                 ),
-              ),
+                if (badge != null || numberLine != null) ...[
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      if (badge != null) ...[SimBadge(label: badge), const SizedBox(width: 6)],
+                      if (numberLine case final line?)
+                        Flexible(child: Text(line, maxLines: 1, overflow: TextOverflow.ellipsis, style: grey)),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(day == l10n.today ? timeLabel(l10n, c.date) : '$day ${timeLabel(l10n, c.date)}', style: grey),
+              if (talk != null) ...[const SizedBox(height: 2), Text(talk, style: grey)],
             ],
           ),
         ],

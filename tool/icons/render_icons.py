@@ -258,3 +258,18 @@ glyph('<mask id="m"><rect width="24" height="24" fill="#fff"/>'
 glyph('<g fill="#FFFFFF" stroke="#FFFFFF" stroke-width="1.2" stroke-linejoin="round">'
       '<rect x="1.6" y="5.4" width="14.4" height="13.2" rx="4"/>'
       '<path d="M18 10.3L21.3 8.1Q22.4 7.4 22.4 8.7V15.3Q22.4 16.6 21.3 15.9L18 13.7Z"/></g>', "video")
+
+
+# Call-type marks for call history rows: the handset, small at the bottom left, with what happened
+# drawn at the top right (round caps, like the handset's own rounding).
+def typed(mark, name):
+    hand = (f'<path transform="translate(.6 8.6) scale(.62)" d="{HANDSET}" fill="#FFFFFF" stroke="#FFFFFF" '
+            'stroke-width="1.6" stroke-linejoin="round"/>')
+    glyph(hand + f'<g fill="none" stroke="#FFFFFF" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">{mark}</g>',
+          name)
+
+
+typed('<path d="M13.5 10.5L21 3M15.5 3H21V8.5"/>', "call_out")
+typed('<path d="M21 3L13.5 10.5M13.5 5V10.5H19"/>', "call_in")
+typed('<path d="M12 4.5L16 8.5L21.5 3M18 3H21.5V6.5"/>', "call_missed")
+typed('<circle cx="17.3" cy="6.7" r="4.3"/><path d="M14.3 9.7L20.3 3.7"/>', "call_blocked")

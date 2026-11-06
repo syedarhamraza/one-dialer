@@ -805,7 +805,8 @@ class _CallRow extends StatelessWidget {
   }
 }
 
-/// Small grey arrow showing incoming / outgoing / missed; only missed is red.
+/// Small grey handset with what happened (incoming / outgoing / missed / blocked), our own glyphs
+/// from `tool/icons/render_icons.py`; only missed is red.
 class CallTypeIcon extends StatelessWidget {
   const CallTypeIcon({super.key, required this.type, this.size = 18});
 
@@ -814,18 +815,17 @@ class CallTypeIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final icon = switch (type) {
-      CallType.outgoing => Icons.call_made_rounded,
-      CallType.missed => Icons.call_missed_rounded,
-      CallType.rejected || CallType.blocked => Icons.block_rounded,
-      CallType.voicemail => Icons.voicemail_rounded,
-      _ => Icons.call_received_rounded,
+    final color = type == CallType.missed ? OneUITheme.accentRed : context.palette.textSecondary;
+    final asset = switch (type) {
+      CallType.outgoing => 'call_out',
+      CallType.missed => 'call_missed',
+      CallType.rejected || CallType.blocked => 'call_blocked',
+      CallType.voicemail => null,
+      _ => 'call_in',
     };
-    return Icon(
-      icon,
-      size: size,
-      color: type == CallType.missed ? OneUITheme.accentRed : context.palette.textSecondary,
-    );
+    return asset == null
+        ? Icon(Icons.voicemail_rounded, size: size, color: color)
+        : ImageIcon(AssetImage('assets/icons/$asset.png'), size: size, color: color);
   }
 }
 

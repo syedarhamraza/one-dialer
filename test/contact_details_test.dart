@@ -102,8 +102,10 @@ void main() {
     await tester.scrollUntilVisible(find.text('View all'), 200);
     expect(find.text('Call logs'), findsOneWidget);
     expect(find.text('View all'), findsOneWidget);
-    expect(find.textContaining('+92 311 1234567', findRichText: true), findsNWidgets(3));
-    expect(find.textContaining('0399999999', findRichText: true), findsNothing);
+    // Only this contact's calls, the latest three, each with its number (the contact has two).
+    expect(find.byType(ContactCallLogRow), findsNWidgets(3));
+    expect(find.text('Outgoing call'), findsNWidgets(3));
+    expect(find.textContaining('0399999999'), findsNothing);
   });
 
   const fontPath = String.fromEnvironment('PREVIEW_FONT');
