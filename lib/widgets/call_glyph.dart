@@ -6,7 +6,8 @@ import 'package:flutter/material.dart';
 /// (`assets/icons/handset.png`, from `tool/icons/render_icons.py`); hang-up is it turned 135°, and
 /// an ongoing call ([Icons.phone_in_talk_rounded]) is it with sound waves (`handset_talk.png`).
 /// [Icons.chat_rounded] and [Icons.videocam_rounded] are its matching Message and Video glyphs
-/// (`message.png`, `video.png`), for the contact page's tiles.
+/// (`message.png`, `video.png`), and [Icons.person_add_alt_1_rounded] its Add contact glyph
+/// (`add_contact.png`), for the contact and call details pages' tiles.
 class CallGlyph extends StatelessWidget {
   const CallGlyph(this.icon, {super.key, this.color, this.size});
 
@@ -19,6 +20,7 @@ class CallGlyph extends StatelessWidget {
   static final _companions = {
     Icons.chat_rounded: 'assets/icons/message.png',
     Icons.videocam_rounded: 'assets/icons/video.png',
+    Icons.person_add_alt_1_rounded: 'assets/icons/add_contact.png',
   };
 
   final IconData icon;

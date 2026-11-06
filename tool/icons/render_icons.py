@@ -269,3 +269,10 @@ def arrow(mark, name):
 arrow('<path d="M6 6L17.5 17.5M8.5 17.5H17.5V8.5"/>', "arrow_in")
 arrow('<path d="M6 18L17.5 6.5M8.5 6.5H17.5V15.5"/>', "arrow_out")
 arrow('<circle cx="12" cy="12" r="7.5"/><path d="M6.7 17.3L17.3 6.7"/>', "arrow_blocked")
+
+
+# The details page's Add tile: a solid person with a plus, beside the Call and Message glyphs.
+glyph('<g fill="#FFFFFF" stroke="#FFFFFF" stroke-width="1.2" stroke-linejoin="round">'
+      '<circle cx="9" cy="7.6" r="4.1"/>'
+      '<path d="M1.8 20.2C1.8 16.3 5 13.8 9 13.8S16.2 16.3 16.2 20.2V21H1.8Z"/></g>'
+      '<path d="M19.6 6V13M16.1 9.5H23.1" stroke="#FFFFFF" stroke-width="2.3" stroke-linecap="round"/>', "add_contact")

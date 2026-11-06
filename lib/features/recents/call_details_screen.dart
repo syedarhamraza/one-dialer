@@ -124,7 +124,7 @@ class CallDetailsScreen extends StatelessWidget {
                                   ),
                                   Expanded(
                                     child: DetailsActionTile(
-                                      icon: Icons.chat_bubble_rounded,
+                                      icon: Icons.chat_rounded,
                                       label: context.l10n.message,
                                       onTap: () => TelecomBridge.instance.sendSms(call.number),
                                     ),
