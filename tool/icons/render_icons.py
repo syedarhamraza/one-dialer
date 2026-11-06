@@ -263,7 +263,7 @@ glyph('<g fill="#FFFFFF" stroke="#FFFFFF" stroke-width="1.2" stroke-linejoin="ro
 # Call-type marks for call history rows: the handset, small at the bottom left, with what happened
 # drawn at the top right (round caps, like the handset's own rounding).
 def typed(mark, name):
-    hand = (f'<path transform="translate(.6 8.6) scale(.62)" d="{HANDSET}" fill="#FFFFFF" stroke="#FFFFFF" '
+    hand = (f'<path transform="translate(0 7) scale(.7)" d="{HANDSET}" fill="#FFFFFF" stroke="#FFFFFF" '
             'stroke-width="1.6" stroke-linejoin="round"/>')
     glyph(hand + f'<g fill="none" stroke="#FFFFFF" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">{mark}</g>',
           name)

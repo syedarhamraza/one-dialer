@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart' show CupertinoIcons;
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:intl/intl.dart';
@@ -69,17 +70,12 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
   Future<void> _load() async {
     // Together, so the page rebuilds once, early in its slide-in.
-    final numbers = [
-      for (final c in ContactsRepository.instance.contacts.value)
-        if (c.id == widget.contactId) ...c.numbers,
-    ];
-    final (sims, simId, apps, raw, ringtone, display) = await (
+    final (sims, simId, apps, raw, ringtone) = await (
       _bridge.getSims(),
       DialerPrefs.instance.contactSim(widget.contactId),
       _bridge.getMessagingApps(widget.contactId),
       _bridge.getRawContacts(widget.contactId),
       _bridge.getRingtoneTitle(widget.contactId),
-      _bridge.describeNumbers(numbers),
     ).wait;
     if (!mounted) return;
     setState(() {
@@ -87,12 +83,24 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       _simId = simId;
       _apps = apps;
       _ringtone = ringtone;
-      _display = {for (final (i, n) in numbers.indexed) if (i < display.length) n: display[i]};
       // Where it's stored, e.g. "Google · WhatsApp".
       _storage = {for (final r in raw) accountApp(context.l10n, r['accountType'] as String?)}.join(' · ');
     });
     await _loadFull();
   }
+
+  /// Formats [numbers] for [_display] once per set: the contact may load after the page opens
+  /// (a cold start from another app), and an edit can change its numbers.
+  void _describe(List<String> numbers) {
+    if (listEquals(_described, numbers)) return;
+    _described = numbers;
+    _bridge.describeNumbers(numbers).then((d) {
+      if (!mounted || _described != numbers) return;
+      setState(() => _display = {for (final (i, n) in numbers.indexed) if (i < d.length) n: d[i]});
+    });
+  }
+
+  List<String>? _described;
 
   /// Meet's video row (the Video tile) and the chat apps (their own card).
   Map<Object?, Object?>? get _meet => _apps.where(_isMeet).firstOrNull;
@@ -223,6 +231,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             ),
           );
         }
+        _describe(contact.numbers);
         final padding = MediaQuery.paddingOf(context);
         final primary = contact.numbers[contact.primaryIndex >= 0 ? contact.primaryIndex : 0];
         return Scaffold(
@@ -743,48 +752,45 @@ class ContactCallLogRow extends StatelessWidget {
         : l10n.callNotConnected;
     final day = dayLabel(l10n, c.date, now);
     final badge = c.isApp ? null : simBadge;
-    // ColorOS's call history: what happened leads, when and how long sit on the right.
+    final detail = [?talk, ?numberLine].join(' · ');
+    // ColorOS's call history: what happened and when on one line, how long (and which number)
+    // under it; a missed call is a single line.
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 14),
       child: Row(
         children: [
           SizedBox(
             width: 40,
-            child: Align(alignment: Alignment.centerLeft, child: CallTypeIcon(type: c.type, size: 22)),
+            child: Align(alignment: Alignment.centerLeft, child: CallTypeIcon(type: c.type, size: 26)),
           ),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  c.isApp ? appCallLabel(l10n, c) : callTypeLabel(l10n, c.type),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 17,
-                    color: c.type == CallType.missed ? OneUITheme.accentRed : context.palette.textPrimary,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        c.isApp ? appCallLabel(l10n, c) : callTypeLabel(l10n, c.type),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 17,
+                          color: c.type == CallType.missed ? OneUITheme.accentRed : context.palette.textPrimary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    if (badge != null) ...[SimBadge(label: badge), const SizedBox(width: 6)],
+                    Text(day == l10n.today ? timeLabel(l10n, c.date) : '$day ${timeLabel(l10n, c.date)}', style: grey),
+                  ],
                 ),
-                if (badge != null || numberLine != null) ...[
+                if (detail.isNotEmpty) ...[
                   const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      if (badge != null) ...[SimBadge(label: badge), const SizedBox(width: 6)],
-                      if (numberLine case final line?)
-                        Flexible(child: Text(line, maxLines: 1, overflow: TextOverflow.ellipsis, style: grey)),
-                    ],
-                  ),
+                  Text(detail, maxLines: 1, overflow: TextOverflow.ellipsis, style: grey),
                 ],
               ],
             ),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(day == l10n.today ? timeLabel(l10n, c.date) : '$day ${timeLabel(l10n, c.date)}', style: grey),
-              if (talk != null) ...[const SizedBox(height: 2), Text(talk, style: grey)],
-            ],
           ),
         ],
       ),
