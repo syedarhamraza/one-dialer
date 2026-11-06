@@ -67,6 +67,12 @@ internal class DiagnosticsPolicy {
         fun stalled(now: Long, resumedAt: Long, heartbeat: Long, resumed: Boolean, debugger: Boolean) =
             resumed && !debugger && now - resumedAt >= 5_000 && now - heartbeat >= 3_000
 
+        /**
+         * The 1 s watchdog itself ran late, so the whole process was paused (frozen by the OS, as
+         * vivo does during a call with the screen off at the ear): stale heartbeats are no stall.
+         */
+        fun processPaused(now: Long, lastTick: Long) = lastTick > 0 && now - lastTick >= 2_500
+
         /** Touches kept arriving for 3 s that Dart never counted, while Dart itself is alive. */
         fun inputStalled(now: Long, firstUnseenTouchAt: Long, lastTouchAt: Long, heartbeat: Long) =
             firstUnseenTouchAt > 0 && lastTouchAt - firstUnseenTouchAt >= 3_000 && now - heartbeat < 3_000

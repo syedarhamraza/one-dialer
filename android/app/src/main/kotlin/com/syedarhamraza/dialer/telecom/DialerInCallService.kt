@@ -14,6 +14,7 @@ import android.telecom.CallAudioState
 import android.telecom.InCallService
 import android.telecom.VideoProfile
 import android.speech.tts.TextToSpeech
+import java.util.concurrent.Executors
 import com.syedarhamraza.dialer.AppLanguage
 import com.syedarhamraza.dialer.InCallActivity
 import com.syedarhamraza.dialer.InCallEngine
@@ -49,7 +50,8 @@ class DialerInCallService : InCallService() {
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
-        tts?.shutdown()
+        onTts { shutdown() }
+        ttsThread.shutdown()
         CallManager.removeListener(onCallsChanged)
         CallManager.service = null
         CallNotifications.cancelIncoming(this)
@@ -101,7 +103,7 @@ class DialerInCallService : InCallService() {
 
     /** Settings › Answer/End calls: a buzz on answer and hang-up, and the speaker on answer. */
     fun onStateChanged(call: Call, from: Int?, to: Int) {
-        if (from == Call.STATE_RINGING) tts?.stop()
+        if (from == Call.STATE_RINGING) onTts { stop() }
         if (!CallPrefs.buzzes(from, to)) return
         val prefs = CallPrefs.read(this)
         if (prefs["vibrateAnswerEnd"] == true) {
@@ -114,7 +116,15 @@ class DialerInCallService : InCallService() {
         ) setAudioRoute(CallAudioState.ROUTE_SPEAKER)
     }
 
-    private var tts: TextToSpeech? = null
+    @Volatile private var tts: TextToSpeech? = null
+
+    // TextToSpeech calls block on the speech engine (3 s seen on a MediaTek OPPO), so never on the main thread.
+    private val ttsThread = Executors.newSingleThreadExecutor()
+
+    /** Called from the main thread only, so the shutdown check can't race. */
+    private fun onTts(action: TextToSpeech.() -> Unit) {
+        if (!ttsThread.isShutdown) ttsThread.execute { tts?.action() }
+    }
 
     /** Settings › Announce incoming calls: says who's calling, every few seconds while it rings. */
     private fun announce(call: Call) {
@@ -132,7 +142,7 @@ class DialerInCallService : InCallService() {
         val speak = object : Runnable {
             override fun run() {
                 if (!ringing()) return
-                tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "announce")
+                onTts { speak(text, TextToSpeech.QUEUE_FLUSH, null, "announce") }
                 handler.postDelayed(this, ANNOUNCE_EVERY_MS)
             }
         }

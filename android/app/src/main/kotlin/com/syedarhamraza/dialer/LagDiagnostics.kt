@@ -35,6 +35,7 @@ internal object LagDiagnostics {
     private var watchdog: ScheduledFuture<*>? = null
     private var lease: Pair<String, Long>? = null
     private var prunedAt = 0L
+    private var lastTick = 0L
 
     private class Engine {
         var enabled = false
@@ -199,7 +200,9 @@ internal object LagDiagnostics {
             prunedAt = now
         }
         if (engines.values.none { it.enabled && it.resumed }) return
-        if (Debug.isDebuggerConnected() || Debug.waitingForDebugger()) {
+        val paused = DiagnosticsPolicy.processPaused(now, lastTick)
+        lastTick = now
+        if (paused || Debug.isDebuggerConnected() || Debug.waitingForDebugger()) {
             engines.values.forEach { it.resumedAt = now; it.beat = now }
             mainBeat = now
             return
