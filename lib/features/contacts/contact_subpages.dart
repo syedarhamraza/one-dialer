@@ -11,6 +11,7 @@ import '../../widgets/press_glow.dart';
 import '../recents/call_log.dart';
 import '../recents/call_log_repository.dart';
 import 'contact_details_screen.dart';
+import 'editor/contact_form.dart' show labelDisplay;
 import '../../l10n/l10n.dart';
 
 /// The app a contact copy lives in, from its raw contact's account type.
@@ -45,6 +46,16 @@ class _ContactHistoryScreenState extends State<ContactHistoryScreen> {
     TelecomBridge.instance.getSims().then((s) {
       if (mounted) setState(() => _sims = s);
     });
+  }
+
+  /// Which number a call used, "Mobile · 03111234567", for a contact with several (as on the
+  /// contact page, unformatted here).
+  String? _numberLine(String number) {
+    final c = widget.contact;
+    if (c.numbers.length < 2) return null;
+    final i = c.numbers.indexWhere((n) => numberKey(n) == numberKey(number));
+    if (i < 0) return number;
+    return [labelDisplay(context.l10n, c.labels[i]), c.numbers[i]].where((s) => s.isNotEmpty).join(' · ');
   }
 
   /// "1"/"2" badge, only on dual-SIM phones (as on the contact page).
@@ -90,8 +101,12 @@ class _ContactHistoryScreenState extends State<ContactHistoryScreen> {
               DetailsCardSliver(
                 padding: const EdgeInsets.fromLTRB(18, 6, 18, 6),
                 itemCount: calls.length,
-                itemBuilder: (context, i) =>
-                    ContactCallLogRow(call: calls[i], simBadge: _simBadge(calls[i].simId), now: now),
+                itemBuilder: (context, i) => ContactCallLogRow(
+                  call: calls[i],
+                  simBadge: _simBadge(calls[i].simId),
+                  now: now,
+                  numberLine: _numberLine(calls[i].number),
+                ),
               ),
           ],
         );

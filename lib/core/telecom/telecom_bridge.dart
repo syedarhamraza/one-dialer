@@ -103,6 +103,12 @@ class TelecomBridge {
   Future<String?> getRingtoneTitle(String contactId) =>
       _methods.invokeMethod<String>('getRingtoneTitle', {'contactId': contactId});
 
+  /// Each number grouped for display, and its country ("Pakistan"); nulls when it doesn't parse.
+  Future<List<({String? formatted, String? location})>> describeNumbers(List<String> numbers) async {
+    final raw = await _methods.invokeListMethod<Map<Object?, Object?>>('describeNumbers', {'numbers': numbers});
+    return [for (final m in raw ?? const []) (formatted: m['formatted'] as String?, location: m['location'] as String?)];
+  }
+
   Future<void> setRingtone(String contactId, String? uri) =>
       _methods.invokeMethod('setRingtone', {'contactId': contactId, 'uri': uri});
 

@@ -805,27 +805,26 @@ class _CallRow extends StatelessWidget {
   }
 }
 
-/// Small grey arrow showing incoming / outgoing / missed; only missed is red.
+/// The small grey arrow of a call's details line (ColorOS's: in for missed calls too, a barred
+/// circle for rejected and blocked), our own glyphs from `tool/icons/render_icons.py`.
 class CallTypeIcon extends StatelessWidget {
-  const CallTypeIcon({super.key, required this.type, this.size = 18});
+  const CallTypeIcon({super.key, required this.type, this.size = 16});
 
   final CallType type;
   final double size;
 
   @override
   Widget build(BuildContext context) {
-    final icon = switch (type) {
-      CallType.outgoing => Icons.call_made_rounded,
-      CallType.missed => Icons.call_missed_rounded,
-      CallType.rejected || CallType.blocked => Icons.block_rounded,
-      CallType.voicemail => Icons.voicemail_rounded,
-      _ => Icons.call_received_rounded,
+    final color = context.palette.textSecondary;
+    final asset = switch (type) {
+      CallType.voicemail => null,
+      CallType.outgoing => 'arrow_out',
+      CallType.rejected || CallType.blocked => 'arrow_blocked',
+      _ => 'arrow_in',
     };
-    return Icon(
-      icon,
-      size: size,
-      color: type == CallType.missed ? OneUITheme.accentRed : context.palette.textSecondary,
-    );
+    return asset == null
+        ? Icon(Icons.voicemail_rounded, size: size, color: color)
+        : ImageIcon(AssetImage('assets/icons/$asset.png'), size: size, color: color);
   }
 }
 
@@ -838,7 +837,7 @@ String callTypeLabel(AppLocalizations l10n, CallType type) => switch (type) {
   _ => l10n.callTypeIncoming,
 };
 
-/// SIM slot number, grey like the text beside it.
+/// SIM slot number knocked out of a small grey SIM card, grey like the text beside it.
 class SimBadge extends StatelessWidget {
   const SimBadge({super.key, required this.label});
 
@@ -846,19 +845,68 @@ class SimBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = context.palette.textSecondary;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(3),
-        border: Border.all(color: color, width: 1),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(fontSize: 10, height: 1.3, fontWeight: FontWeight.w700, color: color),
+    return ExcludeSemantics(
+      child: CustomPaint(
+        size: const Size(15.3, 16),
+        painter: _SimBadgePainter(label: label, color: context.palette.textSecondary),
       ),
     );
   }
+}
+
+/// Drawn on a 23×24 grid. The number is cut out of the card, so it shows whatever is behind the
+/// row (the page or a card).
+class _SimBadgePainter extends CustomPainter {
+  _SimBadgePainter({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  static final _sim = Path()
+    ..moveTo(5, 2.5)
+    ..lineTo(14.2, 2.5)
+    ..lineTo(19, 7.3)
+    ..lineTo(19, 20)
+    ..quadraticBezierTo(19, 21.5, 17.5, 21.5)
+    ..lineTo(5, 21.5)
+    ..quadraticBezierTo(3.5, 21.5, 3.5, 20)
+    ..lineTo(3.5, 4)
+    ..quadraticBezierTo(3.5, 2.5, 5, 2.5)
+    ..close();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.scale(size.height / 24);
+    canvas.saveLayer(const Rect.fromLTWH(0, 0, 23, 24), Paint());
+    canvas.drawPath(_sim, Paint()..color = color);
+    // A thin stroke of the same grey softens the cut corner like the other glyphs' rounding.
+    canvas.drawPath(
+      _sim,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..strokeJoin = StrokeJoin.round,
+    );
+    final text = TextPainter(
+      text: TextSpan(
+        text: label,
+        style: TextStyle(
+          fontSize: 11,
+          height: 1,
+          fontWeight: FontWeight.w700,
+          foreground: Paint()..blendMode = BlendMode.dstOut,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    text.paint(canvas, const Offset(11.25, 12.6) - Offset(text.width / 2, text.height / 2));
+    text.dispose();
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_SimBadgePainter old) => old.label != label || old.color != color;
 }
 
 class _Empty extends StatelessWidget {

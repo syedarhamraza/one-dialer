@@ -1640,4 +1640,24 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get keypadAndRecents => 'Tastierino e recenti';
+
+  @override
+  String get logIncoming => 'In entrata';
+
+  @override
+  String get logOutgoing => 'In uscita';
+
+  @override
+  String get logMissed => 'Persa';
+
+  @override
+  String get logRejected => 'Rifiutata';
+
+  @override
+  String get logBlocked => 'Bloccata';
+
+  @override
+  String logRangFor(String type, String duration) {
+    return '$type (ha squillato per $duration)';
+  }
 }

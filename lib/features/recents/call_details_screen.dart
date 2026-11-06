@@ -155,7 +155,7 @@ class CallDetailsScreen extends StatelessWidget {
                         // Lazy: a number called every day has hundreds of rows.
                         DetailsCardSliver(
                           padding: const EdgeInsets.fromLTRB(18, 6, 18, 6),
-                          itemCount: history.length,
+                                    itemCount: history.length,
                           itemBuilder: (context, i) =>
                               ContactCallLogRow(call: history[i], simBadge: null, now: DateTime.now()),
                         ),

@@ -45,3 +45,4 @@ The UI is laid out for English lengths; check these on the phone in Italian, esp
 | `changelog` | "Novità" rather than a literal "Registro modifiche". |
 | `glassStyle`, `navBarGlass`, `navGlass*` | Display & effects rows: "Stile vetro"; "Vetro liquido", "Rifrazione completa". |
 | `glassSettings`, `navBarFrosted`, `darkModeEdgeGlow`, `liquidGlassOn`, `liquidScope*`, `navGlassAuto`, `glassExperimentalNote` | Glass & blur page: "Vetro e sfocatura", "Bagliore bordi", "Intensità bagliore", "Vetro liquido su", "Tutto", "Barra e pulsanti", "Solo barra di navigazione", "Automatico", and the experimental note. |
+| `logIncoming/Outgoing/Missed/Rejected/Blocked`, `logRangFor` | Contact page call history: "In entrata", "In uscita", "Persa", "Rifiutata", "Bloccata"; "Persa (ha squillato per 29 s)". |
