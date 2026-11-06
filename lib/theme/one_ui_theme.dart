@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 
 import 'one_ui_effects.dart';
+import '../widgets/squircle.dart';
 import 'one_ui_scroll.dart';
 
 export 'one_ui_effects.dart';
+export '../widgets/squircle.dart';
 
 /// Samsung One UI design tokens, ported from OneSpend (`D:\one-spend\lib\theme\one_ui_theme.dart`).
 /// Uses OneSpend's default flat look; its 3D / appearance settings are not ported.
@@ -54,6 +56,9 @@ class OneUITheme {
   static BorderRadius get cardBorderRadius => BorderRadius.circular(radiusCard);
   static BorderRadius get innerBorderRadius => BorderRadius.circular(radiusInner);
   static BorderRadius get fieldBorderRadius => pillBorderRadius;
+
+  /// A card's ColorOS 17 squircle outline.
+  static ShapeBorder get cardShape => SquircleBorder(borderRadius: cardBorderRadius);
 
   // --- Card and floating surfaces (OneSpend's flat look, see one_ui_effects.dart) ---
   static Color get cardColor => OneUIEffectsController.instance.cardColor;

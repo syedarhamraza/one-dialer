@@ -115,7 +115,7 @@ class _OneUIScrollToTopButtonState extends State<OneUIScrollToTopButton> {
               onTap: _scrollToTop,
               child: OneUIGlassSurface.circle(
                 size: 46,
-                child: Icon(Icons.keyboard_arrow_up_rounded, color: context.palette.textPrimary, size: 26),
+                child: Icon(Icons.keyboard_arrow_up_rounded, color: context.palette.textPrimary, size: 28),
               ),
             ),
           ),

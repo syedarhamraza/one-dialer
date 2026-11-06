@@ -54,7 +54,7 @@ class OneUIFloatingSearchField extends StatelessWidget {
     child: GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: SizedBox(width: 32, height: 32, child: Icon(icon, color: Colors.white70, size: 20)),
+      child: SizedBox(width: 32, height: 32, child: Icon(icon, color: Colors.white70, size: 22)),
     ),
   );
 

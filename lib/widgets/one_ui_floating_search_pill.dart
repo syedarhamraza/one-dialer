@@ -24,7 +24,7 @@ class OneUIFloatingSearchPill extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 18),
               child: Row(
                 children: [
-                  Icon(Icons.search_rounded, color: context.palette.textSecondary, size: 22),
+                  Icon(Icons.search_rounded, color: context.palette.textSecondary, size: 24),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(

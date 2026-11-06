@@ -26,7 +26,7 @@ class RoundIconButton extends StatelessWidget {
           fixedSize: const Size.square(48),
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
-        icon: Icon(icon, size: 24),
+        icon: Icon(icon, size: 26),
       ),
     );
   }

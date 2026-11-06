@@ -111,7 +111,7 @@ class _ReleaseHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final v = AppVersion.tryParse(entry.version);
-    return ClipRRect(
+    return ClipRSuperellipse(
       borderRadius: BorderRadius.circular(28),
       child: SizedBox(
         height: 290,
@@ -160,7 +160,7 @@ class _ReleaseNotes extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       padding: const EdgeInsets.fromLTRB(22, 20, 22, 6),
-      decoration: BoxDecoration(color: context.palette.card, borderRadius: OneUITheme.cardBorderRadius),
+      decoration: ShapeDecoration(color: context.palette.card, shape: OneUITheme.cardShape),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

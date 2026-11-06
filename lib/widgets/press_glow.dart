@@ -53,7 +53,7 @@ class PressGlow extends StatelessWidget {
     );
     final color = glowColor;
     if (color == null && shadows == null) return press;
-    final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius));
+    final shape = SquircleBorder(borderRadius: BorderRadius.circular(radius));
     return DecoratedBox(
       decoration: ShapeDecoration(
         shape: shape,

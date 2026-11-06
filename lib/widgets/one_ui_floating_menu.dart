@@ -483,7 +483,7 @@ class _MenuRow extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 16 * size),
         child: Row(
           children: [
-            if (item.icon != null) ...[Icon(item.icon, size: 20 * size, color: color), SizedBox(width: 14 * size)],
+            if (item.icon != null) ...[Icon(item.icon, size: 22 * size, color: color), SizedBox(width: 14 * size)],
             Expanded(
               child: Text(
                 item.label,

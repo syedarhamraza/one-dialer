@@ -52,7 +52,7 @@ class OneUIGroupCard extends StatelessWidget {
               margin: margin ?? const EdgeInsets.only(bottom: 20),
               clipBehavior: Clip.antiAlias,
               // ColorOS 17: a flat grey card, no border or shadow (as `DetailsCard`).
-              decoration: BoxDecoration(color: context.palette.card, borderRadius: OneUITheme.cardBorderRadius),
+              decoration: ShapeDecoration(color: context.palette.card, shape: OneUITheme.cardShape),
               child: Column(
                 children: [
                   for (int index = 0; index < items.length; index++)
@@ -185,7 +185,7 @@ class OneUIGroupCardSliver extends StatelessWidget {
         SliverPadding(
           padding: const EdgeInsets.only(bottom: 20),
           sliver: DecoratedSliver(
-            decoration: BoxDecoration(color: context.palette.card, borderRadius: OneUITheme.cardBorderRadius),
+            decoration: ShapeDecoration(color: context.palette.card, shape: OneUITheme.cardShape),
             sliver: SliverList.builder(
               itemCount: itemCount,
               itemBuilder: (context, i) =>
