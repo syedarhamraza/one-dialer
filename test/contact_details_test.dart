@@ -99,7 +99,13 @@ void main() {
       CallLogEntry(id: 9, number: '0399999999', type: CallType.missed, date: DateTime(2026, 10, 9)),
     ];
     await pump(tester);
-    await tester.scrollUntilVisible(find.text('View all'), 200);
+    // Scrolled from the side margin: the action tiles claim drags that start on them.
+    for (var i = 0; i < 20 && find.text('View all').evaluate().isEmpty; i++) {
+      await tester.dragFrom(const Offset(4, 500), const Offset(0, -200));
+      await tester.pump();
+    }
+    await tester.ensureVisible(find.text('View all'));
+    await tester.pumpAndSettle();
     expect(find.text('Call logs'), findsOneWidget);
     expect(find.text('View all'), findsOneWidget);
     // Only this contact's calls, the latest three, each with its number (the contact has two).

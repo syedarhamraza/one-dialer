@@ -96,7 +96,12 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     _described = numbers;
     _bridge.describeNumbers(numbers).then((d) {
       if (!mounted || _described != numbers) return;
-      setState(() => _display = {for (final (i, n) in numbers.indexed) if (i < d.length) n: d[i]});
+      setState(
+        () => _display = {
+          for (final (i, n) in numbers.indexed)
+            if (i < d.length) n: d[i],
+        },
+      );
     });
   }
 
@@ -476,13 +481,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           value: w.url,
           onTap: () => _bridge.openSystemSettings('url:${w.url.contains('://') ? w.url : 'https://${w.url}'}'),
         ),
-      for (final r in c.relations)
-        _ValueRow(
-          label: labelDisplay(l10n, labelText(r.label)),
-          value: r.name,
-        ),
-      for (final n in notes)
-        _ValueRow(label: l10n.notes, value: n),
+      for (final r in c.relations) _ValueRow(label: labelDisplay(l10n, labelText(r.label)), value: r.name),
+      for (final n in notes) _ValueRow(label: l10n.notes, value: n),
     ];
     return rows.isEmpty ? const [] : [DetailsCard(padding: _cardPadding, children: rows)];
   }
@@ -528,10 +528,13 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               padding: const EdgeInsets.only(left: 18),
               child: Row(
                 children: [
-                  Expanded(child: Text(context.l10n.callLogs, style: TextStyle(fontSize: 15, color: grey))),
+                  Expanded(
+                    child: Text(context.l10n.callLogs, style: TextStyle(fontSize: 15, color: grey)),
+                  ),
                   TextButton(
-                    onPressed: () => Navigator.of(context)
-                        .push(MaterialPageRoute<void>(builder: (_) => ContactHistoryScreen(contact: contact))),
+                    onPressed: () =>
+                        Navigator.of(context)
+                            .push(MaterialPageRoute<void>(builder: (_) => ContactHistoryScreen(contact: contact))),
                     style: TextButton.styleFrom(foregroundColor: grey),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -575,37 +578,48 @@ class DetailsActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PressGlow(
-      radius: 999,
-      child: Material(
-        color: context.palette.card,
-        shape: const StadiumBorder(),
-        child: InkWell(
-          onTap: onTap,
-          customBorder: const StadiumBorder(),
-          // Full width: the glass press hands its child loose constraints.
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Column(
-              children: [
-                CallGlyph(icon, color: onTap == null ? context.palette.textTertiary : context.palette.textPrimary, size: 24),
-                const SizedBox(height: 2),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
+    // Claims vertical drags that start on it (as CallGlass does), so holding and moving a tile
+    // plays the press instead of scrolling the page.
+    return GestureDetector(
+      onVerticalDragStart: _holdStill,
+      child: PressGlow(
+        radius: 999,
+        child: Material(
+          color: context.palette.card,
+          shape: const StadiumBorder(),
+          child: InkWell(
+            onTap: onTap,
+            customBorder: const StadiumBorder(),
+            // Full width: the glass press hands its child loose constraints.
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Column(
+                children: [
+                  CallGlyph(
+                    icon,
                     color: onTap == null ? context.palette.textTertiary : context.palette.textPrimary,
+                    size: 24,
                   ),
-                ),
-              ],
+                  const SizedBox(height: 2),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: onTap == null ? context.palette.textTertiary : context.palette.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
+
+  static void _holdStill(DragStartDetails _) {}
 }
 
 class DetailsCard extends StatelessWidget {
@@ -819,7 +833,10 @@ class _VolteMark extends StatelessWidget {
     return ExcludeSemantics(
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [Text('Vo', style: style), Text('LTE', style: style)],
+        children: [
+          Text('Vo', style: style),
+          Text('LTE', style: style),
+        ],
       ),
     );
   }
