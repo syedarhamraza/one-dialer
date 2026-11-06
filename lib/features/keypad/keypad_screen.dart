@@ -232,7 +232,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
                               constraints: BoxConstraints(maxHeight: constraints.maxHeight),
                               // Frosted like the nav bar: Calls shows blurred behind the keys. Costs a
                               // blur only on frames where something animates.
-                              child: ClipRRect(
+                              child: ClipRSuperellipse(
                                 borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
                                 child: _Frosted(
                                   builder: (blur) => DecoratedBox(

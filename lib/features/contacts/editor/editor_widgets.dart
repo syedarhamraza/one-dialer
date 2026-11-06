@@ -17,7 +17,7 @@ class EditorCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.fromLTRB(0, 4, 4, 4),
-      decoration: BoxDecoration(color: context.palette.card, borderRadius: BorderRadius.circular(20)),
+      decoration: ShapeDecoration(color: context.palette.card, shape: SquircleBorder(borderRadius: BorderRadius.circular(20))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
     );
   }
@@ -213,7 +213,7 @@ class AddRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      customBorder: SquircleBorder(borderRadius: BorderRadius.circular(16)),
       child: EditorRow(
         icon: Icons.add_rounded,
         iconColor: OneUITheme.accentGreen,
@@ -238,7 +238,7 @@ class PlaceholderRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: OneUITheme.cardBorderRadius,
+      customBorder: OneUITheme.cardShape,
       child: EditorRow(
         icon: icon,
         child: Padding(

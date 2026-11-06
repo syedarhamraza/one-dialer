@@ -72,7 +72,7 @@ class _Tile extends StatelessWidget {
   final String app;
 
   @override
-  Widget build(BuildContext context) => ClipRRect(
+  Widget build(BuildContext context) => ClipRSuperellipse(
     // About the rounding launchers give the adaptive icon's tile.
     borderRadius: BorderRadius.circular(16),
     child: Image.asset('assets/app_icons/${style}_$app.png', width: 56, height: 56, filterQuality: FilterQuality.medium),

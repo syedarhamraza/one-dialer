@@ -526,7 +526,7 @@ class _HeaderControls extends StatelessWidget {
           fixedSize: const Size.square(_button),
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
-        icon: Icon(icon, size: 24),
+        icon: Icon(icon, size: 26),
       );
 
   @override
@@ -794,7 +794,7 @@ class _CallRow extends StatelessWidget {
             IconButton(
               tooltip: context.l10n.callDetails,
               onPressed: selecting ? null : onInfo,
-              icon: Icon(Icons.info_outline_rounded, size: 24, color: context.palette.textPrimary),
+              icon: Icon(Icons.info_outline_rounded, size: 26, color: context.palette.textPrimary),
             ),
           ],
         ),

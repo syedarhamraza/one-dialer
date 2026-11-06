@@ -673,9 +673,9 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                 Expanded(
                   child: Material(
                     color: context.palette.cardHighlight,
-                    borderRadius: BorderRadius.circular(20),
+                    shape: SquircleBorder(borderRadius: BorderRadius.circular(20)),
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(20),
+                      customBorder: SquircleBorder(borderRadius: BorderRadius.circular(20)),
                       onTap: () => Navigator.pop(ctx, value),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 18),
@@ -697,9 +697,9 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
             const SizedBox(height: 12),
             Material(
               color: context.palette.cardHighlight,
-              borderRadius: BorderRadius.circular(20),
+              shape: SquircleBorder(borderRadius: BorderRadius.circular(20)),
               child: InkWell(
-                borderRadius: BorderRadius.circular(20),
+                customBorder: SquircleBorder(borderRadius: BorderRadius.circular(20)),
                 onTap: () => Navigator.pop(ctx, 'delete'),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
@@ -746,7 +746,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
     return EditorCard(
       children: [
         InkWell(
-          borderRadius: OneUITheme.cardBorderRadius,
+          customBorder: OneUITheme.cardShape,
           onTap: () async {
             final picked = await TelecomBridge.instance.pickRingtone(_ringtone.isEmpty ? null : _ringtone);
             if (picked != null && _active) setState(() => _ringtone = picked);
@@ -1173,7 +1173,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
     return EditorCard(
       children: [
         InkWell(
-          borderRadius: OneUITheme.cardBorderRadius,
+          customBorder: OneUITheme.cardShape,
           onTap: _groups.isEmpty ? null : () => _chooseGroups(form),
           child: EditorRow(
             icon: Icons.group_outlined,

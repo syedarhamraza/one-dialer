@@ -325,7 +325,7 @@ class _UpdateCardsState extends State<_UpdateCards> {
   Widget build(BuildContext context) {
     // The update's own notes from the website: never the installed version's.
     final notes = UpdateController.instance.updateNotes;
-    final card = BoxDecoration(color: context.palette.card, borderRadius: OneUITheme.cardBorderRadius);
+    final card = ShapeDecoration(color: context.palette.card, shape: OneUITheme.cardShape);
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.42),
       child: SingleChildScrollView(
@@ -370,7 +370,7 @@ class _UpdateCardsState extends State<_UpdateCards> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     InkWell(
-                      borderRadius: OneUITheme.cardBorderRadius,
+                      customBorder: OneUITheme.cardShape,
                       onTap: () => setState(() => _open = !_open),
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(18, 16, 14, 16),

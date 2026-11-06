@@ -93,7 +93,7 @@ class OneUIFloatingActionBar extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(item.icon, size: 21, color: itemColor),
+                    Icon(item.icon, size: 23, color: itemColor),
                     const SizedBox(height: 3),
                     Text(
                       item.label,

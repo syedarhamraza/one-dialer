@@ -65,7 +65,7 @@ class _SearchField extends StatelessWidget {
           padding: const EdgeInsets.only(left: 16, right: 4),
           child: Row(
             children: [
-              Icon(Icons.search_rounded, size: 24, color: context.palette.textSecondary),
+              Icon(Icons.search_rounded, size: 26, color: context.palette.textSecondary),
               const SizedBox(width: 10),
               Expanded(
                 child: TextField(
@@ -88,7 +88,7 @@ class _SearchField extends StatelessWidget {
                     : IconButton(
                         tooltip: context.l10n.clear,
                         onPressed: controller.clear,
-                        icon: Icon(Icons.cancel_rounded, size: 20, color: context.palette.textSecondary),
+                        icon: Icon(Icons.cancel_rounded, size: 22, color: context.palette.textSecondary),
                       ),
               ),
             ],

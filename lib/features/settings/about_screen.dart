@@ -78,7 +78,7 @@ class _AboutScreenState extends State<AboutScreen> {
       builder: (context) => [
         // The artwork card (softly blurred) with the version mark centred in it and, under
         // the channel, the way to Software update.
-        ClipRRect(
+        ClipRSuperellipse(
           borderRadius: BorderRadius.circular(28),
           child: SizedBox(
             height: 340,

@@ -38,7 +38,7 @@ class ShowcasePicker extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.fromLTRB(12, 24, 12, 20),
-            decoration: BoxDecoration(color: context.palette.card, borderRadius: OneUITheme.cardBorderRadius),
+            decoration: ShapeDecoration(color: context.palette.card, shape: OneUITheme.cardShape),
             child: ValueListenableBuilder(
               valueListenable: value,
               builder: (context, picked, _) => Row(
@@ -107,8 +107,11 @@ class PhonePreview extends StatelessWidget {
         width: width,
         height: height,
         padding: const EdgeInsets.all(3),
-        decoration: BoxDecoration(color: const Color(0xFF3A3A3C), borderRadius: BorderRadius.circular(20)),
-        child: ClipRRect(
+        decoration: const ShapeDecoration(
+          color: Color(0xFF3A3A3C),
+          shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.all(Radius.circular(20))),
+        ),
+        child: ClipRSuperellipse(
           borderRadius: BorderRadius.circular(17),
           child: DecoratedBox(
             decoration: const BoxDecoration(

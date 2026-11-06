@@ -305,7 +305,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                           fixedSize: const Size.square(_button),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
-                        icon: Icon(contact.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded, size: 24),
+                        icon: Icon(contact.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded, size: 26),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -460,7 +460,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                       borderRadius: BorderRadius.circular(7),
                       child: Image.memory(app['icon']! as Uint8List, width: 26, height: 26),
                     )
-                  : const Icon(CupertinoIcons.chat_bubble, size: 24),
+                  : const Icon(CupertinoIcons.chat_bubble, size: 26),
             ),
             value: app['label']! as String,
             onTap: () => _openApp(app),
@@ -577,10 +577,10 @@ class DetailsActionTile extends StatelessWidget {
       radius: OneUITheme.radiusCard,
       child: Material(
         color: context.palette.card,
-        borderRadius: OneUITheme.cardBorderRadius,
+        shape: OneUITheme.cardShape,
         child: InkWell(
           onTap: onTap,
-          borderRadius: OneUITheme.cardBorderRadius,
+          customBorder: OneUITheme.cardShape,
           // Full width: the glass press hands its child loose constraints.
           child: Container(
             width: double.infinity,
@@ -626,7 +626,7 @@ class DetailsCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       padding: padding,
-      decoration: BoxDecoration(color: context.palette.card, borderRadius: OneUITheme.cardBorderRadius),
+      decoration: ShapeDecoration(color: context.palette.card, shape: OneUITheme.cardShape),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -661,7 +661,7 @@ class DetailsCardSliver extends StatelessWidget {
     return SliverPadding(
       padding: const EdgeInsets.only(bottom: 20),
       sliver: DecoratedSliver(
-        decoration: BoxDecoration(color: context.palette.card, borderRadius: OneUITheme.cardBorderRadius),
+        decoration: ShapeDecoration(color: context.palette.card, shape: OneUITheme.cardShape),
         sliver: SliverPadding(
           padding: padding,
           sliver: SliverList.separated(
@@ -703,7 +703,7 @@ class _ValueRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      customBorder: SquircleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Row(
@@ -712,7 +712,7 @@ class _ValueRow extends StatelessWidget {
               width: 40,
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: leading ?? (icon == null ? null : Icon(icon, size: 24)),
+                child: leading ?? (icon == null ? null : Icon(icon, size: 26)),
               ),
             ),
             Expanded(

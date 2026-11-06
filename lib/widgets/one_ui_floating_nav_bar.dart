@@ -222,7 +222,7 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
                       verticalPadding: 0,
                       settings: settings,
                       quality: quality,
-                      iconSize: 26,
+                      iconSize: 28,
                       labelFontSize: 12,
                       selectedIconColor: palette.textPrimary,
                       selectedLabelColor: palette.textPrimary,
@@ -289,7 +289,7 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
                         child: Icon(
                           isSelected ? item.activeIcon : item.inactiveIcon,
                           key: ValueKey(isSelected),
-                          size: 26,
+                          size: 28,
                           color: color,
                         ),
                       ),

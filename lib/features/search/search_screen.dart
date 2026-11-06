@@ -233,7 +233,7 @@ class _Card extends StatelessWidget {
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 12),
       padding: padding,
-      decoration: BoxDecoration(color: context.palette.card, borderRadius: OneUITheme.cardBorderRadius),
+      decoration: ShapeDecoration(color: context.palette.card, shape: OneUITheme.cardShape),
       clipBehavior: Clip.antiAlias,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
     );
@@ -353,7 +353,7 @@ class _CardSliver extends StatelessWidget {
     return SliverPadding(
       padding: const EdgeInsets.only(bottom: 12),
       sliver: DecoratedSliver(
-        decoration: BoxDecoration(color: context.palette.card, borderRadius: OneUITheme.cardBorderRadius),
+        decoration: ShapeDecoration(color: context.palette.card, shape: OneUITheme.cardShape),
         sliver: SliverList.builder(itemCount: itemCount, itemBuilder: itemBuilder),
       ),
     );

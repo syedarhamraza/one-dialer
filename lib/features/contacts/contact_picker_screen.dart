@@ -34,7 +34,7 @@ Future<(DialerContact, String)?> pickContactNumber(BuildContext context, {String
         // Rows like the contact page's number rows: the number, its label below.
         for (final (i, n) in contact.numbers.indexed)
           InkWell(
-            borderRadius: BorderRadius.circular(16),
+            customBorder: SquircleBorder(borderRadius: BorderRadius.circular(16)),
             onTap: () => Navigator.pop(ctx, n),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
