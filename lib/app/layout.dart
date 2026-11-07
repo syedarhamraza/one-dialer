@@ -2,19 +2,53 @@ import 'package:flutter/widgets.dart';
 
 import '../core/prefs/dialer_prefs.dart';
 
-/// Height of the floating nav bar and its round action (OneSpend's was 60; 66 matches ColorOS 17's
-/// next to header pills of the same size).
-const double kFloatingNavBarHeight = 66;
+/// Height of the floating nav bar and its round action (OneSpend's was 60), before
+/// Settings › Display size's nav bar size ([navBarScale]).
+const double kFloatingNavBarHeight = 58;
 
-/// Height of a tab's top bar (under the status bar), where its round header buttons sit.
+/// Height of a tab's top bar (under the status bar), where its round header buttons sit, before
+/// Settings › Display size's top buttons size; read it through [headerBarHeight].
 const double kHeaderBarHeight = 60;
+
+/// Settings › Display size › Navigation bar: how much bigger the nav bar and its round buttons draw.
+double navBarScale(BuildContext context) {
+  context.dependOnInheritedWidgetOfExactType<_ComponentSizes>();
+  return DialerPrefs.instance.navBarSize.value;
+}
+
+/// Settings › Display size › Top buttons: how much bigger the Calls and Contacts header pills draw.
+double headerScale(BuildContext context) {
+  context.dependOnInheritedWidgetOfExactType<_ComponentSizes>();
+  return DialerPrefs.instance.headerSize.value;
+}
+
+double headerBarHeight(BuildContext context) => kHeaderBarHeight * headerScale(context);
+
+/// Draws [child] [scale] times bigger, keeping it centred and as wide as its parent: it's laid out
+/// that much narrower, then scaled up.
+Widget scaledToWidth(double scale, Widget child) => scale == 1
+    ? child
+    : LayoutBuilder(
+        builder: (context, box) => OverflowBox(
+          minWidth: box.maxWidth / scale,
+          maxWidth: box.maxWidth / scale,
+          child: Transform.scale(scale: scale, child: child),
+        ),
+      );
+
+/// Rebuilds whoever reads [navBarScale] or [headerScale] when the user changes them.
+class _ComponentSizes extends InheritedNotifier<Listenable> {
+  const _ComponentSizes({required super.notifier, required super.child});
+}
+
+final _componentSizes = Listenable.merge([DialerPrefs.instance.navBarSize, DialerPrefs.instance.headerSize]);
 
 /// Gap between the bottom floating bars and the safe area, shared so they line up.
 const double kNavBarVerticalPadding = 8;
 
 /// Bottom padding that keeps list content clear of the floating nav bar.
 double navBarClearance(BuildContext context) =>
-    MediaQuery.paddingOf(context).bottom + kFloatingNavBarHeight + kNavBarVerticalPadding + 16;
+    MediaQuery.paddingOf(context).bottom + kFloatingNavBarHeight * navBarScale(context) + kNavBarVerticalPadding + 16;
 
 /// Lays both engines out at the width the app is designed on (a vivo at 420 dp) and scales them
 /// to the screen, so every phone shows the same proportions: a 360 dp phone smaller, a 448 dp one
@@ -30,8 +64,10 @@ class DesignWidth extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) =>
-      ValueListenableBuilder(valueListenable: DialerPrefs.instance.displaySize, builder: _scaled);
+  Widget build(BuildContext context) => _ComponentSizes(
+    notifier: _componentSizes,
+    child: ValueListenableBuilder(valueListenable: DialerPrefs.instance.displaySize, builder: _scaled),
+  );
 
   Widget _scaled(BuildContext context, double size, Widget? _) {
     final media = MediaQuery.of(context);

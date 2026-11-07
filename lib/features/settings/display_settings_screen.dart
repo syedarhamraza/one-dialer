@@ -76,8 +76,9 @@ class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
   }
 }
 
-/// ColorOS's Display size: a stepped slider between a small and a big "A". The app rescales
-/// only when the finger lifts, so the slider doesn't move under it while dragging.
+/// ColorOS's Display size: stepped sliders between a small and a big "A", for the whole app,
+/// the top buttons and the nav bar. Each applies when the finger lifts, so a slider doesn't
+/// move under it while dragging.
 class _DisplaySizeCard extends StatefulWidget {
   const _DisplaySizeCard();
 
@@ -86,35 +87,49 @@ class _DisplaySizeCard extends StatefulWidget {
 }
 
 class _DisplaySizeCardState extends State<_DisplaySizeCard> {
-  late int _step = DialerPrefs.displaySizes.indexOf(DialerPrefs.instance.displaySize.value);
+  static final _prefs = DialerPrefs.instance;
+  late final _steps = {
+    for (final n in [_prefs.displaySize, _prefs.headerSize, _prefs.navBarSize])
+      n: DialerPrefs.displaySizes.indexOf(n.value),
+  };
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final labels = [l10n.displaySizeSmall, l10n.displaySizeDefault, l10n.displaySizeLarge, l10n.displaySizeLarger];
+    final labels = [
+      l10n.displaySizeSmall,
+      l10n.displaySizeDefault,
+      l10n.displaySizeLarge,
+      l10n.displaySizeLarger,
+      l10n.displaySizeLargest,
+    ];
     final faint = context.palette.textSecondary;
-    return OneUIGroupCard(
-      items: [
-        OneUIGroupItem(
-          title: l10n.displaySize,
-          value: labels[_step],
-          customSubtitle: Row(
-            children: [
-              Text('A', style: TextStyle(fontSize: 13, color: faint)),
-              Expanded(
-                child: Slider(
-                  value: _step.toDouble(),
-                  max: labels.length - 1.0,
-                  divisions: labels.length - 1,
-                  activeColor: OneUITheme.accentGreen,
-                  onChanged: (v) => setState(() => _step = v.round()),
-                  onChangeEnd: (v) => DialerPrefs.instance.setDisplaySize(DialerPrefs.displaySizes[v.round()]),
-                ),
-              ),
-              Text('A', style: TextStyle(fontSize: 20, color: faint)),
-            ],
+    OneUIGroupItem row(String title, ValueNotifier<double> notifier) => OneUIGroupItem(
+      title: title,
+      value: labels[_steps[notifier]!],
+      customSubtitle: Row(
+        children: [
+          Text('A', style: TextStyle(fontSize: 13, color: faint)),
+          Expanded(
+            child: Slider(
+              value: _steps[notifier]!.toDouble(),
+              max: labels.length - 1.0,
+              divisions: labels.length - 1,
+              activeColor: OneUITheme.accentGreen,
+              onChanged: (v) => setState(() => _steps[notifier] = v.round()),
+              onChangeEnd: (v) => _prefs.setSize(notifier, DialerPrefs.displaySizes[v.round()]),
+            ),
           ),
-        ),
+          Text('A', style: TextStyle(fontSize: 20, color: faint)),
+        ],
+      ),
+    );
+    return OneUIGroupCard(
+      headerTitle: l10n.displaySize,
+      items: [
+        row(l10n.displaySizeApp, _prefs.displaySize),
+        row(l10n.displaySizeHeader, _prefs.headerSize),
+        row(l10n.displaySizeNavBar, _prefs.navBarSize),
       ],
     );
   }

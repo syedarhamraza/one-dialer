@@ -1318,6 +1318,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get displaySizeLarger => 'Larger';
 
   @override
+  String get displaySizeLargest => 'Largest';
+
+  @override
+  String get displaySizeApp => 'App';
+
+  @override
+  String get displaySizeHeader => 'Top buttons';
+
+  @override
+  String get displaySizeNavBar => 'Navigation bar';
+
+  @override
   String get reduceVisualEffectsSubtitle =>
       'Less blur runs smoother on slower phones';
 

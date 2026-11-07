@@ -1332,6 +1332,18 @@ class AppLocalizationsIt extends AppLocalizations {
   String get displaySizeLarger => 'Più grandi';
 
   @override
+  String get displaySizeLargest => 'Massime';
+
+  @override
+  String get displaySizeApp => 'App';
+
+  @override
+  String get displaySizeHeader => 'Pulsanti in alto';
+
+  @override
+  String get displaySizeNavBar => 'Barra di navigazione';
+
+  @override
   String get reduceVisualEffectsSubtitle =>
       'Meno sfocatura, più fluidità sui telefoni lenti';
 

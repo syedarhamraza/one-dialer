@@ -297,10 +297,10 @@ class _RecentsScreenState extends State<RecentsScreen> {
             backgroundColor: Colors.transparent,
             // The page's top blur sits behind the header's pills, not over them.
             // Ends at the bar's bottom: the big title right under it stays sharp.
-            flexibleSpace: OneUIStatusBarScrim(height: MediaQuery.paddingOf(context).top + kHeaderBarHeight),
+            flexibleSpace: OneUIStatusBarScrim(height: MediaQuery.paddingOf(context).top + headerBarHeight(context)),
             surfaceTintColor: Colors.transparent,
             scrolledUnderElevation: 0,
-            toolbarHeight: kHeaderBarHeight,
+            toolbarHeight: headerBarHeight(context),
             // The glass press stretches the pills past the bar; don't cut it off.
             clipBehavior: Clip.none,
             titleSpacing: 0,
@@ -330,7 +330,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
                       text: context.l10n.navCalls,
                       hidden: selecting || number.isNotEmpty,
                     ),
-                    controls,
+                    scaledToWidth(headerScale(context), controls),
                   ],
                 );
               },

@@ -191,19 +191,26 @@ class DialerPrefs {
   /// buttons; menus and modals stay frosted) or `navbar` (the nav bar only).
   final liquidScope = ValueNotifier('all');
 
-  /// Settings › Display & effects › "Display size": one of [displaySizes], multiplying
-  /// `DesignWidth`'s scale in both engines (loaded with [loadAppearance] and [loadCallEffects]).
+  /// Settings › Display & effects › Display size, each one of [displaySizes] (loaded with
+  /// [loadAppearance] and [loadCallEffects]): the whole app, multiplying `DesignWidth`'s scale in
+  /// both engines; the nav bar (`navBarScale`); the Calls and Contacts header pills (`headerScale`).
   final displaySize = ValueNotifier(1.0);
-  static const displaySizes = [0.9, 1.0, 1.1, 1.2];
+  final navBarSize = ValueNotifier(1.0);
+  final headerSize = ValueNotifier(1.0);
+  static const displaySizes = [0.9, 1.0, 1.1, 1.2, 1.3];
+
+  late final _sizeKeys = {displaySize: 'display_size', navBarSize: 'nav_bar_size', headerSize: 'header_size'};
 
   Future<void> _loadDisplaySize() async {
-    final size = await _prefs.getDouble('display_size');
-    if (displaySizes.contains(size)) displaySize.value = size!;
+    for (final MapEntry(key: notifier, value: key) in _sizeKeys.entries) {
+      final size = await _prefs.getDouble(key);
+      if (displaySizes.contains(size)) notifier.value = size!;
+    }
   }
 
-  Future<void> setDisplaySize(double value) async {
-    displaySize.value = value;
-    await _prefs.setDouble('display_size', value);
+  Future<void> setSize(ValueNotifier<double> notifier, double value) async {
+    notifier.value = value;
+    await _prefs.setDouble(_sizeKeys[notifier]!, value);
   }
 
   /// Awaited before the first frame, so the app doesn't open dark and then turn light, or

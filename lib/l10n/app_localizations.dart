@@ -2312,6 +2312,30 @@ abstract class AppLocalizations {
   /// **'Larger'**
   String get displaySizeLarger;
 
+  /// No description provided for @displaySizeLargest.
+  ///
+  /// In en, this message translates to:
+  /// **'Largest'**
+  String get displaySizeLargest;
+
+  /// No description provided for @displaySizeApp.
+  ///
+  /// In en, this message translates to:
+  /// **'App'**
+  String get displaySizeApp;
+
+  /// No description provided for @displaySizeHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Top buttons'**
+  String get displaySizeHeader;
+
+  /// No description provided for @displaySizeNavBar.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation bar'**
+  String get displaySizeNavBar;
+
   /// No description provided for @reduceVisualEffectsSubtitle.
   ///
   /// In en, this message translates to:
