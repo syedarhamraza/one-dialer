@@ -16,7 +16,7 @@ typedef CosAction<T> = ({String label, T value, bool destructive});
 Future<T?> showCosActions<T>(
   BuildContext context, {
   String? title,
-  required String message,
+  String? message,
   required List<CosAction<T>> actions,
 }) => showCosCard<T>(
   context,
@@ -182,9 +182,17 @@ class _Frame extends StatelessWidget {
               // a frame on Adreno. The glass is on the buttons.
               child: DecoratedBox(
                 decoration: _card(context.palette),
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: Padding(padding: EdgeInsets.fromLTRB(20, flat ? 28 : 30, 20, 20), child: child),
+                // Dark at full effects: the pills' edge glow on the card's rim (a painter, no blur).
+                position: DecorationPosition.background,
+                child: DecoratedBox(
+                  position: DecorationPosition.foreground,
+                  decoration: !context.palette.isLight && OneUIEffectsController.instance.isFull
+                      ? glassGlow(_shape, edges: mainGlass(context).edges)
+                      : const BoxDecoration(),
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: Padding(padding: EdgeInsets.fromLTRB(20, flat ? 28 : 30, 20, 20), child: child),
+                  ),
                 ),
               ),
             ),
@@ -196,29 +204,28 @@ class _Frame extends StatelessWidget {
 }
 
 class _Texts extends StatelessWidget {
-  const _Texts({this.title, required this.message});
+  const _Texts({this.title, this.message});
 
   final String? title;
-  final String message;
+  final String? message;
 
   @override
   Widget build(BuildContext context) {
     final flat = _flat(context);
     return Column(
       children: [
-        if (title != null) ...[
-          Text(title!, textAlign: TextAlign.center, style: _titleStyle(context)),
-          SizedBox(height: flat ? 8 : 10),
-        ],
-        Text(
-          message,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: title == null ? 18 : (flat ? 15.5 : 15),
-            height: flat ? 1.35 : 1.4,
-            color: title == null ? context.palette.textPrimary : context.palette.textSecondary,
+        if (title != null) Text(title!, textAlign: TextAlign.center, style: _titleStyle(context)),
+        if (title != null && message != null) SizedBox(height: flat ? 8 : 10),
+        if (message != null)
+          Text(
+            message!,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: title == null ? 18 : (flat ? 15.5 : 15),
+              height: flat ? 1.35 : 1.4,
+              color: title == null ? context.palette.textPrimary : context.palette.textSecondary,
+            ),
           ),
-        ),
       ],
     );
   }

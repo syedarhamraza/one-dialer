@@ -351,17 +351,18 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
     return choice == true && _active;
   }
 
-  /// "Save your changes or discard them?" on back with unsaved changes.
+  /// "Save your edits?" on back with unsaved changes.
   Future<void> _confirmLeave() async {
     _confirming = true;
     final choice = await showCosActions<String?>(
       context,
-      message: context.l10n.saveOrDiscard,
+      title: context.l10n.saveOrDiscard,
+      // Back or a tap outside keeps editing. Saving needs the form loaded; until then Discard | Cancel.
       actions: [
-        // Saving needs the form loaded; until then only Discard and Cancel make sense.
-        if (_loadReady.value) (label: context.l10n.save, value: 'save', destructive: false),
-        (label: context.l10n.discard, value: 'discard', destructive: true),
-        (label: context.l10n.cancel, value: null, destructive: false),
+        (label: context.l10n.discard, value: 'discard', destructive: false),
+        _loadReady.value
+            ? (label: context.l10n.save, value: 'save', destructive: false)
+            : (label: context.l10n.cancel, value: null, destructive: false),
       ],
     );
     _confirming = false;
