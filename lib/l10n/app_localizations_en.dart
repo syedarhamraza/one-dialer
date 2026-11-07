@@ -820,6 +820,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newContact => 'New contact';
 
   @override
+  String get addToExistingContact => 'Add to existing contact';
+
+  @override
   String get editContact => 'Edit contact';
 
   @override

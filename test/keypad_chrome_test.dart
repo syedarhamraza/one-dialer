@@ -77,17 +77,20 @@ void main() {
     expect(open_.value, isFalse);
   });
 
-  testWidgets('typing morphs All | Missed into Add to Contacts and back', (tester) async {
+  testWidgets('typing swaps the Calls header for the number and offers to save it', (tester) async {
     await open(tester);
     final input = tester.widget<KeypadScreen>(find.byType(KeypadScreen)).input;
     expect(find.text('Missed').hitTestable(), findsOneWidget);
     input.value = '5';
     await tester.pumpAndSettle();
-    expect(find.byTooltip('Add to Contacts').hitTestable(), findsOneWidget);
     expect(find.text('Missed').hitTestable(), findsNothing);
+    expect(find.byType(TextField), findsOneWidget);
+    expect(find.text('New contact').hitTestable(), findsOneWidget);
+    expect(find.text('Add to existing contact').hitTestable(), findsOneWidget);
     input.value = '';
     await tester.pumpAndSettle();
     expect(find.text('Missed').hitTestable(), findsOneWidget);
+    expect(find.byType(TextField), findsNothing);
   });
 
   testWidgets('selecting morphs the header into Cancel and Select all, and back', (tester) async {

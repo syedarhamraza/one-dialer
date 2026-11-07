@@ -35,9 +35,32 @@ data class NumberDisplay(val formatted: String?, val location: String?) {
             )
         }
 
+        /** The keypad's number grouped as it's typed ("0333 333"), like Android's own dialer. */
+        fun asYouType(context: Context, number: String): String = asYouType(homeRegion(context), number)
+
+        fun asYouType(home: String, number: String): String {
+            val formatter = PhoneNumberUtil.getInstance().getAsYouTypeFormatter(home)
+            var out = number
+            for (c in number) out = formatter.inputDigit(c)
+            return out
+        }
+
+        /** Loads the home region's number data off the main thread, so the first typed digit doesn't wait for it. */
+        fun preload(context: Context) {
+            Thread { asYouType(context, "0") }.start()
+        }
+
+        // shortcut: looked up once per process (a call into the phone service); a SIM from another country
+        // swapped in while the app runs keeps the old grouping until restart.
+        @Volatile private var home: String? = null
+
         private fun homeRegion(context: Context): String {
+            home?.let { return it }
             val telephony = context.getSystemService(TelephonyManager::class.java)
-            return listOfNotNull(telephony?.simCountryIso, telephony?.networkCountryIso, Locale.getDefault().country)
+            val sim = telephony?.simCountryIso?.takeIf { it.isNotBlank() }?.uppercase(Locale.ROOT)
+            // Only the SIM's country is kept; the fallbacks are asked again until the SIM is ready.
+            if (sim != null) return sim.also { home = it }
+            return listOfNotNull(telephony?.networkCountryIso, Locale.getDefault().country)
                 .firstOrNull { it.isNotBlank() }?.uppercase(Locale.ROOT) ?: "ZZ"
         }
     }

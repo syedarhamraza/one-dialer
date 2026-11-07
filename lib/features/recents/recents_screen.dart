@@ -20,7 +20,6 @@ import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_status_bar_scrim.dart';
 import '../../widgets/round_header_controls.dart';
 import '../../widgets/place_call.dart';
-import '../contacts/editor/add_to_contacts.dart';
 import '../in_call/call_controls.dart';
 import '../keypad/keypad_screen.dart';
 import '../settings/settings_screen.dart';
@@ -53,7 +52,6 @@ class _RecentsScreenState extends State<RecentsScreen> {
   static final _noInput = ValueNotifier('');
   final _repo = CallLogRepository.instance;
   final _menuKey = GlobalKey();
-  final _addKey = GlobalKey();
   CallFilter _filter = CallFilter.all;
 
   /// Only calls VoIP apps (WhatsApp...) shared with the call log; combines with All/Missed.
@@ -63,6 +61,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
 
   /// Bumped when the selection changes but selection mode doesn't, so only the
   /// header count and the visible rows' checkboxes rebuild, not the whole list.
+  final _headerKey = GlobalKey();
   final _selectionChanged = ValueNotifier(0);
 
   /// The big "Calls" going under the header, where a small one takes over.
@@ -325,19 +324,14 @@ class _RecentsScreenState extends State<RecentsScreen> {
               builder: (context, _) {
                 final number = (widget.dialInput ?? _noInput).value;
                 final controls = _HeaderControls(
-                  typing: number.isNotEmpty,
                   selecting: selecting,
                   filterIndex: _filter == CallFilter.missed ? 1 : 0,
                   onFilter: (i) => setState(() => _filter = i == 1 ? CallFilter.missed : CallFilter.all),
-                  onAdd: () => showAddToContacts(context, number, anchorKey: _addKey),
-                  addKey: _addKey,
                   allSelected: _allSelected,
                   onToggleSelectAll: _toggleSelectAll,
                   onCancel: _endSelection,
                   menuKey: _menuKey,
-                  menuItems: () => number.isEmpty
-                      ? _menuItems()
-                      : keypadMenuItems(context, input: widget.dialInput!, open: widget.keypadOpen!),
+                  menuItems: _menuItems,
                 );
                 return LayoutBuilder(
                   builder: (context, box) {
@@ -359,7 +353,25 @@ class _RecentsScreenState extends State<RecentsScreen> {
                           centered: true,
                           hidden: !selecting,
                         ),
-                        scaledToWidth(scale, controls),
+                        // While typing the keypad's number takes the header's place (ColorOS). Faded
+                        // only mid-change: at rest the glass has no opacity layer over it (which would
+                        // cut it off from the shared blur), and while typing it isn't built at all.
+                        IgnorePointer(
+                          ignoring: number.isNotEmpty,
+                          child: TweenAnimationBuilder<double>(
+                            tween: Tween(end: number.isEmpty ? 1 : 0),
+                            duration: MediaQuery.disableAnimationsOf(context)
+                                ? Duration.zero
+                                : const Duration(milliseconds: 220),
+                            // Keyed so moving in and out of the fade keeps their state.
+                            child: KeyedSubtree(key: _headerKey, child: scaledToWidth(scale, controls)),
+                            builder: (context, t, controls) => switch (t) {
+                              1 => controls!,
+                              0 => const SizedBox.shrink(),
+                              _ => Opacity(opacity: t, child: controls),
+                            },
+                          ),
+                        ),
                       ],
                     );
                   },
@@ -496,20 +508,16 @@ class _RecentsScreenState extends State<RecentsScreen> {
   }
 }
 
-/// The Calls header, one set of glass controls that morph between three states
+/// The Calls header, one set of glass controls that morph between two states
 /// instead of swapping:
 /// - normal: All | Missed centred, search and menu on the right;
-/// - typing: the pill shrinks and slides into a round Add to Contacts beside search;
 /// - selecting: the pill slides to the left edge and becomes Cancel, search slides into
 ///   menu and fades, and menu grows into Select all / Deselect all (ColorOS).
 class _HeaderControls extends StatelessWidget {
   const _HeaderControls({
-    required this.typing,
     required this.selecting,
     required this.filterIndex,
     required this.onFilter,
-    required this.onAdd,
-    required this.addKey,
     required this.allSelected,
     required this.onToggleSelectAll,
     required this.onCancel,
@@ -517,12 +525,9 @@ class _HeaderControls extends StatelessWidget {
     required this.menuItems,
   });
 
-  final bool typing;
   final bool selecting;
   final int filterIndex;
   final ValueChanged<int> onFilter;
-  final VoidCallback onAdd;
-  final GlobalKey addKey;
   final bool allSelected;
   final VoidCallback onToggleSelectAll;
   final VoidCallback onCancel;
@@ -581,7 +586,6 @@ class _HeaderControls extends StatelessWidget {
           final w = box.maxWidth;
           final menuLeft = w - _edge - _button;
           final searchLeft = menuLeft - _gap - _button;
-          final addLeft = searchLeft - _gap - _button;
           final tabsLeft = tabsLeftFor(w);
           final cancelWidth = SelectionPillLabel.widthFor(context, context.l10n.cancel);
           final selectAllWidth = SelectionPillLabel.widthFor(
@@ -675,72 +679,52 @@ class _HeaderControls extends StatelessWidget {
                     ),
                   ),
                 ),
-                // The lead pill: All | Missed, Add to Contacts, or Cancel.
-                _morph(context, typing && !selecting, (typ) {
-                  final width = _lerp(
-                    _lerp(tabs.width, _button, typ),
-                    cancelWidth,
-                    sel,
-                  ).clamp(_button - 6, tabs.width + 6);
-                  final left = _lerp(_lerp(tabsLeft, addLeft, typ), _edge, sel);
-                  return Positioned(
-                    left: left,
-                    width: width,
-                    height: _button,
-                    child: CallGlass(
-                      radius: _button / 2,
-                      // Clipped only mid-morph, so the tab highlight can still swing past the edge at rest.
-                      child: ClipRSuperellipse(
-                        borderRadius: const BorderRadius.all(Radius.circular(_button / 2)),
-                        clipBehavior: typ == 0 && sel == 0 ? Clip.none : Clip.antiAlias,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            IgnorePointer(
-                              ignoring: typing || selecting,
-                              child: Opacity(
-                                opacity: _out(typ) * _out(sel),
-                                child: OverflowBox(
-                                  minWidth: tabs.width,
-                                  maxWidth: tabs.width,
-                                  child: FilterTabs(
-                                    labels: [context.l10n.all, context.l10n.recentsFilterMissed],
-                                    index: filterIndex,
-                                    onChanged: onFilter,
-                                    bare: true,
-                                  ),
+                // The lead pill: All | Missed, or Cancel.
+                Positioned(
+                  left: _lerp(tabsLeft, _edge, sel),
+                  width: _lerp(tabs.width, cancelWidth, sel).clamp(_button - 6, tabs.width + 6),
+                  height: _button,
+                  child: CallGlass(
+                    radius: _button / 2,
+                    // Clipped only mid-morph, so the tab highlight can still swing past the edge at rest.
+                    child: ClipRSuperellipse(
+                      borderRadius: const BorderRadius.all(Radius.circular(_button / 2)),
+                      clipBehavior: sel == 0 ? Clip.none : Clip.antiAlias,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          IgnorePointer(
+                            ignoring: selecting,
+                            child: Opacity(
+                              opacity: _out(sel),
+                              child: OverflowBox(
+                                minWidth: tabs.width,
+                                maxWidth: tabs.width,
+                                child: FilterTabs(
+                                  labels: [context.l10n.all, context.l10n.recentsFilterMissed],
+                                  index: filterIndex,
+                                  onChanged: onFilter,
+                                  bare: true,
                                 ),
                               ),
                             ),
-                            IgnorePointer(
-                              ignoring: !typing || selecting,
-                              child: Opacity(
-                                opacity: _in(typ) * _out(sel),
-                                child: _glassIcon(
-                                  key: addKey,
-                                  icon: Icons.person_add_alt_rounded,
-                                  tooltip: context.l10n.addToContacts,
-                                  onTap: onAdd,
-                                ),
+                          ),
+                          IgnorePointer(
+                            ignoring: !selecting,
+                            child: Opacity(
+                              opacity: _in(sel),
+                              child: OverflowBox(
+                                minWidth: cancelWidth,
+                                maxWidth: cancelWidth,
+                                child: SelectionPillLabel(text: context.l10n.cancel, onTap: onCancel),
                               ),
                             ),
-                            IgnorePointer(
-                              ignoring: !selecting,
-                              child: Opacity(
-                                opacity: _in(sel),
-                                child: OverflowBox(
-                                  minWidth: cancelWidth,
-                                  maxWidth: cancelWidth,
-                                  child: SelectionPillLabel(text: context.l10n.cancel, onTap: onCancel),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
-                  );
-                }),
+                  ),
+                ),
               ],
             ),
           );

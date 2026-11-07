@@ -112,6 +112,10 @@ class TelecomBridge {
     return [for (final m in raw ?? const []) (formatted: m['formatted'] as String?, location: m['location'] as String?)];
   }
 
+  /// The keypad's number grouped as it's typed ("0333 333"); digits and a leading + only.
+  Future<String> formatAsYouType(String number) async =>
+      await _methods.invokeMethod<String>('formatAsYouType', {'number': number}) ?? number;
+
   Future<void> setRingtone(String contactId, String? uri) =>
       _methods.invokeMethod('setRingtone', {'contactId': contactId, 'uri': uri});
 

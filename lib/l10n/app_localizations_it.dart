@@ -826,6 +826,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get newContact => 'Nuovo contatto';
 
   @override
+  String get addToExistingContact => 'Aggiungi a contatto esistente';
+
+  @override
   String get editContact => 'Modifica contatto';
 
   @override

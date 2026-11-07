@@ -211,6 +211,7 @@
   "showLess": "Mostra meno",
   "showMore": "Mostra altro",
   "newContact": "Nuovo contatto",
+  "addToExistingContact": "Aggiungi a contatto esistente",
   "editContact": "Modifica contatto",
   "couldNotLoadAccounts": "Impossibile caricare gli account",
   "loadingAccounts": "Caricamento account…",

@@ -1364,6 +1364,12 @@ abstract class AppLocalizations {
   /// **'New contact'**
   String get newContact;
 
+  /// No description provided for @addToExistingContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to existing contact'**
+  String get addToExistingContact;
+
   /// No description provided for @editContact.
   ///
   /// In en, this message translates to:
