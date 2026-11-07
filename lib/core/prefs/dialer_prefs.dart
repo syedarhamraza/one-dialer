@@ -192,8 +192,9 @@ class DialerPrefs {
   final liquidScope = ValueNotifier('all');
 
   /// Settings › Display & effects › Display size, each one of [displaySizes] (loaded with
-  /// [loadAppearance] and [loadCallEffects]): the whole app, multiplying `DesignWidth`'s scale in
-  /// both engines (the top buttons keep their size, see `headerScale`); the nav bar (`navBarScale`).
+  /// [loadAppearance], in the main engine only: the call screen keeps its own size): the pages,
+  /// multiplying `DesignWidth`'s scale (the top buttons keep their size, see `headerScale`); the
+  /// nav bar (`navBarScale`).
   final displaySize = ValueNotifier(1.0);
   final navBarSize = ValueNotifier(1.0);
   static const displaySizes = [0.9, 1.0, 1.1, 1.2];
@@ -295,7 +296,6 @@ class DialerPrefs {
   final answerDirection = ValueNotifier('up');
 
   Future<void> loadCallEffects() async {
-    await _loadDisplaySize();
     final effects = await _prefs.getString('call_effects');
     if (effects == null) callEffects.value = await _effectsDefault();
     if (effects == 'full' || effects == 'reduced' || effects == 'off') callEffects.value = effects!;

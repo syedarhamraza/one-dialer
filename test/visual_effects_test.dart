@@ -31,7 +31,8 @@ void main() {
     Object? tier = 'off';
     messenger.setMockMethodCallHandler(
       channel,
-      (call) async => call.method == 'effectsDefault' ? {'tier': tier, 'source': 'soc', 'soc': 'Mediatek MT6765'} : null,
+      (call) async =>
+          call.method == 'effectsDefault' ? {'tier': tier, 'source': 'soc', 'soc': 'Mediatek MT6765'} : null,
     );
     addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
 
@@ -49,6 +50,18 @@ void main() {
     await prefs.loadAppearance();
     await prefs.loadCallEffects();
     expect((prefs.visualEffects.value, prefs.callEffects.value), ('full', 'full'));
+  });
+
+  test('the call screen engine leaves the display sizes alone', () async {
+    await prefs.setSize(prefs.displaySize, 1.2);
+    await prefs.setSize(prefs.navBarSize, 1.2);
+    prefs.displaySize.value = prefs.navBarSize.value = 1;
+    await prefs.loadCallEffects(); // all the call screen's engine loads
+    expect((prefs.displaySize.value, prefs.navBarSize.value), (1, 1));
+    await prefs.loadAppearance(); // the main engine
+    expect((prefs.displaySize.value, prefs.navBarSize.value), (1.2, 1.2));
+    await prefs.setSize(prefs.displaySize, 1);
+    await prefs.setSize(prefs.navBarSize, 1);
   });
 
   test('the glass style is saved, reloaded, and unknown values are ignored', () async {
