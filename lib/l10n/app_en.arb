@@ -482,7 +482,7 @@
     }
   },
   "saveAnyway": "Save anyway",
-  "saveOrDiscard": "Save your changes or discard them?",
+  "saveOrDiscard": "Save your edits?",
   "couldNotLoadContactRetry": "Couldn't load the contact. Retry",
   "email": "Email",
   "addEmail": "Add email",

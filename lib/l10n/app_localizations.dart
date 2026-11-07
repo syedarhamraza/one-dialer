@@ -1301,7 +1301,7 @@ abstract class AppLocalizations {
   /// No description provided for @saveOrDiscard.
   ///
   /// In en, this message translates to:
-  /// **'Save your changes or discard them?'**
+  /// **'Save your edits?'**
   String get saveOrDiscard;
 
   /// No description provided for @couldNotLoadContactRetry.

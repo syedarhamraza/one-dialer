@@ -37,14 +37,26 @@ class EditorRow extends StatelessWidget {
     return ConstrainedBox(
       constraints: const BoxConstraints(minHeight: 60),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        // Icon and trailing stay level with the first line when the row grows (expanded name).
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
             width: 56,
+            height: 60,
             child: icon == null ? null : Icon(icon, size: 24, color: iconColor ?? context.palette.textPrimary),
           ),
-          Expanded(child: child),
-          SizedBox(width: 48, child: trailing),
+          Expanded(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 60),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [child],
+              ),
+            ),
+          ),
+          SizedBox(width: 48, height: 60, child: trailing == null ? null : Center(child: trailing)),
         ],
       ),
     );
@@ -96,7 +108,7 @@ class EditorField extends StatelessWidget {
         hintText: hint,
         hintStyle: TextStyle(fontSize: 18, color: context.palette.textTertiary),
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(vertical: 19),
         enabledBorder: divider ? _hairline : InputBorder.none,
         focusedBorder: divider ? _hairline : InputBorder.none,
       ),

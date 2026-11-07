@@ -792,7 +792,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get saveAnyway => 'Salva comunque';
 
   @override
-  String get saveOrDiscard => 'Salvare le modifiche o ignorarle?';
+  String get saveOrDiscard => 'Salvare le modifiche?';
 
   @override
   String get couldNotLoadContactRetry =>
