@@ -1318,9 +1318,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get displaySizeLarger => 'Larger';
 
   @override
-  String get displaySizeLargest => 'Largest';
-
-  @override
   String get displaySizeApp => 'App';
 
   @override

@@ -196,13 +196,15 @@ class DialerPrefs {
   /// both engines (the top buttons keep their size, see `headerScale`); the nav bar (`navBarScale`).
   final displaySize = ValueNotifier(1.0);
   final navBarSize = ValueNotifier(1.0);
-  static const displaySizes = [0.9, 1.0, 1.1, 1.2, 1.3];
+  static const displaySizes = [0.9, 1.0, 1.1, 1.2];
 
   late final _sizeKeys = {displaySize: 'display_size', navBarSize: 'nav_bar_size'};
 
   Future<void> _loadDisplaySize() async {
     for (final MapEntry(key: notifier, value: key) in _sizeKeys.entries) {
       final size = await _prefs.getDouble(key);
+      // A test build's Largest (1.3) comes back as the top step, Larger.
+      if (size != null && size > displaySizes.last) notifier.value = displaySizes.last;
       if (displaySizes.contains(size)) notifier.value = size!;
     }
   }

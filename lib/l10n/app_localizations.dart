@@ -2312,12 +2312,6 @@ abstract class AppLocalizations {
   /// **'Larger'**
   String get displaySizeLarger;
 
-  /// No description provided for @displaySizeLargest.
-  ///
-  /// In en, this message translates to:
-  /// **'Largest'**
-  String get displaySizeLargest;
-
   /// No description provided for @displaySizeApp.
   ///
   /// In en, this message translates to:

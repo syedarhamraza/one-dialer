@@ -95,13 +95,7 @@ class _DisplaySizeCardState extends State<_DisplaySizeCard> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final labels = [
-      l10n.displaySizeSmall,
-      l10n.displaySizeDefault,
-      l10n.displaySizeLarge,
-      l10n.displaySizeLarger,
-      l10n.displaySizeLargest,
-    ];
+    final labels = [l10n.displaySizeSmall, l10n.displaySizeDefault, l10n.displaySizeLarge, l10n.displaySizeLarger];
     final faint = context.palette.textSecondary;
     OneUIGroupItem row(String title, ValueNotifier<double> notifier) => OneUIGroupItem(
       title: title,
