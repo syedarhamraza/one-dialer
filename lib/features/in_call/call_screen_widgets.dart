@@ -113,7 +113,7 @@ abstract final class CallerLookup {
   static CallSnapshot? latest;
 
   static void start() {
-    final repo = ContactsRepository.instance;
+    final repo = ContactsRepository.instance..ignoreChanges = true;
     // Caller lookup must not prevent answering if a contacts provider is unavailable.
     repo.start().catchError((Object _) {});
     void prefetch() {
