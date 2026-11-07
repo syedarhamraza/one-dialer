@@ -29,7 +29,8 @@ double headerScale(BuildContext context) {
 double headerBarHeight(BuildContext context) => kHeaderBarHeight * headerScale(context);
 
 /// Draws [child] [scale] times bigger, keeping it centred and as wide as its parent: it's laid out
-/// that much narrower, then scaled up. Its height is the child's (an app bar title has no bound).
+/// that much narrower (and, in a bounded slot, shorter), then scaled up. Its height is the child's
+/// (an app bar title has no bound).
 Widget scaledToWidth(double scale, Widget child, {Alignment alignment = Alignment.center}) => scale == 1
     ? child
     : LayoutBuilder(
@@ -40,6 +41,10 @@ Widget scaledToWidth(double scale, Widget child, {Alignment alignment = Alignmen
             alignment: alignment,
             minWidth: box.maxWidth / scale,
             maxWidth: box.maxWidth / scale,
+            // The height too: a row in a slot already sized for [scale] (the contact editor's) would
+            // otherwise be squeezed into it and then scaled again.
+            minHeight: box.minHeight / scale,
+            maxHeight: box.maxHeight / scale,
             child: Transform.scale(scale: scale, alignment: alignment, child: child),
           ),
         ),

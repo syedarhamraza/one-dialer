@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dialer/app/layout.dart';
 import 'package:dialer/app/main_shell.dart';
 import 'package:dialer/core/contacts/contacts_repository.dart';
 import 'package:dialer/core/prefs/dialer_prefs.dart';
@@ -135,6 +136,27 @@ void main() {
       expect(find.text('Page'), findsNothing);
     });
   }
+
+  testWidgets('a top row in a slot sized for the App size keeps its height', (tester) async {
+    DialerPrefs.instance.displaySize.value = DialerPrefs.displaySizes.last;
+    addTearDown(() => DialerPrefs.instance.displaySize.value = 1);
+    const pill = Key('pill');
+    await open(
+      tester,
+      Builder(
+        // As the contact editor's Cancel | Done row: the slot is 48 dp at the top buttons size.
+        builder: (context) => Align(
+          alignment: Alignment.topCenter,
+          child: SizedBox(
+            height: 48 * headerScale(context),
+            child: const HeaderScaled(child: SizedBox(key: pill, height: 48)),
+          ),
+        ),
+      ),
+    );
+    // No DesignWidth here, so the row draws 48 dp / App size, not squeezed to that and then shrunk again.
+    expect(tester.getRect(find.byKey(pill)).height, moreOrLessEquals(48 / DialerPrefs.displaySizes.last, epsilon: .5));
+  });
 
   testWidgets('Calls search opens a page and Cancel closes it', (tester) async {
     await open(tester, const RecentsScreen());
