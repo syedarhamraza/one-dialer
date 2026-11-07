@@ -6,6 +6,7 @@ import 'package:flutter_contacts/flutter_contacts.dart';
 import '../../features/keypad/t9.dart';
 import '../../features/recents/call_log.dart';
 import '../prefs/dialer_prefs.dart';
+import '../telecom/telecom_bridge.dart';
 import '../diagnostics/lag_diagnostics.dart';
 
 /// A device contact. Usable directly as a T9 entry; only [ContactsRepository.allContacts]
@@ -93,11 +94,17 @@ class ContactsRepository {
 
   /// Reloads once a burst of changes settles.
   void reload() {
+    if (ignoreChanges) return;
     _reload?.cancel();
     _reload = Timer(const Duration(milliseconds: 400), _load);
   }
 
   Timer? _reload;
+
+  /// Set by the cached in-call engine: it keeps its first load. flutter_contacts encodes the whole
+  /// list on Android's main thread, which froze the app for seconds after every call (Android
+  /// rewrites contacts then). Telecom still names a contact saved since (CallInfo.name).
+  bool ignoreChanges = false;
 
   final _thumbnails = <String, Uint8List?>{};
   final _thumbnailLoads = <String, Future<Uint8List?>>{};
@@ -110,11 +117,17 @@ class ContactsRepository {
   Future<Uint8List?> thumbnail(String id) => _thumbnailLoads[id] ??= () async {
     try {
       final photo = (await FlutterContacts.get(id, properties: {ContactProperty.photoThumbnail}))?.photo?.thumbnail;
-      return _thumbnails[id] = photo;
+      return _thumbnails[id] = samePhoto(_thumbnails[id], photo);
     } on Object {
       return _thumbnails[id];
     }
   }();
+
+  /// [fresh], or [old] when the bytes are the same: MemoryImage compares bytes by identity, so a
+  /// new copy of an unchanged photo would decode it again in every visible row after a reload.
+  @visibleForTesting
+  static Uint8List? samePhoto(Uint8List? old, Uint8List? fresh) =>
+      old != null && fresh != null && listEquals(old, fresh) ? old : fresh;
 
   final _fullPhotos = <String, Future<Uint8List?>>{};
 
@@ -134,41 +147,12 @@ class ContactsRepository {
     try {
       _fullPhotos.clear();
       _thumbnailLoads.clear();
-      final all = await FlutterContacts.getAll(
-        properties: {
-          ContactProperty.name,
-          ContactProperty.phone,
-          ContactProperty.favorite,
-        },
-      );
       final prefs = DialerPrefs.instance;
-      final entries = <DialerContact>[];
-      for (final c in all) {
-        final phones = _uniquePhones(c.phones);
-        final display = c.displayName?.trim() ?? '';
-        final fallback = display.isNotEmpty ? display : (phones.isEmpty ? '' : phones.first.number);
-        if (c.id == null || fallback.isEmpty) continue;
-        final (name, sortKey) = displayNames(
-          first: c.name?.first,
-          middle: c.name?.middle,
-          last: c.name?.last,
-          fallback: fallback,
-          order: prefs.nameOrder.value,
-          sortBy: prefs.sortBy.value,
-        );
-        entries.add(
-          DialerContact(
-            id: c.id!,
-            name: name,
-            sortKey: sortKey,
-            numbers: [for (final p in phones) p.number],
-            labels: [for (final p in phones) _label(p.label)],
-            isFavorite: c.android?.isFavorite ?? false,
-            primaryIndex: phones.indexWhere((p) => p.isPrimary ?? false),
-            accounts: [for (final a in c.metadata?.accounts ?? const <Account>[]) '${a.type}|${a.name}'],
-          ),
-        );
-      }
+      final entries = entriesFrom(
+        await TelecomBridge.instance.getContacts(),
+        order: prefs.nameOrder.value,
+        sortBy: prefs.sortBy.value,
+      );
       entries.sort((a, b) => a.sortKey.compareTo(b.sortKey));
       final numbered = [
         for (final e in entries)
@@ -180,6 +164,46 @@ class ContactsRepository {
     } finally {
       LagDiagnostics.instance.action(DiagnosticAction.contactsLoad, elapsed: diagnosticTimer.elapsed);
     }
+  }
+
+  /// [DialerContact]s from `ContactsSource.kt`'s rows, unsorted.
+  @visibleForTesting
+  static List<DialerContact> entriesFrom(List<List<Object?>> rows, {required String order, required String sortBy}) {
+    final entries = <DialerContact>[];
+    for (final r in rows) {
+      final phones = _uniquePhones([
+        for (final p in (r[6] as List).cast<List<Object?>>())
+          Phone(
+            number: p[0] as String,
+            label: Label(PhoneLabel.values.asNameMap()[p[1]] ?? PhoneLabel.custom, p[2] as String?),
+            isPrimary: p[3] == true,
+          ),
+      ]);
+      final display = (r[1] as String?)?.trim() ?? '';
+      final fallback = display.isNotEmpty ? display : (phones.isEmpty ? '' : phones.first.number);
+      if (fallback.isEmpty) continue;
+      final (name, sortKey) = displayNames(
+        first: r[2] as String?,
+        middle: r[3] as String?,
+        last: r[4] as String?,
+        fallback: fallback,
+        order: order,
+        sortBy: sortBy,
+      );
+      entries.add(
+        DialerContact(
+          id: r[0] as String,
+          name: name,
+          sortKey: sortKey,
+          numbers: [for (final p in phones) p.number],
+          labels: [for (final p in phones) _label(p.label)],
+          isFavorite: r[5] == true,
+          primaryIndex: phones.indexWhere((p) => p.isPrimary ?? false),
+          accounts: (r[7] as List).cast<String>(),
+        ),
+      );
+    }
+    return entries;
   }
 
   /// The name to show in [order] (`first` or `last` first) and the sort key by [sortBy],

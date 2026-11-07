@@ -13,6 +13,9 @@ class TelecomBridge {
   static const _methods = MethodChannel('com.syedarhamraza.dialer/telecom');
   static const _events = EventChannel('com.syedarhamraza.dialer/call_state');
 
+  /// Big reads, answered off Android's main thread (see `CallBridge.readData`).
+  static const _data = MethodChannel('com.syedarhamraza.dialer/data');
+
   /// Fires when the app is opened from a `tel:` link while already running.
   void Function(String number)? onDialIntent;
 
@@ -169,7 +172,12 @@ class TelecomBridge {
   // Call log
   /// Newest first, up to 500 calls. Throws [PlatformException] `NO_PERMISSION` without call-log access.
   Future<List<Map<Object?, Object?>>> getCallLog() async =>
-      await _methods.invokeListMethod<Map<Object?, Object?>>('getCallLog') ?? const [];
+      await _data.invokeListMethod<Map<Object?, Object?>>('getCallLog') ?? const [];
+
+  /// Every contact, sorted by name: `[id, displayName, first, middle, last, starred,
+  /// [[number, label, customLabel, isPrimary]], ["type|name"]]` (`ContactsSource.kt`).
+  Future<List<List<Object?>>> getContacts() async =>
+      await _data.invokeListMethod<List<Object?>>('getContacts') ?? const [];
 
   Future<void> deleteCalls(List<int> ids) => _methods.invokeMethod('deleteCalls', {'ids': ids});
 

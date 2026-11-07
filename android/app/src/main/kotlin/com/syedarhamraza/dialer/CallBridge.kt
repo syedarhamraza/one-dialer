@@ -24,12 +24,14 @@ import android.telecom.VideoProfile
 import com.syedarhamraza.dialer.telecom.BlockingPrefs
 import com.syedarhamraza.dialer.telecom.CallLogSource
 import com.syedarhamraza.dialer.telecom.CallManager
+import com.syedarhamraza.dialer.telecom.ContactsSource
 import com.syedarhamraza.dialer.telecom.MissedCallNotifier
 import com.syedarhamraza.dialer.telecom.NumberDisplay
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.StandardMethodCodec
 
 /**
  * Platform channels between Flutter and Telecom. One instance per Flutter engine
@@ -41,6 +43,10 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
     MethodChannel.MethodCallHandler, EventChannel.StreamHandler {
 
     private val methods = MethodChannel(messenger, METHOD_CHANNEL)
+
+    // Big reads answer from a background task queue: a result sent from the main thread is
+    // encoded there, and a large contact list froze both engines for seconds.
+    private val data = MethodChannel(messenger, DATA_CHANNEL, StandardMethodCodec.INSTANCE, messenger.makeBackgroundTaskQueue())
     private val diagnostics = LagDiagnostics.attach(context, messenger, engineName)
     private val events = EventChannel(messenger, EVENT_CHANNEL)
     private var listener: (() -> Unit)? = null
@@ -78,6 +84,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
 
     init {
         methods.setMethodCallHandler(this)
+        data.setMethodCallHandler { call, result -> readData(call, result) }
         events.setStreamHandler(this)
         watchCallLog()
     }
@@ -90,6 +97,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
         toneGenerator = null
         if (watchingCallLog) context.contentResolver.unregisterContentObserver(callLogObserver)
         methods.setMethodCallHandler(null)
+        data.setMethodCallHandler(null)
         events.setStreamHandler(null)
     }
 
@@ -141,10 +149,6 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             "consumeDialNumber" -> result.success(pendingDialNumber).also { pendingDialNumber = null }
             "consumeOpenRecents" -> result.success(pendingOpenRecents).also { pendingOpenRecents = false }
             "consumeContactAction" -> result.success(pendingContactAction).also { pendingContactAction = null }
-            "getCallLog" -> {
-                watchCallLog()
-                inBackground(result) { CallLogSource.query(context) }
-            }
             "deleteCalls" -> {
                 val ids = call.argument<List<Number>>("ids").orEmpty().map(Number::toLong)
                 inBackground(result) { CallLogSource.delete(context, ids) }
@@ -314,6 +318,28 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             else -> return result.notImplemented()
         }
         result.success(null)
+    }
+
+    /** Runs on the data channel's background task queue; answers from that thread. */
+    private fun readData(call: MethodCall, result: MethodChannel.Result) {
+        val outcome = runCatching {
+            when (call.method) {
+                "getCallLog" -> {
+                    main.post { watchCallLog() }
+                    CallLogSource.query(context)
+                }
+                "getContacts" -> ContactsSource.query(context)
+                else -> return result.notImplemented()
+            }
+        }
+        outcome.fold(
+            onSuccess = { result.success(it) },
+            onFailure = {
+                android.util.Log.w("CallBridge", "Data read failed", it)
+                if (it is SecurityException) result.error("NO_PERMISSION", it.message, null)
+                else result.error("FAILED", it.message, null)
+            },
+        )
     }
 
     /** Runs [work] off the main thread; a missing call-log permission becomes a NO_PERMISSION error. */
@@ -512,6 +538,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
 
     companion object {
         const val METHOD_CHANNEL = "com.syedarhamraza.dialer/telecom"
+        const val DATA_CHANNEL = "com.syedarhamraza.dialer/data"
         const val EVENT_CHANNEL = "com.syedarhamraza.dialer/call_state"
         private const val TONE_VOLUME = 80
         private const val TONE_LENGTH_MS = 150
