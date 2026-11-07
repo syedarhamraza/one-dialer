@@ -10,6 +10,7 @@ import '../../widgets/search_bar_row.dart';
 import '../contacts/contact_details_screen.dart';
 import 'search.dart';
 import '../../l10n/l10n.dart';
+import '../../app/layout.dart';
 
 Future<void> openSearch(BuildContext context) =>
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SearchScreen()));
@@ -76,7 +77,12 @@ class _SearchScreenState extends State<SearchScreen> {
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               slivers: [
                 SliverPadding(
-                  padding: EdgeInsets.fromLTRB(16, padding.top + 8 + _bar + 16, 16, padding.bottom + 32),
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    padding.top + 8 + _bar * headerScale(context) + 16,
+                    16,
+                    padding.bottom + 32,
+                  ),
                   sliver: SliverMainAxisGroup(slivers: _results(context)),
                 ),
               ],
@@ -88,10 +94,12 @@ class _SearchScreenState extends State<SearchScreen> {
             left: 16,
             right: 16,
             top: padding.top + 8,
-            child: SearchBarRow(
-              controller: _query,
-              onSubmitted: (_) => _remember(),
-              onCancel: () => Navigator.of(context).maybePop(),
+            child: HeaderScaled(
+              child: SearchBarRow(
+                controller: _query,
+                onSubmitted: (_) => _remember(),
+                onCancel: () => Navigator.of(context).maybePop(),
+              ),
             ),
           ),
         ],

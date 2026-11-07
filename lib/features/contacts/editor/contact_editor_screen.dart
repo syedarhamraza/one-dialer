@@ -24,6 +24,7 @@ import '../../../widgets/press_glow.dart';
 import 'contact_form.dart';
 import 'editor_widgets.dart';
 import '../../../l10n/l10n.dart';
+import '../../../app/layout.dart';
 
 /// Opens the editor: a new contact (optionally with [number] and [name], as another app's
 /// "add contact" sends) or [contactId] (optionally adding [number] to it). Returns the saved contact's id, or null if cancelled. With
@@ -499,16 +500,22 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
 
     return Padding(
       padding: EdgeInsets.fromLTRB(16, MediaQuery.paddingOf(context).top + 8, 16, 8),
+      // Laid out at the Top buttons size, then drawn at it.
       child: SizedBox(
-        height: 48,
-        child: NavigationToolbar(
-          leading: pill(context.l10n.cancel, _requestLeave),
-          middle: Text(
-            _isNew ? context.l10n.newContact : context.l10n.editContact,
-            style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
+        height: 48 * headerScale(context),
+        child: HeaderScaled(
+          child: SizedBox(
+            height: 48,
+            child: NavigationToolbar(
+              leading: pill(context.l10n.cancel, _requestLeave),
+              middle: Text(
+                _isNew ? context.l10n.newContact : context.l10n.editContact,
+                style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
+              ),
+              trailing: pill(context.l10n.done, canSave ? _save : null),
+              middleSpacing: 12,
+            ),
           ),
-          trailing: pill(context.l10n.done, canSave ? _save : null),
-          middleSpacing: 12,
         ),
       ),
     );

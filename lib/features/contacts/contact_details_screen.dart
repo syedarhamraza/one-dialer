@@ -226,11 +226,17 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 ),
                 Positioned(
                   left: 16,
+                  right: 16,
                   top: MediaQuery.paddingOf(context).top + 8,
-                  child: RoundIconButton(
-                    icon: Icons.arrow_back_rounded,
-                    tooltip: context.l10n.back,
-                    onTap: () => Navigator.of(context).maybePop(),
+                  child: HeaderScaled(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: RoundIconButton(
+                        icon: Icons.arrow_back_rounded,
+                        tooltip: context.l10n.back,
+                        onTap: () => Navigator.of(context).maybePop(),
+                      ),
+                    ),
                   ),
                 ),
               ],

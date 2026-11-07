@@ -102,7 +102,7 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
             physics: const OneUIScrollPhysics(),
             slivers: [
               // Room for the pinned Back row (as `OneUISubpage`).
-              SliverToBoxAdapter(child: SizedBox(height: top + 8 + 48 + 16)),
+              SliverToBoxAdapter(child: SizedBox(height: top + 8 + 48 * headerScale(context) + 16)),
               if (sections.isEmpty)
                 SliverToBoxAdapter(
                   child: Padding(padding: const EdgeInsets.all(20), child: Text(context.l10n.noMatchingContacts)),
