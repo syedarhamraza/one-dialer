@@ -1,3 +1,4 @@
+import 'package:flutter/rendering.dart' show OverflowBoxFit;
 import 'package:flutter/widgets.dart';
 
 import '../core/prefs/dialer_prefs.dart';
@@ -11,28 +12,35 @@ const double kFloatingNavBarHeight = 58;
 const double kHeaderBarHeight = 60;
 
 /// Settings › Display size › Navigation bar: how much bigger the nav bar and its round buttons draw.
+/// Divided by the App size, which scales everything under `DesignWidth`: the App slider is for the
+/// pages, so the bar keeps its own size.
 double navBarScale(BuildContext context) {
   context.dependOnInheritedWidgetOfExactType<_ComponentSizes>();
-  return DialerPrefs.instance.navBarSize.value;
+  return DialerPrefs.instance.navBarSize.value / DialerPrefs.instance.displaySize.value;
 }
 
-/// Settings › Display size › Top buttons: how much bigger the Calls and Contacts header pills draw.
+/// Settings › Display size › Top buttons: how much bigger the Calls and Contacts header pills draw,
+/// apart from the App size like [navBarScale].
 double headerScale(BuildContext context) {
   context.dependOnInheritedWidgetOfExactType<_ComponentSizes>();
-  return DialerPrefs.instance.headerSize.value;
+  return DialerPrefs.instance.headerSize.value / DialerPrefs.instance.displaySize.value;
 }
 
 double headerBarHeight(BuildContext context) => kHeaderBarHeight * headerScale(context);
 
 /// Draws [child] [scale] times bigger, keeping it centred and as wide as its parent: it's laid out
-/// that much narrower, then scaled up.
+/// that much narrower, then scaled up. Its height is the child's (an app bar title has no bound).
 Widget scaledToWidth(double scale, Widget child) => scale == 1
     ? child
     : LayoutBuilder(
-        builder: (context, box) => OverflowBox(
-          minWidth: box.maxWidth / scale,
-          maxWidth: box.maxWidth / scale,
-          child: Transform.scale(scale: scale, child: child),
+        builder: (context, box) => SizedBox(
+          width: box.maxWidth,
+          child: OverflowBox(
+            fit: OverflowBoxFit.deferToChild,
+            minWidth: box.maxWidth / scale,
+            maxWidth: box.maxWidth / scale,
+            child: Transform.scale(scale: scale, child: child),
+          ),
         ),
       );
 
@@ -41,7 +49,11 @@ class _ComponentSizes extends InheritedNotifier<Listenable> {
   const _ComponentSizes({required super.notifier, required super.child});
 }
 
-final _componentSizes = Listenable.merge([DialerPrefs.instance.navBarSize, DialerPrefs.instance.headerSize]);
+final _componentSizes = Listenable.merge([
+  DialerPrefs.instance.navBarSize,
+  DialerPrefs.instance.headerSize,
+  DialerPrefs.instance.displaySize,
+]);
 
 /// Gap between the bottom floating bars and the safe area, shared so they line up.
 const double kNavBarVerticalPadding = 8;

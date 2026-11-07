@@ -70,6 +70,22 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  for (final size in [DialerPrefs.displaySizes.first, DialerPrefs.displaySizes.last]) {
+    testWidgets('the Calls header pills stay on screen and tappable at top buttons size $size', (tester) async {
+      DialerPrefs.instance.headerSize.value = size;
+      addTearDown(() => DialerPrefs.instance.headerSize.value = 1);
+      await open(tester, const RecentsScreen());
+      final screen = tester.getRect(find.byType(RecentsScreen));
+      for (final tip in ['Search', 'More options']) {
+        final rect = tester.getRect(find.byTooltip(tip));
+        expect(screen.contains(rect.topLeft) && screen.contains(rect.bottomRight), isTrue, reason: '$tip at $rect');
+      }
+      await tester.tap(find.byTooltip('Search'));
+      await tester.pumpAndSettle();
+      expect(find.byType(SearchScreen), findsOneWidget);
+    });
+  }
+
   testWidgets('Calls search opens a page and Cancel closes it', (tester) async {
     await open(tester, const RecentsScreen());
     await tester.tap(find.byTooltip('Search'));
