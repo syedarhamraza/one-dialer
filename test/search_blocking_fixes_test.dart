@@ -13,6 +13,7 @@ import 'package:dialer/features/recents/call_log_repository.dart';
 import 'package:dialer/features/recents/recents_screen.dart';
 import 'package:dialer/features/search/search_screen.dart';
 import 'package:dialer/theme/one_ui_theme.dart';
+import 'package:dialer/widgets/one_ui_subpage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -83,6 +84,35 @@ void main() {
       await tester.tap(find.byTooltip('Search'));
       await tester.pumpAndSettle();
       expect(find.byType(SearchScreen), findsOneWidget);
+    });
+  }
+
+  for (final size in [DialerPrefs.displaySizes.first, DialerPrefs.displaySizes.last]) {
+    testWidgets("a page's Back button follows top buttons size $size, not the App size", (tester) async {
+      DialerPrefs.instance.headerSize.value = size;
+      DialerPrefs.instance.displaySize.value = 1.3;
+      addTearDown(() => DialerPrefs.instance.headerSize.value = DialerPrefs.instance.displaySize.value = 1);
+      await open(
+        tester,
+        Builder(
+          builder: (context) => TextButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => OneUISubpage(title: 'Page', builder: (_) => const []),
+              ),
+            ),
+            child: const Text('Go'),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Go'));
+      await tester.pumpAndSettle();
+      // Painted size: 48 dp times the slider, with the App size divided back out.
+      final rect = tester.getRect(find.byTooltip('Back'));
+      expect(rect.width, moreOrLessEquals(48 * size / 1.3, epsilon: .5));
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
+      expect(find.text('Page'), findsNothing);
     });
   }
 

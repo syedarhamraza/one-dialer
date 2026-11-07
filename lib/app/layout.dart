@@ -30,19 +30,31 @@ double headerBarHeight(BuildContext context) => kHeaderBarHeight * headerScale(c
 
 /// Draws [child] [scale] times bigger, keeping it centred and as wide as its parent: it's laid out
 /// that much narrower, then scaled up. Its height is the child's (an app bar title has no bound).
-Widget scaledToWidth(double scale, Widget child) => scale == 1
+Widget scaledToWidth(double scale, Widget child, {Alignment alignment = Alignment.center}) => scale == 1
     ? child
     : LayoutBuilder(
         builder: (context, box) => SizedBox(
           width: box.maxWidth,
           child: OverflowBox(
             fit: OverflowBoxFit.deferToChild,
+            alignment: alignment,
             minWidth: box.maxWidth / scale,
             maxWidth: box.maxWidth / scale,
-            child: Transform.scale(scale: scale, child: child),
+            child: Transform.scale(scale: scale, alignment: alignment, child: child),
           ),
         ),
       );
+
+/// A pushed page's top row (Back button, title, actions), at Settings › Display size › Top
+/// buttons: scaled from its top edge, kept as wide as its parent.
+class HeaderScaled extends StatelessWidget {
+  const HeaderScaled({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => scaledToWidth(headerScale(context), child, alignment: Alignment.topCenter);
+}
 
 /// Rebuilds whoever reads [navBarScale] or [headerScale] when the user changes them.
 class _ComponentSizes extends InheritedNotifier<Listenable> {

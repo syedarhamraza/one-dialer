@@ -31,6 +31,7 @@ import 'contact_subpages.dart';
 import 'editor/contact_editor_screen.dart';
 import 'editor/contact_form.dart' show labelDisplay, labelText;
 import '../../l10n/l10n.dart';
+import '../../app/layout.dart';
 
 /// ColorOS-style contact page in the Calls look: round glass Back / Favourite / Edit / More
 /// buttons over a big avatar and name, Call and Message tiles, the numbers and ringtone,
@@ -244,7 +245,12 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             children: [
               ListView(
                 physics: const OneUIScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(16, padding.top + 8 + _button + 16, 16, padding.bottom + 32),
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  padding.top + 8 + _button * headerScale(context) + 16,
+                  16,
+                  padding.bottom + 32,
+                ),
                 children: [
                   Center(
                     child: LetterAvatar(
@@ -307,44 +313,48 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 left: 16,
                 right: 16,
                 top: padding.top + 8,
-                child: Row(
-                  children: [
-                    RoundIconButton(
-                      icon: Icons.arrow_back_rounded,
-                      tooltip: context.l10n.back,
-                      onTap: () => Navigator.of(context).maybePop(),
-                    ),
-                    const Spacer(),
-                    // RoundIconButton with an orange star when it's a favourite.
-                    CallGlass(
-                      child: IconButton(
-                        tooltip: contact.isFavorite ? context.l10n.removeFromFavourites : context.l10n.addToFavourites,
-                        onPressed: () => repo.setFavorite(contact.id, !contact.isFavorite),
-                        style: IconButton.styleFrom(
-                          foregroundColor: contact.isFavorite ? const Color(0xFFF7A93B) : context.palette.textPrimary,
-                          fixedSize: const Size.square(_button),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                child: HeaderScaled(
+                  child: Row(
+                    children: [
+                      RoundIconButton(
+                        icon: Icons.arrow_back_rounded,
+                        tooltip: context.l10n.back,
+                        onTap: () => Navigator.of(context).maybePop(),
+                      ),
+                      const Spacer(),
+                      // RoundIconButton with an orange star when it's a favourite.
+                      CallGlass(
+                        child: IconButton(
+                          tooltip: contact.isFavorite
+                              ? context.l10n.removeFromFavourites
+                              : context.l10n.addToFavourites,
+                          onPressed: () => repo.setFavorite(contact.id, !contact.isFavorite),
+                          style: IconButton.styleFrom(
+                            foregroundColor: contact.isFavorite ? const Color(0xFFF7A93B) : context.palette.textPrimary,
+                            fixedSize: const Size.square(_button),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          icon: Icon(contact.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded, size: 26),
                         ),
-                        icon: Icon(contact.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded, size: 26),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    RoundIconButton(
-                      icon: Icons.edit_outlined,
-                      tooltip: context.l10n.edit,
-                      onTap: () => openContactEditor(context, contactId: contact.id),
-                    ),
-                    const SizedBox(width: 8),
-                    // The menu measures this wrapper, outside the glass press, like Calls' menu.
-                    KeyedSubtree(
-                      key: _moreKey,
-                      child: RoundIconButton(
-                        icon: Icons.more_vert_rounded,
-                        tooltip: context.l10n.moreOptions,
-                        onTap: () => _more(contact),
+                      const SizedBox(width: 8),
+                      RoundIconButton(
+                        icon: Icons.edit_outlined,
+                        tooltip: context.l10n.edit,
+                        onTap: () => openContactEditor(context, contactId: contact.id),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 8),
+                      // The menu measures this wrapper, outside the glass press, like Calls' menu.
+                      KeyedSubtree(
+                        key: _moreKey,
+                        child: RoundIconButton(
+                          icon: Icons.more_vert_rounded,
+                          tooltip: context.l10n.moreOptions,
+                          onTap: () => _more(contact),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -817,7 +827,12 @@ class ContactCallLogRow extends StatelessWidget {
           // Its own line, so the badges and duration never cut the number off.
           if (numberLine case final line?) ...[
             const SizedBox(height: 2),
-            Text(line, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 14, color: grey)),
+            Text(
+              line,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 14, color: grey),
+            ),
           ],
         ],
       ),

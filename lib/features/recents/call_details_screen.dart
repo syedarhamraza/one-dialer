@@ -19,6 +19,7 @@ import 'call_log.dart';
 import 'call_log_repository.dart';
 import 'delete_calls.dart';
 import '../../l10n/l10n.dart';
+import '../../app/layout.dart';
 
 /// (i) on a call: a saved contact's own page, else this number's page.
 void openCallDetails(BuildContext context, CallLogEntry call) {
@@ -67,7 +68,12 @@ class CallDetailsScreen extends StatelessWidget {
                 physics: const OneUIScrollPhysics(),
                 slivers: [
                   SliverPadding(
-                    padding: EdgeInsets.fromLTRB(16, padding.top + 8 + _button + 16, 16, padding.bottom + 32),
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      padding.top + 8 + _button * headerScale(context) + 16,
+                      16,
+                      padding.bottom + 32,
+                    ),
                     sliver: SliverMainAxisGroup(
                       slivers: [
                         SliverList.list(
@@ -155,7 +161,7 @@ class CallDetailsScreen extends StatelessWidget {
                         // Lazy: a number called every day has hundreds of rows.
                         DetailsCardSliver(
                           padding: const EdgeInsets.fromLTRB(18, 6, 18, 6),
-                                    itemCount: history.length,
+                          itemCount: history.length,
                           itemBuilder: (context, i) =>
                               ContactCallLogRow(call: history[i], simBadge: null, now: DateTime.now()),
                         ),
@@ -171,51 +177,53 @@ class CallDetailsScreen extends StatelessWidget {
             left: 16,
             right: 16,
             top: padding.top + 8,
-            child: Row(
-              spacing: 8,
-              children: [
-                RoundIconButton(
-                  icon: Icons.arrow_back_rounded,
-                  tooltip: context.l10n.back,
-                  onTap: () => Navigator.of(context).maybePop(),
-                ),
-                const Spacer(),
-                if (!call.isPrivate) ...[
-                  // RoundIconButton in red while the number is blocked.
-                  ValueListenableBuilder(
-                    valueListenable: BlockingRepository.instance.numbers,
-                    builder: (context, _, _) {
-                      final blocked = BlockingRepository.instance.isBlocked(call.number);
-                      return CallGlass(
-                        child: IconButton(
-                          tooltip: blocked ? context.l10n.unblock : context.l10n.block,
-                          onPressed: () => BlockingRepository.instance.setBlocked(call.number, !blocked),
-                          style: IconButton.styleFrom(
-                            foregroundColor: blocked ? OneUITheme.accentRed : context.palette.textPrimary,
-                            fixedSize: const Size.square(_button),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            child: HeaderScaled(
+              child: Row(
+                spacing: 8,
+                children: [
+                  RoundIconButton(
+                    icon: Icons.arrow_back_rounded,
+                    tooltip: context.l10n.back,
+                    onTap: () => Navigator.of(context).maybePop(),
+                  ),
+                  const Spacer(),
+                  if (!call.isPrivate) ...[
+                    // RoundIconButton in red while the number is blocked.
+                    ValueListenableBuilder(
+                      valueListenable: BlockingRepository.instance.numbers,
+                      builder: (context, _, _) {
+                        final blocked = BlockingRepository.instance.isBlocked(call.number);
+                        return CallGlass(
+                          child: IconButton(
+                            tooltip: blocked ? context.l10n.unblock : context.l10n.block,
+                            onPressed: () => BlockingRepository.instance.setBlocked(call.number, !blocked),
+                            style: IconButton.styleFrom(
+                              foregroundColor: blocked ? OneUITheme.accentRed : context.palette.textPrimary,
+                              fixedSize: const Size.square(_button),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            icon: const Icon(Icons.block_rounded, size: 24),
                           ),
-                          icon: const Icon(Icons.block_rounded, size: 24),
-                        ),
-                      );
+                        );
+                      },
+                    ),
+                  ],
+                  RoundIconButton(
+                    icon: Icons.delete_outline_rounded,
+                    tooltip: context.l10n.deleteCallHistory,
+                    onTap: () async {
+                      final ids = call.isPrivate || call.number.isEmpty
+                          ? [call.id]
+                          : [
+                              for (final c in repo.calls.value)
+                                if (!c.isPrivate && numberKey(c.number) == key) c.id,
+                            ];
+                      final deleted = await confirmDeleteCalls(context, ids);
+                      if (deleted && context.mounted) Navigator.of(context).pop();
                     },
                   ),
                 ],
-                RoundIconButton(
-                  icon: Icons.delete_outline_rounded,
-                  tooltip: context.l10n.deleteCallHistory,
-                  onTap: () async {
-                    final ids = call.isPrivate || call.number.isEmpty
-                        ? [call.id]
-                        : [
-                            for (final c in repo.calls.value)
-                              if (!c.isPrivate && numberKey(c.number) == key) c.id,
-                          ];
-                    final deleted = await confirmDeleteCalls(context, ids);
-                    if (deleted && context.mounted) Navigator.of(context).pop();
-                  },
-                ),
-              ],
+              ),
             ),
           ),
         ],
