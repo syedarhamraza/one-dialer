@@ -493,6 +493,7 @@
   "showLess": "Show less",
   "showMore": "Show more",
   "newContact": "New contact",
+  "addToExistingContact": "Add to existing contact",
   "editContact": "Edit contact",
   "couldNotLoadAccounts": "Couldn't load accounts",
   "loadingAccounts": "Loading accounts…",

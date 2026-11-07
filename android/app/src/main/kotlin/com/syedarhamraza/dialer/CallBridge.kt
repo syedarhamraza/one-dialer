@@ -87,6 +87,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
         data.setMethodCallHandler { call, result -> readData(call, result) }
         events.setStreamHandler(this)
         watchCallLog()
+        if (engineName == "main") NumberDisplay.preload(context.applicationContext)
     }
 
     fun dispose() {
@@ -201,6 +202,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                     NumberDisplay.of(context, n).let { mapOf("formatted" to it?.formatted, "location" to it?.location) }
                 }
             }
+            "formatAsYouType" -> result.success(NumberDisplay.asYouType(context, call.argument<String>("number").orEmpty()))
             "setRingtone" -> inBackground(result) {
                 ContactExtras.setRingtone(context, call.argument<String>("contactId")!!, call.argument<String>("uri"))
             }

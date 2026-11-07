@@ -20,6 +20,11 @@ Future<String?> showAddToContacts(BuildContext context, String number, {GlobalKe
   );
   if (!context.mounted || choice == null) return null;
   if (choice == 'new') return openContactEditor(context, number: number);
+  return addToExistingContact(context, number);
+}
+
+/// Picks a contact and opens it in the editor with [number] added. Returns its id, or null.
+Future<String?> addToExistingContact(BuildContext context, String number) async {
   final contact = await pickContact(context, title: context.l10n.updateExistingContact);
   if (contact == null || !context.mounted) return null;
   return openContactEditor(context, contactId: contact.id, number: number);
