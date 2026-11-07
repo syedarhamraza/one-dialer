@@ -1317,6 +1317,21 @@ class AppLocalizationsIt extends AppLocalizations {
   String get reduceVisualEffects => 'Riduci effetti visivi';
 
   @override
+  String get displaySize => 'Dimensioni schermo';
+
+  @override
+  String get displaySizeSmall => 'Piccole';
+
+  @override
+  String get displaySizeDefault => 'Predefinite';
+
+  @override
+  String get displaySizeLarge => 'Grandi';
+
+  @override
+  String get displaySizeLarger => 'Più grandi';
+
+  @override
   String get reduceVisualEffectsSubtitle =>
       'Meno sfocatura, più fluidità sui telefoni lenti';
 

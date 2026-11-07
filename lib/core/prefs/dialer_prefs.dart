@@ -191,9 +191,25 @@ class DialerPrefs {
   /// buttons; menus and modals stay frosted) or `navbar` (the nav bar only).
   final liquidScope = ValueNotifier('all');
 
+  /// Settings › Display & effects › "Display size": one of [displaySizes], multiplying
+  /// `DesignWidth`'s scale in both engines (loaded with [loadAppearance] and [loadCallEffects]).
+  final displaySize = ValueNotifier(1.0);
+  static const displaySizes = [0.9, 1.0, 1.1, 1.2];
+
+  Future<void> _loadDisplaySize() async {
+    final size = await _prefs.getDouble('display_size');
+    if (displaySizes.contains(size)) displaySize.value = size!;
+  }
+
+  Future<void> setDisplaySize(double value) async {
+    displaySize.value = value;
+    await _prefs.setDouble('display_size', value);
+  }
+
   /// Awaited before the first frame, so the app doesn't open dark and then turn light, or
   /// frosted and then flat.
   Future<void> loadAppearance() async {
+    await _loadDisplaySize();
     final mode = await _prefs.getString('theme_mode');
     if (mode == 'system' || mode == 'light' || mode == 'dark') themeMode.value = mode!;
     final effects = await _prefs.getString('visual_effects');
@@ -271,6 +287,7 @@ class DialerPrefs {
   final answerDirection = ValueNotifier('up');
 
   Future<void> loadCallEffects() async {
+    await _loadDisplaySize();
     final effects = await _prefs.getString('call_effects');
     if (effects == null) callEffects.value = await _effectsDefault();
     if (effects == 'full' || effects == 'reduced' || effects == 'off') callEffects.value = effects!;

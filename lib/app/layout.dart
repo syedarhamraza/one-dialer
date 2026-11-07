@@ -1,7 +1,10 @@
 import 'package:flutter/widgets.dart';
 
-/// Height of the floating nav bar and its round action (OneSpend's was 60).
-const double kFloatingNavBarHeight = 58;
+import '../core/prefs/dialer_prefs.dart';
+
+/// Height of the floating nav bar and its round action (OneSpend's was 60; 66 matches ColorOS 17's
+/// next to header pills of the same size).
+const double kFloatingNavBarHeight = 66;
 
 /// Height of a tab's top bar (under the status bar), where its round header buttons sit.
 const double kHeaderBarHeight = 60;
@@ -16,7 +19,8 @@ double navBarClearance(BuildContext context) =>
 /// Lays both engines out at the width the app is designed on (a vivo at 420 dp) and scales them
 /// to the screen, so every phone shows the same proportions: a 360 dp phone smaller, a 448 dp one
 /// larger. Scaling up stops at [maxScale], so tablets and open foldables get sensible sizes and
-/// more room instead of giant buttons; landscape never scales.
+/// more room instead of giant buttons; landscape never scales. Settings › Display size
+/// ([DialerPrefs.displaySize]) multiplies the result.
 class DesignWidth extends StatelessWidget {
   const DesignWidth({super.key, required this.child});
 
@@ -26,11 +30,14 @@ class DesignWidth extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      ValueListenableBuilder(valueListenable: DialerPrefs.instance.displaySize, builder: _scaled);
+
+  Widget _scaled(BuildContext context, double size, Widget? _) {
     final media = MediaQuery.of(context);
     // A window not sized yet (0×0, seen on vivo in the background) would scale by 0/0 = NaN.
     if (media.size.isEmpty || media.size.width > media.size.height) return child;
-    final scale = (media.size.width / width).clamp(0.0, maxScale);
+    final scale = (media.size.width / width).clamp(0.0, maxScale) * size;
     if (scale == 1) return child;
     return FittedBox(
       alignment: Alignment.topLeft,

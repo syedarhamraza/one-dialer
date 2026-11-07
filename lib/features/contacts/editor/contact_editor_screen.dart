@@ -479,28 +479,21 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
 
   // --- Header --------------------------------------------------------------
 
-  /// ColorOS's top bar: Cancel | title | Done, as call-glass pills tinted red and green
-  /// (a wash through the glass, white text); a disabled Done is plain glass.
+  /// ColorOS's top bar: Cancel | title | Done, as plain call-glass pills; a disabled Done is dimmed.
   Widget _header({required bool canSave}) {
-    Widget pill(String label, VoidCallback? onPressed, Color tint) => CallGlass(
+    Widget pill(String label, VoidCallback? onPressed) => CallGlass(
       radius: 24,
-      child: DecoratedBox(
-        decoration: ShapeDecoration(
-          color: onPressed == null ? null : tint.withValues(alpha: .28),
+      child: TextButton(
+        onPressed: onPressed,
+        style: TextButton.styleFrom(
+          foregroundColor: context.palette.textPrimary,
+          disabledForegroundColor: context.palette.textTertiary,
+          minimumSize: const Size(0, 48),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           shape: const StadiumBorder(),
         ),
-        child: TextButton(
-          onPressed: onPressed,
-          style: TextButton.styleFrom(
-            foregroundColor: context.palette.textPrimary,
-            disabledForegroundColor: context.palette.textTertiary,
-            minimumSize: const Size(0, 48),
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            shape: const StadiumBorder(),
-          ),
-          child: Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-        ),
+        child: Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
       ),
     );
 
@@ -509,12 +502,12 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
       child: SizedBox(
         height: 48,
         child: NavigationToolbar(
-          leading: pill(context.l10n.cancel, _requestLeave, OneUITheme.accentRed),
+          leading: pill(context.l10n.cancel, _requestLeave),
           middle: Text(
             _isNew ? context.l10n.newContact : context.l10n.editContact,
             style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
           ),
-          trailing: pill(context.l10n.done, canSave ? _save : null, OneUITheme.accentGreen),
+          trailing: pill(context.l10n.done, canSave ? _save : null),
           middleSpacing: 12,
         ),
       ),

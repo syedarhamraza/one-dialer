@@ -882,6 +882,21 @@ void main() {
     });
   }
 
+  testWidgets('the largest display size still fits the call screen on a small phone', (tester) async {
+    DialerPrefs.instance.displaySize.value = DialerPrefs.displaySizes.last;
+    addTearDown(() => DialerPrefs.instance.displaySize.value = 1);
+    const size = Size(360, 640);
+    await open(tester, size: size, scaled: true);
+    await emit(tester, [call('ringing')]);
+    expect(tester.takeException(), isNull);
+    expect(tester.getBottomLeft(find.byKey(const ValueKey('swipe-Decline'))).dy, lessThan(size.height));
+    await emit(tester, [call('active')]);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(tester.getBottomLeft(control('End call')).dy, lessThan(size.height));
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('reduced motion disables call transitions and ended calls have no actions', (tester) async {
     await open(tester, reduceMotion: true);
     await emit(tester, [call('active')]);

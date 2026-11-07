@@ -44,7 +44,7 @@ class OneUIFloatingNavBar extends StatefulWidget {
   });
 
   /// Matches `kFloatingNavBarHeight` (lib/app/layout.dart).
-  static const double _barHeight = 58;
+  static const double _barHeight = 66;
 
   @override
   State<OneUIFloatingNavBar> createState() => _OneUIFloatingNavBarState();
@@ -202,7 +202,7 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
               )
             : SizedBox(
                 key: const ValueKey('tabs'),
-                width: items.length * 96,
+                width: items.length * 104,
                 child: glassPixelRatio(
                   context,
                   Listener(
@@ -222,8 +222,8 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
                       verticalPadding: 0,
                       settings: settings,
                       quality: quality,
-                      iconSize: 28,
-                      labelFontSize: 12,
+                      iconSize: 30,
+                      labelFontSize: 13,
                       selectedIconColor: palette.textPrimary,
                       selectedLabelColor: palette.textPrimary,
                       unselectedIconColor: palette.textSecondary,
@@ -269,7 +269,7 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
           final duration = reduceMotion ? Duration.zero : const Duration(milliseconds: 220);
           // Each tab is as wide as its label (with a minimum), so the bar fits its tabs.
           return ConstrainedBox(
-            constraints: const BoxConstraints(minWidth: 72),
+            constraints: const BoxConstraints(minWidth: 80),
             child: Semantics(
               selected: isSelected,
               button: true,
@@ -279,7 +279,7 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
                 onTap: () => widget.onTap(index),
                 behavior: HitTestBehavior.opaque,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  padding: const EdgeInsets.symmetric(horizontal: 22),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -289,14 +289,14 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
                         child: Icon(
                           isSelected ? item.activeIcon : item.inactiveIcon,
                           key: ValueKey(isSelected),
-                          size: 28,
+                          size: 30,
                           color: color,
                         ),
                       ),
                       const SizedBox(height: 2),
                       AnimatedDefaultTextStyle(
                         duration: duration,
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: color),
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: color),
                         child: Text(item.label, maxLines: 1),
                       ),
                     ],
