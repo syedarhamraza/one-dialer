@@ -96,7 +96,7 @@ class LitButton extends StatelessWidget {
                 ? [BoxShadow(color: color.withValues(alpha: .25), blurRadius: 12, offset: const Offset(0, 4))]
                 : null,
           ),
-          child: fx.isFull ? CustomPaint(foregroundPainter: RimPainter(shape, color), child: child) : child,
+          child: fx.isFull ? CustomPaint(foregroundPainter: _RimPainter(shape, color), child: child) : child,
         ),
       ),
       child: child,
@@ -104,10 +104,10 @@ class LitButton extends StatelessWidget {
   }
 }
 
-/// [LitButton]'s rim (also the dark alert card's): faint white along the top, clear through the middle, a brighter
+/// [LitButton]'s rim: faint white along the top, clear through the middle, a brighter
 /// green along the bottom.
-class RimPainter extends CustomPainter {
-  RimPainter(this.shape, this.color);
+class _RimPainter extends CustomPainter {
+  _RimPainter(this.shape, this.color);
 
   final OutlinedBorder shape;
   final Color color;
@@ -134,5 +134,5 @@ class RimPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(RimPainter old) => old.shape != shape || old.color != color;
+  bool shouldRepaint(_RimPainter old) => old.shape != shape || old.color != color;
 }
