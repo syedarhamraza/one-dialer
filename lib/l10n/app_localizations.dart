@@ -2282,6 +2282,48 @@ abstract class AppLocalizations {
   /// **'Reduce visual effects'**
   String get reduceVisualEffects;
 
+  /// No description provided for @displaySize.
+  ///
+  /// In en, this message translates to:
+  /// **'Display size'**
+  String get displaySize;
+
+  /// No description provided for @displaySizeSmall.
+  ///
+  /// In en, this message translates to:
+  /// **'Small'**
+  String get displaySizeSmall;
+
+  /// No description provided for @displaySizeDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get displaySizeDefault;
+
+  /// No description provided for @displaySizeLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Large'**
+  String get displaySizeLarge;
+
+  /// No description provided for @displaySizeLarger.
+  ///
+  /// In en, this message translates to:
+  /// **'Larger'**
+  String get displaySizeLarger;
+
+  /// No description provided for @displaySizeApp.
+  ///
+  /// In en, this message translates to:
+  /// **'App'**
+  String get displaySizeApp;
+
+  /// No description provided for @displaySizeNavBar.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation bar'**
+  String get displaySizeNavBar;
+
   /// No description provided for @reduceVisualEffectsSubtitle.
   ///
   /// In en, this message translates to:

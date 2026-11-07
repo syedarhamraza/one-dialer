@@ -172,7 +172,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
                   // Contacts while typing. They fade in on the first digit and out when the
                   // number is cleared; the outgoing one keeps its last number while it fades.
                   Positioned(
-                    top: MediaQuery.paddingOf(context).top + kHeaderBarHeight,
+                    top: MediaQuery.paddingOf(context).top + headerBarHeight(context),
                     left: 0,
                     right: 0,
                     bottom: 0,
@@ -773,7 +773,10 @@ List<OneUIFloatingMenuItem> keypadMenuItems(
         label: open.value ? context.l10n.hideKeypad : context.l10n.showKeypad,
         onTap: () => open.value = !open.value,
       ),
-      OneUIFloatingMenuItem(label: context.l10n.copy, onTap: () => Clipboard.setData(ClipboardData(text: input.value))),
+      OneUIFloatingMenuItem(
+        label: context.l10n.copy,
+        onTap: () => Clipboard.setData(ClipboardData(text: input.value)),
+      ),
       OneUIFloatingMenuItem(label: context.l10n.paste, onTap: () => pasteNumber(input)),
       OneUIFloatingMenuItem(label: context.l10n.addPause, onTap: () => input.value += ','),
       OneUIFloatingMenuItem(label: context.l10n.addWait, onTap: () => input.value += ';'),

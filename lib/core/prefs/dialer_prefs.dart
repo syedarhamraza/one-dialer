@@ -191,9 +191,34 @@ class DialerPrefs {
   /// buttons; menus and modals stay frosted) or `navbar` (the nav bar only).
   final liquidScope = ValueNotifier('all');
 
+  /// Settings › Display & effects › Display size, each one of [displaySizes] (loaded with
+  /// [loadAppearance], in the main engine only: the call screen keeps its own size): the pages,
+  /// multiplying `DesignWidth`'s scale (the top buttons keep their size, see `headerScale`); the
+  /// nav bar (`navBarScale`).
+  final displaySize = ValueNotifier(1.0);
+  final navBarSize = ValueNotifier(1.0);
+  static const displaySizes = [0.9, 1.0, 1.1, 1.2];
+
+  late final _sizeKeys = {displaySize: 'display_size', navBarSize: 'nav_bar_size'};
+
+  Future<void> _loadDisplaySize() async {
+    for (final MapEntry(key: notifier, value: key) in _sizeKeys.entries) {
+      final size = await _prefs.getDouble(key);
+      // A test build's Largest (1.3) comes back as the top step, Larger.
+      if (size != null && size > displaySizes.last) notifier.value = displaySizes.last;
+      if (displaySizes.contains(size)) notifier.value = size!;
+    }
+  }
+
+  Future<void> setSize(ValueNotifier<double> notifier, double value) async {
+    notifier.value = value;
+    await _prefs.setDouble(_sizeKeys[notifier]!, value);
+  }
+
   /// Awaited before the first frame, so the app doesn't open dark and then turn light, or
   /// frosted and then flat.
   Future<void> loadAppearance() async {
+    await _loadDisplaySize();
     final mode = await _prefs.getString('theme_mode');
     if (mode == 'system' || mode == 'light' || mode == 'dark') themeMode.value = mode!;
     final effects = await _prefs.getString('visual_effects');

@@ -251,10 +251,12 @@ class _ContactsScreenState extends State<ContactsScreen> {
                 backgroundColor: Colors.transparent,
                 // The page's top blur sits behind the header's pills, not over them.
                 // Ends at the bar's bottom: the big title right under it stays sharp.
-                flexibleSpace: OneUIStatusBarScrim(height: MediaQuery.paddingOf(context).top + kHeaderBarHeight),
+                flexibleSpace: OneUIStatusBarScrim(
+                  height: MediaQuery.paddingOf(context).top + headerBarHeight(context),
+                ),
                 surfaceTintColor: Colors.transparent,
                 scrolledUnderElevation: 0,
-                toolbarHeight: kHeaderBarHeight,
+                toolbarHeight: headerBarHeight(context),
                 // The glass press stretches the buttons past the bar; don't cut it off.
                 clipBehavior: Clip.none,
                 titleSpacing: 0,
@@ -263,13 +265,16 @@ class _ContactsScreenState extends State<ContactsScreen> {
                   builder: (context, _, _) => Stack(
                     children: [
                       HeaderTitle(collapse: _collapse, text: context.l10n.navContacts, hidden: selecting),
-                      _Header(
-                        selecting: selecting,
-                        allSelected: _allSelected,
-                        onToggleSelectAll: _toggleSelectAll,
-                        onCancel: _endSelection,
-                        menuKey: _menuKey,
-                        onMenu: _openMenu,
+                      scaledToWidth(
+                        headerScale(context),
+                        _Header(
+                          selecting: selecting,
+                          allSelected: _allSelected,
+                          onToggleSelectAll: _toggleSelectAll,
+                          onCancel: _endSelection,
+                          menuKey: _menuKey,
+                          onMenu: _openMenu,
+                        ),
                       ),
                     ],
                   ),
@@ -347,7 +352,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
         if (_sections.length > 1)
           Positioned(
             right: 4,
-            top: top + kHeaderBarHeight + _titleHeight,
+            top: top + headerBarHeight(context) + _titleHeight,
             bottom: navBarClearance(context),
             width: 140,
             child: FastScroller(

@@ -10,6 +10,7 @@ import '../../widgets/search_bar_row.dart';
 import 'contact_sections.dart';
 import 'contacts_widgets.dart';
 import '../../l10n/l10n.dart';
+import '../../app/layout.dart';
 import 'editor/contact_form.dart' show labelDisplay;
 
 /// Picks a contact from our own list (instead of Android's picker). Returns the contact.
@@ -101,7 +102,7 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
             physics: const OneUIScrollPhysics(),
             slivers: [
               // Room for the pinned Back row (as `OneUISubpage`).
-              SliverToBoxAdapter(child: SizedBox(height: top + 8 + 48 + 16)),
+              SliverToBoxAdapter(child: SizedBox(height: top + 8 + 48 * headerScale(context) + 16)),
               if (sections.isEmpty)
                 SliverToBoxAdapter(
                   child: Padding(padding: const EdgeInsets.all(20), child: Text(context.l10n.noMatchingContacts)),
@@ -130,25 +131,27 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
             left: 16,
             right: 16,
             top: top + 8,
-            child: ExpandableSearchHeader(
-              controller: _query,
-              leading: Row(
-                children: [
-                  RoundIconButton(
-                    icon: Icons.arrow_back_rounded,
-                    tooltip: context.l10n.back,
-                    onTap: () => Navigator.of(context).pop(),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Text(
-                      widget.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600, letterSpacing: -0.3),
+            child: HeaderScaled(
+              child: ExpandableSearchHeader(
+                controller: _query,
+                leading: Row(
+                  children: [
+                    RoundIconButton(
+                      icon: Icons.arrow_back_rounded,
+                      tooltip: context.l10n.back,
+                      onTap: () => Navigator.of(context).pop(),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        widget.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600, letterSpacing: -0.3),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

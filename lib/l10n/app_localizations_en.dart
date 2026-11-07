@@ -1303,6 +1303,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reduceVisualEffects => 'Reduce visual effects';
 
   @override
+  String get displaySize => 'Display size';
+
+  @override
+  String get displaySizeSmall => 'Small';
+
+  @override
+  String get displaySizeDefault => 'Default';
+
+  @override
+  String get displaySizeLarge => 'Large';
+
+  @override
+  String get displaySizeLarger => 'Larger';
+
+  @override
+  String get displaySizeApp => 'App';
+
+  @override
+  String get displaySizeNavBar => 'Navigation bar';
+
+  @override
   String get reduceVisualEffectsSubtitle =>
       'Less blur runs smoother on slower phones';
 

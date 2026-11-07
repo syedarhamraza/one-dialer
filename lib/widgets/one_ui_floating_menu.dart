@@ -11,6 +11,7 @@ import 'liquid_body.dart';
 import 'press_glow.dart';
 import 'round_header_controls.dart';
 import '../l10n/l10n.dart';
+import '../app/layout.dart';
 
 /// Item definition for the floating menu.
 class OneUIFloatingMenuItem {
@@ -56,9 +57,13 @@ class OneUIFloatingMenu {
     // Scales the rows, text and icons: the call screen's menus sit beside 76 dp buttons.
     double scale = 1,
   }) async {
+    // The app's menus hang off its top buttons, so they follow Settings › Display size › Top
+    // buttons rather than the App size; the call screen's (scaled already) follow the call screen.
+    final follow = scale == 1 ? headerScale(context) : 1.0;
+    scale *= follow;
     final screen = MediaQuery.sizeOf(context);
     final height = (items.length * _rowHeight + _padding * 2) * scale;
-    final menuWidth = math.min(width, screen.width - _edge * 2);
+    final menuWidth = math.min(width * follow, screen.width - _edge * 2);
 
     // The button (or [anchorContext]'s widget, e.g. a list row) the menu separates from, or a button-sized spot at the fallback corner.
     Rect? anchor;
@@ -265,7 +270,9 @@ class _PopoverMenu extends StatelessWidget {
                                       scale: scale,
                                       alignment: Alignment.topLeft,
                                       child: ColoredBox(
-                                        color: context.palette.isLight ? const Color(0x4DFFFFFF) : const Color(0x59141416),
+                                        color: context.palette.isLight
+                                            ? const Color(0x4DFFFFFF)
+                                            : const Color(0x59141416),
                                         child: items,
                                       ),
                                     ),

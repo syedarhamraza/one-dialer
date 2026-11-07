@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dialer/app/layout.dart';
 import 'package:dialer/app/main_shell.dart';
 import 'package:dialer/core/contacts/contacts_repository.dart';
 import 'package:dialer/core/prefs/dialer_prefs.dart';
@@ -13,6 +14,8 @@ import 'package:dialer/features/recents/call_log_repository.dart';
 import 'package:dialer/features/recents/recents_screen.dart';
 import 'package:dialer/features/search/search_screen.dart';
 import 'package:dialer/theme/one_ui_theme.dart';
+import 'package:dialer/widgets/one_ui_subpage.dart';
+import 'package:dialer/widgets/round_header_controls.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -69,6 +72,91 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
+
+  for (final size in DialerPrefs.displaySizes) {
+    testWidgets('the Calls header pills stay on screen, apart and tappable at App size $size', (tester) async {
+      // The vivo's width, where the pills have the least room once they grow.
+      tester.view.physicalSize = const Size(420, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      // No DesignWidth here, so the pills draw at 1 / size: big at a small App size.
+      DialerPrefs.instance.displaySize.value = size;
+      addTearDown(() => DialerPrefs.instance.displaySize.value = 1);
+      repo.calls.value = [for (var i = 0; i < 30; i++) call(i, '9$i')];
+      await open(tester, const RecentsScreen());
+      final screen = tester.getRect(find.byType(RecentsScreen));
+      final tabs = tester.getRect(find.byType(FilterTabs));
+      for (final tip in ['Search', 'More options']) {
+        final rect = tester.getRect(find.byTooltip(tip));
+        expect(screen.contains(rect.topLeft) && screen.contains(rect.bottomRight), isTrue, reason: '$tip at $rect');
+        expect(rect.overlaps(tabs), isFalse, reason: '$tip at $rect, tabs at $tabs');
+      }
+      // Scrolled, the small title shows only where the tabs leave it room.
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -300));
+      await tester.pumpAndSettle();
+      final title = find.descendant(of: find.byType(HeaderTitle), matching: find.byType(Text));
+      if (title.evaluate().isNotEmpty) {
+        expect(tester.getRect(title).right, lessThan(tabs.left), reason: 'title under the tabs at $size');
+      }
+      // The test font draws every letter as a wide square, so only the smallest pills leave room for it.
+      if (size == DialerPrefs.displaySizes.last) expect(title, findsOneWidget);
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, 300));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Search'));
+      await tester.pumpAndSettle();
+      expect(find.byType(SearchScreen), findsOneWidget);
+    });
+  }
+
+  for (final size in [DialerPrefs.displaySizes.first, DialerPrefs.displaySizes.last]) {
+    testWidgets("a page's Back button keeps its size at App size $size", (tester) async {
+      DialerPrefs.instance.displaySize.value = size;
+      addTearDown(() => DialerPrefs.instance.displaySize.value = 1);
+      await open(
+        tester,
+        Builder(
+          builder: (context) => TextButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => OneUISubpage(title: 'Page', builder: (_) => const []),
+              ),
+            ),
+            child: const Text('Go'),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Go'));
+      await tester.pumpAndSettle();
+      // Painted size (no DesignWidth here): 48 dp with the App size divided out.
+      final rect = tester.getRect(find.byTooltip('Back'));
+      expect(rect.width, moreOrLessEquals(48 / size, epsilon: .5));
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
+      expect(find.text('Page'), findsNothing);
+    });
+  }
+
+  testWidgets('a top row in a slot sized for the App size keeps its height', (tester) async {
+    DialerPrefs.instance.displaySize.value = DialerPrefs.displaySizes.last;
+    addTearDown(() => DialerPrefs.instance.displaySize.value = 1);
+    const pill = Key('pill');
+    await open(
+      tester,
+      Builder(
+        // As the contact editor's Cancel | Done row: the slot is 48 dp at the top buttons size.
+        builder: (context) => Align(
+          alignment: Alignment.topCenter,
+          child: SizedBox(
+            height: 48 * headerScale(context),
+            child: const HeaderScaled(child: SizedBox(key: pill, height: 48)),
+          ),
+        ),
+      ),
+    );
+    // No DesignWidth here, so the row draws 48 dp / App size, not squeezed to that and then shrunk again.
+    expect(tester.getRect(find.byKey(pill)).height, moreOrLessEquals(48 / DialerPrefs.displaySizes.last, epsilon: .5));
+  });
 
   testWidgets('Calls search opens a page and Cancel closes it', (tester) async {
     await open(tester, const RecentsScreen());
