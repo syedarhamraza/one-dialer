@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../features/in_call/call_controls.dart';
 import '../theme/one_ui_theme.dart';
 import 'call_glass.dart';
+import 'press_glow.dart';
 import '../l10n/l10n.dart';
 
 /// One button of a [showCosActions] dialog.
@@ -100,6 +101,9 @@ final _spring = GlassSpringCurve(
   const Duration(milliseconds: 400),
 );
 
+/// Dark mode at full effects: ColorOS 17's flat grey card and pills with a lit rim.
+bool _lit(BuildContext context) => !context.palette.isLight && OneUIEffectsController.instance.isFull;
+
 /// Light mode below full effects keeps the original flat One UI alert: a white card, smaller
 /// corners and text, and the darker dim.
 bool _flat(BuildContext context) => identical(context.palette, OneUIPalette.lightFlat);
@@ -149,9 +153,12 @@ class _Frame extends StatelessWidget {
           shadows: OneUIPalette.lightMenuShadow,
         )
       : ShapeDecoration(
-          color: palette.card,
+          color: OneUIEffectsController.instance.isFull ? _darkCard : palette.card,
           shape: _shape.copyWith(side: const BorderSide(color: Color(0x14FFFFFF), width: .8)),
         );
+
+  /// ColorOS 17's dark alert grey, a step above the page's cards.
+  static const _darkCard = Color(0xFF242424);
 
   @override
   Widget build(BuildContext context) {
@@ -182,13 +189,10 @@ class _Frame extends StatelessWidget {
               // a frame on Adreno. The glass is on the buttons.
               child: DecoratedBox(
                 decoration: _card(context.palette),
-                // Dark at full effects: the pills' edge glow on the card's rim (a painter, no blur).
                 position: DecorationPosition.background,
-                child: DecoratedBox(
-                  position: DecorationPosition.foreground,
-                  decoration: !context.palette.isLight && OneUIEffectsController.instance.isFull
-                      ? glassGlow(_shape, edges: mainGlass(context).edges)
-                      : const BoxDecoration(),
+                // Dark at full effects: ColorOS 17's lit rim, like the pills' (a painter, no blur).
+                child: CustomPaint(
+                  foregroundPainter: _lit(context) ? RimPainter(_shape, _darkCard) : null,
                   child: Material(
                     type: MaterialType.transparency,
                     child: Padding(padding: EdgeInsets.fromLTRB(20, flat ? 28 : 30, 20, 20), child: child),
@@ -245,9 +249,8 @@ class CosPill extends StatelessWidget {
   final bool destructive;
 
   @override
-  Widget build(BuildContext context) => CallGlass(
-    radius: 26,
-    child: Material(
+  Widget build(BuildContext context) {
+    final content = Material(
       type: MaterialType.transparency,
       shape: const StadiumBorder(),
       clipBehavior: Clip.antiAlias,
@@ -269,8 +272,11 @@ class CosPill extends StatelessWidget {
           ),
         ),
       ),
-    ),
-  );
+    );
+    return _lit(context)
+        ? LitButton(color: const Color(0xFF474747), shape: const StadiumBorder(), radius: 26, child: content)
+        : CallGlass(radius: 26, child: content);
+  }
 }
 
 /// Owns its controller, so it outlives the close animation.
