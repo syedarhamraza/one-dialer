@@ -2324,12 +2324,6 @@ abstract class AppLocalizations {
   /// **'App'**
   String get displaySizeApp;
 
-  /// No description provided for @displaySizeHeader.
-  ///
-  /// In en, this message translates to:
-  /// **'Top buttons'**
-  String get displaySizeHeader;
-
   /// No description provided for @displaySizeNavBar.
   ///
   /// In en, this message translates to:

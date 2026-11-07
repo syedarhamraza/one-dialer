@@ -76,8 +76,8 @@ class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
   }
 }
 
-/// ColorOS's Display size: stepped sliders between a small and a big "A", for the whole app,
-/// the top buttons and the nav bar. Each applies when the finger lifts, so a slider doesn't
+/// ColorOS's Display size: stepped sliders between a small and a big "A", for the pages and
+/// the nav bar. Each applies when the finger lifts, so a slider doesn't
 /// move under it while dragging.
 class _DisplaySizeCard extends StatefulWidget {
   const _DisplaySizeCard();
@@ -89,8 +89,7 @@ class _DisplaySizeCard extends StatefulWidget {
 class _DisplaySizeCardState extends State<_DisplaySizeCard> {
   static final _prefs = DialerPrefs.instance;
   late final _steps = {
-    for (final n in [_prefs.displaySize, _prefs.headerSize, _prefs.navBarSize])
-      n: DialerPrefs.displaySizes.indexOf(n.value),
+    for (final n in [_prefs.displaySize, _prefs.navBarSize]) n: DialerPrefs.displaySizes.indexOf(n.value),
   };
 
   @override
@@ -126,11 +125,7 @@ class _DisplaySizeCardState extends State<_DisplaySizeCard> {
     );
     return OneUIGroupCard(
       headerTitle: l10n.displaySize,
-      items: [
-        row(l10n.displaySizeApp, _prefs.displaySize),
-        row(l10n.displaySizeHeader, _prefs.headerSize),
-        row(l10n.displaySizeNavBar, _prefs.navBarSize),
-      ],
+      items: [row(l10n.displaySizeApp, _prefs.displaySize), row(l10n.displaySizeNavBar, _prefs.navBarSize)],
     );
   }
 }

@@ -1338,9 +1338,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get displaySizeApp => 'App';
 
   @override
-  String get displaySizeHeader => 'Pulsanti in alto';
-
-  @override
   String get displaySizeNavBar => 'Barra di navigazione';
 
   @override

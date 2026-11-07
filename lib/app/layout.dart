@@ -8,7 +8,7 @@ import '../core/prefs/dialer_prefs.dart';
 const double kFloatingNavBarHeight = 58;
 
 /// Height of a tab's top bar (under the status bar), where its round header buttons sit, before
-/// Settings › Display size's top buttons size; read it through [headerBarHeight].
+/// [headerScale]; read it through [headerBarHeight].
 const double kHeaderBarHeight = 60;
 
 /// Settings › Display size › Navigation bar: how much bigger the nav bar and its round buttons draw.
@@ -19,11 +19,11 @@ double navBarScale(BuildContext context) {
   return DialerPrefs.instance.navBarSize.value / DialerPrefs.instance.displaySize.value;
 }
 
-/// Settings › Display size › Top buttons: how much bigger the Calls and Contacts header pills draw,
-/// apart from the App size like [navBarScale].
+/// How much the top buttons (the tabs' header pills, pages' top rows, menus) draw: the App size
+/// divided back out, so they keep their size when the pages grow, like [navBarScale].
 double headerScale(BuildContext context) {
   context.dependOnInheritedWidgetOfExactType<_ComponentSizes>();
-  return DialerPrefs.instance.headerSize.value / DialerPrefs.instance.displaySize.value;
+  return 1 / DialerPrefs.instance.displaySize.value;
 }
 
 double headerBarHeight(BuildContext context) => kHeaderBarHeight * headerScale(context);
@@ -45,8 +45,8 @@ Widget scaledToWidth(double scale, Widget child, {Alignment alignment = Alignmen
         ),
       );
 
-/// A pushed page's top row (Back button, title, actions), at Settings › Display size › Top
-/// buttons: scaled from its top edge, kept as wide as its parent.
+/// A pushed page's top row (Back button, title, actions) at [headerScale]: scaled from its top
+/// edge, kept as wide as its parent.
 class HeaderScaled extends StatelessWidget {
   const HeaderScaled({super.key, required this.child});
 
@@ -56,16 +56,12 @@ class HeaderScaled extends StatelessWidget {
   Widget build(BuildContext context) => scaledToWidth(headerScale(context), child, alignment: Alignment.topCenter);
 }
 
-/// Rebuilds whoever reads [navBarScale] or [headerScale] when the user changes them.
+/// Rebuilds whoever reads [navBarScale] or [headerScale] when the sizes change.
 class _ComponentSizes extends InheritedNotifier<Listenable> {
   const _ComponentSizes({required super.notifier, required super.child});
 }
 
-final _componentSizes = Listenable.merge([
-  DialerPrefs.instance.navBarSize,
-  DialerPrefs.instance.headerSize,
-  DialerPrefs.instance.displaySize,
-]);
+final _componentSizes = Listenable.merge([DialerPrefs.instance.navBarSize, DialerPrefs.instance.displaySize]);
 
 /// Gap between the bottom floating bars and the safe area, shared so they line up.
 const double kNavBarVerticalPadding = 8;

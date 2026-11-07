@@ -73,14 +73,15 @@ void main() {
   }
 
   for (final size in DialerPrefs.displaySizes) {
-    testWidgets('the Calls header pills stay on screen, apart and tappable at top buttons size $size', (tester) async {
+    testWidgets('the Calls header pills stay on screen, apart and tappable at App size $size', (tester) async {
       // The vivo's width, where the pills have the least room once they grow.
       tester.view.physicalSize = const Size(420, 900);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
-      DialerPrefs.instance.headerSize.value = size;
-      addTearDown(() => DialerPrefs.instance.headerSize.value = 1);
+      // No DesignWidth here, so the pills draw at 1 / size: big at a small App size.
+      DialerPrefs.instance.displaySize.value = size;
+      addTearDown(() => DialerPrefs.instance.displaySize.value = 1);
       repo.calls.value = [for (var i = 0; i < 30; i++) call(i, '9$i')];
       await open(tester, const RecentsScreen());
       final screen = tester.getRect(find.byType(RecentsScreen));
@@ -97,8 +98,8 @@ void main() {
       if (title.evaluate().isNotEmpty) {
         expect(tester.getRect(title).right, lessThan(tabs.left), reason: 'title under the tabs at $size');
       }
-      // The test font draws every letter as a wide square, so only the smallest size leaves room for it.
-      if (size == DialerPrefs.displaySizes.first) expect(title, findsOneWidget);
+      // The test font draws every letter as a wide square, so only the smallest pills leave room for it.
+      if (size == DialerPrefs.displaySizes.last) expect(title, findsOneWidget);
       await tester.drag(find.byType(CustomScrollView), const Offset(0, 300));
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Search'));
@@ -108,10 +109,9 @@ void main() {
   }
 
   for (final size in [DialerPrefs.displaySizes.first, DialerPrefs.displaySizes.last]) {
-    testWidgets("a page's Back button follows top buttons size $size, not the App size", (tester) async {
-      DialerPrefs.instance.headerSize.value = size;
-      DialerPrefs.instance.displaySize.value = 1.3;
-      addTearDown(() => DialerPrefs.instance.headerSize.value = DialerPrefs.instance.displaySize.value = 1);
+    testWidgets("a page's Back button keeps its size at App size $size", (tester) async {
+      DialerPrefs.instance.displaySize.value = size;
+      addTearDown(() => DialerPrefs.instance.displaySize.value = 1);
       await open(
         tester,
         Builder(
@@ -127,9 +127,9 @@ void main() {
       );
       await tester.tap(find.text('Go'));
       await tester.pumpAndSettle();
-      // Painted size: 48 dp times the slider, with the App size divided back out.
+      // Painted size (no DesignWidth here): 48 dp with the App size divided out.
       final rect = tester.getRect(find.byTooltip('Back'));
-      expect(rect.width, moreOrLessEquals(48 * size / 1.3, epsilon: .5));
+      expect(rect.width, moreOrLessEquals(48 / size, epsilon: .5));
       await tester.tap(find.byTooltip('Back'));
       await tester.pumpAndSettle();
       expect(find.text('Page'), findsNothing);

@@ -328,7 +328,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
                 return LayoutBuilder(
                   builder: (context, box) {
                     final scale = headerScale(context);
-                    // At a big Top buttons size All | Missed slides left beside Search; the small title
+                    // With big top buttons (a small App size) All | Missed slides left beside Search; the small title
                     // gives way if it would reach it. The controls are laid out at width / scale.
                     final tabsLeft = _HeaderControls.tabsLeftFor(box.maxWidth / scale) * scale;
                     final clash = HeaderTitle.rightEdge(context, context.l10n.navCalls) + 8 > tabsLeft;
@@ -522,7 +522,7 @@ class _HeaderControls extends StatelessWidget {
   static double _lerp(double a, double b, double t) => a + (b - a) * t;
 
   /// Where All | Missed starts in a header [w] wide: centred, or beside Search when centred would
-  /// touch it (a big Top buttons size lays the header out narrower).
+  /// touch it (big top buttons lay the header out narrower).
   static double tabsLeftFor(double w) {
     final tabs = FilterTabs.sizeFor(_tabCount);
     final searchLeft = w - _edge - _button - _gap - _button;

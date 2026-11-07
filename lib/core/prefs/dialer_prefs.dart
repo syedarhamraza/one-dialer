@@ -193,13 +193,12 @@ class DialerPrefs {
 
   /// Settings › Display & effects › Display size, each one of [displaySizes] (loaded with
   /// [loadAppearance] and [loadCallEffects]): the whole app, multiplying `DesignWidth`'s scale in
-  /// both engines; the nav bar (`navBarScale`); the Calls and Contacts header pills (`headerScale`).
+  /// both engines (the top buttons keep their size, see `headerScale`); the nav bar (`navBarScale`).
   final displaySize = ValueNotifier(1.0);
   final navBarSize = ValueNotifier(1.0);
-  final headerSize = ValueNotifier(1.0);
   static const displaySizes = [0.9, 1.0, 1.1, 1.2, 1.3];
 
-  late final _sizeKeys = {displaySize: 'display_size', navBarSize: 'nav_bar_size', headerSize: 'header_size'};
+  late final _sizeKeys = {displaySize: 'display_size', navBarSize: 'nav_bar_size'};
 
   Future<void> _loadDisplaySize() async {
     for (final MapEntry(key: notifier, value: key) in _sizeKeys.entries) {

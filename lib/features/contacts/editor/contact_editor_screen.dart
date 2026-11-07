@@ -500,7 +500,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
 
     return Padding(
       padding: EdgeInsets.fromLTRB(16, MediaQuery.paddingOf(context).top + 8, 16, 8),
-      // Laid out at the Top buttons size, then drawn at it.
+      // Laid out at the top buttons size, then drawn at it.
       child: SizedBox(
         height: 48 * headerScale(context),
         child: HeaderScaled(
