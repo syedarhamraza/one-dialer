@@ -14,6 +14,7 @@ import 'package:dialer/features/recents/recents_screen.dart';
 import 'package:dialer/features/search/search_screen.dart';
 import 'package:dialer/theme/one_ui_theme.dart';
 import 'package:dialer/widgets/one_ui_subpage.dart';
+import 'package:dialer/widgets/round_header_controls.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -71,16 +72,35 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  for (final size in [DialerPrefs.displaySizes.first, DialerPrefs.displaySizes.last]) {
-    testWidgets('the Calls header pills stay on screen and tappable at top buttons size $size', (tester) async {
+  for (final size in DialerPrefs.displaySizes) {
+    testWidgets('the Calls header pills stay on screen, apart and tappable at top buttons size $size', (tester) async {
+      // The vivo's width, where the pills have the least room once they grow.
+      tester.view.physicalSize = const Size(420, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
       DialerPrefs.instance.headerSize.value = size;
       addTearDown(() => DialerPrefs.instance.headerSize.value = 1);
+      repo.calls.value = [for (var i = 0; i < 30; i++) call(i, '9$i')];
       await open(tester, const RecentsScreen());
       final screen = tester.getRect(find.byType(RecentsScreen));
+      final tabs = tester.getRect(find.byType(FilterTabs));
       for (final tip in ['Search', 'More options']) {
         final rect = tester.getRect(find.byTooltip(tip));
         expect(screen.contains(rect.topLeft) && screen.contains(rect.bottomRight), isTrue, reason: '$tip at $rect');
+        expect(rect.overlaps(tabs), isFalse, reason: '$tip at $rect, tabs at $tabs');
       }
+      // Scrolled, the small title shows only where the tabs leave it room.
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -300));
+      await tester.pumpAndSettle();
+      final title = find.descendant(of: find.byType(HeaderTitle), matching: find.byType(Text));
+      if (title.evaluate().isNotEmpty) {
+        expect(tester.getRect(title).right, lessThan(tabs.left), reason: 'title under the tabs at $size');
+      }
+      // The test font draws every letter as a wide square, so only the smallest size leaves room for it.
+      if (size == DialerPrefs.displaySizes.first) expect(title, findsOneWidget);
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, 300));
+      await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Search'));
       await tester.pumpAndSettle();
       expect(find.byType(SearchScreen), findsOneWidget);

@@ -235,13 +235,35 @@ class HeaderTitle extends StatelessWidget {
   final TitleCollapse collapse;
   final String text;
 
-  /// While the header uses its left side (selecting, typing).
+  /// While the header uses its left side (selecting, typing), or a pill would cover it.
   final bool hidden;
+
+  static const double _left = 20;
+
+  static TextStyle _style(BuildContext context, double shown) => TextStyle(
+    fontSize: 22,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.3,
+    color: context.palette.textPrimary.withValues(alpha: shown),
+  );
+
+  /// Where [text] ends, as this title draws it: for headers that must keep their pills clear of it.
+  static double rightEdge(BuildContext context, String text) {
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: DefaultTextStyle.of(context).style.merge(_style(context, 1))),
+      textDirection: TextDirection.ltr,
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    )..layout();
+    final width = painter.width;
+    painter.dispose();
+    return _left + width;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      left: 20,
+      left: _left,
       top: 0,
       bottom: 0,
       child: IgnorePointer(
@@ -254,15 +276,7 @@ class HeaderTitle extends StatelessWidget {
               if (shown == 0) return const SizedBox.shrink();
               return Transform.translate(
                 offset: Offset(0, (1 - shown) * 10),
-                child: Text(
-                  text,
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: -0.3,
-                    color: context.palette.textPrimary.withValues(alpha: shown),
-                  ),
-                ),
+                child: Text(text, style: _style(context, shown)),
               );
             },
           ),

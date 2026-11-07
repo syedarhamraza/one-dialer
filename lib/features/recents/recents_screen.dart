@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -323,15 +325,24 @@ class _RecentsScreenState extends State<RecentsScreen> {
                       ? _menuItems()
                       : keypadMenuItems(context, input: widget.dialInput!, open: widget.keypadOpen!),
                 );
-                return Stack(
-                  children: [
-                    HeaderTitle(
-                      collapse: _collapse,
-                      text: context.l10n.navCalls,
-                      hidden: selecting || number.isNotEmpty,
-                    ),
-                    scaledToWidth(headerScale(context), controls),
-                  ],
+                return LayoutBuilder(
+                  builder: (context, box) {
+                    final scale = headerScale(context);
+                    // At a big Top buttons size All | Missed slides left beside Search; the small title
+                    // gives way if it would reach it. The controls are laid out at width / scale.
+                    final tabsLeft = _HeaderControls.tabsLeftFor(box.maxWidth / scale) * scale;
+                    final clash = HeaderTitle.rightEdge(context, context.l10n.navCalls) + 8 > tabsLeft;
+                    return Stack(
+                      children: [
+                        HeaderTitle(
+                          collapse: _collapse,
+                          text: context.l10n.navCalls,
+                          hidden: selecting || number.isNotEmpty || clash,
+                        ),
+                        scaledToWidth(scale, controls),
+                      ],
+                    );
+                  },
                 );
               },
             ),
@@ -510,6 +521,14 @@ class _HeaderControls extends StatelessWidget {
   static double _in(double t) => (t * 2 - 1).clamp(0.0, 1.0);
   static double _lerp(double a, double b, double t) => a + (b - a) * t;
 
+  /// Where All | Missed starts in a header [w] wide: centred, or beside Search when centred would
+  /// touch it (a big Top buttons size lays the header out narrower).
+  static double tabsLeftFor(double w) {
+    final tabs = FilterTabs.sizeFor(_tabCount);
+    final searchLeft = w - _edge - _button - _gap - _button;
+    return math.min((w - tabs.width) / 2, searchLeft - _gap - tabs.width);
+  }
+
   Widget _morph(BuildContext context, bool on, Widget Function(double t) builder) => TweenAnimationBuilder<double>(
     tween: Tween(end: on ? 1 : 0),
     duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 550),
@@ -540,7 +559,7 @@ class _HeaderControls extends StatelessWidget {
           final menuLeft = w - _edge - _button;
           final searchLeft = menuLeft - _gap - _button;
           final addLeft = searchLeft - _gap - _button;
-          final tabsLeft = (w - tabs.width) / 2;
+          final tabsLeft = tabsLeftFor(w);
           return _morph(
             context,
             selecting,
