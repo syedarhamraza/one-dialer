@@ -49,7 +49,7 @@ class ContactRow extends StatelessWidget {
   });
 
   /// Fixed, so the list can use a fixed-extent sliver and section offsets are known.
-  static const double height = 64;
+  static const double height = 75; // ColorOS 17 Contacts' row pitch
 
   final DialerContact contact;
   final bool isLast;

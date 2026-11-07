@@ -791,6 +791,8 @@ class _CallRow extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(20, 10, 8, 10),
         child: Row(
           children: [
+            // ColorOS 17's call rows repeat every 82 dp: 61 + 2 × 10 padding + the 1 dp divider.
+            const SizedBox(height: 61),
             AppBadged(
               package: call.appPackage,
               child: CallerAvatar(number: call.number, name: name, isPrivate: call.isPrivate),
