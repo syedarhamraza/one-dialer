@@ -4,7 +4,6 @@ import '../core/haptics/haptics.dart';
 import '../features/in_call/call_controls.dart';
 import '../theme/one_ui_theme.dart';
 import 'call_glass.dart';
-import '../l10n/l10n.dart';
 
 /// A header icon on its own round grey background (search, menu, cancel).
 class RoundIconButton extends StatelessWidget {
@@ -154,19 +153,38 @@ class _FilterTabsState extends State<FilterTabs> {
   }
 }
 
-/// Select all, inside the lead pill: a check circle (filled blue when every row is
-/// selected) and "All". The count itself is the big "N selected" title.
-class SelectAllCount extends StatelessWidget {
-  const SelectAllCount({super.key, required this.allSelected, required this.onTap});
+/// A selection-mode header pill's label (Cancel, Select all / Deselect all): ColorOS's text
+/// pill, without its glass, so a header can morph the glass around it. A changed label
+/// cross-fades.
+class SelectionPillLabel extends StatelessWidget {
+  const SelectionPillLabel({super.key, required this.text, required this.onTap});
 
-  final bool allSelected;
+  final String text;
   final VoidCallback onTap;
+
+  static const double _padding = 18;
+
+  static TextStyle _style(BuildContext context) =>
+      TextStyle(fontSize: 16, fontWeight: FontWeight.w500, letterSpacing: -0.2, color: context.palette.textPrimary);
+
+  /// The pill's width for [text]: measured, so it fits any language.
+  static double widthFor(BuildContext context, String text) {
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: DefaultTextStyle.of(context).style.merge(_style(context))),
+      textDirection: TextDirection.ltr,
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    )..layout();
+    final width = painter.width;
+    painter.dispose();
+    return (width + 2 * _padding).ceilToDouble();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: allSelected ? context.l10n.deselectAll : context.l10n.selectAll,
+      label: text,
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -174,35 +192,11 @@ class SelectAllCount extends StatelessWidget {
           Haptics.select();
           onTap();
         },
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeOutCubic,
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: allSelected ? const Color(0xFF2C69FF) : Colors.transparent,
-                border: Border.all(
-                  color: allSelected ? const Color(0xFF2C69FF) : context.palette.textPrimary.withValues(alpha: 0.55),
-                  width: 2,
-                ),
-              ),
-              child: allSelected ? const Icon(Icons.check_rounded, size: 15, color: Colors.white) : null,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              context.l10n.all,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.2,
-                color: context.palette.textPrimary,
-              ),
-            ),
-          ],
+        child: Center(
+          child: AnimatedSwitcher(
+            duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 180),
+            child: Text(text, key: ValueKey(text), maxLines: 1, softWrap: false, style: _style(context)),
+          ),
         ),
       ),
     );
@@ -230,10 +224,19 @@ class TitleCollapse extends ValueNotifier<double> {
 /// The small title that takes the big one's place at the left of the header bar
 /// (ColorOS), fading and rising in as [collapse] goes from 0 to 1.
 class HeaderTitle extends StatelessWidget {
-  const HeaderTitle({super.key, required this.collapse, required this.text, this.hidden = false});
+  const HeaderTitle({
+    super.key,
+    required this.collapse,
+    required this.text,
+    this.hidden = false,
+    this.centered = false,
+  });
 
   final TitleCollapse collapse;
   final String text;
+
+  /// In the middle of the bar, between the selection pills (ColorOS's "N selected").
+  final bool centered;
 
   /// While the header uses its left side (selecting, typing), or a pill would cover it.
   final bool hidden;
@@ -263,22 +266,33 @@ class HeaderTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      left: _left,
+      left: centered ? 0 : _left,
+      right: centered ? 0 : null,
       top: 0,
       bottom: 0,
       child: IgnorePointer(
         child: Center(
-          child: ValueListenableBuilder(
-            valueListenable: collapse,
-            builder: (context, t, _) {
-              final shown = hidden ? 0.0 : (t * 2 - 1).clamp(0.0, 1.0);
-              // Not there at all while hidden, so screen readers don't read it twice.
-              if (shown == 0) return const SizedBox.shrink();
-              return Transform.translate(
-                offset: Offset(0, (1 - shown) * 10),
-                child: Text(text, style: _style(context, shown)),
-              );
-            },
+          // Hiding fades, so a header can cross-fade two titles (Contacts ↔ N selected).
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(end: hidden ? 0 : 1),
+            duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 220),
+            builder: (context, visible, _) => ValueListenableBuilder(
+              valueListenable: collapse,
+              builder: (context, t, _) {
+                final shown = visible * (t * 2 - 1).clamp(0.0, 1.0);
+                // Not there at all while hidden, so screen readers don't read it twice.
+                if (shown == 0) return const SizedBox.shrink();
+                return Transform.translate(
+                  offset: Offset(0, (1 - shown) * 10),
+                  // Smaller between the pills, as ColorOS draws it.
+                  child: Text(
+                    text,
+                    maxLines: 1,
+                    style: _style(context, shown).copyWith(fontSize: centered ? 18 : null),
+                  ),
+                );
+              },
+            ),
           ),
         ),
       ),

@@ -49,6 +49,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deselectAll => 'Deselect all';
 
   @override
+  String get selectItems => 'Select items';
+
+  @override
   String get search => 'Search';
 
   @override

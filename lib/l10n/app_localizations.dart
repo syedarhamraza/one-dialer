@@ -176,6 +176,12 @@ abstract class AppLocalizations {
   /// **'Deselect all'**
   String get deselectAll;
 
+  /// No description provided for @selectItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Select items'**
+  String get selectItems;
+
   /// No description provided for @search.
   ///
   /// In en, this message translates to:

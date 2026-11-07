@@ -49,6 +49,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get deselectAll => 'Deseleziona tutto';
 
   @override
+  String get selectItems => 'Seleziona elementi';
+
+  @override
   String get search => 'Cerca';
 
   @override

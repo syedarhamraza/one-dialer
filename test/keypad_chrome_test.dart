@@ -90,7 +90,7 @@ void main() {
     expect(find.text('Missed').hitTestable(), findsOneWidget);
   });
 
-  testWidgets('selecting morphs the header into the count and Cancel, and back', (tester) async {
+  testWidgets('selecting morphs the header into Cancel and Select all, and back', (tester) async {
     CallLogRepository.instance.calls.value = [
       CallLogEntry(id: 1, number: '03001234567', type: CallType.incoming, date: DateTime.now()),
     ];
@@ -101,10 +101,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.longPress(find.text('03001234567'));
     await tester.pumpAndSettle();
-    expect(find.byTooltip('Cancel').hitTestable(), findsOneWidget);
+    expect(find.text('Cancel').hitTestable(), findsOneWidget);
+    expect(find.text('Deselect all').hitTestable(), findsOneWidget);
     expect(find.byTooltip('Search').hitTestable(), findsNothing);
     expect(find.text('1 selected'), findsOneWidget);
-    await tester.tap(find.byTooltip('Cancel'));
+    await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
     expect(find.text('Missed').hitTestable(), findsOneWidget);
     expect(find.byTooltip('Search').hitTestable(), findsOneWidget);
