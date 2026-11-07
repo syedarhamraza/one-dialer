@@ -43,6 +43,7 @@ class ContactRow extends StatelessWidget {
     required this.contact,
     required this.isLast,
     required this.selectMark,
+    this.highlight,
     required this.onTap,
     required this.onLongPress,
   });
@@ -53,13 +54,14 @@ class ContactRow extends StatelessWidget {
   final DialerContact contact;
   final bool isLast;
 
-  /// The selection circle, which alone listens to selection taps.
+  /// The selection box and the selected row's background, which alone listen to selection taps.
   final Widget selectMark;
+  final Widget? highlight;
   final VoidCallback onTap, onLongPress;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    final row = InkWell(
       onTap: onTap,
       onLongPress: onLongPress,
       splashColor: context.palette.textPrimary.withValues(alpha: 0.06),
@@ -68,7 +70,6 @@ class ContactRow extends StatelessWidget {
         padding: const EdgeInsets.only(left: 20),
         child: Row(
           children: [
-            selectMark,
             ContactAvatar(id: contact.id, name: contact.name),
             const SizedBox(width: 14),
             Expanded(
@@ -82,17 +83,32 @@ class ContactRow extends StatelessWidget {
                       ? null
                       : Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1)),
                 ),
-                child: Text(
-                  contact.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500, letterSpacing: -0.2),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        contact.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500, letterSpacing: -0.2),
+                      ),
+                    ),
+                    selectMark,
+                  ],
                 ),
               ),
             ),
           ],
         ),
       ),
+    );
+    final highlight = this.highlight;
+    if (highlight == null) return row;
+    return Stack(
+      children: [
+        Positioned.fill(child: highlight),
+        row,
+      ],
     );
   }
 }

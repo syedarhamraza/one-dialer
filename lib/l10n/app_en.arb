@@ -16,6 +16,7 @@
   "all": "All",
   "selectAll": "Select all",
   "deselectAll": "Deselect all",
+  "selectItems": "Select items",
   "search": "Search",
   "searchContacts": "Search contacts",
   "clear": "Clear",

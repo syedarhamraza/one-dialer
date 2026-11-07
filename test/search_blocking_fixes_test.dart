@@ -232,7 +232,8 @@ void main() {
     await tester.tap(find.text('Delete'));
     await tester.pumpAndSettle();
     expect(native.where((c) => c.method == 'deleteCalls'), isEmpty);
-    await tester.tap(find.text('Cancel'));
+    // The dialog's Cancel, not the header's.
+    await tester.tap(find.text('Cancel').last);
     await tester.pumpAndSettle();
     expect(find.text('1 selected'), findsOneWidget);
     await tester.tap(find.text('Delete'));
