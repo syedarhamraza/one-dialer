@@ -17,6 +17,8 @@
     <string name="setup_notifications">Notifications</string>
     <string name="setup_notifications_detail">Shows while a call is being recorded</string>
     <string name="setup_done">Ready</string>
+    <string name="setup_battery">Battery: Unrestricted</string>
+    <string name="setup_battery_detail">Stops the phone from switching the recorder off while it\'s idle</string>
     <string name="setup_consent">Recording laws differ by country. You are responsible for telling the other person and getting their consent where it\'s required.</string>
     <string name="setting_source">Microphone source</string>
     <string name="source_auto">Automatic (tests on the first call)</string>

@@ -16,6 +16,8 @@
     <string name="setup_notifications">Notifiche</string>
     <string name="setup_notifications_detail">Visibile mentre una chiamata viene registrata</string>
     <string name="setup_done">Pronto</string>
+    <string name="setup_battery">Batteria: senza restrizioni</string>
+    <string name="setup_battery_detail">Impedisce al telefono di disattivare il registratore quando è inattivo</string>
     <string name="setup_consent">Le leggi sulla registrazione variano da paese a paese. Sei responsabile di informare l\'altra persona e di ottenere il suo consenso quando è richiesto.</string>
     <string name="setting_source">Sorgente microfono</string>
     <string name="source_auto">Automatica (prova alla prima chiamata)</string>

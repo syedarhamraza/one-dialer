@@ -63,6 +63,13 @@ class SetupActivity : Activity() {
             if (Build.VERSION.SDK_INT >= 33) requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 2)
             else startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName))
         }
+        // vivo and other OEM battery managers stop idle apps, which switches the accessibility service off.
+        row(
+            getString(R.string.setup_battery), getString(R.string.setup_battery_detail),
+            getSystemService(android.os.PowerManager::class.java).isIgnoringBatteryOptimizations(packageName),
+        ) {
+            startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName")))
+        }
         choice(getString(R.string.setting_source), "sourceMode", listOf(
             "auto" to getString(R.string.source_auto),
             "recognition" to getString(R.string.source_recognition),
