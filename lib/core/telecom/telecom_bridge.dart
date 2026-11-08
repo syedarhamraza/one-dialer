@@ -173,6 +173,31 @@ class TelecomBridge {
   Future<void> setCallSetting(String key, Object value) =>
       _methods.invokeMethod('setCallSetting', {'key': key, 'value': value});
 
+  // Call recording, through the sideloaded companion (RecorderCompanion.kt)
+  /// Null when One Dialer Recorder isn't installed.
+  Future<RecorderInfo?> getRecorder() async {
+    final map = await _methods.invokeMapMethod<Object?, Object?>('getRecorder');
+    return map == null ? null : RecorderInfo.fromMap(map);
+  }
+
+  /// Starts or stops recording the active call; false when nothing could be done.
+  Future<bool> toggleRecording() async => await _methods.invokeMethod<bool>('toggleRecording') ?? false;
+
+  Future<List<CallRecording>> listRecordings() async =>
+      (await _methods.invokeListMethod<Object?>('listRecordings') ?? const [])
+          .map((r) => CallRecording.fromMap(r! as Map<Object?, Object?>))
+          .toList();
+
+  Future<void> deleteRecording(String name) => _methods.invokeMethod('deleteRecording', {'name': name});
+
+  Future<void> deleteAllRecordings() => _methods.invokeMethod('deleteAllRecordings');
+
+  Future<void> openRecording(String name) => _methods.invokeMethod('openRecording', {'name': name});
+
+  Future<void> shareRecording(String name) => _methods.invokeMethod('shareRecording', {'name': name});
+
+  Future<void> openRecorderSetup() => _methods.invokeMethod('openRecorderSetup');
+
   // Call log
   /// Newest first, up to 500 calls. Throws [PlatformException] `NO_PERMISSION` without call-log access.
   Future<List<Map<Object?, Object?>>> getCallLog() async =>

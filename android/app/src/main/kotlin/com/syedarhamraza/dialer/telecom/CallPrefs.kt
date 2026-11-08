@@ -19,6 +19,8 @@ object CallPrefs {
         "autoAnswer" to false,
         "autoAnswerDelay" to 5, // seconds
         "announceCalls" to "off", // "always", or "headset" (only with headphones)
+        "autoRecord" to false, // record every answered call (needs the companion recorder)
+        "recordingConsent" to false, // the user accepted Settings › Call recording's consent notice
     )
 
     fun read(context: Context): Map<String, Any> {

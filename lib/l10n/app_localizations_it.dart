@@ -1687,4 +1687,79 @@ class AppLocalizationsIt extends AppLocalizations {
   String logRangFor(String type, String duration) {
     return '$type (ha squillato per $duration)';
   }
+
+  @override
+  String get record => 'Registra';
+
+  @override
+  String get stopRecording => 'Interrompi registrazione';
+
+  @override
+  String get recordSetUpFirst => 'Registra (configura in Impostazioni)';
+
+  @override
+  String get recordingNow => 'Registrazione in corso';
+
+  @override
+  String get callRecording => 'Registrazione chiamate';
+
+  @override
+  String get recorderApp => 'One Dialer Recorder';
+
+  @override
+  String get recorderReady => 'Pronto per registrare';
+
+  @override
+  String get recorderNeedsMic => 'Consenti il microfono in One Dialer Recorder';
+
+  @override
+  String get recorderNeedsAccessibility =>
+      'Attiva il suo servizio di accessibilità';
+
+  @override
+  String get recorderUntrusted =>
+      'Questa versione di One Dialer non è riconosciuta dal registratore. Aggiorna entrambe le app.';
+
+  @override
+  String get recordingConsentTitle => 'Prima di registrare';
+
+  @override
+  String get recordingConsentBody =>
+      'Le leggi sulla registrazione variano da paese a paese e alcune richiedono il consenso di tutti i partecipanti alla chiamata. Sei responsabile di informare l\'altra persona e di ottenere il suo consenso. Le registrazioni restano su questo telefono e non vengono mai caricate.';
+
+  @override
+  String get recordingConsentAccept => 'Ho capito';
+
+  @override
+  String get recordAllCalls => 'Registra tutte le chiamate';
+
+  @override
+  String get recordAllCallsSubtitle =>
+      'Avvia la registrazione appena si risponde a una chiamata';
+
+  @override
+  String get recordings => 'Registrazioni';
+
+  @override
+  String get noRecordings => 'Ancora nessuna registrazione';
+
+  @override
+  String get noRecordingsSubtitle =>
+      'Durante una chiamata tocca ⋮ › Registra nella schermata di chiamata';
+
+  @override
+  String get deleteAllRecordings => 'Elimina tutte le registrazioni';
+
+  @override
+  String get deleteAllRecordingsTitle => 'Eliminare tutte le registrazioni?';
+
+  @override
+  String get deleteAllRecordingsMessage => 'Non potranno essere recuperate.';
+
+  @override
+  String get recordingNotSetUp => 'Le chiamate non vengono registrate';
+
+  @override
+  String get recordingNotSetUpSubtitle =>
+      'Registra tutte le chiamate è attivo, ma One Dialer Recorder non è configurato';
 }

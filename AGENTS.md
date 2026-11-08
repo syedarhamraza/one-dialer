@@ -116,6 +116,10 @@ Rules:
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
 - A committed graphify-out/graph.json is rewritten whole on every build, so a large diff to it in a pull request is expected. Do not flag it as churn or suggest skipping the graph rebuild or its hooks.
 
+## Call recording (companion app)
+
+Recording is a separate sideloaded app, **One Dialer Recorder** (`companion/`, plain Kotlin, `com.syedarhamraza.onedialer.recorder`), never Play: it holds the mic and an empty accessibility service, and One Dialer drives it through its provider's `call()` (`telecom/RecorderCompanion.kt`; all recording UI hides when it isn't installed). It trusts One Dialer by pinned signing certificate (`companion/.../TrustedDialer.kt`; the Play app-signing key must be added there). Build and test it with `companion/gradlew.bat -p companion test assembleDebug` (needs `companion/local.properties` with `sdk.dir`), and install `companion/app/build/outputs/apk/debug/app-debug.apk` with the same call-idle gate. Design and what's still unverified: `docs/call-recording-plan.md`.
+
 ## Liquid Glass Widgets
 
 For liquid glass widgets or any liquid glass request refer to the skill in `.claude\skills\liquid-glass-widgets\SKILL.md` (other agents: read that file directly).

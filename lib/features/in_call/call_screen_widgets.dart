@@ -152,8 +152,18 @@ String? backdropSeed(CallInfo call) {
 }
 
 class CallHeader extends StatelessWidget {
-  const CallHeader({super.key, required this.call, required this.sims, required this.compact, this.keypadProgress = 0});
+  const CallHeader({
+    super.key,
+    required this.call,
+    required this.sims,
+    required this.compact,
+    this.keypadProgress = 0,
+    this.recording = false,
+  });
   final CallInfo call;
+
+  /// The companion recorder is recording this call: a red dot by the timer.
+  final bool recording;
   final List<SimCard> sims;
   final bool compact;
   final double keypadProgress;
@@ -251,6 +261,7 @@ class CallHeader extends StatelessWidget {
                 SizedBox(height: compact ? 12 : 18),
                 CallStatus(
                   call: call,
+                  recording: recording,
                   sim: sims.length > 1 ? sim : null,
                   simSlot: sim == null ? 0 : sims.indexOf(sim) + 1,
                   alignment: line,
@@ -287,8 +298,16 @@ bool _calling(CallState state) =>
     state == CallState.dialing || state == CallState.connecting || state == CallState.newCall;
 
 class CallStatus extends StatefulWidget {
-  const CallStatus({super.key, required this.call, this.sim, this.simSlot = 0, this.alignment = Alignment.center});
+  const CallStatus({
+    super.key,
+    required this.call,
+    this.sim,
+    this.simSlot = 0,
+    this.alignment = Alignment.center,
+    this.recording = false,
+  });
   final CallInfo call;
+  final bool recording;
 
   /// Shown as a small numbered SIM mark; only passed on dual-SIM phones, as on ColorOS.
   final SimCard? sim;
@@ -420,6 +439,16 @@ class _CallStatusState extends State<CallStatus> with SingleTickerProviderStateM
         : Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: style);
     // ColorOS: small glyphs for the line (HD, Wi-Fi, which SIM), then the status as plain text.
     final glyphs = [
+      if (widget.recording)
+        Semantics(
+          label: context.l10n.recordingNow,
+          child: const ExcludeSemantics(
+            child: SizedBox.square(
+              dimension: 9,
+              child: DecoratedBox(decoration: BoxDecoration(color: endRed, shape: BoxShape.circle)),
+            ),
+          ),
+        ),
       if (call.isHd) const _HdCallGlyph(),
       if (call.isWifi) const Icon(Icons.wifi_calling_rounded, size: 17, color: Colors.white70),
       if (widget.sim case final sim?)

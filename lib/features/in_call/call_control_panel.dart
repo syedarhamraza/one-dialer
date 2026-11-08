@@ -19,6 +19,7 @@ class CallControlPanel extends StatefulWidget {
     super.key,
     required this.call,
     required this.audio,
+    this.recorder,
     required this.callCount,
     required this.progress,
     required this.animating,
@@ -34,6 +35,9 @@ class CallControlPanel extends StatefulWidget {
   });
   final CallInfo call;
   final AudioInfo audio;
+
+  /// The companion recorder; null without it, and then More has no Record.
+  final RecorderInfo? recorder;
   final int callCount;
   final double progress;
   final bool animating;
@@ -105,6 +109,17 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
           icon: Icons.edit_note_rounded,
           onTap: _editNote,
         ),
+        if (widget.recorder case final recorder?)
+          OneUIFloatingMenuItem(
+            label: recorder.recording
+                ? context.l10n.stopRecording
+                : recorder.ready
+                ? context.l10n.record
+                : context.l10n.recordSetUpFirst,
+            icon: recorder.recording ? Icons.stop_circle_outlined : Icons.fiber_manual_record_outlined,
+            enabled: recorder.recording || (recorder.ready && call.state == CallState.active),
+            onTap: TelecomBridge.instance.toggleRecording,
+          ),
         OneUIFloatingMenuItem(
           label: context.l10n.videoCall,
           icon: Icons.videocam_rounded,

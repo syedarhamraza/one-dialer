@@ -91,6 +91,8 @@ object CallManager {
         // A conference's members stay inside it (hung up with it), so the screen shows one call.
         "calls" to (if (calls.isEmpty()) listOfNotNull(ended) else all().map { (id, call) -> serialize(id, call) }),
         "audio" to audioSnapshot(),
+        // The companion recorder's state; null without it (the screen then shows no Record).
+        "recording" to RecorderCompanion.snapshot(),
     )
 
     fun stateOf(call: Call): Int =

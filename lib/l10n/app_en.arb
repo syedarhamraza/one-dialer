@@ -841,5 +841,53 @@
   "logRejected": "Rejected",
   "logBlocked": "Blocked",
   "logRangFor": "{type} (Rang for {duration})",
-  "@logRangFor": {"description": "A missed or rejected call on the contact page's call history: its type, then how long it rang.", "placeholders": {"type": {"type": "String"}, "duration": {"type": "String"}}}
+  "@logRangFor": {
+    "description": "A missed or rejected call on the contact page's call history: its type, then how long it rang.",
+    "placeholders": {
+      "type": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "record": "Record",
+  "@record": {
+    "description": "Call screen ⋮ menu: start recording the call"
+  },
+  "stopRecording": "Stop recording",
+  "recordSetUpFirst": "Record (set up in Settings)",
+  "@recordSetUpFirst": {
+    "description": "Call screen ⋮ menu while One Dialer Recorder isn't set up"
+  },
+  "recordingNow": "Recording",
+  "@recordingNow": {
+    "description": "Screen reader label for the red dot on the call screen"
+  },
+  "callRecording": "Call recording",
+  "@callRecording": {
+    "description": "Settings row and page title"
+  },
+  "recorderApp": "One Dialer Recorder",
+  "@recorderApp": {
+    "description": "Name of the companion app; keep in English"
+  },
+  "recorderReady": "Ready to record",
+  "recorderNeedsMic": "Allow the microphone in One Dialer Recorder",
+  "recorderNeedsAccessibility": "Turn on its accessibility service",
+  "recorderUntrusted": "This build of One Dialer isn't trusted by the recorder. Update both apps.",
+  "recordingConsentTitle": "Before you record",
+  "recordingConsentBody": "Recording laws differ by country, and some need everyone on the call to agree. You're responsible for telling the other person and getting their consent. Recordings stay on this phone and are never uploaded.",
+  "recordingConsentAccept": "I understand",
+  "recordAllCalls": "Record all calls",
+  "recordAllCallsSubtitle": "Starts recording as soon as a call is answered",
+  "recordings": "Recordings",
+  "noRecordings": "No recordings yet",
+  "noRecordingsSubtitle": "Tap ⋮ › Record on the call screen during a call",
+  "deleteAllRecordings": "Delete all recordings",
+  "deleteAllRecordingsTitle": "Delete all recordings?",
+  "deleteAllRecordingsMessage": "They can't be recovered.",
+  "recordingNotSetUp": "Calls aren't being recorded",
+  "recordingNotSetUpSubtitle": "Record all calls is on, but One Dialer Recorder isn't set up"
 }

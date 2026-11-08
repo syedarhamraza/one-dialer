@@ -1671,4 +1671,78 @@ class AppLocalizationsEn extends AppLocalizations {
   String logRangFor(String type, String duration) {
     return '$type (Rang for $duration)';
   }
+
+  @override
+  String get record => 'Record';
+
+  @override
+  String get stopRecording => 'Stop recording';
+
+  @override
+  String get recordSetUpFirst => 'Record (set up in Settings)';
+
+  @override
+  String get recordingNow => 'Recording';
+
+  @override
+  String get callRecording => 'Call recording';
+
+  @override
+  String get recorderApp => 'One Dialer Recorder';
+
+  @override
+  String get recorderReady => 'Ready to record';
+
+  @override
+  String get recorderNeedsMic => 'Allow the microphone in One Dialer Recorder';
+
+  @override
+  String get recorderNeedsAccessibility => 'Turn on its accessibility service';
+
+  @override
+  String get recorderUntrusted =>
+      'This build of One Dialer isn\'t trusted by the recorder. Update both apps.';
+
+  @override
+  String get recordingConsentTitle => 'Before you record';
+
+  @override
+  String get recordingConsentBody =>
+      'Recording laws differ by country, and some need everyone on the call to agree. You\'re responsible for telling the other person and getting their consent. Recordings stay on this phone and are never uploaded.';
+
+  @override
+  String get recordingConsentAccept => 'I understand';
+
+  @override
+  String get recordAllCalls => 'Record all calls';
+
+  @override
+  String get recordAllCallsSubtitle =>
+      'Starts recording as soon as a call is answered';
+
+  @override
+  String get recordings => 'Recordings';
+
+  @override
+  String get noRecordings => 'No recordings yet';
+
+  @override
+  String get noRecordingsSubtitle =>
+      'Tap ⋮ › Record on the call screen during a call';
+
+  @override
+  String get deleteAllRecordings => 'Delete all recordings';
+
+  @override
+  String get deleteAllRecordingsTitle => 'Delete all recordings?';
+
+  @override
+  String get deleteAllRecordingsMessage => 'They can\'t be recovered.';
+
+  @override
+  String get recordingNotSetUp => 'Calls aren\'t being recorded';
+
+  @override
+  String get recordingNotSetUpSubtitle =>
+      'Record all calls is on, but One Dialer Recorder isn\'t set up';
 }

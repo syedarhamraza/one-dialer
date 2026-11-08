@@ -162,17 +162,21 @@ class AudioInfo {
 
 /// Everything the in-call UI needs, pushed on every Telecom change.
 class CallSnapshot {
-  const CallSnapshot({this.calls = const [], this.audio = const AudioInfo()});
+  const CallSnapshot({this.calls = const [], this.audio = const AudioInfo(), this.recording});
 
   factory CallSnapshot.fromMap(Map<Object?, Object?> map) => CallSnapshot(
     calls: (map['calls'] as List<Object?>? ?? const [])
         .map((c) => CallInfo.fromMap(c! as Map<Object?, Object?>))
         .toList(),
     audio: map['audio'] == null ? const AudioInfo() : AudioInfo.fromMap(map['audio']! as Map<Object?, Object?>),
+    recording: map['recording'] == null ? null : RecorderInfo.fromMap(map['recording']! as Map<Object?, Object?>),
   );
 
   final List<CallInfo> calls;
   final AudioInfo audio;
+
+  /// The companion recorder's state; null when it isn't installed (no recording UI then).
+  final RecorderInfo? recording;
 
   /// The call the in-call screen should focus on.
   CallInfo? get primary {
@@ -182,6 +186,64 @@ class CallSnapshot {
       orElse: () => calls.firstWhere((c) => c.state != CallState.holding, orElse: () => calls.first),
     );
   }
+}
+
+/// One Dialer Recorder, the sideloaded companion (`RecorderCompanion.kt`).
+class RecorderInfo {
+  const RecorderInfo({
+    this.ready = false,
+    this.recording = false,
+    this.trusted = true,
+    this.accessibilityOn = false,
+    this.micGranted = false,
+    this.consented = false,
+    this.autoRecord = false,
+    this.error,
+  });
+
+  factory RecorderInfo.fromMap(Map<Object?, Object?> map) => RecorderInfo(
+    ready: map['ready'] as bool? ?? false,
+    recording: map['recording'] as bool? ?? false,
+    trusted: map['trusted'] as bool? ?? true,
+    accessibilityOn: map['accessibilityOn'] as bool? ?? false,
+    micGranted: map['micGranted'] as bool? ?? false,
+    consented: map['consented'] as bool? ?? false,
+    autoRecord: map['autoRecord'] as bool? ?? false,
+    error: map['error'] as String?,
+  );
+
+  /// Set up (mic, accessibility service) and the consent notice accepted.
+  final bool ready;
+  final bool recording;
+
+  /// False when the companion refuses this build (its signing certificate isn't pinned).
+  final bool trusted;
+  final bool accessibilityOn;
+  final bool micGranted;
+  final bool consented;
+  final bool autoRecord;
+
+  /// Why the last start failed: `accessibility`, `microphone` or `start`.
+  final String? error;
+}
+
+/// A saved recording, named `<startMillis>_<number>.m4a` by the companion.
+class CallRecording {
+  const CallRecording({required this.name, this.number, required this.start, required this.duration, required this.bytes});
+
+  factory CallRecording.fromMap(Map<Object?, Object?> map) => CallRecording(
+    name: map['name']! as String,
+    number: map['number'] as String?,
+    start: DateTime.fromMillisecondsSinceEpoch(map['startMillis'] as int? ?? 0),
+    duration: Duration(milliseconds: map['durationMs'] as int? ?? 0),
+    bytes: map['bytes'] as int? ?? 0,
+  );
+
+  final String name;
+  final String? number;
+  final DateTime start;
+  final Duration duration;
+  final int bytes;
 }
 
 /// A call-capable SIM (a Telecom phone account).
