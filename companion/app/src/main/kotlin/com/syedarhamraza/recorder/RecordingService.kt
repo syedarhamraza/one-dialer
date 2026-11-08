@@ -32,15 +32,10 @@ class RecordingService : Service() {
         private const val EXTRA_START = "startMillis"
         private const val CHANNEL = "recording"
         private const val NOTIFICATION_ID = 1
-        private const val PREFS = "recorder"
+        private const val EXTRA_DIRECTION = "direction"
+        private const val EXTRA_SIM = "simId"
         private const val CHECK_MS = 5000L
-
-        // Mic sources a normal app may use, best first; the one that starts is kept per phone.
-        private val SOURCES = listOf(
-            MediaRecorder.AudioSource.VOICE_RECOGNITION,
-            MediaRecorder.AudioSource.VOICE_COMMUNICATION,
-            MediaRecorder.AudioSource.MIC,
-        )
+        private const val DAY_MS = 86_400_000L
 
         @Volatile var current: RecordingFile? = null
             private set
@@ -61,16 +56,26 @@ class RecordingService : Service() {
             return enabled.split(':').any { ComponentName.unflattenFromString(it) == me }
         }
 
-        fun start(context: Context, number: String?, startMillis: Long) {
+        /** Auto-delete (Settings › Call recording): drops recordings older than the kept days, never starred ones. */
+        fun prune(context: Context) {
+            val days = RecorderSettings.read(context)["retentionDays"] as Int
+            if (days <= 0) return
+            val cutoff = System.currentTimeMillis() - days * DAY_MS
+            val starred = RecordingIndex.starred(context)
+            dir(context).listFiles().orEmpty().forEach { f ->
+                val entry = RecordingFile.parse(f.name) ?: return@forEach
+                if (entry.startMillis < cutoff && f.name !in starred && f.name != current?.name) f.delete()
+            }
+        }
+
+        fun start(context: Context, extras: android.os.Bundle?) {
             lastError = when {
                 !accessibilityOn(context) -> "accessibility"
                 !micGranted(context) -> "microphone"
                 else -> null
             }
             if (lastError != null) return RecordingsProvider.notifyStatus(context)
-            context.startForegroundService(
-                Intent(context, RecordingService::class.java).putExtra(EXTRA_NUMBER, number).putExtra(EXTRA_START, startMillis),
-            )
+            context.startForegroundService(Intent(context, RecordingService::class.java).apply { extras?.let(::putExtras) })
         }
 
         fun stop(context: Context) {
@@ -78,6 +83,7 @@ class RecordingService : Service() {
         }
     }
 
+    private var pipeline: AudioPipeline? = null
     private var recorder: MediaRecorder? = null
     private var file: File? = null
     private val handler = Handler(Looper.getMainLooper())
@@ -118,25 +124,33 @@ class RecordingService : Service() {
             intent?.getStringExtra(EXTRA_NUMBER),
         )
         val target = File(dir(this), entry.name)
-        recorder = open(target)
-        if (recorder == null) {
+        val sources = RecorderSettings.sourcesToTry(this)
+        pipeline = AudioPipeline(
+            target, sources, Compressor.Level.of(RecorderSettings.read(this)["boost"] as String),
+            onSourceChosen = { RecorderSettings.saveSource(this, it) },
+            onSilent = { RecorderSettings.forgetSource(this) },
+        ).takeIf { it.start() }
+        // The plain MediaRecorder path, for phones where AudioRecord won't open during a call.
+        if (pipeline == null) recorder = open(target, sources)
+        if (pipeline == null && recorder == null) {
             lastError = "start"
             finish()
             return
         }
         file = target
         current = entry
+        RecordingIndex.update(this, entry.name) {
+            it.put("direction", intent?.getStringExtra(EXTRA_DIRECTION) ?: "")
+            it.put("simId", intent?.getStringExtra(EXTRA_SIM) ?: "")
+        }
         lastError = null
         idleChecks = 0
         handler.postDelayed(watchCall, CHECK_MS)
         RecordingsProvider.notifyStatus(this)
     }
 
-    private fun open(target: File): MediaRecorder? {
-        val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
-        val saved = prefs.getInt("source", -1)
-        // shortcut: a source that starts but records silence stays saved; add a maxAmplitude check if phones show silent files.
-        for (source in (listOf(saved) + SOURCES).filter { it >= 0 }.distinct()) {
+    private fun open(target: File, sources: List<Int>): MediaRecorder? {
+        for (source in sources) {
             val r = if (Build.VERSION.SDK_INT >= 31) MediaRecorder(this) else @Suppress("DEPRECATION") MediaRecorder()
             try {
                 r.setAudioSource(source)
@@ -148,7 +162,6 @@ class RecordingService : Service() {
                 r.setOutputFile(target.path)
                 r.prepare()
                 r.start()
-                prefs.edit().putInt("source", source).apply()
                 return r
             } catch (_: Exception) {
                 r.release()
@@ -160,6 +173,8 @@ class RecordingService : Service() {
 
     private fun finish() {
         handler.removeCallbacks(watchCall)
+        pipeline?.stop()
+        pipeline = null
         recorder?.let {
             try {
                 it.stop()
@@ -171,13 +186,14 @@ class RecordingService : Service() {
         recorder = null
         file = null
         current = null
+        prune(this)
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
         RecordingsProvider.notifyStatus(this)
     }
 
     override fun onDestroy() {
-        if (recorder != null) finish()
+        if (recorder != null || pipeline != null) finish()
         super.onDestroy()
     }
 

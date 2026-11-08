@@ -3050,18 +3050,6 @@ abstract class AppLocalizations {
   /// **'I understand'**
   String get recordingConsentAccept;
 
-  /// No description provided for @recordAllCalls.
-  ///
-  /// In en, this message translates to:
-  /// **'Record all calls'**
-  String get recordAllCalls;
-
-  /// No description provided for @recordAllCallsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Starts recording as soon as a call is answered'**
-  String get recordAllCallsSubtitle;
-
   /// No description provided for @recordings.
   ///
   /// In en, this message translates to:
@@ -3107,8 +3095,242 @@ abstract class AppLocalizations {
   /// No description provided for @recordingNotSetUpSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Record all calls is on, but One Dialer Recorder isn\'t set up'**
+  /// **'Auto-record is on, but One Dialer Recorder isn\'t set up'**
   String get recordingNotSetUpSubtitle;
+
+  /// No description provided for @rename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get rename;
+
+  /// No description provided for @star.
+  ///
+  /// In en, this message translates to:
+  /// **'Star'**
+  String get star;
+
+  /// No description provided for @unstar.
+  ///
+  /// In en, this message translates to:
+  /// **'Unstar'**
+  String get unstar;
+
+  /// Recordings filter
+  ///
+  /// In en, this message translates to:
+  /// **'Starred'**
+  String get filterStarred;
+
+  /// Recordings filter: numbers without a contact
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get filterUnknown;
+
+  /// Copies a recording to the phone's Recordings folder
+  ///
+  /// In en, this message translates to:
+  /// **'Save to phone'**
+  String get saveToPhone;
+
+  /// No description provided for @searchRecordings.
+  ///
+  /// In en, this message translates to:
+  /// **'Search recordings'**
+  String get searchRecordings;
+
+  /// No description provided for @renameRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename recording'**
+  String get renameRecording;
+
+  /// No description provided for @recordingsSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Saved to Recordings/One Dialer} other{{count} recordings saved to Recordings/One Dialer}}'**
+  String recordingsSaved(int count);
+
+  /// No description provided for @recordingSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save to the phone'**
+  String get recordingSaveFailed;
+
+  /// No description provided for @deleteRecordings.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Delete this recording?} other{Delete {count} recordings?}}'**
+  String deleteRecordings(int count);
+
+  /// No description provided for @noMatchingRecordings.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching recordings'**
+  String get noMatchingRecordings;
+
+  /// No description provided for @addContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Add contact'**
+  String get addContact;
+
+  /// No description provided for @autoRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-record'**
+  String get autoRecord;
+
+  /// No description provided for @autoRecordOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get autoRecordOff;
+
+  /// No description provided for @autoRecordAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All calls'**
+  String get autoRecordAll;
+
+  /// No description provided for @autoRecordUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown numbers'**
+  String get autoRecordUnknown;
+
+  /// No description provided for @autoRecordContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected contacts'**
+  String get autoRecordContacts;
+
+  /// No description provided for @recordTheseContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Contacts to record'**
+  String get recordTheseContacts;
+
+  /// No description provided for @neverRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Never record'**
+  String get neverRecord;
+
+  /// No description provided for @neverRecordSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Contacts auto-record always skips'**
+  String get neverRecordSubtitle;
+
+  /// No description provided for @recordingSound.
+  ///
+  /// In en, this message translates to:
+  /// **'Sound'**
+  String get recordingSound;
+
+  /// No description provided for @volumeBoost.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume boost'**
+  String get volumeBoost;
+
+  /// No description provided for @volumeBoostSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lifts the other person\'s voice, which the mic only hears faintly'**
+  String get volumeBoostSubtitle;
+
+  /// No description provided for @boostOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get boostOff;
+
+  /// No description provided for @boostNormal.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get boostNormal;
+
+  /// No description provided for @boostStrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Strong'**
+  String get boostStrong;
+
+  /// No description provided for @micSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone source'**
+  String get micSource;
+
+  /// No description provided for @micSourceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic tries each on the first call and keeps the loudest'**
+  String get micSourceSubtitle;
+
+  /// No description provided for @micSourceAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get micSourceAuto;
+
+  /// No description provided for @micSourceRecognition.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice recognition'**
+  String get micSourceRecognition;
+
+  /// No description provided for @micSourceCommunication.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice communication'**
+  String get micSourceCommunication;
+
+  /// No description provided for @micSourceMic.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone'**
+  String get micSourceMic;
+
+  /// No description provided for @storage.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage'**
+  String get storage;
+
+  /// No description provided for @storageUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Space used'**
+  String get storageUsed;
+
+  /// No description provided for @autoDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-delete'**
+  String get autoDelete;
+
+  /// No description provided for @autoDeleteSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Starred recordings are always kept'**
+  String get autoDeleteSubtitle;
+
+  /// No description provided for @autoDeleteNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get autoDeleteNever;
+
+  /// No description provided for @autoDeleteDays.
+  ///
+  /// In en, this message translates to:
+  /// **'After {days} days'**
+  String autoDeleteDays(int days);
 }
 
 class _AppLocalizationsDelegate

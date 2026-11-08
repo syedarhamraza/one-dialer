@@ -194,7 +194,25 @@ class TelecomBridge {
 
   Future<void> openRecording(String name) => _methods.invokeMethod('openRecording', {'name': name});
 
-  Future<void> shareRecording(String name) => _methods.invokeMethod('shareRecording', {'name': name});
+  /// Shares one or more recordings in one go.
+  Future<void> shareRecordings(List<String> names) => _methods.invokeMethod('shareRecording', {'names': names});
+
+  Future<void> starRecording(String name, bool starred) =>
+      _methods.invokeMethod('starRecording', {'name': name, 'starred': starred});
+
+  Future<void> renameRecording(String name, String title) =>
+      _methods.invokeMethod('renameRecording', {'name': name, 'title': title});
+
+  /// Save to phone: a copy in the shared Recordings/One Dialer folder named [displayName] and the time.
+  Future<bool> exportRecording(String name, String displayName) async =>
+      await _methods.invokeMethod<bool>('exportRecording', {'name': name, 'displayName': displayName}) ?? false;
+
+  /// The recorder's own settings: `sourceMode`, `boost`, `retentionDays`.
+  Future<Map<Object?, Object?>> getRecorderSettings() async =>
+      await _methods.invokeMapMethod<Object?, Object?>('getRecorderSettings') ?? const {};
+
+  Future<void> setRecorderSetting(String key, Object value) =>
+      _methods.invokeMethod('setRecorderSetting', {'key': key, 'value': value});
 
   Future<void> openRecorderSetup() => _methods.invokeMethod('openRecorderSetup');
 

@@ -22,6 +22,7 @@ import '../../widgets/round_header_controls.dart';
 import '../../widgets/place_call.dart';
 import '../in_call/call_controls.dart';
 import '../keypad/keypad_screen.dart';
+import '../recordings/recordings_screen.dart';
 import '../settings/settings_screen.dart';
 import 'call_details_screen.dart';
 import 'app_calls.dart';
@@ -56,6 +57,9 @@ class _RecentsScreenState extends State<RecentsScreen> {
 
   /// Only calls VoIP apps (WhatsApp...) shared with the call log; combines with All/Missed.
   bool _appsOnly = false;
+
+  /// One Dialer Recorder is installed and set up: ⋮ then offers Recordings.
+  bool _hasRecordings = false;
   bool _hideBlocked = true;
   Set<int>? _selected; // call ids; null when not selecting
 
@@ -74,6 +78,9 @@ class _RecentsScreenState extends State<RecentsScreen> {
   @override
   void initState() {
     super.initState();
+    TelecomBridge.instance.getRecorder().then((r) {
+      if (mounted && r != null && r.consented) setState(() => _hasRecordings = true);
+    }, onError: (Object _) {});
     TelecomBridge.instance.getSims().then((s) {
       if (mounted) setState(() => _sims = s);
     });
@@ -138,6 +145,11 @@ class _RecentsScreenState extends State<RecentsScreen> {
       label: _hideBlocked ? context.l10n.showBlockedCalls : context.l10n.hideBlockedCalls,
       onTap: () => DialerPrefs.instance.setHideBlockedCalls(!_hideBlocked),
     ),
+    if (_hasRecordings)
+      OneUIFloatingMenuItem(
+        label: context.l10n.recordings,
+        onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const RecordingsScreen())),
+      ),
     OneUIFloatingMenuItem(
       label: context.l10n.settings,
       onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),

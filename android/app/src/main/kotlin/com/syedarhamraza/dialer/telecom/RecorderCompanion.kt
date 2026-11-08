@@ -51,7 +51,8 @@ object RecorderCompanion {
             // Recording also waits for the user to accept the consent notice (Settings › Call recording).
             "ready" to (accessibility && mic && prefs["recordingConsent"] == true),
             "consented" to prefs["recordingConsent"],
-            "autoRecord" to prefs["autoRecord"],
+            "autoRecordMode" to prefs["autoRecordMode"],
+            "bytes" to b.getLong("bytes"),
             "accessibilityOn" to accessibility,
             "micGranted" to mic,
             "notificationsOn" to b.getBoolean("notificationsOn"),
@@ -91,7 +92,9 @@ object RecorderCompanion {
             return
         }
         val active = live.firstOrNull { CallManager.stateOf(it) == Call.STATE_ACTIVE } ?: return
-        if (!sessionStarted && cached?.get("ready") == true && CallPrefs.read(context)["autoRecord"] == true) start(context, active)
+        if (!sessionStarted && cached?.get("ready") == true &&
+            RecordRules.shouldRecord(context, active.details.handle?.schemeSpecificPart)
+        ) start(context, active)
     }
 
     /** The call screen's Record / Stop. False when there's nothing to record or no companion. */
@@ -104,9 +107,12 @@ object RecorderCompanion {
 
     private fun start(context: Context, call: Call): Boolean {
         sessionStarted = true
+        val details = call.details
         val extras = Bundle().apply {
-            putString("number", call.details.handle?.schemeSpecificPart)
-            putLong("startMillis", call.details.connectTimeMillis.takeIf { it > 0 } ?: System.currentTimeMillis())
+            putString("number", details.handle?.schemeSpecificPart)
+            putLong("startMillis", details.connectTimeMillis.takeIf { it > 0 } ?: System.currentTimeMillis())
+            putString("direction", if (details.callDirection == Call.Details.DIRECTION_INCOMING) "in" else "out")
+            putString("simId", details.accountHandle?.let { "${it.componentName.flattenToString()}|${it.id}" })
         }
         return call(context, "start", extras = extras) != null
     }
@@ -123,15 +129,43 @@ object RecorderCompanion {
                 "startMillis" to o.getLong("startMillis"),
                 "durationMs" to o.getLong("durationMs"),
                 "bytes" to o.getLong("bytes"),
+                "direction" to o.optString("direction"),
+                "simId" to o.optString("simId"),
+                "starred" to o.optBoolean("starred"),
+                "title" to o.optString("title"),
             )
         }
     }
 
     fun delete(context: Context, name: String?) = call(context, "delete", name)
 
+    fun star(context: Context, name: String?, starred: Boolean) =
+        call(context, "setStar", name, Bundle().apply { putBoolean("starred", starred) })
+
+    fun rename(context: Context, name: String?, title: String?) =
+        call(context, "rename", name, Bundle().apply { putString("title", title) })
+
+    /** Save to phone (shared Recordings/One Dialer); [displayName] names the copy. */
+    fun export(context: Context, name: String?, displayName: String?): Boolean =
+        call(context, "export", name, Bundle().apply { putString("displayName", displayName) })?.getBoolean("ok") == true
+
+    /** The companion's own settings: `{sourceMode, boost, retentionDays}`. */
+    fun settings(context: Context): Map<String, Any?> {
+        val json = call(context, "settings")?.getString("json") ?: return emptyMap()
+        val o = org.json.JSONObject(json)
+        return o.keys().asSequence().associateWith { o.get(it) }
+    }
+
+    fun setSetting(context: Context, key: String?, value: Any?) = call(context, "setSetting", key, Bundle().apply {
+        when (value) {
+            is Number -> putInt("value", value.toInt())
+            is String -> putString("value", value)
+        }
+    })
+
     fun deleteAll(context: Context) = call(context, "deleteAll")
 
-    /** Plays or shares one recording; the companion hands us an intent that carries its URI grant. */
+    /** Plays one recording, or shares one or more (names joined by '|'); the companion's intent carries the URI grant. */
     fun open(context: Context, name: String?, share: Boolean): Boolean {
         val intent = call(context, if (share) "share" else "open", name)?.let {
             @Suppress("DEPRECATION") it.getParcelable<PendingIntent>("intent")

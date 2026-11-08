@@ -197,7 +197,8 @@ class RecorderInfo {
     this.accessibilityOn = false,
     this.micGranted = false,
     this.consented = false,
-    this.autoRecord = false,
+    this.autoRecordMode = 'off',
+    this.bytes = 0,
     this.error,
   });
 
@@ -208,7 +209,8 @@ class RecorderInfo {
     accessibilityOn: map['accessibilityOn'] as bool? ?? false,
     micGranted: map['micGranted'] as bool? ?? false,
     consented: map['consented'] as bool? ?? false,
-    autoRecord: map['autoRecord'] as bool? ?? false,
+    autoRecordMode: map['autoRecordMode'] as String? ?? 'off',
+    bytes: map['bytes'] as int? ?? 0,
     error: map['error'] as String?,
   );
 
@@ -221,7 +223,12 @@ class RecorderInfo {
   final bool accessibilityOn;
   final bool micGranted;
   final bool consented;
-  final bool autoRecord;
+
+  /// Auto-record rule: `off`, `all`, `unknown` or `contacts` (`RecordRules.kt`).
+  final String autoRecordMode;
+
+  /// Space the recordings take.
+  final int bytes;
 
   /// Why the last start failed: `accessibility`, `microphone` or `start`.
   final String? error;
@@ -229,7 +236,17 @@ class RecorderInfo {
 
 /// A saved recording, named `<startMillis>_<number>.m4a` by the companion.
 class CallRecording {
-  const CallRecording({required this.name, this.number, required this.start, required this.duration, required this.bytes});
+  const CallRecording({
+    required this.name,
+    this.number,
+    required this.start,
+    required this.duration,
+    required this.bytes,
+    this.incoming,
+    this.simId,
+    this.starred = false,
+    this.title,
+  });
 
   factory CallRecording.fromMap(Map<Object?, Object?> map) => CallRecording(
     name: map['name']! as String,
@@ -237,6 +254,14 @@ class CallRecording {
     start: DateTime.fromMillisecondsSinceEpoch(map['startMillis'] as int? ?? 0),
     duration: Duration(milliseconds: map['durationMs'] as int? ?? 0),
     bytes: map['bytes'] as int? ?? 0,
+    incoming: switch (map['direction']) {
+      'in' => true,
+      'out' => false,
+      _ => null,
+    },
+    simId: (map['simId'] as String?)?.nullIfEmpty,
+    starred: map['starred'] as bool? ?? false,
+    title: (map['title'] as String?)?.nullIfEmpty,
   );
 
   final String name;
@@ -244,6 +269,18 @@ class CallRecording {
   final DateTime start;
   final Duration duration;
   final int bytes;
+
+  /// Null for recordings made before direction was saved.
+  final bool? incoming;
+  final String? simId;
+  final bool starred;
+
+  /// The user's own name for it (Rename).
+  final String? title;
+}
+
+extension on String {
+  String? get nullIfEmpty => isEmpty ? null : this;
 }
 
 /// A call-capable SIM (a Telecom phone account).

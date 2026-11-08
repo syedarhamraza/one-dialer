@@ -18,4 +18,13 @@
     <string name="setup_notifications_detail">Shows while a call is being recorded</string>
     <string name="setup_done">Ready</string>
     <string name="setup_consent">Recording laws differ by country. You are responsible for telling the other person and getting their consent where it\'s required.</string>
+    <string name="setting_source">Microphone source</string>
+    <string name="source_auto">Automatic (tests on the first call)</string>
+    <string name="source_recognition">Voice recognition</string>
+    <string name="source_communication">Voice communication</string>
+    <string name="source_mic">Microphone</string>
+    <string name="setting_boost">Volume boost</string>
+    <string name="boost_off">Off</string>
+    <string name="boost_normal">Normal: lifts the other person</string>
+    <string name="boost_strong">Strong: lifts the other person more</string>
 </resources>

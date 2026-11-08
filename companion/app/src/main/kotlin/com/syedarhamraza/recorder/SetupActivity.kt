@@ -63,12 +63,48 @@ class SetupActivity : Activity() {
             if (Build.VERSION.SDK_INT >= 33) requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 2)
             else startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName))
         }
+        choice(getString(R.string.setting_source), "sourceMode", listOf(
+            "auto" to getString(R.string.source_auto),
+            "recognition" to getString(R.string.source_recognition),
+            "communication" to getString(R.string.source_communication),
+            "mic" to getString(R.string.source_mic),
+        ))
+        choice(getString(R.string.setting_boost), "boost", listOf(
+            "off" to getString(R.string.boost_off),
+            "normal" to getString(R.string.boost_normal),
+            "strong" to getString(R.string.boost_strong),
+        ))
         rows.addView(text(getString(R.string.setup_consent), 13f, GREY).apply { setPadding(0, dp(24), 0, 0) })
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         render()
         RecordingsProvider.notifyStatus(this)
+    }
+
+    /** A setting row; tapping it lists the options (also changeable from One Dialer's Settings). */
+    private fun choice(title: String, key: String, options: List<Pair<String, String>>) {
+        val current = RecorderSettings.read(this)[key]
+        val selected = options.indexOfFirst { it.first == current }.coerceAtLeast(0)
+        val card = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(16), dp(14), dp(16), dp(14))
+            background = GradientDrawable().apply { setColor(CARD); cornerRadius = dp(20).toFloat() }
+            layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { bottomMargin = dp(12) }
+            addView(text(title, 17f, Color.WHITE))
+            addView(text(options[selected].second, 13f, GREY))
+            setOnClickListener {
+                android.app.AlertDialog.Builder(this@SetupActivity)
+                    .setTitle(title)
+                    .setSingleChoiceItems(options.map { it.second }.toTypedArray(), selected) { dialog, which ->
+                        RecorderSettings.write(this@SetupActivity, key, options[which].first)
+                        dialog.dismiss()
+                        render()
+                    }
+                    .show()
+            }
+        }
+        rows.addView(card)
     }
 
     private fun row(title: String, detail: String, ok: Boolean, fix: () -> Unit) {

@@ -17,4 +17,13 @@
     <string name="setup_notifications_detail">Visibile mentre una chiamata viene registrata</string>
     <string name="setup_done">Pronto</string>
     <string name="setup_consent">Le leggi sulla registrazione variano da paese a paese. Sei responsabile di informare l\'altra persona e di ottenere il suo consenso quando è richiesto.</string>
+    <string name="setting_source">Sorgente microfono</string>
+    <string name="source_auto">Automatica (prova alla prima chiamata)</string>
+    <string name="source_recognition">Riconoscimento vocale</string>
+    <string name="source_communication">Comunicazione vocale</string>
+    <string name="source_mic">Microfono</string>
+    <string name="setting_boost">Amplificazione volume</string>
+    <string name="boost_off">Disattivata</string>
+    <string name="boost_normal">Normale: alza la voce dell\'altra persona</string>
+    <string name="boost_strong">Forte: alza di più la voce dell\'altra persona</string>
 </resources>

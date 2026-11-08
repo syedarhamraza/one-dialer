@@ -128,7 +128,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
       if ((rules.blockHidden || rules.blockNonContacts) && _health['screensCalls'] != true)
         _problem(context.l10n.blockingPaused, context.l10n.blockingPausedShort, () => _push(const BlockingScreen())),
       // Auto-record is on but the companion can't record (its setup was undone).
-      if (_recorder case final r? when r.autoRecord && r.consented && !r.ready)
+      if (_recorder case final r? when r.autoRecordMode != 'off' && r.consented && !r.ready)
         _problem(context.l10n.recordingNotSetUp, context.l10n.recordingNotSetUpSubtitle, () => _push(const CallRecordingScreen())),
       if (!_bluetoothNames)
         _problem(context.l10n.bluetoothNamesHidden, context.l10n.bluetoothNamesHiddenSubtitle, _allowBluetoothNames),

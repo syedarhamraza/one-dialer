@@ -1731,13 +1731,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get recordingConsentAccept => 'Ho capito';
 
   @override
-  String get recordAllCalls => 'Registra tutte le chiamate';
-
-  @override
-  String get recordAllCallsSubtitle =>
-      'Avvia la registrazione appena si risponde a una chiamata';
-
-  @override
   String get recordings => 'Registrazioni';
 
   @override
@@ -1761,5 +1754,144 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get recordingNotSetUpSubtitle =>
-      'Registra tutte le chiamate è attivo, ma One Dialer Recorder non è configurato';
+      'La registrazione automatica è attiva, ma One Dialer Recorder non è configurato';
+
+  @override
+  String get rename => 'Rinomina';
+
+  @override
+  String get star => 'Aggiungi a speciali';
+
+  @override
+  String get unstar => 'Rimuovi da speciali';
+
+  @override
+  String get filterStarred => 'Speciali';
+
+  @override
+  String get filterUnknown => 'Sconosciuti';
+
+  @override
+  String get saveToPhone => 'Salva sul telefono';
+
+  @override
+  String get searchRecordings => 'Cerca registrazioni';
+
+  @override
+  String get renameRecording => 'Rinomina registrazione';
+
+  @override
+  String recordingsSaved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count registrazioni salvate in Recordings/One Dialer',
+      one: 'Salvata in Recordings/One Dialer',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recordingSaveFailed => 'Impossibile salvare sul telefono';
+
+  @override
+  String deleteRecordings(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Eliminare $count registrazioni?',
+      one: 'Eliminare questa registrazione?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get noMatchingRecordings => 'Nessuna registrazione corrispondente';
+
+  @override
+  String get addContact => 'Aggiungi contatto';
+
+  @override
+  String get autoRecord => 'Registrazione automatica';
+
+  @override
+  String get autoRecordOff => 'Disattivata';
+
+  @override
+  String get autoRecordAll => 'Tutte le chiamate';
+
+  @override
+  String get autoRecordUnknown => 'Numeri sconosciuti';
+
+  @override
+  String get autoRecordContacts => 'Contatti selezionati';
+
+  @override
+  String get recordTheseContacts => 'Contatti da registrare';
+
+  @override
+  String get neverRecord => 'Non registrare mai';
+
+  @override
+  String get neverRecordSubtitle =>
+      'Contatti sempre esclusi dalla registrazione automatica';
+
+  @override
+  String get recordingSound => 'Audio';
+
+  @override
+  String get volumeBoost => 'Amplificazione volume';
+
+  @override
+  String get volumeBoostSubtitle =>
+      'Alza la voce dell\'altra persona, che il microfono sente appena';
+
+  @override
+  String get boostOff => 'Disattivata';
+
+  @override
+  String get boostNormal => 'Normale';
+
+  @override
+  String get boostStrong => 'Forte';
+
+  @override
+  String get micSource => 'Sorgente microfono';
+
+  @override
+  String get micSourceSubtitle =>
+      'Automatica prova ciascuna alla prima chiamata e tiene la più forte';
+
+  @override
+  String get micSourceAuto => 'Automatica';
+
+  @override
+  String get micSourceRecognition => 'Riconoscimento vocale';
+
+  @override
+  String get micSourceCommunication => 'Comunicazione vocale';
+
+  @override
+  String get micSourceMic => 'Microfono';
+
+  @override
+  String get storage => 'Spazio';
+
+  @override
+  String get storageUsed => 'Spazio occupato';
+
+  @override
+  String get autoDelete => 'Eliminazione automatica';
+
+  @override
+  String get autoDeleteSubtitle =>
+      'Le registrazioni speciali vengono sempre conservate';
+
+  @override
+  String get autoDeleteNever => 'Mai';
+
+  @override
+  String autoDeleteDays(int days) {
+    return 'Dopo $days giorni';
+  }
 }

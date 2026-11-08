@@ -1714,13 +1714,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recordingConsentAccept => 'I understand';
 
   @override
-  String get recordAllCalls => 'Record all calls';
-
-  @override
-  String get recordAllCallsSubtitle =>
-      'Starts recording as soon as a call is answered';
-
-  @override
   String get recordings => 'Recordings';
 
   @override
@@ -1744,5 +1737,142 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recordingNotSetUpSubtitle =>
-      'Record all calls is on, but One Dialer Recorder isn\'t set up';
+      'Auto-record is on, but One Dialer Recorder isn\'t set up';
+
+  @override
+  String get rename => 'Rename';
+
+  @override
+  String get star => 'Star';
+
+  @override
+  String get unstar => 'Unstar';
+
+  @override
+  String get filterStarred => 'Starred';
+
+  @override
+  String get filterUnknown => 'Unknown';
+
+  @override
+  String get saveToPhone => 'Save to phone';
+
+  @override
+  String get searchRecordings => 'Search recordings';
+
+  @override
+  String get renameRecording => 'Rename recording';
+
+  @override
+  String recordingsSaved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count recordings saved to Recordings/One Dialer',
+      one: 'Saved to Recordings/One Dialer',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recordingSaveFailed => 'Couldn\'t save to the phone';
+
+  @override
+  String deleteRecordings(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Delete $count recordings?',
+      one: 'Delete this recording?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get noMatchingRecordings => 'No matching recordings';
+
+  @override
+  String get addContact => 'Add contact';
+
+  @override
+  String get autoRecord => 'Auto-record';
+
+  @override
+  String get autoRecordOff => 'Off';
+
+  @override
+  String get autoRecordAll => 'All calls';
+
+  @override
+  String get autoRecordUnknown => 'Unknown numbers';
+
+  @override
+  String get autoRecordContacts => 'Selected contacts';
+
+  @override
+  String get recordTheseContacts => 'Contacts to record';
+
+  @override
+  String get neverRecord => 'Never record';
+
+  @override
+  String get neverRecordSubtitle => 'Contacts auto-record always skips';
+
+  @override
+  String get recordingSound => 'Sound';
+
+  @override
+  String get volumeBoost => 'Volume boost';
+
+  @override
+  String get volumeBoostSubtitle =>
+      'Lifts the other person\'s voice, which the mic only hears faintly';
+
+  @override
+  String get boostOff => 'Off';
+
+  @override
+  String get boostNormal => 'Normal';
+
+  @override
+  String get boostStrong => 'Strong';
+
+  @override
+  String get micSource => 'Microphone source';
+
+  @override
+  String get micSourceSubtitle =>
+      'Automatic tries each on the first call and keeps the loudest';
+
+  @override
+  String get micSourceAuto => 'Automatic';
+
+  @override
+  String get micSourceRecognition => 'Voice recognition';
+
+  @override
+  String get micSourceCommunication => 'Voice communication';
+
+  @override
+  String get micSourceMic => 'Microphone';
+
+  @override
+  String get storage => 'Storage';
+
+  @override
+  String get storageUsed => 'Space used';
+
+  @override
+  String get autoDelete => 'Auto-delete';
+
+  @override
+  String get autoDeleteSubtitle => 'Starred recordings are always kept';
+
+  @override
+  String get autoDeleteNever => 'Never';
+
+  @override
+  String autoDeleteDays(int days) {
+    return 'After $days days';
+  }
 }

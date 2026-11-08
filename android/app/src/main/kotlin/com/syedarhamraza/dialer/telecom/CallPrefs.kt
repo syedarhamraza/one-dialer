@@ -19,7 +19,9 @@ object CallPrefs {
         "autoAnswer" to false,
         "autoAnswerDelay" to 5, // seconds
         "announceCalls" to "off", // "always", or "headset" (only with headphones)
-        "autoRecord" to false, // record every answered call (needs the companion recorder)
+        "autoRecordMode" to "off", // "all", "unknown" (no contact) or "contacts" (RecordRules; needs the companion)
+        "recordContacts" to "[]", // contact ids (JSON) recorded in "contacts" mode
+        "neverRecord" to "[]", // contact ids (JSON) never auto-recorded
         "recordingConsent" to false, // the user accepted Settings › Call recording's consent notice
     )
 
