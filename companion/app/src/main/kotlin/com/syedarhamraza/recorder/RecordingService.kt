@@ -50,9 +50,14 @@ class RecordingService : Service() {
             context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
 
         fun accessibilityOn(context: Context): Boolean {
+            val me = ComponentName(context, RecorderAccessibilityService::class.java)
+            // AccessibilityManager first: vivo hides the secure setting from apps, so it alone read as off.
+            val running = context.getSystemService(android.view.accessibility.AccessibilityManager::class.java)
+                .getEnabledAccessibilityServiceList(android.accessibilityservice.AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
+                .any { ComponentName.unflattenFromString(it.id) == me }
+            if (running) return true
             val enabled = Settings.Secure.getString(context.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
                 ?: return false
-            val me = ComponentName(context, RecorderAccessibilityService::class.java)
             return enabled.split(':').any { ComponentName.unflattenFromString(it) == me }
         }
 
