@@ -1,0 +1,59 @@
+name: Bug report
+description: Something doesn't work as it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! **Don't paste real phone numbers, contact names or call logs.** Blur them in screenshots.
+        For a security problem, follow SECURITY.md instead.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Calls
+        2. ...
+  - type: input
+    id: version
+    attributes:
+      label: One Dialer version
+      description: Settings › About
+      placeholder: 1.0.0-beta.8
+    validations:
+      required: true
+  - type: input
+    id: phone
+    attributes:
+      label: Phone model
+      placeholder: vivo X200, Galaxy S25...
+    validations:
+      required: true
+  - type: input
+    id: android
+    attributes:
+      label: Android version and skin
+      placeholder: Android 16, OriginOS 6
+    validations:
+      required: true
+  - type: dropdown
+    id: sims
+    attributes:
+      label: SIMs
+      options: [One SIM, Two SIMs, eSIM + SIM, No SIM]
+  - type: dropdown
+    id: default
+    attributes:
+      label: Is One Dialer the default phone app?
+      options: ["Yes", "No"]
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshots or anything else

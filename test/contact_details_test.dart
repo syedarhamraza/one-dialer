@@ -26,7 +26,7 @@ void main() {
       return null;
     });
     ContactsRepository.instance.contacts.value = const [
-      DialerContact(id: '7', name: 'Wasif', numbers: ['03111234567', '03001234567'], labels: ['Mobile', 'Work']),
+      DialerContact(id: '7', name: 'Sam', numbers: ['03111234567', '03001234567'], labels: ['Mobile', 'Work']),
     ];
   });
   tearDown(() {
