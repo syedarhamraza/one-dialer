@@ -198,8 +198,8 @@ class _PopoverMenu extends StatelessWidget {
         if (fade == 0) return const SizedBox.shrink();
         // The card scaled about the pivot, in its own coordinates. The glass is laid out at
         // this size instead of scaled by a Transform: a blur under a scale reads its backdrop
-        // magnified by 1/scale, which dropped frames on Adreno. Radius and sigma scale as the
-        // Transform scaled them, so it looks the same.
+        // magnified by 1/scale, which dropped frames on Adreno. The radius scales as the
+        // Transform scaled it, so it looks the same.
         final origin = pivot.alongSize(menu.size);
         final glass = Rect.fromLTWH(
           origin.dx * (1 - scale),
@@ -285,9 +285,12 @@ class _PopoverMenu extends StatelessWidget {
                             : _glass(
                                 fx.isOff
                                     ? null
-                                    : fx.isFull
-                                    ? ImageFilter.blur(sigmaX: fx.blurSigma * scale, sigmaY: fx.blurSigma * scale)
-                                    : ImageFilter.blur(sigmaX: fx.blurSigma, sigmaY: fx.blurSigma),
+                                    // Full: one light fixed sigma (the dark base keeps rows legible); a sigma
+                                    // that changed every frame of the grow was a new filter each frame.
+                                    : ImageFilter.blur(
+                                        sigmaX: fx.isFull ? 10 : fx.blurSigma,
+                                        sigmaY: fx.isFull ? 10 : fx.blurSigma,
+                                      ),
                                 Opacity(
                                   opacity: fade,
                                   child: OverflowBox(
@@ -308,18 +311,18 @@ class _PopoverMenu extends StatelessWidget {
                                             // see-through like the buttons; the blur keeps rows legible.
                                             : context.palette.isLight
                                             ? const Color(0x4DFFFFFF)
-                                            : const Color(0xB3141416),
-                                        // The same glow as the buttons, but reaching less far in: across a card
-                                        // this much bigger the button's spread reads as a wide haze. From a cached
-                                        // image: drawn live, its blurred strokes were re-rendered every frame of a
-                                        // press (~10 ms on a Galaxy S25).
+                                            // Dark: nearly opaque black. The header pills' glass sits over the black
+                                            // header; this keeps the menu's wash on the same black over the list.
+                                            : const Color(0xE6000000),
+                                        // The header pills' glass, glow and all. From a cached image: drawn live,
+                                        // its blurred strokes were re-rendered every frame of a press (~10 ms on a
+                                        // Galaxy S25).
                                         child: fx.isFull
                                             ? CallBodyArtwork(
                                                 radius: OneUIFloatingMenu._radius * size,
                                                 glow: kMainGlassGlow,
                                                 opacity: mainGlass(context).opacity,
                                                 edges: mainGlass(context).edges,
-                                                spread: .5,
                                                 child: items!,
                                               )
                                             : items,
