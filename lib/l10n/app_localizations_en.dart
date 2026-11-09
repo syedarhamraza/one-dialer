@@ -1701,7 +1701,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recorderUntrusted =>
-      'This build of One Dialer isn\'t trusted by the recorder. Update both apps.';
+      'The recorder works only with One Dialer from Google Play. Install it from Play, or update both apps.';
 
   @override
   String get recordingConsentTitle => 'Before you record';

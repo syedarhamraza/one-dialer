@@ -876,7 +876,7 @@
   "recorderReady": "Ready to record",
   "recorderNeedsMic": "Allow the microphone in One Dialer Recorder",
   "recorderNeedsAccessibility": "Turn on its accessibility service",
-  "recorderUntrusted": "This build of One Dialer isn't trusted by the recorder. Update both apps.",
+  "recorderUntrusted": "The recorder works only with One Dialer from Google Play. Install it from Play, or update both apps.",
   "recordingConsentTitle": "Before you record",
   "recordingConsentBody": "Recording laws differ by country, and some need everyone on the call to agree. You're responsible for telling the other person and getting their consent. Recordings stay on this phone and are never uploaded.",
   "recordingConsentAccept": "I understand",

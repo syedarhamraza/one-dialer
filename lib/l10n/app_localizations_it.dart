@@ -1718,7 +1718,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get recorderUntrusted =>
-      'Questa versione di One Dialer non è riconosciuta dal registratore. Aggiorna entrambe le app.';
+      'Il registratore funziona solo con One Dialer da Google Play. Installalo da Play o aggiorna entrambe le app.';
 
   @override
   String get recordingConsentTitle => 'Prima di registrare';
