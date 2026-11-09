@@ -37,6 +37,16 @@ class RecorderTest {
         assertFalse(TrustedDialer.isTrusted(null) { true })
     }
 
+    @Test
+    fun releaseTrustsOnlyThePlayBuild() {
+        val release = TrustedDialer.certs(debug = false)
+        assertTrue(release == listOf(TrustedDialer.PLAY_CERT))
+        assertTrue(TrustedDialer.certs(debug = true).containsAll(release))
+        val debugKey = TrustedDialer.hex(TrustedDialer.certs(debug = true).last())
+        assertFalse(TrustedDialer.isTrusted(TrustedDialer.PACKAGE, release) { it.contentEquals(debugKey) })
+        assertTrue(TrustedDialer.hex(TrustedDialer.PLAY_CERT).size == 32)
+    }
+
     private fun sine(amplitude: Double, n: Int = 48_000) =
         ShortArray(n) { (amplitude * 32767 * kotlin.math.sin(it * 2 * Math.PI * 300 / 48_000)).toInt().toShort() }
 
