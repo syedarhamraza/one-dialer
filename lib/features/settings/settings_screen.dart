@@ -185,7 +185,11 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           headerTitle: l10n.settingsCalls,
           items: [
             OneUIGroupItem(title: l10n.incomingCallReminders, onTap: () => _push(const IncomingCallRemindersScreen())),
-            OneUIGroupItem(title: l10n.answerButtons, onTap: () => _push(const AnswerButtonsScreen())),
+            OneUIGroupItem(
+              title: l10n.answerButtons,
+              subtitle: l10n.answerButtonsSubtitle,
+              onTap: () => _push(const AnswerButtonsScreen()),
+            ),
             OneUIGroupItem(title: l10n.answerEndCalls, onTap: () => _push(const AnswerEndCallsScreen())),
             // Only with One Dialer Recorder installed (the sideloaded companion); the Play app can't record alone.
             if (_recorder != null)
@@ -245,7 +249,11 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
             OneUIGroupItem(title: l10n.navContacts, onTap: () => _push(const _ContactsSettingsScreen())),
             OneUIGroupItem(title: l10n.notifications, onTap: () => _telecom.openSystemSettings('notifications')),
             OneUIGroupItem(title: l10n.defaultApps, onTap: () => _telecom.openSystemSettings('defaultApps')),
-            OneUIGroupItem(title: l10n.carrierSettings, onTap: () => openSystemSetting(context, 'carrier')),
+            OneUIGroupItem(
+              title: l10n.carrierSettings,
+              subtitle: l10n.carrierSettingsSubtitle,
+              onTap: () => openSystemSetting(context, 'carrier'),
+            ),
             if (_appCallLog)
               OneUIGroupItem(
                 title: l10n.callsFromOtherApps,

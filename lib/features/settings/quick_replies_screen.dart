@@ -55,7 +55,7 @@ class _QuickRepliesScreenState extends State<QuickRepliesScreen> {
       title: context.l10n.quickDeclineMessages,
       builder: (context) => [
         Padding(
-          padding: EdgeInsets.fromLTRB(16, 0, 16, 4),
+          padding: EdgeInsets.fromLTRB(18, 0, 18, 4), // text lines up with the rows below
           child: Text(
             context.l10n.quickDeclineHint,
             style: TextStyle(fontSize: 13.5, color: context.palette.textSecondary),

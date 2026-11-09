@@ -68,7 +68,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
     var roleRequester: ((String, MethodChannel.Result) -> Unit)? = null
 
     /** Set by [MainActivity]: opens the photo picker; the result is JPEG bytes or null. */
-    var photoPicker: ((MethodChannel.Result) -> Unit)? = null
+    var photoPicker: ((Int, MethodChannel.Result) -> Unit)? = null
     var photoTaker: ((MethodChannel.Result) -> Unit)? = null
 
     /** Set by [MainActivity]: picks a .vcf file; the result is its text or null. */
@@ -217,7 +217,8 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 ?: result.error("NO_ACTIVITY", "Ringtones can only be picked from the main screen", null)
             "pickVcf" -> vcfPicker?.invoke(result)
                 ?: result.error("NO_ACTIVITY", "Files can only be picked from the main screen", null)
-            "pickPhoto" -> photoPicker?.invoke(result)
+            "pickPhoto" -> photoPicker?.invoke(call.argument<Int>("max") ?: 720, result)
+                ?: result.error("NO_ACTIVITY", "Photos can only be picked from the main screen", null)
             "takePhoto" -> photoTaker?.invoke(result)
                 ?: result.error("NO_ACTIVITY", "Photos can only be picked from the main screen", null)
             "getQuickReplies" -> result.success(com.syedarhamraza.dialer.telecom.QuickReplies.read(context))

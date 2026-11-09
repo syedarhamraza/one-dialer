@@ -3349,6 +3349,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'About phone'**
   String get aboutPhone;
+
+  /// No description provided for @glassStyleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Liquid glass bends what\'s behind it but uses more power'**
+  String get glassStyleSubtitle;
+
+  /// No description provided for @darkModeEdgeGlowSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How brightly the glass edges glow in dark mode'**
+  String get darkModeEdgeGlowSubtitle;
+
+  /// No description provided for @liquidGlassOnSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Which parts of the app use liquid glass'**
+  String get liquidGlassOnSubtitle;
+
+  /// No description provided for @navBarGlassSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Full refraction looks best; Light runs smoother on slower phones'**
+  String get navBarGlassSubtitle;
+
+  /// No description provided for @tapRecentCallSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What happens when you tap a call in Calls'**
+  String get tapRecentCallSubtitle;
+
+  /// No description provided for @callScreenEdgeGlowSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How brightly the call buttons\' glass edges glow'**
+  String get callScreenEdgeGlowSubtitle;
+
+  /// No description provided for @answerButtonsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How you answer, and how the call screen looks'**
+  String get answerButtonsSubtitle;
+
+  /// No description provided for @carrierSettingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Call forwarding, call waiting and caller ID'**
+  String get carrierSettingsSubtitle;
+
+  /// No description provided for @callBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'Call background'**
+  String get callBackground;
+
+  /// No description provided for @callBackgroundAllSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'For every call, unless a contact has its own'**
+  String get callBackgroundAllSubtitle;
+
+  /// No description provided for @callBackgroundDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get callBackgroundDefault;
+
+  /// No description provided for @callBackgroundColour.
+  ///
+  /// In en, this message translates to:
+  /// **'Colour'**
+  String get callBackgroundColour;
+
+  /// No description provided for @callBackgroundPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo'**
+  String get callBackgroundPhoto;
+
+  /// No description provided for @callBackgroundChoosePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose photo'**
+  String get callBackgroundChoosePhoto;
+
+  /// No description provided for @callBackgroundContactPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact\'s photo'**
+  String get callBackgroundContactPhoto;
+
+  /// No description provided for @callBackgroundContactPhotoSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Android keeps contact photos small; choose a photo for a sharper one'**
+  String get callBackgroundContactPhotoSubtitle;
+
+  /// No description provided for @callBackgroundSameAsAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Same as all calls'**
+  String get callBackgroundSameAsAll;
+
+  /// No description provided for @callBackgroundAllNote.
+  ///
+  /// In en, this message translates to:
+  /// **'A contact with their own call background, set on their contact page, uses it instead.'**
+  String get callBackgroundAllNote;
+
+  /// No description provided for @callBackgroundContactNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Used for this contact instead of the call background for all calls.'**
+  String get callBackgroundContactNote;
 }
 
 class _AppLocalizationsDelegate

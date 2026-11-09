@@ -13,6 +13,7 @@ import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import 'call_control_panel.dart';
+import 'call_background.dart';
 import 'call_controls.dart';
 import 'call_screen_widgets.dart';
 import 'incoming_controls.dart';
@@ -72,13 +73,28 @@ class _InCallScreenState extends State<InCallScreen> {
         final state = _last;
         final call = state?.primary;
         return ListenableBuilder(
-          // Contacts load in late (the aurora's tint follows the caller's name).
-          listenable: ContactsRepository.instance.contacts,
+          // Contacts load in late (the aurora's tint follows the caller's name), and so do the
+          // caller's photo and saved background.
+          listenable: Listenable.merge([
+            ContactsRepository.instance.contacts,
+            CallBackgrounds.instance,
+          ]),
           builder: (context, _) {
+            final contact = call == null || call.isPrivate || call.isConference
+                ? null
+                : ContactsRepository.instance.contactFor(call.number ?? '');
             return CallBackdrop(
               shown: call != null,
               dim: _keypadBlur,
               seed: call == null ? null : backdropSeed(call),
+              background: call == null ? null : CallBackgrounds.instance.forCall(contact?.id),
+              // Connected; an answered call stays frosted on the ended summary rather than sharpening
+              // as it closes, while a declined or missed one stays sharp.
+              frosted: switch (call?.state) {
+                CallState.active || CallState.holding => true,
+                CallState.disconnecting || CallState.disconnected => call?.connectTime != null,
+                _ => false,
+              },
               child: SafeArea(
                 child: switch ((state, call)) {
                   (final state?, final call?) => _CallSession(

@@ -1904,4 +1904,73 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get aboutPhone => 'Info sul telefono';
+
+  @override
+  String get glassStyleSubtitle =>
+      'Il vetro liquido piega ciò che sta dietro, ma consuma di più';
+
+  @override
+  String get darkModeEdgeGlowSubtitle =>
+      'Quanto brillano i bordi del vetro in modalità scura';
+
+  @override
+  String get liquidGlassOnSubtitle =>
+      'Quali parti dell\'app usano il vetro liquido';
+
+  @override
+  String get navBarGlassSubtitle =>
+      'Rifrazione completa è più bella; Leggero è più fluido sui telefoni lenti';
+
+  @override
+  String get tapRecentCallSubtitle =>
+      'Cosa succede quando tocchi una chiamata in Chiamate';
+
+  @override
+  String get callScreenEdgeGlowSubtitle =>
+      'Quanto brillano i bordi di vetro dei pulsanti di chiamata';
+
+  @override
+  String get answerButtonsSubtitle =>
+      'Come rispondi e l\'aspetto della schermata di chiamata';
+
+  @override
+  String get carrierSettingsSubtitle =>
+      'Trasferimento, avviso di chiamata e ID chiamante';
+
+  @override
+  String get callBackground => 'Sfondo chiamata';
+
+  @override
+  String get callBackgroundAllSubtitle =>
+      'Per ogni chiamata, salvo i contatti che ne hanno uno proprio';
+
+  @override
+  String get callBackgroundDefault => 'Predefinito';
+
+  @override
+  String get callBackgroundColour => 'Colore';
+
+  @override
+  String get callBackgroundPhoto => 'Foto';
+
+  @override
+  String get callBackgroundChoosePhoto => 'Scegli foto';
+
+  @override
+  String get callBackgroundContactPhoto => 'Foto del contatto';
+
+  @override
+  String get callBackgroundContactPhotoSubtitle =>
+      'Android salva le foto dei contatti piccole; scegli una foto per una più nitida';
+
+  @override
+  String get callBackgroundSameAsAll => 'Come tutte le chiamate';
+
+  @override
+  String get callBackgroundAllNote =>
+      'Un contatto con un proprio sfondo, impostato nella sua scheda, usa quello.';
+
+  @override
+  String get callBackgroundContactNote =>
+      'Usato per questo contatto al posto dello sfondo per tutte le chiamate.';
 }

@@ -126,6 +126,19 @@ class DialerPrefs {
     changes.value++;
   }
 
+  /// The call screen background for a contact id, or `all` for every call: `color:<argb hex>`,
+  /// `photo:<file name>` or `contact:` (see `CallBackground`); null is the default.
+  Future<String?> callBackground(String scope) => _prefs.getString('call_bg_$scope');
+
+  Future<void> setCallBackground(String scope, String? value) async {
+    if (value == null) {
+      await _prefs.remove('call_bg_$scope');
+    } else {
+      await _prefs.setString('call_bg_$scope', value);
+    }
+    changes.value++;
+  }
+
   /// Settings › "Tap a recent call": `details` (open its page), `dial` (write the number
   /// in the keypad) or `sim` (dual SIM only: pick a SIM and call). Notifiers so rows read
   /// it synchronously; [loadChoices] fills them at startup.
