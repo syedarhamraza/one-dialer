@@ -48,9 +48,9 @@ object CallNotifications {
         val manager = context.getSystemService(NotificationManager::class.java)
         // On an unlocked vivo the Atomic Island card is the pop-up, and with the call screen up
         // (call waiting) the screen itself rings; a heads-up banner would double either.
-        val island = vivoIsland &&
-            context.getSystemService(PowerManager::class.java).isInteractive &&
+        val unlocked = context.getSystemService(PowerManager::class.java).isInteractive &&
             !context.getSystemService(KeyguardManager::class.java).isKeyguardLocked
+        val island = vivoIsland && unlocked
         val quiet = screenOpening || island || InCallActivity.isFullScreen
         val channel = if (quiet) CHANNEL_INCOMING_QUIET else CHANNEL_INCOMING
         manager.deleteNotificationChannel("incoming_calls_island")
@@ -77,7 +77,13 @@ object CallNotifications {
             context, 0, InCallActivity.intent(context),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
-        val answer = CallActionReceiver.answerIntent(context, callId)
+        // Unlocked, answering from the banner keeps you in what you were doing (a game, a video):
+        // the ongoing notification carries the call and a tap on it opens the call screen.
+        val answer = if (unlocked && !screenOpening) {
+            CallActionReceiver.pendingIntent(context, CallActionReceiver.ACTION_ANSWER_IN_ISLAND, callId)
+        } else {
+            CallActionReceiver.answerIntent(context, callId)
+        }
         val decline = CallActionReceiver.pendingIntent(context, CallActionReceiver.ACTION_DECLINE, callId)
 
         val builder = Notification.Builder(context, channel)
@@ -99,8 +105,9 @@ object CallNotifications {
             builder.addAction(Notification.Action.Builder(null, res.getString(R.string.decline), decline).build())
             builder.addAction(Notification.Action.Builder(null, res.getString(R.string.answer), answer).build())
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA && !vivoIsland) {
-            // Asks for a Live Update (status bar chip); on vivo it'd be a second island next to the card.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA && !vivoIsland && !quiet && unlocked) {
+            // Asks for a Live Update (status bar chip) beside the banner only: with the call screen up
+            // (or opening over the lock screen) the chip doubled it. On vivo it'd be a second island.
             builder.addExtras(Bundle().apply { putBoolean(Notification.EXTRA_REQUEST_PROMOTED_ONGOING, true) })
         }
         val icon = callerIcon(context, details.handle?.schemeSpecificPart)
@@ -214,13 +221,8 @@ object CallNotifications {
     fun updateOngoing(context: Context, calls: List<Pair<String, Call>>) {
         val res = AppLanguage.localized(context).resources
         val manager = context.getSystemService(NotificationManager::class.java)
-        val states = calls.map { CallManager.stateOf(it.second) }
-        val (callId, call) = calls.indices
-            .sortedBy { ONGOING_PRIORITY.indexOf(states[it]).let { p -> if (p < 0) Int.MAX_VALUE else p } }
-            .firstOrNull { states[it] in ONGOING_PRIORITY }
-            ?.let { calls[it] }
-            ?: return removeOngoing(manager)
-        if (Call.STATE_RINGING in states) return removeOngoing(manager)
+        val (callId, call) = shownOngoing(calls) ?: return removeOngoing(manager)
+        if (calls.any { CallManager.stateOf(it.second) == Call.STATE_RINGING }) return removeOngoing(manager)
 
         // Not IMPORTANCE_LOW: Android 12+ and vivo hide silent notifications on the lock screen,
         // which left no way back to a call there. An existing channel's importance can't change.
@@ -314,6 +316,10 @@ object CallNotifications {
         manager.notify(ID_ONGOING, builder.build())
     }
 
+    /** The call the ongoing notification describes, or null when none qualifies. */
+    fun shownOngoing(calls: List<Pair<String, Call>>): Pair<String, Call>? =
+        ongoingIndex(calls.map { CallManager.stateOf(it.second) })?.let { calls[it] }
+
     /** The in-call island's last posted look; null until it's created. */
     private var islandKey: String? = null
 
@@ -365,9 +371,14 @@ object CallNotifications {
 
     private const val CHANNEL_ONGOING = "ongoing_calls_v2"
     private const val ID_ONGOING = 3
-
-    /** Which call the ongoing notification describes, best first. */
-    private val ONGOING_PRIORITY = listOf(
-        Call.STATE_ACTIVE, Call.STATE_DIALING, Call.STATE_CONNECTING, Call.STATE_HOLDING,
-    )
 }
+
+/** Which call states the ongoing notification describes, best first. */
+private val ONGOING_PRIORITY = listOf(
+    Call.STATE_ACTIVE, Call.STATE_DIALING, Call.STATE_CONNECTING, Call.STATE_HOLDING,
+)
+
+/** Index of the call the ongoing notification describes among [states], or null when none qualifies. */
+internal fun ongoingIndex(states: List<Int>): Int? =
+    states.indices.filter { states[it] in ONGOING_PRIORITY }.minByOrNull { ONGOING_PRIORITY.indexOf(states[it]) }
+
