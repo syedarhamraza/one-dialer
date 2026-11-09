@@ -122,4 +122,12 @@ Recording is a separate sideloaded app, **One Dialer Recorder** (`companion/`, p
 
 ## Liquid Glass Widgets
 
-For liquid glass widgets or any liquid glass request refer to the skill in `.claude\skills\liquid-glass-widgets\SKILL.md` (other agents: read that file directly).
+For any liquid glass work, read the package's own guide first: `skills/liquid-glass-widgets/SKILL.md` inside the `liquid_glass_widgets` package. Its folder is that package's `rootUri` in `.dart_tool/package_config.json` (after `flutter pub get`), so it always matches the version in `pubspec.lock`. Don't copy it into this repo.
+
+In this repo, these rules come before the package guide:
+
+- Only the call screen uses the package's controls (`GlassButton.custom`, for the ColorOS 17 control motion). The main app's buttons press with `PressGlow` and never call `LiquidGlassWidgets.initialize`, except the main engine once Settings › Display & effects › Glass & blur › Glass style is Liquid glass.
+- Liquid glass is opt-in and Full-effects only. Floating bodies switch to `GlassContainer` through `liquidBody` (`lib/widgets/liquid_body.dart`), as far as `DialerPrefs.liquidScope` reaches (`isLiquid`, `liquidControls`, `liquidPopups`). Reduced and Off never show liquid glass, and the keypad sheet and the call screen keep their own glass.
+- The nav bar's liquid form is `GlassTabBar.bottom` in the `GlassQuality` picked under Glass effect, not a hard-coded quality.
+- Each place hosting several liquid surfaces (the shell's tabs, pushed pages, `RisePageRoute`) adds a `GlassBackdropGroup`, so they share one backdrop read. Keep `Opacity`, `ShaderMask` and save-layer clips out from between a liquid surface and its group, or it reads the backdrop alone.
+- No liquid surface under an animated `Transform`; lay it out at the animated size instead, as the floating menu does.

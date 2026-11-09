@@ -1,5 +1,7 @@
 # Localization
 
+> **Translators:** you don't need this page. Follow [TRANSLATING.md](../TRANSLATING.md) instead. This page is for developers.
+
 One Dialer ships in English and Italian. The Flutter UI uses Flutter's gen-l10n; the Kotlin layer's notification text uses Android string resources.
 
 | What | Where |
@@ -27,6 +29,8 @@ Both edit one value, `AppLanguage.kt`: Android's per-app language (`LocaleManage
 A switch never interrupts a call: nothing calls `Locale.setDefault`, both activities already handle `locale` config changes, and neither the engines nor `InCallService` restart. A running call screen re-renders in the new language (13+) or picks it up on its next resume (10–12); the ongoing-call notification on its next repost.
 
 ## Adding a language
+
+Translators start from the templates in `translations/` ([TRANSLATING.md](../TRANSLATING.md)); `dart run tool/l10n_template.dart` regenerates them from the English text, and `test/l10n_test.dart` fails while they are stale.
 
 1. Copy `lib/l10n/app_it.arb` to `app_xx.arb`, set `@@locale` and translate every value (`languageName` is the language's own name).
 2. Copy `values-it/strings.xml` to `values-xx/strings.xml` and translate it (plurals need the language's quantities).

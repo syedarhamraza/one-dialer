@@ -32,6 +32,15 @@ void main() {
     });
   }
 
+  test('the translator templates match the English text (dart run tool/l10n_template.dart)', () {
+    final arbTemplate = jsonDecode(File('translations/app_xx.arb').readAsStringSync()) as Map<String, dynamic>;
+    expect(arbTemplate.keys.where((k) => !k.startsWith('@')).toSet(), keys);
+    expect(
+      File('translations/strings_xx.xml').readAsStringSync(),
+      File('android/app/src/main/res/values/strings.xml').readAsStringSync(),
+    );
+  });
+
   test("Android's per-app language list matches the app's languages", () {
     final config = File('android/app/src/main/res/xml/locales_config.xml').readAsStringSync();
     final listed = RegExp(r'android:name="([\w-]+)"').allMatches(config).map((m) => m[1]).toSet();
