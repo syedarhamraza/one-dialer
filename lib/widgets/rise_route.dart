@@ -19,11 +19,14 @@ class RisePageRoute<T> extends PageRoute<T> {
 
   final WidgetBuilder builder;
 
-  @override
-  Duration get transitionDuration => const Duration(milliseconds: 450);
+  /// Android's Remove animations: no slide at all.
+  bool get _still => navigator != null && MediaQuery.maybeDisableAnimationsOf(navigator!.context) == true;
 
   @override
-  Duration get reverseTransitionDuration => const Duration(milliseconds: 240);
+  Duration get transitionDuration => _still ? Duration.zero : const Duration(milliseconds: 450);
+
+  @override
+  Duration get reverseTransitionDuration => _still ? Duration.zero : const Duration(milliseconds: 240);
 
   // See-through, so the page below shows above it while it slides. Kept see-through once
   // open too: an opaque page stops the page below painting, and bringing it back cost a
