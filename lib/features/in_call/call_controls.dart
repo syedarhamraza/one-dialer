@@ -129,7 +129,7 @@ class CallFrost extends StatelessWidget {
 /// The frosted backdrop stays live; only the static glow and rim are rasterized once.
 /// A fixed-resolution image remains reusable while the glass press and keypad scale it.
 /// The main app's keypad keys use it too, with their softer [glow] and [opacity].
-class CallBodyArtwork extends StatefulWidget {
+class CallBodyArtwork extends StatelessWidget {
   const CallBodyArtwork({
     super.key,
     required this.radius,
@@ -158,47 +158,24 @@ class CallBodyArtwork extends StatefulWidget {
   final Widget child;
 
   @override
-  State<CallBodyArtwork> createState() => _CallBodyArtworkState();
+  Widget build(BuildContext context) => CustomPaint(
+    painter: _CachedBodyPainter(
+      radius,
+      MediaQuery.devicePixelRatioOf(context),
+      glow,
+      spread,
+      opacity,
+      edges,
+      context.palette.isLight,
+      lipsOnly: lipsOnly,
+    ),
+    child: child,
+  );
 }
 
-class _CallBodyArtworkState extends State<CallBodyArtwork> {
-  _CachedBodyPainter? _painter;
-
-  @override
-  Widget build(BuildContext context) {
-    final ratio = MediaQuery.devicePixelRatioOf(context);
-    final light = context.palette.isLight;
-    if (_painter == null ||
-        _painter!.light != light ||
-        _painter!.radius != widget.radius ||
-        _painter!.ratio != ratio ||
-        _painter!.glow != widget.glow ||
-        _painter!.spread != widget.spread ||
-        _painter!.opacity != widget.opacity ||
-        _painter!.edges != widget.edges ||
-        _painter!.lipsOnly != widget.lipsOnly) {
-      _painter?.dispose();
-      _painter = _CachedBodyPainter(
-        widget.radius,
-        ratio,
-        widget.glow,
-        widget.spread,
-        widget.opacity,
-        widget.edges,
-        light,
-        lipsOnly: widget.lipsOnly,
-      );
-    }
-    return CustomPaint(painter: _painter, child: widget.child);
-  }
-
-  @override
-  void dispose() {
-    _painter?.dispose();
-    super.dispose();
-  }
-}
-
+/// Draws its look from one image cache shared by every [CallBodyArtwork], keyed by size and look
+/// ([opacity] is applied when drawing), so a page's buttons reuse the artwork other pages already
+/// rasterized instead of drawing it on their first frame.
 class _CachedBodyPainter extends CustomPainter {
   _CachedBodyPainter(
     this.radius,
@@ -218,29 +195,35 @@ class _CachedBodyPainter extends CustomPainter {
   final GlassEdges edges;
   final bool light;
   final bool lipsOnly;
-  ui.Image? _image;
-  Size? _size;
+
+  // Least recently used first. A drawn image stays alive in the frame's picture, so evicting
+  // (disposing our handle) never pulls it from under a painter.
+  static final _cache = <Object, ui.Image>{};
+  static const _cacheSize = 64;
+
+  ui.Image _image(Size size) {
+    final key = (size, radius, ratio, glow, spread, edges, light, lipsOnly);
+    final cached = _cache.remove(key);
+    if (cached != null) return _cache[key] = cached;
+    final recorder = ui.PictureRecorder();
+    final recording = Canvas(recorder)..scale(ratio);
+    if (lipsOnly) {
+      paintGlassLips(recording, Offset.zero & size, radius, edges);
+    } else {
+      TintedCallBody(radius, glow: glow, spread: spread, edges: edges, light: light).paint(recording, size);
+    }
+    final picture = recorder.endRecording();
+    final image = picture.toImageSync((size.width * ratio).ceil(), (size.height * ratio).ceil());
+    picture.dispose();
+    if (_cache.length >= _cacheSize) _cache.remove(_cache.keys.first)!.dispose();
+    return _cache[key] = image;
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
     if (size.isEmpty) return;
-    if (_image == null || _size != size) {
-      final recorder = ui.PictureRecorder();
-      final recording = Canvas(recorder)..scale(ratio);
-      if (lipsOnly) {
-        paintGlassLips(recording, Offset.zero & size, radius, edges);
-      } else {
-        TintedCallBody(radius, glow: glow, spread: spread, edges: edges, light: light).paint(recording, size);
-      }
-      final picture = recorder.endRecording();
-      final image = picture.toImageSync((size.width * ratio).ceil(), (size.height * ratio).ceil());
-      picture.dispose();
-      _image?.dispose();
-      _image = image;
-      _size = size;
-    }
     canvas.drawImageRect(
-      _image!,
+      _image(size),
       Rect.fromLTWH(0, 0, size.width * ratio, size.height * ratio),
       Offset.zero & size,
       Paint()
@@ -248,8 +231,6 @@ class _CachedBodyPainter extends CustomPainter {
         ..color = Color.fromRGBO(0, 0, 0, opacity),
     );
   }
-
-  void dispose() => _image?.dispose();
 
   @override
   bool shouldRepaint(_CachedBodyPainter oldDelegate) =>
