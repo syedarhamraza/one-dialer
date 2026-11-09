@@ -53,14 +53,29 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _refresh();
-    _loadIcon();
     // Their values show on the Display and Language rows.
     DialerPrefs.instance.themeMode.addListener(_rebuild);
     DialerPrefs.instance.language.addListener(_rebuild);
-    AppVersion.current().then((v) {
-      if (mounted) setState(() => _version = v);
-    });
+  }
+
+  bool _loadStarted = false;
+
+  /// The first load waits until the page has slid in: its replies would otherwise rebuild the
+  /// page (and its glass) during the transition.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_loadStarted) return;
+    _loadStarted = true;
+    final animation = ModalRoute.of(context)?.animation;
+    if (animation == null || animation.isCompleted) return _refreshAll();
+    void opened(AnimationStatus status) {
+      if (!status.isCompleted) return;
+      animation.removeStatusListener(opened);
+      _refreshAll();
+    }
+
+    animation.addStatusListener(opened);
   }
 
   @override
@@ -82,15 +97,24 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     if (mounted) setState(() => _icon = s);
   });
 
-  Future<void> _refresh() async {
-    final health = await _telecom.getCallHealth();
-    final bluetoothNames = await Permission.bluetoothConnect.isGranted;
-    final recorder = await _telecom.getRecorder();
+  void _refreshAll() => _refresh(all: true);
+
+  /// One rebuild for every reply; [all] adds the version and icon, which only change elsewhere.
+  Future<void> _refresh({bool all = false}) async {
+    final (health, bluetoothNames, recorder, version, icon) = await (
+      _telecom.getCallHealth(),
+      Permission.bluetoothConnect.isGranted,
+      _telecom.getRecorder(),
+      all ? AppVersion.current() : Future.value(_version),
+      all ? _telecom.getLauncherIcon() : Future.value(_icon),
+    ).wait;
     if (mounted) {
       setState(() {
         _health = health;
         _recorder = recorder;
         _bluetoothNames = bluetoothNames;
+        _version = version;
+        _icon = icon;
       });
     }
   }
@@ -129,7 +153,11 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         _problem(context.l10n.blockingPaused, context.l10n.blockingPausedShort, () => _push(const BlockingScreen())),
       // Auto-record is on but the companion can't record (its setup was undone).
       if (_recorder case final r? when r.autoRecordMode != 'off' && r.consented && !r.ready)
-        _problem(context.l10n.recordingNotSetUp, context.l10n.recordingNotSetUpSubtitle, () => _push(const CallRecordingScreen())),
+        _problem(
+          context.l10n.recordingNotSetUp,
+          context.l10n.recordingNotSetUpSubtitle,
+          () => _push(const CallRecordingScreen()),
+        ),
       if (!_bluetoothNames)
         _problem(context.l10n.bluetoothNamesHidden, context.l10n.bluetoothNamesHiddenSubtitle, _allowBluetoothNames),
     ];
@@ -163,9 +191,10 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
             if (_recorder != null)
               OneUIGroupItem(
                 title: l10n.callRecording,
-                onTap: () => Navigator.of(context)
-                    .push(MaterialPageRoute<void>(builder: (_) => const CallRecordingScreen()))
-                    .then((_) => _refresh()),
+                onTap: () =>
+                    Navigator.of(context)
+                        .push(MaterialPageRoute<void>(builder: (_) => const CallRecordingScreen()))
+                        .then((_) => _refresh()),
               ),
           ],
         ),

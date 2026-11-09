@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
+import '../../theme/one_ui_effects.dart';
 import '../prefs/dialer_prefs.dart';
 import 'lag_metrics.dart';
 
@@ -73,6 +74,7 @@ class LagDiagnostics with WidgetsBindingObserver {
   int _lastFrameAt = 0;
   int? _framePendingSince;
   Timer? _timer;
+  String _engine = 'main';
   String _screen = 'calls';
   String _tab = 'calls';
   int _routeDepth = 0;
@@ -91,6 +93,7 @@ class LagDiagnostics with WidgetsBindingObserver {
     if (_enabled || !enabled) return;
     _enabled = await _invoke<bool>('register', {'enabled': true}) == true;
     if (!_enabled) return;
+    _engine = engine;
     _screen = engine == 'in_call' ? 'in_call' : 'calls';
     _tab = _screen;
     WidgetsBinding.instance.addObserver(this);
@@ -219,11 +222,15 @@ class LagDiagnostics with WidgetsBindingObserver {
       }
     }
     if (!_enabled || !_resumed || _clock.elapsedMilliseconds - _resumedAt < 5000) return;
-    var severe = false;
+    var severeCount = 0;
     for (final frame in timings) {
-      severe =
-          metrics.add(frame.buildDuration.inMicroseconds / 1000, frame.rasterDuration.inMicroseconds / 1000) || severe;
+      if (metrics.add(frame.buildDuration.inMicroseconds / 1000, frame.rasterDuration.inMicroseconds / 1000)) {
+        severeCount++;
+      }
     }
+    final severe = severeCount > 0;
+    // The call screen has its own level; only the main app's steps down.
+    if (_engine == 'main') OneUIEffectsController.instance.severeFrames(severeCount);
     if (severe && _clock.elapsedMilliseconds - _lastAutomatic >= 600000) {
       _lastAutomatic = _clock.elapsedMilliseconds;
       _summary = metrics.summary();
@@ -285,7 +292,16 @@ class LagDiagnostics with WidgetsBindingObserver {
     await crashlytics.setCustomKey('lag_${engine}_report_id', payload['reportId'] as String);
     await crashlytics.setCustomKey('lag_${engine}_category', payload['category'] as String);
     final context = payload['context'] as Map<String, dynamic>? ?? {};
-    for (final key in ['screen', 'visualEffects', 'callEffects', 'glassDark', 'callGlass', 'navStyle', 'navGlass', 'refreshRate']) {
+    for (final key in [
+      'screen',
+      'visualEffects',
+      'callEffects',
+      'glassDark',
+      'callGlass',
+      'navStyle',
+      'navGlass',
+      'refreshRate',
+    ]) {
       await crashlytics.setCustomKey('lag_${engine}_$key', context[key] ?? 'unknown');
     }
     final category = payload['category'] as String;

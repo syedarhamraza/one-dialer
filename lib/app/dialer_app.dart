@@ -56,8 +56,23 @@ class DialerApp extends StatelessWidget {
 /// controls (`CallGlass`) sharing one backdrop read, as the shell's tabs do: a separate read
 /// per button splits the GPU pass every frame.
 /// Extends the builder (not wraps it) so pages keep its 450 ms duration.
+///
+/// A normal push or pop only slides, like [RisePageRoute] (the builder's own fallback also fades,
+/// and fading live blurs costs a save layer per frame). The builder stays mounted underneath with
+/// still animations, in the same tree, so it still hears the start of a back swipe and takes over.
 class _GroupedSlide extends PredictiveBackPageTransitionsBuilder {
   const _GroupedSlide();
+
+  // FadeForwardsPageTransitionsBuilder's curve and parallax, without its fade.
+  static final _enter = Tween(
+    begin: const Offset(1, 0),
+    end: Offset.zero,
+  ).chain(CurveTween(curve: Curves.easeInOutCubicEmphasized));
+  static final _cover = Tween(
+    begin: Offset.zero,
+    end: const Offset(-.25, 0),
+  ).chain(CurveTween(curve: Curves.easeInOutCubicEmphasized));
+  static const _still = AlwaysStoppedAnimation(Offset.zero);
 
   @override
   Widget buildTransitions<T>(
@@ -66,14 +81,24 @@ class _GroupedSlide extends PredictiveBackPageTransitionsBuilder {
     Animation<double> animation,
     Animation<double> secondaryAnimation,
     Widget child,
-  ) => super.buildTransitions(
-    route,
-    context,
-    animation,
-    secondaryAnimation,
-    // Liquid glass shares its own read the same way.
-    BackdropGroup(child: GlassBackdropGroup(child: child)),
-  );
+  ) {
+    final swipe = route.popGestureInProgress;
+    final slide = !swipe && !MediaQuery.disableAnimationsOf(context);
+    return SlideTransition(
+      position: slide ? _enter.animate(animation) : _still,
+      child: SlideTransition(
+        position: slide ? _cover.animate(secondaryAnimation) : _still,
+        child: super.buildTransitions(
+          route,
+          context,
+          swipe ? animation : kAlwaysCompleteAnimation,
+          swipe ? secondaryAnimation : kAlwaysDismissedAnimation,
+          // Liquid glass shares its own read the same way.
+          BackdropGroup(child: GlassBackdropGroup(child: child)),
+        ),
+      ),
+    );
+  }
 }
 
 /// Shows [SetupScreen] until the app is the default phone app.

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -5,6 +7,12 @@ import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/foundation.dart';
 
 import 'diagnostics/lag_diagnostics.dart';
+
+final _started = Completer<void>();
+
+/// Completes once [initCrashReporting] has started Firebase (or found it unavailable); never in
+/// tests, which don't start it.
+Future<void> get crashReportingStarted => _started.future;
 
 /// Sends uncaught errors to Firebase Crashlytics, usage stats to Firebase Analytics and, in betas, performance data to Firebase
 /// Performance Monitoring (beta-only: see docs/beta-only.md). Called by both engines (main and in-call).
@@ -17,6 +25,8 @@ Future<void> initCrashReporting({String engine = 'main'}) async {
   } catch (error) {
     debugPrint('Crash reporting off: $error');
     return;
+  } finally {
+    if (!_started.isCompleted) _started.complete();
   }
   const enabled = !kDebugMode || bool.fromEnvironment('TELEMETRY_IN_DEBUG');
   final crashlytics = FirebaseCrashlytics.instance;
@@ -29,8 +39,5 @@ Future<void> initCrashReporting({String engine = 'main'}) async {
     crashlytics.recordError(error, stack, fatal: true);
     return true;
   };
-  await LagDiagnostics.instance.start(
-    engine: engine,
-    enabled: enabled,
-  );
+  await LagDiagnostics.instance.start(engine: engine, enabled: enabled);
 }

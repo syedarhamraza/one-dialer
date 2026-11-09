@@ -97,6 +97,21 @@ class OneUIEffectsController extends ChangeNotifier {
   /// The call screen's edge glow style (Settings › "Call screen edge glow").
   String get callGlassStyle => DialerPrefs.instance.callGlass.value;
 
+  int _severeFrames = 0;
+
+  /// Severe frames (lag diagnostics' >=700 ms) seen at full effects before stepping down.
+  static const stepDownAfter = 3;
+
+  /// Lag diagnostics saw [count] severe frames: after [stepDownAfter] at full effects, when the
+  /// user never picked a level (it's the phone's default), drop to reduced for this session.
+  /// Nothing is saved, so the next launch starts at the phone's default again.
+  void severeFrames(int count) {
+    final prefs = DialerPrefs.instance;
+    if (count == 0 || !isFull || prefs.effectsSaved) return;
+    _severeFrames += count;
+    if (_severeFrames >= stepDownAfter) prefs.visualEffects.value = 'reduced';
+  }
+
   /// Effects off: solid One UI fills, no blur anywhere.
   bool get isOff => level == 'off';
 

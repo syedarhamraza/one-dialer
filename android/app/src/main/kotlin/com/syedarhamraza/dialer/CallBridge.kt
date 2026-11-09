@@ -219,7 +219,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 com.syedarhamraza.dialer.telecom.QuickReplies.write(context, call.argument<List<String>>("replies").orEmpty())
                 result.success(null)
             }
-            "getCallHealth" -> result.success(callHealth())
+            "getCallHealth" -> inBackground(result) { callHealth() }
             "getLauncherIcon" -> result.success(AppIcons.current(context))
             "setLauncherIcon" -> inBackground(result) { AppIcons.set(context, call.argument<String>("style")!!) }
             "effectsDefault" -> inBackground(result) { effectsDefault() }
@@ -242,7 +242,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 AppLanguage.set(context, call.argument<String>("tag")!!)
                 result.success(null)
             }
-            "getRecorder" -> result.success(RecorderCompanion.status(context))
+            "getRecorder" -> inBackground(result) { RecorderCompanion.status(context) }
             "toggleRecording" -> result.success(RecorderCompanion.toggle(context))
             "listRecordings" -> result.success(RecorderCompanion.list(context))
             "deleteRecording" -> result.success(RecorderCompanion.delete(context, call.argument<String>("name")).let { null })

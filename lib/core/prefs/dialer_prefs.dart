@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../features/recents/call_log.dart' show numberKey;
+import '../crash_reporting.dart' show crashReportingStarted;
 import '../telecom/telecom_bridge.dart';
 
 /// Small app settings: speed dial slots and per-contact default SIM.
@@ -201,9 +202,9 @@ class DialerPrefs {
 
   late final _sizeKeys = {displaySize: 'display_size', navBarSize: 'nav_bar_size'};
 
-  Future<void> _loadDisplaySize() async {
+  void _loadDisplaySize(Map<String, Object?> saved) {
     for (final MapEntry(key: notifier, value: key) in _sizeKeys.entries) {
-      final size = await _prefs.getDouble(key);
+      final size = (saved[key] as num?)?.toDouble();
       // A test build's Largest (1.3) comes back as the top step, Larger.
       if (size != null && size > displaySizes.last) notifier.value = displaySizes.last;
       if (displaySizes.contains(size)) notifier.value = size!;
@@ -218,21 +219,42 @@ class DialerPrefs {
   /// Awaited before the first frame, so the app doesn't open dark and then turn light, or
   /// frosted and then flat.
   Future<void> loadAppearance() async {
-    await _loadDisplaySize();
-    final mode = await _prefs.getString('theme_mode');
+    // One read for every key: each separate read is a platform round trip before the first frame.
+    final saved = await _prefs.getAll(
+      allowList: {
+        ..._sizeKeys.values,
+        'theme_mode',
+        'visual_effects',
+        'glass_dark',
+        'nav_style',
+        'nav_glass',
+        'liquid_scope',
+      },
+    );
+    _loadDisplaySize(saved);
+    String? read(String key) => switch (saved[key]) {
+      final String value => value,
+      _ => null,
+    };
+    final mode = read('theme_mode');
     if (mode == 'system' || mode == 'light' || mode == 'dark') themeMode.value = mode!;
-    final effects = await _prefs.getString('visual_effects');
+    final effects = read('visual_effects');
+    effectsSaved = effects != null;
     if (effects == null) visualEffects.value = await _effectsDefault();
     if (effects == 'full' || effects == 'reduced' || effects == 'off') visualEffects.value = effects!;
-    final dark = await _prefs.getString('glass_dark');
+    final dark = read('glass_dark');
     if (dark == 'classic' || dark == 'soft' || dark == 'bold') glassDark.value = dark!;
-    final nav = await _prefs.getString('nav_style');
+    final nav = read('nav_style');
     if (nav == 'frosted' || nav == 'liquid') navStyle.value = nav!;
-    final navEffect = await _prefs.getString('nav_glass');
+    final navEffect = read('nav_glass');
     if (navEffect == 'premium' || navEffect == 'standard' || navEffect == 'auto') navGlass.value = navEffect!;
-    final scope = await _prefs.getString('liquid_scope');
+    final scope = read('liquid_scope');
     if (scope == 'all' || scope == 'controls' || scope == 'navbar') liquidScope.value = scope!;
   }
+
+  /// Whether the user ever picked a [visualEffects] level; until then it's the phone's default,
+  /// which `OneUIEffectsController.stepDown` may lower for the session.
+  bool effectsSaved = false;
 
   /// Settings › Language: `system` or a language tag. Kept natively (`AppLanguage.kt`), where
   /// Android 13+ keeps its own per-app language, so it's read again on every resume.
@@ -269,6 +291,8 @@ class DialerPrefs {
   /// it never holds up the first frame.
   Future<void> _logDevice(Map<String, Object?> pick, String level) async {
     try {
+      // Firebase starts unawaited, alongside the first frame.
+      await crashReportingStarted;
       final crashlytics = FirebaseCrashlytics.instance;
       for (final key in ['soc', 'platform', 'hardware', 'gpu']) {
         await crashlytics.setCustomKey('device_$key', '${pick[key] ?? ''}');
@@ -328,6 +352,7 @@ class DialerPrefs {
   }
 
   Future<void> setVisualEffects(String value) async {
+    effectsSaved = true;
     visualEffects.value = value;
     await _prefs.setString('visual_effects', value);
   }
