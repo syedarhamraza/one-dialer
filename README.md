@@ -10,6 +10,7 @@
 </p>
 
 <p align="center">
+  <a href="https://play.google.com/apps/testing/com.syedarhamraza.onedialer"><b>Get it on Google Play</b></a> ·
   <a href="https://syedarhamraza.github.io/one-dialer/">Website</a> ·
   <a href="https://syedarhamraza.github.io/one-dialer/privacy/">Privacy policy</a> ·
   <a href="CONTRIBUTING.md">Contributing</a>
@@ -32,7 +33,7 @@
 - **Dual SIM:** a SIM per contact, "ask every time", and a SIM chooser
 - **Blocking:** Android's system block list, plus rules for private and unknown callers
 - **Design:** frosted glass and spring motion, with *Reduce visual effects* for slower phones
-- **Languages:** English and Italian ([add yours](docs/localization.md))
+- **Languages:** English and Italian ([add yours](TRANSLATING.md))
 
 No ads, no accounts, no servers of its own. Call log and contacts never leave the phone. The only data sent anywhere is crash reports (Firebase Crashlytics), and only from builds made with a Firebase config.
 
@@ -45,25 +46,13 @@ No ads, no accounts, no servers of its own. Call log and contacts never leave th
 | Notifications, full-screen intent | Ringing and ongoing-call notifications, and the call screen on the lock screen |
 | Nearby devices (Bluetooth) | Route call audio to a headset |
 
-## Build from source
-
-Requirements: Flutter stable (the version CI uses is in [`.github/workflows/ci.yml`](.github/workflows/ci.yml)), JDK 17, and an Android 10+ phone.
-
-```bash
-flutter pub get
-flutter run
-```
-
-- **Firebase is optional.** Without `android/app/google-services.json` the app builds with crash reporting off. To use your own Firebase project, put its config file there.
-- **Release signing** reads `android/key.properties` (see `android/key.properties.example`). Without it, release builds fall back to debug signing.
-- **Calls only work once One Dialer is the default phone app.** Tap "Set" on the first screen.
-- **To test incoming calls without a second phone,** debug and profile builds include a fake "Test line". See [CONTRIBUTING.md](CONTRIBUTING.md#testing-calls).
-
-[AGENTS.md](AGENTS.md) is the architecture guide, for people and coding agents alike. It covers how the two Flutter engines, the Kotlin Telecom layer and the UI fit together.
-
 ## Contributing
 
-Bug reports, translations and pull requests are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md). Report security problems privately, as described in [SECURITY.md](SECURITY.md), not in an issue.
+Bug reports, translations and pull requests are welcome.
+
+- **Want to translate the app into your language?** Follow [TRANSLATING.md](TRANSLATING.md). No coding needed.
+- **Want to build it or change the code?** Start with [CONTRIBUTING.md](CONTRIBUTING.md). [AGENTS.md](AGENTS.md) is the architecture guide, for people and coding agents alike.
+- **Found a security problem?** Report it privately, as described in [SECURITY.md](SECURITY.md), not in an issue.
 
 ## License
 
