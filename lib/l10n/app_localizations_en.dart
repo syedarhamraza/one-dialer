@@ -992,7 +992,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editNote => 'Edit note';
 
   @override
-  String get videoCall => 'Video call';
+  String get videoCall => 'Video call (Meet)';
 
   @override
   String get mute => 'Mute';
@@ -1875,4 +1875,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String autoDeleteDays(int days) {
     return 'After $days days';
   }
+
+  @override
+  String get imeiTitle => 'IMEI';
+
+  @override
+  String get imeiUnavailable =>
+      'Android doesn\'t let apps show the IMEI. You can find it in your phone\'s settings under About phone.';
+
+  @override
+  String get aboutPhone => 'About phone';
 }

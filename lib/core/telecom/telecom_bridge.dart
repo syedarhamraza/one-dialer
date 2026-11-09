@@ -256,6 +256,9 @@ class TelecomBridge {
 
   /// Keypad feedback tone (respects the system "Dial pad tones" setting).
   Future<void> playTone(String digit) => _methods.invokeMethod('playTone', {'digit': digit});
+  /// Hands a keypad code (`*#06#`, `*#*#4636#*#*`) to the system; false when nothing handled it.
+  Future<bool> handleSpecialCode(String code) async =>
+      await _methods.invokeMethod<bool>('handleSpecialCode', {'code': code}) ?? false;
   Future<void> stopTone() => _methods.invokeMethod('stopTone');
 
   Future<void> answer(String id) => _call('answer', id);

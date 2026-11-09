@@ -15,6 +15,8 @@ class MainActivity : FlutterActivity() {
     override fun onResume() {
         super.onResume()
         LagDiagnostics.foreground("main", true)
+        // Again on each resume: OPPO resets it, and the user may have changed it in Settings.
+        HighRefresh.apply(this)
     }
 
     override fun onPause() {

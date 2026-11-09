@@ -16,6 +16,7 @@ import '../../core/prefs/dialer_prefs.dart';
 import '../contacts/editor/add_to_contacts.dart';
 import '../contacts/editor/contact_editor_screen.dart';
 import '../recents/call_log_repository.dart';
+import 'special_codes.dart';
 import 'speed_dial_screen.dart';
 import '../../widgets/call_glass.dart';
 import '../../widgets/letter_avatar.dart';
@@ -197,18 +198,38 @@ class _KeypadScreenState extends State<KeypadScreen> {
     HapticFeedback.lightImpact();
     _telecom.playTone(key);
     _replace(key);
+    final number = widget.input.value;
+    if (specialCode(number) case final code?) _special(code, number);
   }
 
-  /// Long-press: 0 types "+", * a pause (","), # a wait (";"), 2–9 call their speed dial
-  /// (or offer to assign one).
+  /// `*#06#` and the like act as soon as they're typed (and on Call), never dialled.
+  Future<void> _special(SpecialCode code, String number) async {
+    final handled = await _telecom.handleSpecialCode(number);
+    if (!mounted || widget.input.value != number) return;
+    if (handled) {
+      widget.input.value = '';
+    } else if (code case DeviceCode(isImei: true)) {
+      // Android doesn't let apps read the IMEI; the phone's own About page shows it.
+      widget.input.value = '';
+      final l10n = context.l10n;
+      if (await showCosConfirm(context, title: l10n.imeiTitle, message: l10n.imeiUnavailable, confirmLabel: l10n.aboutPhone)) {
+        await _telecom.openSystemSettings('deviceInfo');
+      }
+    }
+  }
+
+  /// Long-press (the key already typed its digit on press): 0 becomes "+", * a pause (","),
+  /// # a wait (";"); 2–9 alone call their speed dial (or offer to assign one).
   Future<void> _longPress(String digit) async {
     if (const {'0': '+', '*': ',', '#': ';'}[digit] case final char?) {
       HapticFeedback.mediumImpact();
+      _replace('');
       _replace(char);
       return;
     }
-    if (!DialerPrefs.speedDialDigits.contains(digit) || widget.input.value.isNotEmpty) return;
+    if (!DialerPrefs.speedDialDigits.contains(digit) || widget.input.value != digit) return;
     HapticFeedback.mediumImpact();
+    widget.input.value = '';
     final entry = await DialerPrefs.instance.speedDial(digit);
     if (entry != null) {
       if (mounted) await placeCall(context, entry.$2);
@@ -239,6 +260,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
       widget.input.value = CallLogRepository.instance.lastDialled ?? '';
       return;
     }
+    if (specialCode(number) case final code?) return _special(code, number);
     HapticFeedback.mediumImpact();
     setState(() => _calling = true);
     try {
@@ -736,7 +758,8 @@ class _Keypad extends StatelessWidget {
                         '2' || '3' || '4' || '5' || '6' || '7' || '8' || '9' => context.l10n.keypadDigitHint(digit),
                         _ => digit,
                       },
-                      onTap: () => onKey(digit),
+                      onTap: null,
+                      onDown: () => onKey(digit),
                       onLongPress: () => onLongPress(digit),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -774,6 +797,7 @@ class _Pill extends StatelessWidget {
     required this.label,
     required this.onTap,
     required this.child,
+    this.onDown,
     this.onLongPress,
     this.color = OneUITheme.surfacePill,
     this.lit = false,
@@ -782,6 +806,10 @@ class _Pill extends StatelessWidget {
   final double height;
   final String label;
   final VoidCallback? onTap;
+
+  /// Fires on touch-down instead of [onTap] (digit keys): a tap only counts on release, after
+  /// winning the gesture arena, so quick or rolling presses dropped digits.
+  final VoidCallback? onDown;
   final VoidCallback? onLongPress;
   final Color color;
 
@@ -793,35 +821,40 @@ class _Pill extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
     button: true,
     label: label,
-    enabled: onTap != null,
+    enabled: onTap != null || onDown != null,
     excludeSemantics: true,
-    child: ListenableBuilder(
-      listenable: OneUIEffectsController.instance,
-      builder: (context, _) {
-        final fx = OneUIEffectsController.instance;
-        if (lit) return LitButton(color: color, shape: const StadiumBorder(), child: _ink());
-        // White glass keys in light mode press dark.
-        final light = context.palette.isLight;
-        return PressGlow(
-          // Below full visual effects light mode is flat One UI: no shadows.
-          shadows: context.palette.isLight && fx.isFull ? OneUIPalette.lightGlassShadow : null,
-          child: fx.isFull
-              // The nav bar's call glass without its backdrop blur (a save layer per key), rasterized
-              // once so presses and the sheet's slide only draw an image.
-              ? CallBodyArtwork(
-                  radius: height / 2,
-                  glow: kMainGlassGlow,
-                  opacity: mainGlass(context, classicOpacity: .75).opacity,
-                  edges: mainGlass(context).edges,
-                  child: _ink(light: light),
-                )
-              // Below full: a flat One UI key, translucent over the sheet when reduced, solid when off.
-              : _ink(
-                  fill: fx.oneUIFill(light: light),
-                  light: light,
-                ),
-        );
-      },
+    // Screen readers activate without a touch-down.
+    onTap: onDown,
+    child: Listener(
+      onPointerDown: onDown == null ? null : (_) => onDown!(),
+      child: ListenableBuilder(
+        listenable: OneUIEffectsController.instance,
+        builder: (context, _) {
+          final fx = OneUIEffectsController.instance;
+          if (lit) return LitButton(color: color, shape: const StadiumBorder(), child: _ink());
+          // White glass keys in light mode press dark.
+          final light = context.palette.isLight;
+          return PressGlow(
+            // Below full visual effects light mode is flat One UI: no shadows.
+            shadows: context.palette.isLight && fx.isFull ? OneUIPalette.lightGlassShadow : null,
+            child: fx.isFull
+                // The nav bar's call glass without its backdrop blur (a save layer per key), rasterized
+                // once so presses and the sheet's slide only draw an image.
+                ? CallBodyArtwork(
+                    radius: height / 2,
+                    glow: kMainGlassGlow,
+                    opacity: mainGlass(context, classicOpacity: .75).opacity,
+                    edges: mainGlass(context).edges,
+                    child: _ink(light: light),
+                  )
+                // Below full: a flat One UI key, translucent over the sheet when reduced, solid when off.
+                : _ink(
+                    fill: fx.oneUIFill(light: light),
+                    light: light,
+                  ),
+          );
+        },
+      ),
     ),
   );
 
