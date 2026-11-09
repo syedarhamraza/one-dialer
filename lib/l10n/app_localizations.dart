@@ -3029,7 +3029,7 @@ abstract class AppLocalizations {
   /// No description provided for @recorderUntrusted.
   ///
   /// In en, this message translates to:
-  /// **'This build of One Dialer isn\'t trusted by the recorder. Update both apps.'**
+  /// **'The recorder works only with One Dialer from Google Play. Install it from Play, or update both apps.'**
   String get recorderUntrusted;
 
   /// No description provided for @recordingConsentTitle.

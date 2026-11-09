@@ -488,7 +488,7 @@
   "recorderReady": "Pronto per registrare",
   "recorderNeedsMic": "Consenti il microfono in One Dialer Recorder",
   "recorderNeedsAccessibility": "Attiva il suo servizio di accessibilità",
-  "recorderUntrusted": "Questa versione di One Dialer non è riconosciuta dal registratore. Aggiorna entrambe le app.",
+  "recorderUntrusted": "Il registratore funziona solo con One Dialer da Google Play. Installalo da Play o aggiorna entrambe le app.",
   "recordingConsentTitle": "Prima di registrare",
   "recordingConsentBody": "Le leggi sulla registrazione variano da paese a paese e alcune richiedono il consenso di tutti i partecipanti alla chiamata. Sei responsabile di informare l'altra persona e di ottenere il suo consenso. Le registrazioni restano su questo telefono e non vengono mai caricate.",
   "recordingConsentAccept": "Ho capito",
