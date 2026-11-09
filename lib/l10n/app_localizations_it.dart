@@ -1000,7 +1000,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get editNote => 'Modifica nota';
 
   @override
-  String get videoCall => 'Videochiamata';
+  String get videoCall => 'Videochiamata (Meet)';
 
   @override
   String get mute => 'Muto';
@@ -1894,4 +1894,14 @@ class AppLocalizationsIt extends AppLocalizations {
   String autoDeleteDays(int days) {
     return 'Dopo $days giorni';
   }
+
+  @override
+  String get imeiTitle => 'IMEI';
+
+  @override
+  String get imeiUnavailable =>
+      'Android non consente alle app di mostrare l\'IMEI. Puoi trovarlo nelle impostazioni del telefono, in Info sul telefono.';
+
+  @override
+  String get aboutPhone => 'Info sul telefono';
 }

@@ -267,7 +267,7 @@
   "addCall": "Add call",
   "note": "Note",
   "editNote": "Edit note",
-  "videoCall": "Video call",
+  "videoCall": "Video call (Meet)",
   "mute": "Mute",
   "hold": "Hold",
   "resume": "Resume",
@@ -538,5 +538,8 @@
   "autoDelete": "Auto-delete",
   "autoDeleteSubtitle": "Starred recordings are always kept",
   "autoDeleteNever": "Never",
-  "autoDeleteDays": "After {days} days"
+  "autoDeleteDays": "After {days} days",
+  "imeiTitle": "IMEI",
+  "imeiUnavailable": "Android doesn't let apps show the IMEI. You can find it in your phone's settings under About phone.",
+  "aboutPhone": "About phone"
 }

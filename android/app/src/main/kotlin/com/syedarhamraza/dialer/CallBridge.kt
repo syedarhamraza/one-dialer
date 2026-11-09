@@ -14,6 +14,7 @@ import android.os.Looper
 import android.provider.CallLog
 import android.media.AudioManager
 import android.media.ToneGenerator
+import android.telephony.TelephonyManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
@@ -51,7 +52,9 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
     private val diagnostics = LagDiagnostics.attach(context, messenger, engineName)
     private val events = EventChannel(messenger, EVENT_CHANNEL)
     private var listener: (() -> Unit)? = null
+    /** Only touched on [tones], one thread so key tones keep their order. */
     private var toneGenerator: ToneGenerator? = null
+    private val tones = java.util.concurrent.Executors.newSingleThreadExecutor()
     private val main = Handler(Looper.getMainLooper())
 
     private val callLogObserver = object : ContentObserver(main) {
@@ -95,8 +98,11 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
         diagnostics.setMethodCallHandler(null)
         LagDiagnostics.foreground(engineName, false)
         onCancel(null)
-        toneGenerator?.release()
-        toneGenerator = null
+        tones.execute {
+            toneGenerator?.release()
+            toneGenerator = null
+        }
+        tones.shutdown()
         if (watchingCallLog) context.contentResolver.unregisterContentObserver(callLogObserver)
         methods.setMethodCallHandler(null)
         data.setMethodCallHandler(null)
@@ -286,13 +292,16 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                     .onFailure { result.error("NO_SMS_APP", it.message, null) }
             }
             "playTone" -> {
-                call.argument<String>("digit")?.firstOrNull()?.let(::playTone)
+                // Off the main thread: the settings reads and ToneGenerator are binder calls, and the
+                // main thread is Flutter's UI thread, so they held up the next key press.
+                call.argument<String>("digit")?.firstOrNull()?.let { digit -> tones.execute { playTone(digit) } }
                 result.success(null)
             }
             "stopTone" -> {
-                toneGenerator?.stopTone()
+                tones.execute { toneGenerator?.stopTone() }
                 result.success(null)
             }
+            "handleSpecialCode" -> result.success(handleSpecialCode(call.argument<String>("code")!!))
             "setMuted" -> {
                 CallManager.service?.setMuted(call.argument<Boolean>("muted") == true)
                 result.success(null)
@@ -475,6 +484,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             page == "language" && android.os.Build.VERSION.SDK_INT >= 33 ->
                 android.content.Intent(android.provider.Settings.ACTION_APP_LOCALE_SETTINGS, Uri.parse("package:$pkg"))
             page == "language" -> android.content.Intent(android.provider.Settings.ACTION_LOCALE_SETTINGS)
+            page == "deviceInfo" -> android.content.Intent(android.provider.Settings.ACTION_DEVICE_INFO_SETTINGS)
             page == "defaultApps" -> android.content.Intent(android.provider.Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
             // The SIM provider's call settings (forwarding, waiting, caller ID), from the phone service.
             page == "carrier" -> android.content.Intent(android.telecom.TelecomManager.ACTION_SHOW_CALL_SETTINGS)
@@ -530,6 +540,20 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
         val component = ComponentName.unflattenFromString(id.substringBefore('|')) ?: return null
         return PhoneAccountHandle(component, id.substringAfter('|'))
     }
+
+    /**
+     * `*#*#<digits>#*#*` goes to the app that registered it (Android allows this for the default
+     * dialer); other codes (`*#06#`) to the system's MMI handling. False when nothing took it.
+     */
+    private fun handleSpecialCode(code: String): Boolean = runCatching {
+        val secret = Regex("""^\*#\*#(\d+)#\*#\*$""").find(code)?.groupValues?.get(1)
+        if (secret != null) {
+            context.getSystemService(TelephonyManager::class.java).sendDialerSpecialCode(secret)
+            true
+        } else {
+            context.getSystemService(TelecomManager::class.java).handleMmi(code)
+        }
+    }.onFailure { android.util.Log.w("CallBridge", "Special code not handled", it) }.getOrDefault(false)
 
     /** Keypad tone, only when the system "Dial pad tones" setting is on and the ringer isn't silenced. */
     private fun playTone(digit: Char) {

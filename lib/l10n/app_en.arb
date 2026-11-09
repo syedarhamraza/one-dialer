@@ -559,7 +559,7 @@
   },
   "note": "Note",
   "editNote": "Edit note",
-  "videoCall": "Video call",
+  "videoCall": "Video call (Meet)",
   "mute": "Mute",
   "@mute": {
     "description": "REVIEW: In-call control label; AOSP uses \"Disattiva audio\", shortened to fit the button"
@@ -956,5 +956,8 @@
         "type": "int"
       }
     }
-  }
+  },
+  "imeiTitle": "IMEI",
+  "imeiUnavailable": "Android doesn't let apps show the IMEI. You can find it in your phone's settings under About phone.",
+  "aboutPhone": "About phone"
 }

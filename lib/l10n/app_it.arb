@@ -267,7 +267,7 @@
   "addCall": "Aggiungi chiamata",
   "note": "Nota",
   "editNote": "Modifica nota",
-  "videoCall": "Videochiamata",
+  "videoCall": "Videochiamata (Meet)",
   "mute": "Muto",
   "hold": "Attesa",
   "resume": "Riprendi",
@@ -538,5 +538,8 @@
   "autoDelete": "Eliminazione automatica",
   "autoDeleteSubtitle": "Le registrazioni speciali vengono sempre conservate",
   "autoDeleteNever": "Mai",
-  "autoDeleteDays": "Dopo {days} giorni"
+  "autoDeleteDays": "Dopo {days} giorni",
+  "imeiTitle": "IMEI",
+  "imeiUnavailable": "Android non consente alle app di mostrare l'IMEI. Puoi trovarlo nelle impostazioni del telefono, in Info sul telefono.",
+  "aboutPhone": "Info sul telefono"
 }

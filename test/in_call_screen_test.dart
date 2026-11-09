@@ -264,11 +264,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Note'), findsOneWidget);
     // No Google Meet: Video stays in the menu, greyed out, and does nothing.
-    expect(find.text('Video call'), findsOneWidget);
-    await tester.tap(find.text('Video call'));
+    expect(find.text('Video call (Meet)'), findsOneWidget);
+    await tester.tap(find.text('Video call (Meet)'));
     await tester.pumpAndSettle();
     expect(nativeCalls.where((c) => c.method == 'meetCall'), isEmpty);
-    expect(find.text('Video call'), findsOneWidget); // The menu stayed open.
+    expect(find.text('Video call (Meet)'), findsOneWidget); // The menu stayed open.
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -278,7 +278,7 @@ void main() {
     await emit(tester, [call('active')]);
     await tester.tap(control('More'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Video call'));
+    await tester.tap(find.text('Video call (Meet)'));
     await tester.pumpAndSettle();
     expect(nativeCalls.where((c) => c.method == 'meetCall').single.arguments['number'], '5550100');
     await tester.pumpWidget(const SizedBox());

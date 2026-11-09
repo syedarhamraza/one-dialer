@@ -1703,7 +1703,7 @@ abstract class AppLocalizations {
   /// No description provided for @videoCall.
   ///
   /// In en, this message translates to:
-  /// **'Video call'**
+  /// **'Video call (Meet)'**
   String get videoCall;
 
   /// REVIEW: In-call control label; AOSP uses "Disattiva audio", shortened to fit the button
@@ -3331,6 +3331,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'After {days} days'**
   String autoDeleteDays(int days);
+
+  /// No description provided for @imeiTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'IMEI'**
+  String get imeiTitle;
+
+  /// No description provided for @imeiUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Android doesn\'t let apps show the IMEI. You can find it in your phone\'s settings under About phone.'**
+  String get imeiUnavailable;
+
+  /// No description provided for @aboutPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'About phone'**
+  String get aboutPhone;
 }
 
 class _AppLocalizationsDelegate

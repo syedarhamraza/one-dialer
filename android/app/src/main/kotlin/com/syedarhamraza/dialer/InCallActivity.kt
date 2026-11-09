@@ -23,6 +23,8 @@ class InCallActivity : FlutterActivity() {
     override fun onResume() {
         super.onResume()
         LagDiagnostics.foreground("in_call", true)
+        // Again on each resume: OPPO resets it, and the user may have changed it in Settings.
+        HighRefresh.apply(this)
     }
 
     override fun onPause() {
