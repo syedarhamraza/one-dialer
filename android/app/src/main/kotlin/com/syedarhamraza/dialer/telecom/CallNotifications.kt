@@ -29,6 +29,7 @@ import android.text.style.ForegroundColorSpan
 import com.syedarhamraza.dialer.AppLanguage
 import com.syedarhamraza.dialer.InCallActivity
 import com.syedarhamraza.dialer.R
+import org.json.JSONObject
 
 object CallNotifications {
     private const val CHANNEL_INCOMING = "incoming_calls"
@@ -277,10 +278,19 @@ object CallNotifications {
             val create = islandKey == null
             islandKey = key
             // vivo's SuperXChronometer ticks text holding this JSON (read from its SystemUI plugin);
-            // base is on the elapsedRealtime clock like Chronometer's.
+            // base is on the elapsedRealtime clock like Chronometer's. Keep the format fields: without
+            // them vivo falls back to its own formatters, and the island's timer went back to 0:00 at
+            // every whole minute (vivo redraws the island then). Its args: S (s), MS (m, s), HMS (h, m, s).
             val timer = details.connectTimeMillis.takeIf { state == Call.STATE_ACTIVE && it > 0 }?.let {
-                val base = SystemClock.elapsedRealtime() - (System.currentTimeMillis() - it)
-                """{"base":$base,"started":true,"countDown":false}"""
+                JSONObject()
+                    .put("base", SystemClock.elapsedRealtime() - (System.currentTimeMillis() - it))
+                    .put("started", true)
+                    .put("countDown", false)
+                    .put("minUnit", "M")
+                    .put("elapsedFormatS", "0:%1\$02d")
+                    .put("elapsedFormatMS", "%1\$d:%2\$02d")
+                    .put("elapsedFormatHMS", "%1\$d:%2\$02d:%3\$02d")
+                    .toString()
             }
             builder.addExtras(
                 vivoIslandExtras(
