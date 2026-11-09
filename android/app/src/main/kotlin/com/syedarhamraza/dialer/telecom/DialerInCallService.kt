@@ -36,12 +36,14 @@ class DialerInCallService : InCallService() {
     private val onCallsChanged = {
         CallNotifications.updateOngoing(this, CallManager.all())
         updateProximity()
+        RecorderCompanion.onCallsChanged(this)
     }
 
     override fun onCreate() {
         super.onCreate()
         CallManager.service = this
         CallManager.addListener(onCallsChanged)
+        RecorderCompanion.watch(this)
         val power = getSystemService(PowerManager::class.java)
         if (power.isWakeLockLevelSupported(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK)) {
             proximityLock = power.newWakeLock(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK, "dialer:proximity")
@@ -53,6 +55,7 @@ class DialerInCallService : InCallService() {
         onTts { shutdown() }
         ttsThread.shutdown()
         CallManager.removeListener(onCallsChanged)
+        RecorderCompanion.unwatch(this)
         CallManager.service = null
         CallNotifications.cancelIncoming(this)
         CallNotifications.cancelOngoing(this)

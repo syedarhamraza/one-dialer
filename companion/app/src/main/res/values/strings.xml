@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">One Dialer Recorder</string>
+    <string name="channel_recording">Call recording</string>
+    <string name="recording_call">Recording call</string>
+    <string name="stop">Stop</string>
+    <string name="fix">Fix</string>
+    <string name="accessibility_summary">Lets One Dialer record calls</string>
+    <string name="accessibility_description">This service reads nothing on your screen and does nothing by itself. Android only lets an app with an accessibility service on use the microphone during a call, so One Dialer Recorder needs it to record your calls. Recordings stay on this phone.</string>
+    <string name="setup_intro">Lets One Dialer record your calls. Start and stop recordings from the call screen in One Dialer, and find them in One Dialer › Settings › Call recording.</string>
+    <string name="setup_mic">Microphone</string>
+    <string name="setup_mic_detail">Needed to record</string>
+    <string name="setup_accessibility">Accessibility service</string>
+    <string name="setup_accessibility_detail">Turn on One Dialer Recorder under Installed apps</string>
+    <string name="setup_restricted">If Android says the setting is restricted: open App info, tap ⋮ › Allow restricted settings, then come back and turn the service on.</string>
+    <string name="setup_open_app_info">Open App info</string>
+    <string name="setup_notifications">Notifications</string>
+    <string name="setup_notifications_detail">Shows while a call is being recorded</string>
+    <string name="setup_done">Ready</string>
+    <string name="setup_battery">Battery: Unrestricted</string>
+    <string name="setup_battery_detail">Stops the phone from switching the recorder off while it\'s idle</string>
+    <string name="setup_consent">Recording laws differ by country. You are responsible for telling the other person and getting their consent where it\'s required.</string>
+    <string name="setting_source">Microphone source</string>
+    <string name="source_auto">Automatic (tests on the first call)</string>
+    <string name="source_recognition">Voice recognition</string>
+    <string name="source_communication">Voice communication</string>
+    <string name="source_mic">Microphone</string>
+    <string name="setting_boost">Volume boost</string>
+    <string name="boost_off">Off</string>
+    <string name="boost_normal">Normal: lifts the other person</string>
+    <string name="boost_strong">Strong: lifts the other person more</string>
+</resources>

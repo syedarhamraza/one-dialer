@@ -1,6 +1,9 @@
 import 'package:dialer/features/blocking/blocking_screen.dart';
 import 'package:dialer/core/prefs/dialer_prefs.dart';
 import 'package:dialer/features/settings/app_icon_screen.dart';
+import 'package:dialer/core/telecom/call_info.dart';
+import 'package:dialer/features/recordings/recordings_screen.dart';
+import 'package:dialer/features/settings/call_recording_screen.dart';
 import 'package:dialer/features/settings/dialing_settings_screen.dart';
 import 'package:dialer/features/settings/display_settings_screen.dart';
 import 'package:dialer/features/settings/glass_settings_screen.dart';
@@ -17,9 +20,11 @@ import 'package:dialer/l10n/app_localizations.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   final telecom = <MethodCall>[];
+  Map<String, Object?>? recorder;
 
   setUp(() {
     telecom.clear();
+    recorder = null;
     SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.empty();
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     messenger.setMockMethodCallHandler(const MethodChannel('com.syedarhamraza.dialer/telecom'), (call) async {
@@ -29,6 +34,12 @@ void main() {
         'hasScreeningRole' => false,
         'getQuickReplies' => ['Hi'],
         'getLauncherIcon' => 'classic',
+        'getRecorder' => recorder,
+        'getCallSettings' => <String, Object?>{},
+        'getRecorderSettings' => <String, Object?>{'boost': 'off', 'sourceMode': 'auto', 'retentionDays': 0},
+        'listRecordings' => [
+          {'name': '1762600000000_+923001234567.m4a', 'number': '+923001234567', 'startMillis': 1762600000000, 'durationMs': 65000, 'bytes': 1000},
+        ],
         'getSims' => [
           {'id': 'a', 'label': 'SIM 1'},
           {'id': 'b', 'label': 'SIM 2'},
@@ -63,6 +74,58 @@ void main() {
     expect(find.text('Choose from contacts'), findsNothing);
     expect(find.text('Block number'), findsOneWidget);
     expect(find.byType(AlertDialog), findsNothing);
+  });
+
+  testWidgets('call recording waits for the consent notice, then lists recordings', (tester) async {
+    recorder = {'trusted': true, 'ready': false, 'accessibilityOn': true, 'micGranted': true, 'consented': false};
+    await open(tester, const CallRecordingScreen());
+    expect(find.text('Before you record'), findsOneWidget);
+    expect(find.text('Auto-record'), findsNothing);
+    expect(find.text('Recordings'), findsNothing);
+
+    recorder = {...recorder!, 'consented': true, 'ready': true};
+    await tester.tap(find.text('I understand'));
+    await tester.pumpAndSettle();
+    expect(telecom.any((c) => c.method == 'setCallSetting' && c.arguments['key'] == 'recordingConsent'), isTrue);
+    expect(find.text('Volume boost'), findsOneWidget);
+    expect(find.text('Off'), findsWidgets); // boost is off until chosen
+
+    await tester.tap(find.text('Auto-record').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Unknown numbers'));
+    await tester.pumpAndSettle();
+    expect(telecom.last.method, 'setCallSetting');
+    expect(telecom.last.arguments, {'key': 'autoRecordMode', 'value': 'unknown'});
+
+    await tester.tap(find.text('Recordings'));
+    await tester.pumpAndSettle();
+    expect(find.text('+923001234567'), findsOneWidget);
+    await tester.tap(find.text('+923001234567'));
+    expect(telecom.last.method, 'openRecording');
+  });
+
+  test('recordings filter by star and contact, and search name, title or number', () {
+    final all = [
+      CallRecording(name: 'a', number: '111', start: DateTime(2026), duration: Duration.zero, bytes: 0, starred: true),
+      CallRecording(name: 'b', number: '222', start: DateTime(2026), duration: Duration.zero, bytes: 0, title: 'Bank'),
+      CallRecording(name: 'c', start: DateTime(2026), duration: Duration.zero, bytes: 0),
+    ];
+    String? nameFor(String n) => n == '111' ? 'Ali' : null;
+    List<String> names(RecordingFilter f, [String q = '']) =>
+        filterRecordings(all, f, q, nameFor: nameFor).map((r) => r.name).toList();
+    expect(names(RecordingFilter.all), ['a', 'b', 'c']);
+    expect(names(RecordingFilter.starred), ['a']);
+    expect(names(RecordingFilter.contacts), ['a']);
+    expect(names(RecordingFilter.unknown), ['b', 'c']);
+    expect(names(RecordingFilter.all, 'ali'), ['a']);
+    expect(names(RecordingFilter.all, 'bank'), ['b']);
+    expect(names(RecordingFilter.all, '22'), ['b']);
+  });
+
+  testWidgets('without the recorder app the page offers nothing', (tester) async {
+    await open(tester, const CallRecordingScreen());
+    expect(find.text('One Dialer Recorder'), findsNothing);
+    expect(telecom.any((c) => c.method == 'listRecordings'), isFalse);
   });
 
   testWidgets('a quick reply is kept to one SMS', (tester) async {

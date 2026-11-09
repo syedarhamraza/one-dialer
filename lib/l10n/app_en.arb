@@ -841,5 +841,120 @@
   "logRejected": "Rejected",
   "logBlocked": "Blocked",
   "logRangFor": "{type} (Rang for {duration})",
-  "@logRangFor": {"description": "A missed or rejected call on the contact page's call history: its type, then how long it rang.", "placeholders": {"type": {"type": "String"}, "duration": {"type": "String"}}}
+  "@logRangFor": {
+    "description": "A missed or rejected call on the contact page's call history: its type, then how long it rang.",
+    "placeholders": {
+      "type": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "record": "Record",
+  "@record": {
+    "description": "Call screen ⋮ menu: start recording the call"
+  },
+  "stopRecording": "Stop recording",
+  "recordSetUpFirst": "Record (set up in Settings)",
+  "@recordSetUpFirst": {
+    "description": "Call screen ⋮ menu while One Dialer Recorder isn't set up"
+  },
+  "recordingNow": "Recording",
+  "@recordingNow": {
+    "description": "Screen reader label for the red dot on the call screen"
+  },
+  "callRecording": "Call recording",
+  "@callRecording": {
+    "description": "Settings row and page title"
+  },
+  "recorderApp": "One Dialer Recorder",
+  "@recorderApp": {
+    "description": "Name of the companion app; keep in English"
+  },
+  "recorderReady": "Ready to record",
+  "recorderNeedsMic": "Allow the microphone in One Dialer Recorder",
+  "recorderNeedsAccessibility": "Turn on its accessibility service",
+  "recorderUntrusted": "This build of One Dialer isn't trusted by the recorder. Update both apps.",
+  "recordingConsentTitle": "Before you record",
+  "recordingConsentBody": "Recording laws differ by country, and some need everyone on the call to agree. You're responsible for telling the other person and getting their consent. Recordings stay on this phone and are never uploaded.",
+  "recordingConsentAccept": "I understand",
+  "recordings": "Recordings",
+  "noRecordings": "No recordings yet",
+  "noRecordingsSubtitle": "Tap ⋮ › Record on the call screen during a call",
+  "deleteAllRecordings": "Delete all recordings",
+  "deleteAllRecordingsTitle": "Delete all recordings?",
+  "deleteAllRecordingsMessage": "They can't be recovered.",
+  "recordingNotSetUp": "Calls aren't being recorded",
+  "recordingNotSetUpSubtitle": "Auto-record is on, but One Dialer Recorder isn't set up",
+  "rename": "Rename",
+  "star": "Star",
+  "unstar": "Unstar",
+  "filterStarred": "Starred",
+  "@filterStarred": {
+    "description": "Recordings filter"
+  },
+  "filterUnknown": "Unknown",
+  "@filterUnknown": {
+    "description": "Recordings filter: numbers without a contact"
+  },
+  "saveToPhone": "Save to phone",
+  "@saveToPhone": {
+    "description": "Copies a recording to the phone's Recordings folder"
+  },
+  "searchRecordings": "Search recordings",
+  "renameRecording": "Rename recording",
+  "recordingsSaved": "{count, plural, =1{Saved to Recordings/One Dialer} other{{count} recordings saved to Recordings/One Dialer}}",
+  "@recordingsSaved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recordingSaveFailed": "Couldn't save to the phone",
+  "deleteRecordings": "{count, plural, =1{Delete this recording?} other{Delete {count} recordings?}}",
+  "@deleteRecordings": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noMatchingRecordings": "No matching recordings",
+  "addContact": "Add contact",
+  "autoRecord": "Auto-record",
+  "autoRecordOff": "Off",
+  "autoRecordAll": "All calls",
+  "autoRecordUnknown": "Unknown numbers",
+  "autoRecordContacts": "Selected contacts",
+  "recordTheseContacts": "Contacts to record",
+  "neverRecord": "Never record",
+  "neverRecordSubtitle": "Contacts auto-record always skips",
+  "recordingSound": "Sound",
+  "volumeBoost": "Volume boost",
+  "volumeBoostSubtitle": "Lifts the other person's voice, which the mic only hears faintly",
+  "boostOff": "Off",
+  "boostNormal": "Normal",
+  "boostStrong": "Strong",
+  "micSource": "Microphone source",
+  "micSourceSubtitle": "Automatic tries each on the first call and keeps the loudest",
+  "micSourceAuto": "Automatic",
+  "micSourceRecognition": "Voice recognition",
+  "micSourceCommunication": "Voice communication",
+  "micSourceMic": "Microphone",
+  "storage": "Storage",
+  "storageUsed": "Space used",
+  "autoDelete": "Auto-delete",
+  "autoDeleteSubtitle": "Starred recordings are always kept",
+  "autoDeleteNever": "Never",
+  "autoDeleteDays": "After {days} days",
+  "@autoDeleteDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  }
 }

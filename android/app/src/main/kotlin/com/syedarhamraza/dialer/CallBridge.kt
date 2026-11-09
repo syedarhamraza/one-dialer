@@ -27,6 +27,7 @@ import com.syedarhamraza.dialer.telecom.CallManager
 import com.syedarhamraza.dialer.telecom.ContactsSource
 import com.syedarhamraza.dialer.telecom.MissedCallNotifier
 import com.syedarhamraza.dialer.telecom.NumberDisplay
+import com.syedarhamraza.dialer.telecom.RecorderCompanion
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
@@ -241,6 +242,21 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 AppLanguage.set(context, call.argument<String>("tag")!!)
                 result.success(null)
             }
+            "getRecorder" -> result.success(RecorderCompanion.status(context))
+            "toggleRecording" -> result.success(RecorderCompanion.toggle(context))
+            "listRecordings" -> result.success(RecorderCompanion.list(context))
+            "deleteRecording" -> result.success(RecorderCompanion.delete(context, call.argument<String>("name")).let { null })
+            "deleteAllRecordings" -> result.success(RecorderCompanion.deleteAll(context).let { null })
+            "starRecording" -> result.success(RecorderCompanion.star(context, call.argument("name"), call.argument<Boolean>("starred") == true).let { null })
+            "renameRecording" -> result.success(RecorderCompanion.rename(context, call.argument("name"), call.argument("title")).let { null })
+            "exportRecording" -> result.success(RecorderCompanion.export(context, call.argument("name"), call.argument("displayName")))
+            "getRecorderSettings" -> result.success(RecorderCompanion.settings(context))
+            "setRecorderSetting" -> result.success(RecorderCompanion.setSetting(context, call.argument("key"), call.argument<Any>("value")).let { null })
+            "openRecording" -> result.success(RecorderCompanion.open(context, call.argument<String>("name"), share = false))
+            "shareRecording" -> result.success(
+                RecorderCompanion.open(context, call.argument<List<String>>("names")?.joinToString("|"), share = true),
+            )
+            "openRecorderSetup" -> result.success(RecorderCompanion.openSetup(context))
             "getCallSettings" -> result.success(com.syedarhamraza.dialer.telecom.CallPrefs.read(context))
             "setCallSetting" -> {
                 com.syedarhamraza.dialer.telecom.CallPrefs.write(context, call.argument<String>("key")!!, call.argument<Any>("value"))

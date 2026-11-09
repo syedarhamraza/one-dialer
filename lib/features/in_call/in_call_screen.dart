@@ -402,6 +402,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
                           key: const ValueKey('connected'),
                           call: call,
                           audio: widget.snapshot.audio,
+                          recorder: widget.snapshot.recording,
                           callCount: widget.snapshot.calls.length,
                           width: landscape ? (constraints.maxWidth - 56) / 2 : constraints.maxWidth - 32,
                           compact: compact,
@@ -449,7 +450,13 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
                                 : const SizedBox(width: double.infinity),
                           ),
                         ),
-                        CallHeader(call: call, sims: widget.sims, compact: compact, keypadProgress: progress),
+                        CallHeader(
+                          call: call,
+                          sims: widget.sims,
+                          compact: compact,
+                          keypadProgress: progress,
+                          recording: widget.snapshot.recording?.recording ?? false,
+                        ),
                       ],
                     ),
                   );

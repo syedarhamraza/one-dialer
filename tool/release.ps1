@@ -255,6 +255,13 @@ if (-not $SkipBuild) {
     Write-Host 'Symbol upload failed (run `npx firebase-tools login` once). Upload them later with:' -ForegroundColor Yellow
     Write-Host "  $uploadCommand" -ForegroundColor Yellow
   }
+
+  # One Dialer Recorder (companion/): the sideloaded call recorder, shared from the website, never Play.
+  Write-Host "`nBuilding One Dialer Recorder..."
+  Invoke-Native { & companion/gradlew.bat -p companion assembleRelease -q }
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host 'The recorder build failed. Build it later with: companion/gradlew.bat -p companion assembleRelease' -ForegroundColor Yellow
+  }
 }
 
 if (-not (Invoke-Native { git tag --list "v$newName" })) { Invoke-Checked 'git tag' { git tag -a "v$newName" -m "One Dialer $newName" } }
@@ -283,5 +290,6 @@ if (-not $SkipBuild) {
   }
   else { Write-Host '  1. Install or share build/app/outputs/flutter-apk/app-release.apk (Play needs the .aab).' }
 }
+if (-not $SkipBuild) { Write-Host '     Recorder (website only): companion/app/build/outputs/apk/release/app-release.apk' }
 Write-Host '  2. Push the release commit and tag:  git push --follow-tags'
 Write-Host "  3. Commit and push the website ($website) so Software update shows the notes."

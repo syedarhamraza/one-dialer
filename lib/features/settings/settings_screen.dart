@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../app/app_info.dart';
 import '../../core/config/app_version.dart';
 import '../../core/prefs/dialer_prefs.dart';
+import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/cos_subpage.dart';
@@ -19,6 +20,7 @@ import '../keypad/speed_dial_screen.dart';
 import '../updates/presentation/update_controller.dart';
 import 'about_screen.dart';
 import 'app_icon_screen.dart';
+import 'call_recording_screen.dart';
 import 'call_settings_pages.dart';
 import 'dialing_settings_screen.dart';
 import 'display_settings_screen.dart';
@@ -38,6 +40,9 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   final _telecom = TelecomBridge.instance;
   Map<Object?, Object?> _health = const {};
   bool _bluetoothNames = true;
+
+  /// One Dialer Recorder (the sideloaded companion); null when it isn't installed.
+  RecorderInfo? _recorder;
   AppVersion? _version;
   String _icon = 'default';
 
@@ -80,9 +85,11 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   Future<void> _refresh() async {
     final health = await _telecom.getCallHealth();
     final bluetoothNames = await Permission.bluetoothConnect.isGranted;
+    final recorder = await _telecom.getRecorder();
     if (mounted) {
       setState(() {
         _health = health;
+        _recorder = recorder;
         _bluetoothNames = bluetoothNames;
       });
     }
@@ -120,6 +127,9 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         ),
       if ((rules.blockHidden || rules.blockNonContacts) && _health['screensCalls'] != true)
         _problem(context.l10n.blockingPaused, context.l10n.blockingPausedShort, () => _push(const BlockingScreen())),
+      // Auto-record is on but the companion can't record (its setup was undone).
+      if (_recorder case final r? when r.autoRecordMode != 'off' && r.consented && !r.ready)
+        _problem(context.l10n.recordingNotSetUp, context.l10n.recordingNotSetUpSubtitle, () => _push(const CallRecordingScreen())),
       if (!_bluetoothNames)
         _problem(context.l10n.bluetoothNamesHidden, context.l10n.bluetoothNamesHiddenSubtitle, _allowBluetoothNames),
     ];
@@ -149,6 +159,14 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
             OneUIGroupItem(title: l10n.incomingCallReminders, onTap: () => _push(const IncomingCallRemindersScreen())),
             OneUIGroupItem(title: l10n.answerButtons, onTap: () => _push(const AnswerButtonsScreen())),
             OneUIGroupItem(title: l10n.answerEndCalls, onTap: () => _push(const AnswerEndCallsScreen())),
+            // Only with One Dialer Recorder installed (the sideloaded companion); the Play app can't record alone.
+            if (_recorder != null)
+              OneUIGroupItem(
+                title: l10n.callRecording,
+                onTap: () => Navigator.of(context)
+                    .push(MaterialPageRoute<void>(builder: (_) => const CallRecordingScreen()))
+                    .then((_) => _refresh()),
+              ),
           ],
         ),
         OneUIGroupCard(

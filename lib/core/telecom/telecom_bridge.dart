@@ -173,6 +173,49 @@ class TelecomBridge {
   Future<void> setCallSetting(String key, Object value) =>
       _methods.invokeMethod('setCallSetting', {'key': key, 'value': value});
 
+  // Call recording, through the sideloaded companion (RecorderCompanion.kt)
+  /// Null when One Dialer Recorder isn't installed.
+  Future<RecorderInfo?> getRecorder() async {
+    final map = await _methods.invokeMapMethod<Object?, Object?>('getRecorder');
+    return map == null ? null : RecorderInfo.fromMap(map);
+  }
+
+  /// Starts or stops recording the active call; false when nothing could be done.
+  Future<bool> toggleRecording() async => await _methods.invokeMethod<bool>('toggleRecording') ?? false;
+
+  Future<List<CallRecording>> listRecordings() async =>
+      (await _methods.invokeListMethod<Object?>('listRecordings') ?? const [])
+          .map((r) => CallRecording.fromMap(r! as Map<Object?, Object?>))
+          .toList();
+
+  Future<void> deleteRecording(String name) => _methods.invokeMethod('deleteRecording', {'name': name});
+
+  Future<void> deleteAllRecordings() => _methods.invokeMethod('deleteAllRecordings');
+
+  Future<void> openRecording(String name) => _methods.invokeMethod('openRecording', {'name': name});
+
+  /// Shares one or more recordings in one go.
+  Future<void> shareRecordings(List<String> names) => _methods.invokeMethod('shareRecording', {'names': names});
+
+  Future<void> starRecording(String name, bool starred) =>
+      _methods.invokeMethod('starRecording', {'name': name, 'starred': starred});
+
+  Future<void> renameRecording(String name, String title) =>
+      _methods.invokeMethod('renameRecording', {'name': name, 'title': title});
+
+  /// Save to phone: a copy in the shared Recordings/One Dialer folder named [displayName] and the time.
+  Future<bool> exportRecording(String name, String displayName) async =>
+      await _methods.invokeMethod<bool>('exportRecording', {'name': name, 'displayName': displayName}) ?? false;
+
+  /// The recorder's own settings: `sourceMode`, `boost`, `retentionDays`.
+  Future<Map<Object?, Object?>> getRecorderSettings() async =>
+      await _methods.invokeMapMethod<Object?, Object?>('getRecorderSettings') ?? const {};
+
+  Future<void> setRecorderSetting(String key, Object value) =>
+      _methods.invokeMethod('setRecorderSetting', {'key': key, 'value': value});
+
+  Future<void> openRecorderSetup() => _methods.invokeMethod('openRecorderSetup');
+
   // Call log
   /// Newest first, up to 500 calls. Throws [PlatformException] `NO_PERMISSION` without call-log access.
   Future<List<Map<Object?, Object?>>> getCallLog() async =>
