@@ -62,3 +62,15 @@ app.*.map.json
 /symbols/
 # Firebase CLI's Crashlytics symbol tool (dump_syms), downloaded by the symbol upload
 /.crashlytics/
+
+# Firebase config (Crashlytics) is per-developer; the app builds and runs without it
+/android/app/google-services.json
+# Private working files (feedback, reports, store drafts)
+/tool/*.csv
+/tool/*.pdf
+/tool/*.gs
+/tool/emails.txt
+/tool/Q2-report*
+/tool/store_graphics/
+/docs/play-store/
+/docs/store-listing.md
