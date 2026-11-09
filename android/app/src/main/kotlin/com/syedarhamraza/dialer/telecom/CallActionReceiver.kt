@@ -24,7 +24,13 @@ class CallActionReceiver : BroadcastReceiver() {
             }.start()
             return
         }
-        val call = intent.getStringExtra(EXTRA_CALL_ID)?.let(CallManager::get) ?: return
+        val call = intent.getStringExtra(EXTRA_CALL_ID)?.let(CallManager::get)
+        if (call == null) {
+            // A card left by a killed process (vivo keeps it even after force-stop): nothing to act on, clear it.
+            CallNotifications.cancelIncoming(context)
+            CallNotifications.cancelOngoing(context)
+            return
+        }
         when (intent.action) {
             // vivo's island card: the call carries on in the island, no call screen.
             ACTION_ANSWER_IN_ISLAND -> call.answer(VideoProfile.STATE_AUDIO_ONLY)

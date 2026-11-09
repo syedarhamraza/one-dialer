@@ -42,6 +42,12 @@ class InCallActivity : FlutterActivity() {
         WindowCompat.enableEdgeToEdge(window)
         CallManager.addListener(closeWhenIdle)
         answerFrom(intent)
+        if (!CallManager.isShowingCalls) {
+            // Opened from a call card left by a killed process: no call to show, so don't sit black.
+            CallNotifications.cancelIncoming(this)
+            CallNotifications.cancelOngoing(this)
+            finish()
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
