@@ -53,17 +53,11 @@ object CallNotifications {
         val island = vivoIsland && unlocked
         val quiet = screenOpening || island || InCallActivity.isFullScreen
         val channel = if (quiet) CHANNEL_INCOMING_QUIET else CHANNEL_INCOMING
-        manager.deleteNotificationChannel("incoming_calls_island")
-        manager.createNotificationChannel(
-            NotificationChannel(
-                channel,
-                res.getString(if (quiet) R.string.channel_incoming_quiet else R.string.channel_incoming),
-                if (quiet) NotificationManager.IMPORTANCE_DEFAULT else NotificationManager.IMPORTANCE_HIGH,
-            ).apply {
-                // Telecom plays the ringtone; the notification itself stays silent.
-                setSound(null, null)
-                enableVibration(false)
-            }
+        ensureChannel(
+            manager, channel,
+            res.getString(if (quiet) R.string.channel_incoming_quiet else R.string.channel_incoming),
+            if (quiet) NotificationManager.IMPORTANCE_DEFAULT else NotificationManager.IMPORTANCE_HIGH,
+            legacy = "incoming_calls_island",
         )
 
         val details = call.details
@@ -226,12 +220,9 @@ object CallNotifications {
 
         // Not IMPORTANCE_LOW: Android 12+ and vivo hide silent notifications on the lock screen,
         // which left no way back to a call there. An existing channel's importance can't change.
-        manager.deleteNotificationChannel("ongoing_calls")
-        manager.createNotificationChannel(
-            NotificationChannel(CHANNEL_ONGOING, res.getString(R.string.channel_ongoing), NotificationManager.IMPORTANCE_DEFAULT).apply {
-                setSound(null, null)
-                enableVibration(false)
-            }
+        ensureChannel(
+            manager, CHANNEL_ONGOING, res.getString(R.string.channel_ongoing), NotificationManager.IMPORTANCE_DEFAULT,
+            legacy = "ongoing_calls",
         )
         val state = CallManager.stateOf(call)
         val details = call.details
@@ -332,6 +323,24 @@ object CallNotifications {
     fun cancelOngoing(context: Context) {
         removeOngoing(context.getSystemService(NotificationManager::class.java))
         photos.clear() // A photo changed between calls is picked up next time.
+    }
+
+    /** Channels created in this process, by id and localized name: each create is a binder call. */
+    private val channels = HashSet<String>()
+
+    /**
+     * Creates a silent channel (Telecom plays the ringtone) once per process and name, deleting its
+     * [legacy] predecessor, instead of on every post: this ran before every ringing notification.
+     */
+    private fun ensureChannel(manager: NotificationManager, id: String, name: String, importance: Int, legacy: String) {
+        if (!channels.add("$id|$name")) return
+        manager.deleteNotificationChannel(legacy)
+        manager.createNotificationChannel(
+            NotificationChannel(id, name, importance).apply {
+                setSound(null, null)
+                enableVibration(false)
+            }
+        )
     }
 
     /** Looked up once per number while calls last; the ongoing notification updates often. */

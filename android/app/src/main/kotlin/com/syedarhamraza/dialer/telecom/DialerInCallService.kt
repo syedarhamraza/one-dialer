@@ -14,6 +14,7 @@ import android.telecom.CallAudioState
 import android.telecom.InCallService
 import android.telecom.VideoProfile
 import android.speech.tts.TextToSpeech
+import io.flutter.FlutterInjector
 import java.util.concurrent.Executors
 import com.syedarhamraza.dialer.AppLanguage
 import com.syedarhamraza.dialer.InCallActivity
@@ -42,6 +43,9 @@ class DialerInCallService : InCallService() {
     override fun onCreate() {
         super.onCreate()
         CallManager.service = this
+        // Telecom binds before the first call: load Flutter's native library and snapshot in the
+        // background now, so building the call screen's engine on a cold process waits less.
+        FlutterInjector.instance().flutterLoader().startInitialization(applicationContext)
         CallManager.addListener(onCallsChanged)
         RecorderCompanion.watch(this)
         val power = getSystemService(PowerManager::class.java)
