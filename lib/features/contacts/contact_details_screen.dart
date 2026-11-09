@@ -21,11 +21,13 @@ import '../../widgets/call_glyph.dart';
 import '../../widgets/press_glow.dart';
 import '../../widgets/round_header_controls.dart';
 import '../blocking/blocking_repository.dart';
+import '../in_call/call_background.dart';
 import '../recents/call_details_screen.dart' show CallNotesCard;
 import '../recents/call_log.dart';
 import '../recents/app_calls.dart' show appCallLabel;
 import '../recents/call_log_repository.dart';
 import '../recents/recents_screen.dart' show CallTypeIcon, SimBadge;
+import '../settings/call_background_screen.dart';
 import 'contact_actions.dart';
 import 'contact_subpages.dart';
 import 'editor/contact_editor_screen.dart';
@@ -60,6 +62,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   void initState() {
     super.initState();
     ContactsRepository.instance.revision.addListener(_loadFull);
+    CallBackgrounds.instance.load(widget.contactId);
     _load();
   }
 
@@ -421,6 +424,26 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             final ringtone = await _bridge.getRingtoneTitle(contact.id);
             if (mounted) setState(() => _ringtone = ringtone);
           },
+        ),
+        ListenableBuilder(
+          listenable: CallBackgrounds.instance,
+          builder: (context, _) => _ValueRow(
+            value: CallBackgroundScreen.label(
+              context.l10n,
+              // Contact's photo while all calls use it too reads as following them, as on its page.
+              switch ((CallBackgrounds.instance.stored(contact.id), CallBackgrounds.instance.stored('all'))) {
+                (CallBackground(contactPhoto: true), CallBackground(contactPhoto: true)) => null,
+                (final own, _) => own,
+              },
+              contact: true,
+            ),
+            label: context.l10n.callBackground,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => CallBackgroundScreen(scope: contact.id, name: contact.name),
+              ),
+            ),
+          ),
         ),
         if (_sims.length > 1)
           KeyedSubtree(

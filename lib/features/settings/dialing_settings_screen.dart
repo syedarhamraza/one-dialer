@@ -43,6 +43,7 @@ class _DialingSettingsScreenState extends State<DialingSettingsScreen> {
             choiceRow(
               context,
               title: l10n.tapRecentCall,
+              subtitle: l10n.tapRecentCallSubtitle,
               anchor: _tapKey,
               value: prefs.recentTap,
               labels: {

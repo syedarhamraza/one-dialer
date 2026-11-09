@@ -6,8 +6,10 @@ import '../../widgets/choice_row.dart';
 import '../../widgets/cos_subpage.dart';
 import '../../widgets/one_ui_group_card.dart';
 import '../../widgets/showcase_picker.dart';
+import '../in_call/call_background.dart';
 import '../in_call/call_controls.dart' show answerGreen, endRed;
 import '../in_call/incoming_controls.dart' show ArcHint, oneButtonWhite;
+import 'call_background_screen.dart';
 import 'quick_replies_screen.dart';
 import '../../l10n/l10n.dart';
 
@@ -214,6 +216,12 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
   final _effectsKey = GlobalKey();
   final _glassKey = GlobalKey();
 
+  @override
+  void initState() {
+    super.initState();
+    CallBackgrounds.instance.load('all');
+  }
+
   static Map<String, String> _directions(AppLocalizations l10n) => {
     'up': l10n.swipeUpToAnswer,
     'down': l10n.swipeDownToAnswer,
@@ -261,7 +269,7 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
           ],
         ),
         ListenableBuilder(
-          listenable: Listenable.merge([prefs.answerStyle, prefs.callEffects]),
+          listenable: Listenable.merge([prefs.answerStyle, prefs.callEffects, CallBackgrounds.instance]),
           builder: (context, _) => OneUIGroupCard(
             items: [
               // Only 1 button has a direction to choose.
@@ -288,11 +296,20 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
                 choiceRow(
                   context,
                   title: context.l10n.callScreenEdgeGlow,
+                  subtitle: context.l10n.callScreenEdgeGlowSubtitle,
                   anchor: _glassKey,
                   value: prefs.callGlass,
                   labels: edgeGlowLabels(context.l10n),
                   onPick: prefs.setCallGlass,
                 ),
+              OneUIGroupItem(
+                title: context.l10n.callBackground,
+                subtitle: context.l10n.callBackgroundAllSubtitle,
+                value: CallBackgroundScreen.label(context.l10n, CallBackgrounds.instance.stored('all')),
+                onTap: () => Navigator.of(
+                  context,
+                ).push(MaterialPageRoute<void>(builder: (_) => const CallBackgroundScreen(scope: 'all'))),
+              ),
             ],
           ),
         ),

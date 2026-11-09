@@ -32,6 +32,7 @@ class MainActivity : FlutterActivity() {
     private var bridge: CallBridge? = null
     private var pendingRoleResult: MethodChannel.Result? = null
     private var pendingPhotoResult: MethodChannel.Result? = null
+    private var pendingPhotoMax = 720
     private var pendingRingtoneResult: MethodChannel.Result? = null
     private var pendingVcfResult: MethodChannel.Result? = null
 
@@ -81,9 +82,10 @@ class MainActivity : FlutterActivity() {
     }
 
     /** Android's photo picker (no storage permission needed); falls back to "get content". */
-    private fun pickPhoto(result: MethodChannel.Result) {
+    private fun pickPhoto(max: Int, result: MethodChannel.Result) {
         pendingPhotoResult?.success(null)
         pendingPhotoResult = result
+        pendingPhotoMax = max
         val intent = if (android.os.Build.VERSION.SDK_INT >= 33) {
             Intent(android.provider.MediaStore.ACTION_PICK_IMAGES)
         } else {
@@ -170,7 +172,7 @@ class MainActivity : FlutterActivity() {
             pendingPhotoResult = null
             val uri = data?.data.takeIf { resultCode == RESULT_OK } ?: return result.success(null)
             Thread {
-                val bytes = runCatching { scaledJpeg(uri) }.getOrNull()
+                val bytes = runCatching { scaledJpeg(uri, pendingPhotoMax) }.getOrNull()
                 runOnUiThread { result.success(bytes) }
             }.start()
             return
@@ -195,13 +197,13 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    /** Decodes [uri] at most [PHOTO_MAX] px on its long side (contacts store small photos anyway). */
-    private fun scaledJpeg(uri: android.net.Uri): ByteArray {
+    /** Decodes [uri] at most [max] px on its long side (contacts store small photos anyway). */
+    private fun scaledJpeg(uri: android.net.Uri, max: Int): ByteArray {
         val source = android.graphics.ImageDecoder.createSource(contentResolver, uri)
         val bitmap = android.graphics.ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
             val longSide = maxOf(info.size.width, info.size.height)
-            if (longSide > PHOTO_MAX) {
-                val scale = PHOTO_MAX.toFloat() / longSide
+            if (longSide > max) {
+                val scale = max.toFloat() / longSide
                 decoder.setTargetSize((info.size.width * scale).toInt(), (info.size.height * scale).toInt())
             }
             decoder.allocator = android.graphics.ImageDecoder.ALLOCATOR_SOFTWARE
@@ -287,7 +289,6 @@ class MainActivity : FlutterActivity() {
         private const val REQUEST_RINGTONE = 1003
         private const val REQUEST_CAMERA = 1004
         private const val REQUEST_VCF = 1005
-        private const val PHOTO_MAX = 720
         private const val EXTRA_OPEN_RECENTS = "open_recents"
 
         fun openRecentsIntent(context: Context): Intent =

@@ -11,6 +11,7 @@ import 'app/dialer_app.dart';
 import 'app/in_call_app.dart';
 import 'core/crash_reporting.dart';
 import 'core/prefs/dialer_prefs.dart';
+import 'features/in_call/call_background.dart';
 import 'features/in_call/call_screen_widgets.dart';
 import 'features/updates/presentation/update_controller.dart';
 
@@ -74,6 +75,7 @@ Future<void> inCallMain() async {
   AppLifecycleListener(
     onResume: () {
       DialerPrefs.instance.loadCallEffects();
+      CallBackgrounds.instance.refresh();
       DialerPrefs.instance.loadLanguage();
     },
   );

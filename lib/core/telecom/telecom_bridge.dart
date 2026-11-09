@@ -63,8 +63,8 @@ class TelecomBridge {
   Future<Map<Object?, Object?>?> consumeContactAction() =>
       _methods.invokeMapMethod<Object?, Object?>('consumeContactAction');
 
-  /// Android's photo picker; returns the picked photo as JPEG bytes (max 720px), or null.
-  Future<Uint8List?> pickPhoto() => _methods.invokeMethod<Uint8List>('pickPhoto');
+  /// Android's photo picker; returns the picked photo as JPEG bytes ([max] px on the long side), or null.
+  Future<Uint8List?> pickPhoto({int max = 720}) => _methods.invokeMethod<Uint8List>('pickPhoto', {'max': max});
 
   /// The camera's quick capture (a small photo); null when cancelled.
   Future<Uint8List?> takePhoto() => _methods.invokeMethod<Uint8List>('takePhoto');

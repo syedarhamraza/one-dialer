@@ -1885,4 +1885,72 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aboutPhone => 'About phone';
+
+  @override
+  String get glassStyleSubtitle =>
+      'Liquid glass bends what\'s behind it but uses more power';
+
+  @override
+  String get darkModeEdgeGlowSubtitle =>
+      'How brightly the glass edges glow in dark mode';
+
+  @override
+  String get liquidGlassOnSubtitle => 'Which parts of the app use liquid glass';
+
+  @override
+  String get navBarGlassSubtitle =>
+      'Full refraction looks best; Light runs smoother on slower phones';
+
+  @override
+  String get tapRecentCallSubtitle =>
+      'What happens when you tap a call in Calls';
+
+  @override
+  String get callScreenEdgeGlowSubtitle =>
+      'How brightly the call buttons\' glass edges glow';
+
+  @override
+  String get answerButtonsSubtitle =>
+      'How you answer, and how the call screen looks';
+
+  @override
+  String get carrierSettingsSubtitle =>
+      'Call forwarding, call waiting and caller ID';
+
+  @override
+  String get callBackground => 'Call background';
+
+  @override
+  String get callBackgroundAllSubtitle =>
+      'For every call, unless a contact has its own';
+
+  @override
+  String get callBackgroundDefault => 'Default';
+
+  @override
+  String get callBackgroundColour => 'Colour';
+
+  @override
+  String get callBackgroundPhoto => 'Photo';
+
+  @override
+  String get callBackgroundChoosePhoto => 'Choose photo';
+
+  @override
+  String get callBackgroundContactPhoto => 'Contact\'s photo';
+
+  @override
+  String get callBackgroundContactPhotoSubtitle =>
+      'Android keeps contact photos small; choose a photo for a sharper one';
+
+  @override
+  String get callBackgroundSameAsAll => 'Same as all calls';
+
+  @override
+  String get callBackgroundAllNote =>
+      'A contact with their own call background, set on their contact page, uses it instead.';
+
+  @override
+  String get callBackgroundContactNote =>
+      'Used for this contact instead of the call background for all calls.';
 }
