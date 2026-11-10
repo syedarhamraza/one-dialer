@@ -203,6 +203,11 @@ object CallNotifications {
             NotificationManager::class.java.declaredMethods.any { it.name == "getSceneStatus" }
     }
 
+    /** OPPO, OnePlus and realme share one capsule (Fluid Cloud / Live Alerts), fed by Live Updates. */
+    private val oplusCapsule: Boolean by lazy {
+        Build.MANUFACTURER.lowercase() in setOf("oppo", "oneplus", "realme")
+    }
+
     fun cancelIncoming(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java)
         manager.cancel(ID_INCOMING)
@@ -268,6 +273,24 @@ object CallNotifications {
             builder.setStyle(Notification.CallStyle.forOngoingCall(person, hangUp))
         } else {
             builder.addAction(Notification.Action.Builder(null, res.getString(R.string.hang_up), hangUp).build())
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA && !vivoIsland) {
+            // Asks for a Live Update: the status bar chip, and the capsule on skins that map Live
+            // Updates to their island (ColorOS Fluid Cloud, OxygenOS Live Alerts, realme UI).
+            builder.addExtras(Bundle().apply { putBoolean(Notification.EXTRA_REQUEST_PROMOTED_ONGOING, true) })
+            // Their capsule shows only the small icon and this text (about 7 characters), never the
+            // chronometer. Elsewhere it would replace the chip's live timer, so it's theirs alone.
+            if (oplusCapsule) {
+                builder.setShortCriticalText(
+                    res.getString(
+                        when (state) {
+                            Call.STATE_ACTIVE -> R.string.island_on_call
+                            Call.STATE_HOLDING -> R.string.on_hold
+                            else -> R.string.island_calling
+                        }
+                    )
+                )
+            }
         }
         if (vivoIsland) {
             @Suppress("DEPRECATION") // CallAudioState still reports the route on API 34+
