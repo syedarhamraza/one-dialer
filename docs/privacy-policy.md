@@ -1,6 +1,6 @@
 # One Dialer — Privacy Policy
 
-_Last updated: 1 November 2026_
+_Last updated: 10 November 2026_
 
 One Dialer is a phone app for Android made by Syed Arham Raza. This policy explains what the app accesses and what it does with it.
 
