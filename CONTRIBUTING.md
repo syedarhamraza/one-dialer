@@ -2,6 +2,8 @@
 
 Thanks for helping! This guide takes you from nothing installed to an open pull request. If anything here is unclear or doesn't work for you, that's a bug too: open an issue.
 
+Everyone whose pull request is merged shows up in the README's [Contributors](README.md#contributors) section automatically, whether they used an AI assistant or not.
+
 ## Ways to help
 
 - **Report a bug.** Use the bug report form. The phone model, Android version and OS skin (One UI, ColorOS, OriginOS, HyperOS...) matter most, because a dialer behaves differently on each phone maker's Android.
