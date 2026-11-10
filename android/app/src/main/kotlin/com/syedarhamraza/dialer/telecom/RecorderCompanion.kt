@@ -110,7 +110,9 @@ object RecorderCompanion {
         val details = call.details
         val extras = Bundle().apply {
             putString("number", details.handle?.schemeSpecificPart)
-            putLong("startMillis", details.connectTimeMillis.takeIf { it > 0 } ?: System.currentTimeMillis())
+            // When this recording starts, not when the call connected: the companion names the file
+            // by it, and a second recording in one call used to overwrite the first.
+            putLong("startMillis", System.currentTimeMillis())
             putString("direction", if (details.callDirection == Call.Details.DIRECTION_INCOMING) "in" else "out")
             putString("simId", details.accountHandle?.let { "${it.componentName.flattenToString()}|${it.id}" })
         }

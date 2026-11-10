@@ -1,16 +1,20 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../core/contacts/contacts_repository.dart';
 import '../core/prefs/dialer_prefs.dart';
 import '../core/telecom/call_info.dart';
 import '../core/telecom/telecom_bridge.dart';
+import '../l10n/l10n.dart';
 import 'one_ui_floating_menu.dart';
+import 'one_ui_toast.dart';
 
 /// Calls [number] the way Samsung does: on [simId] if given, else on the contact's chosen
 /// SIM, else (dual SIM with "Ask every time") after asking with our SIM menu, which pops
 /// from [anchorKey]'s button (or [anchorContext]'s widget) when given. [chooseSim] always asks on dual SIM.
+/// False when no call was placed: the SIM menu was dismissed, or Android refused (a toast says so).
 Future<bool> placeCall(
   BuildContext context,
   String number, {
@@ -24,7 +28,7 @@ Future<bool> placeCall(
     final sims = await telecom.getSims();
     if (sims.length > 1) {
       if (!context.mounted) return false;
-      final sim = await _pickSim(context, sims, anchorKey, anchorContext);
+      final sim = await pickSim(context, sims, anchorKey: anchorKey, anchorContext: anchorContext);
       if (sim == null) return false;
       simId = sim.id;
     }
@@ -37,21 +41,42 @@ Future<bool> placeCall(
     final sims = await telecom.getSims();
     if (sims.length > 1 && !sims.any((s) => s.isDefault)) {
       if (!context.mounted) return false;
-      final sim = await _pickSim(context, sims, anchorKey, anchorContext);
+      final sim = await pickSim(context, sims, anchorKey: anchorKey, anchorContext: anchorContext);
       if (sim == null) return false;
       simId = sim.id;
     }
   }
-  await telecom.placeCall(number, simId: simId);
-  return true;
+  // The page may have closed during the lookups above; the call still goes out, and only the toast needs the page.
+  final placed = await _placed(() => telecom.placeCall(number, simId: simId));
+  if (!placed && context.mounted) OneUIToast.show(context, context.l10n.couldNotPlaceCall);
+  return placed;
 }
 
-Future<SimCard?> _pickSim(
+/// Calls back call-log row [id] through the app that logged it (WhatsApp...).
+Future<bool> callBackRow(BuildContext context, int id) async {
+  final placed = await _placed(() => TelecomBridge.instance.callBack(id));
+  if (!placed && context.mounted) OneUIToast.show(context, context.l10n.couldNotPlaceCall);
+  return placed;
+}
+
+/// False when Android refused the call (the Phone permission was taken away): the caller says so
+/// with a toast, so it never looks like a dead button.
+Future<bool> _placed(Future<void> Function() call) async {
+  try {
+    await call();
+    return true;
+  } on PlatformException {
+    return false;
+  }
+}
+
+/// The shared SIM menu; null when it's dismissed.
+Future<SimCard?> pickSim(
   BuildContext context,
-  List<SimCard> sims,
+  List<SimCard> sims, {
   GlobalKey? anchorKey,
   BuildContext? anchorContext,
-) async {
+}) async {
   final picked = Completer<SimCard?>();
   await OneUIFloatingMenu.show(
     context: context,

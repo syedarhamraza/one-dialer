@@ -15,6 +15,13 @@ class RecorderTest {
     }
 
     @Test
+    fun aSecondRecordingWithTheSameStartNeverTakesTheFirstOnesName() {
+        val saved = setOf("1000_123.m4a", "1001_123.m4a")
+        assertEquals("1002_123.m4a", RecordingFile.free(1000, "123", saved::contains).name)
+        assertEquals("1000_456.m4a", RecordingFile.free(1000, "456", saved::contains).name)
+    }
+
+    @Test
     fun hiddenNumberIsUnknown() {
         val file = RecordingFile.of(5, null)
         assertEquals("5_unknown.m4a", file.name)

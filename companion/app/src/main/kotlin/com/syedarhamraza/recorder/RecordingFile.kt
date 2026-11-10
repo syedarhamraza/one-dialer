@@ -11,6 +11,13 @@ data class RecordingFile(val startMillis: Long, val number: String?) {
         fun of(startMillis: Long, number: String?) =
             RecordingFile(startMillis, number?.filter { it.isDigit() || it in "+*#" }?.takeIf { it.isNotEmpty() })
 
+        /**
+         * [of], moved to the next millisecond while [taken] already has its name: One Dialer used to
+         * send the call's connect time, so a second recording in one call overwrote the first.
+         */
+        fun free(startMillis: Long, number: String?, taken: (String) -> Boolean): RecordingFile =
+            generateSequence(of(startMillis, number)) { it.copy(startMillis = it.startMillis + 1) }.first { !taken(it.name) }
+
         fun parse(name: String): RecordingFile? {
             val match = Regex("""(\d+)_([0-9+*#]+|$UNKNOWN)\.m4a""").matchEntire(name) ?: return null
             val (start, number) = match.destructured

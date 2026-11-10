@@ -124,10 +124,10 @@ class RecordingService : Service() {
     }
 
     private fun begin(intent: Intent?) {
-        val entry = RecordingFile.of(
+        val entry = RecordingFile.free(
             intent?.getLongExtra(EXTRA_START, 0L)?.takeIf { it > 0 } ?: System.currentTimeMillis(),
             intent?.getStringExtra(EXTRA_NUMBER),
-        )
+        ) { File(dir(this), it).exists() }
         val target = File(dir(this), entry.name)
         val sources = RecorderSettings.sourcesToTry(this)
         pipeline = AudioPipeline(
