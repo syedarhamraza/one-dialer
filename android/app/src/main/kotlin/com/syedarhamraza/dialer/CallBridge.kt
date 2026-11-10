@@ -74,6 +74,9 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
     /** Set by [MainActivity]: picks a .vcf file; the result is its text or null. */
     var vcfPicker: ((MethodChannel.Result) -> Unit)? = null
 
+    /** Set by [MainActivity]: exports (true) or imports (false) the settings file; see [SettingsBackup]. */
+    var settingsBackup: ((Boolean, MethodChannel.Result) -> Unit)? = null
+
     /** Set by [MainActivity]: the system ringtone picker; the result is the picked URI, "" for Default, null if cancelled. */
     var ringtonePicker: ((String?, MethodChannel.Result) -> Unit)? = null
 
@@ -216,6 +219,8 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             "pickRingtone" -> ringtonePicker?.invoke(call.argument<String>("current"), result)
                 ?: result.error("NO_ACTIVITY", "Ringtones can only be picked from the main screen", null)
             "pickVcf" -> vcfPicker?.invoke(result)
+                ?: result.error("NO_ACTIVITY", "Files can only be picked from the main screen", null)
+            "exportSettings", "importSettings" -> settingsBackup?.invoke(call.method == "exportSettings", result)
                 ?: result.error("NO_ACTIVITY", "Files can only be picked from the main screen", null)
             "pickPhoto" -> photoPicker?.invoke(call.argument<Int>("max") ?: 720, result)
                 ?: result.error("NO_ACTIVITY", "Photos can only be picked from the main screen", null)

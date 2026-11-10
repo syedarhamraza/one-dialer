@@ -95,6 +95,13 @@ class TelecomBridge {
   /// A .vcf file's text from the files app; null when cancelled.
   Future<String?> pickVcf() => _methods.invokeMethod<String>('pickVcf');
 
+  /// Saves the settings file where the user picks; true when saved, null when cancelled.
+  Future<bool?> exportSettings() => _methods.invokeMethod<bool>('exportSettings');
+
+  /// Reads a settings file the user picks and restarts the app with it; false when the file isn't
+  /// one, null when cancelled. Throws `IN_CALL` during a call.
+  Future<bool?> importSettings() => _methods.invokeMethod<bool>('importSettings');
+
   Future<void> unlinkRawContacts(String contactId, List<int> rawIds) =>
       _methods.invokeMethod('unlinkRawContacts', {'contactId': contactId, 'rawIds': rawIds});
 
