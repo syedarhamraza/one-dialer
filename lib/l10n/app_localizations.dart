@@ -3463,6 +3463,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Used for this contact instead of the call background for all calls.'**
   String get callBackgroundContactNote;
+
+  /// No description provided for @exportSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Export settings'**
+  String get exportSettings;
+
+  /// No description provided for @exportSettingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save settings, call notes and call backgrounds to a file'**
+  String get exportSettingsSubtitle;
+
+  /// No description provided for @importSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Import settings'**
+  String get importSettings;
+
+  /// No description provided for @importSettingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore them from an exported file'**
+  String get importSettingsSubtitle;
+
+  /// No description provided for @importSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace your settings?'**
+  String get importSettingsTitle;
+
+  /// No description provided for @importSettingsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your settings, speed dial, call notes and call backgrounds are replaced by the ones in the file. One Dialer then restarts.'**
+  String get importSettingsMessage;
+
+  /// No description provided for @importSettingsInCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings can\'t be imported during a call'**
+  String get importSettingsInCall;
+
+  /// No description provided for @settingsExported.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings exported'**
+  String get settingsExported;
+
+  /// No description provided for @couldNotSaveSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save the file'**
+  String get couldNotSaveSettings;
+
+  /// No description provided for @notASettingsFile.
+  ///
+  /// In en, this message translates to:
+  /// **'This isn\'t a One Dialer settings file'**
+  String get notASettingsFile;
 }
 
 class _AppLocalizationsDelegate

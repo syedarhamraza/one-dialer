@@ -560,5 +560,15 @@
   "callBackgroundContactPhotoSubtitle": "Android salva le foto dei contatti piccole; scegli una foto per una più nitida",
   "callBackgroundSameAsAll": "Come tutte le chiamate",
   "callBackgroundAllNote": "Un contatto con un proprio sfondo, impostato nella sua scheda, usa quello.",
-  "callBackgroundContactNote": "Usato per questo contatto al posto dello sfondo per tutte le chiamate."
+  "callBackgroundContactNote": "Usato per questo contatto al posto dello sfondo per tutte le chiamate.",
+  "exportSettings": "Esporta impostazioni",
+  "exportSettingsSubtitle": "Salva impostazioni, note e sfondi delle chiamate in un file",
+  "importSettings": "Importa impostazioni",
+  "importSettingsSubtitle": "Ripristinale da un file esportato",
+  "importSettingsTitle": "Sostituire le impostazioni?",
+  "importSettingsMessage": "Impostazioni, chiamata rapida, note e sfondi delle chiamate vengono sostituiti da quelli del file. Poi One Dialer si riavvia.",
+  "importSettingsInCall": "Non puoi importare le impostazioni durante una chiamata",
+  "settingsExported": "Impostazioni esportate",
+  "couldNotSaveSettings": "Impossibile salvare il file",
+  "notASettingsFile": "Questo non è un file di impostazioni di One Dialer"
 }

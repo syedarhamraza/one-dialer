@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.MotionEvent
 import androidx.core.view.WindowCompat
+import com.syedarhamraza.dialer.telecom.CallManager
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -35,6 +36,7 @@ class MainActivity : FlutterActivity() {
     private var pendingPhotoMax = 720
     private var pendingRingtoneResult: MethodChannel.Result? = null
     private var pendingVcfResult: MethodChannel.Result? = null
+    private var pendingBackupResult: MethodChannel.Result? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,6 +52,7 @@ class MainActivity : FlutterActivity() {
             it.photoPicker = ::pickPhoto
             it.photoTaker = ::takePhoto
             it.vcfPicker = ::pickVcf
+            it.settingsBackup = ::settingsBackup
             it.ringtonePicker = ::pickRingtone
             it.pendingDialNumber = dialNumberFrom(intent)
             it.pendingOpenRecents = intent.getBooleanExtra(EXTRA_OPEN_RECENTS, false)
@@ -108,6 +111,46 @@ class MainActivity : FlutterActivity() {
     }
 
     /**
+     * Settings › Export / Import settings: where to save the file, or which one to read. The
+     * result is true when done (an import restarts the app instead), false for a file that isn't
+     * a settings file, null when cancelled.
+     */
+    private fun settingsBackup(export: Boolean, result: MethodChannel.Result) {
+        // An import restarts the process, which would drop the call.
+        if (!export && CallManager.all().isNotEmpty()) return result.error("IN_CALL", null, null)
+        pendingBackupResult?.success(null)
+        pendingBackupResult = result
+        val intent = if (export) {
+            Intent(Intent.ACTION_CREATE_DOCUMENT)
+                .addCategory(Intent.CATEGORY_OPENABLE)
+                .setType("application/zip")
+                .putExtra(Intent.EXTRA_TITLE, "one-dialer-settings-${java.time.LocalDate.now()}.zip")
+        } else {
+            Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*")
+        }
+        @Suppress("DEPRECATION")
+        startActivityForResult(intent, if (export) REQUEST_EXPORT else REQUEST_IMPORT)
+    }
+
+    private fun finishBackup(export: Boolean, uri: android.net.Uri, result: MethodChannel.Result) = Thread {
+        val outcome = runCatching {
+            if (export) {
+                contentResolver.openOutputStream(uri, "wt")!!.use { SettingsBackup.export(this, it) }
+                true
+            } else {
+                contentResolver.openInputStream(uri)!!.use { SettingsBackup.import(this, it) }
+            }
+        }
+        runOnUiThread {
+            val done = outcome.getOrElse { return@runOnUiThread result.error("FAILED", it.message, null) }
+            if (export || !done) return@runOnUiThread result.success(done)
+            // Every preference is cached in memory (DataStore, SharedPreferences): start afresh.
+            startActivity(Intent.makeRestartActivityTask(android.content.ComponentName(this, MainActivity::class.java)))
+            Runtime.getRuntime().exit(0)
+        }
+    }.start()
+
+    /**
      * The camera app's quick capture: a small preview bitmap, which is plenty for a contact
      * photo and needs no CAMERA permission or FileProvider (the app declares no CAMERA).
      */
@@ -143,6 +186,15 @@ class MainActivity : FlutterActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         @Suppress("DEPRECATION")
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_EXPORT || requestCode == REQUEST_IMPORT) {
+            val result = pendingBackupResult ?: return
+            pendingBackupResult = null
+            val uri = data?.data.takeIf { resultCode == RESULT_OK } ?: return result.success(null)
+            // shortcut: a call that starts during the second the import takes still drops; rare enough.
+            if (requestCode == REQUEST_IMPORT && CallManager.all().isNotEmpty()) return result.error("IN_CALL", null, null)
+            finishBackup(requestCode == REQUEST_EXPORT, uri, result)
+            return
+        }
         if (requestCode == REQUEST_VCF) {
             val result = pendingVcfResult ?: return
             pendingVcfResult = null
@@ -289,6 +341,8 @@ class MainActivity : FlutterActivity() {
         private const val REQUEST_RINGTONE = 1003
         private const val REQUEST_CAMERA = 1004
         private const val REQUEST_VCF = 1005
+        private const val REQUEST_EXPORT = 1006
+        private const val REQUEST_IMPORT = 1007
         private const val EXTRA_OPEN_RECENTS = "open_recents"
 
         fun openRecentsIntent(context: Context): Intent =

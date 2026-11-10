@@ -1973,4 +1973,38 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get callBackgroundContactNote =>
       'Usato per questo contatto al posto dello sfondo per tutte le chiamate.';
+
+  @override
+  String get exportSettings => 'Esporta impostazioni';
+
+  @override
+  String get exportSettingsSubtitle =>
+      'Salva impostazioni, note e sfondi delle chiamate in un file';
+
+  @override
+  String get importSettings => 'Importa impostazioni';
+
+  @override
+  String get importSettingsSubtitle => 'Ripristinale da un file esportato';
+
+  @override
+  String get importSettingsTitle => 'Sostituire le impostazioni?';
+
+  @override
+  String get importSettingsMessage =>
+      'Impostazioni, chiamata rapida, note e sfondi delle chiamate vengono sostituiti da quelli del file. Poi One Dialer si riavvia.';
+
+  @override
+  String get importSettingsInCall =>
+      'Non puoi importare le impostazioni durante una chiamata';
+
+  @override
+  String get settingsExported => 'Impostazioni esportate';
+
+  @override
+  String get couldNotSaveSettings => 'Impossibile salvare il file';
+
+  @override
+  String get notASettingsFile =>
+      'Questo non è un file di impostazioni di One Dialer';
 }

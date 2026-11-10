@@ -13,6 +13,7 @@ import '../../widgets/one_ui_subpage.dart';
 import '../../widgets/choice_row.dart';
 import '../contacts/manage_contacts_screen.dart';
 import '../../widgets/one_ui_toast.dart';
+import '../../widgets/cos_dialog.dart';
 import '../../widgets/one_ui_group_card.dart';
 import '../blocking/blocking_repository.dart';
 import '../blocking/blocking_screen.dart';
@@ -126,6 +127,33 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   }
 
   void _push(Widget page) => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
+
+  Future<void> _exportSettings() async {
+    try {
+      final saved = await _telecom.exportSettings();
+      if (saved == true && mounted) OneUIToast.show(context, context.l10n.settingsExported);
+    } on PlatformException {
+      if (mounted) OneUIToast.show(context, context.l10n.couldNotSaveSettings);
+    }
+  }
+
+  Future<void> _importSettings() async {
+    final l10n = context.l10n;
+    final ok = await showCosConfirm(
+      context,
+      title: l10n.importSettingsTitle,
+      message: l10n.importSettingsMessage,
+      confirmLabel: l10n.import,
+    );
+    if (!ok || !mounted) return;
+    try {
+      // On success the app restarts with the imported settings and this never returns.
+      final read = await _telecom.importSettings();
+      if (read == false && mounted) OneUIToast.show(context, l10n.notASettingsFile);
+    } on PlatformException catch (e) {
+      if (mounted) OneUIToast.show(context, e.code == 'IN_CALL' ? l10n.importSettingsInCall : l10n.couldNotOpenFile);
+    }
+  }
 
   /// Rows only for problems; empty when everything incoming calls need is in place.
   List<OneUIGroupItem> get _problems {
@@ -260,6 +288,16 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                 subtitle: l10n.callsFromOtherAppsSubtitle,
                 onTap: () => openSystemSetting(context, 'voipCallLog'),
               ),
+            OneUIGroupItem(
+              title: l10n.exportSettings,
+              subtitle: l10n.exportSettingsSubtitle,
+              onTap: _exportSettings,
+            ),
+            OneUIGroupItem(
+              title: l10n.importSettings,
+              subtitle: l10n.importSettingsSubtitle,
+              onTap: _importSettings,
+            ),
           ],
         ),
         OneUIGroupCard(

@@ -1,6 +1,6 @@
 # One Dialer — Privacy Policy
 
-_Last updated: 1 November 2026_
+_Last updated: 10 November 2026_
 
 One Dialer is a phone app for Android made by Syed Arham Raza. This policy explains what the app accesses and what it does with it.
 
@@ -20,6 +20,8 @@ When you make One Dialer your default phone app, Android gives it access to:
 ## Where your data goes
 
 **Your calls, call history and contacts never leave your phone.** One Dialer has no account and no servers, and it doesn't sell, share or upload any of this data. Settings you choose in the app (speed dial, blocking rules, quick decline messages, the SIM to use for a contact) are stored only on your phone.
+
+**Backups.** If you have turned on your phone's own backup (Google's, or your phone maker's), Android includes One Dialer's settings, call notes and call backgrounds in it, so they come back when you reinstall the app or move to a new phone. That backup belongs to your Google or phone-maker account; One Dialer never sees or controls it. Settings › Export settings saves the same data to a file wherever you choose, and Import settings reads it back. One Dialer never uploads that file.
 
 When Google Play has an update for One Dialer, Software update downloads that update's release notes from this website (syedarhamraza.github.io). Nothing about you or your phone is sent with the request.
 

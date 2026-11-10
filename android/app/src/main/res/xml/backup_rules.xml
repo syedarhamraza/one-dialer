@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 and older. Everything else (settings, call notes, call backgrounds) is backed up. -->
+<full-backup-content>
+    <!-- This phone's GPU, probed again on the next one. -->
+    <exclude domain="sharedpref" path="device_tier.xml" />
+    <!-- Blocked calls waiting to be hidden from the call log: this phone's log only. -->
+    <exclude domain="sharedpref" path="blocked_pending.xml" />
+</full-backup-content>

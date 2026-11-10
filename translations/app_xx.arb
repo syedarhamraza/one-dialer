@@ -560,5 +560,15 @@
   "callBackgroundContactPhotoSubtitle": "Android keeps contact photos small; choose a photo for a sharper one",
   "callBackgroundSameAsAll": "Same as all calls",
   "callBackgroundAllNote": "A contact with their own call background, set on their contact page, uses it instead.",
-  "callBackgroundContactNote": "Used for this contact instead of the call background for all calls."
+  "callBackgroundContactNote": "Used for this contact instead of the call background for all calls.",
+  "exportSettings": "Export settings",
+  "exportSettingsSubtitle": "Save settings, call notes and call backgrounds to a file",
+  "importSettings": "Import settings",
+  "importSettingsSubtitle": "Restore them from an exported file",
+  "importSettingsTitle": "Replace your settings?",
+  "importSettingsMessage": "Your settings, speed dial, call notes and call backgrounds are replaced by the ones in the file. One Dialer then restarts.",
+  "importSettingsInCall": "Settings can't be imported during a call",
+  "settingsExported": "Settings exported",
+  "couldNotSaveSettings": "Couldn't save the file",
+  "notASettingsFile": "This isn't a One Dialer settings file"
 }

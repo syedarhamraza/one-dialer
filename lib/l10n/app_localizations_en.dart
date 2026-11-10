@@ -1953,4 +1953,37 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get callBackgroundContactNote =>
       'Used for this contact instead of the call background for all calls.';
+
+  @override
+  String get exportSettings => 'Export settings';
+
+  @override
+  String get exportSettingsSubtitle =>
+      'Save settings, call notes and call backgrounds to a file';
+
+  @override
+  String get importSettings => 'Import settings';
+
+  @override
+  String get importSettingsSubtitle => 'Restore them from an exported file';
+
+  @override
+  String get importSettingsTitle => 'Replace your settings?';
+
+  @override
+  String get importSettingsMessage =>
+      'Your settings, speed dial, call notes and call backgrounds are replaced by the ones in the file. One Dialer then restarts.';
+
+  @override
+  String get importSettingsInCall =>
+      'Settings can\'t be imported during a call';
+
+  @override
+  String get settingsExported => 'Settings exported';
+
+  @override
+  String get couldNotSaveSettings => 'Couldn\'t save the file';
+
+  @override
+  String get notASettingsFile => 'This isn\'t a One Dialer settings file';
 }
