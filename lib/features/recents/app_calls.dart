@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 import '../../core/telecom/telecom_bridge.dart';
+import '../../widgets/place_call.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import 'call_log.dart';
@@ -31,7 +32,7 @@ Future<void> showAppCallBack(
     OneUIFloatingMenuItem(
       label: call.isVideo ? context.l10n.videoCallOnApp(call.app ?? '') : context.l10n.callOnApp(call.app ?? ''),
       icon: call.isVideo ? Icons.videocam_rounded : Icons.call_rounded,
-      onTap: () => TelecomBridge.instance.callBack(call.id),
+      onTap: () => callBackRow(context, call.id),
     ),
   ],
 );

@@ -8,7 +8,6 @@ import '../../core/diagnostics/lag_diagnostics.dart';
 import '../../core/contacts/contacts_repository.dart';
 import '../../core/telecom/call_info.dart';
 import '../../widgets/cos_dialog.dart';
-import '../../widgets/one_ui_toast.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../theme/one_ui_scroll.dart';
@@ -266,10 +265,6 @@ class _KeypadScreenState extends State<KeypadScreen> {
     try {
       final called = await placeCall(context, number, simId: simId, anchorKey: _callKey);
       if (called && widget.input.value == number) widget.input.value = '';
-    } on PlatformException {
-      if (mounted) {
-        OneUIToast.show(context, context.l10n.couldNotPlaceCall);
-      }
     } finally {
       if (mounted) setState(() => _calling = false);
     }

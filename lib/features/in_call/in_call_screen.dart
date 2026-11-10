@@ -12,6 +12,7 @@ import '../../core/contacts/contacts_repository.dart';
 import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
+import '../../widgets/place_call.dart';
 import 'call_control_panel.dart';
 import 'call_background.dart';
 import 'call_controls.dart';
@@ -34,6 +35,23 @@ class _InCallScreenState extends State<InCallScreen> {
 
   /// The last snapshot that had a call in it.
   CallSnapshot? _last;
+
+  /// The call already asked "which SIM?", so the menu shows once.
+  String? _askedSim;
+
+  /// Telecom holds a call started outside the app (another app, a car kit, a notification) on
+  /// dual SIM with no default until the call screen names a SIM. No pick ends it, as Android's own chooser does.
+  Future<void> _chooseSim(CallInfo call) async {
+    final telecom = TelecomBridge.instance;
+    try {
+      final sims = _sims.isNotEmpty ? _sims : await telecom.getSims();
+      if (!mounted) return;
+      final sim = sims.length == 1 ? sims.first : (sims.isEmpty ? null : await pickSim(context, sims));
+      await (sim == null ? telecom.hangUp(call.id) : telecom.selectSim(call.id, sim.id));
+    } on PlatformException {
+      await telecom.hangUp(call.id);
+    }
+  }
 
   /// The keypad's open progress, which dims the backdrop behind it.
   final _keypadBlur = ValueNotifier<double>(0);
@@ -72,6 +90,16 @@ class _InCallScreenState extends State<InCallScreen> {
         if (snapshot.data?.primary != null) _last = snapshot.data;
         final state = _last;
         final call = state?.primary;
+        if (snapshot.data != null && snapshot.data!.primary == null) {
+          // This engine outlives the call: a menu or sheet left open would cover the next one.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+          });
+        }
+        if (call != null && call.state == CallState.selectPhoneAccount && _askedSim != call.id) {
+          _askedSim = call.id;
+          WidgetsBinding.instance.addPostFrameCallback((_) => _chooseSim(call));
+        }
         return ListenableBuilder(
           // Contacts load in late (the aurora's tint follows the caller's name), and so do the
           // caller's photo and saved background.

@@ -251,18 +251,27 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             }
             "getRecorder" -> inBackground(result) { RecorderCompanion.status(context) }
             "toggleRecording" -> result.success(RecorderCompanion.toggle(context))
-            "listRecordings" -> result.success(RecorderCompanion.list(context))
-            "deleteRecording" -> result.success(RecorderCompanion.delete(context, call.argument<String>("name")).let { null })
-            "deleteAllRecordings" -> result.success(RecorderCompanion.deleteAll(context).let { null })
-            "starRecording" -> result.success(RecorderCompanion.star(context, call.argument("name"), call.argument<Boolean>("starred") == true).let { null })
-            "renameRecording" -> result.success(RecorderCompanion.rename(context, call.argument("name"), call.argument("title")).let { null })
-            "exportRecording" -> result.success(RecorderCompanion.export(context, call.argument("name"), call.argument("displayName")))
-            "getRecorderSettings" -> result.success(RecorderCompanion.settings(context))
-            "setRecorderSetting" -> result.success(RecorderCompanion.setSetting(context, call.argument("key"), call.argument<Any>("value")).let { null })
-            "openRecording" -> result.success(RecorderCompanion.open(context, call.argument<String>("name"), share = false))
-            "shareRecording" -> result.success(
-                RecorderCompanion.open(context, call.argument<List<String>>("names")?.joinToString("|"), share = true),
-            )
+            // Each of these waits on the companion's process (listing opens every file for its length).
+            "listRecordings" -> inBackground(result) { RecorderCompanion.list(context) }
+            "deleteRecording" -> inBackground(result) { RecorderCompanion.delete(context, call.argument<String>("name")).let { null } }
+            "deleteAllRecordings" -> inBackground(result) { RecorderCompanion.deleteAll(context).let { null } }
+            "starRecording" -> inBackground(result) {
+                RecorderCompanion.star(context, call.argument("name"), call.argument<Boolean>("starred") == true).let { null }
+            }
+            "renameRecording" -> inBackground(result) {
+                RecorderCompanion.rename(context, call.argument("name"), call.argument("title")).let { null }
+            }
+            "exportRecording" -> inBackground(result) {
+                RecorderCompanion.export(context, call.argument("name"), call.argument("displayName"))
+            }
+            "getRecorderSettings" -> inBackground(result) { RecorderCompanion.settings(context) }
+            "setRecorderSetting" -> inBackground(result) {
+                RecorderCompanion.setSetting(context, call.argument("key"), call.argument<Any>("value")).let { null }
+            }
+            "openRecording" -> inBackground(result) { RecorderCompanion.open(context, call.argument<String>("name"), share = false) }
+            "shareRecording" -> inBackground(result) {
+                RecorderCompanion.open(context, call.argument<List<String>>("names")?.joinToString("|"), share = true)
+            }
             "openRecorderSetup" -> result.success(RecorderCompanion.openSetup(context))
             "getCallSettings" -> result.success(com.syedarhamraza.dialer.telecom.CallPrefs.read(context))
             "setCallSetting" -> {
@@ -343,6 +352,10 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             "merge" -> target.conferenceableCalls.firstOrNull()?.let(target::conference)
                 ?: target.mergeConference()
             "swap" -> target.swapConference()
+            // Telecom is waiting in STATE_SELECT_PHONE_ACCOUNT: a call started outside the app
+            // (another app, a car kit, the missed-call notification) on dual SIM with no default.
+            "selectSim" -> call.argument<String>("simId")?.let(::simHandle)?.let { target.phoneAccountSelected(it, false) }
+                ?: return result.error("NO_SIM", "Unknown SIM", null)
             else -> return result.notImplemented()
         }
         result.success(null)

@@ -282,6 +282,9 @@ class TelecomBridge {
   Future<void> merge(String id) => _call('merge', id);
   Future<void> swap(String id) => _call('swap', id);
 
+  /// Answers Telecom's "which SIM?" for a call waiting in [CallState.selectPhoneAccount].
+  Future<void> selectSim(String id, String simId) => _call('selectSim', id, {'simId': simId});
+
   Future<void> playDtmf(String id, String digit) => _call('playDtmf', id, {'digit': digit});
   Future<void> stopDtmf(String id) => _call('stopDtmf', id);
 

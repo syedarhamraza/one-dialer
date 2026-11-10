@@ -115,7 +115,7 @@ class CallDetailsScreen extends StatelessWidget {
                                       child: DetailsActionTile(
                                         icon: call.isVideo ? Icons.videocam_rounded : Icons.call_rounded,
                                         label: call.app!,
-                                        onTap: () => TelecomBridge.instance.callBack(call.id),
+                                        onTap: () => callBackRow(context, call.id),
                                       ),
                                     ),
                                   Expanded(

@@ -526,6 +526,39 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('a call waiting for a SIM asks once: a pick goes to Telecom, no pick ends the call', (tester) async {
+    await open(tester, reduceMotion: true);
+    await emit(tester, [call('selectPhoneAccount')]);
+    await tester.pumpAndSettle();
+    expect(find.text('SIM 1 · Personal'), findsOneWidget);
+    // Telecom repeats the state while it waits; the menu must not stack.
+    await emit(tester, [call('selectPhoneAccount')]);
+    await tester.pumpAndSettle();
+    expect(find.text('SIM 2 · Work'), findsOneWidget);
+    await tester.tap(find.text('SIM 2 · Work'));
+    await tester.pumpAndSettle();
+    final picks = nativeCalls.where((c) => c.method == 'selectSim').toList();
+    expect(picks.single.arguments, {'id': 'call-1', 'simId': 'sim2'});
+    expect(nativeCalls.any((c) => c.method == 'hangUp'), isFalse);
+
+    await emit(tester, [call('selectPhoneAccount', id: 'call-2')]);
+    await tester.pumpAndSettle();
+    expect(find.text('SIM 1 · Personal'), findsOneWidget);
+    await tester.tapAt(const Offset(4, 4)); // outside the menu
+    await tester.pumpAndSettle();
+    expect(nativeCalls.any((c) => c.method == 'hangUp' && c.arguments['id'] == 'call-2'), isTrue);
+    expect(nativeCalls.where((c) => c.method == 'selectSim'), hasLength(1));
+
+    // The call ends from outside while the menu is up: it must not wait for the next call.
+    await emit(tester, [call('selectPhoneAccount', id: 'call-3')]);
+    await tester.pumpAndSettle();
+    expect(find.text('SIM 1 · Personal'), findsOneWidget);
+    await emit(tester, []);
+    await tester.pumpAndSettle();
+    expect(find.text('SIM 1 · Personal'), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('audio output and quick replies use floating sheets', (tester) async {
     await open(tester, reduceMotion: true); // The ringing hint loops, which pumpAndSettle can't outwait.
     await emit(tester, [call('active')], bluetooth: true);

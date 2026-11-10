@@ -30,6 +30,13 @@ void main() {
     expect(calls[3].arguments, {'id': 'call-1', 'digit': '5'});
   });
 
+  test('a SIM choice names the waiting call and the SIM', () async {
+    error = 'NO_CALL';
+    await TelecomBridge.instance.selectSim('call-1', 'component|1');
+    expect(calls.single.method, 'selectSim');
+    expect(calls.single.arguments, {'id': 'call-1', 'simId': 'component|1'});
+  });
+
   test('other failures still reach the caller', () async {
     error = 'NO_PERMISSION';
     expect(() => TelecomBridge.instance.hangUp('call-1'), throwsA(isA<PlatformException>()));
