@@ -2,6 +2,8 @@
 
 Guidance for coding agents (Codex, Claude Code and others) working in this repository. `CLAUDE.md` only imports this file, so this is the one copy to keep up to date.
 
+**Working on a fork (outside contributors).** Some of this file describes the maintainer's own machine. If you're running on a contributor's fork: "the user" means whoever is running you; skip anything that isn't there for them (`D:\one-spend`, `Images/`, `graphify` and `graphify-out/`, `android/key.properties`, `google-services.json`, `tool/release.ps1`, the companion's release signing); never cut a release, edit `beta/<n>` or `main` directly, or merge anything. Make the change on a `feat/...` or `fix/...` branch of the fork, run the checks under **Commands**, help the user try it on their phone, then open a pull request into the upstream's current `beta/<n>` branch with [CONTRIBUTING.md](CONTRIBUTING.md)'s template filled in. Keep it small and about one thing.
+
 ## What this is
 
 A custom Android default phone app, **One Dialer** (application id `com.syedarhamraza.onedialer`; the Kotlin namespace and channel names stay `com.syedarhamraza.dialer`). The UI is Flutter; a Kotlin layer under `android/` talks to Android's Telecom framework. Android-only (`--platforms android`); `minSdk 29` (needs `RoleManager.ROLE_DIALER`), `compileSdk 37` (required by `permission_handler_android`).
