@@ -52,7 +52,16 @@ Bug reports, translations and pull requests are welcome.
 
 - **Want to translate the app into your language?** Follow [TRANSLATING.md](TRANSLATING.md). No coding needed.
 - **Want to build it or change the code?** Start with [CONTRIBUTING.md](CONTRIBUTING.md). [AGENTS.md](AGENTS.md) is the architecture guide, for people and coding agents alike.
+- **Want to build it with an AI assistant?** See [CONTRIBUTING.md › Vibe coding](CONTRIBUTING.md#vibe-coding-building-with-an-ai-assistant).
 - **Found a security problem?** Report it privately, as described in [SECURITY.md](SECURITY.md), not in an issue.
+
+## Contributors
+
+Thanks to everyone who has helped build One Dialer.
+
+<a href="https://github.com/syedarhamraza/one-dialer/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=syedarhamraza/one-dialer" alt="One Dialer contributors" />
+</a>
 
 ## License
 
