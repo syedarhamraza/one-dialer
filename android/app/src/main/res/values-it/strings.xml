@@ -16,6 +16,7 @@
     <string name="on_hold">In attesa</string>
     <string name="calling_ellipsis">Chiamata in uscita…</string>
     <string name="island_calling">Chiamata</string>
+    <string name="island_on_call">In linea</string>
     <string name="hang_up">Riaggancia</string>
     <string name="missed_call">Chiamata persa</string>
     <plurals name="missed_calls">
