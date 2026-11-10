@@ -131,11 +131,28 @@ Add `--ez private true` to the second command for a hidden number.
 3. Fill in the template. For anything you can see, add before/after screenshots or a short screen recording (with fake numbers).
 4. CI (analyze, tests, debug build) must pass. Keep pull requests small and about one thing; they get reviewed faster.
 
-## Using an AI coding assistant
+## Vibe coding (building with an AI assistant)
 
-That's fine. [AGENTS.md](AGENTS.md) is written for people and agents alike, and Claude Code, Codex and similar tools read it automatically. Work with the `liquid_glass_widgets` package follows that package's own guide; AGENTS.md says where to find it and which of this app's rules come first.
+Welcome, even if you've never written Flutter. If you want a feature for yourself or a bug fixed, an AI coding assistant (Claude Code, Codex, Cursor, Copilot...) can do most of the work. [AGENTS.md](AGENTS.md) is written for people and agents alike, and these tools read it automatically.
 
-You're responsible for every line you submit: run the checks above and try it on a phone. Don't paste real phone numbers, contacts or call logs into a prompt, a log or a commit.
+1. **Say what you'll build.** For anything bigger than a small fix, open a feature request first and tick *I'd like to build this myself*, so we agree on the approach before you spend time on it.
+2. **Set up** with sections 1–3 above: the tools, your fork, and `flutter run` working on your phone. Your assistant can help with this too.
+3. **Open the project folder in your assistant** and start with a prompt like this:
+
+   ```text
+   Read AGENTS.md and CONTRIBUTING.md first. I'm working on my fork of One Dialer.
+   I want: <describe the feature or bug, what you expect to happen>.
+   Make the smallest change that does it, on a new feat/... or fix/... branch.
+   Put any new text in both app_en.arb and app_it.arb.
+   Then run flutter analyze, flutter test and flutter build apk --debug,
+   and tell me how to install it and what to try on my phone.
+   ```
+
+4. **Try it on your phone.** Does it do what you asked? Did anything else break? Tell the assistant what's wrong and repeat. Don't trust "it works" until you've seen it work.
+5. **Ask the assistant to explain the diff** in plain words, and read it yourself. You're responsible for every line you submit.
+6. **Open the pull request** (section 7). Ask the assistant to fill in the template, then check it. Say which tool you used; it helps the review, and it's not held against you.
+
+Don't paste real phone numbers, contacts or call logs into a prompt, a log or a commit. Work with the `liquid_glass_widgets` package follows that package's own guide; AGENTS.md says where to find it and which of this app's rules come first.
 
 ## License
 
