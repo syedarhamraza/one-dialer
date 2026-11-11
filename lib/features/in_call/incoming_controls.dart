@@ -1,8 +1,9 @@
 import 'dart:math' as math;
-import 'dart:ui' show lerpDouble;
+import 'dart:ui' show ImageFilter, TileMode, lerpDouble;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
@@ -57,12 +58,21 @@ class _IncomingControlsState extends State<IncomingControls> {
 
   void _progress(String label, double armed) => _dragged.value = (armed > 0 ? label : null, armed);
 
-  /// Everything but the dragged button fades as it arms.
+  /// Everything but the dragged button fades in step with it. The other ball also blurs as it goes
+  /// (ColorOS 17), except with call screen effects reduced.
   Widget _fading(String? label, {required Widget child}) => ValueListenableBuilder(
     valueListenable: _dragged,
     builder: (context, dragged, child) {
       final (active, armed) = dragged;
-      return Opacity(opacity: active == null || active == label ? 1 : 1 - armed, child: child);
+      final fade = active == null || active == label ? 0.0 : armed;
+      final faded = Opacity(opacity: 1 - fade, child: child);
+      if (label == null) return faded;
+      return ImageFiltered(
+        // Always in the tree, so the ball keeps its state when the blur starts.
+        enabled: fade > 0 && !callFlat(context),
+        imageFilter: ImageFilter.blur(sigmaX: 8 * fade, sigmaY: 8 * fade, tileMode: TileMode.decal),
+        child: faded,
+      );
     },
     child: child,
   );
@@ -268,7 +278,8 @@ class SwipeUpButton extends StatefulWidget {
   /// the global distance left to the top of its travel.
   final void Function(Rect ball, double lift) onTriggered;
 
-  /// How armed the drag is, 0 at rest to 1 at [threshold].
+  /// How far the drag has faded everything else, 0 at rest to 1: the 2-button ball's height over
+  /// 75% of its travel (ColorOS 17), the 1-button ball's over [threshold].
   final ValueChanged<double>? onProgress;
   final bool compact;
   final bool hidden;
@@ -299,6 +310,23 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
   /// Where the finger has taken the ball, relative to its resting place.
   Offset _drag = Offset.zero;
 
+  /// Where the finger is. The 2-button ball eases after it instead of jumping to it, so it starts
+  /// softly and glides into the top of its travel (ColorOS 17 trails the finger by about 40 ms;
+  /// 30 here, as Flutter's own frame of delay adds to it).
+  Offset _target = Offset.zero;
+  Duration _lastTick = Duration.zero;
+  late final Ticker _follow;
+
+  void _chase(Duration elapsed) {
+    final dt = (elapsed - _lastTick).inMicroseconds / Duration.microsecondsPerSecond;
+    _lastTick = elapsed;
+    final next = Offset.lerp(_drag, _target, 1 - math.exp(-dt / .03))!;
+    final arrived = (_target - next).distance < .5;
+    setState(() => _drag = arrived ? _target : next);
+    widget.onProgress?.call(_fade(_drag));
+    if (arrived) _follow.stop();
+  }
+
   /// Scales [_drag]: 1 while held, springing to 0 when let go short.
   late final AnimationController _hold = AnimationController.unbounded(vsync: this, value: 1);
   late final AnimationController _hint = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800));
@@ -313,14 +341,17 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
   Offset get _offset => _drag * math.max(_hold.value, -.08);
 
   /// Only an upward drag arms, so a downward brush never fires.
-  /// How far up the ball can go: ColorOS's released Answer rests about 1.85 diameters up.
-  double get _maxTravel => _threshold * 1.4;
+  /// How far up the ball can go: ColorOS 17's Answer stops 2.08 diameters up, under the finger or let go.
+  double get _maxTravel => _twoWay ? _threshold * 1.4 : SwipeUpButton.size * (widget.compact ? .85 : 1) * 2.08;
 
   bool get _twoWay => widget.onSwipeDown != null;
 
   bool _armedBy(Offset drag) => (_twoWay ? drag.dy.abs() : -drag.dy) >= _threshold;
 
   double _armedFraction(Offset drag) => ((_twoWay ? drag.dy.abs() : -drag.dy) / _threshold).clamp(0.0, 1.0);
+
+  /// What [SwipeUpButton.onProgress] reports.
+  double _fade(Offset drag) => _twoWay ? _armedFraction(drag) : (-drag.dy / (_maxTravel * .75)).clamp(0.0, 1.0);
 
   /// Touched: the ball grows a little under the finger, like a glass button.
   bool _pressed = false;
@@ -332,8 +363,9 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
   @override
   void initState() {
     super.initState();
+    _follow = createTicker(_chase);
     _hold.addListener(() {
-      if (!_dragging && !_fired) widget.onProgress?.call(_armedFraction(_offset));
+      if (!_dragging && !_fired) widget.onProgress?.call(_fade(_offset));
     });
   }
 
@@ -355,6 +387,9 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
   void _fire({bool down = false}) {
     if (_fired) return;
     _fired = true;
+    _follow.stop();
+    // A quick flick can let go before the ball has caught up: nothing else stays half faded.
+    widget.onProgress?.call(1);
     _syncHint();
     HapticFeedback.heavyImpact();
     final box = _ball.currentContext?.findRenderObject() as RenderBox?;
@@ -370,7 +405,7 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
 
   void _onStart(DragStartDetails _) {
     if (_fired) return;
-    _drag = _offset;
+    _target = _drag = _offset;
     _hold
       ..stop()
       ..value = 1;
@@ -382,19 +417,27 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
     if (_fired) return;
     // Straight up only, a little past the threshold; downward can't act, so it only gives a
     // little and never slides under the pill below.
-    final limited = Offset(0, (_drag.dy + d.delta.dy).clamp(-_maxTravel, _twoWay ? _maxTravel : 16.0));
-    if (_armedBy(_drag) != _armedBy(limited)) HapticFeedback.selectionClick();
-    setState(() => _drag = limited);
-    widget.onProgress?.call(_armedFraction(_drag));
+    final limited = Offset(0, (_target.dy + d.delta.dy).clamp(-_maxTravel, _twoWay ? _maxTravel : 16.0));
+    if (_armedBy(_target) != _armedBy(limited)) HapticFeedback.selectionClick();
+    _target = limited;
+    if (_twoWay || MediaQuery.disableAnimationsOf(context)) {
+      setState(() => _drag = limited);
+      widget.onProgress?.call(_fade(_drag));
+    } else if (!_follow.isActive) {
+      _lastTick = Duration.zero;
+      _follow.start();
+    }
   }
 
   void _onEnd(DragEndDetails d) {
     if (_fired) return;
-    if (_armedBy(_drag)) return _fire(down: _drag.dy > 0);
+    // The finger decides, not the ball trailing it.
+    if (_armedBy(_target)) return _fire(down: _target.dy > 0);
     _springBack(d.velocity.pixelsPerSecond);
   }
 
   void _springBack([Offset velocity = Offset.zero]) {
+    _follow.stop();
     setState(() => _dragging = false);
     _syncHint();
     if (MediaQuery.disableAnimationsOf(context) || _drag == Offset.zero) {
@@ -411,6 +454,7 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
 
   @override
   void dispose() {
+    _follow.dispose();
     _hold.dispose();
     _hint.dispose();
     super.dispose();
@@ -449,7 +493,10 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
           onPointerUp: (_) => _press(false),
           onPointerCancel: (_) {
             _press(false);
-            if (!_fired) _drag = Offset.zero;
+            if (!_fired) {
+              _follow.stop();
+              _target = _drag = Offset.zero;
+            }
           },
           child: SizedBox(
             width: size + 40,
@@ -552,11 +599,12 @@ class _SwipeUpButtonState extends State<SwipeUpButton> with TickerProviderStateM
     return Transform.translate(
       offset: offset,
       child: AnimatedScale(
-        scale: _pressed && !_fired ? 1.08 : 1,
-        duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 180),
+        // ColorOS 17's 2-button ball grows 11.5% under the finger in ~120 ms, and no more as it arms.
+        scale: !_pressed || _fired ? 1 : (_twoWay ? 1.08 : 1.115),
+        duration: reduceMotion ? Duration.zero : Duration(milliseconds: _pressed && !_twoWay ? 120 : 180),
         curve: _pressed ? Curves.easeOutCubic : Curves.easeOutBack,
         child: Transform.scale(
-          scale: 1 + .1 * armed,
+          scale: _twoWay ? 1 + .1 * armed : 1,
           child: Opacity(
             opacity: widget.hidden ? 0 : 1,
             child: KeyedSubtree(

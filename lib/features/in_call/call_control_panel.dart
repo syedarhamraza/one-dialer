@@ -379,6 +379,9 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
         ),
       ),
     );
+    // ColorOS 17: the End pill is a little smaller than the row it sits in, 90% of the circles' height
+    // and 87.5% of the space between them (measured off a recording).
+    final endHeight = actionSize * .9;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -428,69 +431,73 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                     child: Column(
                       children: [
                         LayoutBuilder(
-                          builder: (context, box) => Align(
-                            alignment: Alignment.topCenter,
-                            child: AnimatedOpacity(
-                              key: widget.endKey,
-                              opacity: widget.hideEnd ? 0 : (_ending ? .55 : 1),
-                              // Only ending dims gradually; the pill appears at once when the Answer ball lands on it.
-                              duration: _ending ? const Duration(milliseconds: 220) : Duration.zero,
-                              // The red glow sits outside the press below, whose clip would cut it off.
-                              child: AnimatedContainer(
-                                duration: MediaQuery.disableAnimationsOf(context)
-                                    ? Duration.zero
-                                    : const Duration(milliseconds: 280),
-                                curve: Curves.easeInOutCubic,
-                                decoration: ShapeDecoration(
-                                  shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(actionSize / 2)),
-                                  shadows: solidBody(
-                                    endRed,
-                                    RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(actionSize / 2)),
-                                    glow: _ending ? 0 : .3,
-                                    flat: callFlat(context),
-                                  ).shadows,
-                                ),
-                                // Solid red, but with the glass package's press: glow and stretch, no glass body.
-                                child: GlassButton.custom(
-                                  style: GlassButtonStyle.transparent,
-                                  onTap: _noTap,
-                                  excludeFromSemantics: true,
-                                  canRequestFocus: false,
-                                  // Below full call screen effects: no glass lighting on press.
-                                  glowColor: callFlat(context) ? Colors.transparent : null,
-                                  ambientBaseLight: callFlat(context) ? 0 : null,
-                                  shape: LiquidRoundedRectangle(borderRadius: actionSize / 2),
-                                  child: AnimatedContainer(
-                                    // While ending, the pill draws in to a circle.
-                                    duration: MediaQuery.disableAnimationsOf(context)
-                                        ? Duration.zero
-                                        : const Duration(milliseconds: 280),
-                                    curve: Curves.easeInOutCubic,
-                                    width: _ending ? actionSize : box.maxWidth,
-                                    height: actionSize,
-                                    // ColorOS 17's tomato red, lit from below like the other buttons, with
-                                    // squircle ends like the keys.
-                                    foregroundDecoration: callGlassGlow(
-                                      context,
-                                      RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(actionSize / 2)),
+                          builder: (context, box) => SizedBox(
+                            height: actionSize,
+                            child: Center(
+                              child: AnimatedOpacity(
+                                key: widget.endKey,
+                                opacity: widget.hideEnd ? 0 : (_ending ? .55 : 1),
+                                // Only ending dims gradually; the pill appears at once when the Answer ball lands on it.
+                                duration: _ending ? const Duration(milliseconds: 220) : Duration.zero,
+                                // The red glow sits outside the press below, whose clip would cut it off.
+                                child: AnimatedContainer(
+                                  duration: MediaQuery.disableAnimationsOf(context)
+                                      ? Duration.zero
+                                      : const Duration(milliseconds: 280),
+                                  curve: Curves.easeInOutCubic,
+                                  decoration: ShapeDecoration(
+                                    shape: RoundedSuperellipseBorder(
+                                      borderRadius: BorderRadius.circular(endHeight / 2),
                                     ),
-                                    decoration: glassBody(
+                                    shadows: solidBody(
                                       endRed,
-                                      RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(actionSize / 2)),
-                                      glow: 0,
+                                      RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(endHeight / 2)),
+                                      glow: _ending ? 0 : .3,
                                       flat: callFlat(context),
-                                    ),
-                                    child: Semantics(
-                                      label: context.l10n.endCall,
-                                      child: IconButton(
-                                        iconSize: 46,
-                                        style: IconButton.styleFrom(
-                                          foregroundColor: Colors.white,
-                                          disabledForegroundColor: Colors.white,
-                                          shape: const StadiumBorder(),
+                                    ).shadows,
+                                  ),
+                                  // Solid red, but with the glass package's press: glow and stretch, no glass body.
+                                  child: GlassButton.custom(
+                                    style: GlassButtonStyle.transparent,
+                                    onTap: _noTap,
+                                    excludeFromSemantics: true,
+                                    canRequestFocus: false,
+                                    // Below full call screen effects: no glass lighting on press.
+                                    glowColor: callFlat(context) ? Colors.transparent : null,
+                                    ambientBaseLight: callFlat(context) ? 0 : null,
+                                    shape: LiquidRoundedRectangle(borderRadius: endHeight / 2),
+                                    child: AnimatedContainer(
+                                      // While ending, the pill draws in to a circle.
+                                      duration: MediaQuery.disableAnimationsOf(context)
+                                          ? Duration.zero
+                                          : const Duration(milliseconds: 280),
+                                      curve: Curves.easeInOutCubic,
+                                      width: _ending ? endHeight : box.maxWidth * .875,
+                                      height: endHeight,
+                                      // ColorOS 17's tomato red, lit from below like the other buttons, with
+                                      // squircle ends like the keys.
+                                      foregroundDecoration: callGlassGlow(
+                                        context,
+                                        RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(endHeight / 2)),
+                                      ),
+                                      decoration: glassBody(
+                                        endRed,
+                                        RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(endHeight / 2)),
+                                        glow: 0,
+                                        flat: callFlat(context),
+                                      ),
+                                      child: Semantics(
+                                        label: context.l10n.endCall,
+                                        child: IconButton(
+                                          iconSize: 46,
+                                          style: IconButton.styleFrom(
+                                            foregroundColor: Colors.white,
+                                            disabledForegroundColor: Colors.white,
+                                            shape: const StadiumBorder(),
+                                          ),
+                                          onPressed: _ending ? null : _endCall,
+                                          icon: const CallGlyph(Icons.call_end_rounded),
                                         ),
-                                        onPressed: _ending ? null : _endCall,
-                                        icon: const CallGlyph(Icons.call_end_rounded),
                                       ),
                                     ),
                                   ),
