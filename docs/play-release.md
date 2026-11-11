@@ -10,8 +10,9 @@ Application id `com.syedarhamraza.onedialer` (can't change once on Play). The Ko
    ```
    Copy `android/key.properties.example` to `android/key.properties` and fill it in. Without it, release builds are signed with the debug key; `flutter build` allows that, the release script refuses.
 2. **Play App Signing**: accept it when creating the app (Google holds the app signing key, so a lost upload key can be reset).
-3. **Privacy policy**: `docs/privacy-policy.md` is published by the website repo ([syedarhamraza.github.io](https://github.com/syedarhamraza/syedarhamraza.github.io), `content/one-dialer-privacy-policy.md`) at `AppInfo.privacyPolicyUrl`. After changing the policy, copy it there and push.
-4. **Firebase Crashlytics**: Firebase project for One Dialer, Android app `com.syedarhamraza.onedialer`, `google-services.json` in `android/app/` (committed; it holds no secrets). Without the file the Gradle plugins are skipped and the app runs with crash reporting off. Run `npx firebase-tools login` once so the release script can upload symbols.
+3. **Privacy policy**: `docs/privacy-policy.md` is published at `AppInfo.privacyPolicyUrl` by this repo's website (`site/`, `.github/workflows/pages.yml`): merging a change to it redeploys the page.
+4. **Firebase Crashlytics**: Firebase project for One Dialer, Android app `com.syedarhamraza.onedialer`, `google-services.json` in `android/app/` (git-ignored, per developer). Without the file the Gradle plugins are skipped and the app runs with crash reporting off. Run `npx firebase-tools login` once so the release script can upload symbols from the PC.
+5. **Release pipeline** (GitHub Actions: Play upload, recorder APK, website): [pipeline-setup.md](pipeline-setup.md), once, when the repo goes public.
 
 ## Versioning
 
@@ -31,21 +32,33 @@ Before the first production (non-beta) release, work through [beta-only.md](beta
 
 For beta 5 diagnostics, follow [the diagnostics verification guide](lag-diagnostics.md) before uploading. Publish the updated privacy policy and review the Play Data safety declarations for diagnostics/performance data. Filter Crashlytics **non-fatal** issues for `SevereFrameDelay`, `NativeMainStall`, `DartStall`, `RenderStall`, `InputStall`, and `UserReportedLag`; the crash-free release chart is not a lag metric. Do not include the diagnostics integration-test entrypoint or `LAG_DIAGNOSTICS_TEST_HOOKS` in a release command. Version bump, signing, upload, and publishing remain the release workflow below.
 
-From a clean tree on a `release/<version>` branch (main only changes through PRs):
+### With the pipeline (once [pipeline-setup.md](pipeline-setup.md) is done)
 
-| You want to… | Command |
-|---|---|
-| First upload (1.0.0-alpha.1 is already in pubspec) | `./tool/release.ps1 -Rebuild` |
-| Next alpha | `./tool/release.ps1 -Pre alpha` |
-| Move to open beta | `./tool/release.ps1 -Pre beta` |
-| Release | `./tool/release.ps1 -Promote` |
-| Bug fix after release | `./tool/release.ps1 -Bump patch` |
+1. Copy-edit the draft GitHub release "Next release" (Release Drafter lists merged pull requests there) into the lines users should read, one `- ` line each.
+2. Actions › **Release** › Run workflow on the beta branch: pick the version step and the Play track.
+3. Approve it.
 
-The script runs analyze and tests, bumps pubspec, adds a Changelog entry and waits for you to write it, builds an obfuscated `app-release.aab`, uploads the Dart symbols to Crashlytics, commits `chore(release): …` and tags `v<name>`. `./tool/release.ps1 -Help` lists every option.
+`.github/workflows/release.yml` then runs the script below with the draft's lines as the notes, pushes the release commit and tag, uploads the bundle to Play (testing tracks go out, production stays a draft) with the notes as "What's new", publishes a GitHub release with the recorder APK and the symbols, and the website redeploys with the notes. A run that fails after the push is repeated with `rebuild`. Details and troubleshooting: [pipeline-setup.md](pipeline-setup.md).
 
-Keep `symbols/<version>/` (git-ignored): it decodes that release's crashes (`flutter symbolize -i trace.txt -d symbols/<version>/app.android-arm64.symbols`; exception messages via `symbols/<version>.obfuscation-map.json`).
+### From the PC
 
-Then upload `build/app/outputs/bundle/release/app-release.aab`, push the branch with `git push --follow-tags`, and open the PR. The script also writes the release notes to the website (`public/one-dialer/changelog.json`) for Software update: commit and push the website too.
+From a clean tree on the beta branch:
+
+| You want to… | Command | Pipeline's version step |
+|---|---|---|
+| Next alpha | `./tool/release.ps1 -Pre alpha` | `next-alpha` |
+| Next beta (or alpha → beta) | `./tool/release.ps1 -Pre beta` | `next-beta` |
+| Release | `./tool/release.ps1 -Promote` | `promote` |
+| Bug fix after release | `./tool/release.ps1 -Bump patch` | `patch` |
+| Same name, new build number (re-upload) | `./tool/release.ps1 -Rebuild` | `rebuild` |
+
+The script runs analyze and tests, bumps pubspec, adds a Changelog entry and waits for you to write it (or takes the `- ` lines of `-NotesFile <file>`), writes that entry to `site/public/changelog.json` for Software update and the website, builds an obfuscated `app-release.aab`, uploads the Dart symbols to Crashlytics, builds the recorder, commits `chore(release): …` and tags `v<name>`. `./tool/release.ps1 -Help` lists every option.
+
+Then upload `build/app/outputs/bundle/release/app-release.aab` and push with `git push --follow-tags`; the push redeploys the website.
+
+Keep `symbols/<version>/` (git-ignored; the pipeline attaches it to the GitHub release as `symbols-<name>-<build>.zip`): it decodes that release's crashes (`flutter symbolize -i trace.txt -d symbols/<version>/app.android-arm64.symbols`; exception messages via `symbols/<version>.obfuscation-map.json`).
+
+The recorder is downloaded from `https://github.com/syedarhamraza/one-dialer/releases/latest/download/one-dialer-recorder.apk`.
 
 ## Closed testing
 

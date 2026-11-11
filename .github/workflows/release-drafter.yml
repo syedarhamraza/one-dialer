@@ -1,0 +1,33 @@
+name: Release Drafter
+
+# Keeps a draft GitHub release ("Next release") listing the pull requests merged into the beta
+# branch; the Release workflow turns its lines into the release notes. Rules: ../release-drafter.yml.
+on:
+  push:
+    branches: ["beta/**"]
+  # Labels pull requests by branch name. pull_request_target so it also works on forks' pull
+  # requests; safe here because the job never checks out or runs their code.
+  pull_request_target:
+    types: [opened, reopened, synchronize, edited]
+
+permissions:
+  contents: read
+
+jobs:
+  draft:
+    # Not on the release commit: the Release workflow is still reading the draft then.
+    if: github.event_name == 'push' && !startsWith(github.event.head_commit.message, 'chore(release)')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - uses: release-drafter/release-drafter@978bb0b30c5ee8cdd332ced253758157150d43f0 # v7.10.0
+
+  label:
+    if: github.event_name == 'pull_request_target'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: release-drafter/release-drafter/autolabeler@978bb0b30c5ee8cdd332ced253758157150d43f0 # v7.10.0
