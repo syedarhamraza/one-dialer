@@ -138,7 +138,8 @@ jobs:
         env:
           NAME: ${{ steps.build.outputs.name }}
           CODE: ${{ steps.build.outputs.code }}
-          DRAFT: ${{ steps.draft.outputs.id }}
+          # A rebuild reuses its version's notes, so the draft still holds the next version's.
+          DRAFT: ${{ inputs.kind != 'rebuild' && steps.draft.outputs.id || '' }}
         run: |
           tag="v$NAME"
           cp companion/app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/one-dialer-recorder.apk"
