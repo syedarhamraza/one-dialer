@@ -34,8 +34,13 @@ void main() {
         final nav = find.byType(OneUIFloatingNavBar);
         Finder tab(IconData icon) => find.descendant(of: nav, matching: find.byIcon(icon));
 
-        // The keypad opens with the app; hide it to reach the list.
-        await _back(tester);
+        // Launched from the Contacts icon the app opens on Contacts: go to Calls.
+        if (tab(Icons.call_outlined).evaluate().isNotEmpty) {
+          await tester.tap(tab(Icons.call_outlined));
+          await _settle(tester);
+        }
+        // Hide the keypad to reach the list, only if it's up: Back with nothing open leaves the app.
+        if (find.byTooltip('Show keypad').evaluate().isEmpty) await _back(tester);
         await measure('calls_scroll', () => _flings(tester, find.byType(CustomScrollView).first));
         await measure('call_details', () async {
           await tester.tap(find.byTooltip('Call details').first);
