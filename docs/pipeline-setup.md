@@ -106,7 +106,7 @@ One service account does both jobs: uploading to Play and sending crash symbols 
 2. **APIs & Services > Library** > search "Google Play Android Developer API" > **Enable**.
 3. **IAM & Admin > Service Accounts > Create service account**. Name: `play-release`. Role: **Firebase Crashlytics Admin**. Done.
 4. Open the new account > **Keys > Add key > Create new key > JSON**. A file downloads; say it is `C:\Users\YOU\Downloads\play-release.json`. Copy the account's email (`play-release@....iam.gserviceaccount.com`).
-5. [Play Console](https://play.google.com/console) > **Users and permissions > Invite new users**. Email: the service account's. **App permissions** > add One Dialer > tick **Release apps to testing tracks** and **Release to production, exclude devices, and use Play App Signing** (the second is what lets a production build be uploaded as a draft). Invite user.
+5. [Play Console](https://play.google.com/console) > **Users and permissions > Invite new users**. Email: the service account's. **App permissions** > add One Dialer > under Releases tick **Release apps to testing tracks**, and the permission that starts with **Release to production** (its wording changes; it is what lets a production build be uploaded as a draft, and can be added later). Invite user.
 
 Check: the account shows as Active under Users and permissions. Play can take from a few minutes to a day to honour a new service account; if step 8 fails with "The caller does not have permission", that is the reason.
 
@@ -156,7 +156,7 @@ The `protect main and beta` ruleset blocks direct pushes, and the release commit
    Remove-Item "$env:TEMP\od-release", "$env:TEMP\od-release.pub"
    ```
 
-3. GitHub > **Settings > Rules > Rulesets > protect main and beta > Bypass list > Add bypass > Deploy keys**. Mode: Always. Save.
+3. GitHub > **Settings > Rules > Rulesets > protect main and beta > Bypass list > Add bypass > Deploy keys**. Mode: Always allow. Save changes. (Do this one by hand: coding agents are blocked from adding a bypass to branch protection.)
 
 Check: `gh api repos/syedarhamraza/one-dialer/rulesets --jq '.[0].id'` gives an id; `gh api repos/syedarhamraza/one-dialer/rulesets/<id> --jq '.bypass_actors[].actor_type'` lists `DeployKey`.
 
