@@ -38,7 +38,7 @@ class VersionMark extends StatelessWidget {
 }
 
 /// Glass letters: the glyphs are drawn once, then the glass is painted inside them (srcIn), so
-/// the frosted body, the glossy streak and the edge light stay within the letters. A soft drop
+/// the lit body, the soft sheen and the edge light stay within the letters. A soft drop
 /// shadow and a green glow sit behind.
 class _GlassTextPainter extends CustomPainter {
   _GlassTextPainter(this.text, this.channel, this.size, this.light);
@@ -161,7 +161,7 @@ class _GlassTextPainter extends CustomPainter {
       canvas.restore();
     }
 
-    // Frosted body: bright at the top, clearer in the middle, catching light at the bottom.
+    // Body: glass lit from above, white at the top melting through mint into clear green.
     inside(
       () => canvas.drawRect(
         r,
@@ -170,34 +170,25 @@ class _GlassTextPainter extends CustomPainter {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: light
-                ? const [Color(0xF26FD99A), Color(0xE62FAE52), Color(0xE61E8A43), Color(0xF24CC77C)]
-                : const [Color(0x9EFFFFFF), Color(0x47E8FFF0), Color(0x2E8BF0B0), Color(0x7A8BF0B0)],
-            stops: const [0, .4, .72, 1],
+                ? const [Color(0xFF7FE0A6), Color(0xFF2FAE52), Color(0xFF1E8A43), Color(0xFF14703A)]
+                : const [Color(0xFFFFFFFF), Color(0xEBE8FFF0), Color(0xA68BF0B0), Color(0x592FAE52)],
+            stops: const [.12, .42, .74, 1],
           ).createShader(r),
       ),
     );
-    // Glossy streak sloping across the upper part, with a crisp line along its top.
-    inside(() {
-      canvas.translate(r.center.dx, r.top + r.height * .3);
-      canvas.rotate(-.14);
-      final band = Rect.fromLTWH(-r.width * .8, 0, r.width * 1.6, r.height * .22);
-      canvas.drawRect(
-        band,
+    // A soft sheen crossing the letters on a slant.
+    inside(
+      () => canvas.drawRect(
+        r,
         Paint()
           ..shader = const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xE6FFFFFF), Color(0x80FFFFFF), Color(0x1AFFFFFF), Color(0x00FFFFFF)],
-            stops: [0, .18, .6, 1],
-          ).createShader(band),
-      );
-      canvas.drawRect(
-        Rect.fromLTWH(band.left, -r.height * .012, band.width, r.height * .018),
-        Paint()
-          ..color = Colors.white
-          ..maskFilter = MaskFilter.blur(BlurStyle.normal, r.height * .004),
-      );
-    });
+            begin: Alignment(-1, -.5),
+            end: Alignment(1, .5),
+            colors: [Color(0x00FFFFFF), Color(0x73FFFFFF), Color(0x00FFFFFF)],
+            stops: [.4, .54, .68],
+          ).createShader(r),
+      ),
+    );
     // A cooler shade low on the right, where the glass turns from the light.
     inside(
       () => canvas.drawRect(
