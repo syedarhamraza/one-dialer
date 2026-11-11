@@ -239,13 +239,22 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     });
     // The ball takes its time to spring into End, longest for the 1-button swiped up, from furthest away.
     _fly.duration = Duration(
-      milliseconds: !_oneButton ? 1000 : (DialerPrefs.instance.answerDirection.value == 'up' ? 1100 : 900),
+      milliseconds: !_oneButton ? 800 : (DialerPrefs.instance.answerDirection.value == 'up' ? 1100 : 900),
     );
-    _springIn = GlassSpringCurve(GlassSpring.bouncy(duration: _fly.duration! * .6), _fly.duration!);
-    // The 2-button ball drops ahead of sliding across, so it curves in from above instead of a straight line.
-    _springDrop = _oneButton
-        ? _springIn
-        : GlassSpringCurve(GlassSpring.bouncy(duration: _fly.duration! * .35), _fly.duration!);
+    if (_oneButton) {
+      _springIn = GlassSpringCurve(GlassSpring.bouncy(duration: _fly.duration! * .6), _fly.duration!);
+      _springDrop = _springSize = _springIn;
+    } else {
+      // Fitted to a 120 fps ColorOS 17 recording: it drops fast and overshoots 3% before easing back,
+      // slides across late with no overshoot (so it curves in from above), and is a pill by ~280 ms.
+      Curve spring(double stiffness, double ratio) => GlassSpringCurve(
+        SpringDescription.withDampingRatio(mass: 1, stiffness: stiffness, ratio: ratio),
+        _fly.duration!,
+      );
+      _springIn = spring(90, 1);
+      _springDrop = spring(142, .75);
+      _springSize = spring(290, 1);
+    }
     _rise.forward(from: 0);
     // If Telecom never connects, don't leave the ball hanging.
     _ballTimeout = Timer(const Duration(seconds: 4), _land);
@@ -287,12 +296,15 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     return MatrixUtils.transformRect(stack!.getTransformTo(null)..invert(), global);
   }
 
-  // The ball springs into End on the glass package's bouncy spring over the whole flight: a soft,
-  // unhurried overshoot past the pill's size and place, then settling. It stays green for the first
-  // ~120 ms, then crossfades to red (the handset tipping over meanwhile).
+  // Across, down and size each on their own spring (see [_answered]). The 1-button ball stays green
+  // for the first ~120 ms, then crossfades to red (the handset tipping over meanwhile).
   Curve _springIn = Curves.linear;
   Curve _springDrop = Curves.linear;
+  Curve _springSize = Curves.linear;
   static const _turn = Interval(.14, .43, curve: Curves.easeInOut);
+
+  // The 2-button ball tips its handset over the first 320 ms.
+  static const _tip = Interval(0, .4, curve: Curves.easeInOut);
 
   Widget _flyingBall() {
     final from = _localRect(_ball!.shift(Offset(0, -_lift * Curves.easeOutCubic.transform(_rise.value))));
@@ -312,16 +324,24 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
           lerpDouble(from.center.dx, to.center.dx, move)!,
           lerpDouble(from.center.dy, to.center.dy, _springDrop.transform(t))!,
         ),
-        width: lerpDouble(from.width, to.width, move)!,
-        height: lerpDouble(from.height, to.height, move)!,
+        width: lerpDouble(from.width, to.width, _springSize.transform(t))!,
+        height: lerpDouble(from.height, to.height, _springSize.transform(t))!,
       );
     }
-    // Green crossfades to End's red (not a colour tween): half way both layers are half see-through,
-    // the muddy amber of ColorOS's morph. It lands as the pill itself.
-    final red = _turn.transform(t);
+    // Green crossfades to End's red (not a colour tween), so mid-way it is see-through. It lands as
+    // the pill itself. The 2-button ball follows the recording: green gone by 80 ms (the ball almost
+    // clear around 70 ms), red half there at 110 ms and solid at 330 ms.
+    final ms = t * _fly.duration!.inMilliseconds;
+    final red = _oneButton
+        ? _turn.transform(t)
+        : ms < 110
+        ? .5 * ((ms - 50) / 60).clamp(0.0, 1.0)
+        : .5 + .5 * math.pow(((ms - 110) / 220).clamp(0.0, 1.0), 1.5).toDouble();
+    final green = _oneButton ? 1 - red : 1 - (ms / 80).clamp(0.0, 1.0);
+    final tip = _oneButton ? red : _tip.transform(t);
     // The same shared finish as the End pill, so the hand-off on landing is invisible.
     final shape = RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(rect.shortestSide / 2));
-    final iconSize = lerpDouble(from.shortestSide * .52, 46, red)!;
+    final iconSize = lerpDouble(from.shortestSide * .52, 46, tip)!;
     return Positioned.fromRect(
       rect: rect,
       child: IgnorePointer(
@@ -334,7 +354,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
             alignment: Alignment.center,
             children: [
               Opacity(
-                opacity: 1 - red,
+                opacity: green,
                 child: DecoratedBox(decoration: glassBody(answerGreen, shape, flat: callFlat(context))),
               ),
               Opacity(
@@ -344,11 +364,11 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
               // Our hang-up glyph is the handset turned 135°, so the handset simply tips over (growing to
               // CallGlyph's hang-up size) and lands already as End's icon.
               Transform.rotate(
-                angle: 3 * math.pi / 4 * red,
+                angle: 3 * math.pi / 4 * tip,
                 child: CallGlyph(
                   Icons.call_rounded,
                   color: Colors.white,
-                  size: iconSize * lerpDouble(1, CallGlyph.tipGrowth, red)!,
+                  size: iconSize * lerpDouble(1, CallGlyph.tipGrowth, tip)!,
                 ),
               ),
             ],

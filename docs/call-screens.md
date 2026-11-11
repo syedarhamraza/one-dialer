@@ -63,28 +63,32 @@ act, with a "Decline with SMS" pill underneath. They're finished like
 the connected screen: the balls take the End pill's look (the shared bottom-lit
 `solidBody`/`solidGlow` finish, a glow that brightens as the drag arms) in End's red
 and `answerGreen`, and the pill is a frosted `CallBody` with the same glass
-press. While one is dragged,
-the other button and the pill fade out as it arms.
+press. The 2-button motion below was measured per frame off a 120 fps ColorOS 17 recording
+(`Images/call_animation.mp4`, local only). While one is dragged,
+the other button and the pill fade out in a straight line with the ball's height, gone at 75% of
+its travel; the other ball also blurs as it goes (up to 8 px, not with call screen effects reduced).
 
-- Release at least `threshold` (96 px) up to act. The ball moves only vertically (sideways is ignored), up to 1.3× the threshold, and grows and glows as it arms.
-- Touching a ball grows it to 108% (a glass-button press); it settles back on release. Taps never act.
-- **Answer → End** (timed frame by frame off a ColorOS 17 recording): the released Answer ball
-  glides on up to the top of its travel (1.4× the threshold, about 1.85 diameters; 170 ms,
+- Release at least `threshold` (96 px) up to act. The ball moves only vertically (sideways is ignored), up to 2.08 diameters, and glows as it arms.
+- The 2-button ball eases after the finger (an exponential follow, 30 ms time constant, on a `Ticker`), so it starts softly and glides into the top of its travel. The finger's position, not the trailing ball's, decides whether a release acts. Reduced motion and the 1-button ball follow the finger directly.
+- Touching a ball grows it to 111.5% in 120 ms (the 1-button ball to 108%); it settles back on release. Taps never act.
+- **Answer → End**: an Answer ball released short of the top
+  glides on up to it (170 ms,
   ease-out) and waits there until Telecom connects. Then the session flies it into the End pill
-  in 1 s (the 1-button one in 900 ms) on the glass package's bouncy spring (the 1-button ball's too), dropping ahead of
-  sliding across so it curves in from above (the 1-button one goes straight): it
-  stretches into the pill as it goes, softly overshooting its size and place, then settles. It stays green for the first
-  14%, then crossfades (two stacked layers, not a colour tween, so mid-way it reads as a
-  see-through amber) to End's red by 43%, while the
-  handset tips over 135°; End's hang-up glyph then fades in over it before the handset fades out
-  underneath (so the icon never dims or jumps on landing). The ball wears the End
+  in 800 ms on three springs: down on stiffness 142 at damping ratio 0.75 (82% of the way at
+  200 ms, 3% past the pill at 400 ms, then easing back), across on a critically damped 90 (57% at
+  200 ms, no overshoot, so it curves in from above), and circle to pill on a critically damped 290
+  (done by about 280 ms). Its green fades out over the first 80 ms and End's red fades in from
+  50 ms (half at 110 ms, solid at 330 ms; two stacked layers, not a colour tween, so around
+  70 ms the ball is almost see-through), while the
+  handset tips over 135° in the first 320 ms. The 1-button ball keeps the glass package's bouncy
+  spring over 900 ms (1.1 s swiped up), going straight and softly overshooting its size and place,
+  green for the first 14% and red by 43%. The ball wears the End
   pill's finish the whole way (the shared `solidBody`/`solidGlow`, squircle shape), and the
   connected controls fade in over 150 ms as it flies. The real pill stays hidden until it lands.
   If the call never connects, the ball is dropped after 4 s. Answering from the notification, or
   with reduced motion on, skips the flight.
 - Anything shorter springs back on `GlassSpring.snappy`, carrying a third of the fling, wobbling at most 8% past rest (never through to the other side). Downward drags give only 16 px.
 - Taps never answer or decline.
-- The button grows and glows as it arms.
 - A haptic fires when you cross a threshold.
 - A cancelled pointer resets the offset before release handling runs.
 - While idle, a dash above each button drifts up and fades (staggered). These loops stop while dragging and under reduced motion. Because
@@ -122,7 +126,7 @@ The header sits slightly above the centre of the space the controls leave.
 - **Row**: Mute, Hold, Note (or Merge), Add call.
 - **Third slot**: Note on a single call. It opens a floating sheet over the call that saves as you type, so the note survives the other side hanging up. Notes are stored in `DialerPrefs` as `call_note_<number>_<millis>`, and Recents call details show each note under the logged call it was taken during. The slot becomes Merge once two calls can merge.
 - **Icons** are 46% of the circle. Dial pad uses `DialPadGlyph`, ColorOS's 3×4 grid of 12 dots (Material's dialpad has 10).
-- **End call**: a squircle-ended tomato-red pill, lit from below (`solidBody`), with a soft glow. Its press comes from a `GlassButton.custom` in `GlassButtonStyle.transparent` (the package's glow and stretch, no glass body). Once tapped it draws in to a circle and dims. If Telecom hasn't ended the call within 3 s, it becomes tappable again.
+- **End call**: a squircle-ended tomato-red pill, lit from below (`solidBody`), with a soft glow. As on ColorOS 17 it is a little smaller than its row: 90% of the circles' height, centred on them, and 87.5% of the space between Speaker and Dial pad. Its press comes from a `GlassButton.custom` in `GlassButtonStyle.transparent` (the package's glow and stretch, no glass body). Once tapped it draws in to a circle and dims. If Telecom hasn't ended the call within 3 s, it becomes tappable again.
 - **Entrance**: when the connected or dialing controls appear, the action row and the bottom row fade and rise 16 px, staggered (520 ms total). Reduced motion skips it.
 - **Header** (ColorOS 17):
   - Name 32 px bold, then the number and the city on lines of their own.

@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:dialer/app/layout.dart';
 import 'package:dialer/features/in_call/in_call_screen.dart';
+import 'package:dialer/features/in_call/incoming_controls.dart';
 import 'package:dialer/features/in_call/call_screen_widgets.dart';
 import 'package:dialer/widgets/one_ui_floating_modal.dart';
 import 'package:dialer/theme/one_ui_theme.dart';
@@ -145,6 +146,8 @@ void main() {
     expect(nativeCalls.where((c) => c.method == 'answer'), hasLength(1));
     final ball = find.byKey(const ValueKey('answer-flight'));
     expect(ball, findsOneWidget);
+    // Let it glide to the top of its travel, where it waits for Telecom.
+    await tester.pump(const Duration(milliseconds: 300));
     final released = tester.getRect(ball);
 
     tester.binding.defaultBinaryMessenger.handlePlatformMessage(
@@ -162,21 +165,58 @@ void main() {
     // Lay out the connected controls, then start the flight clock.
     await tester.pump();
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 280));
-    double endOpacity() => tester
-        .widget<AnimatedOpacity>(find.ancestor(of: control('End call'), matching: find.byType(AnimatedOpacity)).first)
-        .opacity;
-    // Mid-flight: the ball has left where it was let go, and the real pill waits for it.
-    expect(tester.getRect(ball), isNot(released));
-    expect(endOpacity(), 0);
+    // Small steps: the ball aims at the End pill's last painted place, which rises in as it flies.
+    Future<void> fly(int ms) async {
+      for (var i = 0; i < ms; i += 25) {
+        await tester.pump(const Duration(milliseconds: 25));
+      }
+    }
 
-    // The flight has landed within about a second.
-    for (var i = 0; i < 12; i++) {
+    await fly(200);
+    final end = find.ancestor(of: control('End call'), matching: find.byType(AnimatedOpacity)).first;
+    double endOpacity() => tester.widget<AnimatedOpacity>(end).opacity;
+    final to = tester.getRect(end);
+    double down() => (tester.getRect(ball).center.dy - released.center.dy) / (to.center.dy - released.center.dy);
+    double across() => (tester.getRect(ball).center.dx - released.center.dx) / (to.center.dx - released.center.dx);
+    // 200 ms in, as in the ColorOS 17 recording: most of the way down, about half way across (it
+    // curves in from above), and the real pill waits for it.
+    expect(down(), closeTo(.82, .05));
+    expect(across(), closeTo(.57, .05));
+    expect(endOpacity(), 0);
+    // It dips just past the pill (3%) and eases back; across never overshoots.
+    await fly(200);
+    expect(down(), inInclusiveRange(1.0, 1.05));
+    expect(across(), lessThan(1));
+
+    // The flight has landed within 800 ms.
+    for (var i = 0; i < 5; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
     expect(ball, findsNothing);
     expect(endOpacity(), 1);
     expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('dragging Answer fades Decline and the SMS pill in step with the ball', (tester) async {
+    await open(tester);
+    await emit(tester, [call('ringing')]);
+    final answer = find.byKey(const ValueKey('swipe-Answer'));
+    final rest = tester.getCenter(answer).dy;
+    final gesture = await tester.startGesture(tester.getCenter(answer));
+    await gesture.moveBy(const Offset(0, -30));
+    await gesture.moveBy(const Offset(0, -40));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    // A straight line with the ball's height, gone at 75% of its travel.
+    final faded = 1 - (rest - tester.getCenter(answer).dy) / (SwipeUpButton.size * 2.08 * .75);
+    expect(faded, inExclusiveRange(.2, .8));
+    double opacityAbove(Finder child, int nth) =>
+        tester.widgetList<Opacity>(find.ancestor(of: child, matching: find.byType(Opacity))).elementAt(nth).opacity;
+    // The ball's own Opacity (hidden while it flies) is nearer than the fade's.
+    expect(opacityAbove(find.byKey(const ValueKey('swipe-Decline')), 1), closeTo(faded, .01));
+    expect(opacityAbove(find.text('Decline with SMS'), 0), closeTo(faded, .01));
+    await gesture.cancel();
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -188,6 +228,7 @@ void main() {
     await gesture.moveBy(const Offset(-20, -20));
     await gesture.moveBy(const Offset(-90, -90));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     final letGo = tester.getRect(answer);
     await gesture.up();
     await tester.pump();
@@ -402,7 +443,8 @@ void main() {
       await tester.pumpAndSettle();
       Rect key(String digit) => tester.getRect(find.byKey(ValueKey('morph-key-$digit')));
       final rowGap = key('4').top - key('1').bottom;
-      final footerGap = tester.getRect(control('End call')).top - key('0').bottom;
+      // The row's circles: the End pill is shorter and centred on them.
+      final footerGap = tester.getRect(control('Dial pad')).top - key('0').bottom;
       expect(footerGap, inInclusiveRange(rowGap - 1, rowGap + 11));
       await tester.pumpWidget(const SizedBox());
     });
