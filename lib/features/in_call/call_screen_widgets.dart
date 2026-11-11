@@ -351,6 +351,10 @@ abstract final class CallerLookup {
 
     TelecomBridge.instance.callState.listen((s) {
       latest = s;
+      if (s.calls.isEmpty) {
+        repo.forgetPhotos();
+        backgrounds.forgetPhotos();
+      }
       prefetch();
     }, onError: (Object _) {});
     repo.contacts.addListener(prefetch);

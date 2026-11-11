@@ -200,10 +200,10 @@ class PlayUpdateService implements UpdateService {
       if (_notFromPlayCodes.any((code) => message.contains('($code)') || message.startsWith('$code:'))) {
         return UpdateCheckResult.notFromPlay;
       }
-      debugPrint('Update check failed: ${e.code} ${e.message}');
+      if (kDebugMode) debugPrint('Update check failed: ${e.code} ${e.message}');
       return UpdateCheckResult.failed;
     } catch (e) {
-      debugPrint('Update check failed: ${e.runtimeType}');
+      if (kDebugMode) debugPrint('Update check failed: ${e.runtimeType}');
       return UpdateCheckResult.failed;
     }
   }
@@ -217,7 +217,7 @@ class PlayUpdateService implements UpdateService {
         play.AppUpdateResult.inAppUpdateFailed => UpdateInstallResult.failed,
       };
     } catch (e, stack) {
-      debugPrint('Update install failed: $e\n$stack');
+      if (kDebugMode) debugPrint('Update install failed: $e\n$stack');
       return UpdateInstallResult.failed;
     }
   }
@@ -233,7 +233,7 @@ class PlayUpdateService implements UpdateService {
         play.AppUpdateResult.inAppUpdateFailed => UpdateInstallResult.failed,
       };
     } catch (e, stack) {
-      debugPrint('Update download failed: $e\n$stack');
+      if (kDebugMode) debugPrint('Update download failed: $e\n$stack');
       return UpdateInstallResult.failed;
     }
   }
@@ -259,7 +259,7 @@ class PlayUpdateService implements UpdateService {
       await play.InAppUpdate.completeFlexibleUpdate();
       return true;
     } catch (e, stack) {
-      debugPrint('Update install failed: $e\n$stack');
+      if (kDebugMode) debugPrint('Update install failed: $e\n$stack');
       return false;
     }
   }

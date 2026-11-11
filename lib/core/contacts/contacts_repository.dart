@@ -141,18 +141,27 @@ class ContactsRepository {
     }
   }();
 
+  /// The call screen's engine never reloads ([ignoreChanges]), so it forgets photos between
+  /// calls instead: a changed photo turns up on the next call, and photos of everyone who ever
+  /// rang don't pile up while the phone app's process lives (days).
+  void forgetPhotos() {
+    _fullPhotos.clear();
+    _thumbnailLoads.clear();
+  }
+
+  int _loads = 0;
+
   Future<void> _load() async {
     final diagnosticTimer = Stopwatch()..start();
     LagDiagnostics.instance.action(DiagnosticAction.contactsLoad);
+    final load = ++_loads;
     try {
-      _fullPhotos.clear();
-      _thumbnailLoads.clear();
+      forgetPhotos();
       final prefs = DialerPrefs.instance;
-      final entries = entriesFrom(
-        await TelecomBridge.instance.getContacts(),
-        order: prefs.nameOrder.value,
-        sortBy: prefs.sortBy.value,
-      );
+      final rows = await TelecomBridge.instance.getContacts();
+      // A newer load started while this one read: its result is the one to show, whichever lands last.
+      if (load != _loads) return;
+      final entries = entriesFrom(rows, order: prefs.nameOrder.value, sortBy: prefs.sortBy.value);
       entries.sort((a, b) => a.sortKey.compareTo(b.sortKey));
       final numbered = [
         for (final e in entries)
