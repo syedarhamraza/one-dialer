@@ -42,7 +42,7 @@ jobs:
           [ -n "$KEYSTORE_B64" ] || { echo "::error::The release environment has no secrets yet. Follow docs/pipeline-setup.md."; exit 1; }
 
       # The deploy key is on the branch ruleset's bypass list, so the release commit can be pushed.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ssh-key: ${{ secrets.RELEASE_DEPLOY_KEY }}
           fetch-depth: 0
