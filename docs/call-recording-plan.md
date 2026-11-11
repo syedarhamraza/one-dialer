@@ -91,7 +91,7 @@ Write the results in this file. If no source records the caller on the earpiece 
 
 ## 6. Website updates for the web build
 
-- `tool/release.ps1` writes `one-dialer/web.json` (`versionCode`, `versionName`, `apkUrl`, `sha256`) to `D:\syedarhamraza.github.io` next to `changelog.json`, and copies the APK there (or uploads it to a GitHub release and links that, to keep the site repo small).
+- `tool/release.ps1` writes `one-dialer/web.json` (`versionCode`, `versionName`, `apkUrl`, `sha256`) to `site/public/` next to `changelog.json`, and copies the APK there (or uploads it to a GitHub release and links that, to keep the site repo small).
 - `update_service.dart` gets a second implementation for the web flavor: fetch `web.json`, compare `versionCode`, download the APK, verify its SHA-256, hand it to Android's installer (`PackageInstaller` session, or `ACTION_VIEW` with a content URI). Android checks the signature matches the installed app.
 - Never put the signing password anywhere but `android/key.properties`.
 

@@ -33,6 +33,12 @@ jobs:
       - run: flutter test
       # Also generates android/gradlew, used below. No google-services.json, so Firebase is skipped.
       - run: flutter build apk --debug
+      # To try a pull request on a phone without building it (debug-signed, crash reporting off).
+      - uses: actions/upload-artifact@v4
+        with:
+          name: one-dialer-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 7
       - name: Kotlin unit tests
         working-directory: android
         run: ./gradlew :app:testDebugUnitTest

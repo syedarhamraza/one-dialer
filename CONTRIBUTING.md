@@ -131,7 +131,7 @@ Add `--ez private true` to the second command for a hidden number.
 
 2. GitHub shows a **Compare & pull request** button. Make sure the base branch is the current **`beta/<n>`**, not `main` (`main` only moves when a beta ships).
 3. Fill in the template. For anything you can see, add before/after screenshots or a short screen recording (with fake numbers).
-4. CI (analyze, tests, debug build) must pass. Keep pull requests small and about one thing; they get reviewed faster.
+4. CI (analyze, tests, debug build) must pass; its run has the debug APK to download. The pull request's title becomes a line of the release notes, so say what changes for the user. Keep pull requests small and about one thing; they get reviewed faster.
 
 ## Vibe coding (building with an AI assistant)
 

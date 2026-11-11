@@ -1,0 +1,54 @@
+name: Website
+
+# site/ is published as this repo's GitHub Pages site: syedarhamraza.github.io/one-dialer/.
+# The app reads one-dialer/changelog.json and links one-dialer/privacy/ from there.
+on:
+  push:
+    branches: [main, "beta/**"]
+    paths: ["site/**", "docs/privacy-policy.md", ".github/workflows/pages.yml"]
+  pull_request:
+    paths: ["site/**", "docs/privacy-policy.md", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.event_name == 'pull_request' && github.ref || 'deploy' }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - run: npm ci
+        working-directory: site
+      - run: npm run build
+        working-directory: site
+        env:
+          NEXT_PUBLIC_SITE_URL: https://syedarhamraza.github.io
+      # Pull requests only build. A private repo has no Pages to deploy to.
+      - if: github.event_name != 'pull_request' && !github.event.repository.private
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/out
+
+  deploy:
+    if: github.event_name != 'pull_request' && !github.event.repository.private
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
