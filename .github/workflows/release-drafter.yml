@@ -25,9 +25,12 @@ jobs:
       - uses: release-drafter/release-drafter@978bb0b30c5ee8cdd332ced253758157150d43f0 # v7.10.0
 
   label:
-    if: github.event_name == 'pull_request_target'
+    # Dependabot's pull requests come labelled, and its token couldn't add labels anyway.
+    if: github.event_name == 'pull_request_target' && github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
     permissions:
+      # Job permissions replace the workflow's, and the labeller reads ../release-drafter.yml.
+      contents: read
       pull-requests: write
     steps:
       - uses: release-drafter/release-drafter/autolabeler@978bb0b30c5ee8cdd332ced253758157150d43f0 # v7.10.0
