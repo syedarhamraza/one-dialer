@@ -117,8 +117,9 @@ jobs:
       - name: Release notes for Play and GitHub
         run: |
           mkdir "$RUNNER_TEMP/whatsnew"
-          # Play allows 500 characters.
-          jq -r '[.changes[] | "• " + .] | join("\n") | .[0:500]' site/public/changelog.json > "$RUNNER_TEMP/whatsnew/whatsnew-en-US"
+          # Play allows 500 characters: whole lines while they fit, and no trailing newline (-j).
+          jq -rj 'reduce (.changes[] | "• " + .) as $l (""; (if . == "" then $l else . + "\n" + $l end) as $n | if ($n | length) <= 500 then $n else . end)' \
+            site/public/changelog.json > "$RUNNER_TEMP/whatsnew/whatsnew-en-US"
           jq -r '.changes[] | "- " + .' site/public/changelog.json > "$RUNNER_TEMP/release-notes.md"
 
       - name: Upload to Google Play
