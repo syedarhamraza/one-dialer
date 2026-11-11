@@ -249,9 +249,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
       destructive: true,
     );
     if (!ok) return;
-    for (final n in numbers) {
-      await BlockingRepository.instance.setBlocked(n, true);
-    }
+    await BlockingRepository.instance.blockAll(numbers);
     _endSelection();
   }
 

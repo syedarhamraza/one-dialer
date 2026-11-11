@@ -67,9 +67,7 @@ class _BlockingScreenState extends State<BlockingScreen> {
     final numbers = choice == 'type'
         ? [?await _typeNumber()]
         : (await pickContact(context, title: context.l10n.blockContact))?.numbers;
-    for (final n in numbers ?? const <String>[]) {
-      await _repo.setBlocked(n, true);
-    }
+    if (numbers != null && numbers.isNotEmpty) await _repo.blockAll(numbers);
   }
 
   Future<void> _setRules({required bool blockHidden, required bool blockNonContacts}) async {

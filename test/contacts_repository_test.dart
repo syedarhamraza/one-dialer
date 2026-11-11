@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dialer/core/contacts/contacts_repository.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -61,6 +63,32 @@ void main() {
     repo.reload();
     await tester.pump(const Duration(seconds: 1));
     expect(loads, 1);
+  });
+
+  testWidgets('a slow older load never replaces a newer one', (tester) async {
+    List<Object?> row(String name) => [
+      '1', name, null, null, null, false,
+      [
+        ['0300 1234567', 'mobile', null, false],
+      ],
+      <String>[],
+    ];
+    final slow = Completer<List<Object?>>();
+    var loads = 0;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      const MethodChannel('com.syedarhamraza.dialer/data'),
+      (_) => ++loads == 1 ? slow.future : Future.value([row('New')]),
+    );
+    final repo = ContactsRepository.instance..ignoreChanges = false;
+    repo.reload();
+    await tester.pump(const Duration(seconds: 1));
+    repo.reload();
+    await tester.pump(const Duration(seconds: 1));
+    expect(repo.contacts.value.single.name, 'New');
+    slow.complete([row('Old')]);
+    await tester.pump();
+    expect(repo.contacts.value.single.name, 'New');
+    repo.debugSetContacts(const []);
   });
 
   test('native rows become contacts: labels, primary, accounts, duplicate numbers, no numbers', () {

@@ -31,6 +31,12 @@ object RecorderCompanion {
     /** This call session already started a recording (auto or by hand); auto never restarts one. */
     private var sessionStarted = false
 
+    // The companion's process is often dead when a call arrives, and a provider call then waits
+    // for it to start: on the main thread that held up the ringing notification. One thread, so
+    // start and stop reach the companion in the order they were asked for.
+    private val io = java.util.concurrent.Executors.newSingleThreadExecutor()
+    private val main = Handler(Looper.getMainLooper())
+
     fun installed(context: Context) = context.packageManager.resolveContentProvider(AUTHORITY, 0) != null
 
     private fun call(context: Context, method: String, arg: String? = null, extras: Bundle? = null): Bundle? = try {
@@ -66,20 +72,32 @@ object RecorderCompanion {
 
     /** Called while calls exist: refreshes the cached status and follows the companion's changes. */
     fun watch(context: Context) {
-        cached = status(context)
-        if (cached == null || observer != null) return
-        observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
-            override fun onChange(selfChange: Boolean) {
-                cached = status(context)
-                CallManager.notifyChanged()
-            }
-        }.also { context.contentResolver.registerContentObserver(Uri.parse("content://$AUTHORITY/status"), false, it) }
+        if (!installed(context)) {
+            cached = null
+            return
+        }
+        if (observer == null) {
+            observer = object : ContentObserver(main) {
+                override fun onChange(selfChange: Boolean) = refresh(context)
+            }.also { context.contentResolver.registerContentObserver(Uri.parse("content://$AUTHORITY/status"), false, it) }
+        }
+        refresh(context)
+    }
+
+    /** Asks the companion off the main thread; the last status stays until the answer is in. */
+    private fun refresh(context: Context) = io.execute {
+        val status = status(context)
+        main.post {
+            if (observer == null) return@post // unwatched meanwhile
+            cached = status
+            CallManager.notifyChanged()
+        }
     }
 
     fun unwatch(context: Context) {
         observer?.let(context.contentResolver::unregisterContentObserver)
         observer = null
-        cached = null
+        // [cached] stays for the next call's first frames; [watch] refreshes it.
     }
 
     /** Auto-record (Settings › Call recording) once a call is answered; stop when no call is left. */
@@ -87,14 +105,23 @@ object RecorderCompanion {
         val calls = CallManager.all().map { it.second }
         val live = calls.filter { CallManager.stateOf(it).let { s -> s == Call.STATE_ACTIVE || s == Call.STATE_HOLDING } }
         if (live.isEmpty()) {
-            if (cached?.get("recording") == true) call(context, "stop")
+            if (cached?.get("recording") == true) io.execute { call(context, "stop") }
             if (calls.isEmpty()) sessionStarted = false
             return
         }
         val active = live.firstOrNull { CallManager.stateOf(it) == Call.STATE_ACTIVE } ?: return
-        if (!sessionStarted && cached?.get("ready") == true &&
-            RecordRules.shouldRecord(context, active.details.handle?.schemeSpecificPart)
-        ) start(context, active)
+        if (sessionStarted || cached?.get("ready") != true) return
+        val number = active.details.handle?.schemeSpecificPart
+        // The rule is a contacts query, and this runs on every change to the call.
+        io.execute {
+            if (!RecordRules.shouldRecord(context, number)) return@execute
+            main.post {
+                if (sessionStarted || CallManager.idOf(active) == null || CallManager.stateOf(active) != Call.STATE_ACTIVE) return@post
+                sessionStarted = true
+                val extras = startExtras(active)
+                io.execute { call(context, "start", extras = extras) }
+            }
+        }
     }
 
     /** The call screen's Record / Stop. False when there's nothing to record or no companion. */
@@ -107,8 +134,12 @@ object RecorderCompanion {
 
     private fun start(context: Context, call: Call): Boolean {
         sessionStarted = true
+        return call(context, "start", extras = startExtras(call)) != null
+    }
+
+    private fun startExtras(call: Call): Bundle {
         val details = call.details
-        val extras = Bundle().apply {
+        return Bundle().apply {
             putString("number", details.handle?.schemeSpecificPart)
             // When this recording starts, not when the call connected: the companion names the file
             // by it, and a second recording in one call used to overwrite the first.
@@ -116,7 +147,6 @@ object RecorderCompanion {
             putString("direction", if (details.callDirection == Call.Details.DIRECTION_INCOMING) "in" else "out")
             putString("simId", details.accountHandle?.let { "${it.componentName.flattenToString()}|${it.id}" })
         }
-        return call(context, "start", extras = extras) != null
     }
 
     /** `[{name, number, startMillis, durationMs, bytes}]`, newest first. */

@@ -102,15 +102,29 @@ class CallBackgrounds extends ChangeNotifier {
 
   Future<void> load(String scope) async {
     if (_stored.containsKey(scope)) return;
-    await _read(scope);
+    // Marked at once: the call screen asks again on every call update while this reads.
+    _stored[scope] = null;
+    try {
+      await _read(scope);
+    } catch (_) {
+      _stored.remove(scope); // the next ask reads again
+      rethrow;
+    }
     notifyListeners();
   }
 
   Future<void> loadPhoto(String contactId) async {
     if (_photos.containsKey(contactId)) return;
-    _photos[contactId] = await ContactsRepository.instance.fullPhoto(contactId);
+    _photos[contactId] = null;
+    final photo = await ContactsRepository.instance.fullPhoto(contactId);
+    // Forgotten meanwhile (the call ended): the next call loads it again.
+    if (!_photos.containsKey(contactId)) return;
+    _photos[contactId] = photo;
     notifyListeners();
   }
+
+  /// Drops the callers' full photos once no call is left; see [ContactsRepository.forgetPhotos].
+  void forgetPhotos() => _photos.clear();
 
   /// Reads every loaded background again (the main app may have changed them).
   Future<void> refresh() async {

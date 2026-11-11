@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/cupertino.dart' show CupertinoIcons;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter/services.dart';
@@ -293,7 +294,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
       }
       if (_active) _close(id);
     } on PlatformException catch (e) {
-      debugPrint('Saving the contact failed: ${e.code} ${e.message}');
+      if (kDebugMode) debugPrint('Saving the contact failed: ${e.code} ${e.message}');
       if (!mounted || _closing) return;
       setState(() => _saving = false);
       OneUIToast.show(

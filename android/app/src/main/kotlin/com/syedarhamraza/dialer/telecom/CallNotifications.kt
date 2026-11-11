@@ -381,7 +381,10 @@ object CallNotifications {
 
     private fun callerIcon(context: Context, number: String?): Icon? {
         if (number.isNullOrBlank()) return null
-        return photos.getOrPut(number) { lookupPhoto(context, number) }
+        // Not getOrPut: it treats a cached null (no photo, most callers) as missing and queried
+        // contacts again on every update of the ongoing notification.
+        if (number in photos) return photos[number]
+        return lookupPhoto(context, number).also { photos[number] = it }
     }
 
     /** Some skins (ColorOS) show a person's icon as-is, so round it like the call screen's avatar. */

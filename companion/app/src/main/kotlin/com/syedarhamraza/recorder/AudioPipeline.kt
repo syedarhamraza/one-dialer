@@ -73,18 +73,32 @@ class AudioPipeline(
     }
 
     private fun loop(firstSource: Int) {
-        val codec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC)
-        codec.configure(
-            MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC, RATE, 1).apply {
-                setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
-                setInteger(MediaFormat.KEY_BIT_RATE, 64_000)
-                setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, CHUNK * 2)
-            },
-            null, null, MediaCodec.CONFIGURE_FLAG_ENCODE,
-        )
-        codec.start()
-        val muxer = MediaMuxer(file.path, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
-        val writer = Writer(codec, muxer)
+        // An encoder or file that won't open must not take the process down (an uncaught exception
+        // on this thread would) with the microphone still held.
+        var codec: MediaCodec? = null
+        var muxer: MediaMuxer? = null
+        val writer = try {
+            codec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC)
+            codec.configure(
+                MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC, RATE, 1).apply {
+                    setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
+                    setInteger(MediaFormat.KEY_BIT_RATE, 64_000)
+                    setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, CHUNK * 2)
+                },
+                null, null, MediaCodec.CONFIGURE_FLAG_ENCODE,
+            )
+            codec.start()
+            muxer = MediaMuxer(file.path, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+            Writer(codec, muxer)
+        } catch (_: Exception) {
+            gain?.release()
+            record?.run { runCatching { stop() }; release() }
+            record = null
+            codec?.release()
+            muxer?.release()
+            file.delete()
+            return
+        }
         val pcm = ShortArray(CHUNK)
         var written = 0L
 
@@ -103,7 +117,10 @@ class AudioPipeline(
         try {
             while (running) {
                 val n = record?.read(pcm, 0, CHUNK) ?: break
-                if (n <= 0) continue
+                // A dead or revoked microphone answers with the same error forever: end the file
+                // with what was heard rather than spin on it.
+                if (n < 0) break
+                if (n == 0) continue
                 var squares = 0.0
                 for (i in 0 until n) squares += pcm[i].toDouble() * pcm[i]
                 if (!settled) {
@@ -143,12 +160,12 @@ class AudioPipeline(
             gain?.release()
             record?.run { stop(); release() }
             record = null
-            codec.release()
+            codec?.release()
             try {
-                if (writer.started) muxer.stop()
+                if (writer.started) muxer?.stop()
             } catch (_: IllegalStateException) {
             }
-            muxer.release()
+            muxer?.release()
             if (!writer.started) file.delete() // nothing was recorded
         }
     }

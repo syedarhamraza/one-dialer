@@ -53,6 +53,17 @@ class BlockingRepository {
   List<String>? _keysFor;
   Set<String> _keys = const {};
 
+  /// Blocks several numbers with one reload at the end, not one per number.
+  Future<void> blockAll(Iterable<String> numbers) async {
+    try {
+      for (final n in numbers) {
+        await _api.block(n);
+      }
+    } finally {
+      await load();
+    }
+  }
+
   Future<void> setBlocked(String number, bool blocked) async {
     if (blocked) {
       await _api.block(number);

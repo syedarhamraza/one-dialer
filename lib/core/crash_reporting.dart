@@ -23,7 +23,7 @@ Future<void> initCrashReporting({String engine = 'main'}) async {
   try {
     await Firebase.initializeApp();
   } catch (error) {
-    debugPrint('Crash reporting off: $error');
+    if (kDebugMode) debugPrint('Crash reporting off: $error');
     return;
   } finally {
     if (!_started.isCompleted) _started.complete();
