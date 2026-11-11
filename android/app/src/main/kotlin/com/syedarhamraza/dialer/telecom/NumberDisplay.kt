@@ -10,11 +10,19 @@ import java.util.Locale
 /** How the call screen shows a number: grouped digits, plus the caller's country (as ColorOS shows a place). */
 data class NumberDisplay(val formatted: String?, val location: String?) {
     companion object {
-        private val cache = HashMap<String, NumberDisplay>()
+        private const val CACHE_SIZE = 1000
+
+        // Read from the main thread (call snapshots) and background threads (describeNumbers), so
+        // it's locked; least recently used numbers go once it's full.
+        private val cache = object : LinkedHashMap<String, NumberDisplay>(64, .75f, true) {
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, NumberDisplay>?) = size > CACHE_SIZE
+        }
 
         fun of(context: Context, number: String?): NumberDisplay? {
             if (number.isNullOrBlank()) return null
-            return cache.getOrPut(number) { compute(homeRegion(context), number) }
+            synchronized(cache) { cache[number] }?.let { return it }
+            // Computed outside the lock: parsing is slow and the main thread mustn't wait on a list's worth.
+            return compute(homeRegion(context), number).also { synchronized(cache) { cache[number] = it } }
         }
 
         /** Pure so it can be unit-tested without Android. */

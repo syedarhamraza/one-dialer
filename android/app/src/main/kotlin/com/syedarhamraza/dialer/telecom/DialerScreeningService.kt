@@ -19,11 +19,15 @@ class DialerScreeningService : CallScreeningService() {
     override fun onScreenCall(details: Call.Details) {
         val incoming = details.callDirection == Call.Details.DIRECTION_INCOMING
         val number = details.handle?.schemeSpecificPart.orEmpty()
-        val block = incoming && BlockRules.shouldBlock(
-            hiddenNumber = details.handlePresentation != TelecomManager.PRESENTATION_ALLOWED || number.isBlank(),
-            isContact = { isContact(number) },
-            settings = BlockingPrefs.read(this),
-        )
+        // A failed contacts lookup lets the call through: without an answer Telecom holds the
+        // call back for its 5 s timeout before it rings.
+        val block = incoming && runCatching {
+            BlockRules.shouldBlock(
+                hiddenNumber = details.handlePresentation != TelecomManager.PRESENTATION_ALLOWED || number.isBlank(),
+                isContact = { isContact(number) },
+                settings = BlockingPrefs.read(this),
+            )
+        }.getOrDefault(false)
         val response = CallResponse.Builder()
         if (block) {
             response.setDisallowCall(true).setRejectCall(true).setSkipNotification(true)
