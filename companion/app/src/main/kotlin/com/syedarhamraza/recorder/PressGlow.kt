@@ -22,7 +22,10 @@ import kotlin.math.min
  * undershoot on release; its surface lifts by 14% white, and a soft light follows the finger.
  */
 class PressGlow private constructor(private val view: View, radiusDp: Float?, keepRound: Boolean) {
+    // The finger light goes on top; the lift goes under the button's own body, as GlassButton's
+    // ambient overlay sits under its content (so an opaque body, like the menu's base, hides it).
     private val overlay = Overlay(view, radiusDp, keepRound)
+    private val under = Overlay(view, radiusDp, keepRound)
     private val growth = OneLook.px(view.context, 17f) // LiquidStretch.nativePressGrowth
     private val press = SpringValue(0f) { p ->
         val longest = max(view.width, view.height).toFloat()
@@ -36,6 +39,12 @@ class PressGlow private constructor(private val view: View, radiusDp: Float?, ke
 
     init {
         view.foreground = overlay
+        val body = view.background
+        when {
+            body != null -> view.background = android.graphics.drawable.LayerDrawable(arrayOf(under, body))
+            view is android.view.ViewGroup -> view.addView(View(view.context).apply { background = under }, 0,
+                android.view.ViewGroup.LayoutParams(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.MATCH_PARENT))
+        }
         view.setOnTouchListener { _, e -> onTouch(e); false }
     }
 
@@ -61,10 +70,10 @@ class PressGlow private constructor(private val view: View, radiusDp: Float?, ke
 
     private fun ambient(on: Boolean) {
         lift?.cancel()
-        lift = ValueAnimator.ofFloat(overlay.lift, if (on) 1f else 0f).apply {
+        lift = ValueAnimator.ofFloat(under.lift, if (on) 1f else 0f).apply {
             duration = if (on) 150 else 60
             interpolator = OneLook.easeOut
-            addUpdateListener { overlay.lift = it.animatedValue as Float; view.invalidate() }
+            addUpdateListener { under.lift = it.animatedValue as Float; under.invalidateSelf(); view.invalidate() }
             start()
         }
     }
@@ -76,29 +85,30 @@ class PressGlow private constructor(private val view: View, radiusDp: Float?, ke
         var x = 0f
         var y = 0f
         private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        private val light = OneLook.palette(view.context).light
 
         override fun draw(canvas: Canvas) {
             if (lift <= 0f && glow <= 0f) return
             val rect = RectF(bounds)
             val shape = Shapes.path(rect, radiusDp?.let { OneLook.px(view.context, it) }, keepRound)
-            canvas.save()
-            canvas.clipPath(shape)
+            // Filled in the shape (no clip): a clipped rect leaked out as a grey square on the vivo.
             if (lift > 0f) {
-                paint.shader = null; paint.xfermode = null
-                paint.color = OneLook.withAlpha(0xFFFFFF, .14f * lift) // ambientBaseLightDark
-                canvas.drawRect(rect, paint)
+                paint.shader = null
+                paint.color = OneLook.withAlpha(0xFFFFFF, (if (light) .3f else .14f) * lift) // ambientBaseLight(Light|Dark)
+                canvas.drawPath(shape, paint)
             }
             if (glow > .001f) {
                 val r = 1.6f * min(rect.width(), rect.height()) * glow.coerceAtLeast(.01f)
                 paint.color = 0xFFFFFFFF.toInt()
-                paint.shader = RadialGradient(x, y, r, OneLook.withAlpha(0xFFFFFF, (0x12 / 255f) * glow.coerceIn(0f, 1f)), 0, Shader.TileMode.CLAMP)
-                paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.ADD)
-                canvas.drawRect(rect, paint)
-                paint.xfermode = null; paint.shader = null
+                paint.shader = RadialGradient(x, y, r, if (light) OneLook.withAlpha(0x000000, (0x0F / 255f) * glow.coerceIn(0f, 1f))
+                    else OneLook.withAlpha(0xFFFFFF, (0x12 / 255f) * glow.coerceIn(0f, 1f)), 0, Shader.TileMode.CLAMP)
+                canvas.drawPath(shape, paint)
+                paint.shader = null
             }
-            canvas.restore()
         }
 
+        // No outline of its own: under a body in a LayerDrawable, the body's outline is the view's.
+        override fun getOutline(outline: android.graphics.Outline) = outline.setEmpty()
         override fun setAlpha(alpha: Int) {}
         override fun setColorFilter(colorFilter: ColorFilter?) {}
         @Deprecated("Deprecated in Java") override fun getOpacity() = PixelFormat.TRANSLUCENT

@@ -25,7 +25,6 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import com.syedarhamraza.recorder.OneLook.TEXT2
 
 /**
  * One Dialer's OneUISubpage (CosSubpage) as plain views: black, the round call-glass Back button
@@ -42,7 +41,9 @@ class Subpage(private val activity: Activity, title: String, onBack: () -> Unit)
         clipChildren = false
         addView(content)
     }
-    val root = FrameLayout(activity).apply { setBackgroundColor(OneLook.PAGE) }
+    // Not clipping children: a pressed button grows 17 dp past its slot (PressGlow), as in One Dialer.
+    private val p = OneLook.palette(activity)
+    val root = FrameLayout(activity).apply { setBackgroundColor(p.page); clipChildren = false }
     private val scrim = FrameLayout(activity)
     private val mirrors = mutableListOf<View>()
 
@@ -56,7 +57,8 @@ class Subpage(private val activity: Activity, title: String, onBack: () -> Unit)
         if (Build.VERSION.SDK_INT >= 29) w.isNavigationBarContrastEnforced = false
         @Suppress("DEPRECATION")
         w.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
-            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+            (if (p.light) View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR else 0)
 
         // The header blur: the page itself, drawn again behind the header and blurred
         // (shaders/progressive_blur.frag's light blur plus more toward the top, fading out at
@@ -71,12 +73,14 @@ class Subpage(private val activity: Activity, title: String, onBack: () -> Unit)
 
         val header = LinearLayout(activity).apply {
             gravity = Gravity.CENTER_VERTICAL
+            clipChildren = false
+            clipToPadding = false
             addView(backButton(onBack), LinearLayout.LayoutParams(di(48f), di(48f)))
             addView(TextView(activity).apply {
                 text = title
                 maxLines = 1
                 ellipsize = TextUtils.TruncateAt.END
-                OneLook.style(this, 22f, Color.WHITE, 600, -.3f)
+                OneLook.style(this, 22f, p.text, 600, -.3f)
             }, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f).apply { marginStart = di(14f) })
         }
         root.addView(scroll, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
@@ -96,14 +100,27 @@ class Subpage(private val activity: Activity, title: String, onBack: () -> Unit)
     }
 
     /** RoundIconButton: a 48 dp circle of call glass with the 26 dp back arrow. */
-    private fun backButton(onBack: () -> Unit) = FrameLayout(activity).apply {
-        background = GlassBody(activity, null)
-        clipToOutline = true
-        contentDescription = activity.getString(R.string.back)
-        addView(ImageView(activity).apply { setImageDrawable(Glyph.back(Color.WHITE)) },
-            FrameLayout.LayoutParams(di(26f), di(26f), Gravity.CENTER))
-        PressGlow.attach(this, null)
-        setOnClickListener { onBack() }
+    private fun backButton(onBack: () -> Unit): View {
+        val button = FrameLayout(activity).apply {
+            background = OneLook.glass(activity, null)
+            clipToOutline = true
+            contentDescription = activity.getString(R.string.back)
+            addView(ImageView(activity).apply { setImageDrawable(Glyph.back(p.text)) },
+                FrameLayout.LayoutParams(di(26f), di(26f), Gravity.CENTER))
+            PressGlow.attach(this, null)
+            setOnClickListener { onBack() }
+        }
+        return withShadow(button, null, keepRound = true)
+    }
+
+    /** Light mode's glass shadow under [view], outside its press (CallGlass, unlit GlowButton). */
+    private fun withShadow(view: View, radiusDp: Float?, keepRound: Boolean): View {
+        if (!p.light) return view
+        return FrameLayout(activity).apply {
+            clipChildren = false
+            addView(ShadowView(activity, radiusDp, keepRound, OneLook.LIGHT_GLASS_SHADOW), FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
+            addView(view, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
+        }
     }
 
     /** The page's content drawn where it scrolls under the header, blurred by [sigma]. */
@@ -129,7 +146,7 @@ class Subpage(private val activity: Activity, title: String, onBack: () -> Unit)
         override fun dispatchDraw(canvas: Canvas) {
             val h = height.toFloat()
             val save = canvas.saveLayer(0f, 0f, width.toFloat(), h, null)
-            canvas.drawColor(Color.BLACK) // the copy sits on the page's black
+            canvas.drawColor(p.page) // the copy sits on the page colour
             super.dispatchDraw(canvas)
             val stops = FloatArray(11) { it / 10f }
             val alphas = IntArray(11) { i ->
@@ -151,13 +168,13 @@ class Subpage(private val activity: Activity, title: String, onBack: () -> Unit)
         return t * t * (3 - 2 * t)
     }
 
-    /** OneUIStatusBarScrim.topGradient: dark under the status bar icons, gone by the bottom. */
+    /** OneUIStatusBarScrim.topGradient in the page colour (palette.tint): strong under the status bar, gone by the bottom. */
     private inner class Tint : View(activity) {
         private val paint = Paint()
         override fun onDraw(canvas: Canvas) {
             paint.shader = LinearGradient(0f, 0f, 0f, height.toFloat(),
-                intArrayOf(0xCC000000.toInt(), 0x8C000000.toInt(), 0x33000000, 0), floatArrayOf(0f, .4f, .75f, 1f),
-                Shader.TileMode.CLAMP)
+                intArrayOf(OneLook.withAlpha(p.page, .8f), OneLook.withAlpha(p.page, .55f), OneLook.withAlpha(p.page, .2f), OneLook.withAlpha(p.page, 0f)),
+                floatArrayOf(0f, .4f, .75f, 1f), Shader.TileMode.CLAMP)
             canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
         }
     }
@@ -168,17 +185,17 @@ class Subpage(private val activity: Activity, title: String, onBack: () -> Unit)
     fun group(items: List<View>, header: String? = null) {
         if (header != null) content.addView(TextView(activity).apply {
             text = header
-            OneLook.style(this, 15f, TEXT2)
+            OneLook.style(this, 15f, p.text2)
             setPadding(di(18f), di(4f), 0, di(8f))
         })
         val card = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
-            background = ShapeFill(OneLook.CARD, d(OneLook.RADIUS_CARD))
+            background = ShapeFill(p.card, d(OneLook.RADIUS_CARD))
             clipToOutline = true
         }
         items.forEachIndexed { i, item ->
             card.addView(item)
-            if (i < items.size - 1) card.addView(View(activity).apply { setBackgroundColor(OneLook.DIVIDER) },
+            if (i < items.size - 1) card.addView(View(activity).apply { setBackgroundColor(p.divider) },
                 LinearLayout.LayoutParams(MATCH_PARENT, d(.8f).toInt().coerceAtLeast(1)).apply {
                     marginStart = di(18f); marginEnd = di(18f)
                 })
@@ -193,7 +210,7 @@ class Subpage(private val activity: Activity, title: String, onBack: () -> Unit)
     fun row(
         title: String,
         subtitle: String? = null,
-        subtitleColor: Int = TEXT2,
+        subtitleColor: Int? = null,
         value: String? = null,
         anchor: ((View) -> Unit)? = null,
         onTap: (() -> Unit)? = null,
@@ -204,11 +221,11 @@ class Subpage(private val activity: Activity, title: String, onBack: () -> Unit)
             orientation = LinearLayout.VERTICAL
             addView(TextView(activity).apply {
                 text = title
-                OneLook.style(this, 17f, Color.WHITE, 400, -.2f, 1.25f)
+                OneLook.style(this, 17f, p.text, 400, -.2f, 1.25f)
             })
             if (subtitle != null) addView(TextView(activity).apply {
                 text = subtitle
-                OneLook.style(this, 13.5f, subtitleColor, 400, 0f, 1.25f)
+                OneLook.style(this, 13.5f, subtitleColor ?: p.text2, 400, 0f, 1.25f)
                 setPadding(0, di(1f), 0, 0)
             })
         }, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f).apply { marginEnd = di(14f) })
@@ -218,15 +235,15 @@ class Subpage(private val activity: Activity, title: String, onBack: () -> Unit)
                 maxLines = 1
                 ellipsize = TextUtils.TruncateAt.END
                 maxWidth = di(180f)
-                OneLook.style(this, 15f, TEXT2)
+                OneLook.style(this, 15f, p.text2)
             }
             addView(v, LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply { marginEnd = di(4f) })
             anchor?.invoke(v)
         }
         if (onTap != null) {
-            addView(ImageView(activity).apply { setImageDrawable(Glyph.chevron(TEXT2)) }, LinearLayout.LayoutParams(di(22f), di(22f)))
-            // InkWell: a white splash at 6% on the dark card.
-            background = RippleDrawable(ColorStateList.valueOf(0x0FFFFFFF), null, ColorDrawable(Color.WHITE))
+            addView(ImageView(activity).apply { setImageDrawable(Glyph.chevron(p.text2)) }, LinearLayout.LayoutParams(di(22f), di(22f)))
+            // InkWell: the text colour at 6% (white on dark cards, black on light ones).
+            background = RippleDrawable(ColorStateList.valueOf(OneLook.withAlpha(p.text, .06f)), null, ColorDrawable(Color.WHITE))
             isClickable = true
             setOnClickListener { onTap() }
         }
@@ -245,20 +262,21 @@ class Subpage(private val activity: Activity, title: String, onBack: () -> Unit)
             gravity = Gravity.CENTER
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
-            OneLook.style(this, 17f, Color.WHITE, 600)
+            OneLook.style(this, 17f, if (lit) Color.WHITE else p.text, 600)
             setPadding(di(24f), 0, di(24f), 0)
-            val look: Drawable = if (lit) LitBody(OneLook.CALL_GREEN) else GlassBody(activity, height / 2)
-            background = RippleDrawable(ColorStateList.valueOf(0x14FFFFFF), look, null)
+            val look: Drawable = if (lit) LitBody(OneLook.CALL_GREEN) else OneLook.glass(activity, height / 2)
+            // Unlit glass is white in light mode: press it dark.
+            background = RippleDrawable(ColorStateList.valueOf(OneLook.withAlpha(if (lit) Color.WHITE else p.text, .08f)), look, null)
             clipToOutline = true
             PressGlow.attach(this, 999f)
             setOnClickListener { onTap() }
         }
-        return FrameLayout(activity).apply {
+        val button = if (lit) FrameLayout(activity).apply {
             clipChildren = false
-            if (lit) addView(Shadows(OneLook.CALL_GREEN), FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
+            addView(Shadows(OneLook.CALL_GREEN), FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
             addView(body, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
-            layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, di(height))
-        }
+        } else withShadow(body, 999f, keepRound = true)
+        return button.apply { layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, di(height)) }
     }
 
     /** LitButton's body: the flat colour and its rim (white along the top, brighter colour along the bottom). */
@@ -301,8 +319,9 @@ class Subpage(private val activity: Activity, title: String, onBack: () -> Unit)
             val r = RectF(0f, 0f, width.toFloat(), height.toFloat())
             val path = Shapes.path(r, 999f, keepRound = true)
             paint.color = color
-            // solidBody(glow: .22) from PressGlow, then LitButton's own.
-            paint.setShadowLayer(d(22f), 0f, d(6f), OneLook.withAlpha(color, .22f))
+            // solidBody(glow: .22) from PressGlow (light mode: tighter, .28), then LitButton's own.
+            if (p.light) paint.setShadowLayer(d(14f), 0f, d(4f), OneLook.withAlpha(color, .28f))
+            else paint.setShadowLayer(d(22f), 0f, d(6f), OneLook.withAlpha(color, .22f))
             canvas.drawPath(path, paint)
             paint.setShadowLayer(d(12f), 0f, d(4f), OneLook.withAlpha(color, .25f))
             canvas.drawPath(path, paint)

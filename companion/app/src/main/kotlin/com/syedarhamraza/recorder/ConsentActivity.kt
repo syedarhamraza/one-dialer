@@ -18,7 +18,7 @@ class ConsentActivity : Activity() {
         val page = Subpage(this, getString(R.string.consent_title)) { leave() }
         page.content.addView(android.widget.TextView(this).apply {
             text = getString(R.string.consent_intro)
-            OneLook.style(this, 15f, OneLook.TEXT2, 400, 0f, 1.3f)
+            OneLook.style(this, 15f, OneLook.palette(this@ConsentActivity).text2, 400, 0f, 1.3f)
             val p = OneLook.px(this@ConsentActivity, 18f).toInt()
             setPadding(p, 0, p, OneLook.px(this@ConsentActivity, 16f).toInt())
         })

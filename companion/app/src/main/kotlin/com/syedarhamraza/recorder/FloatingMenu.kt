@@ -45,11 +45,30 @@ class FloatingMenu(
     private val dialog = object : Dialog(activity, android.R.style.Theme_Translucent_NoTitleBar) {
         override fun cancel() = close(null) // Back
     }
-    private val root = FrameLayout(activity)
-    private val pop = FrameLayout(activity).apply { alpha = 0f }
+    // Neither clips: the pressed card grows past its own box (PressGlow), as in One Dialer.
+    private val root = FrameLayout(activity).apply { clipChildren = false }
+    private val pop = FrameLayout(activity).apply { alpha = 0f; clipChildren = false }
+
+    /** The page behind, captured once: the card blurs it as One Dialer's menu blurs its backdrop. */
+    private var backdrop: android.graphics.Bitmap? = null
+    private var backdropX = 0f
+    private var backdropY = 0f
 
     fun show() {
+        val decor = activity.window.decorView
+        if (decor.width <= 0 || decor.height <= 0) return build()
+        val shot = android.graphics.Bitmap.createBitmap(decor.width, decor.height, android.graphics.Bitmap.Config.ARGB_8888)
+        android.view.PixelCopy.request(activity.window, shot, { result ->
+            if (result == android.view.PixelCopy.SUCCESS) backdrop = shot
+            build()
+        }, android.os.Handler(activity.mainLooper))
+    }
+
+    private fun build() {
         val card = Card()
+        // Light mode: the menu's soft drop shadow, behind the card and outside its press.
+        if (light) pop.addView(ShadowView(activity, row / 2 / OneLook.px(activity, 1f) + 6f, false, OneLook.LIGHT_MENU_SHADOW),
+            FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
         pop.addView(card, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
         root.addView(pop, FrameLayout.LayoutParams(0, 0))
         root.setOnClickListener { close(null) } // tap outside
@@ -95,6 +114,9 @@ class FloatingMenu(
         pop.layoutParams = FrameLayout.LayoutParams(w.toInt(), h.toInt()).apply {
             leftMargin = left.toInt(); topMargin = top.toInt()
         }
+        val decor = IntArray(2).also { activity.window.decorView.getLocationOnScreen(it) }
+        backdropX = left + r[0] - decor[0]
+        backdropY = top + r[1] - decor[1]
         pop.pivotX = ((aLeft + aRight) / 2).coerceIn(left, right) - left
         pop.pivotY = if (upwards) h else 0f
     }
@@ -132,9 +154,12 @@ class FloatingMenu(
     }
 
     /** The card: a nearly black base under the header pills' call glass, the rows and their highlight. */
+    private val light = OneLook.palette(activity).light
+    private val ink = if (light) 0xFF111418.toInt() else Color.WHITE
+
     private inner class Card : FrameLayout(activity) {
         private val highlight = View(activity).apply {
-            background = ShapeFill(0x3DFFFFFF, row / 2)
+            background = ShapeFill(if (light) 0x14000000 else 0x3DFFFFFF, row / 2)
             alpha = 0f
         }
         private val press: PressGlow
@@ -143,34 +168,50 @@ class FloatingMenu(
         private var fade: ValueAnimator? = null
 
         init {
-            val glass = GlassBody(activity, row / 2 / OneLook.px(activity, 1f) + 6f)
-            background = LayerDrawable(arrayOf(ColorDrawable(0xE6000000.toInt()), glass))
+            val radius = row / 2 + pad
+            val glass = OneLook.glass(activity, row / 2 / OneLook.px(activity, 1f) + 6f)
             outlineProvider = object : android.view.ViewOutlineProvider() {
-                override fun getOutline(view: View, outline: android.graphics.Outline) {
-                    glass.bounds = android.graphics.Rect(0, 0, view.width, view.height)
-                    glass.getOutline(outline)
-                }
+                override fun getOutline(view: View, outline: android.graphics.Outline) =
+                    outline.setRoundRect(0, 0, view.width, view.height, radius)
             }
             clipToOutline = true
-            setPadding(pad.toInt(), pad.toInt(), pad.toInt(), pad.toInt())
-            addView(highlight, LayoutParams(MATCH_PARENT, row.toInt()))
-            addView(LinearLayout(activity).apply {
-                orientation = LinearLayout.VERTICAL
-                labels.forEachIndexed { i, label -> addView(rowView(label, i == selected), LinearLayout.LayoutParams(MATCH_PARENT, row.toInt())) }
-            }, LayoutParams(MATCH_PARENT, WRAP_CONTENT))
+            // The page behind, blurred (sigma 10), under the base: OneUIFloatingMenu's BackdropFilter.
+            backdrop?.let { shot ->
+                addView(object : View(activity) {
+                    override fun onDraw(canvas: android.graphics.Canvas) {
+                        canvas.drawBitmap(shot, -backdropX, -backdropY, null)
+                    }
+                }.apply {
+                    if (android.os.Build.VERSION.SDK_INT >= 31) {
+                        val blur = OneLook.blurRadius(d(10f))
+                        setRenderEffect(android.graphics.RenderEffect.createBlurEffect(blur, blur, android.graphics.Shader.TileMode.CLAMP))
+                    }
+                }, LayoutParams(MATCH_PARENT, MATCH_PARENT))
+            }
+            // The dark base and the call glass, filled in the card's own shape.
+            addView(View(activity).apply {
+                background = LayerDrawable(arrayOf(ShapeFill(if (light) 0x4DFFFFFF else 0xE6000000.toInt(), radius, keepRound = false), glass))
+            }, LayoutParams(MATCH_PARENT, MATCH_PARENT))
+            addView(FrameLayout(activity).apply {
+                addView(highlight, LayoutParams(MATCH_PARENT, row.toInt()))
+                addView(LinearLayout(activity).apply {
+                    orientation = LinearLayout.VERTICAL
+                    labels.forEachIndexed { i, label -> addView(rowView(label, i == selected), LinearLayout.LayoutParams(MATCH_PARENT, row.toInt())) }
+                }, LayoutParams(MATCH_PARENT, WRAP_CONTENT))
+            }, LayoutParams(MATCH_PARENT, MATCH_PARENT).apply { setMargins(pad.toInt(), pad.toInt(), pad.toInt(), pad.toInt()) })
             press = PressGlow.attach(this, row / 2 / OneLook.px(activity, 1f) + 6f, keepRound = false)
         }
 
         private fun rowView(label: String, checked: Boolean) = LinearLayout(activity).apply {
             gravity = Gravity.CENTER_VERTICAL
             setPadding(d(16f).toInt(), 0, d(16f).toInt(), 0)
-            addView(ImageView(activity).apply { setImageDrawable(Glyph.radio(Color.WHITE, checked)) },
+            addView(ImageView(activity).apply { setImageDrawable(Glyph.radio(ink, checked)) },
                 LinearLayout.LayoutParams(d(22f).toInt(), d(22f).toInt()).apply { marginEnd = d(14f).toInt() })
             addView(TextView(activity).apply {
                 text = label
                 maxLines = 1
                 ellipsize = TextUtils.TruncateAt.END
-                OneLook.style(this, 16f, Color.WHITE, 500, -.2f)
+                OneLook.style(this, 16f, ink, 500, -.2f)
             }, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
         }
 

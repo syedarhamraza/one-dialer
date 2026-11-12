@@ -36,14 +36,28 @@ import kotlin.math.sqrt
  * (TintedCallBody, GlassSpringCurve), squircle.dart. Every size is in One Dialer's design dp.
  */
 object OneLook {
-    const val PAGE = Color.BLACK
-    val CARD = Color.rgb(0x1C, 0x1C, 0x1E) // surfaceCard
-    val TEXT2 = Color.rgb(0x9E, 0x9E, 0xA4) // textSecondary
-    const val DIVIDER = 0x1AFFFFFF
     val RED = Color.rgb(0xF0, 0x71, 0x67) // accentRed
     val CALL_GREEN = Color.rgb(0x00, 0xC2, 0x16) // callGreen, GlowButton's default
     const val RADIUS_CARD = 26f
     const val MAIN_GLASS_GLOW = .6f // kMainGlassGlow
+
+    /** OneUIPalette: dark (pitch black) or ColorOS 17 light (grey page, white cards, black text). */
+    class Palette(val light: Boolean, val page: Int, val card: Int, val text: Int, val text2: Int, val divider: Int)
+
+    private val DARK = Palette(false, Color.BLACK, Color.rgb(0x1C, 0x1C, 0x1E), Color.WHITE, Color.rgb(0x9E, 0x9E, 0xA4), 0x1AFFFFFF)
+    private val LIGHT = Palette(true, Color.rgb(0xF2, 0xF3, 0xF5), Color.WHITE, Color.BLACK, Color.rgb(0x5E, 0x5E, 0x63), 0x1A000000)
+
+    /** Follows the phone's dark theme, as One Dialer's default (System) does. */
+    fun palette(context: Context) =
+        if ((context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES) DARK else LIGHT
+
+    /** OneUIPalette.lightGlassShadow and lightMenuShadow. */
+    val LIGHT_GLASS_SHADOW = listOf(Shadow(0x12000000, 24f, 6f), Shadow(0x10000000, 6f, 1f))
+    val LIGHT_MENU_SHADOW = listOf(Shadow(0x29000000, 40f, 12f), Shadow(0x14000000, 8f, 2f))
+
+    /** The glass body for this theme: half-strength soft glass in dark mode, full white glass in light. */
+    fun glass(context: Context, radius: Float?) =
+        if (palette(context).light) GlassBody(context, radius, opacity = 1f, light = true) else GlassBody(context, radius)
 
     /** DesignWidth: the app is designed 420 dp wide and scaled to the screen, up to 1.15x; landscape unscaled. */
     fun scale(context: Context): Float {
@@ -258,8 +272,9 @@ class ShapeFill(private val color: Int, private val radius: Float?, private val 
     override fun draw(canvas: Canvas) = canvas.drawPath(path, paint)
 
     override fun getOutline(outline: Outline) {
-        if (android.os.Build.VERSION.SDK_INT >= 33) outline.setPath(path)
-        else outline.setRoundRect(bounds, radius ?: (min(bounds.width(), bounds.height()) / 2f))
+        // A rounded rect, not the squircle path: path outlines didn't clip on the vivo (Android 16).
+        val half = min(bounds.width(), bounds.height()) / 2f
+        outline.setRoundRect(bounds, min(radius ?: half, half))
     }
 
     override fun setAlpha(alpha: Int) { paint.alpha = alpha }
@@ -281,13 +296,15 @@ class GlassBody(
     private val strength: Float = 2f,
     private val bottomLip: Float = 1f,
     private val lip: Float = 1f,
+    /** Light mode's glass: a translucent white wash with a top sheen, a bright rim, a shaded bottom edge. */
+    private val light: Boolean = false,
 ) : Drawable() {
     private val paint = Paint(Paint.FILTER_BITMAP_FLAG).apply { alpha = (opacity * 255).toInt() }
     private var image: Bitmap? = null
 
     override fun onBoundsChange(bounds: android.graphics.Rect) {
         if (bounds.isEmpty) return
-        val key = "${bounds.width()}x${bounds.height()}|$radius|$glow|$strength|$bottomLip|$lip"
+        val key = "${bounds.width()}x${bounds.height()}|$radius|$glow|$strength|$bottomLip|$lip|$light"
         image = cache.get(key) ?: paint(bounds.width(), bounds.height()).also { cache.put(key, it) }
     }
 
@@ -296,8 +313,9 @@ class GlassBody(
     }
 
     override fun getOutline(outline: Outline) {
-        val path = Shapes.path(RectF(bounds), radius?.let { OneLook.px(context, it) }, keepRound = false)
-        if (android.os.Build.VERSION.SDK_INT >= 33) outline.setPath(path) else if (radius == null) outline.setOval(bounds) else outline.setRoundRect(bounds, min(OneLook.px(context, radius), min(bounds.width(), bounds.height()) / 2f))
+        // A rounded rect, not the squircle path: path outlines didn't clip on the vivo (Android 16).
+        val half = min(bounds.width(), bounds.height()) / 2f
+        outline.setRoundRect(bounds, min(radius?.let { OneLook.px(context, it) } ?: half, half))
     }
 
     private fun d(v: Float) = OneLook.px(context, v)
@@ -315,7 +333,14 @@ class GlassBody(
 
         // An even milky wash, a little lighter toward the bottom.
         c.drawPath(shape, Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            shader = vertical(intArrayOf(0x33FFFFFF, 0x2BFFFFFF, 0x3DFFFFFF), floatArrayOf(0f, .5f, 1f))
+            shader = vertical(
+                if (light) intArrayOf(0x99FFFFFF.toInt(), 0x6BFFFFFF, 0x85FFFFFF.toInt()) else intArrayOf(0x33FFFFFF, 0x2BFFFFFF, 0x3DFFFFFF),
+                floatArrayOf(0f, .5f, 1f),
+            )
+        })
+        // Light: a sheen over the top half, as light glass catches the light from above.
+        if (light) c.drawPath(shape, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            shader = vertical(intArrayOf(0x80FFFFFF.toInt(), 0x00FFFFFF), floatArrayOf(0f, .5f))
         })
         // The soft glow hugging every edge, weaker along the top.
         c.save(); c.clipPath(shape)
@@ -336,6 +361,19 @@ class GlassBody(
             )
         })
         c.restore()
+        if (light) {
+            val edge = RectF(rect).apply { inset(d(.5f), d(.5f)) }
+            val edgePath = Shapes.path(edge, r?.let { it - d(.5f) }, keepRound = false)
+            // A bright rim, as light glass's edge catches the light.
+            c.drawPath(edgePath, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.STROKE; strokeWidth = d(1f); color = 0xF2FFFFFF.toInt()
+            })
+            // White alone vanishes on a light page: a hairline shade deepening toward the bottom.
+            c.drawPath(edgePath, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.STROKE; strokeWidth = d(.8f)
+                shader = vertical(intArrayOf(0, 0, 0x1A000000), floatArrayOf(0f, .5f, 1f))
+            })
+        }
         // The 3D lips: clearer along the top, fainter along the bottom, faded toward the sides.
         val lipPx = d(lip)
         c.saveLayer(rect, null)
@@ -343,7 +381,7 @@ class GlassBody(
         c.drawPath(Shapes.path(inner, r?.let { it - lipPx / 2 }, keepRound = false), Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE; strokeWidth = lipPx
             shader = vertical(
-                intArrayOf(e(0x3BFFFFFF), 0x00FFFFFF, 0x00FFFFFF, e(0x1FFFFFFF, bottomLip)),
+                intArrayOf(e(0x3BFFFFFF), 0x00FFFFFF, 0x00FFFFFF, e(if (light) 0x0F000000 else 0x1FFFFFFF, bottomLip)),
                 floatArrayOf(0f, .3f, .7f, 1f),
             )
         })
@@ -410,5 +448,32 @@ class Glyph(private val color: Int, private val draw: (Canvas, Paint) -> Unit) :
                 c.drawCircle(12f, 12f, 5f, p)
             }
         }
+    }
+}
+
+/** A BoxShadow: colour, blur radius and downward offset, in design dp. */
+class Shadow(val color: Int, val blur: Float, val dy: Float)
+
+/**
+ * Shadows around a shape and never inside it (BoxShadow): a sibling under a pressed button, so
+ * they stay put while it grows, as One Dialer draws them outside PressGlow's press.
+ */
+class ShadowView(
+    context: Context,
+    private val radiusDp: Float?,
+    private val keepRound: Boolean,
+    private val shadows: List<Shadow>,
+) : android.view.View(context) {
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.BLACK }
+
+    override fun onDraw(canvas: Canvas) {
+        val path = Shapes.path(RectF(0f, 0f, width.toFloat(), height.toFloat()), radiusDp?.let { OneLook.px(context, it) }, keepRound)
+        canvas.save()
+        canvas.clipOutPath(path)
+        for (s in shadows) {
+            paint.setShadowLayer(OneLook.px(context, s.blur), 0f, OneLook.px(context, s.dy), s.color)
+            canvas.drawPath(path, paint)
+        }
+        canvas.restore()
     }
 }
