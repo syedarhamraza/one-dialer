@@ -2702,6 +2702,30 @@ abstract class AppLocalizations {
   /// **'Report ID copied'**
   String get reportIdCopied;
 
+  /// No description provided for @editSpeedDial.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit speed dial'**
+  String get editSpeedDial;
+
+  /// No description provided for @clearNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear number'**
+  String get clearNumber;
+
+  /// No description provided for @changeNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Change number'**
+  String get changeNumber;
+
+  /// No description provided for @numberCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Number copied'**
+  String get numberCopied;
+
   /// No description provided for @noEmailApp.
   ///
   /// In en, this message translates to:
@@ -2887,42 +2911,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Using Wi-Fi or mobile data'**
   String get autoUpdateAlways;
-
-  /// No description provided for @settingsCalls.
-  ///
-  /// In en, this message translates to:
-  /// **'Calls'**
-  String get settingsCalls;
-
-  /// No description provided for @settingsDialing.
-  ///
-  /// In en, this message translates to:
-  /// **'Dialing'**
-  String get settingsDialing;
-
-  /// No description provided for @settingsSpamBlocking.
-  ///
-  /// In en, this message translates to:
-  /// **'Spam & blocking'**
-  String get settingsSpamBlocking;
-
-  /// No description provided for @settingsPersonalisation.
-  ///
-  /// In en, this message translates to:
-  /// **'Personalisation'**
-  String get settingsPersonalisation;
-
-  /// No description provided for @settingsGeneral.
-  ///
-  /// In en, this message translates to:
-  /// **'General'**
-  String get settingsGeneral;
-
-  /// No description provided for @settingsAbout.
-  ///
-  /// In en, this message translates to:
-  /// **'About'**
-  String get settingsAbout;
 
   /// No description provided for @displayAndEffects.
   ///

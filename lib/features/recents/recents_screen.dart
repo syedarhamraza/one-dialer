@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -869,7 +870,8 @@ class _CallRow extends StatelessWidget {
               child: IconButton(
                 tooltip: context.l10n.callDetails,
                 onPressed: selecting ? null : onInfo,
-                icon: Icon(Icons.info_outline_rounded, size: 26, color: context.palette.textPrimary),
+                // Light like the time beside it.
+                icon: Icon(CupertinoIcons.info, size: 24, color: context.palette.textSecondary),
               ),
             ),
             selectMark,

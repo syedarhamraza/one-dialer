@@ -1543,6 +1543,18 @@ class AppLocalizationsIt extends AppLocalizations {
   String get reportIdCopied => 'ID segnalazione copiato';
 
   @override
+  String get editSpeedDial => 'Modifica chiamata rapida';
+
+  @override
+  String get clearNumber => 'Cancella numero';
+
+  @override
+  String get changeNumber => 'Cambia numero';
+
+  @override
+  String get numberCopied => 'Numero copiato';
+
+  @override
   String get noEmailApp => 'Nessuna app email trovata';
 
   @override
@@ -1643,24 +1655,6 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get autoUpdateAlways => 'Con Wi-Fi o dati mobili';
-
-  @override
-  String get settingsCalls => 'Chiamate';
-
-  @override
-  String get settingsDialing => 'Composizione';
-
-  @override
-  String get settingsSpamBlocking => 'Spam e blocco';
-
-  @override
-  String get settingsPersonalisation => 'Personalizzazione';
-
-  @override
-  String get settingsGeneral => 'Generali';
-
-  @override
-  String get settingsAbout => 'Informazioni';
 
   @override
   String get displayAndEffects => 'Schermo ed effetti';

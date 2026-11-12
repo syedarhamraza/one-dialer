@@ -1529,6 +1529,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportIdCopied => 'Report ID copied';
 
   @override
+  String get editSpeedDial => 'Edit speed dial';
+
+  @override
+  String get clearNumber => 'Clear number';
+
+  @override
+  String get changeNumber => 'Change number';
+
+  @override
+  String get numberCopied => 'Number copied';
+
+  @override
   String get noEmailApp => 'No email app found';
 
   @override
@@ -1627,24 +1639,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get autoUpdateAlways => 'Using Wi-Fi or mobile data';
-
-  @override
-  String get settingsCalls => 'Calls';
-
-  @override
-  String get settingsDialing => 'Dialing';
-
-  @override
-  String get settingsSpamBlocking => 'Spam & blocking';
-
-  @override
-  String get settingsPersonalisation => 'Personalisation';
-
-  @override
-  String get settingsGeneral => 'General';
-
-  @override
-  String get settingsAbout => 'About';
 
   @override
   String get displayAndEffects => 'Display & effects';

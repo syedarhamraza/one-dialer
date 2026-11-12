@@ -204,13 +204,12 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   Widget build(BuildContext context) {
     final problems = _problems;
     final l10n = context.l10n;
-    // Grouped like ColorOS's Settings: one titled card per topic.
+    // Grouped like ColorOS's Settings: one untitled card per topic.
     return OneUISubpage(
       title: l10n.callSettings,
       builder: (context) => [
         if (problems.isNotEmpty) OneUIGroupCard(headerTitle: l10n.needsAttention, items: problems),
         OneUIGroupCard(
-          headerTitle: l10n.settingsCalls,
           items: [
             OneUIGroupItem(title: l10n.incomingCallReminders, onTap: () => _push(const IncomingCallRemindersScreen())),
             OneUIGroupItem(
@@ -231,14 +230,12 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           ],
         ),
         OneUIGroupCard(
-          headerTitle: l10n.settingsDialing,
           items: [
             OneUIGroupItem(title: l10n.keypadAndRecents, onTap: () => _push(const DialingSettingsScreen())),
             OneUIGroupItem(title: l10n.speedDial, onTap: () => _push(const SpeedDialScreen())),
           ],
         ),
         OneUIGroupCard(
-          headerTitle: l10n.settingsSpamBlocking,
           items: [
             OneUIGroupItem(title: l10n.blockAndFilter, onTap: () => _push(const BlockingScreen())),
             OneUIGroupItem(
@@ -249,7 +246,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           ],
         ),
         OneUIGroupCard(
-          headerTitle: l10n.settingsPersonalisation,
           items: [
             OneUIGroupItem(
               title: l10n.displayAndEffects,
@@ -267,7 +263,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           ],
         ),
         OneUIGroupCard(
-          headerTitle: l10n.settingsGeneral,
           items: [
             OneUIGroupItem(
               title: l10n.settingsLanguageHeader,
@@ -301,7 +296,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           ],
         ),
         OneUIGroupCard(
-          headerTitle: l10n.settingsAbout,
           items: [
             OneUIGroupItem(
               title: l10n.softwareUpdate,
