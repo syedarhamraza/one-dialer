@@ -55,6 +55,7 @@ class DialerInCallService : InCallService() {
     }
 
     override fun onDestroy() {
+        CallFlash.stop()
         handler.removeCallbacksAndMessages(null)
         onTts { shutdown() }
         ttsThread.shutdown()
@@ -77,6 +78,7 @@ class DialerInCallService : InCallService() {
                 getSystemService(PowerManager::class.java).isInteractive &&
                 !getSystemService(KeyguardManager::class.java).isKeyguardLocked
             CallNotifications.showIncoming(this, id, call, screenOpening = openScreen)
+            CallFlash.start(this)
             if (openScreen) {
                 InCallActivity.start(this)
                 // If Android blocked the start, ring with the banner after all rather than silently.
@@ -105,12 +107,16 @@ class DialerInCallService : InCallService() {
 
     override fun onCallRemoved(call: Call) {
         CallManager.onCallRemoved(call)
+        if (CallManager.all().none { (_, c) -> CallManager.stateOf(c) == Call.STATE_RINGING }) CallFlash.stop()
         if (!CallManager.hasCalls) CallNotifications.cancelIncoming(this)
     }
 
     /** Settings › Answer/End calls: a buzz on answer and hang-up, and the speaker on answer. */
     fun onStateChanged(call: Call, from: Int?, to: Int) {
-        if (from == Call.STATE_RINGING) onTts { stop() }
+        if (from == Call.STATE_RINGING) {
+            onTts { stop() }
+            CallFlash.stop()
+        }
         if (!CallPrefs.buzzes(from, to)) return
         val prefs = CallPrefs.read(this)
         if (prefs["vibrateAnswerEnd"] == true) {

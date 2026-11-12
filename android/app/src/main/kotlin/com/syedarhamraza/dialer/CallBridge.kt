@@ -504,6 +504,8 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 android.content.Intent(android.provider.Settings.ACTION_APP_LOCALE_SETTINGS, Uri.parse("package:$pkg"))
             page == "language" -> android.content.Intent(android.provider.Settings.ACTION_LOCALE_SETTINGS)
             page == "deviceInfo" -> android.content.Intent(android.provider.Settings.ACTION_DEVICE_INFO_SETTINGS)
+            // The phone's own flash notification has no public page on vivo or OPPO: open Settings.
+            page == "systemSettings" -> android.content.Intent(android.provider.Settings.ACTION_SETTINGS)
             page == "defaultApps" -> android.content.Intent(android.provider.Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
             // The SIM provider's call settings (forwarding, waiting, caller ID), from the phone service.
             page == "carrier" -> android.content.Intent(android.telecom.TelecomManager.ACTION_SHOW_CALL_SETTINGS)

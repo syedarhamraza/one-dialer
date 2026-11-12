@@ -1,3 +1,4 @@
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/prefs/dialer_prefs.dart';
@@ -5,6 +6,7 @@ import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/choice_row.dart';
 import '../../widgets/cos_subpage.dart';
 import '../../widgets/one_ui_group_card.dart';
+import '../../widgets/one_ui_switch.dart';
 import '../../widgets/showcase_picker.dart';
 import '../in_call/call_background.dart';
 import '../in_call/call_controls.dart' show answerGreen, endRed;
@@ -25,6 +27,7 @@ class _CallSettings {
       if (s['autoAnswer'] case final bool v) autoAnswer.value = v;
       if (s['autoAnswerDelay'] case final int v) delay.value = '$v';
       if (s['announceCalls'] case final String v) announce.value = v;
+      if (s['flashOnCall'] case final bool v) flash.value = v;
     });
   }
 
@@ -34,12 +37,13 @@ class _CallSettings {
   final autoAnswer = ValueNotifier(false);
   final delay = ValueNotifier<String?>('5');
   final announce = ValueNotifier('off');
+  final flash = ValueNotifier(false);
 
   bool _disposed = false;
 
   void dispose() {
     _disposed = true;
-    for (final n in [incomingStyle, vibrate, speaker, autoAnswer, delay, announce]) {
+    for (final n in [incomingStyle, vibrate, speaker, autoAnswer, delay, announce, flash]) {
       n.dispose();
     }
   }
@@ -123,6 +127,19 @@ class _IncomingCallRemindersScreenState extends State<IncomingCallRemindersScree
   final _settings = _CallSettings();
   final _announceKey = GlobalKey();
 
+  /// Skins with their own flash notification, where ours would blink on top of it.
+  static const _ownFlash = ['vivo', 'iqoo', 'oppo', 'oneplus', 'realme', 'samsung', 'xiaomi', 'honor', 'huawei'];
+  bool _systemFlash = false;
+
+  @override
+  void initState() {
+    super.initState();
+    DeviceInfoPlugin().androidInfo.then((info) {
+      final brand = '${info.manufacturer} ${info.brand}'.toLowerCase();
+      if (mounted) setState(() => _systemFlash = _ownFlash.any(brand.contains));
+    }, onError: (_) {}); // not on Android (tests)
+  }
+
   static Map<String, String> _announce(AppLocalizations l10n) => {
     'off': l10n.off,
     'always': l10n.always,
@@ -196,6 +213,26 @@ class _IncomingCallRemindersScreenState extends State<IncomingCallRemindersScree
               labels: _announce(context.l10n),
               onPick: (v) => _settings.set(_settings.announce, 'announceCalls', v),
             ),
+          ],
+        ),
+        OneUIGroupCard(
+          items: [
+            OneUIGroupItem(
+              title: context.l10n.flashOnCall,
+              subtitle: context.l10n.flashOnCallSubtitle,
+              onTap: () => _settings.set(_settings.flash, 'flashOnCall', !_settings.flash.value),
+              trailing: ValueListenableBuilder(
+                valueListenable: _settings.flash,
+                builder: (context, on, _) =>
+                    OneUISwitch(value: on, onChanged: (v) => _settings.set(_settings.flash, 'flashOnCall', v)),
+              ),
+            ),
+            if (_systemFlash)
+              OneUIGroupItem(
+                title: context.l10n.systemFlash,
+                subtitle: context.l10n.systemFlashSubtitle,
+                onTap: () => TelecomBridge.instance.openSystemSettings('systemSettings'),
+              ),
           ],
         ),
       ],
@@ -306,9 +343,9 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
                 title: context.l10n.callBackground,
                 subtitle: context.l10n.callBackgroundAllSubtitle,
                 value: CallBackgroundScreen.label(context.l10n, CallBackgrounds.instance.stored('all')),
-                onTap: () => Navigator.of(
-                  context,
-                ).push(MaterialPageRoute<void>(builder: (_) => const CallBackgroundScreen(scope: 'all'))),
+                onTap: () =>
+                    Navigator.of(context)
+                        .push(MaterialPageRoute<void>(builder: (_) => const CallBackgroundScreen(scope: 'all'))),
               ),
             ],
           ),

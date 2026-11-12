@@ -1149,6 +1149,20 @@ class AppLocalizationsIt extends AppLocalizations {
       'Pronuncia il nome di chi chiama mentre squilla';
 
   @override
+  String get flashOnCall => 'Notifica con flash';
+
+  @override
+  String get flashOnCallSubtitle =>
+      'Fa lampeggiare il flash mentre arriva una chiamata';
+
+  @override
+  String get systemFlash => 'Il telefono ha già una notifica con flash';
+
+  @override
+  String get systemFlashSubtitle =>
+      'Disattivane una, altrimenti lampeggeranno entrambe. La trovi in Impostazioni, sotto Notifiche o Accessibilità';
+
+  @override
   String get swipeUpToAnswer => 'Scorri verso l\'alto per rispondere';
 
   @override
