@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/contacts/contacts_repository.dart';
+import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/letter_avatar.dart';
@@ -435,7 +436,12 @@ class CallHeader extends StatelessWidget {
     final textAlign = photo == null || folded == 1 ? TextAlign.center : TextAlign.start;
     // ColorOS puts the number and the city on lines of their own.
     final subtitles = [
-      if (name != shownNumber && shownNumber.isNotEmpty && !call.isPrivate && !call.isConference) shownNumber,
+      if (name != shownNumber &&
+          shownNumber.isNotEmpty &&
+          !call.isPrivate &&
+          !call.isConference &&
+          !(contact != null && DialerPrefs.instance.hideContactNumbers.value))
+        shownNumber,
       ?call.location,
     ];
     final held = call.state == CallState.holding;

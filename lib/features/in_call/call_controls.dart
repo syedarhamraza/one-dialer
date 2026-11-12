@@ -93,7 +93,8 @@ GlassLook callGlass(BuildContext context) {
 }
 
 /// [CallFrost]'s fills below full call screen effects.
-const callFrostFill = Color(0x40FFFFFF);
+// ColorOS 17 reduced: a faint white wash, so the call colours show through the buttons.
+const callFrostFill = Color(0x2BFFFFFF);
 const callSolidFill = Color(0xFF6E7278);
 
 /// A frosted control's body: [CallBodyArtwork] at full call screen effects, One UI's flat

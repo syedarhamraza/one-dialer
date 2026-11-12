@@ -106,7 +106,7 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
           ),
         OneUIFloatingMenuItem(
           label: _hasNote ? context.l10n.editNote : context.l10n.note,
-          icon: Icons.edit_note_rounded,
+          icon: Icons.sticky_note_2_rounded,
           onTap: _editNote,
         ),
         if (widget.recorder case final recorder?)
@@ -116,7 +116,7 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                 : recorder.ready
                 ? context.l10n.record
                 : context.l10n.recordSetUpFirst,
-            icon: recorder.recording ? Icons.stop_circle_outlined : Icons.fiber_manual_record_outlined,
+            icon: recorder.recording ? Icons.stop_circle_outlined : Icons.graphic_eq_rounded,
             enabled: recorder.recording || (recorder.ready && call.state == CallState.active),
             onTap: TelecomBridge.instance.toggleRecording,
           ),

@@ -602,8 +602,7 @@
     }
   },
   "switchCall": "Switch",
-  "declineWithSms": "Decline with SMS",
-  "noQuickReplies": "No quick replies saved",
+  "declineWithSms": "SMS reply",
   "answer": "Answer",
   "decline": "Decline",
   "answerVerb": "answer",
@@ -647,6 +646,10 @@
   "answerCall": "Answer call",
   "callScreenEffects": "Call screen effects",
   "callScreenEffectsSubtitle": "Glass and glow on the call screen",
+  "callScreenAnimations": "Call screen animations",
+  "callScreenAnimationsSubtitle": "Motion when the call screen opens, answers and changes",
+  "hideContactNumbers": "Hide contact phone numbers",
+  "hideContactNumbersSubtitle": "Show only the name of saved contacts on the call screen and in Calls",
   "@callScreenEffectsSubtitle": {
     "description": "REVIEW: \"Glass and glow\" names the design's frosted-glass look; keep it short"
   },

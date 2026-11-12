@@ -1865,14 +1865,8 @@ abstract class AppLocalizations {
   /// No description provided for @declineWithSms.
   ///
   /// In en, this message translates to:
-  /// **'Decline with SMS'**
+  /// **'SMS reply'**
   String get declineWithSms;
-
-  /// No description provided for @noQuickReplies.
-  ///
-  /// In en, this message translates to:
-  /// **'No quick replies saved'**
-  String get noQuickReplies;
 
   /// No description provided for @answer.
   ///
@@ -2029,6 +2023,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Glass and glow on the call screen'**
   String get callScreenEffectsSubtitle;
+
+  /// No description provided for @callScreenAnimations.
+  ///
+  /// In en, this message translates to:
+  /// **'Call screen animations'**
+  String get callScreenAnimations;
+
+  /// No description provided for @callScreenAnimationsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Motion when the call screen opens, answers and changes'**
+  String get callScreenAnimationsSubtitle;
+
+  /// No description provided for @hideContactNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide contact phone numbers'**
+  String get hideContactNumbers;
+
+  /// No description provided for @hideContactNumbersSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Show only the name of saved contacts on the call screen and in Calls'**
+  String get hideContactNumbersSubtitle;
 
   /// No description provided for @secondsCount.
   ///

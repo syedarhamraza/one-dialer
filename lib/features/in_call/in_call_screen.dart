@@ -116,10 +116,11 @@ class _InCallScreenState extends State<InCallScreen> {
               dim: _keypadBlur,
               seed: call == null ? null : backdropSeed(call),
               background: call == null ? null : CallBackgrounds.instance.forCall(contact?.id),
-              // Connected; an answered call stays frosted on the ended summary rather than sharpening
-              // as it closes, while a declined or missed one stays sharp.
+              // Placing a call or connected (the same buttons, frosted under them as soon as they
+              // show); an answered call stays frosted on the ended summary rather than sharpening as
+              // it closes, while a declined or missed one stays sharp. Ringing is the sharp reveal.
               frosted: switch (call?.state) {
-                CallState.active || CallState.holding => true,
+                CallState.dialing || CallState.connecting || CallState.active || CallState.holding => true,
                 CallState.disconnecting || CallState.disconnected => call?.connectTime != null,
                 _ => false,
               },

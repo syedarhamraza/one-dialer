@@ -1083,10 +1083,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get switchCall => 'Passa';
 
   @override
-  String get declineWithSms => 'Rifiuta con SMS';
-
-  @override
-  String get noQuickReplies => 'Nessuna risposta rapida salvata';
+  String get declineWithSms => 'Rispondi con SMS';
 
   @override
   String get answer => 'Rispondi';
@@ -1172,6 +1169,20 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get callScreenEffectsSubtitle =>
       'Vetro e bagliore nella schermata di chiamata';
+
+  @override
+  String get callScreenAnimations => 'Animazioni schermata di chiamata';
+
+  @override
+  String get callScreenAnimationsSubtitle =>
+      'Movimento quando la schermata di chiamata si apre, risponde e cambia';
+
+  @override
+  String get hideContactNumbers => 'Nascondi i numeri dei contatti';
+
+  @override
+  String get hideContactNumbersSubtitle =>
+      'Mostra solo il nome dei contatti salvati nella schermata di chiamata e in Chiamate';
 
   @override
   String secondsCount(int count) {

@@ -25,7 +25,14 @@ class InCallApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: OneUITheme.darkTheme,
         scrollBehavior: const MaterialScrollBehavior(), // the call screen holds still
-        builder: (context, child) => DesignWidth(child: child!),
+        // Every call screen animation checks disableAnimations, so this one switch stills them all.
+        builder: (context, child) => ValueListenableBuilder(
+          valueListenable: DialerPrefs.instance.callAnimations,
+          builder: (context, animate, child) => animate
+              ? child!
+              : MediaQuery(data: MediaQuery.of(context).copyWith(disableAnimations: true), child: child!),
+          child: DesignWidth(child: child!),
+        ),
         home: CallEffects(child: const InCallScreen()),
       ),
     );
