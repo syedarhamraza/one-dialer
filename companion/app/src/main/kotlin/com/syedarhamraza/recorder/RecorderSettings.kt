@@ -42,6 +42,12 @@ object RecorderSettings {
     }
 
     private const val SAVED_SOURCE = "source"
+    private const val CONSENT = "consentAccepted"
+
+    /** The first-run "Before you record" page was agreed to. Not in [DEFAULTS]: One Dialer doesn't change it. */
+    fun consentAccepted(context: Context) = prefs(context).getBoolean(CONSENT, false)
+
+    fun acceptConsent(context: Context) = prefs(context).edit().putBoolean(CONSENT, true).apply()
 
     /** The sources to try at the start of a recording: one when known, all of them when Auto hasn't tested yet. */
     fun sourcesToTry(context: Context): List<Int> {

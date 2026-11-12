@@ -29,4 +29,20 @@
     <string name="boost_off">Off</string>
     <string name="boost_normal">Normal: lifts the other person</string>
     <string name="boost_strong">Strong: lifts the other person more</string>
+    <string name="section_permissions">Permissions</string>
+    <string name="section_recording">Recording</string>
+    <string name="section_law">Recording and the law</string>
+    <string name="consent_title">Before you record</string>
+    <string name="consent_intro">Please read this before you record a call.</string>
+    <string name="consent_choice_title">Recording is your choice</string>
+    <string name="consent_choice">Nothing is recorded on its own. You start and stop every recording yourself, from One Dialer\'s call screen.</string>
+    <string name="consent_law_title">Follow the law where you live</string>
+    <string name="consent_law">Call recording laws differ by country and region. Some places allow it when one person on the call agrees, others need everyone on the call to agree, and some don\'t allow it at all.</string>
+    <string name="consent_tell_title">Tell the other person</string>
+    <string name="consent_tell">The other person isn\'t told that you\'re recording. You\'re responsible for telling them, getting their consent where the law requires it, and using recordings lawfully.</string>
+    <string name="consent_private_title">Recordings stay on your phone</string>
+    <string name="consent_private">They\'re never uploaded. They leave this phone only if you share them.</string>
+    <string name="consent_accept">I understand and agree</string>
+    <string name="consent_later">Not now</string>
+    <string name="back">Back</string>
 </resources>
