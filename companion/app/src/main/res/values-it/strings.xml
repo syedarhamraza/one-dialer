@@ -5,12 +5,12 @@
     <string name="stop">Interrompi</string>
     <string name="fix">Risolvi</string>
     <string name="accessibility_summary">Permette a One Dialer di registrare le chiamate</string>
-    <string name="accessibility_description">Questo servizio non legge nulla sullo schermo e non fa nulla da solo. Android consente di usare il microfono durante una chiamata solo alle app con un servizio di accessibilità attivo, quindi One Dialer Recorder ne ha bisogno per registrare le chiamate. Le registrazioni restano su questo telefono.</string>
+    <string name="accessibility_description">Questo servizio non legge nulla sullo schermo e non fa nulla da solo. Android consente di usare il microfono durante una chiamata solo alle app con un servizio di accessibilità attivo, quindi One Recorder ne ha bisogno per registrare le chiamate. Le registrazioni restano su questo telefono.</string>
     <string name="setup_intro">Permette a One Dialer di registrare le chiamate. Avvia e interrompi le registrazioni dalla schermata di chiamata di One Dialer e trovale in One Dialer › Impostazioni › Registrazione chiamate.</string>
     <string name="setup_mic">Microfono</string>
     <string name="setup_mic_detail">Necessario per registrare</string>
     <string name="setup_accessibility">Servizio di accessibilità</string>
-    <string name="setup_accessibility_detail">Attiva One Dialer Recorder in App installate</string>
+    <string name="setup_accessibility_detail">Attiva One Recorder in App installate</string>
     <string name="setup_restricted">Se Android indica che l\'impostazione è limitata: apri Info app, tocca ⋮ › Consenti impostazioni limitate, poi torna qui e attiva il servizio.</string>
     <string name="setup_open_app_info">Apri Info app</string>
     <string name="setup_notifications">Notifiche</string>

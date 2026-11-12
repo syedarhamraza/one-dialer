@@ -278,7 +278,7 @@ glyph('<g fill="#FFFFFF" stroke="#FFFFFF" stroke-width="1.2" stroke-linejoin="ro
       '<path d="M19.6 6V13M16.1 9.5H23.1" stroke="#FFFFFF" stroke-width="2.3" stroke-linecap="round"/>', "add_contact")
 
 
-# One Dialer Recorder (companion/): Phone's Glossy tile with a glossy sound wave (rounded bars) in
+# One Recorder (companion/): Phone's Glossy tile with a glossy sound wave (rounded bars) in
 # place of the handset, so it reads as One Dialer's sibling.
 REC = pathlib.Path("companion/app/src/main/res/drawable-nodpi")
 WAVE = (.26, .5, .78, 1, .66, .9, .44, .22)  # bar heights, as a share of the tallest

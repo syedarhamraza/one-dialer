@@ -188,7 +188,7 @@ class CallSnapshot {
   }
 }
 
-/// One Dialer Recorder, the sideloaded companion (`RecorderCompanion.kt`).
+/// One Recorder, the sideloaded companion (`RecorderCompanion.kt`).
 class RecorderInfo {
   const RecorderInfo({
     this.ready = false,

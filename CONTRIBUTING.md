@@ -64,7 +64,7 @@ Things to know before the first run:
 | `lib/core/` | Non-UI code: telecom bridge, contacts, preferences, crash reporting |
 | `lib/l10n/` | The app's text in each language (`app_en.arb`, `app_it.arb`) |
 | `android/app/src/main/kotlin/.../telecom/` | The Kotlin side that talks to Android's call system |
-| `companion/` | One Dialer Recorder, the separate call-recording app |
+| `companion/` | One Recorder, the separate call-recording app |
 | `test/` | Flutter tests |
 
 Two Flutter engines run in one app: one for the main screens and one, kept warm, for the call screen. [AGENTS.md](AGENTS.md) explains how everything fits together; read its **Architecture** section before changing anything call-related.

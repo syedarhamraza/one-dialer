@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- One Dialer Recorder: sideloaded companion. Holds the mic and an empty accessibility service so
+<!-- One Recorder: sideloaded companion. Holds the mic and an empty accessibility service so
      One Dialer (the Play app) can record calls without carrying either. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 

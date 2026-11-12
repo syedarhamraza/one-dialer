@@ -74,13 +74,13 @@ Most phones ship a dialer you can't change, and most replacements either look da
 - English and Italian ([add your language](TRANSLATING.md)).
 
 ### Call recording (optional)
-Recording lives in a separate, sideloaded companion app, **One Dialer Recorder**. Install it from [GitHub Releases](https://github.com/syedarhamraza/one-dialer/releases) and recording controls appear in the call screen and Settings. Without it, One Dialer never touches the microphone. Recording laws differ by country, so check yours first.
+Recording lives in a separate, sideloaded companion app, **One Recorder**. Install it from [GitHub Releases](https://github.com/syedarhamraza/one-dialer/releases) and recording controls appear in the call screen and Settings. Without it, One Dialer never touches the microphone. Recording laws differ by country, so check yours first.
 
 ## Install
 
 1. Join the closed test on [Google Play](https://play.google.com/apps/testing/com.syedarhamraza.onedialer) and install One Dialer.
 2. Open it and tap **Set** to make it your default phone app. Calls only route through One Dialer once it's the default.
-3. Optional: install **One Dialer Recorder** from [GitHub Releases](https://github.com/syedarhamraza/one-dialer/releases) for call recording.
+3. Optional: install **One Recorder** from [GitHub Releases](https://github.com/syedarhamraza/one-dialer/releases) for call recording.
 
 It needs Android 10 or newer.
 

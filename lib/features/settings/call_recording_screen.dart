@@ -15,7 +15,7 @@ import '../../widgets/one_ui_group_card.dart';
 import '../contacts/contact_picker_screen.dart';
 import '../recordings/recordings_screen.dart';
 
-/// Settings › Call recording: shown only with One Dialer Recorder (the sideloaded companion)
+/// Settings › Call recording: shown only with One Recorder (the sideloaded companion)
 /// installed. Its setup, the consent notice, auto-record rules, sound and storage.
 class CallRecordingScreen extends StatefulWidget {
   const CallRecordingScreen({super.key});

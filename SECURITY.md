@@ -17,4 +17,4 @@ Only the latest release on Google Play and in this repository's current `beta/<n
 
 ## Scope
 
-In scope: the One Dialer app (`lib/`, `android/`) and the One Dialer Recorder companion (`companion/`). Examples: another app triggering calls or reading call data through One Dialer's exported components, or the companion trusting an app that isn't One Dialer.
+In scope: the One Dialer app (`lib/`, `android/`) and the One Recorder companion (`companion/`). Examples: another app triggering calls or reading call data through One Dialer's exported components, or the companion trusting an app that isn't One Dialer.
