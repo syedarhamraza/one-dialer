@@ -314,6 +314,8 @@
   "fullScreen": "Full screen",
   "announceCalls": "Announce incoming calls",
   "announceCallsSubtitle": "Says the caller's name while it rings",
+  "liveUpdateCapsule": "Live Update capsule (Experimental)",
+  "liveUpdateCapsuleSubtitle": "Android 16: show a connected call in the status bar chip, and the capsule on ColorOS, OxygenOS and realme UI",
   "swipeUpToAnswer": "Swipe up to answer",
   "swipeDownToAnswer": "Swipe down to answer",
   "answerButtons": "Answer buttons",

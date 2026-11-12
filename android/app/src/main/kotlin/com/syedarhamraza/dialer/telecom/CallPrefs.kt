@@ -23,6 +23,7 @@ object CallPrefs {
         "recordContacts" to "[]", // contact ids (JSON) recorded in "contacts" mode
         "neverRecord" to "[]", // contact ids (JSON) never auto-recorded
         "recordingConsent" to false, // the user accepted Settings › Call recording's consent notice
+        "liveUpdates" to false, // experimental: a connected call asks for an Android 16 Live Update (capsule)
     )
 
     fun read(context: Context): Map<String, Any> {

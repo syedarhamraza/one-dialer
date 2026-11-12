@@ -314,6 +314,8 @@
   "fullScreen": "Schermo intero",
   "announceCalls": "Annuncia chiamate in arrivo",
   "announceCallsSubtitle": "Pronuncia il nome di chi chiama mentre squilla",
+  "liveUpdateCapsule": "Capsula Live Update (Sperimentale)",
+  "liveUpdateCapsuleSubtitle": "Android 16: mostra la chiamata in corso nel chip della barra di stato e nella capsula su ColorOS, OxygenOS e realme UI",
   "swipeUpToAnswer": "Scorri verso l'alto per rispondere",
   "swipeDownToAnswer": "Scorri verso il basso per rispondere",
   "answerButtons": "Pulsanti di risposta",

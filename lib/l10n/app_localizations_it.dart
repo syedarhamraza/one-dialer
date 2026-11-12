@@ -1149,6 +1149,13 @@ class AppLocalizationsIt extends AppLocalizations {
       'Pronuncia il nome di chi chiama mentre squilla';
 
   @override
+  String get liveUpdateCapsule => 'Capsula Live Update (Sperimentale)';
+
+  @override
+  String get liveUpdateCapsuleSubtitle =>
+      'Android 16: mostra la chiamata in corso nel chip della barra di stato e nella capsula su ColorOS, OxygenOS e realme UI';
+
+  @override
   String get swipeUpToAnswer => 'Scorri verso l\'alto per rispondere';
 
   @override

@@ -5,6 +5,7 @@ import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/choice_row.dart';
 import '../../widgets/cos_subpage.dart';
 import '../../widgets/one_ui_group_card.dart';
+import '../../widgets/one_ui_switch.dart';
 import '../../widgets/showcase_picker.dart';
 import '../in_call/call_background.dart';
 import '../in_call/call_controls.dart' show answerGreen, endRed;
@@ -25,6 +26,7 @@ class _CallSettings {
       if (s['autoAnswer'] case final bool v) autoAnswer.value = v;
       if (s['autoAnswerDelay'] case final int v) delay.value = '$v';
       if (s['announceCalls'] case final String v) announce.value = v;
+      if (s['liveUpdates'] case final bool v) liveUpdates.value = v;
     });
   }
 
@@ -34,12 +36,13 @@ class _CallSettings {
   final autoAnswer = ValueNotifier(false);
   final delay = ValueNotifier<String?>('5');
   final announce = ValueNotifier('off');
+  final liveUpdates = ValueNotifier(false);
 
   bool _disposed = false;
 
   void dispose() {
     _disposed = true;
-    for (final n in [incomingStyle, vibrate, speaker, autoAnswer, delay, announce]) {
+    for (final n in [incomingStyle, vibrate, speaker, autoAnswer, delay, announce, liveUpdates]) {
       n.dispose();
     }
   }
@@ -195,6 +198,18 @@ class _IncomingCallRemindersScreenState extends State<IncomingCallRemindersScree
               value: _settings.announce,
               labels: _announce(context.l10n),
               onPick: (v) => _settings.set(_settings.announce, 'announceCalls', v),
+            ),
+            OneUIGroupItem(
+              title: context.l10n.liveUpdateCapsule,
+              subtitle: context.l10n.liveUpdateCapsuleSubtitle,
+              onTap: () => _settings.set(_settings.liveUpdates, 'liveUpdates', !_settings.liveUpdates.value),
+              trailing: ValueListenableBuilder(
+                valueListenable: _settings.liveUpdates,
+                builder: (context, on, _) => OneUISwitch(
+                  value: on,
+                  onChanged: (v) => _settings.set(_settings.liveUpdates, 'liveUpdates', v),
+                ),
+              ),
             ),
           ],
         ),

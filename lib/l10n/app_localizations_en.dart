@@ -1140,6 +1140,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get announceCallsSubtitle => 'Says the caller\'s name while it rings';
 
   @override
+  String get liveUpdateCapsule => 'Live Update capsule (Experimental)';
+
+  @override
+  String get liveUpdateCapsuleSubtitle =>
+      'Android 16: show a connected call in the status bar chip, and the capsule on ColorOS, OxygenOS and realme UI';
+
+  @override
   String get swipeUpToAnswer => 'Swipe up to answer';
 
   @override

@@ -1982,6 +1982,18 @@ abstract class AppLocalizations {
   /// **'Says the caller\'s name while it rings'**
   String get announceCallsSubtitle;
 
+  /// No description provided for @liveUpdateCapsule.
+  ///
+  /// In en, this message translates to:
+  /// **'Live Update capsule (Experimental)'**
+  String get liveUpdateCapsule;
+
+  /// No description provided for @liveUpdateCapsuleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Android 16: show a connected call in the status bar chip, and the capsule on ColorOS, OxygenOS and realme UI'**
+  String get liveUpdateCapsuleSubtitle;
+
   /// No description provided for @swipeUpToAnswer.
   ///
   /// In en, this message translates to:

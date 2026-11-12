@@ -274,7 +274,11 @@ object CallNotifications {
         } else {
             builder.addAction(Notification.Action.Builder(null, res.getString(R.string.hang_up), hangUp).build())
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA && !vivoIsland) {
+        // Experimental and off by default (Settings › Incoming call reminders › Live Update capsule):
+        // whether ColorOS gives a third-party dialer's call the capsule is still unverified.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA && !vivoIsland &&
+            CallPrefs.read(context)["liveUpdates"] == true
+        ) {
             // Asks for a Live Update: the status bar chip, and the capsule on skins that map Live
             // Updates to their island (ColorOS Fluid Cloud, OxygenOS Live Alerts, realme UI).
             builder.addExtras(Bundle().apply { putBoolean(Notification.EXTRA_REQUEST_PROMOTED_ONGOING, true) })
