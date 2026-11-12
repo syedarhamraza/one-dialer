@@ -49,9 +49,14 @@ class _ContactHistoryScreenState extends State<ContactHistoryScreen> {
   /// Selected call ids; null while not selecting (long-press a call to start).
   final _selected = ValueNotifier<Set<int>?>(null);
 
+  /// Whether [_selected] is non-null: the page itself rebuilds only on entering and leaving
+  /// selection; a tap redraws just the header, the bar and that row's mark.
+  final _selecting = ValueNotifier(false);
+
   @override
   void dispose() {
     _selected.dispose();
+    _selecting.dispose();
     super.dispose();
   }
 
@@ -61,7 +66,15 @@ class _ContactHistoryScreenState extends State<ContactHistoryScreen> {
     _selected.value = set.isEmpty ? null : set;
   }
 
-  Widget _selectionHeader(Set<int> selected, List<CallLogEntry> calls) => SizedBox(
+  /// The selection still in [calls]: deleted calls drop out of it.
+  Set<int> _live(List<CallLogEntry> calls) => _selected.value?.intersection({for (final c in calls) c.id}) ?? {};
+
+  Widget _selectionHeader(List<CallLogEntry> calls) => ValueListenableBuilder(
+    valueListenable: _selected,
+    builder: (context, _, _) => _selectionRow(_live(calls), calls),
+  );
+
+  Widget _selectionRow(Set<int> selected, List<CallLogEntry> calls) => SizedBox(
     height: 48,
     child: Row(
       children: [
@@ -80,6 +93,7 @@ class _ContactHistoryScreenState extends State<ContactHistoryScreen> {
   @override
   void initState() {
     super.initState();
+    _selected.addListener(() => _selecting.value = _selected.value != null);
     TelecomBridge.instance.getSims().then((s) {
       if (mounted) setState(() => _sims = s);
     });
@@ -107,24 +121,23 @@ class _ContactHistoryScreenState extends State<ContactHistoryScreen> {
     final keys = {for (final n in widget.contact.numbers) numberKey(n)};
     final repo = CallLogRepository.instance;
     return ListenableBuilder(
-      listenable: Listenable.merge([repo.calls, _selected]),
+      listenable: Listenable.merge([repo.calls, _selecting]),
       builder: (context, _) {
         final calls = [
           for (final c in repo.calls.value)
             if (keys.contains(numberKey(c.number))) c,
         ];
         final now = DateTime.now();
-        // Deleted calls drop out of the selection.
-        final selected = _selected.value?.intersection({for (final c in calls) c.id});
+        final selecting = _selecting.value;
         return PopScope(
-          canPop: selected == null,
+          canPop: !selecting,
           onPopInvokedWithResult: (didPop, _) {
             if (!didPop) _selected.value = null;
           },
           child: OneUISubpage(
             title: context.l10n.callLogs,
-            header: selected == null || selected.isEmpty ? null : _selectionHeader(selected, calls),
-            bottomPill: selected == null || selected.isEmpty
+            header: selecting ? _selectionHeader(calls) : null,
+            bottomPill: !selecting
                 ? null
                 : OneUIFloatingActionBar(
                     items: [
@@ -132,7 +145,8 @@ class _ContactHistoryScreenState extends State<ContactHistoryScreen> {
                         icon: Icons.delete_outline_rounded,
                         label: context.l10n.delete,
                         color: OneUITheme.accentRed,
-                        onTap: () => confirmDeleteCalls(context, selected, onConfirmed: () => _selected.value = null),
+                        onTap: () =>
+                            confirmDeleteCalls(context, _live(calls), onConfirmed: () => _selected.value = null),
                       ),
                     ],
                   ),
@@ -160,27 +174,29 @@ class _ContactHistoryScreenState extends State<ContactHistoryScreen> {
                   itemCount: calls.length,
                   itemBuilder: (context, i) {
                     final c = calls[i];
-                    return InkWell(
-                      onTap: selected == null ? null : () => _toggle(c.id),
-                      onLongPress: selected != null
-                          ? null
-                          : () {
-                              Haptics.longPress();
-                              _selected.value = {c.id};
-                            },
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: ContactCallLogRow(
-                              call: c,
-                              simBadge: _simBadge(c.simId),
-                              now: now,
-                              numberLine: _numberLine(c.number),
-                            ),
-                          ),
-                          // Same row structure in and out of selection: the mark springs in.
-                          SelectMark(selected: selected?.contains(c.id)),
-                        ],
+                    return ValueListenableBuilder(
+                      valueListenable: _selected,
+                      builder: (context, selected, row) => InkWell(
+                        onTap: selected == null ? null : () => _toggle(c.id),
+                        onLongPress: selected != null
+                            ? null
+                            : () {
+                                Haptics.longPress();
+                                _selected.value = {c.id};
+                              },
+                        child: Row(
+                          children: [
+                            Expanded(child: row!),
+                            // Same row structure in and out of selection: the mark springs in.
+                            SelectMark(selected: selected?.contains(c.id)),
+                          ],
+                        ),
+                      ),
+                      child: ContactCallLogRow(
+                        call: c,
+                        simBadge: _simBadge(c.simId),
+                        now: now,
+                        numberLine: _numberLine(c.number),
                       ),
                     );
                   },

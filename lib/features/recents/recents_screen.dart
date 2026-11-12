@@ -275,6 +275,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
           _repo.hasAccess,
           ContactsRepository.instance.contacts,
           BlockingRepository.instance.numbers,
+          DialerPrefs.instance.hideContactNumbers, // rows read it directly
         ]),
         builder: (context, _) => _buildList(context),
       ),
