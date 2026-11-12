@@ -81,7 +81,7 @@ class ContactRow extends StatelessWidget {
                 decoration: BoxDecoration(
                   border: isLast
                       ? null
-                      : Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1)),
+                      : Border(bottom: BorderSide(color: context.palette.divider, width: 1)),
                 ),
                 child: Row(
                   children: [

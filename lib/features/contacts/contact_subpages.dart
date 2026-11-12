@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 
 import '../../core/contacts/contacts_repository.dart';
+import '../../core/haptics/haptics.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/cos_subpage.dart';
 import '../../widgets/one_ui_subpage.dart';
 import '../../widgets/letter_avatar.dart';
-import '../../widgets/press_glow.dart';
+import '../../widgets/one_ui_floating_action_bar.dart';
+import '../../widgets/one_ui_selection_header_pills.dart';
+import '../../widgets/round_header_controls.dart';
+import '../../widgets/select_mark.dart';
+import '../../widgets/cos_dialog.dart' show CosPill;
 import '../recents/call_log.dart';
 import '../recents/call_log_repository.dart';
+import '../recents/delete_calls.dart';
 import 'contact_details_screen.dart';
 import 'editor/contact_form.dart' show labelDisplay;
 import '../../l10n/l10n.dart';
@@ -39,6 +45,37 @@ class ContactHistoryScreen extends StatefulWidget {
 
 class _ContactHistoryScreenState extends State<ContactHistoryScreen> {
   List<SimCard> _sims = const [];
+
+  /// Selected call ids; null while not selecting (long-press a call to start).
+  final _selected = ValueNotifier<Set<int>?>(null);
+
+  @override
+  void dispose() {
+    _selected.dispose();
+    super.dispose();
+  }
+
+  void _toggle(int id) {
+    final set = {...?_selected.value};
+    if (!set.remove(id)) set.add(id);
+    _selected.value = set.isEmpty ? null : set;
+  }
+
+  Widget _selectionHeader(Set<int> selected, List<CallLogEntry> calls) => SizedBox(
+    height: 48,
+    child: Row(
+      children: [
+        RoundIconButton(icon: Icons.close_rounded, tooltip: context.l10n.cancel, onTap: () => _selected.value = null),
+        const SizedBox(width: 12),
+        OneUISelectionCountPill(
+          selectedCount: selected.length,
+          totalCount: calls.length,
+          onToggleSelectAll: () =>
+              _selected.value = selected.length == calls.length ? null : {for (final c in calls) c.id},
+        ),
+      ],
+    ),
+  );
 
   @override
   void initState() {
@@ -70,45 +107,86 @@ class _ContactHistoryScreenState extends State<ContactHistoryScreen> {
     final keys = {for (final n in widget.contact.numbers) numberKey(n)};
     final repo = CallLogRepository.instance;
     return ListenableBuilder(
-      listenable: repo.calls,
+      listenable: Listenable.merge([repo.calls, _selected]),
       builder: (context, _) {
         final calls = [
           for (final c in repo.calls.value)
             if (keys.contains(numberKey(c.number))) c,
         ];
         final now = DateTime.now();
-        return OneUISubpage(
-          title: context.l10n.callLogs,
-          slivers: (context) => [
-            if (calls.isEmpty)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(32, 120, 32, 0),
-                  child: Column(
-                    children: [
-                      Icon(Icons.watch_later_outlined, size: 40, color: context.palette.textSecondary),
-                      SizedBox(height: 12),
-                      Text(
-                        context.l10n.noCallsWithContact,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: context.palette.textSecondary),
+        // Deleted calls drop out of the selection.
+        final selected = _selected.value?.intersection({for (final c in calls) c.id});
+        return PopScope(
+          canPop: selected == null,
+          onPopInvokedWithResult: (didPop, _) {
+            if (!didPop) _selected.value = null;
+          },
+          child: OneUISubpage(
+            title: context.l10n.callLogs,
+            header: selected == null || selected.isEmpty ? null : _selectionHeader(selected, calls),
+            bottomPill: selected == null || selected.isEmpty
+                ? null
+                : OneUIFloatingActionBar(
+                    items: [
+                      OneUIFloatingActionBarItem(
+                        icon: Icons.delete_outline_rounded,
+                        label: context.l10n.delete,
+                        color: OneUITheme.accentRed,
+                        onTap: () => confirmDeleteCalls(context, selected, onConfirmed: () => _selected.value = null),
                       ),
                     ],
                   ),
+            slivers: (context) => [
+              if (calls.isEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(32, 120, 32, 0),
+                    child: Column(
+                      children: [
+                        Icon(Icons.watch_later_outlined, size: 40, color: context.palette.textSecondary),
+                        SizedBox(height: 12),
+                        Text(
+                          context.l10n.noCallsWithContact,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: context.palette.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                DetailsCardSliver(
+                  padding: const EdgeInsets.fromLTRB(18, 6, 18, 6),
+                  itemCount: calls.length,
+                  itemBuilder: (context, i) {
+                    final c = calls[i];
+                    return InkWell(
+                      onTap: selected == null ? null : () => _toggle(c.id),
+                      onLongPress: selected != null
+                          ? null
+                          : () {
+                              Haptics.longPress();
+                              _selected.value = {c.id};
+                            },
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: ContactCallLogRow(
+                              call: c,
+                              simBadge: _simBadge(c.simId),
+                              now: now,
+                              numberLine: _numberLine(c.number),
+                            ),
+                          ),
+                          // Same row structure in and out of selection: the mark springs in.
+                          SelectMark(selected: selected?.contains(c.id)),
+                        ],
+                      ),
+                    );
+                  },
                 ),
-              )
-            else
-              DetailsCardSliver(
-                padding: const EdgeInsets.fromLTRB(18, 6, 18, 6),
-                itemCount: calls.length,
-                itemBuilder: (context, i) => ContactCallLogRow(
-                  call: calls[i],
-                  simBadge: _simBadge(calls[i].simId),
-                  now: now,
-                  numberLine: _numberLine(calls[i].number),
-                ),
-              ),
-          ],
+            ],
+          ),
         );
       },
     );
@@ -197,54 +275,23 @@ class _StorageLocationsScreenState extends State<StorageLocationsScreen> {
                           ],
                         ),
                       ),
-                      if (many) _PillButton(label: context.l10n.unlink, onTap: () => _unlink([r['id']! as int])),
+                      // ColorOS 17's row action: accent text, no button body.
+                      if (many)
+                        TextButton(
+                          onPressed: () => _unlink([r['id']! as int]),
+                          style: TextButton.styleFrom(
+                            foregroundColor: OneUITheme.accentGreen,
+                            textStyle: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600),
+                          ),
+                          child: Text(context.l10n.unlink),
+                        ),
                     ],
                   ),
                 ),
             ],
           ),
-        if (many)
-          _PillButton(
-            label: context.l10n.unlinkAll,
-            wide: true,
-            onTap: () => _unlink([for (final r in raw!) r['id']! as int]),
-          ),
+        if (many) CosPill(label: context.l10n.unlinkAll, onTap: () => _unlink([for (final r in raw!) r['id']! as int])),
       ],
     );
   }
-}
-
-/// A grey stadium button with the glass press, small in a row or full width under the card.
-class _PillButton extends StatelessWidget {
-  const _PillButton({required this.label, required this.onTap, this.wide = false});
-
-  final String label;
-  final VoidCallback onTap;
-  final bool wide;
-
-  @override
-  Widget build(BuildContext context) => PressGlow(
-    child: Material(
-      color: context.palette.pill,
-      shape: const StadiumBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          width: wide ? double.infinity : null,
-          height: wide ? 52 : 36,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          alignment: Alignment.center,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: wide ? 16.5 : 14.5,
-              fontWeight: FontWeight.w600,
-              color: context.palette.textPrimary,
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
 }

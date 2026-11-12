@@ -5,7 +5,7 @@ import '../core/prefs/dialer_prefs.dart';
 import '../core/telecom/telecom_bridge.dart';
 import '../features/updates/data/update_service.dart';
 import '../l10n/l10n.dart';
-import '../widgets/one_ui_floating_modal.dart';
+import '../widgets/cos_dialog.dart';
 import 'app_info.dart';
 
 /// Opens the website page that says how to get the official copy.
@@ -23,12 +23,12 @@ Future<void> warnIfSideloaded(
   // Marked before showing, so a kill mid-dialog never shows it again.
   await DialerPrefs.instance.setSideloadWarned();
   if (!context.mounted) return;
-  await OneUIFloatingModal.showConfirmationDialog(
-    context: context,
+  final official = await showCosConfirm(
+    context,
     title: context.l10n.notFromPlayTitle,
     message: context.l10n.notFromPlayWarning,
     cancelLabel: context.l10n.keepUsing,
     confirmLabel: context.l10n.getOfficialVersion,
-    onConfirm: openOfficialVersion,
   );
+  if (official) openOfficialVersion();
 }
