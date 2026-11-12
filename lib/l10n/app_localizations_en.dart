@@ -1137,6 +1137,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get announceCallsSubtitle => 'Says the caller\'s name while it rings';
 
   @override
+  String get flashOnCall => 'Flash notification';
+
+  @override
+  String get flashOnCallSubtitle => 'Blink the camera flash while a call rings';
+
+  @override
+  String get systemFlash => 'Your phone has its own flash notification';
+
+  @override
+  String get systemFlashSubtitle =>
+      'Turn one of them off, or both will blink. Find it in Settings under Notifications or Accessibility';
+
+  @override
   String get liveUpdateCapsule => 'Live Update capsule (Experimental)';
 
   @override

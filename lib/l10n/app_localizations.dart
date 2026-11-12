@@ -1976,6 +1976,30 @@ abstract class AppLocalizations {
   /// **'Says the caller\'s name while it rings'**
   String get announceCallsSubtitle;
 
+  /// No description provided for @flashOnCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Flash notification'**
+  String get flashOnCall;
+
+  /// No description provided for @flashOnCallSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Blink the camera flash while a call rings'**
+  String get flashOnCallSubtitle;
+
+  /// No description provided for @systemFlash.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone has its own flash notification'**
+  String get systemFlash;
+
+  /// No description provided for @systemFlashSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn one of them off, or both will blink. Find it in Settings under Notifications or Accessibility'**
+  String get systemFlashSubtitle;
+
   /// No description provided for @liveUpdateCapsule.
   ///
   /// In en, this message translates to:
