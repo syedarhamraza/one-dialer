@@ -198,8 +198,9 @@ class DialerPrefs {
   final navStyle = ValueNotifier('frosted');
 
   /// Settings › "Glass effect", for `liquid` glass: `premium`, `standard` or `auto` (the glass
-  /// package picks per phone; see `LiquidQualityScope`).
-  final navGlass = ValueNotifier('premium');
+  /// package picks per phone; see `LiquidQualityScope`). Automatic by default: premium at 120 Hz
+  /// out-rastered a Snapdragon 7+ Gen 3's frame budget.
+  final navGlass = ValueNotifier('auto');
 
   /// Settings › Glass › "Liquid glass on", for `liquid` glass: `all`, `controls` (the nav bar and
   /// buttons; menus and modals stay frosted) or `navbar` (the nav bar only).
