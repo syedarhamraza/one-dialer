@@ -560,6 +560,7 @@
   "note": "Note",
   "editNote": "Edit note",
   "videoCall": "Video call (Meet)",
+  "switchToVideoCall": "Switch to video call",
   "mute": "Mute",
   "@mute": {
     "description": "REVIEW: In-call control label; AOSP uses \"Disattiva audio\", shortened to fit the button"

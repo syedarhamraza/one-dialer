@@ -268,6 +268,7 @@
   "note": "Note",
   "editNote": "Edit note",
   "videoCall": "Video call (Meet)",
+  "switchToVideoCall": "Switch to video call",
   "mute": "Mute",
   "hold": "Hold",
   "resume": "Resume",

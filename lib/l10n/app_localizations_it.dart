@@ -1003,6 +1003,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get videoCall => 'Videochiamata (Meet)';
 
   @override
+  String get switchToVideoCall => 'Passa a videochiamata';
+
+  @override
   String get mute => 'Muto';
 
   @override
