@@ -119,7 +119,7 @@ void main() {
     testWidgets('render contact details preview', (tester) async {
       await tester.runAsync(() async {
         for (final (family, file) in [
-          ('Roboto', fontPath),
+          ('sans-serif', fontPath),
           ('MaterialIcons', '${File(fontPath).parent.path}/materialicons-regular.otf'),
         ]) {
           await (FontLoader(family)..addFont(File(file).readAsBytes().then(ByteData.sublistView))).load();

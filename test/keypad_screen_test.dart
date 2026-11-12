@@ -123,7 +123,7 @@ void main() {
   if (fontPath.isNotEmpty) {
     testWidgets('render keypad reference previews', (tester) async {
       await tester.runAsync(() async {
-        final loader = FontLoader('Roboto')
+        final loader = FontLoader('sans-serif')
           ..addFont(File(fontPath).readAsBytes().then((bytes) => ByteData.sublistView(bytes)));
         await loader.load();
         final icons = FontLoader('MaterialIcons')

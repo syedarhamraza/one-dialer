@@ -249,7 +249,7 @@ void main() {
     const fontPath = String.fromEnvironment('PREVIEW_FONT');
     if (fontPath.isNotEmpty) {
       await tester.runAsync(() async {
-        await (FontLoader('Roboto')..addFont(File(fontPath).readAsBytes().then(ByteData.sublistView))).load();
+        await (FontLoader('sans-serif')..addFont(File(fontPath).readAsBytes().then(ByteData.sublistView))).load();
         await (FontLoader('MaterialIcons')..addFont(
               File('${File(fontPath).parent.path}/materialicons-regular.otf').readAsBytes().then(ByteData.sublistView),
             ))
@@ -975,7 +975,7 @@ void main() {
   if (fontPath.isNotEmpty) {
     testWidgets('render One UI call previews with real fonts', (tester) async {
       await tester.runAsync(() async {
-        final font = FontLoader('Roboto')
+        final font = FontLoader('sans-serif')
           ..addFont(File(fontPath).readAsBytes().then((bytes) => ByteData.sublistView(bytes)));
         await font.load();
         final icons = FontLoader('MaterialIcons')

@@ -87,7 +87,9 @@ class OneUITheme {
       primaryColor: accentBlue,
       canvasColor: p.page,
       cardColor: p.card,
-      fontFamily: 'Roboto',
+      // The phone's own font: OEM font themes (vivo's VivoFont.ttf, ColorOS...) swap the file behind
+      // Android's sans-serif, while 'Roboto' named plain Roboto and ignored them.
+      fontFamily: 'sans-serif',
       colorScheme: (brightness == Brightness.light ? const ColorScheme.light() : const ColorScheme.dark()).copyWith(
         surface: p.page,
         primary: accentBlue,
