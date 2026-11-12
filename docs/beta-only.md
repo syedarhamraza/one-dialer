@@ -6,7 +6,7 @@ Things that exist only to test the betas. **Before the first production (non-bet
 
 | What | Where | To remove |
 | --- | --- | --- |
-| Firebase Performance Monitoring (app start, slow and frozen frames, release-notes request timing) | `firebase_performance` in `pubspec.yaml`; the `com.google.firebase.firebase-perf` Gradle plugin in `android/settings.gradle.kts` and `android/app/build.gradle.kts`; `setPerformanceCollectionEnabled` in `lib/core/crash_reporting.dart`; the `HttpMetric` in `fetchReleaseNotes` (`lib/features/updates/data/release_notes.dart`) | Delete those, run `flutter pub get`, delete the Performance Monitoring paragraph from `docs/privacy-policy.md` (and the website copy), and remove Performance Monitoring from Data safety in `docs/play-release.md` and Play Console |
+| Firebase Performance Monitoring (app start, slow and frozen frames, release-notes request timing) | `firebase_performance` in `pubspec.yaml`; the `com.google.firebase.firebase-perf` Gradle plugin in `android/settings.gradle.kts` and `android/app/build.gradle.kts`; `setPerformanceCollectionEnabled` in `lib/core/crash_reporting.dart`; the `HttpMetric` in `fetchReleaseNotes` (`lib/features/updates/data/release_notes.dart`) | Delete those, run `flutter pub get`, delete the Performance Monitoring paragraph from `docs/privacy-policy.md` (and the website copy), and remove Performance Monitoring from Data safety in Play Console |
 
 ## Decide before production
 

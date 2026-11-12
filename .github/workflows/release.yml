@@ -2,7 +2,6 @@ name: Release
 
 # One Dialer to Google Play, the recorder APK to GitHub Releases, the notes to the website.
 # Started by hand on the beta branch: Actions > Release > Run workflow (or the GitHub phone app).
-# Setup, secrets and what to check afterwards: docs/pipeline-setup.md.
 on:
   workflow_dispatch:
     inputs:
@@ -39,7 +38,7 @@ jobs:
         env:
           KEYSTORE_B64: ${{ secrets.UPLOAD_KEYSTORE_B64 }}
         run: |
-          [ -n "$KEYSTORE_B64" ] || { echo "::error::The release environment has no secrets yet. Follow docs/pipeline-setup.md."; exit 1; }
+          [ -n "$KEYSTORE_B64" ] || { echo "::error::The release environment has no secrets yet."; exit 1; }
 
       # The deploy key is on the branch ruleset's bypass list, so the release commit can be pushed.
       - uses: actions/checkout@v4
@@ -144,7 +143,7 @@ jobs:
         run: |
           tag="v$NAME"
           cp companion/app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/one-dialer-recorder.apk"
-          # Decodes this build's crashes (flutter symbolize); see docs/play-release.md.
+          # Decodes this build's crashes (flutter symbolize).
           zip -qr "$RUNNER_TEMP/symbols-$NAME-$CODE.zip" symbols
           if ! gh release view "$tag" > /dev/null 2>&1; then
             gh release create "$tag" --verify-tag --title "One Dialer $NAME" --notes-file "$RUNNER_TEMP/release-notes.md"
