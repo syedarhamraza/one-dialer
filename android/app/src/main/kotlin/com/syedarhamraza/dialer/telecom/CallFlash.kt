@@ -5,26 +5,28 @@ import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.media.AudioManager
 import android.os.Handler
-import android.os.Looper
+import android.os.HandlerThread
 
 /**
  * Settings › Incoming call reminders › Flash notification: blinks the camera flash while a call
  * rings. setTorchMode needs no CAMERA permission. Off by default; phones with their own flash
  * notification (vivo, OPPO, Samsung...) get a hint in Settings so the two don't both blink.
+ * Runs on its own thread: the main thread is Flutter's UI thread, and every torch toggle and camera
+ * query is a binder call. All state below is only touched on that thread.
  */
 object CallFlash {
     private const val ON_MS = 250L
     private const val OFF_MS = 450L
     private const val MAX_MS = 60_000L // never blinks longer than a call can ring
 
-    private val handler = Handler(Looper.getMainLooper())
+    private val handler by lazy { Handler(HandlerThread("call-flash").apply { start() }.looper) }
     private var camera: CameraManager? = null
     private var cameraId: String? = null
     private var lit = false
     private var startedAt = 0L
 
     /** The user's own torch is on (Quick Settings): leave it alone. */
-    @Volatile private var torchInUse = false
+    private var torchInUse = false
     private var watching = false
     private val torchWatch = object : CameraManager.TorchCallback() {
         override fun onTorchModeChanged(id: String, enabled: Boolean) {
@@ -35,7 +37,18 @@ object CallFlash {
     private val running get() = startedAt != 0L
 
     fun start(context: Context) {
-        if (running || CallPrefs.read(context)["flashOnCall"] != true) return
+        if (CallPrefs.read(context)["flashOnCall"] != true) return
+        val app = context.applicationContext
+        handler.post { begin(app) }
+    }
+
+    /** Stops blinking, ahead of any queued blink. */
+    fun stop() {
+        handler.postAtFrontOfQueue { end() }
+    }
+
+    private fun begin(context: Context) {
+        if (running) return
         // Silent mode means no alerts at all, flash included.
         if (context.getSystemService(AudioManager::class.java)?.ringerMode == AudioManager.RINGER_MODE_SILENT) return
         val manager = context.getSystemService(CameraManager::class.java) ?: return
@@ -59,7 +72,7 @@ object CallFlash {
         blink()
     }
 
-    fun stop() {
+    private fun end() {
         if (!running) return
         startedAt = 0L
         handler.removeCallbacks(blinkStep)
@@ -70,7 +83,7 @@ object CallFlash {
 
     private fun blink() {
         if (!running) return
-        if (System.currentTimeMillis() - startedAt > MAX_MS) return stop()
+        if (System.currentTimeMillis() - startedAt > MAX_MS) return end()
         torch(!lit)
         handler.postDelayed(blinkStep, if (lit) ON_MS else OFF_MS)
     }

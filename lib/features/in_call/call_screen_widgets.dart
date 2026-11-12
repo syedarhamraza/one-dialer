@@ -238,7 +238,7 @@ class _PhotoFillState extends State<_PhotoFill> with SingleTickerProviderStateMi
 }
 
 /// The blurred copies laid over the photo: frosted under the controls ([frost]) and all over
-/// ([dim], the keypad). Made once per size, then only drawn at their opacities.
+/// ([dim], the keypad). Made once per size (the keypad one on first use), then only drawn at their opacities.
 class _PhotoPainter extends CustomPainter {
   _PhotoPainter(this.image, this.ratio, this.frost, this.dim) : super(repaint: Listenable.merge([frost, ?dim]));
   final ui.Image image;
@@ -305,12 +305,13 @@ class _PhotoPainter extends CustomPainter {
     if (_size != size) {
       dispose();
       _frosted = _bake(size, fade: true);
-      _blurred = _bake(size, fade: false);
       _size = size;
     }
     final rect = Offset.zero & size;
     _draw(canvas, _frosted!, rect, frost.value);
-    _draw(canvas, _blurred!, rect, dim?.value ?? 0);
+    // Made only once the keypad opens: most calls never do, and each copy is a full-screen bake.
+    final dimmed = dim?.value ?? 0;
+    if (dimmed > 0) _draw(canvas, _blurred ??= _bake(size, fade: false), rect, dimmed);
   }
 
   void dispose() {
