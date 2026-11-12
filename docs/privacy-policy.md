@@ -25,7 +25,7 @@ When you make One Dialer your default phone app, Android gives it access to:
 
 When Google Play has an update for One Dialer, Software update downloads that update's release notes from this website (syedarhamraza.github.io). Nothing about you or your phone is sent with the request.
 
-**Call recording** needs the separate One Dialer Recorder app, which is downloaded from this website and is not part of the Google Play app. One Dialer itself never uses the microphone. When you record a call, the audio is saved only inside One Dialer Recorder on your phone. It is never uploaded, and it is deleted when you delete it or uninstall the recorder. One Dialer Recorder asks you to turn on an accessibility service: Android only lets apps with one use the microphone during a call. The service reads nothing on your screen. Recording laws differ by country, and you are responsible for getting the other person's consent where it's required.
+**Call recording** needs the separate One Recorder app, which is downloaded from this website and is not part of the Google Play app. One Dialer itself never uses the microphone. When you record a call, the audio is saved only inside One Recorder on your phone. It is never uploaded, and it is deleted when you delete it or uninstall the recorder. One Recorder asks you to turn on an accessibility service: Android only lets apps with one use the microphone during a call. The service reads nothing on your screen. Recording laws differ by country, and you are responsible for getting the other person's consent where it's required.
 
 "Decline with SMS" sends the text you pick as an SMS to the caller, through your carrier, only when you choose to.
 

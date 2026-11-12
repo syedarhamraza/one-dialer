@@ -50,7 +50,7 @@ List<CallRecording> filterRecordings(
   }).toList();
 }
 
-/// All recordings from One Dialer Recorder: searchable, filtered, grouped by day, with
+/// All recordings from One Recorder: searchable, filtered, grouped by day, with
 /// play, star, rename, share, save to phone and delete (one at a time or selected).
 class RecordingsScreen extends StatefulWidget {
   const RecordingsScreen({super.key});

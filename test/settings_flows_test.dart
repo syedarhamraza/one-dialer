@@ -124,7 +124,7 @@ void main() {
 
   testWidgets('without the recorder app the page offers nothing', (tester) async {
     await open(tester, const CallRecordingScreen());
-    expect(find.text('One Dialer Recorder'), findsNothing);
+    expect(find.text('One Recorder'), findsNothing);
     expect(telecom.any((c) => c.method == 'listRecordings'), isFalse);
   });
 
