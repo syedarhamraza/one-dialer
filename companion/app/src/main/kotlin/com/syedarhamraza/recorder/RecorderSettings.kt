@@ -49,6 +49,13 @@ object RecorderSettings {
 
     fun acceptConsent(context: Context) = prefs(context).edit().putBoolean(CONSENT, true).apply()
 
+    private const val THEME = "theme"
+
+    /** "system", "light" or "dark". Not in [DEFAULTS]: only the Recorder's own page shows it. */
+    fun theme(context: Context) = prefs(context).getString(THEME, "system") ?: "system"
+
+    fun setTheme(context: Context, theme: String) = prefs(context).edit().putString(THEME, theme).apply()
+
     /** The sources to try at the start of a recording: one when known, all of them when Auto hasn't tested yet. */
     fun sourcesToTry(context: Context): List<Int> {
         val mode = read(context)["sourceMode"] as String

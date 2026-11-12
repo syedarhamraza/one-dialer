@@ -18,6 +18,8 @@ import android.view.View
 class SetupActivity : Activity() {
     private lateinit var page: Subpage
 
+    override fun attachBaseContext(base: android.content.Context) = super.attachBaseContext(OneLook.themed(base))
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         page = Subpage(this, getString(R.string.app_name)) { finish() }
@@ -73,18 +75,30 @@ class SetupActivity : Activity() {
         }
 
         page.group(listOf(
-            choice(getString(R.string.setting_source), "sourceMode", listOf(
+            setting(getString(R.string.setting_source), "sourceMode", listOf(
                 "auto" to getString(R.string.source_auto),
                 "recognition" to getString(R.string.source_recognition),
                 "communication" to getString(R.string.source_communication),
                 "mic" to getString(R.string.source_mic),
             )),
-            choice(getString(R.string.setting_boost), "boost", listOf(
+            setting(getString(R.string.setting_boost), "boost", listOf(
                 "off" to getString(R.string.boost_off),
                 "normal" to getString(R.string.boost_normal),
                 "strong" to getString(R.string.boost_strong),
             )),
         ), header = getString(R.string.section_recording))
+
+        val themes = listOf(
+            "system" to getString(R.string.theme_system),
+            "light" to getString(R.string.theme_light),
+            "dark" to getString(R.string.theme_dark),
+        )
+        page.group(listOf(
+            choice(getString(R.string.setting_theme), RecorderSettings.theme(this), themes) { value ->
+                RecorderSettings.setTheme(this, value)
+                window.decorView.postDelayed({ recreate() }, 200) // after the menu has closed (170 ms)
+            },
+        ), header = getString(R.string.section_appearance))
 
         page.group(listOf(page.row(getString(R.string.consent_title), getString(R.string.setup_consent)) {
             startActivity(Intent(this, ConsentActivity::class.java))
@@ -101,16 +115,18 @@ class SetupActivity : Activity() {
         else page.row(title, detail, OneLook.RED, getString(R.string.fix), onTap = fix)
 
     /** choiceRow: the current choice in grey before a chevron; tap opens the floating menu from it. */
-    private fun choice(title: String, key: String, options: List<Pair<String, String>>): View {
-        val current = RecorderSettings.read(this)[key]
+    private fun setting(title: String, key: String, options: List<Pair<String, String>>) =
+        choice(title, RecorderSettings.read(this)[key], options) { value ->
+            RecorderSettings.write(this, key, value)
+            render()
+            RecordingsProvider.notifyStatus(this)
+        }
+
+    private fun choice(title: String, current: Any?, options: List<Pair<String, String>>, onPick: (String) -> Unit): View {
         val selected = options.indexOfFirst { it.first == current }.coerceAtLeast(0)
         var anchor: View? = null
         return page.row(title, value = options[selected].second, anchor = { anchor = it }) {
-            FloatingMenu(this, anchor!!, options.map { it.second }, selected) { i ->
-                RecorderSettings.write(this, key, options[i].first)
-                render()
-                RecordingsProvider.notifyStatus(this)
-            }.show()
+            FloatingMenu(this, anchor!!, options.map { it.second }, selected) { i -> onPick(options[i].first) }.show()
         }
     }
 }

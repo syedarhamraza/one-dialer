@@ -48,6 +48,18 @@ object OneLook {
     private val LIGHT = Palette(true, Color.rgb(0xF2, 0xF3, 0xF5), Color.WHITE, Color.BLACK, Color.rgb(0x5E, 0x5E, 0x63), 0x1A000000)
 
     /** Follows the phone's dark theme, as One Dialer's default (System) does. */
+    /** [base] in the Light or Dark picked under Appearance (System leaves it as is); for attachBaseContext. */
+    fun themed(base: Context): Context {
+        val night = when (RecorderSettings.theme(base)) {
+            "light" -> Configuration.UI_MODE_NIGHT_NO
+            "dark" -> Configuration.UI_MODE_NIGHT_YES
+            else -> return base
+        }
+        val config = Configuration(base.resources.configuration)
+        config.uiMode = (config.uiMode and Configuration.UI_MODE_NIGHT_MASK.inv()) or night
+        return base.createConfigurationContext(config)
+    }
+
     fun palette(context: Context) =
         if ((context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES) DARK else LIGHT
 

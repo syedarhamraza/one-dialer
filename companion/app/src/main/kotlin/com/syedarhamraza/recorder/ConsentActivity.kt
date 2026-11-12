@@ -13,6 +13,8 @@ import android.widget.LinearLayout
 class ConsentActivity : Activity() {
     private val firstRun get() = intent.getBooleanExtra(FIRST_RUN, false) && !RecorderSettings.consentAccepted(this)
 
+    override fun attachBaseContext(base: android.content.Context) = super.attachBaseContext(OneLook.themed(base))
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val page = Subpage(this, getString(R.string.consent_title)) { leave() }
