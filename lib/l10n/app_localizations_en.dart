@@ -2011,4 +2011,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notASettingsFile => 'This isn\'t a One Dialer settings file';
+
+  @override
+  String endHeldCall(String name) {
+    return 'End call with $name';
+  }
 }

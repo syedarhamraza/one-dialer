@@ -838,68 +838,95 @@ class _HdCallGlyph extends StatelessWidget {
 }
 
 /// The other call, on hold, as a frosted card above the caller: its avatar, name and "On hold",
-/// with a Switch pill. Tapping anywhere on it switches to that call.
+/// with a Switch pill and a red End button. Tapping anywhere but End switches to that call.
 class HeldCallCard extends StatelessWidget {
-  const HeldCallCard({super.key, required this.call, required this.onSwitch});
+  const HeldCallCard({super.key, required this.call, required this.onSwitch, required this.onEnd});
   final CallInfo call;
   final VoidCallback onSwitch;
+
+  /// Hangs up the held call without switching to it first.
+  final VoidCallback onEnd;
 
   @override
   Widget build(BuildContext context) {
     final name = callerName(context.l10n, call);
-    return Semantics(
-      button: true,
-      label: context.l10n.switchToOnHold(name),
-      excludeSemantics: true,
-      onTap: onSwitch,
-      child: CallBody(
-        radius: 28,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: onSwitch,
-          child: Padding(
-            padding: const EdgeInsets.all(8),
-            child: Row(
-              children: [
-                LetterAvatar(name: name, size: 40),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+    return CallBody(
+      radius: 28,
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Row(
+          children: [
+            Expanded(
+              child: Semantics(
+                button: true,
+                label: context.l10n.switchToOnHold(name),
+                excludeSemantics: true,
+                onTap: onSwitch,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: onSwitch,
+                  child: Row(
                     children: [
-                      Text(
-                        name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white),
+                      LetterAvatar(name: name, size: 40),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(context.l10n.onHold, style: const TextStyle(fontSize: 13, color: Colors.white60)),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(context.l10n.onHold, style: const TextStyle(fontSize: 13, color: Colors.white60)),
+                      const SizedBox(width: 8),
+                      DecoratedBox(
+                        decoration: const ShapeDecoration(color: Color(0x29FFFFFF), shape: StadiumBorder()),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.swap_vert_rounded, size: 18, color: Colors.white),
+                              const SizedBox(width: 6),
+                              Text(
+                                context.l10n.switchCall,
+                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.white),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                DecoratedBox(
-                  decoration: const ShapeDecoration(color: Color(0x29FFFFFF), shape: StadiumBorder()),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.swap_vert_rounded, size: 18, color: Colors.white),
-                        const SizedBox(width: 6),
-                        Text(
-                          context.l10n.switchCall,
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.white),
-                        ),
-                      ],
-                    ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Semantics(
+              button: true,
+              label: context.l10n.endHeldCall(name),
+              excludeSemantics: true,
+              onTap: onEnd,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onEnd,
+                child: const SizedBox.square(
+                  dimension: 40,
+                  child: DecoratedBox(
+                    decoration: ShapeDecoration(color: endRed, shape: CircleBorder()),
+                    child: Icon(Icons.call_end_rounded, size: 20, color: Colors.white),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

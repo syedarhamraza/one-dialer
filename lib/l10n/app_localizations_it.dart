@@ -2033,4 +2033,9 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get notASettingsFile =>
       'Questo non è un file di impostazioni di One Dialer';
+
+  @override
+  String endHeldCall(String name) {
+    return 'Termina la chiamata con $name';
+  }
 }

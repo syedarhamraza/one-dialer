@@ -995,5 +995,13 @@
   "importSettingsInCall": "Settings can't be imported during a call",
   "settingsExported": "Settings exported",
   "couldNotSaveSettings": "Couldn't save the file",
-  "notASettingsFile": "This isn't a One Dialer settings file"
+  "notASettingsFile": "This isn't a One Dialer settings file",
+  "endHeldCall": "End call with {name}",
+  "@endHeldCall": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }

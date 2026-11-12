@@ -3565,6 +3565,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This isn\'t a One Dialer settings file'**
   String get notASettingsFile;
+
+  /// No description provided for @endHeldCall.
+  ///
+  /// In en, this message translates to:
+  /// **'End call with {name}'**
+  String endHeldCall(String name);
 }
 
 class _AppLocalizationsDelegate

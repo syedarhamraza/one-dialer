@@ -577,5 +577,6 @@
   "importSettingsInCall": "Non puoi importare le impostazioni durante una chiamata",
   "settingsExported": "Impostazioni esportate",
   "couldNotSaveSettings": "Impossibile salvare il file",
-  "notASettingsFile": "Questo non è un file di impostazioni di One Dialer"
+  "notASettingsFile": "Questo non è un file di impostazioni di One Dialer",
+  "endHeldCall": "Termina la chiamata con {name}"
 }
