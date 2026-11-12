@@ -3,10 +3,12 @@ import 'dart:typed_data';
 import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/contacts/contacts_repository.dart';
+import '../../core/haptics/haptics.dart';
 import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
@@ -16,6 +18,7 @@ import '../../widgets/call_glass.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_status_bar_scrim.dart';
+import '../../widgets/one_ui_toast.dart';
 import '../../widgets/place_call.dart';
 import '../../widgets/call_glyph.dart';
 import '../../widgets/press_glow.dart';
@@ -132,6 +135,23 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   Future<void> _call(String number, GlobalKey anchor) => placeCall(context, number, simId: _simId, anchorKey: anchor);
 
   // --- Share / More --------------------------------------------------------------
+
+  void _copyMenu(String number, GlobalKey anchor) {
+    Haptics.longPress();
+    OneUIFloatingMenu.show(
+      context: context,
+      anchorKey: anchor,
+      items: [
+        OneUIFloatingMenuItem(
+          label: context.l10n.copy,
+          onTap: () {
+            Clipboard.setData(ClipboardData(text: number));
+            OneUIToast.show(context, context.l10n.numberCopied);
+          },
+        ),
+      ],
+    );
+  }
 
   void _share(DialerContact contact) => OneUIFloatingMenu.show(
     context: context,
@@ -414,6 +434,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               ].whereType<String>().where((s) => s.isNotEmpty).join('  |  '),
               value: _display[n]?.formatted ?? n,
               onTap: () => _call(n, _numberKeys[n]!),
+              onLongPress: () => _copyMenu(n, _numberKeys[n]!),
             ),
           ),
         _ValueRow(
@@ -744,18 +765,20 @@ class RowDivider extends StatelessWidget {
 /// A value over its grey label, ColorOS style, with no icon column ([leading] is a chat app's own
 /// icon); tappable when [onTap] is set.
 class _ValueRow extends StatelessWidget {
-  const _ValueRow({this.leading, this.label = '', required this.value, this.onTap});
+  const _ValueRow({this.leading, this.label = '', required this.value, this.onTap, this.onLongPress});
 
   final Widget? leading;
   final String label;
   final String value;
 
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
+      onLongPress: onLongPress,
       customBorder: SquircleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12),

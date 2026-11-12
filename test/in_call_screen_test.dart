@@ -130,7 +130,7 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.byKey(const ValueKey('swipe-Answer')), findsOneWidget);
     expect(find.byKey(const ValueKey('swipe-Decline')), findsOneWidget);
-    expect(find.text('Decline with SMS'), findsOneWidget);
+    expect(find.text('SMS reply'), findsOneWidget);
     expect(find.text('Alex Morgan'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
@@ -215,7 +215,7 @@ void main() {
         tester.widgetList<Opacity>(find.ancestor(of: child, matching: find.byType(Opacity))).elementAt(nth).opacity;
     // The ball's own Opacity (hidden while it flies) is nearer than the fade's.
     expect(opacityAbove(find.byKey(const ValueKey('swipe-Decline')), 1), closeTo(faded, .01));
-    expect(opacityAbove(find.text('Decline with SMS'), 0), closeTo(faded, .01));
+    expect(opacityAbove(find.text('SMS reply'), 0), closeTo(faded, .01));
     await gesture.cancel();
     await tester.pumpWidget(const SizedBox());
   });
@@ -613,9 +613,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(nativeCalls.any((c) => c.method == 'setAudioRoute' && c.arguments['route'] == 'bluetooth'), isTrue);
     await emit(tester, [call('ringing', id: 'call-2')]);
-    await tester.tap(find.text('Decline with SMS'));
+    await tester.tap(find.text('SMS reply'));
     await tester.pumpAndSettle();
-    expect(find.byType(OneUIFloatingModal), findsOneWidget);
+    expect(find.text('Custom'), findsOneWidget); // the ColorOS SMS reply card
     await tester.tap(find.text("I'll call you back"));
     await tester.pumpAndSettle();
     expect(nativeCalls.any((c) => c.method == 'rejectWithMessage' && c.arguments['id'] == 'call-2'), isTrue);
@@ -627,7 +627,7 @@ void main() {
     await emit(tester, [call('ringing', private: true)]);
     expect(find.text('Private number'), findsOneWidget);
     expect(find.text('5550100'), findsNothing);
-    expect(find.text('Decline with SMS'), findsNothing);
+    expect(find.text('SMS reply'), findsNothing);
     await emit(tester, [call('active', conference: true)]);
     expect(find.text('Conference call'), findsOneWidget);
     await emit(tester, [call('disconnected', conference: true)]);
@@ -924,7 +924,7 @@ void main() {
   testWidgets('a reply selected after the ringing call changes cannot reject it', (tester) async {
     await open(tester, reduceMotion: true);
     await emit(tester, [call('ringing')]);
-    await tester.tap(find.text('Decline with SMS'));
+    await tester.tap(find.text('SMS reply'));
     await tester.pumpAndSettle();
     await emit(tester, [call('active')]);
     await tester.tap(find.text("I'll call you back"));

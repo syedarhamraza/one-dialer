@@ -1865,14 +1865,8 @@ abstract class AppLocalizations {
   /// No description provided for @declineWithSms.
   ///
   /// In en, this message translates to:
-  /// **'Decline with SMS'**
+  /// **'SMS reply'**
   String get declineWithSms;
-
-  /// No description provided for @noQuickReplies.
-  ///
-  /// In en, this message translates to:
-  /// **'No quick replies saved'**
-  String get noQuickReplies;
 
   /// No description provided for @answer.
   ///
@@ -2006,6 +2000,18 @@ abstract class AppLocalizations {
   /// **'Turn one of them off, or both will blink. Find it in Settings under Notifications or Accessibility'**
   String get systemFlashSubtitle;
 
+  /// No description provided for @liveUpdateCapsule.
+  ///
+  /// In en, this message translates to:
+  /// **'Live Update capsule (Experimental)'**
+  String get liveUpdateCapsule;
+
+  /// No description provided for @liveUpdateCapsuleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Android 16: show a connected call in the status bar chip, and the capsule on ColorOS, OxygenOS and realme UI'**
+  String get liveUpdateCapsuleSubtitle;
+
   /// No description provided for @swipeUpToAnswer.
   ///
   /// In en, this message translates to:
@@ -2053,6 +2059,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Glass and glow on the call screen'**
   String get callScreenEffectsSubtitle;
+
+  /// No description provided for @callScreenAnimations.
+  ///
+  /// In en, this message translates to:
+  /// **'Call screen animations'**
+  String get callScreenAnimations;
+
+  /// No description provided for @callScreenAnimationsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Motion when the call screen opens, answers and changes'**
+  String get callScreenAnimationsSubtitle;
+
+  /// No description provided for @hideContactNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide contact phone numbers'**
+  String get hideContactNumbers;
+
+  /// No description provided for @hideContactNumbersSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Show only the name of saved contacts on the call screen and in Calls'**
+  String get hideContactNumbersSubtitle;
 
   /// No description provided for @secondsCount.
   ///
@@ -2726,6 +2756,30 @@ abstract class AppLocalizations {
   /// **'Report ID copied'**
   String get reportIdCopied;
 
+  /// No description provided for @editSpeedDial.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit speed dial'**
+  String get editSpeedDial;
+
+  /// No description provided for @clearNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear number'**
+  String get clearNumber;
+
+  /// No description provided for @changeNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Change number'**
+  String get changeNumber;
+
+  /// No description provided for @numberCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Number copied'**
+  String get numberCopied;
+
   /// No description provided for @noEmailApp.
   ///
   /// In en, this message translates to:
@@ -2911,42 +2965,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Using Wi-Fi or mobile data'**
   String get autoUpdateAlways;
-
-  /// No description provided for @settingsCalls.
-  ///
-  /// In en, this message translates to:
-  /// **'Calls'**
-  String get settingsCalls;
-
-  /// No description provided for @settingsDialing.
-  ///
-  /// In en, this message translates to:
-  /// **'Dialing'**
-  String get settingsDialing;
-
-  /// No description provided for @settingsSpamBlocking.
-  ///
-  /// In en, this message translates to:
-  /// **'Spam & blocking'**
-  String get settingsSpamBlocking;
-
-  /// No description provided for @settingsPersonalisation.
-  ///
-  /// In en, this message translates to:
-  /// **'Personalisation'**
-  String get settingsPersonalisation;
-
-  /// No description provided for @settingsGeneral.
-  ///
-  /// In en, this message translates to:
-  /// **'General'**
-  String get settingsGeneral;
-
-  /// No description provided for @settingsAbout.
-  ///
-  /// In en, this message translates to:
-  /// **'About'**
-  String get settingsAbout;
 
   /// No description provided for @displayAndEffects.
   ///

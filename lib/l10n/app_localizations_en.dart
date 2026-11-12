@@ -1075,10 +1075,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get switchCall => 'Switch';
 
   @override
-  String get declineWithSms => 'Decline with SMS';
-
-  @override
-  String get noQuickReplies => 'No quick replies saved';
+  String get declineWithSms => 'SMS reply';
 
   @override
   String get answer => 'Answer';
@@ -1153,6 +1150,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Turn one of them off, or both will blink. Find it in Settings under Notifications or Accessibility';
 
   @override
+  String get liveUpdateCapsule => 'Live Update capsule (Experimental)';
+
+  @override
+  String get liveUpdateCapsuleSubtitle =>
+      'Android 16: show a connected call in the status bar chip, and the capsule on ColorOS, OxygenOS and realme UI';
+
+  @override
   String get swipeUpToAnswer => 'Swipe up to answer';
 
   @override
@@ -1175,6 +1179,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get callScreenEffectsSubtitle => 'Glass and glow on the call screen';
+
+  @override
+  String get callScreenAnimations => 'Call screen animations';
+
+  @override
+  String get callScreenAnimationsSubtitle =>
+      'Motion when the call screen opens, answers and changes';
+
+  @override
+  String get hideContactNumbers => 'Hide contact phone numbers';
+
+  @override
+  String get hideContactNumbersSubtitle =>
+      'Show only the name of saved contacts on the call screen and in Calls';
 
   @override
   String secondsCount(int count) {
@@ -1542,6 +1560,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportIdCopied => 'Report ID copied';
 
   @override
+  String get editSpeedDial => 'Edit speed dial';
+
+  @override
+  String get clearNumber => 'Clear number';
+
+  @override
+  String get changeNumber => 'Change number';
+
+  @override
+  String get numberCopied => 'Number copied';
+
+  @override
   String get noEmailApp => 'No email app found';
 
   @override
@@ -1640,24 +1670,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get autoUpdateAlways => 'Using Wi-Fi or mobile data';
-
-  @override
-  String get settingsCalls => 'Calls';
-
-  @override
-  String get settingsDialing => 'Dialing';
-
-  @override
-  String get settingsSpamBlocking => 'Spam & blocking';
-
-  @override
-  String get settingsPersonalisation => 'Personalisation';
-
-  @override
-  String get settingsGeneral => 'General';
-
-  @override
-  String get settingsAbout => 'About';
 
   @override
   String get displayAndEffects => 'Display & effects';

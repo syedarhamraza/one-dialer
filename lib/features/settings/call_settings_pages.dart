@@ -28,6 +28,7 @@ class _CallSettings {
       if (s['autoAnswerDelay'] case final int v) delay.value = '$v';
       if (s['announceCalls'] case final String v) announce.value = v;
       if (s['flashOnCall'] case final bool v) flash.value = v;
+      if (s['liveUpdates'] case final bool v) liveUpdates.value = v;
     });
   }
 
@@ -38,12 +39,13 @@ class _CallSettings {
   final delay = ValueNotifier<String?>('5');
   final announce = ValueNotifier('off');
   final flash = ValueNotifier(false);
+  final liveUpdates = ValueNotifier(false);
 
   bool _disposed = false;
 
   void dispose() {
     _disposed = true;
-    for (final n in [incomingStyle, vibrate, speaker, autoAnswer, delay, announce, flash]) {
+    for (final n in [incomingStyle, vibrate, speaker, autoAnswer, delay, announce, flash, liveUpdates]) {
       n.dispose();
     }
   }
@@ -213,6 +215,16 @@ class _IncomingCallRemindersScreenState extends State<IncomingCallRemindersScree
               labels: _announce(context.l10n),
               onPick: (v) => _settings.set(_settings.announce, 'announceCalls', v),
             ),
+            OneUIGroupItem(
+              title: context.l10n.liveUpdateCapsule,
+              subtitle: context.l10n.liveUpdateCapsuleSubtitle,
+              onTap: () => _settings.set(_settings.liveUpdates, 'liveUpdates', !_settings.liveUpdates.value),
+              trailing: ValueListenableBuilder(
+                valueListenable: _settings.liveUpdates,
+                builder: (context, on, _) =>
+                    OneUISwitch(value: on, onChanged: (v) => _settings.set(_settings.liveUpdates, 'liveUpdates', v)),
+              ),
+            ),
           ],
         ),
         OneUIGroupCard(
@@ -306,7 +318,13 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
           ],
         ),
         ListenableBuilder(
-          listenable: Listenable.merge([prefs.answerStyle, prefs.callEffects, CallBackgrounds.instance]),
+          listenable: Listenable.merge([
+            prefs.answerStyle,
+            prefs.callEffects,
+            prefs.callAnimations,
+            prefs.hideContactNumbers,
+            CallBackgrounds.instance,
+          ]),
           builder: (context, _) => OneUIGroupCard(
             items: [
               // Only 1 button has a direction to choose.
@@ -339,6 +357,18 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
                   labels: edgeGlowLabels(context.l10n),
                   onPick: prefs.setCallGlass,
                 ),
+              OneUIGroupItem(
+                title: context.l10n.callScreenAnimations,
+                subtitle: context.l10n.callScreenAnimationsSubtitle,
+                onTap: () => prefs.setCallAnimations(!prefs.callAnimations.value),
+                trailing: OneUISwitch(value: prefs.callAnimations.value, onChanged: prefs.setCallAnimations),
+              ),
+              OneUIGroupItem(
+                title: context.l10n.hideContactNumbers,
+                subtitle: context.l10n.hideContactNumbersSubtitle,
+                onTap: () => prefs.setHideContactNumbers(!prefs.hideContactNumbers.value),
+                trailing: OneUISwitch(value: prefs.hideContactNumbers.value, onChanged: prefs.setHideContactNumbers),
+              ),
               OneUIGroupItem(
                 title: context.l10n.callBackground,
                 subtitle: context.l10n.callBackgroundAllSubtitle,

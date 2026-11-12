@@ -5,6 +5,7 @@ import '../contacts/contact_picker_screen.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/one_ui_subpage.dart';
 import '../../core/haptics/haptics.dart';
+import '../../widgets/cos_dialog.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_toast.dart';
 import '../../l10n/l10n.dart';
@@ -64,10 +65,24 @@ class SpeedDialScreen extends StatelessWidget {
     onTap: () => _assign(context, digit),
     onLongPress: entry == null
         ? null
-        : () {
+        : () async {
             Haptics.longPress();
-            DialerPrefs.instance.setSpeedDial(digit, null);
-            OneUIToast.show(context, context.l10n.speedDialRemoved(entry.$1, digit));
+            final action = await showCosActions<int>(
+              context,
+              title: context.l10n.editSpeedDial,
+              actions: [
+                (label: context.l10n.clearNumber, value: 0, destructive: false),
+                (label: context.l10n.changeNumber, value: 1, destructive: false),
+                (label: context.l10n.cancel, value: 2, destructive: false),
+              ],
+            );
+            if (!context.mounted) return;
+            if (action == 0) {
+              await DialerPrefs.instance.setSpeedDial(digit, null);
+              if (context.mounted) OneUIToast.show(context, context.l10n.speedDialRemoved(entry.$1, digit));
+            } else if (action == 1) {
+              await _assign(context, digit);
+            }
           },
   );
 }

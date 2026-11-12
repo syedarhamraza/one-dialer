@@ -1083,10 +1083,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get switchCall => 'Passa';
 
   @override
-  String get declineWithSms => 'Rifiuta con SMS';
-
-  @override
-  String get noQuickReplies => 'Nessuna risposta rapida salvata';
+  String get declineWithSms => 'Rispondi con SMS';
 
   @override
   String get answer => 'Rispondi';
@@ -1163,6 +1160,13 @@ class AppLocalizationsIt extends AppLocalizations {
       'Disattivane una, altrimenti lampeggeranno entrambe. La trovi in Impostazioni, sotto Notifiche o Accessibilità';
 
   @override
+  String get liveUpdateCapsule => 'Capsula Live Update (Sperimentale)';
+
+  @override
+  String get liveUpdateCapsuleSubtitle =>
+      'Android 16: mostra la chiamata in corso nel chip della barra di stato e nella capsula su ColorOS, OxygenOS e realme UI';
+
+  @override
   String get swipeUpToAnswer => 'Scorri verso l\'alto per rispondere';
 
   @override
@@ -1186,6 +1190,20 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get callScreenEffectsSubtitle =>
       'Vetro e bagliore nella schermata di chiamata';
+
+  @override
+  String get callScreenAnimations => 'Animazioni schermata di chiamata';
+
+  @override
+  String get callScreenAnimationsSubtitle =>
+      'Movimento quando la schermata di chiamata si apre, risponde e cambia';
+
+  @override
+  String get hideContactNumbers => 'Nascondi i numeri dei contatti';
+
+  @override
+  String get hideContactNumbersSubtitle =>
+      'Mostra solo il nome dei contatti salvati nella schermata di chiamata e in Chiamate';
 
   @override
   String secondsCount(int count) {
@@ -1557,6 +1575,18 @@ class AppLocalizationsIt extends AppLocalizations {
   String get reportIdCopied => 'ID segnalazione copiato';
 
   @override
+  String get editSpeedDial => 'Modifica chiamata rapida';
+
+  @override
+  String get clearNumber => 'Cancella numero';
+
+  @override
+  String get changeNumber => 'Cambia numero';
+
+  @override
+  String get numberCopied => 'Numero copiato';
+
+  @override
   String get noEmailApp => 'Nessuna app email trovata';
 
   @override
@@ -1657,24 +1687,6 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get autoUpdateAlways => 'Con Wi-Fi o dati mobili';
-
-  @override
-  String get settingsCalls => 'Chiamate';
-
-  @override
-  String get settingsDialing => 'Composizione';
-
-  @override
-  String get settingsSpamBlocking => 'Spam e blocco';
-
-  @override
-  String get settingsPersonalisation => 'Personalizzazione';
-
-  @override
-  String get settingsGeneral => 'Generali';
-
-  @override
-  String get settingsAbout => 'Informazioni';
 
   @override
   String get displayAndEffects => 'Schermo ed effetti';

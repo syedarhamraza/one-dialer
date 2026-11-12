@@ -198,8 +198,9 @@ class DialerPrefs {
   final navStyle = ValueNotifier('frosted');
 
   /// Settings › "Glass effect", for `liquid` glass: `premium`, `standard` or `auto` (the glass
-  /// package picks per phone; see `LiquidQualityScope`).
-  final navGlass = ValueNotifier('premium');
+  /// package picks per phone; see `LiquidQualityScope`). Automatic by default: premium at 120 Hz
+  /// out-rastered a Snapdragon 7+ Gen 3's frame budget.
+  final navGlass = ValueNotifier('auto');
 
   /// Settings › Glass › "Liquid glass on", for `liquid` glass: `all`, `controls` (the nav bar and
   /// buttons; menus and modals stay frosted) or `navbar` (the nav bar only).
@@ -332,7 +333,27 @@ class DialerPrefs {
   /// Settings › Answer buttons › Answer call, with 1 button: swipe `up` or `down` to answer.
   final answerDirection = ValueNotifier('up');
 
+  /// Settings › "Call screen animations" (on by default). Off stills the whole call screen,
+  /// as Android's "Remove animations" does. Loaded with [callEffects].
+  final callAnimations = ValueNotifier(true);
+
+  /// Settings › "Hide contact phone numbers": a saved caller shows only their name on the
+  /// call screen and in Calls. Loaded with [callEffects].
+  final hideContactNumbers = ValueNotifier(false);
+
+  Future<void> setCallAnimations(bool value) async {
+    callAnimations.value = value;
+    await _prefs.setBool('call_animations', value);
+  }
+
+  Future<void> setHideContactNumbers(bool value) async {
+    hideContactNumbers.value = value;
+    await _prefs.setBool('hide_contact_numbers', value);
+  }
+
   Future<void> loadCallEffects() async {
+    callAnimations.value = await _prefs.getBool('call_animations') ?? true;
+    hideContactNumbers.value = await _prefs.getBool('hide_contact_numbers') ?? false;
     final effects = await _prefs.getString('call_effects');
     if (effects == null) callEffects.value = await _effectsDefault();
     if (effects == 'full' || effects == 'reduced' || effects == 'off') callEffects.value = effects!;
