@@ -1706,6 +1706,12 @@ abstract class AppLocalizations {
   /// **'Video call (Meet)'**
   String get videoCall;
 
+  /// No description provided for @switchToVideoCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to video call'**
+  String get switchToVideoCall;
+
   /// REVIEW: In-call control label; AOSP uses "Disattiva audio", shortened to fit the button
   ///
   /// In en, this message translates to:

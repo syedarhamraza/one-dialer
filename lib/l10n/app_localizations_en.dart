@@ -995,6 +995,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get videoCall => 'Video call (Meet)';
 
   @override
+  String get switchToVideoCall => 'Switch to video call';
+
+  @override
   String get mute => 'Mute';
 
   @override
