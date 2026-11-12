@@ -24,16 +24,16 @@
 </p>
 
 <p align="center">
-  <img src="docs/play-store/01-glass-design.png" width="24%" alt="Glass design">
-  <img src="docs/play-store/02-incoming-call.png" width="24%" alt="Incoming call">
-  <img src="docs/play-store/03-in-call.png" width="24%" alt="In call">
-  <img src="docs/play-store/04-t9-dialer.png" width="24%" alt="T9 dialer">
+  <img src="docs/screenshots/01-glass-design.webp" width="24%" alt="Glass design">
+  <img src="docs/screenshots/02-incoming-call.webp" width="24%" alt="Incoming call">
+  <img src="docs/screenshots/03-in-call.webp" width="24%" alt="In call">
+  <img src="docs/screenshots/04-t9-dialer.webp" width="24%" alt="T9 dialer">
 </p>
 <p align="center">
-  <img src="docs/play-store/05-contacts.png" width="24%" alt="Contacts">
-  <img src="docs/play-store/06-call-blocking.png" width="24%" alt="Call blocking">
-  <img src="docs/play-store/07-dual-sim.png" width="24%" alt="Dual SIM">
-  <img src="docs/play-store/08-make-it-yours.png" width="24%" alt="Make it yours">
+  <img src="docs/screenshots/05-contacts.webp" width="24%" alt="Contacts">
+  <img src="docs/screenshots/06-call-blocking.webp" width="24%" alt="Call blocking">
+  <img src="docs/screenshots/07-dual-sim.webp" width="24%" alt="Dual SIM">
+  <img src="docs/screenshots/08-make-it-yours.webp" width="24%" alt="Make it yours">
 </p>
 
 ## Why One Dialer
