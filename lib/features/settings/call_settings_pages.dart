@@ -5,6 +5,7 @@ import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/choice_row.dart';
 import '../../widgets/cos_subpage.dart';
 import '../../widgets/one_ui_group_card.dart';
+import '../../widgets/one_ui_switch.dart';
 import '../../widgets/showcase_picker.dart';
 import '../in_call/call_background.dart';
 import '../in_call/call_controls.dart' show answerGreen, endRed;
@@ -269,7 +270,13 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
           ],
         ),
         ListenableBuilder(
-          listenable: Listenable.merge([prefs.answerStyle, prefs.callEffects, CallBackgrounds.instance]),
+          listenable: Listenable.merge([
+            prefs.answerStyle,
+            prefs.callEffects,
+            prefs.callAnimations,
+            prefs.hideContactNumbers,
+            CallBackgrounds.instance,
+          ]),
           builder: (context, _) => OneUIGroupCard(
             items: [
               // Only 1 button has a direction to choose.
@@ -303,12 +310,24 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
                   onPick: prefs.setCallGlass,
                 ),
               OneUIGroupItem(
+                title: context.l10n.callScreenAnimations,
+                subtitle: context.l10n.callScreenAnimationsSubtitle,
+                onTap: () => prefs.setCallAnimations(!prefs.callAnimations.value),
+                trailing: OneUISwitch(value: prefs.callAnimations.value, onChanged: prefs.setCallAnimations),
+              ),
+              OneUIGroupItem(
+                title: context.l10n.hideContactNumbers,
+                subtitle: context.l10n.hideContactNumbersSubtitle,
+                onTap: () => prefs.setHideContactNumbers(!prefs.hideContactNumbers.value),
+                trailing: OneUISwitch(value: prefs.hideContactNumbers.value, onChanged: prefs.setHideContactNumbers),
+              ),
+              OneUIGroupItem(
                 title: context.l10n.callBackground,
                 subtitle: context.l10n.callBackgroundAllSubtitle,
                 value: CallBackgroundScreen.label(context.l10n, CallBackgrounds.instance.stored('all')),
-                onTap: () => Navigator.of(
-                  context,
-                ).push(MaterialPageRoute<void>(builder: (_) => const CallBackgroundScreen(scope: 'all'))),
+                onTap: () =>
+                    Navigator.of(context)
+                        .push(MaterialPageRoute<void>(builder: (_) => const CallBackgroundScreen(scope: 'all'))),
               ),
             ],
           ),

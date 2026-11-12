@@ -1075,10 +1075,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get switchCall => 'Switch';
 
   @override
-  String get declineWithSms => 'Decline with SMS';
-
-  @override
-  String get noQuickReplies => 'No quick replies saved';
+  String get declineWithSms => 'SMS reply';
 
   @override
   String get answer => 'Answer';
@@ -1162,6 +1159,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get callScreenEffectsSubtitle => 'Glass and glow on the call screen';
+
+  @override
+  String get callScreenAnimations => 'Call screen animations';
+
+  @override
+  String get callScreenAnimationsSubtitle =>
+      'Motion when the call screen opens, answers and changes';
+
+  @override
+  String get hideContactNumbers => 'Hide contact phone numbers';
+
+  @override
+  String get hideContactNumbersSubtitle =>
+      'Show only the name of saved contacts on the call screen and in Calls';
 
   @override
   String secondsCount(int count) {

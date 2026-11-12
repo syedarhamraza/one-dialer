@@ -818,7 +818,8 @@ class _CallRow extends StatelessWidget {
                         child: Text(
                           call.isApp
                               ? appCallLabel(context.l10n, call)
-                              : name == call.number || call.isPrivate
+                              // A named caller's number stays hidden with "Hide contact phone numbers".
+                              : name == call.number || call.isPrivate || DialerPrefs.instance.hideContactNumbers.value
                               ? callTypeLabel(context.l10n, call.type)
                               : call.number,
                           maxLines: 1,
