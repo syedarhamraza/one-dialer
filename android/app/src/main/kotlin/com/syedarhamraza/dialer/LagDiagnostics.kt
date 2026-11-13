@@ -51,7 +51,7 @@ internal object LagDiagnostics {
     }
 
     private val actions = setOf("keypad", "backspace", "tab_calls", "tab_contacts", "contacts_load",
-        "call_log_load", "playTone", "stopTone", "answer", "reject", "rejectWithMessage", "hangUp",
+        "call_log_load", "playTone", "stopTone", "answer", "reject", "hangUp",
         "hold", "unhold", "playDtmf", "stopDtmf", "merge", "swap")
     private val categories = setOf("SevereFrameDelay", "NativeMainStall", "DartStall", "RenderStall", "InputStall", "UserReportedLag")
 

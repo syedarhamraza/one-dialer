@@ -619,7 +619,8 @@ void main() {
     expect(find.text('Custom'), findsOneWidget); // the ColorOS SMS reply card
     await tester.tap(find.text("I'll call you back"));
     await tester.pumpAndSettle();
-    expect(nativeCalls.any((c) => c.method == 'rejectWithMessage' && c.arguments['id'] == 'call-2'), isTrue);
+    expect(nativeCalls.any((c) => c.method == 'reject' && c.arguments['id'] == 'call-2'), isTrue);
+    expect(nativeCalls.any((c) => c.method == 'sendSms' && c.arguments['body'] == "I'll call you back"), isTrue);
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -931,7 +932,7 @@ void main() {
     await emit(tester, [call('active')]);
     await tester.tap(find.text("I'll call you back"));
     await tester.pumpAndSettle();
-    expect(nativeCalls.where((c) => c.method == 'rejectWithMessage'), isEmpty);
+    expect(nativeCalls.where((c) => c.method == 'reject' || c.method == 'sendSms'), isEmpty);
     await tester.pumpWidget(const SizedBox());
   });
 

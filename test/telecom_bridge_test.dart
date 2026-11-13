@@ -23,10 +23,10 @@ void main() {
     final bridge = TelecomBridge.instance;
     await bridge.hangUp('call-1');
     await bridge.answer('call-1');
-    await bridge.rejectWithMessage('call-1', 'Busy');
+    await bridge.reject('call-1');
     await bridge.playDtmf('call-1', '5');
-    expect(calls.map((c) => c.method), ['hangUp', 'answer', 'rejectWithMessage', 'playDtmf']);
-    expect(calls[2].arguments, {'id': 'call-1', 'message': 'Busy'});
+    expect(calls.map((c) => c.method), ['hangUp', 'answer', 'reject', 'playDtmf']);
+    expect(calls[2].arguments, {'id': 'call-1'});
     expect(calls[3].arguments, {'id': 'call-1', 'digit': '5'});
   });
 

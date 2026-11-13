@@ -302,6 +302,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 val number = call.argument<String>("number").orEmpty()
                 val intent = android.content.Intent(android.content.Intent.ACTION_SENDTO, Uri.fromParts("smsto", number, null))
                     .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                call.argument<String>("body")?.let { intent.putExtra("sms_body", it) }
                 runCatching { context.startActivity(intent) }
                     .onSuccess { result.success(null) }
                     .onFailure { result.error("NO_SMS_APP", it.message, null) }
@@ -348,7 +349,6 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
         when (call.method) {
             "answer" -> target.answer(VideoProfile.STATE_AUDIO_ONLY)
             "reject" -> target.reject(false, null)
-            "rejectWithMessage" -> target.reject(true, call.argument<String>("message"))
             "hangUp" -> target.disconnect()
             "hold" -> target.hold()
             "unhold" -> target.unhold()
