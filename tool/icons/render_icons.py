@@ -1,8 +1,7 @@
-"""Renders the launcher icons (Phone, Contacts) in Glossy (the default) and Classic, their Settings
-previews, the Play Store icon and the vivo island images from SVG.
+"""Renders the launcher icon, its preview (the website's icon), the Play Store icon and the vivo
+island images from SVG.
 
-The design is the flat green pair from Figma ("One Dialer — App Icons"), with a light glass rim
-on the glyphs. Adaptive icon layers are 108 dp with the middle 72 dp visible, so the 1024-unit
+The design is the glossy green handset. Adaptive icon layers are 108 dp with the middle 72 dp visible, so the 1024-unit
 tile sits at 256..1280 of a 1536-unit layer. Vector drawables can't draw the glass shading, so the
 layers are PNGs, rendered with headless Chrome/Edge. Run from the repo root after changing the design:
 
@@ -23,28 +22,6 @@ HANDSET = "M19.23 15.26l-2.54-.29c-.61-.07-1.21.14-1.64.57l-1.84 1.84c-2.83-1.44
 BODY = "M40 486c0-118 104-178 240-178s240 60 240 178c0 22-18 38-40 38H80c-22 0-40-16-40-38z"
 
 
-def rgba(h, a):
-    r, g, b = (int(h[i:i + 2], 16) / 255 for i in (1, 3, 5))
-    return f"0 0 0 0 {r:.3f} 0 0 0 0 {g:.3f} 0 0 0 0 {b:.3f} 0 0 0 {a} 0"
-
-
-def glass_filter(fid):
-    """The glyphs' light glass: a faint shadow, a thin white rim on top and a softer green one underneath."""
-    alpha = '<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>'
-    inner = lambda dx, dy, blur, c, a, prev, out: (
-        alpha + f'<feOffset dx="{dx}" dy="{dy}"/><feGaussianBlur stdDeviation="{blur / 2}"/>'
-        '<feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>'
-        f'<feColorMatrix type="matrix" values="{rgba(c, a)}"/><feBlend in2="{prev}" result="{out}"/>')
-    return (
-        f'<filter id="{fid}" x="0" y="0" width="{L}" height="{L}" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">'
-        + alpha + '<feOffset dy="6"/><feGaussianBlur stdDeviation="10"/>'
-        f'<feColorMatrix type="matrix" values="{rgba("#00451F", .12)}" result="drop"/>'
-        '<feBlend in="SourceGraphic" in2="drop" result="shape"/>'
-        + inner(0, 4, 3, "#FFFFFF", .9, "shape", "rim")
-        + inner(0, -4, 6, "#1FA85C", .25, "rim", "out")
-        + "</filter>")
-
-
 def handset(cx, cy, size, fill, w, rotate=0, extra=""):
     """The rounded handset centred on (cx, cy), [size] across including its [w]-wide rounding."""
     f = (size - 2 * w) * 24 / 18
@@ -54,42 +31,13 @@ def handset(cx, cy, size, fill, w, rotate=0, extra=""):
 
 
 def thin_handset(cx, cy, size, fill, w, rotate=0, extra=""):
-    """Glossy's slimmer handset as plain geometry: the same glyph with 15/28 of [w]'s rounding
-    (Glossy erodes Classic's 28-unit rounding by 13), so it also works in vector XML."""
+    """The launcher's slim handset as plain geometry: the glyph with 15/28 of [w]'s rounding."""
     t = w * 15 / 28
     return handset(cx, cy, size - 2 * (w - t), fill, t, rotate, extra)
 
 
-FROST = ('<linearGradient id="frost" x1="0" y1="0" x2="0" y2="1">'
-         '<stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#E6FAEE"/></linearGradient>')
-
-
-def tile_bg(top, bottom, extra=""):
-    return (f'<defs><linearGradient id="bg" x1="0" y1="{O}" x2="0" y2="{O + T}" gradientUnits="userSpaceOnUse">'
-            f'<stop stop-color="{top}"/><stop offset="1" stop-color="{bottom}"/></linearGradient>'
-            f'<radialGradient id="glow" cx="{O + 250}" cy="{O - 10}" r="550" gradientUnits="userSpaceOnUse">'
-            '<stop stop-color="#FFFFFF" stop-opacity=".12"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient></defs>'
-            f'<rect width="{L}" height="{L}" fill="url(#bg)"/><rect width="{L}" height="{L}" fill="url(#glow)"/>{extra}')
-
-
-SPINE = (f'<defs><linearGradient id="spine" x1="0" y1="{O}" x2="0" y2="{O + T}" gradientUnits="userSpaceOnUse">'
-         '<stop stop-color="#04A856"/><stop offset="1" stop-color="#007A36"/></linearGradient></defs>'
-         f'<rect x="{O + T - 150}" width="{L}" height="{L}" fill="url(#spine)" opacity=".9"/>'
-         + "".join(f'<rect x="{O + T - 140}" y="{O + y}" width="14" height="110" rx="7" fill="#FFFFFF" fill-opacity=".28"/>' for y in (300, 470, 640)))
-
-# The handset fills 59% of the tile like vivo's; a round-joined stroke rounds its pads (28 units out).
+# A round-joined stroke rounds the handset's pads (28 units out at full rounding).
 W = 28
-HANDSET_FG = (f'<defs>{FROST}{glass_filter("glass")}</defs><g filter="url(#glass)"><g opacity=".95">'
-              + handset(O + T / 2, O + T / 2, 0.59 * T, "url(#frost)", W) + '</g></g>')
-
-# The person is 54% of the tile tall, a little left of centre to clear the spine.
-pk = 0.54 * T / 484
-px, py = O + 0.47 * T - 280 * pk, O + T / 2 - 282 * pk
-PERSON_FG = (f'<defs>{FROST}{glass_filter("glass")}</defs><g filter="url(#glass)"><g opacity=".95" fill="url(#frost)" '
-             f'transform="translate({px:.2f} {py:.2f}) scale({pk:.4f})"><circle cx="280" cy="168" r="128"/><path d="{BODY}"/></g></g>')
-
-PHONE_BG = tile_bg("#1ED760", "#009A3E")
-CONTACTS_BG = tile_bg("#14D16E", "#00964A", SPINE)
 
 # vivo Origin Island images (CallNotifications.kt): 72 dp at 3x. The balls are the call screen's
 # solidBody + solidGlow (call_controls.dart); the glyphs are the Glossy launcher's slim handset, flat.
@@ -162,59 +110,67 @@ def render(markup, out, size):
 
 
 # Glossy, the default launcher pair since beta 7: the same glyphs, glossy white-to-mint with a soft
-# shadow on a brighter green; the Contacts tile has three address-book tabs down its right edge.
-# The original frosted pair stays as Classic (Settings › More settings › App icon, AppIcons.kt).
+# shadow on a brighter green.
 def tile_grad(top, bottom):
     return (f'<defs><linearGradient id="bg" x1="0" y1="{O}" x2="0" y2="{O + T}" gradientUnits="userSpaceOnUse">'
             f'<stop stop-color="{top}"/><stop offset="1" stop-color="{bottom}"/></linearGradient></defs>'
             f'<rect width="{L}" height="{L}" fill="url(#bg)"/>')
 
 
-def tabs():
-    x, cuts = O + .86 * T, (O + .38 * T, O + .69 * T)
-    return ('<defs><linearGradient id="shade" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#005A1E" stop-opacity=".28"/>'
-            '<stop offset="1" stop-color="#005A1E" stop-opacity="0"/></linearGradient></defs>'
-            f'<rect x="{x:.0f}" width="{L}" height="{cuts[0]:.0f}" fill="#00C640"/>'
-            f'<rect x="{x:.0f}" y="{cuts[0]:.0f}" width="{L}" height="{cuts[1] - cuts[0]:.0f}" fill="#00B532"/>'
-            f'<rect x="{x:.0f}" y="{cuts[1]:.0f}" width="{L}" height="{L}" fill="#00A529"/>'
-            f'<rect x="{x:.0f}" width="{.036 * T:.0f}" height="{L}" fill="url(#shade)"/>')
-
-
-GLOSS = ('<linearGradient id="gloss" x1="0" y1="0" x2=".4" y2="1"><stop stop-color="#FFFFFF"/>'
-         '<stop offset=".55" stop-color="#EEFCF4"/><stop offset="1" stop-color="#BDF0D8"/></linearGradient>'
-         '<linearGradient id="head" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F2FFF8"/><stop offset="1" stop-color="#B5F2D0"/></linearGradient>'
-         '<linearGradient id="body" x1="0" y1="0" x2="1" y2=".6"><stop stop-color="#F2FCF6"/>'
-         '<stop offset=".6" stop-color="#CBF4DD"/><stop offset="1" stop-color="#95E6B8"/></linearGradient>'
-         '<filter id="drop" x="-20%" y="-20%" width="140%" height="150%">'
-         '<feDropShadow dx="0" dy="11" stdDeviation="13" flood-color="#006E2A" flood-opacity=".35"/></filter>'
-         # Thins the handset evenly; the blur and threshold round the corners the erosion squares off.
-         '<filter id="thin" x="-20%" y="-20%" width="140%" height="150%">'
-         '<feMorphology in="SourceAlpha" operator="erode" radius="13" result="e"/>'
-         '<feGaussianBlur in="e" stdDeviation="10" result="b"/>'
-         '<feComponentTransfer in="b" result="m"><feFuncA type="linear" slope="12" intercept="-5.5"/></feComponentTransfer>'
-         '<feComposite in="SourceGraphic" in2="m" operator="in" result="t"/>'
-         '<feDropShadow in="t" dx="0" dy="11" stdDeviation="13" flood-color="#006E2A" flood-opacity=".35"/></filter>')
-
 GLOSSY_PHONE_BG = tile_grad("#14DD5E", "#00C23A")
-GLOSSY_CONTACTS_BG = tile_grad("#10DE68", "#00C43F") + tabs()
-# Slimmer than Classic: less rounding on the handset, a smaller head and a narrower body.
-GLOSSY_PHONE_FG = (f'<defs>{GLOSS}</defs><g filter="url(#thin)">'
-                   + handset(O + T / 2, O + T / 2, 0.62 * T, "url(#gloss)", W) + '</g>')
-GLOSSY_PERSON_FG = (f'<defs>{GLOSS}</defs><g filter="url(#drop)" transform="translate({px:.2f} {py:.2f}) scale({pk:.4f})">'
-                    f'<circle cx="280" cy="178" r="112" fill="url(#head)"/>'
-                    f'<path d="{BODY}" fill="url(#body)" transform="translate(280 0) scale(.86 .92) translate(-280 42)"/></g>')
+# Drawn like One Recorder's wave (plain geometry, a top-to-bottom gloss and a drop shadow, no
+# filter thinning): vivo's Dark icon style then tints it green, as it does the Recorder's.
+hs_ = 0.62 * T
+GLOSSY_PHONE_FG = (f'<defs><linearGradient id="hgloss" x1="0" y1="{O + (T - hs_) / 2:.0f}" x2="0" y2="{O + (T + hs_) / 2:.0f}" '
+                   'gradientUnits="userSpaceOnUse"><stop stop-color="#FFFFFF"/><stop offset=".55" stop-color="#EEFCF4"/>'
+                   '<stop offset="1" stop-color="#BDF0D8"/></linearGradient>'
+                   '<filter id="hdrop" x="-20%" y="-20%" width="140%" height="150%">'
+                   '<feDropShadow dx="0" dy="11" stdDeviation="13" flood-color="#006E2A" flood-opacity=".35"/></filter></defs>'
+                   f'<g filter="url(#hdrop)">' + thin_handset(O + T / 2, O + T / 2, hs_, "url(#hgloss)", W) + '</g>')
 
 RES.mkdir(parents=True, exist_ok=True)
 PREVIEW.mkdir(parents=True, exist_ok=True)
-for name, body in {"ic_launcher_background": GLOSSY_PHONE_BG, "ic_launcher_foreground": GLOSSY_PHONE_FG,
-                   "ic_contacts_background": GLOSSY_CONTACTS_BG, "ic_contacts_foreground": GLOSSY_PERSON_FG,
-                   "ic_classic_phone_background": PHONE_BG, "ic_classic_phone_foreground": HANDSET_FG,
-                   "ic_classic_contacts_background": CONTACTS_BG, "ic_classic_contacts_foreground": PERSON_FG}.items():
+for name, body in {"ic_launcher_background": GLOSSY_PHONE_BG, "ic_launcher_foreground": GLOSSY_PHONE_FG}.items():
     render(svg(body), RES / f"{name}.png", PX)
-# Settings previews: the visible tile, which the app rounds itself.
-for name, body in {"default_phone": GLOSSY_PHONE_BG + GLOSSY_PHONE_FG, "default_contacts": GLOSSY_CONTACTS_BG + GLOSSY_PERSON_FG,
-                   "classic_phone": PHONE_BG + HANDSET_FG, "classic_contacts": CONTACTS_BG + PERSON_FG}.items():
-    render(svg(body, f"{O} {O} {T} {T}", 192), PREVIEW / f"{name}.png", 192)
+# Themed icon (<monochrome>): the launcher's slim handset as one white path in a 108-unit canvas; a
+# round-joined stroke gives it the foreground's rounding (without it, it's the stock Material glyph).
+def flat_path(d, k, tx, ty):
+    """[d] scaled by [k] and moved by (tx, ty), baked into the path data (absolute M/L/C/H/V, relative rest)."""
+    import re
+    out, cmd, i = [], "", 0
+    for tok in re.findall(r"[A-Za-z]|-?(?:\d+\.?\d*|\.\d+)", d):
+        if tok.isalpha():
+            cmd, i = tok, 0
+            out.append(tok)
+            continue
+        v = float(tok)
+        if cmd.islower():
+            v *= k
+        elif cmd == "H" or (cmd in "MLC" and i % 2 == 0):
+            v = v * k + tx
+        else:
+            v = v * k + ty
+        i += 1
+        out.append(f"{v:.2f}")
+    return re.sub(r" ?([A-Za-z]) ?", lambda m: m.group(1), " ".join(out))
+
+
+def v_handset(size, w):
+    """handset() as a vector path: [size] across including the [w]-wide rounding."""
+    f = (size - 2 * w) * 24 / 18
+    k = f / 24 * 108 / L
+    off = (O + T / 2 - f / 2) * 108 / L
+    return (f'<path android:fillColor="#FFFFFFFF" android:strokeColor="#FFFFFFFF" android:strokeWidth="{2 * w * 108 / L:.3f}" '
+            f'android:strokeLineJoin="round" android:pathData="{flat_path(HANDSET, k, off, off)}"/>')
+
+
+for name, body in {"ic_launcher_monochrome": v_handset(0.62 * T - 2 * (W - W * 15 / 28), W * 15 / 28)}.items():  # thin_handset
+    pathlib.Path("android/app/src/main/res/drawable", f"{name}.xml").write_text(
+        "<!-- Rendered by tool/icons/render_icons.py: the launcher glyph, flat, for themed icons. -->\n"
+        '<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" '
+        f'android:viewportWidth="108" android:viewportHeight="108">{body}</vector>\n', encoding="utf-8")
+# The visible tile, which the website uses as its icon (site/scripts/sync-one-dialer.mjs).
+render(svg(GLOSSY_PHONE_BG + GLOSSY_PHONE_FG, f"{O} {O} {T} {T}", 192), PREVIEW / "default_phone.png", 192)
 # Play wants the full square (it rounds the corners itself): the visible tile of both layers.
 render(svg(GLOSSY_PHONE_BG + GLOSSY_PHONE_FG, f"{O} {O} {T} {T}", 512), PLAY, 512)
 for name, body in ISLAND.items():

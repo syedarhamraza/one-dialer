@@ -51,7 +51,7 @@
             <!-- tel: and contact intents are read by MainActivity itself; Flutter's own deep
                  linking would push them as named routes the app doesn't have (null-check crash). -->
             <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
-            <!-- Its launcher icons are the PhoneIcon* aliases below (Settings › App icon, AppIcons.kt). -->
+            <!-- Its launcher icon is the PhoneIcon alias below (AppIcons.kt). -->
             <!-- Both DIAL filters are required for Android to offer this app as the default dialer -->
             <intent-filter>
                 <action android:name="android.intent.action.DIAL" />
@@ -86,36 +86,10 @@
             </intent-filter>
         </activity>
 
-        <!-- One app, two icons (like vivo's Phone and Contacts); the Contacts one opens on the
-             Contacts tab. One pair per style in Settings › App icon (Glossy, Classic), only the chosen pair enabled
-             (AppIcons.kt). FlutterActivity reads meta-data from the launched component, so each
-             alias needs it too. -->
+        <!-- The launcher icon, an alias so home-screen shortcuts to it survive. FlutterActivity reads
+             meta-data from the launched component, so the alias needs it too. -->
         <activity-alias android:name=".PhoneIcon" android:targetActivity=".MainActivity"
             android:exported="true" android:label="One Dialer" android:icon="@mipmap/ic_launcher">
-            <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-        <activity-alias android:name=".PhoneIconClassic" android:targetActivity=".MainActivity" android:enabled="false"
-            android:exported="true" android:label="One Dialer" android:icon="@mipmap/ic_classic_phone">
-            <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-        <activity-alias android:name=".ContactsLauncher" android:targetActivity=".MainActivity"
-            android:exported="true" android:label="One Contacts" android:icon="@mipmap/ic_contacts">
-            <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-        <activity-alias android:name=".ContactsIconClassic" android:targetActivity=".MainActivity" android:enabled="false"
-            android:exported="true" android:label="One Contacts" android:icon="@mipmap/ic_classic_contacts">
             <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

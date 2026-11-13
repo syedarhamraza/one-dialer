@@ -20,7 +20,6 @@ import '../blocking/blocking_screen.dart';
 import '../keypad/speed_dial_screen.dart';
 import '../updates/presentation/update_controller.dart';
 import 'about_screen.dart';
-import 'app_icon_screen.dart';
 import 'call_recording_screen.dart';
 import 'call_settings_pages.dart';
 import 'dialing_settings_screen.dart';
@@ -45,7 +44,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   /// One Recorder (the sideloaded companion); null when it isn't installed.
   RecorderInfo? _recorder;
   AppVersion? _version;
-  String _icon = 'default';
 
   /// Android 17 lets VoIP apps share their calls with Recents; earlier phones have no switch for it.
   bool get _appCallLog => (_health['sdk'] as int? ?? 0) >= 37;
@@ -94,20 +92,15 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
 
   void _rebuild() => setState(() {});
 
-  void _loadIcon() => _telecom.getLauncherIcon().then((s) {
-    if (mounted) setState(() => _icon = s);
-  });
-
   void _refreshAll() => _refresh(all: true);
 
-  /// One rebuild for every reply; [all] adds the version and icon, which only change elsewhere.
+  /// One rebuild for every reply; [all] adds the version, which only changes elsewhere.
   Future<void> _refresh({bool all = false}) async {
-    final (health, bluetoothNames, recorder, version, icon) = await (
+    final (health, bluetoothNames, recorder, version) = await (
       _telecom.getCallHealth(),
       Permission.bluetoothConnect.isGranted,
       _telecom.getRecorder(),
       all ? AppVersion.current() : Future.value(_version),
-      all ? _telecom.getLauncherIcon() : Future.value(_icon),
     ).wait;
     if (mounted) {
       setState(() {
@@ -115,7 +108,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         _recorder = recorder;
         _bluetoothNames = bluetoothNames;
         _version = version;
-        _icon = icon;
       });
     }
   }
@@ -251,14 +243,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               title: l10n.displayAndEffects,
               value: DisplaySettingsScreen.themeLabels(l10n)[DialerPrefs.instance.themeMode.value],
               onTap: () => _push(const DisplaySettingsScreen()),
-            ),
-            OneUIGroupItem(
-              title: l10n.appIcon,
-              value: AppIconScreen.labels(l10n)[_icon],
-              onTap: () =>
-                  Navigator.of(context)
-                      .push(MaterialPageRoute<void>(builder: (_) => const AppIconScreen()))
-                      .then((_) => _loadIcon()),
             ),
           ],
         ),

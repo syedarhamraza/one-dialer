@@ -1,6 +1,5 @@
 import 'package:dialer/features/blocking/blocking_screen.dart';
 import 'package:dialer/core/prefs/dialer_prefs.dart';
-import 'package:dialer/features/settings/app_icon_screen.dart';
 import 'package:dialer/core/telecom/call_info.dart';
 import 'package:dialer/features/recordings/recordings_screen.dart';
 import 'package:dialer/features/settings/call_recording_screen.dart';
@@ -8,7 +7,6 @@ import 'package:dialer/features/settings/dialing_settings_screen.dart';
 import 'package:dialer/features/settings/display_settings_screen.dart';
 import 'package:dialer/features/settings/glass_settings_screen.dart';
 import 'package:dialer/features/settings/quick_replies_screen.dart';
-import 'package:dialer/widgets/one_ui_radio.dart';
 import 'package:dialer/theme/one_ui_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -33,7 +31,6 @@ void main() {
         'getBlocking' => <String, Object?>{},
         'hasScreeningRole' => false,
         'getQuickReplies' => ['Hi'],
-        'getLauncherIcon' => 'classic',
         'getRecorder' => recorder,
         'getCallSettings' => <String, Object?>{},
         'getRecorderSettings' => <String, Object?>{'boost': 'off', 'sourceMode': 'auto', 'retentionDays': 0},
@@ -138,17 +135,6 @@ void main() {
     final saved = telecom.lastWhere((c) => c.method == 'setQuickReplies').arguments;
     expect('$saved', contains('x' * 160));
     expect('$saved', isNot(contains('x' * 161)));
-  });
-
-  testWidgets('the app icon page shows the current style and switches both icons', (tester) async {
-    await open(tester, const AppIconScreen());
-    bool selected(int i) => tester.widgetList<OneUIRadio>(find.byType(OneUIRadio)).elementAt(i).isSelected;
-    expect([selected(0), selected(1)], [false, true]); // classic
-    await tester.tap(find.text('Glossy'));
-    await tester.pumpAndSettle();
-    expect(telecom.last.method, 'setLauncherIcon');
-    expect(telecom.last.arguments, {'style': 'default'});
-    expect([selected(0), selected(1)], [true, false]);
   });
 
   testWidgets('Display & effects hides the Glass & blur row below full effects', (tester) async {

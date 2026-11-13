@@ -267,26 +267,22 @@ class MainActivity : FlutterActivity() {
     }
 
     /**
-     * What the Contacts icon or another app asked for: the Contacts tab, a contact to show or
-     * edit (`id`), or a new contact (`phone`, `name` from the insert extras). Null otherwise.
+     * What another app asked for: a contact to show or edit (`id`), or a new contact (`phone`,
+     * `name` from the insert extras). Null otherwise.
      */
     private fun contactActionFrom(intent: Intent?): Map<String, String?>? {
         intent ?: return null
-        val fromContactsIcon = intent.component?.className?.let {
-            it.endsWith(".ContactsLauncher") || it.contains(".ContactsIcon")
-        } == true
         return when (intent.action) {
             Intent.ACTION_VIEW, Intent.ACTION_EDIT, Intent.ACTION_INSERT_OR_EDIT -> {
                 val id = intent.data?.let(::contactIdOf)
                 when {
                     id != null -> mapOf("kind" to if (intent.action == Intent.ACTION_VIEW) "view" else "edit", "id" to id)
                     intent.action == Intent.ACTION_INSERT_OR_EDIT -> insertAction(intent)
-                    fromContactsIcon -> mapOf("kind" to "tab")
                     else -> null
                 }
             }
             Intent.ACTION_INSERT -> insertAction(intent)
-            else -> if (fromContactsIcon) mapOf("kind" to "tab") else null
+            else -> null
         }
     }
 
