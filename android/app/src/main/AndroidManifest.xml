@@ -197,7 +197,7 @@
         <package android:name="com.whatsapp.w4b" />
         <!-- Google Meet, for the call screen's Video button -->
         <package android:name="com.google.android.apps.tachyon" />
-        <!-- One Dialer Recorder, the sideloaded companion that records calls (telecom/RecorderCompanion.kt) -->
+        <!-- One Recorder, the sideloaded companion that records calls (telecom/RecorderCompanion.kt) -->
         <package android:name="com.syedarhamraza.onedialer.recorder" />
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>

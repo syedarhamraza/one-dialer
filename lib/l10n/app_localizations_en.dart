@@ -995,6 +995,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get videoCall => 'Video call (Meet)';
 
   @override
+  String get switchToVideoCall => 'Switch to video call';
+
+  @override
   String get mute => 'Mute';
 
   @override
@@ -1713,13 +1716,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get callRecording => 'Call recording';
 
   @override
-  String get recorderApp => 'One Dialer Recorder';
+  String get recorderApp => 'One Recorder';
 
   @override
   String get recorderReady => 'Ready to record';
 
   @override
-  String get recorderNeedsMic => 'Allow the microphone in One Dialer Recorder';
+  String get recorderNeedsMic => 'Allow the microphone in One Recorder';
 
   @override
   String get recorderNeedsAccessibility => 'Turn on its accessibility service';
@@ -1762,7 +1765,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recordingNotSetUpSubtitle =>
-      'Auto-record is on, but One Dialer Recorder isn\'t set up';
+      'Auto-record is on, but One Recorder isn\'t set up';
 
   @override
   String get rename => 'Rename';

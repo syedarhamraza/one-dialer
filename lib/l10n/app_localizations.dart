@@ -1706,6 +1706,12 @@ abstract class AppLocalizations {
   /// **'Video call (Meet)'**
   String get videoCall;
 
+  /// No description provided for @switchToVideoCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to video call'**
+  String get switchToVideoCall;
+
   /// REVIEW: In-call control label; AOSP uses "Disattiva audio", shortened to fit the button
   ///
   /// In en, this message translates to:
@@ -3026,7 +3032,7 @@ abstract class AppLocalizations {
   /// **'Stop recording'**
   String get stopRecording;
 
-  /// Call screen ⋮ menu while One Dialer Recorder isn't set up
+  /// Call screen ⋮ menu while One Recorder isn't set up
   ///
   /// In en, this message translates to:
   /// **'Record (set up in Settings)'**
@@ -3047,7 +3053,7 @@ abstract class AppLocalizations {
   /// Name of the companion app; keep in English
   ///
   /// In en, this message translates to:
-  /// **'One Dialer Recorder'**
+  /// **'One Recorder'**
   String get recorderApp;
 
   /// No description provided for @recorderReady.
@@ -3059,7 +3065,7 @@ abstract class AppLocalizations {
   /// No description provided for @recorderNeedsMic.
   ///
   /// In en, this message translates to:
-  /// **'Allow the microphone in One Dialer Recorder'**
+  /// **'Allow the microphone in One Recorder'**
   String get recorderNeedsMic;
 
   /// No description provided for @recorderNeedsAccessibility.
@@ -3137,7 +3143,7 @@ abstract class AppLocalizations {
   /// No description provided for @recordingNotSetUpSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Auto-record is on, but One Dialer Recorder isn\'t set up'**
+  /// **'Auto-record is on, but One Recorder isn\'t set up'**
   String get recordingNotSetUpSubtitle;
 
   /// No description provided for @rename.

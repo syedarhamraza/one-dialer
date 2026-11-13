@@ -14,7 +14,7 @@ import android.telecom.Call
 import org.json.JSONArray
 
 /**
- * Talks to the sideloaded One Dialer Recorder (`companion/`), which holds the mic and the
+ * Talks to the sideloaded One Recorder (`companion/`), which holds the mic and the
  * accessibility service, so this Play app carries neither. Everything goes through its
  * provider's `call()`, which checks our signing certificate. Without the companion, all of
  * this returns null and the UI hides recording.

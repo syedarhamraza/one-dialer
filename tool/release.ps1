@@ -273,8 +273,8 @@ if (-not $SkipBuild) {
     Write-Host "  $uploadCommand" -ForegroundColor Yellow
   }
 
-  # One Dialer Recorder (companion/): the sideloaded call recorder, shared from the website, never Play.
-  Write-Host "`nBuilding One Dialer Recorder..."
+  # One Recorder (companion/): the sideloaded call recorder, shared from the website, never Play.
+  Write-Host "`nBuilding One Recorder..."
   $gradlew = 'companion/gradlew'
   if ($env:OS -eq 'Windows_NT') { $gradlew = 'companion/gradlew.bat' }
   Invoke-Native { & $gradlew -p companion assembleRelease -q }

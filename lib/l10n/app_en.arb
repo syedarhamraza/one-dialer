@@ -560,6 +560,7 @@
   "note": "Note",
   "editNote": "Edit note",
   "videoCall": "Video call (Meet)",
+  "switchToVideoCall": "Switch to video call",
   "mute": "Mute",
   "@mute": {
     "description": "REVIEW: In-call control label; AOSP uses \"Disattiva audio\", shortened to fit the button"
@@ -866,7 +867,7 @@
   "stopRecording": "Stop recording",
   "recordSetUpFirst": "Record (set up in Settings)",
   "@recordSetUpFirst": {
-    "description": "Call screen ⋮ menu while One Dialer Recorder isn't set up"
+    "description": "Call screen ⋮ menu while One Recorder isn't set up"
   },
   "recordingNow": "Recording",
   "@recordingNow": {
@@ -876,12 +877,12 @@
   "@callRecording": {
     "description": "Settings row and page title"
   },
-  "recorderApp": "One Dialer Recorder",
+  "recorderApp": "One Recorder",
   "@recorderApp": {
     "description": "Name of the companion app; keep in English"
   },
   "recorderReady": "Ready to record",
-  "recorderNeedsMic": "Allow the microphone in One Dialer Recorder",
+  "recorderNeedsMic": "Allow the microphone in One Recorder",
   "recorderNeedsAccessibility": "Turn on its accessibility service",
   "recorderUntrusted": "The recorder works only with One Dialer from Google Play. Install it from Play, or update both apps.",
   "recordingConsentTitle": "Before you record",
@@ -894,7 +895,7 @@
   "deleteAllRecordingsTitle": "Delete all recordings?",
   "deleteAllRecordingsMessage": "They can't be recovered.",
   "recordingNotSetUp": "Calls aren't being recorded",
-  "recordingNotSetUpSubtitle": "Auto-record is on, but One Dialer Recorder isn't set up",
+  "recordingNotSetUpSubtitle": "Auto-record is on, but One Recorder isn't set up",
   "rename": "Rename",
   "star": "Star",
   "unstar": "Unstar",
