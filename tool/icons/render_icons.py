@@ -276,3 +276,17 @@ glyph('<g fill="#FFFFFF" stroke="#FFFFFF" stroke-width="1.2" stroke-linejoin="ro
       '<circle cx="9" cy="7.6" r="4.1"/>'
       '<path d="M1.8 20.2C1.8 16.3 5 13.8 9 13.8S16.2 16.3 16.2 20.2V21H1.8Z"/></g>'
       '<path d="M19.6 6V13M16.1 9.5H23.1" stroke="#FFFFFF" stroke-width="2.3" stroke-linecap="round"/>', "add_contact")
+
+
+# The nav bar's tabs: the handset outlined (Calls, unselected) and ColorOS's two people, the front one
+# solid when selected and outlined when not; the one behind is an outline cut short where they overlap.
+NAV = 'stroke="#FFFFFF" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"'
+glyph(f'<path d="{HANDSET}" fill="none" {NAV}/>', "handset_outline")
+FRONT = ('<circle cx="9.5" cy="8.2" r="4"/>'
+         '<path d="M2.6 20.4C2.6 16.4 5.6 14.2 9.5 14.2S16.4 16.4 16.4 20.4Z"/>')
+BEHIND = ('<mask id="b"><rect width="24" height="24" fill="#fff"/>'
+          f'<g fill="#000" stroke="#000" stroke-width="5" stroke-linejoin="round">{FRONT}</g></mask>'
+          f'<g mask="url(#b)" fill="none" {NAV}><circle cx="15.8" cy="6.2" r="3.6"/>'
+          '<path d="M17.4 12.6C20.1 13 21.6 15.1 21.6 17.8"/></g>')
+glyph(BEHIND + f'<g fill="#FFFFFF" {NAV}>{FRONT}</g>', "contacts")
+glyph(BEHIND + f'<g fill="none" {NAV}>{FRONT}</g>', "contacts_outline")
