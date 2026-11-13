@@ -13,9 +13,7 @@
   <a href="https://play.google.com/apps/testing/com.syedarhamraza.onedialer"><img alt="Google Play: closed testing" src="https://img.shields.io/badge/Google%20Play-closed%20testing-00C05A?logo=googleplay&logoColor=white"></a>
   <a href="https://github.com/syedarhamraza/one-dialer/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/syedarhamraza/one-dialer?include_prereleases&label=release&color=00C05A"></a>
   <a href="LICENSE"><img alt="License: GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-blue"></a>
-  <img alt="Android 10+" src="https://img.shields.io/badge/Android-10%2B-3DDC84?logo=android&logoColor=white">
-  <a href="https://www.patreon.com/c/SyedArhamRaza"><img alt="Support on Patreon" src="https://img.shields.io/badge/-F96854?logo=patreon&logoColor=white"></a>
-</p>
+  <img alt="Android 10+" src="https://img.shields.io/badge/Android-10%2B-3DDC84?logo=android&logoColor=white"></p>
 
 <p align="center">
   <a href="https://syedarhamraza.github.io/one-dialer/">Website</a> ·
