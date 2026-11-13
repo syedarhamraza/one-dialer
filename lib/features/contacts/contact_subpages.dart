@@ -9,7 +9,6 @@ import '../../widgets/cos_subpage.dart';
 import '../../widgets/one_ui_subpage.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_floating_action_bar.dart';
-import '../../widgets/one_ui_selection_header_pills.dart';
 import '../../widgets/round_header_controls.dart';
 import '../../widgets/select_mark.dart';
 import '../../widgets/cos_dialog.dart' show CosPill;
@@ -69,25 +68,20 @@ class _ContactHistoryScreenState extends State<ContactHistoryScreen> {
   /// The selection still in [calls]: deleted calls drop out of it.
   Set<int> _live(List<CallLogEntry> calls) => _selected.value?.intersection({for (final c in calls) c.id}) ?? {};
 
-  Widget _selectionHeader(List<CallLogEntry> calls) => ValueListenableBuilder(
+  Widget _header(List<CallLogEntry> calls) => ValueListenableBuilder(
     valueListenable: _selected,
-    builder: (context, _, _) => _selectionRow(_live(calls), calls),
-  );
-
-  Widget _selectionRow(Set<int> selected, List<CallLogEntry> calls) => SizedBox(
-    height: 48,
-    child: Row(
-      children: [
-        RoundIconButton(icon: Icons.close_rounded, tooltip: context.l10n.cancel, onTap: () => _selected.value = null),
-        const SizedBox(width: 12),
-        OneUISelectionCountPill(
-          selectedCount: selected.length,
-          totalCount: calls.length,
-          onToggleSelectAll: () =>
-              _selected.value = selected.length == calls.length ? null : {for (final c in calls) c.id},
-        ),
-      ],
-    ),
+    builder: (context, _, _) {
+      final selected = _live(calls);
+      return SubpageHeader(
+        selecting: _selected.value != null,
+        title: context.l10n.callLogs,
+        selectionTitle: context.l10n.selectedCount(selected.length),
+        allSelected: selected.length == calls.length,
+        onCancel: () => _selected.value = null,
+        onToggleSelectAll: () =>
+            _selected.value = selected.length == calls.length ? null : {for (final c in calls) c.id},
+      );
+    },
   );
 
   @override
@@ -136,20 +130,17 @@ class _ContactHistoryScreenState extends State<ContactHistoryScreen> {
           },
           child: OneUISubpage(
             title: context.l10n.callLogs,
-            header: selecting ? _selectionHeader(calls) : null,
+            header: _header(calls),
             bottomPill: !selecting
                 ? null
-                : OneUIFloatingActionBar(
-                    items: [
-                      OneUIFloatingActionBarItem(
-                        icon: Icons.delete_outline_rounded,
-                        label: context.l10n.delete,
-                        color: OneUITheme.accentRed,
-                        onTap: () =>
-                            confirmDeleteCalls(context, _live(calls), onConfirmed: () => _selected.value = null),
-                      ),
-                    ],
-                  ),
+                : OneUISubpage.actionBar([
+                    OneUIFloatingActionBarItem(
+                      icon: Icons.delete_outline_rounded,
+                      label: context.l10n.delete,
+                      color: OneUITheme.accentRed,
+                      onTap: () => confirmDeleteCalls(context, _live(calls), onConfirmed: () => _selected.value = null),
+                    ),
+                  ]),
             slivers: (context) => [
               if (calls.isEmpty)
                 SliverToBoxAdapter(

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../theme/one_ui_theme.dart';
+import 'call_glass.dart';
 import 'one_ui_bottom_vignette.dart';
+import 'one_ui_floating_action_bar.dart';
 import 'one_ui_status_bar_scrim.dart';
 import 'round_header_controls.dart';
 import '../theme/one_ui_scroll.dart';
@@ -41,6 +43,15 @@ class OneUISubpage extends StatelessWidget {
 
   static const double _button = 48;
 
+  /// A selection's actions as a [bottomPill], in the nav bar's call glass (its docked look).
+  static Widget actionBar(List<OneUIFloatingActionBarItem> items) => CallGlass(
+    radius: kFloatingNavBarHeight / 2,
+    child: SizedBox(
+      height: kFloatingNavBarHeight,
+      child: OneUIFloatingActionBar(docked: true, items: items),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final padding = MediaQuery.paddingOf(context);
@@ -48,7 +59,8 @@ class OneUISubpage extends StatelessWidget {
       16,
       padding.top + 8 + _button * headerScale(context) + 20,
       16,
-      bottomPill == null ? padding.bottom + 32 : 140,
+      // 140 at the default size; grows with the bar so the last row still clears it.
+      bottomPill == null ? padding.bottom + 32 : 82 + kFloatingNavBarHeight * navBarScale(context),
     );
     Widget content(BuildContext context) => slivers == null
         ? SingleChildScrollView(
@@ -115,7 +127,14 @@ class OneUISubpage extends StatelessWidget {
                 top: false,
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Center(child: bottomPill),
+                  // Settings › Display size › Navigation bar, grown from the baseline like the main bar.
+                  child: Center(
+                    child: Transform.scale(
+                      scale: navBarScale(context),
+                      alignment: Alignment.bottomCenter,
+                      child: bottomPill,
+                    ),
+                  ),
                 ),
               ),
             ),
