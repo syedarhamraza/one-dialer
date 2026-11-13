@@ -296,20 +296,24 @@ void main() {
     }
   });
 
-  testWidgets('Add call takes the third slot and opens the dialer; More holds the rest', (tester) async {
+  testWidgets('the row is Mute, Hold, Notes, More; More holds Add call and video', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
-    await tester.tap(control('Add call'));
-    expect(nativeCalls.where((c) => c.method == 'openDialer'), hasLength(1));
+    for (final label in ['Mute', 'Hold', 'Notes', 'More']) {
+      expect(control(label), findsOneWidget, reason: label);
+    }
+    expect(control('Add call'), findsNothing);
     await tester.tap(control('More'));
     await tester.pumpAndSettle();
-    expect(find.text('Note'), findsOneWidget);
+    expect(find.text('Hold'), findsOneWidget); // Only the row's: without the recorder Hold isn't in the menu.
     // No Google Meet: Video stays in the menu, greyed out, and does nothing.
-    expect(find.text('Video call (Meet)'), findsOneWidget);
-    await tester.tap(find.text('Video call (Meet)'));
+    await tester.tap(find.text('Switch to video call'));
     await tester.pumpAndSettle();
     expect(nativeCalls.where((c) => c.method == 'meetCall'), isEmpty);
-    expect(find.text('Video call (Meet)'), findsOneWidget); // The menu stayed open.
+    expect(find.text('Switch to video call'), findsOneWidget); // The menu stayed open.
+    await tester.tap(find.text('Add call'));
+    await tester.pumpAndSettle();
+    expect(nativeCalls.where((c) => c.method == 'openDialer'), hasLength(1));
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -319,7 +323,7 @@ void main() {
     await emit(tester, [call('active')]);
     await tester.tap(control('More'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Video call (Meet)'));
+    await tester.tap(find.text('Switch to video call'));
     await tester.pumpAndSettle();
     expect(nativeCalls.where((c) => c.method == 'meetCall').single.arguments['number'], '5550100');
     await tester.pumpWidget(const SizedBox());
@@ -402,12 +406,10 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('More takes a note; with two calls Merge takes Add call\'s place', (tester) async {
+  testWidgets('Notes takes a note; with two calls More offers Merge in Add call\'s place', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
-    await tester.tap(control('More'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Note'));
+    await tester.tap(control('Notes'));
     await tester.pumpAndSettle();
     expect(find.text('Call note'), findsOneWidget);
     await tester.enterText(find.byType(TextField), 'Send the invoice');
@@ -422,14 +424,13 @@ void main() {
       call('holding', id: 'held'),
     ]);
     await tester.pumpAndSettle();
-    expect(control('Add call'), findsNothing);
-    expect(control('Merge'), findsOneWidget);
+    expect(tester.widget<IconButton>(control('Notes')).isSelected, isTrue); // Lit: the call has a note.
     await tester.tap(control('More'));
     await tester.pumpAndSettle();
-    expect(find.text('Edit note'), findsOneWidget);
-    await tester.tap(find.text('Add call'));
+    expect(find.text('Add call'), findsNothing);
+    await tester.tap(find.text('Merge'));
     await tester.pumpAndSettle();
-    expect(nativeCalls.where((c) => c.method == 'openDialer'), hasLength(1));
+    expect(nativeCalls.any((c) => c.method == 'merge' && c.arguments['id'] == 'call-1'), isTrue);
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -643,14 +644,15 @@ void main() {
     await emit(tester, [call('dialing')]);
     expect(find.textContaining('Calling'), findsOneWidget);
     expect(tester.widget<IconButton>(control('Hold')).onPressed, isNull);
-    expect(control('Merge'), findsNothing); // One call: the slot holds Add call.
-    expect(control('Add call'), findsOneWidget);
     await emit(tester, [
       {...call('active'), 'canHold': true, 'canMerge': true},
       call('holding', id: 'held'),
     ]);
     await tester.tap(control('Hold'));
-    await tester.tap(control('Merge'));
+    await tester.tap(control('More'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Merge'));
+    await tester.pumpAndSettle();
     expect(find.text('On hold'), findsOneWidget); // The held call's card.
     await tester.tap(find.text('Switch'));
     expect(nativeCalls.any((c) => c.method == 'hold' && c.arguments['id'] == 'call-1'), isTrue);

@@ -7,6 +7,7 @@ import '../core/haptics/haptics.dart';
 import '../features/in_call/call_controls.dart';
 import '../theme/one_ui_theme.dart';
 import 'call_glass.dart';
+import 'call_icons.dart';
 import 'liquid_body.dart';
 import 'press_glow.dart';
 import 'round_header_controls.dart';
@@ -17,12 +18,15 @@ import '../app/layout.dart';
 class OneUIFloatingMenuItem {
   final String label;
   final IconData? icon;
+
+  /// Drawn instead of [icon]: the call screen's own thin-line glyphs.
+  final CallIconShape? glyph;
   final VoidCallback onTap;
 
   /// False greys the row out and ignores taps on it (the menu stays open).
   final bool enabled;
 
-  const OneUIFloatingMenuItem({required this.label, this.icon, required this.onTap, this.enabled = true});
+  const OneUIFloatingMenuItem({required this.label, this.icon, this.glyph, required this.onTap, this.enabled = true});
 }
 
 /// The app's floating menu (originally OneSpend's One UI menu, now our own): a
@@ -493,7 +497,13 @@ class _MenuRow extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 16 * size),
         child: Row(
           children: [
-            if (item.icon != null) ...[Icon(item.icon, size: 22 * size, color: color), SizedBox(width: 14 * size)],
+            if (item.glyph case final glyph?) ...[
+              CallIcon(glyph, size: 22 * size, color: color),
+              SizedBox(width: 14 * size),
+            ] else if (item.icon != null) ...[
+              Icon(item.icon, size: 22 * size, color: color),
+              SizedBox(width: 14 * size),
+            ],
             Expanded(
               child: Text(
                 item.label,

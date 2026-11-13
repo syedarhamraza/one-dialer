@@ -181,7 +181,7 @@ class TelecomBridge {
       _methods.invokeMethod('setCallSetting', {'key': key, 'value': value});
 
   // Call recording, through the sideloaded companion (RecorderCompanion.kt)
-  /// Null when One Dialer Recorder isn't installed.
+  /// Null when One Recorder isn't installed.
   Future<RecorderInfo?> getRecorder() async {
     final map = await _methods.invokeMapMethod<Object?, Object?>('getRecorder');
     return map == null ? null : RecorderInfo.fromMap(map);

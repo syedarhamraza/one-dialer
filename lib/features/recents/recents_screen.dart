@@ -59,7 +59,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
   /// Only calls VoIP apps (WhatsApp...) shared with the call log; combines with All/Missed.
   bool _appsOnly = false;
 
-  /// One Dialer Recorder is installed and set up: ⋮ then offers Recordings.
+  /// One Recorder is installed and set up: ⋮ then offers Recordings.
   bool _hasRecordings = false;
   bool _hideBlocked = true;
   Set<int>? _selected; // call ids; null when not selecting

@@ -2,7 +2,7 @@
 
 ## Built: the companion app (accessibility tier)
 
-Instead of a second One Dialer build (the `web` flavor in sections 3 and 6, now dropped), recording lives in a small sideloaded companion, **One Dialer Recorder** (`companion/`, `com.syedarhamraza.onedialer.recorder`, plain Kotlin). The Play app stays the only dialer and keeps its Play updates; it carries no mic permission and no accessibility service, only a `<queries>` entry and `RecorderCompanion.kt`.
+Instead of a second One Dialer build (the `web` flavor in sections 3 and 6, now dropped), recording lives in a small sideloaded companion, **One Recorder** (`companion/`, `com.syedarhamraza.onedialer.recorder`, plain Kotlin). The Play app stays the only dialer and keeps its Play updates; it carries no mic permission and no accessibility service, only a `<queries>` entry and `RecorderCompanion.kt`.
 
 - The companion holds `RECORD_AUDIO`, an empty `RecorderAccessibilityService` (the Android 10+ in-call mic exception) and `RecordingService` (microphone foreground service, `MediaRecorder` AAC, sources `VOICE_RECOGNITION` → `VOICE_COMMUNICATION` → `MIC`, the working one saved). Its one screen (`SetupActivity`) sets up the mic, the accessibility service (with Android 13+ "Allow restricted settings") and notifications.
 - One Dialer drives it through the companion's exported `RecordingsProvider.call()` (`status`, `start`, `stop`, `list`, `delete`, `deleteAll`, `open`, `share`). Every call checks the caller is `com.syedarhamraza.onedialer` signed with a pinned certificate (`TrustedDialer.CERTS`: upload and debug keys; **add the Play app-signing key before a Play build can use it**). Play re-signs One Dialer, so a signature permission can't work.

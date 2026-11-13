@@ -278,6 +278,25 @@ glyph('<g fill="#FFFFFF" stroke="#FFFFFF" stroke-width="1.2" stroke-linejoin="ro
       '<path d="M19.6 6V13M16.1 9.5H23.1" stroke="#FFFFFF" stroke-width="2.3" stroke-linecap="round"/>', "add_contact")
 
 
+# One Recorder (companion/): Phone's Glossy tile with a glossy sound wave (rounded bars) in
+# place of the handset, so it reads as One Dialer's sibling.
+REC = pathlib.Path("companion/app/src/main/res/drawable-nodpi")
+WAVE = (.26, .5, .78, 1, .66, .9, .44, .22)  # bar heights, as a share of the tallest
+bw, gap, tall = .064 * T, .046 * T, .58 * T
+x = O + (T - len(WAVE) * bw - (len(WAVE) - 1) * gap) / 2
+BARS = "".join(f'<rect x="{x + i * (bw + gap):.1f}" y="{O + T / 2 - h * tall / 2:.1f}" width="{bw:.1f}" height="{h * tall:.1f}" rx="{bw / 2:.1f}"/>'
+               for i, h in enumerate(WAVE))
+RECORDER_FG = (f'<defs><linearGradient id="wgloss" x1="0" y1="{O + (T - tall) / 2:.0f}" x2="0" y2="{O + (T + tall) / 2:.0f}" '
+               'gradientUnits="userSpaceOnUse"><stop stop-color="#FFFFFF"/><stop offset=".55" stop-color="#EEFCF4"/>'
+               '<stop offset="1" stop-color="#BDF0D8"/></linearGradient>'
+               '<filter id="wdrop" x="-20%" y="-20%" width="140%" height="150%">'
+               '<feDropShadow dx="0" dy="11" stdDeviation="13" flood-color="#006E2A" flood-opacity=".35"/></filter></defs>'
+               f'<g filter="url(#wdrop)" fill="url(#wgloss)">{BARS}</g>')
+REC.mkdir(parents=True, exist_ok=True)
+render(svg(GLOSSY_PHONE_BG), REC / "ic_launcher_background.png", PX)
+render(svg(RECORDER_FG), REC / "ic_launcher_foreground.png", PX)
+
+
 # The nav bar's tabs: the handset outlined (Calls, unselected) and ColorOS's two people, the front one
 # solid when selected and outlined when not; the one behind is an outline cut short where they overlap.
 NAV = 'stroke="#FFFFFF" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"'

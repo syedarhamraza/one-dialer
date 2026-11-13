@@ -42,7 +42,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   Map<Object?, Object?> _health = const {};
   bool _bluetoothNames = true;
 
-  /// One Dialer Recorder (the sideloaded companion); null when it isn't installed.
+  /// One Recorder (the sideloaded companion); null when it isn't installed.
   RecorderInfo? _recorder;
   AppVersion? _version;
   String _icon = 'default';
@@ -218,7 +218,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               onTap: () => _push(const AnswerButtonsScreen()),
             ),
             OneUIGroupItem(title: l10n.answerEndCalls, onTap: () => _push(const AnswerEndCallsScreen())),
-            // Only with One Dialer Recorder installed (the sideloaded companion); the Play app can't record alone.
+            // Only with One Recorder installed (the sideloaded companion); the Play app can't record alone.
             if (_recorder != null)
               OneUIGroupItem(
                 title: l10n.callRecording,
