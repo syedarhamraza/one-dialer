@@ -1,6 +1,9 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../core/haptics/haptics.dart';
+import '../l10n/l10n.dart';
 import '../features/in_call/call_controls.dart';
 import '../theme/one_ui_theme.dart';
 import 'call_glass.dart';
@@ -34,7 +37,14 @@ class RoundIconButton extends StatelessWidget {
 /// Segmented tabs in a grey pill (All | Missed), the selected one on a lighter thumb
 /// that slides between them.
 class FilterTabs extends StatefulWidget {
-  const FilterTabs({super.key, required this.labels, required this.index, required this.onChanged, this.bare = false});
+  const FilterTabs({
+    super.key,
+    required this.labels,
+    required this.index,
+    required this.onChanged,
+    this.bare = false,
+    this.blur = true,
+  });
 
   final List<String> labels;
   final int index;
@@ -42,6 +52,9 @@ class FilterTabs extends StatefulWidget {
 
   /// Without its own glass body, for a parent that draws one (the Calls header morph).
   final bool bare;
+
+  /// False skips the backdrop blur ([CallGlass.blur]), for tabs on the plain page.
+  final bool blur;
 
   /// The thumb's spring; the floating menu's highlight moves on it too.
   static Curve get thumbSpring => _FilterTabsState.thumbSpring;
@@ -137,7 +150,8 @@ class _FilterTabsState extends State<FilterTabs> {
                               fontWeight: FontWeight.w500,
                               color: i == _index ? context.palette.textPrimary : context.palette.textSecondary,
                             ),
-                            child: Text(widget.labels[i]),
+                            // Scales a long label (Italian) down instead of wrapping it.
+                            child: FittedBox(fit: BoxFit.scaleDown, child: Text(widget.labels[i], maxLines: 1)),
                           ),
                         ),
                       ),
@@ -149,7 +163,7 @@ class _FilterTabsState extends State<FilterTabs> {
         ),
       ),
     );
-    return widget.bare ? content : CallGlass(radius: _height / 2, child: content);
+    return widget.bare ? content : CallGlass(radius: _height / 2, blur: widget.blur, child: content);
   }
 }
 
@@ -198,6 +212,173 @@ class SelectionPillLabel extends StatelessWidget {
             child: Text(text, key: ValueKey(text), maxLines: 1, softWrap: false, style: _style(context)),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// A subpage's header that morphs into selection mode like the Calls tab's: Back grows into
+/// Cancel, the trailing button (or nothing) into Select all, the title into [selectionTitle].
+/// Only the pills' contents fade; the glass itself just changes width.
+class SubpageHeader extends StatelessWidget {
+  const SubpageHeader({
+    super.key,
+    required this.selecting,
+    required this.title,
+    required this.selectionTitle,
+    required this.allSelected,
+    required this.onCancel,
+    required this.onToggleSelectAll,
+    this.onBack,
+    this.trailingIcon,
+    this.trailingTooltip,
+    this.onTrailing,
+  });
+
+  final bool selecting;
+  final String title;
+  final String selectionTitle;
+  final bool allSelected;
+  final VoidCallback onCancel;
+  final VoidCallback onToggleSelectAll;
+  final VoidCallback? onBack;
+  final IconData? trailingIcon;
+  final String? trailingTooltip;
+  final VoidCallback? onTrailing;
+
+  static const double _button = 48;
+  static const double _gap = 14;
+
+  static final _morphSpring = GlassSpringCurve(
+    SpringDescription.withDampingRatio(mass: 1, stiffness: 240, ratio: .78),
+    const Duration(milliseconds: 550),
+  );
+
+  static double _out(double t) => (1 - t * 2).clamp(0.0, 1.0);
+  static double _in(double t) => (t * 2 - 1).clamp(0.0, 1.0);
+  static double _lerp(double a, double b, double t) => a + (b - a) * t;
+
+  Widget _icon(BuildContext context, IconData icon, String tooltip, VoidCallback? onTap) => IconButton(
+    tooltip: tooltip,
+    onPressed: onTap,
+    style: IconButton.styleFrom(
+      foregroundColor: context.palette.textPrimary,
+      fixedSize: const Size.square(_button),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    ),
+    icon: Icon(icon, size: 26),
+  );
+
+  /// A glass pill [width] wide at morph point [sel], showing [idle] then [active].
+  Widget _pill(double sel, double width, Widget? idle, Widget active, double activeWidth) => SizedBox(
+    width: width,
+    height: _button,
+    child: CallGlass(
+      radius: _button / 2,
+      // Clipped only mid-morph, as in the Calls header.
+      child: ClipRSuperellipse(
+        borderRadius: const BorderRadius.all(Radius.circular(_button / 2)),
+        clipBehavior: sel == 0 || sel == 1 ? Clip.none : Clip.antiAlias,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            if (idle != null)
+              IgnorePointer(
+                ignoring: selecting,
+                child: Opacity(opacity: _out(sel), child: idle),
+              ),
+            IgnorePointer(
+              ignoring: !selecting,
+              child: Opacity(
+                opacity: _in(sel),
+                child: OverflowBox(minWidth: activeWidth, maxWidth: activeWidth, child: active),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final cancelWidth = SelectionPillLabel.widthFor(context, l10n.cancel);
+    final selectAllText = allSelected ? l10n.deselectAll : l10n.selectAll;
+    final selectAllWidth = SelectionPillLabel.widthFor(context, selectAllText);
+    final trailing = trailingIcon == null ? null : _icon(context, trailingIcon!, trailingTooltip ?? '', onTrailing);
+    const titleStyle = TextStyle(fontSize: 22, fontWeight: FontWeight.w600, letterSpacing: -0.3);
+    return SizedBox(
+      height: _button,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(end: selecting ? 1 : 0),
+        duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 550),
+        curve: _morphSpring,
+        builder: (context, sel, _) {
+          final lead = _lerp(_button, cancelWidth, sel);
+          // "N selected" centred on the header, kept clear of the wider pill on both sides.
+          final side = math.max(cancelWidth, selectAllWidth) + _gap;
+          return Stack(
+            children: [
+              Positioned.fill(
+                left: side,
+                right: side,
+                child: IgnorePointer(
+                  child: Opacity(
+                    opacity: _in(sel),
+                    child: Center(
+                      child: Text(selectionTitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: titleStyle),
+                    ),
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  _pill(
+                    sel,
+                    lead,
+                    _icon(
+                      context,
+                      Icons.arrow_back_rounded,
+                      l10n.back,
+                      onBack ?? () => Navigator.of(context).maybePop(),
+                    ),
+                    SelectionPillLabel(text: l10n.cancel, onTap: onCancel),
+                    cancelWidth,
+                  ),
+                  const SizedBox(width: _gap),
+                  Expanded(
+                    child: Opacity(
+                      opacity: _out(sel),
+                      child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: titleStyle),
+                    ),
+                  ),
+                  // The right pill's width also follows its label (Select all ⇄ Deselect all).
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(end: selectAllWidth),
+                    duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 600),
+                    curve: FilterTabs.thumbSpring,
+                    builder: (context, labelWidth, _) {
+                      final from = trailing == null ? 0.0 : _button;
+                      if (sel == 0 && trailing == null) return const SizedBox.shrink();
+                      return Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: _pill(
+                          sel,
+                          _lerp(from, labelWidth, sel).clamp(0.0, labelWidth + 6),
+                          trailing,
+                          SelectionPillLabel(text: selectAllText, onTap: onToggleSelectAll),
+                          labelWidth,
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }

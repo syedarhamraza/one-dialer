@@ -102,10 +102,23 @@ class _SearchField extends StatelessWidget {
 /// In-place search for subpages and pickers: a search button beside [leading] that swaps the
 /// header for [SearchBarRow]; Back or Cancel closes search (and clears it) before leaving.
 class ExpandableSearchHeader extends StatefulWidget {
-  const ExpandableSearchHeader({super.key, required this.leading, required this.controller, this.hint});
-  final Widget leading;
+  const ExpandableSearchHeader({
+    super.key,
+    this.leading,
+    required this.controller,
+    this.hint,
+    this.idle,
+    this.forceIdle = false,
+  }) : assert(leading != null || idle != null);
+  final Widget? leading;
   final TextEditingController controller;
   final String? hint;
+
+  /// Replaces the default [leading] + search button row; given the callback that opens search.
+  final Widget Function(VoidCallback openSearch)? idle;
+
+  /// Shows [idle] even while searching (selection mode), keeping the query.
+  final bool forceIdle;
   @override
   State<ExpandableSearchHeader> createState() => _ExpandableSearchHeaderState();
 }
@@ -121,9 +134,9 @@ class _ExpandableSearchHeaderState extends State<ExpandableSearchHeader> {
 
   @override
   Widget build(BuildContext context) => PopScope(
-    canPop: !_searching,
+    canPop: !_searching || widget.forceIdle,
     onPopInvokedWithResult: (didPop, _) {
-      if (!didPop && _searching) _close();
+      if (!didPop && _searching && !widget.forceIdle) _close();
     },
     child: SizedBox(
       height: 48,
@@ -131,17 +144,19 @@ class _ExpandableSearchHeaderState extends State<ExpandableSearchHeader> {
       // transform over its blur, which costs tens of ms a frame on Adreno.
       child: AnimatedSwitcher(
         duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 220),
-        child: _searching
+        child: _searching && !widget.forceIdle
             ? SearchBarRow(
                 key: const ValueKey(true),
                 controller: widget.controller,
                 hint: widget.hint,
                 onCancel: _close,
               )
+            : widget.idle != null
+            ? KeyedSubtree(key: const ValueKey(false), child: widget.idle!(() => setState(() => _searching = true)))
             : Row(
                 key: const ValueKey(false),
                 children: [
-                  Expanded(child: widget.leading),
+                  Expanded(child: widget.leading!),
                   const SizedBox(width: 8),
                   RoundIconButton(
                     icon: Icons.search_rounded,

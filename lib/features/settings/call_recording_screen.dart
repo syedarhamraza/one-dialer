@@ -10,7 +10,7 @@ import '../../theme/one_ui_theme.dart';
 import '../../widgets/choice_row.dart';
 import '../../widgets/cos_subpage.dart';
 import '../../widgets/letter_avatar.dart';
-import '../../widgets/one_ui_floating_modal.dart';
+import '../../widgets/cos_dialog.dart';
 import '../../widgets/one_ui_group_card.dart';
 import '../contacts/contact_picker_screen.dart';
 import '../recordings/recordings_screen.dart';
@@ -108,14 +108,14 @@ class _CallRecordingScreenState extends State<CallRecordingScreen> with WidgetsB
 
   Future<void> _deleteAll() async {
     final l10n = context.l10n;
-    final ok = await OneUIFloatingModal.showConfirmationDialog(
-      context: context,
+    final ok = await showCosConfirm(
+      context,
       title: l10n.deleteAllRecordingsTitle,
       message: l10n.deleteAllRecordingsMessage,
       confirmLabel: l10n.delete,
-      confirmTextColor: OneUITheme.accentRed,
+      destructive: true,
     );
-    if (ok != true) return;
+    if (!ok) return;
     await _telecom.deleteAllRecordings();
     _refresh();
   }
@@ -151,11 +151,7 @@ class _CallRecordingScreenState extends State<CallRecordingScreen> with WidgetsB
           else ...[
             OneUIGroupCard(
               items: [
-                OneUIGroupItem(
-                  title: l10n.recordings,
-                  value: '$_count',
-                  onTap: () => _push(const RecordingsScreen()),
-                ),
+                OneUIGroupItem(title: l10n.recordings, value: '$_count', onTap: () => _push(const RecordingsScreen())),
               ],
             ),
             OneUIGroupCard(
@@ -182,9 +178,8 @@ class _CallRecordingScreenState extends State<CallRecordingScreen> with WidgetsB
                   OneUIGroupItem(
                     title: l10n.recordTheseContacts,
                     value: '${_selectedIds.length}',
-                    onTap: () => _push(
-                      RecordContactsScreen(prefKey: 'recordContacts', title: l10n.recordTheseContacts),
-                    ),
+                    onTap: () =>
+                        _push(RecordContactsScreen(prefKey: 'recordContacts', title: l10n.recordTheseContacts)),
                   ),
                 OneUIGroupItem(
                   title: l10n.neverRecord,
@@ -245,11 +240,7 @@ class _CallRecordingScreenState extends State<CallRecordingScreen> with WidgetsB
                   },
                 ),
                 if (_count > 0)
-                  OneUIGroupItem(
-                    title: l10n.deleteAllRecordings,
-                    trailing: const SizedBox.shrink(),
-                    onTap: _deleteAll,
-                  ),
+                  OneUIGroupItem(title: l10n.deleteAllRecordings, trailing: const SizedBox.shrink(), onTap: _deleteAll),
               ],
             ),
           ],

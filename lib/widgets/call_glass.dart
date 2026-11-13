@@ -28,19 +28,33 @@ GlassLook mainGlass(BuildContext context, {double classicOpacity = 1}) =>
 /// Below full visual effects it's OneSpend's flat One UI glass instead
 /// ([OneUIEffectsController.oneUIFill]): over a blur when reduced, solid when off.
 class CallGlass extends StatelessWidget {
-  const CallGlass({super.key, this.radius, required this.child});
+  const CallGlass({super.key, this.radius, this.blur = true, required this.child});
 
   final double? radius;
   final Widget child;
 
+  /// False draws the same body without reading the backdrop, for glass that sits on the
+  /// plain page (in the scrolling content), where a blur shows nothing but costs a pass.
+  final bool blur;
+
   @override
   Widget build(BuildContext context) {
     final fx = OneUIEffectsController.instance;
+    bool liquid() => fx.liquidControls && blur; // read live: the builder below rebuilds on fx
     Widget body(BuildContext context) {
       // Settings › "Glass style" › Liquid glass: the glass package's own (its own backdrop read).
-      if (fx.liquidControls) return liquidBody(context, radius: radius ?? 999);
+      if (liquid()) return liquidBody(context, radius: radius ?? 999);
       if (fx.isFull) {
         final look = mainGlass(context);
+        if (!blur) {
+          return CallBodyArtwork(
+            radius: radius,
+            glow: kMainGlassGlow,
+            opacity: look.opacity,
+            edges: look.edges,
+            child: const SizedBox.expand(),
+          );
+        }
         // Grouped: inside the shell's tabs, every glass control shares one backdrop read (see
         // MainShell), as do a pushed page's (DialerApp's page transition); the nav bar blurs on its own.
         return BackdropFilter.grouped(
@@ -60,7 +74,7 @@ class CallGlass extends StatelessWidget {
         color: fx.oneUIFill(light: context.palette.isLight),
         child: const SizedBox.expand(),
       );
-      if (fx.isOff) return fill;
+      if (fx.isOff || !blur) return fill;
       return BackdropFilter.grouped(
         filter: ImageFilter.blur(sigmaX: fx.blurSigma, sigmaY: fx.blurSigma),
         child: fill,
@@ -76,7 +90,7 @@ class CallGlass extends StatelessWidget {
         child: PressGlow(
           radius: radius ?? 999,
           // Below full visual effects light mode is flat One UI: no shadows.
-          shadows: context.palette.isLight && fx.isFull && !fx.liquidControls ? OneUIPalette.lightGlassShadow : null,
+          shadows: context.palette.isLight && fx.isFull && !liquid() ? OneUIPalette.lightGlassShadow : null,
           // Only the frosted body is clipped; the content draws on top unclipped, so a
           // springy thumb can overshoot the edge.
           child: Stack(
@@ -84,7 +98,7 @@ class CallGlass extends StatelessWidget {
             children: [
               Positioned.fill(
                 // Liquid glass shapes itself: a clip around it would only cost a layer.
-                child: fx.liquidControls
+                child: liquid()
                     ? body(context)
                     : radius == null
                     ? ClipOval(child: body(context))

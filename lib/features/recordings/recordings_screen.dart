@@ -6,13 +6,11 @@ import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../l10n/l10n.dart';
 import '../../theme/one_ui_theme.dart';
+import '../../widgets/cos_dialog.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_floating_action_bar.dart';
 import '../../widgets/one_ui_floating_menu.dart';
-import '../../widgets/one_ui_floating_modal.dart';
 import '../../widgets/one_ui_group_card.dart';
-import '../../widgets/one_ui_segmented_pills.dart';
-import '../../widgets/one_ui_selection_header_pills.dart';
 import '../../widgets/one_ui_subpage.dart';
 import '../../widgets/one_ui_toast.dart';
 import '../../widgets/round_header_controls.dart';
@@ -89,12 +87,8 @@ class _RecordingsScreenState extends State<RecordingsScreen> {
     if (mounted) _all.value = list;
   }
 
-  List<CallRecording> get _shown => filterRecordings(
-    _all.value,
-    _filter.value,
-    _query.text,
-    nameFor: ContactsRepository.instance.nameFor,
-  );
+  List<CallRecording> get _shown =>
+      filterRecordings(_all.value, _filter.value, _query.text, nameFor: ContactsRepository.instance.nameFor);
 
   void _toggle(CallRecording r) {
     final set = {...?_selected.value};
@@ -104,8 +98,8 @@ class _RecordingsScreenState extends State<RecordingsScreen> {
 
   Future<void> _rename(CallRecording r) async {
     final l10n = context.l10n;
-    final title = await OneUIFloatingModal.showTextInputDialog(
-      context: context,
+    final title = await showCosTextInput(
+      context,
       title: l10n.renameRecording,
       initialValue: r.title ?? '',
       confirmLabel: l10n.save,
@@ -126,14 +120,14 @@ class _RecordingsScreenState extends State<RecordingsScreen> {
 
   Future<void> _delete(List<CallRecording> list) async {
     final l10n = context.l10n;
-    final ok = await OneUIFloatingModal.showConfirmationDialog(
-      context: context,
+    final ok = await showCosConfirm(
+      context,
       title: l10n.deleteRecordings(list.length),
       message: l10n.deleteAllRecordingsMessage,
       confirmLabel: l10n.delete,
-      confirmTextColor: OneUITheme.accentRed,
+      destructive: true,
     );
-    if (ok != true) return;
+    if (!ok) return;
     for (final r in list) {
       await _telecom.deleteRecording(r.name);
     }
@@ -153,7 +147,11 @@ class _RecordingsScreenState extends State<RecordingsScreen> {
           onTap: () => _telecom.starRecording(r.name, !r.starred).then((_) => _refresh()),
         ),
         OneUIFloatingMenuItem(label: l10n.rename, icon: Icons.edit_outlined, onTap: () => _rename(r)),
-        OneUIFloatingMenuItem(label: l10n.share, icon: Icons.share_outlined, onTap: () => _telecom.shareRecordings([r.name])),
+        OneUIFloatingMenuItem(
+          label: l10n.share,
+          icon: Icons.share_outlined,
+          onTap: () => _telecom.shareRecordings([r.name]),
+        ),
         OneUIFloatingMenuItem(label: l10n.saveToPhone, icon: Icons.download_rounded, onTap: () => _save([r])),
         OneUIFloatingMenuItem(label: l10n.delete, icon: Icons.delete_outline_rounded, onTap: () => _delete([r])),
       ],
@@ -168,9 +166,7 @@ class _RecordingsScreenState extends State<RecordingsScreen> {
     final length = '$minutes:${(r.duration.inSeconds % 60).toString().padLeft(2, '0')}';
     final line = [if (r.title != null) r.title!, timeLabel(l10n, r.start), length].join(' · ');
     return OneUIGroupItem(
-      leading: selected != null
-          ? SelectMark(selected: selected.contains(r.name), gap: 0)
-          : LetterAvatar(name: contact?.name ?? name, size: 40),
+      leading: LetterAvatar(name: contact?.name ?? name, size: 40),
       title: name,
       customSubtitle: Row(
         children: [
@@ -199,65 +195,44 @@ class _RecordingsScreenState extends State<RecordingsScreen> {
               Haptics.longPress();
               _selected.value = {r.name};
             },
-      trailing: selected != null
-          ? const SizedBox.shrink()
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (r.starred) const Icon(Icons.star_rounded, size: 18, color: Color(0xFFFFB400)),
-                IconButton(
-                  key: _menuKeys.putIfAbsent(r.name, GlobalKey.new),
-                  tooltip: l10n.moreOptions,
-                  icon: Icon(Icons.more_vert_rounded, color: context.palette.textSecondary),
-                  onPressed: () => _more(r),
-                ),
-              ],
+      // The tick takes the ⋮'s place at the row's end (ColorOS), springing in.
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (selected == null) ...[
+            if (r.starred) const Icon(Icons.star_rounded, size: 18, color: Color(0xFFFFB400)),
+            IconButton(
+              key: _menuKeys.putIfAbsent(r.name, GlobalKey.new),
+              tooltip: l10n.moreOptions,
+              icon: Icon(Icons.more_vert_rounded, color: context.palette.textSecondary),
+              onPressed: () => _more(r),
             ),
+          ],
+          SelectMark(selected: selected?.contains(r.name), end: 4),
+        ],
+      ),
     );
   }
 
   Widget _header(BuildContext context) {
     final l10n = context.l10n;
     final selected = _selected.value;
-    if (selected != null) {
-      final shown = _shown;
-      return SizedBox(
-        height: 48,
-        child: Row(
-          children: [
-            RoundIconButton(icon: Icons.close_rounded, tooltip: l10n.cancel, onTap: () => _selected.value = null),
-            const SizedBox(width: 12),
-            OneUISelectionCountPill(
-              selectedCount: selected.length,
-              totalCount: shown.length,
-              onToggleSelectAll: () => _selected.value = selected.length == shown.length
-                  ? null
-                  : shown.map((r) => r.name).toSet(),
-            ),
-          ],
-        ),
-      );
-    }
+    final shown = _shown;
     return ExpandableSearchHeader(
       controller: _query,
       hint: l10n.searchRecordings,
-      leading: Row(
-        children: [
-          RoundIconButton(
-            icon: Icons.arrow_back_rounded,
-            tooltip: l10n.back,
-            onTap: () => Navigator.of(context).maybePop(),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Text(
-              l10n.recordings,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
+      forceIdle: selected != null,
+      idle: (openSearch) => SubpageHeader(
+        selecting: selected != null,
+        title: l10n.recordings,
+        selectionTitle: l10n.selectedCount(selected?.length ?? 0),
+        allSelected: selected != null && selected.length == shown.length,
+        onCancel: () => _selected.value = null,
+        onToggleSelectAll: () =>
+            _selected.value = selected?.length == shown.length ? null : shown.map((r) => r.name).toSet(),
+        trailingIcon: Icons.search_rounded,
+        trailingTooltip: l10n.search,
+        onTrailing: openSearch,
       ),
     );
   }
@@ -281,26 +256,24 @@ class _RecordingsScreenState extends State<RecordingsScreen> {
             listenable: Listenable.merge([_all, _filter, _query, ContactsRepository.instance.contacts]),
             bottomPill: selected == null
                 ? null
-                : OneUIFloatingActionBar(
-                    items: [
-                      OneUIFloatingActionBarItem(
-                        icon: Icons.share_outlined,
-                        label: l10n.share,
-                        onTap: () => _telecom.shareRecordings(picked.map((r) => r.name).toList()),
-                      ),
-                      OneUIFloatingActionBarItem(
-                        icon: Icons.download_rounded,
-                        label: l10n.saveToPhone,
-                        onTap: () => _save(picked),
-                      ),
-                      OneUIFloatingActionBarItem(
-                        icon: Icons.delete_outline_rounded,
-                        label: l10n.delete,
-                        color: OneUITheme.accentRed,
-                        onTap: () => _delete(picked),
-                      ),
-                    ],
-                  ),
+                : OneUISubpage.actionBar([
+                    OneUIFloatingActionBarItem(
+                      icon: Icons.share_outlined,
+                      label: l10n.share,
+                      onTap: () => _telecom.shareRecordings(picked.map((r) => r.name).toList()),
+                    ),
+                    OneUIFloatingActionBarItem(
+                      icon: Icons.download_rounded,
+                      label: l10n.saveToPhone,
+                      onTap: () => _save(picked),
+                    ),
+                    OneUIFloatingActionBarItem(
+                      icon: Icons.delete_outline_rounded,
+                      label: l10n.delete,
+                      color: OneUITheme.accentRed,
+                      onTap: () => _delete(picked),
+                    ),
+                  ]),
             slivers: (context) {
               final shown = _shown;
               // Day groups, like Recents.
@@ -315,16 +288,14 @@ class _RecordingsScreenState extends State<RecordingsScreen> {
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 16),
-                    child: OneUISegmentedPills<RecordingFilter>(
-                      dense: true,
-                      segments: [
-                        (value: RecordingFilter.all, label: l10n.all),
-                        (value: RecordingFilter.starred, label: l10n.filterStarred),
-                        (value: RecordingFilter.contacts, label: l10n.navContacts),
-                        (value: RecordingFilter.unknown, label: l10n.filterUnknown),
-                      ],
-                      selected: _filter.value,
-                      onChanged: (f) => _filter.value = f,
+                    child: Center(
+                      child: FilterTabs(
+                        labels: [l10n.all, l10n.filterStarred, l10n.navContacts, l10n.filterUnknown],
+                        index: _filter.value.index,
+                        onChanged: (i) => _filter.value = RecordingFilter.values[i],
+                        // On the plain page under the header: a blur here shows nothing.
+                        blur: false,
+                      ),
                     ),
                   ),
                 ),
