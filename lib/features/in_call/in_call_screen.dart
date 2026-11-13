@@ -510,6 +510,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
                                     child: HeldCallCard(
                                       call: held,
                                       onSwitch: () => TelecomBridge.instance.unhold(held.id),
+                                      onEnd: () => TelecomBridge.instance.hangUp(held.id),
                                     ),
                                   )
                                 : const SizedBox(width: double.infinity),
