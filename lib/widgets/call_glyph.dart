@@ -7,7 +7,9 @@ import 'package:flutter/material.dart';
 /// an ongoing call ([Icons.phone_in_talk_rounded]) is it with sound waves (`handset_talk.png`).
 /// [Icons.chat_rounded] and [Icons.videocam_rounded] are its matching Message and Video glyphs
 /// (`message.png`, `video.png`), and [Icons.person_add_alt_1_rounded] its Add contact glyph
-/// (`add_contact.png`), for the contact and call details pages' tiles.
+/// (`add_contact.png`), for the contact and call details pages' tiles. The nav bar's unselected Calls
+/// ([Icons.call_outlined]) is the handset outlined, and Contacts ([Icons.people_alt_rounded],
+/// [Icons.people_alt_outlined]) ColorOS's two people (`handset_outline.png`, `contacts*.png`).
 class CallGlyph extends StatelessWidget {
   const CallGlyph(this.icon, {super.key, this.color, this.size});
 
@@ -21,6 +23,9 @@ class CallGlyph extends StatelessWidget {
     Icons.chat_rounded: 'assets/icons/message.png',
     Icons.videocam_rounded: 'assets/icons/video.png',
     Icons.person_add_alt_1_rounded: 'assets/icons/add_contact.png',
+    Icons.call_outlined: 'assets/icons/handset_outline.png',
+    Icons.people_alt_rounded: 'assets/icons/contacts.png',
+    Icons.people_alt_outlined: 'assets/icons/contacts_outline.png',
   };
 
   final IconData icon;
