@@ -1,0 +1,614 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-13T16:04:32.356697+00:00",
+  "title": "Design System: One Dialer",
+  "extensions": {
+    "colorMeta": {
+      "call-green": {
+        "role": "primary",
+        "displayName": "Call Green",
+        "canonical": "#00C216",
+        "tonalRamp": [
+          "#001200",
+          "#003100",
+          "#005300",
+          "#007700",
+          "#009B00",
+          "#4FB94D",
+          "#90DA8C",
+          "#D0FDCD"
+        ]
+      },
+      "dial-green": {
+        "role": "primary",
+        "displayName": "Dial Green",
+        "canonical": "#5BB450",
+        "tonalRamp": [
+          "#001000",
+          "#052D01",
+          "#124D0A",
+          "#227018",
+          "#419237",
+          "#71B169",
+          "#A4D39D",
+          "#DBF8D7"
+        ]
+      },
+      "phone-green": {
+        "role": "primary",
+        "displayName": "Phone Green",
+        "canonical": "#00C05A",
+        "tonalRamp": [
+          "#001200",
+          "#003004",
+          "#005210",
+          "#00761E",
+          "#00993C",
+          "#50B76D",
+          "#91D8A0",
+          "#D1FBD8"
+        ]
+      },
+      "action-blue": {
+        "role": "secondary",
+        "displayName": "Action Blue",
+        "canonical": "#5390F5",
+        "tonalRamp": [
+          "#010922",
+          "#08224C",
+          "#173D7B",
+          "#275AAD",
+          "#437BD7",
+          "#709FEA",
+          "#A2C6FF",
+          "#DAF0FF"
+        ]
+      },
+      "alert-coral": {
+        "role": "tertiary",
+        "displayName": "Alert Coral",
+        "canonical": "#F07167",
+        "tonalRamp": [
+          "#1D0202",
+          "#440E0D",
+          "#6F211E",
+          "#9D3530",
+          "#C6544C",
+          "#DF8076",
+          "#F8AFA6",
+          "#FFE2DC"
+        ]
+      },
+      "pitch-black": {
+        "role": "neutral",
+        "displayName": "Pitch Black",
+        "canonical": "#000000",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#242424",
+          "#404040",
+          "#5D5D5D",
+          "#7D7D7D",
+          "#9E9E9E",
+          "#C4C4C4",
+          "#EEEEEE"
+        ]
+      },
+      "charcoal-card": {
+        "role": "neutral",
+        "displayName": "Charcoal Card",
+        "canonical": "#1C1C1E",
+        "tonalRamp": [
+          "#0B0B0D",
+          "#242426",
+          "#3F3F42",
+          "#5D5D60",
+          "#7D7D7F",
+          "#9E9EA1",
+          "#C4C4C6",
+          "#EEEEF1"
+        ]
+      },
+      "charcoal-card-raised": {
+        "role": "neutral",
+        "displayName": "Charcoal Card Raised",
+        "canonical": "#262628",
+        "tonalRamp": [
+          "#0B0B0D",
+          "#242426",
+          "#3F3F42",
+          "#5D5D60",
+          "#7D7D7F",
+          "#9E9EA1",
+          "#C4C4C6",
+          "#EEEEF1"
+        ]
+      },
+      "charcoal-pill": {
+        "role": "neutral",
+        "displayName": "Charcoal Pill",
+        "canonical": "#2C2C2E",
+        "tonalRamp": [
+          "#0B0B0D",
+          "#242426",
+          "#3F3F42",
+          "#5D5D60",
+          "#7D7D7F",
+          "#9E9EA0",
+          "#C4C4C6",
+          "#EEEEF1"
+        ]
+      },
+      "charcoal-pill-active": {
+        "role": "neutral",
+        "displayName": "Charcoal Pill Active",
+        "canonical": "#3E3E42",
+        "tonalRamp": [
+          "#0B0B0E",
+          "#242427",
+          "#3F3F43",
+          "#5D5D61",
+          "#7D7D81",
+          "#9E9EA2",
+          "#C3C3C8",
+          "#EEEEF3"
+        ]
+      },
+      "smoke-glass": {
+        "role": "neutral",
+        "displayName": "Smoke Glass",
+        "canonical": "#222226B3",
+        "tonalRamp": [
+          "#0B0B0E",
+          "#242428",
+          "#3F3F44",
+          "#5D5D62",
+          "#7D7D82",
+          "#9E9EA3",
+          "#C3C3C9",
+          "#EEEEF3"
+        ]
+      },
+      "smoke-modal": {
+        "role": "neutral",
+        "displayName": "Smoke Modal",
+        "canonical": "#202024C4",
+        "tonalRamp": [
+          "#0B0B0E",
+          "#242428",
+          "#3F3F44",
+          "#5D5D62",
+          "#7D7D82",
+          "#9E9EA3",
+          "#C3C3C9",
+          "#EEEEF3"
+        ]
+      },
+      "text-white": {
+        "role": "neutral",
+        "displayName": "Text White",
+        "canonical": "#FFFFFF",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#242424",
+          "#404040",
+          "#5D5D5D",
+          "#7D7D7D",
+          "#9E9E9E",
+          "#C4C4C4",
+          "#EEEEEE"
+        ]
+      },
+      "text-ash": {
+        "role": "neutral",
+        "displayName": "Text Ash",
+        "canonical": "#9E9EA4",
+        "tonalRamp": [
+          "#0B0B0F",
+          "#232328",
+          "#3F3F44",
+          "#5D5D62",
+          "#7D7D82",
+          "#9E9EA4",
+          "#C3C3CA",
+          "#EEEEF4"
+        ]
+      },
+      "text-graphite": {
+        "role": "neutral",
+        "displayName": "Text Graphite",
+        "canonical": "#6A6A70",
+        "tonalRamp": [
+          "#0B0B0F",
+          "#232328",
+          "#3F3F45",
+          "#5D5D63",
+          "#7C7C83",
+          "#9E9EA4",
+          "#C3C3CA",
+          "#EEEEF5"
+        ]
+      },
+      "section-mist": {
+        "role": "neutral",
+        "displayName": "Section Mist",
+        "canonical": "#D4D4D8",
+        "tonalRamp": [
+          "#0B0B0D",
+          "#242427",
+          "#3F3F43",
+          "#5D5D61",
+          "#7D7D80",
+          "#9E9EA2",
+          "#C4C4C7",
+          "#EEEEF2"
+        ]
+      },
+      "hairline-dark": {
+        "role": "neutral",
+        "displayName": "Hairline Dark",
+        "canonical": "#FFFFFF1A",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#242424",
+          "#404040",
+          "#5D5D5D",
+          "#7D7D7D",
+          "#9E9E9E",
+          "#C4C4C4",
+          "#EEEEEE"
+        ]
+      },
+      "light-page": {
+        "role": "neutral",
+        "displayName": "Light Page",
+        "canonical": "#F2F3F5",
+        "tonalRamp": [
+          "#0A0B0C",
+          "#232425",
+          "#3F4041",
+          "#5D5E5F",
+          "#7C7D7F",
+          "#9D9EA0",
+          "#C3C4C6",
+          "#EDEEF0"
+        ]
+      },
+      "light-page-flat": {
+        "role": "neutral",
+        "displayName": "Light Page Flat",
+        "canonical": "#E9E9EE",
+        "tonalRamp": [
+          "#0B0B0E",
+          "#242427",
+          "#3F3F43",
+          "#5D5D61",
+          "#7D7D81",
+          "#9E9EA2",
+          "#C3C3C8",
+          "#EEEEF3"
+        ]
+      },
+      "light-card": {
+        "role": "neutral",
+        "displayName": "Light Card",
+        "canonical": "#FFFFFF",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#242424",
+          "#404040",
+          "#5D5D5D",
+          "#7D7D7D",
+          "#9E9E9E",
+          "#C4C4C4",
+          "#EEEEEE"
+        ]
+      },
+      "light-pill": {
+        "role": "neutral",
+        "displayName": "Light Pill",
+        "canonical": "#F5F5F8",
+        "tonalRamp": [
+          "#0B0B0D",
+          "#242426",
+          "#3F3F42",
+          "#5D5D60",
+          "#7D7D7F",
+          "#9E9EA1",
+          "#C4C4C7",
+          "#EEEEF1"
+        ]
+      },
+      "light-text": {
+        "role": "neutral",
+        "displayName": "Light Text",
+        "canonical": "#000000",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#242424",
+          "#404040",
+          "#5D5D5D",
+          "#7D7D7D",
+          "#9E9E9E",
+          "#C4C4C4",
+          "#EEEEEE"
+        ]
+      },
+      "light-text-secondary": {
+        "role": "neutral",
+        "displayName": "Light Text Secondary",
+        "canonical": "#5E5E63",
+        "tonalRamp": [
+          "#0B0B0E",
+          "#242328",
+          "#3F3F44",
+          "#5D5D62",
+          "#7D7D82",
+          "#9E9EA3",
+          "#C3C3C9",
+          "#EEEEF4"
+        ]
+      },
+      "light-text-tertiary": {
+        "role": "neutral",
+        "displayName": "Light Text Tertiary",
+        "canonical": "#8E8E93",
+        "tonalRamp": [
+          "#0B0B0E",
+          "#242427",
+          "#3F3F44",
+          "#5D5D62",
+          "#7D7D81",
+          "#9E9EA3",
+          "#C3C3C9",
+          "#EEEEF3"
+        ]
+      },
+      "light-glass": {
+        "role": "neutral",
+        "displayName": "Light Glass",
+        "canonical": "#FFFFFFE6",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#242424",
+          "#404040",
+          "#5D5D5D",
+          "#7D7D7D",
+          "#9E9E9E",
+          "#C4C4C4",
+          "#EEEEEE"
+        ]
+      },
+      "light-modal": {
+        "role": "neutral",
+        "displayName": "Light Modal",
+        "canonical": "#FFFFFFF2",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#242424",
+          "#404040",
+          "#5D5D5D",
+          "#7D7D7D",
+          "#9E9E9E",
+          "#C4C4C4",
+          "#EEEEEE"
+        ]
+      },
+      "hairline-light": {
+        "role": "neutral",
+        "displayName": "Hairline Light",
+        "canonical": "#0000001A",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#242424",
+          "#404040",
+          "#5D5D5D",
+          "#7D7D7D",
+          "#9E9E9E",
+          "#C4C4C4",
+          "#EEEEEE"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Big Title",
+        "purpose": "Calls and Contacts big titles; collapse into the headline."
+      },
+      "headline": {
+        "displayName": "Header Title",
+        "purpose": "Small header and pushed-page titles."
+      },
+      "title": {
+        "displayName": "Row Title",
+        "purpose": "Group-card and list row labels."
+      },
+      "body": {
+        "displayName": "Control",
+        "purpose": "Header controls and emphasised text."
+      },
+      "label": {
+        "displayName": "Value",
+        "purpose": "Row values, card headers, menu items."
+      },
+      "caption": {
+        "displayName": "Subtitle",
+        "purpose": "Row subtitles."
+      }
+    },
+    "shadows": [
+      {
+        "name": "floating",
+        "value": "0 2px 14px rgba(0,0,0,.30)",
+        "purpose": "Dark floating pills and menus."
+      },
+      {
+        "name": "navbar",
+        "value": "0 -1px 16px rgba(0,0,0,.35)",
+        "purpose": "Lifts the nav bar over content scrolling under it."
+      },
+      {
+        "name": "light-glass",
+        "value": "0 6px 24px rgba(0,0,0,.07), 0 1px 6px rgba(0,0,0,.06)",
+        "purpose": "ColorOS 17's light-mode glass haze."
+      },
+      {
+        "name": "light-menu",
+        "value": "0 12px 40px rgba(0,0,0,.16), 0 2px 8px rgba(0,0,0,.08)",
+        "purpose": "Light-mode menus over white cards."
+      },
+      {
+        "name": "call-glow",
+        "value": "0 4px 12px rgba(0,194,22,.25)",
+        "purpose": "Under the lit Call button."
+      }
+    ],
+    "motion": [
+      {
+        "name": "spring-standard",
+        "value": "spring(mass 1, stiffness 240, damping ratio 0.78)",
+        "purpose": "Default morphs (menus, header, nav bar)."
+      },
+      {
+        "name": "spring-firm",
+        "value": "spring(mass 1, stiffness 320, damping ratio 0.8)",
+        "purpose": "Snappier morphs."
+      },
+      {
+        "name": "press",
+        "value": "220ms",
+        "purpose": "Press squeeze, stretch and glow (PressGlow)."
+      },
+      {
+        "name": "keypad-slide",
+        "value": "300ms",
+        "purpose": "Keypad sheet up and down; reduced motion honoured."
+      },
+      {
+        "name": "busy-sweep",
+        "value": "1400ms loop",
+        "purpose": "GlowButton's busy band of light."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "design-width",
+        "value": "420dp (scaled to screen; up to 1.15x; landscape unscaled)"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Call Button",
+      "kind": "button",
+      "refersTo": "button-call",
+      "description": "The keypad's lit Call button: the one green that emits light.",
+      "html": "<button class=\"ds-call\" aria-label=\"Call\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1z\"/></svg></button>",
+      "css": ".ds-call{width:132px;height:54px;border:none;border-radius:999px;background:#00C216;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,194,22,.25),inset 0 1px 0 rgba(255,255,255,.35),inset 0 -1px 0 rgba(80,230,100,.6);transition:transform .22s cubic-bezier(.34,1.4,.64,1),box-shadow .22s}.ds-call:hover{box-shadow:0 4px 22px rgba(0,194,22,.45),inset 0 1px 0 rgba(255,255,255,.35)}.ds-call:active{transform:scale(.94,.97)}.ds-call:focus-visible{outline:2px solid #fff;outline-offset:3px}"
+    },
+    {
+      "name": "Glass Round Button",
+      "kind": "button",
+      "refersTo": "glass-pill",
+      "description": "Header and page controls: a circle of call glass.",
+      "html": "<div class=\"ds-stage\"><button class=\"ds-glass ds-round\" aria-label=\"Back\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\"><path d=\"M15 5l-7 7 7 7\"/></svg></button></div>",
+      "css": ".ds-stage{background:#000;padding:24px;display:inline-block}.ds-round{width:48px;height:48px;border:none;border-radius:999px;display:flex;align-items:center;justify-content:center}.ds-glass{background:rgba(34,34,38,.7);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 2px 14px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.28),inset 0 0 0 1px rgba(255,255,255,.08);color:#fff;transition:transform .22s cubic-bezier(.34,1.4,.64,1),box-shadow .22s}.ds-glass:hover{box-shadow:0 2px 14px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.4),inset 0 0 0 1px rgba(255,255,255,.16),0 0 18px rgba(255,255,255,.12)}.ds-glass:active{transform:scale(.94,.97)}.ds-glass:focus-visible{outline:2px solid #5390F5;outline-offset:3px}"
+    },
+    {
+      "name": "Glass Header Pill",
+      "kind": "button",
+      "refersTo": "glass-pill",
+      "description": "Stadium of call glass holding header actions.",
+      "html": "<div class=\"ds-stage\"><div class=\"ds-glass ds-hpill\"><span>Select</span><span>&#8942;</span></div></div>",
+      "css": ".ds-stage{background:#000;padding:24px;display:inline-block}.ds-hpill{height:48px;border-radius:999px;padding:0 20px;display:flex;gap:22px;align-items:center;font:500 16px sans-serif;letter-spacing:-.2px}.ds-glass{background:rgba(34,34,38,.7);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 2px 14px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.28),inset 0 0 0 1px rgba(255,255,255,.08);color:#fff;transition:transform .22s cubic-bezier(.34,1.4,.64,1),box-shadow .22s}.ds-glass:hover{box-shadow:0 2px 14px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.4),inset 0 0 0 1px rgba(255,255,255,.16),0 0 18px rgba(255,255,255,.12)}.ds-glass:active{transform:scale(.94,.97)}.ds-glass:focus-visible{outline:2px solid #5390F5;outline-offset:3px}"
+    },
+    {
+      "name": "Floating Nav Bar",
+      "kind": "nav",
+      "refersTo": "nav-bar",
+      "description": "58dp glass stadium; the selected tab on the active charcoal pill.",
+      "html": "<div class=\"ds-stage\"><nav class=\"ds-glass ds-nav\"><a class=\"ds-tab ds-on\" href=\"#\">Calls</a><a class=\"ds-tab\" href=\"#\">Contacts</a></nav></div>",
+      "css": ".ds-stage{background:#000;padding:24px;display:inline-block}.ds-nav{height:58px;border-radius:999px;padding:5px;display:flex;gap:4px;box-sizing:border-box}.ds-tab{flex:1;min-width:110px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#D4D4D8;font:500 15px sans-serif;text-decoration:none;transition:background .22s}.ds-tab:hover{color:#fff}.ds-tab:focus-visible{outline:2px solid #5390F5}.ds-on{background:#3E3E42;color:#fff}.ds-glass{background:rgba(34,34,38,.7);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 2px 14px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.28),inset 0 0 0 1px rgba(255,255,255,.08);color:#fff;transition:transform .22s cubic-bezier(.34,1.4,.64,1),box-shadow .22s}.ds-glass:hover{box-shadow:0 2px 14px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.4),inset 0 0 0 1px rgba(255,255,255,.16),0 0 18px rgba(255,255,255,.12)}.ds-glass:active{transform:scale(.94,.97)}.ds-glass:focus-visible{outline:2px solid #5390F5;outline-offset:3px}"
+    },
+    {
+      "name": "Group Card",
+      "kind": "card",
+      "refersTo": "group-card",
+      "description": "Flat charcoal squircle of settings rows with grey values and chevrons.",
+      "html": "<div class=\"ds-stage\"><div class=\"ds-hdr\">Calls</div><div class=\"ds-card\"><a class=\"ds-row\" href=\"#\"><span>Quick decline messages</span><span class=\"ds-val\">4 &#8250;</span></a><div class=\"ds-div\"></div><a class=\"ds-row\" href=\"#\"><span>Call screen effects</span><span class=\"ds-val\">Full &#8250;</span></a></div></div>",
+      "css": ".ds-stage{background:#000;padding:24px;width:360px}.ds-hdr{color:#9E9EA4;font:15px sans-serif;padding:4px 18px 8px}.ds-card{background:#1C1C1E;border-radius:26px;overflow:hidden}.ds-row{display:flex;justify-content:space-between;padding:17px 18px;color:#fff;font:400 17px/1.25 sans-serif;text-decoration:none}.ds-row:hover{background:#262628}.ds-row:focus-visible{outline:2px solid #5390F5;outline-offset:-2px}.ds-val{color:#9E9EA4;font-size:15px}.ds-div{height:1px;background:rgba(255,255,255,.1);margin:0 18px}"
+    },
+    {
+      "name": "Search Pill",
+      "kind": "input",
+      "refersTo": "search-pill",
+      "description": "Floating glass stadium search field.",
+      "html": "<div class=\"ds-stage\"><input class=\"ds-glass ds-search\" placeholder=\"Search contacts\"></div>",
+      "css": ".ds-stage{background:#000;padding:24px;display:inline-block}.ds-search{width:300px;height:48px;border:none;border-radius:34px;padding:0 20px;font:400 16px sans-serif;color:#fff}.ds-search::placeholder{color:#9E9EA4}.ds-glass{background:rgba(34,34,38,.7);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 2px 14px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.28),inset 0 0 0 1px rgba(255,255,255,.08);color:#fff;transition:transform .22s cubic-bezier(.34,1.4,.64,1),box-shadow .22s}.ds-glass:hover{box-shadow:0 2px 14px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.4),inset 0 0 0 1px rgba(255,255,255,.16),0 0 18px rgba(255,255,255,.12)}.ds-glass:active{transform:scale(.94,.97)}.ds-glass:focus-visible{outline:2px solid #5390F5;outline-offset:3px}"
+    },
+    {
+      "name": "Keypad Key",
+      "kind": "custom",
+      "refersTo": "glass-pill",
+      "description": "A call-glass stadium key on the frosted keypad sheet.",
+      "html": "<div class=\"ds-stage\"><button class=\"ds-glass ds-key\"><b>2</b><small>ABC</small></button><button class=\"ds-glass ds-key\"><b>3</b><small>DEF</small></button></div>",
+      "css": ".ds-stage{background:#000;padding:24px;display:inline-flex;gap:12px}.ds-key{width:110px;height:58px;border:none;border-radius:999px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:sans-serif}.ds-key b{font-weight:400;font-size:26px;line-height:1}.ds-key small{font-size:10px;letter-spacing:1.5px;color:#9E9EA4}.ds-glass{background:rgba(34,34,38,.7);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 2px 14px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.28),inset 0 0 0 1px rgba(255,255,255,.08);color:#fff;transition:transform .22s cubic-bezier(.34,1.4,.64,1),box-shadow .22s}.ds-glass:hover{box-shadow:0 2px 14px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.4),inset 0 0 0 1px rgba(255,255,255,.16),0 0 18px rgba(255,255,255,.12)}.ds-glass:active{transform:scale(.94,.97)}.ds-glass:focus-visible{outline:2px solid #5390F5;outline-offset:3px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Frosted Night Glass",
+    "overview": "A pitch-black page with frosted call glass floating over it, light caught along its edges. Content (call history, contacts, settings) sits flat on the black in dense, quiet rows and grey cards; every control the hand reaches for (nav bar, header pills, keypad keys, menus, call controls) is a floating pane of glass that blurs what scrolls beneath it and glows where it's touched. Green is lit, not painted: the Call button is the one surface that emits light.\n\nThe design language is ColorOS 17, ported from a Samsung One UI base (the sibling app OneSpend). One UI leftovers (coloured icons, One UI dialogs and fields) convert to the ColorOS 17 look when touched. Controls feel soft and springy: they squeeze, stretch toward the finger and glow on press, and every morph runs on a spring rather than a linear tween.\n\nEverything is designed at 420 dp wide and scaled to the screen, and the whole look degrades by device tier: Full (call glass, progressive header blur, optional Liquid glass), Reduced (One UI's flat translucent fill over one shared blur) and Off (solid fills, no blur). The degraded tiers keep the original flat look; they never imitate the glass.",
+    "keyCharacteristics": [
+      "OLED pitch-black ground in dark mode; ColorOS 17 grey page with white cards in light mode.",
+      "Floating frosted glass for every control; flat cards for content.",
+      "Squircle corners on rectangles; circles and stadium pills stay exactly round.",
+      "One lit green action per screen; colour is otherwise rare.",
+      "Springs, squeeze and glow on press; reduced motion honoured.",
+      "The phone's own system font, so OEM font themes carry through."
+    ],
+    "rules": [
+      {
+        "name": "The Lit Green Rule",
+        "body": "Green is light, not paint: only the call action glows green, and at most one green button is lit per screen.",
+        "section": "colors"
+      },
+      {
+        "name": "The Glass Stays Dark Rule",
+        "body": "Floating glass keeps its dark constants in both themes unless a light-mode variant exists (`lightFloating`, `lightModal`); read page colours through `context.palette`, never hard-code them.",
+        "section": "colors"
+      },
+      {
+        "name": "The System Font Rule",
+        "body": "Never name a font family for UI text; 'sans-serif' lets OEM font themes through, where 'Roboto' would ignore them.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Backdrop Rule",
+        "body": "Blurs on a page share one backdrop read (`BackdropFilter.grouped` under the page's group); a new blur layer is a cost, not a flourish. Never put glass under an animated `Transform`.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Honest Tiers Rule",
+        "body": "Reduced and Off are the original flat One UI look; they never fake glass with gradients or glows.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** use `SquircleBorder` (or `OneUITheme.cardShape`) for every rounded rectangle.",
+      "**Do** route new glass and blurs through `OneUIEffectsController` (`isFull`, `isOff`, `oneUIFill`) so they follow Reduce visual effects.",
+      "**Do** read page colours through `context.palette` so light mode works.",
+      "**Do** press buttons with `PressGlow` and animate morphs with springs (stiffness ~240–320, damping ratio ~0.6–0.85).",
+      "**Do** copy OneSpend widgets verbatim, swapping only their corners to squircles and labels to `context.l10n`.",
+      "**Do** draw icons from the app's own glyphs."
+    ],
+    "donts": [
+      "**Don't** add new full-width `BackdropFilter` or `ShaderMask` layers.",
+      "**Don't** put glass under an animated `Transform`, or a mask blur in a press glow.",
+      "**Don't** show glass cues (glow, wash, liquid) at Reduced or Off effects.",
+      "**Don't** use One UI coloured icons, One UI dialogs or fields in new work; use the ColorOS 17 forms.",
+      "**Don't** name a font family for UI text.",
+      "**Don't** trace icons or artwork from another OS.",
+      "**Don't** light more than one green action on a screen."
+    ]
+  }
+}
