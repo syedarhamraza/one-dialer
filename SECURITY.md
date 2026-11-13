@@ -6,7 +6,7 @@ One Dialer holds phone, call log and contacts permissions, so security reports a
 
 **Please don't open a public issue.** Report it privately instead:
 
-- through GitHub's [private vulnerability reporting](../../security/advisories/new) for this repository, or
+- through GitHub's [private vulnerability reporting](https://github.com/syedarhamraza/one-dialer/security/advisories/new) for this repository, or
 - by email to arhamraza399@gmail.com with "One Dialer security" in the subject.
 
 Include the app version (Settings › About), your phone model and Android version, and steps to reproduce. You'll get a reply within 7 days. Once a fix ships, you'll be credited in the release notes unless you'd rather not be.
