@@ -14,6 +14,7 @@
   <a href="https://github.com/syedarhamraza/one-dialer/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/syedarhamraza/one-dialer?include_prereleases&label=release&color=00C05A"></a>
   <a href="LICENSE"><img alt="License: GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-blue"></a>
   <img alt="Android 10+" src="https://img.shields.io/badge/Android-10%2B-3DDC84?logo=android&logoColor=white">
+  <a href="https://www.patreon.com/c/SyedArhamRaza"><img alt="Support on Patreon" src="https://img.shields.io/badge/-F96854?logo=patreon&logoColor=white"></a>
 </p>
 
 <p align="center">
@@ -106,6 +107,7 @@ Bug reports, translations and pull requests are welcome.
 - **Change the code:** start with [CONTRIBUTING.md](CONTRIBUTING.md). [AGENTS.md](AGENTS.md) is the architecture guide, for people and coding agents alike.
 - **Found a security problem?** Report it privately as described in [SECURITY.md](SECURITY.md), not in an issue.
 
+<!-- Hidden for now.
 ## Contributors
 
 Thanks to everyone who has helped build One Dialer.
@@ -113,6 +115,7 @@ Thanks to everyone who has helped build One Dialer.
 <a href="https://github.com/syedarhamraza/one-dialer/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=syedarhamraza/one-dialer" alt="One Dialer contributors" />
 </a>
+-->
 
 ## License
 
