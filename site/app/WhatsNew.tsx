@@ -1,6 +1,5 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { Reveal } from "./Reveal";
 
 type Release = { version: string; date: string; changes: string[] };
 
@@ -17,28 +16,27 @@ function label(version: string) {
   return beta ? `Beta ${beta[1]}` : `Version ${version.split(".").slice(0, 2).join(".")}`;
 }
 
-export async function WhatsNew() {
+export async function WhatsNew({ className, h2 }: { className: string; h2: string }) {
   const r = await latest();
   return (
-    <section id="whats-new" className="mx-auto grid max-w-[1400px] grid-cols-1 gap-12 px-4 py-28 sm:px-8 md:py-36 lg:grid-cols-12">
-      <Reveal className="lg:col-span-4">
-        <h2 className="text-[clamp(2.5rem,5.6vw,5.25rem)] leading-[0.98] font-bold tracking-[-0.05em]">
-          What&apos;s <span className="text-ink-2">new.</span>
+    <section id="whats-new" className={`${className} grid scroll-mt-10 grid-cols-1 gap-x-10 gap-y-12 lg:grid-cols-12`}>
+      <div className="lg:sticky lg:top-28 lg:col-span-5 lg:self-start">
+        <h2 data-split className={h2}>
+          What&apos;s new.
+          <br />
+          <span className="text-ink-2">{label(r.version)}.</span>
         </h2>
-        <p className="mt-6 text-[17px] text-ink-2">
-          {label(r.version)} · {r.date}
+        <p data-rise className="mt-6 text-[17px] text-ink-2">
+          {r.date}
         </p>
-      </Reveal>
-      <Reveal className="overflow-hidden rounded-[var(--radius-card)] bg-card lg:col-span-8">
-        <ul>
-          {r.changes.map((c, i) => (
-            <li key={c} className={`flex gap-4 px-6 py-5 text-[16.5px] leading-relaxed text-ink-2 sm:px-8 ${i ? "border-t border-white/[0.06]" : ""}`}>
-              <span className="mt-[0.6em] h-1.5 w-1.5 shrink-0 rounded-full bg-green" />
-              <span>{c}</span>
-            </li>
-          ))}
-        </ul>
-      </Reveal>
+      </div>
+      <ul className="lg:col-span-7">
+        {r.changes.map((c) => (
+          <li key={c} data-rise className="border-t border-white/10 py-5 text-[clamp(1.05rem,1.5vw,1.3rem)] leading-snug last:border-b">
+            {c}
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
