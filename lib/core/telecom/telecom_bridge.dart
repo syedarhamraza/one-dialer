@@ -252,8 +252,9 @@ class TelecomBridge {
   Future<Uint8List?> appIcon(String package) =>
       _appIcons[package] ??= _methods.invokeMethod<Uint8List>('getAppIcon', {'package': package});
 
-  /// Opens the default SMS app on a conversation with [number].
-  Future<void> sendSms(String number) => _methods.invokeMethod('sendSms', {'number': number});
+  /// Opens the default SMS app on a conversation with [number], [body] typed in.
+  Future<void> sendSms(String number, {String? body}) =>
+      _methods.invokeMethod('sendSms', {'number': number, 'body': body});
 
   /// Call-capable SIMs in slot order; empty without READ_PHONE_STATE.
   Future<List<SimCard>> getSims() async {
@@ -270,9 +271,6 @@ class TelecomBridge {
 
   Future<void> answer(String id) => _call('answer', id);
   Future<void> reject(String id) => _call('reject', id);
-
-  /// Declines and texts [message] to the caller.
-  Future<void> rejectWithMessage(String id, String message) => _call('rejectWithMessage', id, {'message': message});
 
   /// Opens the keypad to place another call; Telecom holds the current one.
   Future<void> openDialer() => _methods.invokeMethod('openDialer');
