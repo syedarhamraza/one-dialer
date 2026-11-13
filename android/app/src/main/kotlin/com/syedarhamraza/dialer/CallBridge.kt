@@ -232,8 +232,6 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 result.success(null)
             }
             "getCallHealth" -> inBackground(result) { callHealth() }
-            "getLauncherIcon" -> result.success(AppIcons.current(context))
-            "setLauncherIcon" -> inBackground(result) { AppIcons.set(context, call.argument<String>("style")!!) }
             "effectsDefault" -> inBackground(result) { effectsDefault() }
             "openSystemSettings" -> openSystemSettings(call.argument<String>("page"), result)
             "getBlocking" -> BlockingPrefs.read(context).let {

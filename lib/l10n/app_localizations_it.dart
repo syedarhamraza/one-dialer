@@ -1383,19 +1383,6 @@ class AppLocalizationsIt extends AppLocalizations {
       'Meno sfocatura, più fluidità sui telefoni lenti';
 
   @override
-  String get appIcon => 'Icona dell\'app';
-
-  @override
-  String get appIconGlossy => 'Lucida';
-
-  @override
-  String get appIconClassic => 'Classica';
-
-  @override
-  String get appIconFootnote =>
-      'Cambia sia l\'icona di Telefono sia quella di Contatti. Il launcher può impiegare qualche secondo e le icone nella schermata Home potrebbero dover essere aggiunte di nuovo dal cassetto delle app.';
-
-  @override
   String get callScreenEdgeGlow => 'Bagliore bordi nella chiamata';
 
   @override

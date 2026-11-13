@@ -139,10 +139,6 @@ class TelecomBridge {
   Future<Map<Object?, Object?>> getCallHealth() async =>
       await _methods.invokeMapMethod<Object?, Object?>('getCallHealth') ?? const {};
 
-  /// The launcher icon style (`default`, which is Glossy, or `classic`) for both Phone and Contacts.
-  Future<String> getLauncherIcon() async => await _methods.invokeMethod<String>('getLauncherIcon') ?? 'default';
-
-  Future<void> setLauncherIcon(String style) => _methods.invokeMethod('setLauncherIcon', {'style': style});
 
   /// The visual effects level this phone starts on (`DeviceTier.kt`): `tier` (`off`, `reduced` or
   /// `full`), `source` (`soc`, `platform`, `gpu` or `ram`) and the raw `soc`, `platform`,
