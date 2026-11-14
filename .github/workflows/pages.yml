@@ -4,7 +4,7 @@ name: Website
 # The app reads one-dialer/changelog.json and links one-dialer/privacy/ from there.
 on:
   push:
-    branches: [main, "beta/**"]
+    branches: [main]
     paths: ["site/**", "docs/privacy-policy.md", ".github/workflows/pages.yml"]
   pull_request:
     paths: ["site/**", "docs/privacy-policy.md", ".github/workflows/pages.yml"]

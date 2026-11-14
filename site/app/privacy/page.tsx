@@ -62,7 +62,7 @@ export default async function OneDialerPrivacy() {
         </div>
       </main>
 
-      <Footer />
+      <Footer recorder={false} />
     </>
   );
 }

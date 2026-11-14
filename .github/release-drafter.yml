@@ -33,3 +33,9 @@ autolabeler:
     branch: ['/^fix\/.+/']
   - labels: [skip-changelog]
     branch: ['/^(docs|test|chore|ci|refactor)\/.+/']
+  # These notes go to Google Play, which mustn't hear about the sideloaded recorder (AGENTS.md),
+  # and a beta merged into main, or main brought into a beta, isn't a change of its own.
+  - labels: [skip-changelog]
+    branch: ['/^(feat|fix)\/recorder-.+/', '/^beta\/.+/', '/^main$/']
+  - labels: [skip-changelog]
+    files: ['companion/**', 'site/app/recorder/**']
