@@ -1,11 +1,14 @@
 import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart' show CupertinoIcons;
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/contacts/contacts_repository.dart';
+import '../../core/haptics/haptics.dart';
 import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
@@ -15,21 +18,25 @@ import '../../widgets/call_glass.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_status_bar_scrim.dart';
+import '../../widgets/one_ui_toast.dart';
 import '../../widgets/place_call.dart';
+import '../../widgets/call_glyph.dart';
 import '../../widgets/press_glow.dart';
 import '../../widgets/round_header_controls.dart';
 import '../blocking/blocking_repository.dart';
-import '../in_call/call_screen_widgets.dart' show SimOutline;
+import '../in_call/call_background.dart';
 import '../recents/call_details_screen.dart' show CallNotesCard;
 import '../recents/call_log.dart';
 import '../recents/app_calls.dart' show appCallLabel;
 import '../recents/call_log_repository.dart';
-import '../recents/recents_screen.dart' show CallTypeIcon, SimBadge, callTypeLabel;
+import '../recents/recents_screen.dart' show CallTypeIcon, SimBadge;
+import '../settings/call_background_screen.dart';
 import 'contact_actions.dart';
 import 'contact_subpages.dart';
 import 'editor/contact_editor_screen.dart';
 import 'editor/contact_form.dart' show labelDisplay, labelText;
 import '../../l10n/l10n.dart';
+import '../../app/layout.dart';
 
 /// ColorOS-style contact page in the Calls look: round glass Back / Favourite / Edit / More
 /// buttons over a big avatar and name, Call and Message tiles, the numbers and ringtone,
@@ -52,11 +59,13 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   String? _simId;
   String _storage = '';
   String? _ringtone; // the custom ringtone's name; null follows the system
+  Map<String, ({String? formatted, String? location})> _display = const {}; // number → grouped + country
 
   @override
   void initState() {
     super.initState();
     ContactsRepository.instance.revision.addListener(_loadFull);
+    CallBackgrounds.instance.load(widget.contactId);
     _load();
   }
 
@@ -87,6 +96,24 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     await _loadFull();
   }
 
+  /// Formats [numbers] for [_display] once per set: the contact may load after the page opens
+  /// (a cold start from another app), and an edit can change its numbers.
+  void _describe(List<String> numbers) {
+    if (listEquals(_described, numbers)) return;
+    _described = numbers;
+    _bridge.describeNumbers(numbers).then((d) {
+      if (!mounted || _described != numbers) return;
+      setState(
+        () => _display = {
+          for (final (i, n) in numbers.indexed)
+            if (i < d.length) n: d[i],
+        },
+      );
+    });
+  }
+
+  List<String>? _described;
+
   /// Meet's video row (the Video tile) and the chat apps (their own card).
   Map<Object?, Object?>? get _meet => _apps.where(_isMeet).firstOrNull;
   Iterable<Map<Object?, Object?>> get _chatApps => _apps.where((a) => !_isMeet(a));
@@ -108,6 +135,23 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   Future<void> _call(String number, GlobalKey anchor) => placeCall(context, number, simId: _simId, anchorKey: anchor);
 
   // --- Share / More --------------------------------------------------------------
+
+  void _copyMenu(String number, GlobalKey anchor) {
+    Haptics.longPress();
+    OneUIFloatingMenu.show(
+      context: context,
+      anchorKey: anchor,
+      items: [
+        OneUIFloatingMenuItem(
+          label: context.l10n.copy,
+          onTap: () {
+            Clipboard.setData(ClipboardData(text: number));
+            OneUIToast.show(context, context.l10n.numberCopied);
+          },
+        ),
+      ],
+    );
+  }
 
   void _share(DialerContact contact) => OneUIFloatingMenu.show(
     context: context,
@@ -205,17 +249,24 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 ),
                 Positioned(
                   left: 16,
+                  right: 16,
                   top: MediaQuery.paddingOf(context).top + 8,
-                  child: RoundIconButton(
-                    icon: Icons.arrow_back_rounded,
-                    tooltip: context.l10n.back,
-                    onTap: () => Navigator.of(context).maybePop(),
+                  child: HeaderScaled(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: RoundIconButton(
+                        icon: Icons.arrow_back_rounded,
+                        tooltip: context.l10n.back,
+                        onTap: () => Navigator.of(context).maybePop(),
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
           );
         }
+        _describe(contact.numbers);
         final padding = MediaQuery.paddingOf(context);
         final primary = contact.numbers[contact.primaryIndex >= 0 ? contact.primaryIndex : 0];
         return Scaffold(
@@ -223,7 +274,12 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             children: [
               ListView(
                 physics: const OneUIScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(16, padding.top + 8 + _button + 16, 16, padding.bottom + 32),
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  padding.top + 8 + _button * headerScale(context) + 16,
+                  16,
+                  padding.bottom + 32,
+                ),
                 children: [
                   Center(
                     child: LetterAvatar(
@@ -255,7 +311,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                       ),
                       Expanded(
                         child: DetailsActionTile(
-                          icon: Icons.chat_bubble_rounded,
+                          icon: Icons.chat_rounded,
                           label: context.l10n.message,
                           onTap: () => _bridge.sendSms(primary),
                         ),
@@ -275,7 +331,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   ),
                   const SizedBox(height: 20),
                   _numbersCard(contact),
-                  _settingsCard(contact),
                   if (_full case final full?) ..._detailCards(full),
                   if (_chatApps.isNotEmpty) _appsCard(),
                   CallNotesCard(numbers: contact.numbers),
@@ -287,44 +342,48 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 left: 16,
                 right: 16,
                 top: padding.top + 8,
-                child: Row(
-                  children: [
-                    RoundIconButton(
-                      icon: Icons.arrow_back_rounded,
-                      tooltip: context.l10n.back,
-                      onTap: () => Navigator.of(context).maybePop(),
-                    ),
-                    const Spacer(),
-                    // RoundIconButton with an orange star when it's a favourite.
-                    CallGlass(
-                      child: IconButton(
-                        tooltip: contact.isFavorite ? context.l10n.removeFromFavourites : context.l10n.addToFavourites,
-                        onPressed: () => repo.setFavorite(contact.id, !contact.isFavorite),
-                        style: IconButton.styleFrom(
-                          foregroundColor: contact.isFavorite ? const Color(0xFFF7A93B) : context.palette.textPrimary,
-                          fixedSize: const Size.square(_button),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                child: HeaderScaled(
+                  child: Row(
+                    children: [
+                      RoundIconButton(
+                        icon: Icons.arrow_back_rounded,
+                        tooltip: context.l10n.back,
+                        onTap: () => Navigator.of(context).maybePop(),
+                      ),
+                      const Spacer(),
+                      // RoundIconButton with an orange star when it's a favourite.
+                      CallGlass(
+                        child: IconButton(
+                          tooltip: contact.isFavorite
+                              ? context.l10n.removeFromFavourites
+                              : context.l10n.addToFavourites,
+                          onPressed: () => repo.setFavorite(contact.id, !contact.isFavorite),
+                          style: IconButton.styleFrom(
+                            foregroundColor: contact.isFavorite ? const Color(0xFFF7A93B) : context.palette.textPrimary,
+                            fixedSize: const Size.square(_button),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          icon: Icon(contact.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded, size: 26),
                         ),
-                        icon: Icon(contact.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded, size: 24),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    RoundIconButton(
-                      icon: Icons.edit_outlined,
-                      tooltip: context.l10n.edit,
-                      onTap: () => openContactEditor(context, contactId: contact.id),
-                    ),
-                    const SizedBox(width: 8),
-                    // The menu measures this wrapper, outside the glass press, like Calls' menu.
-                    KeyedSubtree(
-                      key: _moreKey,
-                      child: RoundIconButton(
-                        icon: Icons.more_vert_rounded,
-                        tooltip: context.l10n.moreOptions,
-                        onTap: () => _more(contact),
+                      const SizedBox(width: 8),
+                      RoundIconButton(
+                        icon: Icons.edit_outlined,
+                        tooltip: context.l10n.edit,
+                        onTap: () => openContactEditor(context, contactId: contact.id),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 8),
+                      // The menu measures this wrapper, outside the glass press, like Calls' menu.
+                      KeyedSubtree(
+                        key: _moreKey,
+                        child: RoundIconButton(
+                          icon: Icons.more_vert_rounded,
+                          tooltip: context.l10n.moreOptions,
+                          onTap: () => _more(contact),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -343,28 +402,42 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     return i < 0 ? null : '${i + 1}';
   }
 
-  /// Every number (tap to call; Message is the tile above), then the contact's ringtone.
+  /// Which of a several-number contact's numbers a call used ("Mobile · 0311 1234567"); null
+  /// for a one-number contact, where the row needs no number.
+  String? _numberLine(DialerContact contact, String number) {
+    if (contact.numbers.length < 2) return null;
+    final i = contact.numbers.indexWhere((n) => numberKey(n) == numberKey(number));
+    if (i < 0) return number;
+    final n = contact.numbers[i];
+    return [
+      labelDisplay(context.l10n, contact.labels[i]),
+      _display[n]?.formatted ?? n,
+    ].where((s) => s.isNotEmpty).join(' · ');
+  }
+
+  /// ColorOS's main card: every number (tap to call; Message is the tile above), then the
+  /// contact's ringtone, SIM for calls and where it's saved, each value over its name.
   Widget _numbersCard(DialerContact contact) {
     final simLabel = _simLabel;
     return DetailsCard(
-      dividerIndent: 40,
+      padding: _cardPadding,
       children: [
         for (final (i, n) in contact.numbers.indexed)
           KeyedSubtree(
             key: _numberKeys.putIfAbsent(n, GlobalKey.new),
             child: _ValueRow(
-              icon: i == 0 ? CupertinoIcons.phone : null,
               label: [
                 labelDisplay(context.l10n, contact.labels[i]),
                 if (contact.numbers.length > 1 && i == contact.primaryIndex) context.l10n.defaultNumber,
-                ?simLabel,
-              ].join('  |  '),
-              value: n,
+                _display[n]?.location,
+                simLabel,
+              ].whereType<String>().where((s) => s.isNotEmpty).join('  |  '),
+              value: _display[n]?.formatted ?? n,
               onTap: () => _call(n, _numberKeys[n]!),
+              onLongPress: () => _copyMenu(n, _numberKeys[n]!),
             ),
           ),
         _ValueRow(
-          icon: CupertinoIcons.bell,
           value: _ringtone ?? context.l10n.followSystem,
           label: context.l10n.ringtone,
           onTap: () async {
@@ -373,15 +446,54 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             if (mounted) setState(() => _ringtone = ringtone);
           },
         ),
+        ListenableBuilder(
+          listenable: CallBackgrounds.instance,
+          builder: (context, _) => _ValueRow(
+            value: CallBackgroundScreen.label(
+              context.l10n,
+              // Contact's photo while all calls use it too reads as following them, as on its page.
+              switch ((CallBackgrounds.instance.stored(contact.id), CallBackgrounds.instance.stored('all'))) {
+                (CallBackground(contactPhoto: true), CallBackground(contactPhoto: true)) => null,
+                (final own, _) => own,
+              },
+              contact: true,
+            ),
+            label: context.l10n.callBackground,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => CallBackgroundScreen(scope: contact.id, name: contact.name),
+              ),
+            ),
+          ),
+        ),
+        if (_sims.length > 1)
+          KeyedSubtree(
+            key: _simRowKey,
+            child: _ValueRow(
+              value: _sims.where((s) => s.id == _simId).map((s) => s.label).firstOrNull ?? context.l10n.askEveryTime,
+              label: context.l10n.simForCalls,
+              onTap: _chooseSim,
+            ),
+          ),
+        _ValueRow(
+          value: _storage.isEmpty ? context.l10n.storageLocations : _storage,
+          label: _storage.isEmpty ? '' : context.l10n.storageLocations,
+          onTap: () async {
+            await Navigator.of(context)
+                .push(MaterialPageRoute<void>(builder: (_) => StorageLocationsScreen(contact: contact)));
+            _load(); // unlinking changes where it's stored
+          },
+        ),
       ],
     );
   }
 
-  /// Emails, addresses, dates, work, websites, relationships and notes, when present. Each
-  /// kind's first row carries its icon; the rest line up under it.
+  /// Text inset the same from both edges, so the hairlines are too.
+  static const _cardPadding = EdgeInsets.fromLTRB(18, 8, 18, 8);
+
+  /// Emails, addresses, dates, work, websites, relationships and notes, when present, in one card.
   List<Widget> _detailCards(Contact c) {
     final l10n = context.l10n;
-    IconData? first(int i, IconData icon) => i == 0 ? icon : null;
     final organizations = [
       for (final o in c.organizations)
         if ([o.name, o.jobTitle, o.departmentName].any((s) => s?.isNotEmpty ?? false)) o,
@@ -391,16 +503,14 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         if (n.note.trim().isNotEmpty) n.note.trim(),
     ];
     final rows = <Widget>[
-      for (final (i, e) in c.emails.indexed)
+      for (final e in c.emails)
         _ValueRow(
-          icon: first(i, CupertinoIcons.mail),
           label: labelDisplay(l10n, labelText(e.label)),
           value: e.address,
           onTap: () => _bridge.openSystemSettings('url:mailto:${e.address}'),
         ),
-      for (final (i, a) in c.addresses.indexed)
+      for (final a in c.addresses)
         _ValueRow(
-          icon: first(i, CupertinoIcons.location),
           label: l10n.addressLabel(labelDisplay(l10n, labelText(a.label))),
           value: [
             a.street,
@@ -413,37 +523,28 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             'url:geo:0,0?q=${Uri.encodeComponent([a.street, a.city, a.country].whereType<String>().join(' '))}',
           ),
         ),
-      for (final (i, d) in c.events.indexed)
+      for (final d in c.events)
         _ValueRow(
-          icon: first(i, CupertinoIcons.gift),
           label: labelDisplay(l10n, labelText(d.label)),
           value: d.year == null
               ? DateFormat.MMMMd().format(DateTime(2000, d.month, d.day))
               : DateFormat.yMMMMd().format(DateTime(d.year!, d.month, d.day)),
         ),
-      for (final (i, o) in organizations.indexed)
+      for (final o in organizations)
         _ValueRow(
-          icon: first(i, CupertinoIcons.briefcase),
           label: l10n.organization,
           value: [o.jobTitle, o.departmentName, o.name].whereType<String>().where((s) => s.isNotEmpty).join(', '),
         ),
-      for (final (i, w) in c.websites.indexed)
+      for (final w in c.websites)
         _ValueRow(
-          icon: first(i, CupertinoIcons.globe),
           label: l10n.website,
           value: w.url,
           onTap: () => _bridge.openSystemSettings('url:${w.url.contains('://') ? w.url : 'https://${w.url}'}'),
         ),
-      for (final (i, r) in c.relations.indexed)
-        _ValueRow(
-          icon: first(i, CupertinoIcons.person_2),
-          label: labelDisplay(l10n, labelText(r.label)),
-          value: r.name,
-        ),
-      for (final (i, n) in notes.indexed)
-        _ValueRow(icon: first(i, CupertinoIcons.doc_text), label: l10n.notes, value: n),
+      for (final r in c.relations) _ValueRow(label: labelDisplay(l10n, labelText(r.label)), value: r.name),
+      for (final n in notes) _ValueRow(label: l10n.notes, value: n),
     ];
-    return rows.isEmpty ? const [] : [DetailsCard(dividerIndent: 40, children: rows)];
+    return rows.isEmpty ? const [] : [DetailsCard(padding: _cardPadding, children: rows)];
   }
 
   /// Chat apps (WhatsApp...) as the details card's rows, the app's icon in the icon column.
@@ -460,53 +561,11 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                       borderRadius: BorderRadius.circular(7),
                       child: Image.memory(app['icon']! as Uint8List, width: 26, height: 26),
                     )
-                  : const Icon(CupertinoIcons.chat_bubble, size: 24),
+                  : const Icon(CupertinoIcons.chat_bubble, size: 26),
             ),
             value: app['label']! as String,
             onTap: () => _openApp(app),
           ),
-      ],
-    );
-  }
-
-  /// SIM card for calls and Storage locations, on the page as on ColorOS (not in More).
-  Widget _settingsCard(DialerContact contact) {
-    return DetailsCard(
-      dividerIndent: 40,
-      children: [
-        if (_sims.length > 1)
-          KeyedSubtree(
-            key: _simRowKey,
-            child: _ValueRow(
-              // ColorOS's SIM outline: neither icon font has a thin SIM glyph.
-              leading: Padding(
-                padding: const EdgeInsets.only(left: 4),
-                child: CustomPaint(
-                  painter: SimOutline(
-                    color: context.palette.textPrimary,
-                    strokeWidth: 1.4,
-                    corner: 2.5,
-                    cut: 5,
-                    chip: true,
-                  ),
-                  size: const Size(16, 21),
-                ),
-              ),
-              value: context.l10n.simForCalls,
-              label: _sims.where((s) => s.id == _simId).map((s) => s.label).firstOrNull ?? context.l10n.askEveryTime,
-              onTap: _chooseSim,
-            ),
-          ),
-        _ValueRow(
-          icon: CupertinoIcons.archivebox,
-          value: context.l10n.storageLocations,
-          label: _storage,
-          onTap: () async {
-            await Navigator.of(context)
-                .push(MaterialPageRoute<void>(builder: (_) => StorageLocationsScreen(contact: contact)));
-            _load(); // unlinking changes where it's stored
-          },
-        ),
       ],
     );
   }
@@ -521,6 +580,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         final calls = repo.calls.value.where((c) => keys.contains(numberKey(c.number))).take(3).toList();
         if (calls.isEmpty) return const SizedBox.shrink();
         final now = DateTime.now();
+        final grey = context.palette.textSecondary;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -529,16 +589,13 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      context.l10n.callLogs,
-                      style: TextStyle(fontSize: 15, color: context.palette.textSecondary),
-                    ),
+                    child: Text(context.l10n.callLogs, style: TextStyle(fontSize: 15, color: grey)),
                   ),
                   TextButton(
                     onPressed: () =>
                         Navigator.of(context)
                             .push(MaterialPageRoute<void>(builder: (_) => ContactHistoryScreen(contact: contact))),
-                    style: TextButton.styleFrom(foregroundColor: context.palette.textSecondary),
+                    style: TextButton.styleFrom(foregroundColor: grey),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -552,8 +609,16 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               ),
             ),
             DetailsCard(
-              padding: const EdgeInsets.fromLTRB(18, 6, 18, 6),
-              children: [for (final c in calls) ContactCallLogRow(call: c, simBadge: _simBadge(c.simId), now: now)],
+              padding: _cardPadding,
+              children: [
+                for (final c in calls)
+                  ContactCallLogRow(
+                    call: c,
+                    simBadge: _simBadge(c.simId),
+                    now: now,
+                    numberLine: _numberLine(contact, c.number),
+                  ),
+              ],
             ),
           ],
         );
@@ -573,37 +638,48 @@ class DetailsActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PressGlow(
-      radius: OneUITheme.radiusCard,
-      child: Material(
-        color: context.palette.card,
-        borderRadius: OneUITheme.cardBorderRadius,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: OneUITheme.cardBorderRadius,
-          // Full width: the glass press hands its child loose constraints.
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Column(
-              children: [
-                Icon(icon, color: onTap == null ? context.palette.textTertiary : context.palette.textPrimary, size: 26),
-                const SizedBox(height: 6),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
+    // Claims vertical drags that start on it (as CallGlass does), so holding and moving a tile
+    // plays the press instead of scrolling the page.
+    return GestureDetector(
+      onVerticalDragStart: _holdStill,
+      child: PressGlow(
+        radius: 999,
+        child: Material(
+          color: context.palette.card,
+          shape: const StadiumBorder(),
+          child: InkWell(
+            onTap: onTap,
+            customBorder: const StadiumBorder(),
+            // Full width: the glass press hands its child loose constraints.
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Column(
+                children: [
+                  CallGlyph(
+                    icon,
                     color: onTap == null ? context.palette.textTertiary : context.palette.textPrimary,
+                    size: 24,
                   ),
-                ),
-              ],
+                  const SizedBox(height: 2),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: onTap == null ? context.palette.textTertiary : context.palette.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
+
+  static void _holdStill(DragStartDetails _) {}
 }
 
 class DetailsCard extends StatelessWidget {
@@ -626,7 +702,7 @@ class DetailsCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       padding: padding,
-      decoration: BoxDecoration(color: context.palette.card, borderRadius: OneUITheme.cardBorderRadius),
+      decoration: ShapeDecoration(color: context.palette.card, shape: OneUITheme.cardShape),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -661,7 +737,7 @@ class DetailsCardSliver extends StatelessWidget {
     return SliverPadding(
       padding: const EdgeInsets.only(bottom: 20),
       sliver: DecoratedSliver(
-        decoration: BoxDecoration(color: context.palette.card, borderRadius: OneUITheme.cardBorderRadius),
+        decoration: ShapeDecoration(color: context.palette.card, shape: OneUITheme.cardShape),
         sliver: SliverPadding(
           padding: padding,
           sliver: SliverList.separated(
@@ -686,35 +762,29 @@ class RowDivider extends StatelessWidget {
       Divider(height: 1, thickness: 0.8, indent: indent, endIndent: endIndent, color: context.palette.divider);
 }
 
-/// A value over its grey label, ColorOS style: a thin icon (or [leading]) level with the value;
-/// tappable when [onTap] is set. A null icon keeps the column empty, so a contact's later numbers
-/// line up under the first.
+/// A value over its grey label, ColorOS style, with no icon column ([leading] is a chat app's own
+/// icon); tappable when [onTap] is set.
 class _ValueRow extends StatelessWidget {
-  const _ValueRow({this.icon, this.leading, this.label = '', required this.value, this.onTap});
+  const _ValueRow({this.leading, this.label = '', required this.value, this.onTap, this.onLongPress});
 
-  final IconData? icon;
   final Widget? leading;
   final String label;
   final String value;
 
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      onLongPress: onLongPress,
+      customBorder: SquircleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Row(
           children: [
-            SizedBox(
-              width: 40,
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: leading ?? (icon == null ? null : Icon(icon, size: 24)),
-              ),
-            ),
+            if (leading case final leading?) SizedBox(width: 40, child: leading),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -737,56 +807,128 @@ class _ValueRow extends StatelessWidget {
 /// One logged call on the contact, Call logs and unsaved-number pages: the time, then one grey
 /// line with the arrow, SIM badge, number, type and talk time.
 class ContactCallLogRow extends StatelessWidget {
-  const ContactCallLogRow({super.key, required this.call, required this.simBadge, required this.now});
+  const ContactCallLogRow({super.key, required this.call, required this.simBadge, required this.now, this.numberLine});
 
   final CallLogEntry call;
   final String? simBadge;
   final DateTime now;
+
+  /// Which number the call used, for a contact with several; null leaves it out.
+  final String? numberLine;
 
   @override
   Widget build(BuildContext context) {
     final c = call;
     final l10n = context.l10n;
     final grey = context.palette.textSecondary;
-    // Missed and rejected calls log ring time as duration; only talk time is shown.
+    final locale = l10n.localeName;
+    // ColorOS's history: "8/21/26 15:28", with the clock as the phone sets it.
+    final date = DateFormat(DateFormat.yMd(locale).pattern!.replaceAll(RegExp('y+'), 'yy'), locale).format(c.date);
+    final time = MediaQuery.alwaysUse24HourFormatOf(context)
+        ? DateFormat.Hm(locale).format(c.date)
+        : timeLabel(l10n, c.date);
+    final type = switch (c.type) {
+      CallType.outgoing => l10n.logOutgoing,
+      CallType.missed => l10n.logMissed,
+      CallType.rejected => l10n.logRejected,
+      CallType.blocked => l10n.logBlocked,
+      CallType.voicemail => l10n.callTypeVoicemail,
+      _ => l10n.logIncoming,
+    };
+    // Talk time for answered calls; for missed and rejected ones the log's duration is ring time.
     final talked = c.type == CallType.incoming || c.type == CallType.outgoing;
-    final talk = !talked
-        ? null
-        : c.duration > Duration.zero
-        ? durationLabel(l10n, c.duration)
-        : l10n.callNotConnected;
+    final rang = (c.type == CallType.missed || c.type == CallType.rejected) && c.duration > Duration.zero;
+    final detail = [
+      if (c.isApp)
+        appCallLabel(l10n, c)
+      else if (rang)
+        l10n.logRangFor(type, durationLabel(l10n, c.duration))
+      else if (talked)
+        '$type  ${c.duration > Duration.zero ? durationLabel(l10n, c.duration) : l10n.callNotConnected}'
+      else
+        type,
+    ].join('  ');
+    final badge = c.isApp ? null : simBadge;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('${dayLabel(l10n, c.date, now)}, ${timeLabel(l10n, c.date)}', style: const TextStyle(fontSize: 17)),
-          const SizedBox(height: 2),
+          Text(
+            '$date $time',
+            style: TextStyle(fontSize: 18, color: c.type == CallType.missed ? OneUITheme.accentRed : null),
+          ),
+          const SizedBox(height: 4),
           Row(
             children: [
-              CallTypeIcon(type: c.type, size: 14),
+              CallTypeIcon(type: c.type, size: 15),
               const SizedBox(width: 6),
-              if (simBadge case final badge? when !c.isApp) ...[SimBadge(label: badge), const SizedBox(width: 6)],
+              if (badge != null) ...[SimBadge(label: badge), const SizedBox(width: 6)],
+              if (c.isVolte) ...[_VolteMark(color: grey), const SizedBox(width: 6)],
+              if (c.isHd) ...[_HdMark(color: grey), const SizedBox(width: 6)],
               Flexible(
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(text: c.isApp ? appCallLabel(l10n, c) : c.number),
-                      TextSpan(
-                        text: '  ${callTypeLabel(l10n, c.type)}',
-                        style: c.type == CallType.missed ? const TextStyle(color: OneUITheme.accentRed) : null,
-                      ),
-                      if (talk != null) TextSpan(text: '  $talk'),
-                    ],
-                  ),
+                child: Text(
+                  detail,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 13, color: grey),
+                  style: TextStyle(fontSize: 14, color: grey),
                 ),
               ),
             ],
           ),
+          // Its own line, so the badges and duration never cut the number off.
+          if (numberLine case final line?) ...[
+            const SizedBox(height: 2),
+            Text(
+              line,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 14, color: grey),
+            ),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+/// The history's VoLTE mark: "Vo" over "LTE", tiny and grey.
+class _VolteMark extends StatelessWidget {
+  const _VolteMark({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = TextStyle(fontSize: 6.5, height: 1, fontWeight: FontWeight.w700, color: color);
+    return ExcludeSemantics(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('Vo', style: style),
+          Text('LTE', style: style),
+        ],
+      ),
+    );
+  }
+}
+
+/// The history's HD voice mark: "HD" knocked out of a small grey tag.
+class _HdMark extends StatelessWidget {
+  const _HdMark({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return ExcludeSemantics(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 2.5, vertical: 1),
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
+        child: Text(
+          'HD',
+          style: TextStyle(fontSize: 8, height: 1.1, fontWeight: FontWeight.w800, color: context.palette.card),
+        ),
       ),
     );
   }

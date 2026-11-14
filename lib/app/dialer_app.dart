@@ -44,7 +44,7 @@ class DialerApp extends StatelessWidget {
         // Status and navigation bar icons follow the page.
         builder: (context, child) => AnnotatedRegion(
           value: context.palette.isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light,
-          child: DesignWidth(child: LiquidQualityScope(child: child!)),
+          child: DesignWidth(child: LiquidQualityScope(child: ReducedMotionPages(child: child!))),
         ),
         home: const _SetupGate(),
       ),
@@ -74,6 +74,41 @@ class _GroupedSlide extends PredictiveBackPageTransitionsBuilder {
     // Liquid glass shares its own read the same way.
     BackdropGroup(child: GlassBackdropGroup(child: child)),
   );
+}
+
+/// Android's Remove animations makes page changes instant: Flutter's page routes don't follow
+/// it themselves (their duration comes from the theme's builder). Sits above the Navigator.
+class ReducedMotionPages extends StatelessWidget {
+  const ReducedMotionPages({super.key, required this.child});
+  final Widget child;
+
+  static const _instant = PageTransitionsTheme(builders: {TargetPlatform.android: _NoTransition()});
+
+  @override
+  Widget build(BuildContext context) => MediaQuery.disableAnimationsOf(context)
+      ? Theme(data: Theme.of(context).copyWith(pageTransitionsTheme: _instant), child: child)
+      : child;
+}
+
+/// No animation, but the same shared backdrop read as [_GroupedSlide]. Back still pops through
+/// the system callback, without the swipe preview.
+class _NoTransition extends PageTransitionsBuilder {
+  const _NoTransition();
+
+  @override
+  Duration get transitionDuration => Duration.zero;
+
+  @override
+  Duration get reverseTransitionDuration => Duration.zero;
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) => BackdropGroup(child: GlassBackdropGroup(child: child));
 }
 
 /// Shows [SetupScreen] until the app is the default phone app.

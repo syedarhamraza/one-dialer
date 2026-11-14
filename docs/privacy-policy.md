@@ -1,6 +1,6 @@
 # One Dialer — Privacy Policy
 
-_Last updated: 1 November 2026_
+_Last updated: 10 November 2026_
 
 One Dialer is a phone app for Android made by Syed Arham Raza. This policy explains what the app accesses and what it does with it.
 
@@ -21,7 +21,11 @@ When you make One Dialer your default phone app, Android gives it access to:
 
 **Your calls, call history and contacts never leave your phone.** One Dialer has no account and no servers, and it doesn't sell, share or upload any of this data. Settings you choose in the app (speed dial, blocking rules, quick decline messages, the SIM to use for a contact) are stored only on your phone.
 
+**Backups.** If you have turned on your phone's own backup (Google's, or your phone maker's), Android includes One Dialer's settings, call notes and call backgrounds in it, so they come back when you reinstall the app or move to a new phone. That backup belongs to your Google or phone-maker account; One Dialer never sees or controls it. Settings › Export settings saves the same data to a file wherever you choose, and Import settings reads it back. One Dialer never uploads that file.
+
 When Google Play has an update for One Dialer, Software update downloads that update's release notes from this website (syedarhamraza.github.io). Nothing about you or your phone is sent with the request.
+
+**Call recording** needs the separate One Recorder app, which is downloaded from this website and is not part of the Google Play app. One Dialer itself never uses the microphone. When you record a call, the audio is saved only inside One Recorder on your phone. It is never uploaded, and it is deleted when you delete it or uninstall the recorder. One Recorder asks you to turn on an accessibility service: Android only lets apps with one use the microphone during a call. The service reads nothing on your screen. Recording laws differ by country, and you are responsible for getting the other person's consent where it's required.
 
 "Decline with SMS" sends the text you pick as an SMS to the caller, through your carrier, only when you choose to.
 

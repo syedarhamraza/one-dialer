@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.telecom.CallAudioState
 import android.telecom.VideoProfile
+import android.util.Log
 import com.syedarhamraza.dialer.InCallActivity
 
 /** Handles the call notifications' buttons (Decline, Hang up, and vivo's island Answer and Speaker). */
@@ -24,9 +25,24 @@ class CallActionReceiver : BroadcastReceiver() {
             }.start()
             return
         }
-        val call = intent.getStringExtra(EXTRA_CALL_ID)?.let(CallManager::get) ?: return
+        val id = intent.getStringExtra(EXTRA_CALL_ID)
+        Log.i(TAG, "${intent.action} for $id")
+        // An id from before the process restarted (ids start over at call-0): Hang up still ends
+        // the call the notification shows, or it reposts at once and the button seems dead.
+        val call = id?.let(CallManager::get)
+            ?: CallManager.all().takeIf { intent.action == ACTION_HANG_UP }
+                ?.let(CallNotifications::shownOngoing)?.second
+        if (call == null) {
+            // A card left by a killed process (vivo keeps it even after force-stop): nothing to act on, clear it.
+            if (!CallManager.hasCalls) {
+                CallNotifications.cancelIncoming(context)
+                CallNotifications.cancelOngoing(context)
+            }
+            return
+        }
         when (intent.action) {
-            // vivo's island card: the call carries on in the island, no call screen.
+            // vivo's island card, or the banner while unlocked: the call carries on in the
+            // ongoing notification, no call screen.
             ACTION_ANSWER_IN_ISLAND -> call.answer(VideoProfile.STATE_AUDIO_ONLY)
             ACTION_DECLINE -> call.reject(false, null)
             ACTION_HANG_UP -> call.disconnect()
@@ -47,6 +63,7 @@ class CallActionReceiver : BroadcastReceiver() {
         const val ACTION_SPEAKER = "com.syedarhamraza.dialer.SPEAKER"
         const val ACTION_MISSED_DISMISSED = "com.syedarhamraza.dialer.MISSED_DISMISSED"
         const val EXTRA_CALL_ID = "call_id"
+        private const val TAG = "CallActionReceiver"
 
         /**
          * Answer opens the call screen directly: Android 12+ blocks activity starts from a

@@ -4,6 +4,7 @@ import '../../core/prefs/dialer_prefs.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/choice_row.dart';
 import '../../widgets/cos_subpage.dart';
+import '../../theme/one_ui_theme.dart';
 import '../../widgets/one_ui_group_card.dart';
 import 'call_settings_pages.dart' show effectsLabels;
 import 'glass_settings_screen.dart';
@@ -69,7 +70,56 @@ class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
             );
           },
         ),
+        const _DisplaySizeCard(),
       ],
+    );
+  }
+}
+
+/// ColorOS's Display size: stepped sliders between a small and a big "A", for the pages and
+/// the nav bar. Each applies when the finger lifts, so a slider doesn't
+/// move under it while dragging.
+class _DisplaySizeCard extends StatefulWidget {
+  const _DisplaySizeCard();
+
+  @override
+  State<_DisplaySizeCard> createState() => _DisplaySizeCardState();
+}
+
+class _DisplaySizeCardState extends State<_DisplaySizeCard> {
+  static final _prefs = DialerPrefs.instance;
+  late final _steps = {
+    for (final n in [_prefs.displaySize, _prefs.navBarSize]) n: DialerPrefs.displaySizes.indexOf(n.value),
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final labels = [l10n.displaySizeSmall, l10n.displaySizeDefault, l10n.displaySizeLarge, l10n.displaySizeLarger];
+    final faint = context.palette.textSecondary;
+    OneUIGroupItem row(String title, ValueNotifier<double> notifier) => OneUIGroupItem(
+      title: title,
+      value: labels[_steps[notifier]!],
+      customSubtitle: Row(
+        children: [
+          Text('A', style: TextStyle(fontSize: 13, color: faint)),
+          Expanded(
+            child: Slider(
+              value: _steps[notifier]!.toDouble(),
+              max: labels.length - 1.0,
+              divisions: labels.length - 1,
+              activeColor: OneUITheme.accentGreen,
+              onChanged: (v) => setState(() => _steps[notifier] = v.round()),
+              onChangeEnd: (v) => _prefs.setSize(notifier, DialerPrefs.displaySizes[v.round()]),
+            ),
+          ),
+          Text('A', style: TextStyle(fontSize: 20, color: faint)),
+        ],
+      ),
+    );
+    return OneUIGroupCard(
+      headerTitle: l10n.displaySize,
+      items: [row(l10n.displaySizeApp, _prefs.displaySize), row(l10n.displaySizeNavBar, _prefs.navBarSize)],
     );
   }
 }

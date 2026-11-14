@@ -29,6 +29,13 @@ class DiagnosticsPolicyTest {
         assertTrue(DiagnosticsPolicy.stalled(8000, 0, 5000, true, false))
     }
 
+    @Test fun aLateWatchdogMeansTheProcessWasPausedNotStalled() {
+        assertFalse(DiagnosticsPolicy.processPaused(8000, 0)) // first tick
+        assertFalse(DiagnosticsPolicy.processPaused(8000, 7000)) // on time
+        assertFalse(DiagnosticsPolicy.processPaused(8000, 5501))
+        assertTrue(DiagnosticsPolicy.processPaused(8000, 5500))
+    }
+
     @Test fun inputStallNeedsThreeSecondsOfUncountedTouchesWhileDartIsAlive() {
         assertFalse(DiagnosticsPolicy.inputStalled(9000, 0, 8000, 8500)) // Dart counted every touch
         assertFalse(DiagnosticsPolicy.inputStalled(9000, 5000, 5000, 8500)) // one tap, then nothing

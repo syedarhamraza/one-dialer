@@ -1,20 +1,31 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/contacts/contacts_repository.dart';
+import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/letter_avatar.dart';
 import 'call_controls.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/call_glyph.dart';
+import 'call_background.dart';
 
-/// The call backdrop: a soft aurora tinted from the caller's avatar colour, under black fades at
-/// the top and bottom.
+/// The call backdrop: a soft aurora tinted from the caller's avatar colour (or the [background]
+/// picked for the call), under black fades at the top and bottom.
 class CallBackdrop extends StatelessWidget {
-  const CallBackdrop({super.key, required this.child, this.seed, this.dim, this.shown = true});
+  const CallBackdrop({
+    super.key,
+    required this.child,
+    this.seed,
+    this.background,
+    this.frosted = false,
+    this.dim,
+    this.shown = true,
+  });
   final Widget child;
 
   /// False until the first call arrives: the window stays black, then fades straight into this
@@ -25,7 +36,14 @@ class CallBackdrop extends StatelessWidget {
   /// conference and unknown calls.
   final String? seed;
 
-  /// The keypad's open progress (0-1): the fades ease to an even dim behind it.
+  /// A colour or photo in place of the caller's tint (see [CallBackgrounds.forCall]).
+  final CallBackground? background;
+
+  /// Connected: a photo [background] frosts under the controls (ringing keeps it sharp).
+  final bool frosted;
+
+  /// The keypad's open progress (0-1): the fades ease to an even dim behind it, and a photo
+  /// [background] blurs all over.
   final ValueListenable<double>? dim;
 
   @override
@@ -38,7 +56,7 @@ class CallBackdrop extends StatelessWidget {
           duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 400),
           layoutBuilder: (current, previous) => Stack(fit: StackFit.expand, children: [...previous, ?current]),
           child: shown
-              ? KeyedSubtree(key: ValueKey(seed), child: _aurora(seed))
+              ? KeyedSubtree(key: ValueKey((seed, background)), child: _fill(seed, background, frosted, dim))
               : const SizedBox.expand(key: ValueKey('black')),
         ),
         ValueListenableBuilder(
@@ -69,10 +87,19 @@ class CallBackdrop extends StatelessWidget {
     );
   }
 
-  /// A soft aurora: a dark base with blurred-looking blobs in hues around the caller's avatar
-  /// colour. Painted once.
-  static Widget _aurora(String? seed) {
-    final hue = seed == null ? 200.0 : HSLColor.fromColor(LetterAvatar.colorFor(seed)).hue;
+  static Widget _fill(String? seed, CallBackground? background, bool frosted, ValueListenable<double>? dim) {
+    final hue = switch ((background?.colour, seed)) {
+      (final colour?, _) => HSLColor.fromColor(colour).hue,
+      (_, final seed?) => HSLColor.fromColor(LetterAvatar.colorFor(seed)).hue,
+      _ => 200.0,
+    };
+    final image = background?.image;
+    if (image == null) return _aurora(hue);
+    return _PhotoFill(image: image, fallback: _aurora(hue), frosted: frosted, dim: dim);
+  }
+
+  /// A soft aurora: a dark base with blurred-looking blobs in hues around [hue]. Painted once.
+  static Widget _aurora(double hue) {
     const shifts = [0.0, 45.0, -50.0, 20.0, -30.0];
     Color tone(int i, double lightness, double saturation) =>
         HSLColor.fromAHSL(1, (hue + shifts[i % shifts.length]) % 360, saturation, lightness).toColor();
@@ -104,6 +131,199 @@ class CallBackdrop extends StatelessWidget {
   }
 }
 
+/// A photo filling the call screen. The controls draw no live blur of their own (the aurora is
+/// soft already), so the photo carries it: sharp while ringing, frosted toward the bottom once
+/// [frosted] (connected), and blurred all over with the keypad's [dim] progress. Both blurred
+/// copies are made once, then only cross-faded: no blur runs per frame. [fallback] shows while
+/// the photo decodes, or if it can't.
+class _PhotoFill extends StatefulWidget {
+  const _PhotoFill({required this.image, required this.fallback, required this.frosted, this.dim});
+  final ImageProvider image;
+  final Widget fallback;
+  final bool frosted;
+  final ValueListenable<double>? dim;
+
+  @override
+  State<_PhotoFill> createState() => _PhotoFillState();
+}
+
+class _PhotoFillState extends State<_PhotoFill> with SingleTickerProviderStateMixin {
+  ImageStream? _stream;
+  late final _listener = ImageStreamListener(
+    (info, _) {
+      if (mounted) setState(() => _image = info.image);
+    },
+    onError: (_, _) {
+      if (mounted) setState(() => _image = null);
+    },
+  );
+  ui.Image? _image;
+  _PhotoPainter? _painter;
+  late final _frost = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 450),
+    value: widget.frosted ? 1 : 0,
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _resolve();
+  }
+
+  @override
+  void didUpdateWidget(_PhotoFill old) {
+    super.didUpdateWidget(old);
+    if (old.image != widget.image) _resolve();
+    if (old.frosted != widget.frosted) {
+      final target = widget.frosted ? 1.0 : 0.0;
+      if (MediaQuery.disableAnimationsOf(context)) {
+        _frost.value = target;
+      } else {
+        _frost.animateTo(target, curve: Curves.easeOut);
+      }
+    }
+  }
+
+  void _resolve() {
+    final stream = widget.image.resolve(createLocalImageConfiguration(context));
+    if (stream.key == _stream?.key) return;
+    _stream?.removeListener(_listener);
+    _stream = stream..addListener(_listener);
+  }
+
+  @override
+  void dispose() {
+    _stream?.removeListener(_listener);
+    _painter?.dispose();
+    _frost.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final image = _image;
+    if (image != null) {
+      final ratio = MediaQuery.devicePixelRatioOf(context);
+      final old = _painter;
+      if (old == null || old.image != image || old.ratio != ratio || old.dim != widget.dim) {
+        old?.dispose();
+        _painter = _PhotoPainter(image, ratio, _frost, widget.dim);
+      }
+    }
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // The photo itself, as Image draws it: full quality, never through the baked copies.
+        RepaintBoundary(
+          child: Image(
+            image: widget.image,
+            fit: BoxFit.cover,
+            gaplessPlayback: true,
+            // A little darker all over, so white text reads on bright photos between the fades.
+            color: const Color(0x33000000),
+            colorBlendMode: BlendMode.srcATop,
+            frameBuilder: (_, child, frame, sync) => frame == null && !sync ? widget.fallback : child,
+            // A deleted or unreadable photo falls back to the tint.
+            errorBuilder: (_, _, _) => widget.fallback,
+          ),
+        ),
+        if (image != null)
+          RepaintBoundary(
+            child: CustomPaint(painter: _painter, size: Size.infinite),
+          ),
+      ],
+    );
+  }
+}
+
+/// The blurred copies laid over the photo: frosted under the controls ([frost]) and all over
+/// ([dim], the keypad). Made once per size (the keypad one on first use), then only drawn at their opacities.
+class _PhotoPainter extends CustomPainter {
+  _PhotoPainter(this.image, this.ratio, this.frost, this.dim) : super(repaint: Listenable.merge([frost, ?dim]));
+  final ui.Image image;
+  final double ratio;
+  final Animation<double> frost;
+  final ValueListenable<double>? dim;
+
+  /// How soft the blurred copies are.
+  static const _sigma = 22.0;
+
+  Size? _size;
+  ui.Image? _frosted, _blurred;
+
+  /// The photo blurred all over or, with [fade], only from just above the controls down; darkened
+  /// like the [Image] under it.
+  ui.Image _bake(Size size, {required bool fade}) {
+    final rect = Offset.zero & size;
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder)..scale(ratio);
+    canvas.saveLayer(rect, Paint());
+    canvas.saveLayer(
+      rect,
+      Paint()..imageFilter = ui.ImageFilter.blur(sigmaX: _sigma, sigmaY: _sigma, tileMode: TileMode.clamp),
+    );
+    paintImage(canvas: canvas, rect: rect, image: image, fit: BoxFit.cover, filterQuality: FilterQuality.medium);
+    canvas.drawRect(rect, Paint()..color = const Color(0x33000000));
+    canvas.restore();
+    if (fade) {
+      // Sharp under the name, frosted under the buttons.
+      canvas.drawRect(
+        rect,
+        Paint()
+          ..blendMode = BlendMode.dstIn
+          ..shader = const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            stops: [.58, .68], // just above the controls (from ~67% down)
+            colors: [Color(0x00000000), Color(0xFF000000)],
+          ).createShader(rect),
+      );
+    }
+    canvas.restore();
+    final picture = recorder.endRecording();
+    final baked = picture.toImageSync((size.width * ratio).ceil(), (size.height * ratio).ceil());
+    picture.dispose();
+    return baked;
+  }
+
+  void _draw(Canvas canvas, ui.Image baked, Rect rect, double opacity) {
+    if (opacity <= 0) return;
+    canvas.drawImageRect(
+      baked,
+      Rect.fromLTWH(0, 0, baked.width.toDouble(), baked.height.toDouble()),
+      rect,
+      Paint()
+        ..filterQuality = FilterQuality.low
+        ..color = Color.fromRGBO(0, 0, 0, opacity.clamp(0.0, 1.0)),
+    );
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.isEmpty) return;
+    if (_size != size) {
+      dispose();
+      _frosted = _bake(size, fade: true);
+      _size = size;
+    }
+    final rect = Offset.zero & size;
+    _draw(canvas, _frosted!, rect, frost.value);
+    // Made only once the keypad opens: most calls never do, and each copy is a full-screen bake.
+    final dimmed = dim?.value ?? 0;
+    if (dimmed > 0) _draw(canvas, _blurred ??= _bake(size, fade: false), rect, dimmed);
+  }
+
+  void dispose() {
+    _frosted?.dispose();
+    _blurred?.dispose();
+    _frosted = _blurred = null;
+  }
+
+  @override
+  bool shouldRepaint(_PhotoPainter old) => old.image != image || old.ratio != ratio;
+}
+
 /// Started by `inCallMain`, long before the call screen first draws (only once its activity
 /// shows): loads contacts and fetches each caller's photo as calls arrive, so [CallHeader] lays
 /// out the name and photo together.
@@ -113,18 +333,30 @@ abstract final class CallerLookup {
   static CallSnapshot? latest;
 
   static void start() {
-    final repo = ContactsRepository.instance;
+    final repo = ContactsRepository.instance..ignoreChanges = true;
     // Caller lookup must not prevent answering if a contacts provider is unavailable.
     repo.start().catchError((Object _) {});
+    final backgrounds = CallBackgrounds.instance;
     void prefetch() {
-      for (final call in latest?.calls ?? const <CallInfo>[]) {
+      final calls = latest?.calls ?? const <CallInfo>[];
+      if (calls.isNotEmpty) backgrounds.load('all');
+      for (final call in calls) {
         if (call.isPrivate || call.isConference) continue;
-        if (repo.contactFor(call.number ?? '') case final contact?) repo.thumbnail(contact.id);
+        if (repo.contactFor(call.number ?? '') case final contact?) {
+          repo.thumbnail(contact.id);
+          // The header loads the full photo anyway; the backdrop shares it.
+          backgrounds.load(contact.id);
+          backgrounds.loadPhoto(contact.id);
+        }
       }
     }
 
     TelecomBridge.instance.callState.listen((s) {
       latest = s;
+      if (s.calls.isEmpty) {
+        repo.forgetPhotos();
+        backgrounds.forgetPhotos();
+      }
       prefetch();
     }, onError: (Object _) {});
     repo.contacts.addListener(prefetch);
@@ -152,8 +384,18 @@ String? backdropSeed(CallInfo call) {
 }
 
 class CallHeader extends StatelessWidget {
-  const CallHeader({super.key, required this.call, required this.sims, required this.compact, this.keypadProgress = 0});
+  const CallHeader({
+    super.key,
+    required this.call,
+    required this.sims,
+    required this.compact,
+    this.keypadProgress = 0,
+    this.recording = false,
+  });
   final CallInfo call;
+
+  /// The companion recorder is recording this call: a red dot by the timer.
+  final bool recording;
   final List<SimCard> sims;
   final bool compact;
   final double keypadProgress;
@@ -165,10 +407,16 @@ class CallHeader extends StatelessWidget {
     if (contact == null) return _header(context, null, null);
     // Only the caller's photo, one row: reading every contact's photo froze the call screen.
     final repo = ContactsRepository.instance;
-    return FutureBuilder(
-      future: repo.thumbnail(contact.id),
-      initialData: repo.cachedThumbnail(contact.id),
-      builder: (context, thumb) => _header(context, contact, thumb.data),
+    return ListenableBuilder(
+      listenable: CallBackgrounds.instance,
+      // With the photo filling the screen, ColorOS drops the small one and centres the lines.
+      builder: (context, _) => CallBackgrounds.instance.callerPhotoFills(contact.id)
+          ? _header(context, contact, null)
+          : FutureBuilder(
+              future: repo.thumbnail(contact.id),
+              initialData: repo.cachedThumbnail(contact.id),
+              builder: (context, thumb) => _header(context, contact, thumb.data),
+            ),
     );
   }
 
@@ -189,7 +437,12 @@ class CallHeader extends StatelessWidget {
     final textAlign = photo == null || folded == 1 ? TextAlign.center : TextAlign.start;
     // ColorOS puts the number and the city on lines of their own.
     final subtitles = [
-      if (name != shownNumber && shownNumber.isNotEmpty && !call.isPrivate && !call.isConference) shownNumber,
+      if (name != shownNumber &&
+          shownNumber.isNotEmpty &&
+          !call.isPrivate &&
+          !call.isConference &&
+          !(contact != null && DialerPrefs.instance.hideContactNumbers.value))
+        shownNumber,
       ?call.location,
     ];
     final held = call.state == CallState.holding;
@@ -251,6 +504,7 @@ class CallHeader extends StatelessWidget {
                 SizedBox(height: compact ? 12 : 18),
                 CallStatus(
                   call: call,
+                  recording: recording,
                   sim: sims.length > 1 ? sim : null,
                   simSlot: sim == null ? 0 : sims.indexOf(sim) + 1,
                   alignment: line,
@@ -287,8 +541,16 @@ bool _calling(CallState state) =>
     state == CallState.dialing || state == CallState.connecting || state == CallState.newCall;
 
 class CallStatus extends StatefulWidget {
-  const CallStatus({super.key, required this.call, this.sim, this.simSlot = 0, this.alignment = Alignment.center});
+  const CallStatus({
+    super.key,
+    required this.call,
+    this.sim,
+    this.simSlot = 0,
+    this.alignment = Alignment.center,
+    this.recording = false,
+  });
   final CallInfo call;
+  final bool recording;
 
   /// Shown as a small numbered SIM mark; only passed on dual-SIM phones, as on ColorOS.
   final SimCard? sim;
@@ -420,6 +682,18 @@ class _CallStatusState extends State<CallStatus> with SingleTickerProviderStateM
         : Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: style);
     // ColorOS: small glyphs for the line (HD, Wi-Fi, which SIM), then the status as plain text.
     final glyphs = [
+      if (widget.recording)
+        Semantics(
+          label: context.l10n.recordingNow,
+          child: const ExcludeSemantics(
+            child: SizedBox.square(
+              dimension: 9,
+              child: DecoratedBox(
+                decoration: BoxDecoration(color: endRed, shape: BoxShape.circle),
+              ),
+            ),
+          ),
+        ),
       if (call.isHd) const _HdCallGlyph(),
       if (call.isWifi) const Icon(Icons.wifi_calling_rounded, size: 17, color: Colors.white70),
       if (widget.sim case final sim?)
@@ -564,68 +838,95 @@ class _HdCallGlyph extends StatelessWidget {
 }
 
 /// The other call, on hold, as a frosted card above the caller: its avatar, name and "On hold",
-/// with a Switch pill. Tapping anywhere on it switches to that call.
+/// with a Switch pill and a red End button. Tapping anywhere but End switches to that call.
 class HeldCallCard extends StatelessWidget {
-  const HeldCallCard({super.key, required this.call, required this.onSwitch});
+  const HeldCallCard({super.key, required this.call, required this.onSwitch, required this.onEnd});
   final CallInfo call;
   final VoidCallback onSwitch;
+
+  /// Hangs up the held call without switching to it first.
+  final VoidCallback onEnd;
 
   @override
   Widget build(BuildContext context) {
     final name = callerName(context.l10n, call);
-    return Semantics(
-      button: true,
-      label: context.l10n.switchToOnHold(name),
-      excludeSemantics: true,
-      onTap: onSwitch,
-      child: CallBody(
-        radius: 28,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: onSwitch,
-          child: Padding(
-            padding: const EdgeInsets.all(8),
-            child: Row(
-              children: [
-                LetterAvatar(name: name, size: 40),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+    return CallBody(
+      radius: 28,
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Row(
+          children: [
+            Expanded(
+              child: Semantics(
+                button: true,
+                label: context.l10n.switchToOnHold(name),
+                excludeSemantics: true,
+                onTap: onSwitch,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: onSwitch,
+                  child: Row(
                     children: [
-                      Text(
-                        name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white),
+                      LetterAvatar(name: name, size: 40),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(context.l10n.onHold, style: const TextStyle(fontSize: 13, color: Colors.white60)),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(context.l10n.onHold, style: const TextStyle(fontSize: 13, color: Colors.white60)),
+                      const SizedBox(width: 8),
+                      DecoratedBox(
+                        decoration: const ShapeDecoration(color: Color(0x29FFFFFF), shape: StadiumBorder()),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.swap_vert_rounded, size: 18, color: Colors.white),
+                              const SizedBox(width: 6),
+                              Text(
+                                context.l10n.switchCall,
+                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.white),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                DecoratedBox(
-                  decoration: const ShapeDecoration(color: Color(0x29FFFFFF), shape: StadiumBorder()),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.swap_vert_rounded, size: 18, color: Colors.white),
-                        const SizedBox(width: 6),
-                        Text(
-                          context.l10n.switchCall,
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.white),
-                        ),
-                      ],
-                    ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Semantics(
+              button: true,
+              label: context.l10n.endHeldCall(name),
+              excludeSemantics: true,
+              onTap: onEnd,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onEnd,
+                child: const SizedBox.square(
+                  dimension: 40,
+                  child: DecoratedBox(
+                    decoration: ShapeDecoration(color: endRed, shape: CircleBorder()),
+                    child: Icon(Icons.call_end_rounded, size: 20, color: Colors.white),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

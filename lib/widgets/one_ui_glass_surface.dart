@@ -91,7 +91,7 @@ class OneUIGlassSurface extends StatelessWidget {
           alignment: alignment,
           decoration: t <= 0.05
               ? null
-              : BoxDecoration(
+              : ShapeDecoration(
                   color: fx.floating3dEffect
                       ? null
                       : _fade(
@@ -108,7 +108,7 @@ class OneUIGlassSurface extends StatelessWidget {
                           t,
                         ),
                   gradient: (isModal ? fx.modalGradient : fx.floatingGradient)?.scale(t),
-                  borderRadius: borderRadius,
+                  shape: SquircleBorder(borderRadius: borderRadius),
                 ),
           child: child,
         );
@@ -133,9 +133,9 @@ class OneUIGlassSurface extends StatelessWidget {
                 child: body,
               );
         return DecoratedBox(
-          decoration: BoxDecoration(borderRadius: borderRadius, boxShadow: shadows),
-          child: ClipRRect(
-            borderRadius: borderRadius,
+          decoration: ShapeDecoration(shape: SquircleBorder(borderRadius: borderRadius), shadows: shadows),
+          child: ClipPath(
+            clipper: ShapeBorderClipper(shape: SquircleBorder(borderRadius: borderRadius)),
             // Dialer: Settings › "Reduce visual effects": reduced shares the page's one backdrop
             // read; off is solid (see _solid).
             child: fx.isOff
@@ -181,12 +181,12 @@ class OneUIRimPainter extends CustomPainter {
     if (opacity <= 0) return;
     final rect = Offset.zero & size;
     final inset = strokeWidth / 2;
-    final rrect = borderRadius.toRRect(rect).deflate(inset);
+    final outline = SquircleBorder.pathFor(borderRadius, rect.deflate(inset));
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..shader = gradient.scale(opacity).createShader(rect);
-    canvas.drawRRect(rrect, paint);
+    canvas.drawPath(outline, paint);
   }
 
   @override

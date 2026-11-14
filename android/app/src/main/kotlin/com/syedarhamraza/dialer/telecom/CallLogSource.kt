@@ -131,6 +131,10 @@ object CallLogSource {
                     "presentation" to presentationName(c.getInt(8)),
                     "isNew" to (c.getInt(9) == 1),
                     "video" to (c.getInt(10) and Calls.FEATURES_VIDEO != 0),
+                    // FEATURES_HD_CALL (API 30) and FEATURES_VOLTE (API 31) by value: minSdk is 29, and
+                    // older phones just never set the bits.
+                    "hd" to (c.getInt(10) and 0x4 != 0),
+                    "volte" to (c.getInt(10) and 0x40 != 0),
                     // Uninstalled apps keep the package name as their label.
                     "appPackage" to pkg,
                     "app" to (app ?: pkg),

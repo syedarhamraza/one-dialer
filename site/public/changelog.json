@@ -1,0 +1,18 @@
+{
+  "version": "1.0.0-beta.8",
+  "code": 15,
+  "date": "Nov 2026",
+  "changes": [
+    "Flash notification for incoming calls",
+    "New call screen buttons with cleaner icons, a blur while calling and smoother animations",
+    "Option to hide numbers on the call screen",
+    "One app icon that looks right in themed, colored and dark home screen styles",
+    "Live Update capsule is now an experimental option, off by default",
+    "SMS reply opens your messages app with the text ready to send",
+    "New Calls and Contacts icons in the nav bar",
+    "Bug fixes and performance improvements",
+    "The app follows the font you picked on your phone",
+    "End a held call without switching to it",
+    "Speed dial menu, copy numbers and delete single calls"
+  ]
+}

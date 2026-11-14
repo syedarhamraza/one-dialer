@@ -1,0 +1,22 @@
+name: Feature request
+description: Suggest an idea
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would you like, and why?
+      description: The problem it solves matters more than the exact solution.
+    validations:
+      required: true
+  - type: textarea
+    id: reference
+    attributes:
+      label: How do other phone apps do it?
+      description: Screenshots from another dialer help (blur personal details).
+  - type: checkboxes
+    id: build
+    attributes:
+      label: Building it
+      options:
+        - label: I'd like to build this myself, with or without an AI assistant (see CONTRIBUTING.md › Vibe coding)

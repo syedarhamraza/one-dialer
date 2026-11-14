@@ -19,6 +19,12 @@ object CallPrefs {
         "autoAnswer" to false,
         "autoAnswerDelay" to 5, // seconds
         "announceCalls" to "off", // "always", or "headset" (only with headphones)
+        "flashOnCall" to false, // blink the camera flash while a call rings (CallFlash)
+        "autoRecordMode" to "off", // "all", "unknown" (no contact) or "contacts" (RecordRules; needs the companion)
+        "recordContacts" to "[]", // contact ids (JSON) recorded in "contacts" mode
+        "neverRecord" to "[]", // contact ids (JSON) never auto-recorded
+        "recordingConsent" to false, // the user accepted Settings › Call recording's consent notice
+        "liveUpdates" to false, // experimental: a connected call asks for an Android 16 Live Update (capsule)
     )
 
     fun read(context: Context): Map<String, Any> {

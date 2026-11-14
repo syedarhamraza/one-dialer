@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.MotionEvent
 import androidx.core.view.WindowCompat
+import com.syedarhamraza.dialer.telecom.CallManager
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -15,6 +16,8 @@ class MainActivity : FlutterActivity() {
     override fun onResume() {
         super.onResume()
         LagDiagnostics.foreground("main", true)
+        // Again on each resume: OPPO resets it, and the user may have changed it in Settings.
+        HighRefresh.apply(this)
     }
 
     override fun onPause() {
@@ -30,8 +33,10 @@ class MainActivity : FlutterActivity() {
     private var bridge: CallBridge? = null
     private var pendingRoleResult: MethodChannel.Result? = null
     private var pendingPhotoResult: MethodChannel.Result? = null
+    private var pendingPhotoMax = 720
     private var pendingRingtoneResult: MethodChannel.Result? = null
     private var pendingVcfResult: MethodChannel.Result? = null
+    private var pendingBackupResult: MethodChannel.Result? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,6 +52,7 @@ class MainActivity : FlutterActivity() {
             it.photoPicker = ::pickPhoto
             it.photoTaker = ::takePhoto
             it.vcfPicker = ::pickVcf
+            it.settingsBackup = ::settingsBackup
             it.ringtonePicker = ::pickRingtone
             it.pendingDialNumber = dialNumberFrom(intent)
             it.pendingOpenRecents = intent.getBooleanExtra(EXTRA_OPEN_RECENTS, false)
@@ -79,9 +85,10 @@ class MainActivity : FlutterActivity() {
     }
 
     /** Android's photo picker (no storage permission needed); falls back to "get content". */
-    private fun pickPhoto(result: MethodChannel.Result) {
+    private fun pickPhoto(max: Int, result: MethodChannel.Result) {
         pendingPhotoResult?.success(null)
         pendingPhotoResult = result
+        pendingPhotoMax = max
         val intent = if (android.os.Build.VERSION.SDK_INT >= 33) {
             Intent(android.provider.MediaStore.ACTION_PICK_IMAGES)
         } else {
@@ -102,6 +109,46 @@ class MainActivity : FlutterActivity() {
         @Suppress("DEPRECATION")
         startActivityForResult(intent, REQUEST_VCF)
     }
+
+    /**
+     * Settings › Export / Import settings: where to save the file, or which one to read. The
+     * result is true when done (an import restarts the app instead), false for a file that isn't
+     * a settings file, null when cancelled.
+     */
+    private fun settingsBackup(export: Boolean, result: MethodChannel.Result) {
+        // An import restarts the process, which would drop the call.
+        if (!export && CallManager.all().isNotEmpty()) return result.error("IN_CALL", null, null)
+        pendingBackupResult?.success(null)
+        pendingBackupResult = result
+        val intent = if (export) {
+            Intent(Intent.ACTION_CREATE_DOCUMENT)
+                .addCategory(Intent.CATEGORY_OPENABLE)
+                .setType("application/zip")
+                .putExtra(Intent.EXTRA_TITLE, "one-dialer-settings-${java.time.LocalDate.now()}.zip")
+        } else {
+            Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*")
+        }
+        @Suppress("DEPRECATION")
+        startActivityForResult(intent, if (export) REQUEST_EXPORT else REQUEST_IMPORT)
+    }
+
+    private fun finishBackup(export: Boolean, uri: android.net.Uri, result: MethodChannel.Result) = Thread {
+        val outcome = runCatching {
+            if (export) {
+                contentResolver.openOutputStream(uri, "wt")!!.use { SettingsBackup.export(this, it) }
+                true
+            } else {
+                contentResolver.openInputStream(uri)!!.use { SettingsBackup.import(this, it) }
+            }
+        }
+        runOnUiThread {
+            val done = outcome.getOrElse { return@runOnUiThread result.error("FAILED", it.message, null) }
+            if (export || !done) return@runOnUiThread result.success(done)
+            // Every preference is cached in memory (DataStore, SharedPreferences): start afresh.
+            startActivity(Intent.makeRestartActivityTask(android.content.ComponentName(this, MainActivity::class.java)))
+            Runtime.getRuntime().exit(0)
+        }
+    }.start()
 
     /**
      * The camera app's quick capture: a small preview bitmap, which is plenty for a contact
@@ -139,6 +186,15 @@ class MainActivity : FlutterActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         @Suppress("DEPRECATION")
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_EXPORT || requestCode == REQUEST_IMPORT) {
+            val result = pendingBackupResult ?: return
+            pendingBackupResult = null
+            val uri = data?.data.takeIf { resultCode == RESULT_OK } ?: return result.success(null)
+            // shortcut: a call that starts during the second the import takes still drops; rare enough.
+            if (requestCode == REQUEST_IMPORT && CallManager.all().isNotEmpty()) return result.error("IN_CALL", null, null)
+            finishBackup(requestCode == REQUEST_EXPORT, uri, result)
+            return
+        }
         if (requestCode == REQUEST_VCF) {
             val result = pendingVcfResult ?: return
             pendingVcfResult = null
@@ -168,7 +224,7 @@ class MainActivity : FlutterActivity() {
             pendingPhotoResult = null
             val uri = data?.data.takeIf { resultCode == RESULT_OK } ?: return result.success(null)
             Thread {
-                val bytes = runCatching { scaledJpeg(uri) }.getOrNull()
+                val bytes = runCatching { scaledJpeg(uri, pendingPhotoMax) }.getOrNull()
                 runOnUiThread { result.success(bytes) }
             }.start()
             return
@@ -193,13 +249,13 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    /** Decodes [uri] at most [PHOTO_MAX] px on its long side (contacts store small photos anyway). */
-    private fun scaledJpeg(uri: android.net.Uri): ByteArray {
+    /** Decodes [uri] at most [max] px on its long side (contacts store small photos anyway). */
+    private fun scaledJpeg(uri: android.net.Uri, max: Int): ByteArray {
         val source = android.graphics.ImageDecoder.createSource(contentResolver, uri)
         val bitmap = android.graphics.ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
             val longSide = maxOf(info.size.width, info.size.height)
-            if (longSide > PHOTO_MAX) {
-                val scale = PHOTO_MAX.toFloat() / longSide
+            if (longSide > max) {
+                val scale = max.toFloat() / longSide
                 decoder.setTargetSize((info.size.width * scale).toInt(), (info.size.height * scale).toInt())
             }
             decoder.allocator = android.graphics.ImageDecoder.ALLOCATOR_SOFTWARE
@@ -211,26 +267,22 @@ class MainActivity : FlutterActivity() {
     }
 
     /**
-     * What the Contacts icon or another app asked for: the Contacts tab, a contact to show or
-     * edit (`id`), or a new contact (`phone`, `name` from the insert extras). Null otherwise.
+     * What another app asked for: a contact to show or edit (`id`), or a new contact (`phone`,
+     * `name` from the insert extras). Null otherwise.
      */
     private fun contactActionFrom(intent: Intent?): Map<String, String?>? {
         intent ?: return null
-        val fromContactsIcon = intent.component?.className?.let {
-            it.endsWith(".ContactsLauncher") || it.contains(".ContactsIcon")
-        } == true
         return when (intent.action) {
             Intent.ACTION_VIEW, Intent.ACTION_EDIT, Intent.ACTION_INSERT_OR_EDIT -> {
                 val id = intent.data?.let(::contactIdOf)
                 when {
                     id != null -> mapOf("kind" to if (intent.action == Intent.ACTION_VIEW) "view" else "edit", "id" to id)
                     intent.action == Intent.ACTION_INSERT_OR_EDIT -> insertAction(intent)
-                    fromContactsIcon -> mapOf("kind" to "tab")
                     else -> null
                 }
             }
             Intent.ACTION_INSERT -> insertAction(intent)
-            else -> if (fromContactsIcon) mapOf("kind" to "tab") else null
+            else -> null
         }
     }
 
@@ -285,7 +337,8 @@ class MainActivity : FlutterActivity() {
         private const val REQUEST_RINGTONE = 1003
         private const val REQUEST_CAMERA = 1004
         private const val REQUEST_VCF = 1005
-        private const val PHOTO_MAX = 720
+        private const val REQUEST_EXPORT = 1006
+        private const val REQUEST_IMPORT = 1007
         private const val EXTRA_OPEN_RECENTS = "open_recents"
 
         fun openRecentsIntent(context: Context): Intent =

@@ -21,6 +21,8 @@ class CallLogEntry {
     this.app,
     this.appPackage,
     this.isVideo = false,
+    this.isHd = false,
+    this.isVolte = false,
   });
 
   factory CallLogEntry.fromMap(Map<Object?, Object?> map) {
@@ -38,11 +40,16 @@ class CallLogEntry {
       app: map['app'] as String?,
       appPackage: map['appPackage'] as String?,
       isVideo: map['video'] as bool? ?? false,
+      isHd: map['hd'] as bool? ?? false,
+      isVolte: map['volte'] as bool? ?? false,
     );
   }
 
   final int id;
   final String number;
+
+  /// HD voice, and carried over VoLTE (the history row's badges).
+  final bool isHd, isVolte;
 
   /// The name Telecom cached when the call was logged; prefer the live contact name.
   final String? name;

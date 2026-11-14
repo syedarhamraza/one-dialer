@@ -67,7 +67,9 @@ object CallManager {
         if (id != null && calls.isEmpty()) {
             ended = serialize(id, call) + ("state" to "disconnected")
             handler.removeCallbacks(clearEnded)
-            handler.postDelayed(clearEnded, ENDED_LINGER_MS)
+            // You hung up yourself: no reason to read, so the screen closes almost at once.
+            val local = call.details.disconnectCause?.code == DisconnectCause.LOCAL
+            handler.postDelayed(clearEnded, if (local) LOCAL_ENDED_LINGER_MS else ENDED_LINGER_MS)
         }
         notifyChanged()
     }
@@ -91,6 +93,8 @@ object CallManager {
         // A conference's members stay inside it (hung up with it), so the screen shows one call.
         "calls" to (if (calls.isEmpty()) listOfNotNull(ended) else all().map { (id, call) -> serialize(id, call) }),
         "audio" to audioSnapshot(),
+        // The companion recorder's state; null without it (the screen then shows no Record).
+        "recording" to RecorderCompanion.snapshot(),
     )
 
     fun stateOf(call: Call): Int =
@@ -180,6 +184,7 @@ object CallManager {
     }
 
     private const val ENDED_LINGER_MS = 2000L
+    private const val LOCAL_ENDED_LINGER_MS = 600L
 
     private val ROUTES = listOf(
         CallAudioState.ROUTE_EARPIECE to "earpiece",

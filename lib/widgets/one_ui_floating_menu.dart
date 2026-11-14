@@ -7,21 +7,26 @@ import '../core/haptics/haptics.dart';
 import '../features/in_call/call_controls.dart';
 import '../theme/one_ui_theme.dart';
 import 'call_glass.dart';
+import 'call_icons.dart';
 import 'liquid_body.dart';
 import 'press_glow.dart';
 import 'round_header_controls.dart';
 import '../l10n/l10n.dart';
+import '../app/layout.dart';
 
 /// Item definition for the floating menu.
 class OneUIFloatingMenuItem {
   final String label;
   final IconData? icon;
+
+  /// Drawn instead of [icon]: the call screen's own thin-line glyphs.
+  final CallIconShape? glyph;
   final VoidCallback onTap;
 
   /// False greys the row out and ignores taps on it (the menu stays open).
   final bool enabled;
 
-  const OneUIFloatingMenuItem({required this.label, this.icon, required this.onTap, this.enabled = true});
+  const OneUIFloatingMenuItem({required this.label, this.icon, this.glyph, required this.onTap, this.enabled = true});
 }
 
 /// The app's floating menu (originally OneSpend's One UI menu, now our own): a
@@ -56,9 +61,13 @@ class OneUIFloatingMenu {
     // Scales the rows, text and icons: the call screen's menus sit beside 76 dp buttons.
     double scale = 1,
   }) async {
+    // The app's menus hang off its top buttons, so they follow Settings › Display size › Top
+    // buttons rather than the App size; the call screen's (scaled already) follow the call screen.
+    final follow = scale == 1 ? headerScale(context) : 1.0;
+    scale *= follow;
     final screen = MediaQuery.sizeOf(context);
     final height = (items.length * _rowHeight + _padding * 2) * scale;
-    final menuWidth = math.min(width, screen.width - _edge * 2);
+    final menuWidth = math.min(width * follow, screen.width - _edge * 2);
 
     // The button (or [anchorContext]'s widget, e.g. a list row) the menu separates from, or a button-sized spot at the fallback corner.
     Rect? anchor;
@@ -193,8 +202,8 @@ class _PopoverMenu extends StatelessWidget {
         if (fade == 0) return const SizedBox.shrink();
         // The card scaled about the pivot, in its own coordinates. The glass is laid out at
         // this size instead of scaled by a Transform: a blur under a scale reads its backdrop
-        // magnified by 1/scale, which dropped frames on Adreno. Radius and sigma scale as the
-        // Transform scaled them, so it looks the same.
+        // magnified by 1/scale, which dropped frames on Adreno. The radius scales as the
+        // Transform scaled it, so it looks the same.
         final origin = pivot.alongSize(menu.size);
         final glass = Rect.fromLTWH(
           origin.dx * (1 - scale),
@@ -265,7 +274,9 @@ class _PopoverMenu extends StatelessWidget {
                                       scale: scale,
                                       alignment: Alignment.topLeft,
                                       child: ColoredBox(
-                                        color: context.palette.isLight ? const Color(0x4DFFFFFF) : const Color(0x59141416),
+                                        color: context.palette.isLight
+                                            ? const Color(0x4DFFFFFF)
+                                            : const Color(0x59141416),
                                         child: items,
                                       ),
                                     ),
@@ -278,9 +289,12 @@ class _PopoverMenu extends StatelessWidget {
                             : _glass(
                                 fx.isOff
                                     ? null
-                                    : fx.isFull
-                                    ? ImageFilter.blur(sigmaX: fx.blurSigma * scale, sigmaY: fx.blurSigma * scale)
-                                    : ImageFilter.blur(sigmaX: fx.blurSigma, sigmaY: fx.blurSigma),
+                                    // Full: one light fixed sigma (the dark base keeps rows legible); a sigma
+                                    // that changed every frame of the grow was a new filter each frame.
+                                    : ImageFilter.blur(
+                                        sigmaX: fx.isFull ? 10 : fx.blurSigma,
+                                        sigmaY: fx.isFull ? 10 : fx.blurSigma,
+                                      ),
                                 Opacity(
                                   opacity: fade,
                                   child: OverflowBox(
@@ -301,18 +315,18 @@ class _PopoverMenu extends StatelessWidget {
                                             // see-through like the buttons; the blur keeps rows legible.
                                             : context.palette.isLight
                                             ? const Color(0x4DFFFFFF)
-                                            : const Color(0xB3141416),
-                                        // The same glow as the buttons, but reaching less far in: across a card
-                                        // this much bigger the button's spread reads as a wide haze. From a cached
-                                        // image: drawn live, its blurred strokes were re-rendered every frame of a
-                                        // press (~10 ms on a Galaxy S25).
+                                            // Dark: nearly opaque black. The header pills' glass sits over the black
+                                            // header; this keeps the menu's wash on the same black over the list.
+                                            : const Color(0xE6000000),
+                                        // The header pills' glass, glow and all. From a cached image: drawn live,
+                                        // its blurred strokes were re-rendered every frame of a press (~10 ms on a
+                                        // Galaxy S25).
                                         child: fx.isFull
                                             ? CallBodyArtwork(
                                                 radius: OneUIFloatingMenu._radius * size,
                                                 glow: kMainGlassGlow,
                                                 opacity: mainGlass(context).opacity,
                                                 edges: mainGlass(context).edges,
-                                                spread: .5,
                                                 child: items!,
                                               )
                                             : items,
@@ -483,7 +497,13 @@ class _MenuRow extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 16 * size),
         child: Row(
           children: [
-            if (item.icon != null) ...[Icon(item.icon, size: 20 * size, color: color), SizedBox(width: 14 * size)],
+            if (item.glyph case final glyph?) ...[
+              CallIcon(glyph, size: 22 * size, color: color),
+              SizedBox(width: 14 * size),
+            ] else if (item.icon != null) ...[
+              Icon(item.icon, size: 22 * size, color: color),
+              SizedBox(width: 14 * size),
+            ],
             Expanded(
               child: Text(
                 item.label,

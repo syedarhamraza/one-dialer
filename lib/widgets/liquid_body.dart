@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
@@ -67,13 +69,29 @@ class LiquidQualityScope extends StatefulWidget {
 class _LiquidQualityScopeState extends State<LiquidQualityScope> {
   final _app = GlobalKey();
 
+  /// The shortest frame budget seen: adaptive-refresh phones drop to 60 Hz when idle, and a new
+  /// budget would restart the scope's warm-up (and could flip its quality) on every switch.
+  int _frameMs = 16;
+
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: OneUIEffectsController.instance,
     builder: (context, _) {
       final app = KeyedSubtree(key: _app, child: widget.child);
       if (!OneUIEffectsController.instance.isLiquid || DialerPrefs.instance.navGlass.value != 'auto') return app;
-      return GlassAdaptiveScope(minQuality: GlassQuality.standard, frostStep: true, child: app);
+      // The package targets 60 Hz (16 ms); at 120 Hz that kept premium on a Snapdragon 7+ Gen 3
+      // rastering 27 ms frames (p95), so the budget and the warm-up thresholds follow the display.
+      final hz = View.of(context).display.refreshRate;
+      final frameMs = _frameMs = math.min(_frameMs, (1000 / (hz > 0 ? hz : 60)).floor().clamp(8, 16));
+      final scale = frameMs / 16;
+      return GlassAdaptiveScope(
+        minQuality: GlassQuality.standard,
+        frostStep: true,
+        targetFrameMs: frameMs,
+        warmupPremiumThresholdMs: 20 * scale,
+        warmupStandardThresholdMs: 28 * scale,
+        child: app,
+      );
     },
   );
 }

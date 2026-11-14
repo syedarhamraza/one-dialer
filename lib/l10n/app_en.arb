@@ -16,6 +16,7 @@
   "all": "All",
   "selectAll": "Select all",
   "deselectAll": "Deselect all",
+  "selectItems": "Select items",
   "search": "Search",
   "searchContacts": "Search contacts",
   "clear": "Clear",
@@ -482,7 +483,7 @@
     }
   },
   "saveAnyway": "Save anyway",
-  "saveOrDiscard": "Save your changes or discard them?",
+  "saveOrDiscard": "Save your edits?",
   "couldNotLoadContactRetry": "Couldn't load the contact. Retry",
   "email": "Email",
   "addEmail": "Add email",
@@ -492,6 +493,7 @@
   "showLess": "Show less",
   "showMore": "Show more",
   "newContact": "New contact",
+  "addToExistingContact": "Add to existing contact",
   "editContact": "Edit contact",
   "couldNotLoadAccounts": "Couldn't load accounts",
   "loadingAccounts": "Loading accounts…",
@@ -557,7 +559,8 @@
   },
   "note": "Note",
   "editNote": "Edit note",
-  "videoCall": "Video call",
+  "videoCall": "Video call (Meet)",
+  "switchToVideoCall": "Switch to video call",
   "mute": "Mute",
   "@mute": {
     "description": "REVIEW: In-call control label; AOSP uses \"Disattiva audio\", shortened to fit the button"
@@ -600,8 +603,7 @@
     }
   },
   "switchCall": "Switch",
-  "declineWithSms": "Decline with SMS",
-  "noQuickReplies": "No quick replies saved",
+  "declineWithSms": "SMS reply",
   "answer": "Answer",
   "decline": "Decline",
   "answerVerb": "answer",
@@ -637,6 +639,12 @@
   "fullScreen": "Full screen",
   "announceCalls": "Announce incoming calls",
   "announceCallsSubtitle": "Says the caller's name while it rings",
+  "flashOnCall": "Flash notification",
+  "flashOnCallSubtitle": "Blink the camera flash while a call rings",
+  "systemFlash": "Your phone has its own flash notification",
+  "systemFlashSubtitle": "Turn one of them off, or both will blink. Find it in Settings under Notifications or Accessibility",
+  "liveUpdateCapsule": "Live Update capsule (Experimental)",
+  "liveUpdateCapsuleSubtitle": "Android 16: show a connected call in the status bar chip, and the capsule on ColorOS, OxygenOS and realme UI",
   "swipeUpToAnswer": "Swipe up to answer",
   "swipeDownToAnswer": "Swipe down to answer",
   "answerButtons": "Answer buttons",
@@ -645,6 +653,10 @@
   "answerCall": "Answer call",
   "callScreenEffects": "Call screen effects",
   "callScreenEffectsSubtitle": "Glass and glow on the call screen",
+  "callScreenAnimations": "Call screen animations",
+  "callScreenAnimationsSubtitle": "Motion when the call screen opens, answers and changes",
+  "hideContactNumbers": "Hide contact phone numbers",
+  "hideContactNumbersSubtitle": "Show only the name of saved contacts on the call screen and in Calls",
   "@callScreenEffectsSubtitle": {
     "description": "REVIEW: \"Glass and glow\" names the design's frosted-glass look; keep it short"
   },
@@ -699,11 +711,14 @@
   "chooseSimSubtitle": "Dual SIM with no default SIM",
   "appearance": "Appearance",
   "reduceVisualEffects": "Reduce visual effects",
+  "displaySize": "Display size",
+  "displaySizeSmall": "Small",
+  "displaySizeDefault": "Default",
+  "displaySizeLarge": "Large",
+  "displaySizeLarger": "Larger",
+  "displaySizeApp": "App",
+  "displaySizeNavBar": "Navigation bar",
   "reduceVisualEffectsSubtitle": "Less blur runs smoother on slower phones",
-  "appIcon": "App icon",
-  "appIconGlossy": "Glossy",
-  "appIconClassic": "Classic",
-  "appIconFootnote": "Changes both the Phone and Contacts icons. The launcher may take a few seconds, and icons on the home screen may need adding again from the app drawer.",
   "callScreenEdgeGlow": "Call screen edge glow",
   "darkModeEdgeGlow": "Glow strength",
   "edgeGlowClassic": "Classic",
@@ -787,6 +802,10 @@
   "paste": "Paste",
   "copyId": "Copy ID",
   "reportIdCopied": "Report ID copied",
+  "editSpeedDial": "Edit speed dial",
+  "clearNumber": "Clear number",
+  "changeNumber": "Change number",
+  "numberCopied": "Number copied",
   "noEmailApp": "No email app found",
   "noBrowser": "No browser found",
   "sendFeedback": "Send feedback",
@@ -818,12 +837,168 @@
   "autoUpdateNever": "Never",
   "autoUpdateWifiOnly": "Using Wi-Fi only",
   "autoUpdateAlways": "Using Wi-Fi or mobile data",
-  "settingsCalls": "Calls",
-  "settingsDialing": "Dialing",
-  "settingsSpamBlocking": "Spam & blocking",
-  "settingsPersonalisation": "Personalisation",
-  "settingsGeneral": "General",
-  "settingsAbout": "About",
   "displayAndEffects": "Display & effects",
-  "keypadAndRecents": "Keypad & recents"
+  "keypadAndRecents": "Keypad & recents",
+  "logIncoming": "Incoming",
+  "logOutgoing": "Outgoing",
+  "logMissed": "Missed",
+  "logRejected": "Rejected",
+  "logBlocked": "Blocked",
+  "logRangFor": "{type} (Rang for {duration})",
+  "@logRangFor": {
+    "description": "A missed or rejected call on the contact page's call history: its type, then how long it rang.",
+    "placeholders": {
+      "type": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "record": "Record",
+  "@record": {
+    "description": "Call screen ⋮ menu: start recording the call"
+  },
+  "stopRecording": "Stop recording",
+  "recordSetUpFirst": "Record (set up in Settings)",
+  "@recordSetUpFirst": {
+    "description": "Call screen ⋮ menu while One Recorder isn't set up"
+  },
+  "recordingNow": "Recording",
+  "@recordingNow": {
+    "description": "Screen reader label for the red dot on the call screen"
+  },
+  "callRecording": "Call recording",
+  "@callRecording": {
+    "description": "Settings row and page title"
+  },
+  "recorderApp": "One Recorder",
+  "@recorderApp": {
+    "description": "Name of the companion app; keep in English"
+  },
+  "recorderReady": "Ready to record",
+  "recorderNeedsMic": "Allow the microphone in One Recorder",
+  "recorderNeedsAccessibility": "Turn on its accessibility service",
+  "recorderUntrusted": "The recorder works only with One Dialer from Google Play. Install it from Play, or update both apps.",
+  "recordingConsentTitle": "Before you record",
+  "recordingConsentBody": "Recording laws differ by country, and some need everyone on the call to agree. You're responsible for telling the other person and getting their consent. Recordings stay on this phone and are never uploaded.",
+  "recordingConsentAccept": "I understand",
+  "recordings": "Recordings",
+  "noRecordings": "No recordings yet",
+  "noRecordingsSubtitle": "Tap ⋮ › Record on the call screen during a call",
+  "deleteAllRecordings": "Delete all recordings",
+  "deleteAllRecordingsTitle": "Delete all recordings?",
+  "deleteAllRecordingsMessage": "They can't be recovered.",
+  "recordingNotSetUp": "Calls aren't being recorded",
+  "recordingNotSetUpSubtitle": "Auto-record is on, but One Recorder isn't set up",
+  "rename": "Rename",
+  "star": "Star",
+  "unstar": "Unstar",
+  "filterStarred": "Starred",
+  "@filterStarred": {
+    "description": "Recordings filter"
+  },
+  "filterUnknown": "Unknown",
+  "@filterUnknown": {
+    "description": "Recordings filter: numbers without a contact"
+  },
+  "saveToPhone": "Save to phone",
+  "@saveToPhone": {
+    "description": "Copies a recording to the phone's Recordings folder"
+  },
+  "searchRecordings": "Search recordings",
+  "renameRecording": "Rename recording",
+  "recordingsSaved": "{count, plural, =1{Saved to Recordings/One Dialer} other{{count} recordings saved to Recordings/One Dialer}}",
+  "@recordingsSaved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recordingSaveFailed": "Couldn't save to the phone",
+  "deleteRecordings": "{count, plural, =1{Delete this recording?} other{Delete {count} recordings?}}",
+  "@deleteRecordings": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noMatchingRecordings": "No matching recordings",
+  "addContact": "Add contact",
+  "autoRecord": "Auto-record",
+  "autoRecordOff": "Off",
+  "autoRecordAll": "All calls",
+  "autoRecordUnknown": "Unknown numbers",
+  "autoRecordContacts": "Selected contacts",
+  "recordTheseContacts": "Contacts to record",
+  "neverRecord": "Never record",
+  "neverRecordSubtitle": "Contacts auto-record always skips",
+  "recordingSound": "Sound",
+  "volumeBoost": "Volume boost",
+  "volumeBoostSubtitle": "Lifts the other person's voice, which the mic only hears faintly",
+  "boostOff": "Off",
+  "boostNormal": "Normal",
+  "boostStrong": "Strong",
+  "micSource": "Microphone source",
+  "micSourceSubtitle": "Automatic tries each on the first call and keeps the loudest",
+  "micSourceAuto": "Automatic",
+  "micSourceRecognition": "Voice recognition",
+  "micSourceCommunication": "Voice communication",
+  "micSourceMic": "Microphone",
+  "storage": "Storage",
+  "storageUsed": "Space used",
+  "autoDelete": "Auto-delete",
+  "autoDeleteSubtitle": "Starred recordings are always kept",
+  "autoDeleteNever": "Never",
+  "autoDeleteDays": "After {days} days",
+  "@autoDeleteDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "imeiTitle": "IMEI",
+  "imeiUnavailable": "Android doesn't let apps show the IMEI. You can find it in your phone's settings under About phone.",
+  "aboutPhone": "About phone",
+  "glassStyleSubtitle": "Liquid glass bends what's behind it but uses more power",
+  "darkModeEdgeGlowSubtitle": "How brightly the glass edges glow in dark mode",
+  "liquidGlassOnSubtitle": "Which parts of the app use liquid glass",
+  "navBarGlassSubtitle": "Full refraction looks best; Light runs smoother on slower phones",
+  "tapRecentCallSubtitle": "What happens when you tap a call in Calls",
+  "callScreenEdgeGlowSubtitle": "How brightly the call buttons' glass edges glow",
+  "answerButtonsSubtitle": "How you answer, and how the call screen looks",
+  "carrierSettingsSubtitle": "Call forwarding, call waiting and caller ID",
+  "callBackground": "Call background",
+  "callBackgroundAllSubtitle": "For every call, unless a contact has its own",
+  "callBackgroundDefault": "Default",
+  "callBackgroundColour": "Colour",
+  "callBackgroundPhoto": "Photo",
+  "callBackgroundChoosePhoto": "Choose photo",
+  "callBackgroundContactPhoto": "Contact's photo",
+  "callBackgroundContactPhotoSubtitle": "Android keeps contact photos small; choose a photo for a sharper one",
+  "callBackgroundSameAsAll": "Same as all calls",
+  "callBackgroundAllNote": "A contact with their own call background, set on their contact page, uses it instead.",
+  "callBackgroundContactNote": "Used for this contact instead of the call background for all calls.",
+  "exportSettings": "Export settings",
+  "exportSettingsSubtitle": "Save settings, call notes and call backgrounds to a file",
+  "importSettings": "Import settings",
+  "importSettingsSubtitle": "Restore them from an exported file",
+  "importSettingsTitle": "Replace your settings?",
+  "importSettingsMessage": "Your settings, speed dial, call notes and call backgrounds are replaced by the ones in the file. One Dialer then restarts.",
+  "importSettingsInCall": "Settings can't be imported during a call",
+  "settingsExported": "Settings exported",
+  "couldNotSaveSettings": "Couldn't save the file",
+  "notASettingsFile": "This isn't a One Dialer settings file",
+  "endHeldCall": "End call with {name}",
+  "@endHeldCall": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }

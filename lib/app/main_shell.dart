@@ -173,45 +173,52 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
             left: 0,
             right: 0,
             bottom: 0,
-            child: StreamBuilder(
-              stream: TelecomBridge.instance.callState,
-              builder: (context, calls) => ListenableBuilder(
-                listenable: Listenable.merge([navDock, _keypadOpen]),
-                builder: (context, _) => OneUIFloatingNavBar(
-                  currentIndex: _tab,
-                  dockedContent: navDock.value,
-                  onTap: (index) {
-                    Haptics.tap();
-                    _select(index);
-                  },
-                  items: _items(context),
-                  leading: ongoingCall(calls.data) == null
-                      ? null
-                      : _RoundAction(
-                          key: const ValueKey('call'),
-                          // The handset with sound waves: an ongoing call, not a call key.
-                          icon: Icons.phone_in_talk_rounded,
-                          tooltip: context.l10n.returnToCall,
-                          onPressed: TelecomBridge.instance.showInCallScreen,
-                        ),
-                  trailing: navDock.value != null
-                      ? null
-                      : _tab == 1
-                      ? _RoundAction(
-                          key: const ValueKey('action'),
-                          icon: Icons.add_rounded,
-                          tooltip: context.l10n.createContact,
-                          // New contact rises from the bottom, like the keypad sheet.
-                          onPressed: () => openContactEditor(context, rise: true),
-                        )
-                      : _keypadOpen.value
-                      ? null
-                      : _RoundAction(
-                          key: const ValueKey('action'),
-                          icon: Icons.dialpad_rounded,
-                          tooltip: context.l10n.showKeypad,
-                          onPressed: () => _keypadOpen.value = true,
-                        ),
+            // Settings › Display size › Navigation bar: grows from the bar's bottom edge, which stays
+            // on the shared baseline.
+            child: Transform.scale(
+              scale: navBarScale(context),
+              alignment: Alignment.bottomCenter,
+              origin: Offset(0, -(MediaQuery.paddingOf(context).bottom + kNavBarVerticalPadding)),
+              child: StreamBuilder(
+                stream: TelecomBridge.instance.callState,
+                builder: (context, calls) => ListenableBuilder(
+                  listenable: Listenable.merge([navDock, _keypadOpen]),
+                  builder: (context, _) => OneUIFloatingNavBar(
+                    currentIndex: _tab,
+                    dockedContent: navDock.value,
+                    onTap: (index) {
+                      Haptics.tap();
+                      _select(index);
+                    },
+                    items: _items(context),
+                    leading: ongoingCall(calls.data) == null
+                        ? null
+                        : _RoundAction(
+                            key: const ValueKey('call'),
+                            // The handset with sound waves: an ongoing call, not a call key.
+                            icon: Icons.phone_in_talk_rounded,
+                            tooltip: context.l10n.returnToCall,
+                            onPressed: TelecomBridge.instance.showInCallScreen,
+                          ),
+                    trailing: navDock.value != null
+                        ? null
+                        : _tab == 1
+                        ? _RoundAction(
+                            key: const ValueKey('action'),
+                            icon: Icons.add_rounded,
+                            tooltip: context.l10n.createContact,
+                            // New contact rises from the bottom, like the keypad sheet.
+                            onPressed: () => openContactEditor(context, rise: true),
+                          )
+                        : _keypadOpen.value
+                        ? null
+                        : _RoundAction(
+                            key: const ValueKey('action'),
+                            icon: Icons.dialpad_rounded,
+                            tooltip: context.l10n.showKeypad,
+                            onPressed: () => _keypadOpen.value = true,
+                          ),
+                  ),
                 ),
               ),
             ),

@@ -6,11 +6,15 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
 import android.database.ContentObserver
+import android.opengl.EGL14
+import android.opengl.EGLConfig
+import android.opengl.GLES20
 import android.os.Handler
 import android.os.Looper
 import android.provider.CallLog
 import android.media.AudioManager
 import android.media.ToneGenerator
+import android.telephony.TelephonyManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
@@ -21,11 +25,15 @@ import android.telecom.VideoProfile
 import com.syedarhamraza.dialer.telecom.BlockingPrefs
 import com.syedarhamraza.dialer.telecom.CallLogSource
 import com.syedarhamraza.dialer.telecom.CallManager
+import com.syedarhamraza.dialer.telecom.ContactsSource
 import com.syedarhamraza.dialer.telecom.MissedCallNotifier
+import com.syedarhamraza.dialer.telecom.NumberDisplay
+import com.syedarhamraza.dialer.telecom.RecorderCompanion
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.StandardMethodCodec
 
 /**
  * Platform channels between Flutter and Telecom. One instance per Flutter engine
@@ -37,10 +45,16 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
     MethodChannel.MethodCallHandler, EventChannel.StreamHandler {
 
     private val methods = MethodChannel(messenger, METHOD_CHANNEL)
+
+    // Big reads answer from a background task queue: a result sent from the main thread is
+    // encoded there, and a large contact list froze both engines for seconds.
+    private val data = MethodChannel(messenger, DATA_CHANNEL, StandardMethodCodec.INSTANCE, messenger.makeBackgroundTaskQueue())
     private val diagnostics = LagDiagnostics.attach(context, messenger, engineName)
     private val events = EventChannel(messenger, EVENT_CHANNEL)
     private var listener: (() -> Unit)? = null
+    /** Only touched on [tones], one thread so key tones keep their order. */
     private var toneGenerator: ToneGenerator? = null
+    private val tones = java.util.concurrent.Executors.newSingleThreadExecutor()
     private val main = Handler(Looper.getMainLooper())
 
     private val callLogObserver = object : ContentObserver(main) {
@@ -54,11 +68,14 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
     var roleRequester: ((String, MethodChannel.Result) -> Unit)? = null
 
     /** Set by [MainActivity]: opens the photo picker; the result is JPEG bytes or null. */
-    var photoPicker: ((MethodChannel.Result) -> Unit)? = null
+    var photoPicker: ((Int, MethodChannel.Result) -> Unit)? = null
     var photoTaker: ((MethodChannel.Result) -> Unit)? = null
 
     /** Set by [MainActivity]: picks a .vcf file; the result is its text or null. */
     var vcfPicker: ((MethodChannel.Result) -> Unit)? = null
+
+    /** Set by [MainActivity]: exports (true) or imports (false) the settings file; see [SettingsBackup]. */
+    var settingsBackup: ((Boolean, MethodChannel.Result) -> Unit)? = null
 
     /** Set by [MainActivity]: the system ringtone picker; the result is the picked URI, "" for Default, null if cancelled. */
     var ringtonePicker: ((String?, MethodChannel.Result) -> Unit)? = null
@@ -74,18 +91,24 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
 
     init {
         methods.setMethodCallHandler(this)
+        data.setMethodCallHandler { call, result -> readData(call, result) }
         events.setStreamHandler(this)
         watchCallLog()
+        if (engineName == "main") NumberDisplay.preload(context.applicationContext)
     }
 
     fun dispose() {
         diagnostics.setMethodCallHandler(null)
         LagDiagnostics.foreground(engineName, false)
         onCancel(null)
-        toneGenerator?.release()
-        toneGenerator = null
+        tones.execute {
+            toneGenerator?.release()
+            toneGenerator = null
+        }
+        tones.shutdown()
         if (watchingCallLog) context.contentResolver.unregisterContentObserver(callLogObserver)
         methods.setMethodCallHandler(null)
+        data.setMethodCallHandler(null)
         events.setStreamHandler(null)
     }
 
@@ -137,10 +160,6 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             "consumeDialNumber" -> result.success(pendingDialNumber).also { pendingDialNumber = null }
             "consumeOpenRecents" -> result.success(pendingOpenRecents).also { pendingOpenRecents = false }
             "consumeContactAction" -> result.success(pendingContactAction).also { pendingContactAction = null }
-            "getCallLog" -> {
-                watchCallLog()
-                inBackground(result) { CallLogSource.query(context) }
-            }
             "deleteCalls" -> {
                 val ids = call.argument<List<Number>>("ids").orEmpty().map(Number::toLong)
                 inBackground(result) { CallLogSource.delete(context, ids) }
@@ -188,6 +207,12 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             "getRingtoneTitle" -> inBackground(result) {
                 ContactExtras.ringtoneTitle(context, call.argument<String>("contactId")!!)
             }
+            "describeNumbers" -> inBackground(result) {
+                call.argument<List<String>>("numbers").orEmpty().map { n ->
+                    NumberDisplay.of(context, n).let { mapOf("formatted" to it?.formatted, "location" to it?.location) }
+                }
+            }
+            "formatAsYouType" -> result.success(NumberDisplay.asYouType(context, call.argument<String>("number").orEmpty()))
             "setRingtone" -> inBackground(result) {
                 ContactExtras.setRingtone(context, call.argument<String>("contactId")!!, call.argument<String>("uri"))
             }
@@ -195,7 +220,10 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 ?: result.error("NO_ACTIVITY", "Ringtones can only be picked from the main screen", null)
             "pickVcf" -> vcfPicker?.invoke(result)
                 ?: result.error("NO_ACTIVITY", "Files can only be picked from the main screen", null)
-            "pickPhoto" -> photoPicker?.invoke(result)
+            "exportSettings", "importSettings" -> settingsBackup?.invoke(call.method == "exportSettings", result)
+                ?: result.error("NO_ACTIVITY", "Files can only be picked from the main screen", null)
+            "pickPhoto" -> photoPicker?.invoke(call.argument<Int>("max") ?: 720, result)
+                ?: result.error("NO_ACTIVITY", "Photos can only be picked from the main screen", null)
             "takePhoto" -> photoTaker?.invoke(result)
                 ?: result.error("NO_ACTIVITY", "Photos can only be picked from the main screen", null)
             "getQuickReplies" -> result.success(com.syedarhamraza.dialer.telecom.QuickReplies.read(context))
@@ -203,10 +231,8 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 com.syedarhamraza.dialer.telecom.QuickReplies.write(context, call.argument<List<String>>("replies").orEmpty())
                 result.success(null)
             }
-            "getCallHealth" -> result.success(callHealth())
-            "getLauncherIcon" -> result.success(AppIcons.current(context))
-            "setLauncherIcon" -> inBackground(result) { AppIcons.set(context, call.argument<String>("style")!!) }
-            "isLowEndDevice" -> result.success(isLowEndDevice())
+            "getCallHealth" -> inBackground(result) { callHealth() }
+            "effectsDefault" -> inBackground(result) { effectsDefault() }
             "openSystemSettings" -> openSystemSettings(call.argument<String>("page"), result)
             "getBlocking" -> BlockingPrefs.read(context).let {
                 result.success(mapOf("blockHidden" to it.blockHidden, "blockNonContacts" to it.blockNonContacts))
@@ -226,6 +252,30 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 AppLanguage.set(context, call.argument<String>("tag")!!)
                 result.success(null)
             }
+            "getRecorder" -> inBackground(result) { RecorderCompanion.status(context) }
+            "toggleRecording" -> result.success(RecorderCompanion.toggle(context))
+            // Each of these waits on the companion's process (listing opens every file for its length).
+            "listRecordings" -> inBackground(result) { RecorderCompanion.list(context) }
+            "deleteRecording" -> inBackground(result) { RecorderCompanion.delete(context, call.argument<String>("name")).let { null } }
+            "deleteAllRecordings" -> inBackground(result) { RecorderCompanion.deleteAll(context).let { null } }
+            "starRecording" -> inBackground(result) {
+                RecorderCompanion.star(context, call.argument("name"), call.argument<Boolean>("starred") == true).let { null }
+            }
+            "renameRecording" -> inBackground(result) {
+                RecorderCompanion.rename(context, call.argument("name"), call.argument("title")).let { null }
+            }
+            "exportRecording" -> inBackground(result) {
+                RecorderCompanion.export(context, call.argument("name"), call.argument("displayName"))
+            }
+            "getRecorderSettings" -> inBackground(result) { RecorderCompanion.settings(context) }
+            "setRecorderSetting" -> inBackground(result) {
+                RecorderCompanion.setSetting(context, call.argument("key"), call.argument<Any>("value")).let { null }
+            }
+            "openRecording" -> inBackground(result) { RecorderCompanion.open(context, call.argument<String>("name"), share = false) }
+            "shareRecording" -> inBackground(result) {
+                RecorderCompanion.open(context, call.argument<List<String>>("names")?.joinToString("|"), share = true)
+            }
+            "openRecorderSetup" -> result.success(RecorderCompanion.openSetup(context))
             "getCallSettings" -> result.success(com.syedarhamraza.dialer.telecom.CallPrefs.read(context))
             "setCallSetting" -> {
                 com.syedarhamraza.dialer.telecom.CallPrefs.write(context, call.argument<String>("key")!!, call.argument<Any>("value"))
@@ -250,18 +300,22 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 val number = call.argument<String>("number").orEmpty()
                 val intent = android.content.Intent(android.content.Intent.ACTION_SENDTO, Uri.fromParts("smsto", number, null))
                     .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                call.argument<String>("body")?.let { intent.putExtra("sms_body", it) }
                 runCatching { context.startActivity(intent) }
                     .onSuccess { result.success(null) }
                     .onFailure { result.error("NO_SMS_APP", it.message, null) }
             }
             "playTone" -> {
-                call.argument<String>("digit")?.firstOrNull()?.let(::playTone)
+                // Off the main thread: the settings reads and ToneGenerator are binder calls, and the
+                // main thread is Flutter's UI thread, so they held up the next key press.
+                call.argument<String>("digit")?.firstOrNull()?.let { digit -> tones.execute { playTone(digit) } }
                 result.success(null)
             }
             "stopTone" -> {
-                toneGenerator?.stopTone()
+                tones.execute { toneGenerator?.stopTone() }
                 result.success(null)
             }
+            "handleSpecialCode" -> result.success(handleSpecialCode(call.argument<String>("code")!!))
             "setMuted" -> {
                 CallManager.service?.setMuted(call.argument<Boolean>("muted") == true)
                 result.success(null)
@@ -293,7 +347,6 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
         when (call.method) {
             "answer" -> target.answer(VideoProfile.STATE_AUDIO_ONLY)
             "reject" -> target.reject(false, null)
-            "rejectWithMessage" -> target.reject(true, call.argument<String>("message"))
             "hangUp" -> target.disconnect()
             "hold" -> target.hold()
             "unhold" -> target.unhold()
@@ -302,9 +355,35 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             "merge" -> target.conferenceableCalls.firstOrNull()?.let(target::conference)
                 ?: target.mergeConference()
             "swap" -> target.swapConference()
+            // Telecom is waiting in STATE_SELECT_PHONE_ACCOUNT: a call started outside the app
+            // (another app, a car kit, the missed-call notification) on dual SIM with no default.
+            "selectSim" -> call.argument<String>("simId")?.let(::simHandle)?.let { target.phoneAccountSelected(it, false) }
+                ?: return result.error("NO_SIM", "Unknown SIM", null)
             else -> return result.notImplemented()
         }
         result.success(null)
+    }
+
+    /** Runs on the data channel's background task queue; answers from that thread. */
+    private fun readData(call: MethodCall, result: MethodChannel.Result) {
+        val outcome = runCatching {
+            when (call.method) {
+                "getCallLog" -> {
+                    main.post { watchCallLog() }
+                    CallLogSource.query(context)
+                }
+                "getContacts" -> ContactsSource.query(context)
+                else -> return result.notImplemented()
+            }
+        }
+        outcome.fold(
+            onSuccess = { result.success(it) },
+            onFailure = {
+                android.util.Log.w("CallBridge", "Data read failed", it)
+                if (it is SecurityException) result.error("NO_PERMISSION", it.message, null)
+                else result.error("FAILED", it.message, null)
+            },
+        )
     }
 
     /** Runs [work] off the main thread; a missing call-log permission becomes a NO_PERMISSION error. */
@@ -327,15 +406,72 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
     private fun requestRole(role: String, result: MethodChannel.Result) = roleRequester?.invoke(role, result)
         ?: result.error("NO_ACTIVITY", "Roles can only be requested from the main screen", null)
 
-    /** What incoming calls need to work, plus the app version for Settings › About. */
-    // shortcut: RAM stands in for GPU class (a 4 GB phone reports ~3.7e9 bytes, a 6 GB one ~5.6e9);
-    // measure frame times instead if mid-range phones turn out to lag on full.
-    private fun isLowEndDevice(): Boolean {
+    /**
+     * The visual effects level this phone starts on, with what decided it and the raw chip strings
+     * (logged to Crashlytics). Runs off the main thread: the GPU probe can take a moment.
+     */
+    private fun effectsDefault(): Map<String, Any?> {
         val activities = context.getSystemService(android.app.ActivityManager::class.java)
         val memory = android.app.ActivityManager.MemoryInfo().also(activities::getMemoryInfo)
-        return activities.isLowRamDevice || memory.totalMem < 5_000_000_000L
+        val soc = if (android.os.Build.VERSION.SDK_INT >= 31) {
+            "${android.os.Build.SOC_MANUFACTURER} ${android.os.Build.SOC_MODEL}"
+        } else null
+        val platform = systemProperty("ro.board.platform")
+        val hardware = android.os.Build.HARDWARE
+        var gpu: String? = null
+        val pick = DeviceTier.ram(memory.totalMem, activities.isLowRamDevice)
+            ?: DeviceTier.chip(soc, platform, hardware)
+            ?: DeviceTier.gpu(glRenderer().also { gpu = it })
+            ?: DeviceTier.ramFallback(memory.totalMem)
+        return mapOf(
+            "tier" to pick.tier, "source" to pick.source, "soc" to soc,
+            "platform" to platform, "hardware" to hardware, "gpu" to gpu,
+        )
     }
 
+    private fun systemProperty(key: String): String? = runCatching {
+        Class.forName("android.os.SystemProperties").getMethod("get", String::class.java)
+            .invoke(null, key) as String
+    }.getOrNull()?.takeIf { it.isNotBlank() }
+
+    /** The GL renderer ("Mali-G57 MC2"), probed once per phone and OS build and kept. */
+    private fun glRenderer(): String? = synchronized(CallBridge) {
+        val prefs = context.getSharedPreferences("device_tier", Context.MODE_PRIVATE)
+        val fingerprint = android.os.Build.FINGERPRINT
+        if (prefs.getString("fingerprint", null) == fingerprint) return prefs.getString("gpu", null)
+        val renderer = runCatching { probeRenderer() }.getOrNull()
+        prefs.edit().putString("fingerprint", fingerprint).putString("gpu", renderer).apply()
+        renderer
+    }
+
+    /** A 1×1 offscreen GLES context, just long enough to ask its name. */
+    private fun probeRenderer(): String? {
+        val display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY)
+        if (display == EGL14.EGL_NO_DISPLAY || !EGL14.eglInitialize(display, IntArray(2), 0, IntArray(2), 1)) return null
+        val configs = arrayOfNulls<EGLConfig>(1)
+        val count = IntArray(1)
+        val wanted = intArrayOf(
+            EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT, EGL14.EGL_SURFACE_TYPE, EGL14.EGL_PBUFFER_BIT, EGL14.EGL_NONE,
+        )
+        if (!EGL14.eglChooseConfig(display, wanted, 0, configs, 0, 1, count, 0) || count[0] == 0) return null
+        val config = configs[0]
+        val gl = EGL14.eglCreateContext(
+            display, config, EGL14.EGL_NO_CONTEXT, intArrayOf(EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE), 0,
+        )
+        val surface = EGL14.eglCreatePbufferSurface(display, config, intArrayOf(EGL14.EGL_WIDTH, 1, EGL14.EGL_HEIGHT, 1, EGL14.EGL_NONE), 0)
+        return try {
+            if (gl == EGL14.EGL_NO_CONTEXT || surface == EGL14.EGL_NO_SURFACE) null
+            else if (!EGL14.eglMakeCurrent(display, surface, surface, gl)) null
+            else GLES20.glGetString(GLES20.GL_RENDERER)
+        } finally {
+            EGL14.eglMakeCurrent(display, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT)
+            if (surface != EGL14.EGL_NO_SURFACE) EGL14.eglDestroySurface(display, surface)
+            if (gl != EGL14.EGL_NO_CONTEXT) EGL14.eglDestroyContext(display, gl)
+            // No eglTerminate: the display is shared with Flutter's own GLES renderer in this process.
+        }
+    }
+
+    /** What incoming calls need to work, plus the app version for Settings › About. */
     private fun callHealth(): Map<String, Any?> {
         val notifications = context.getSystemService(android.app.NotificationManager::class.java)
         val roles = context.getSystemService(RoleManager::class.java)
@@ -365,6 +501,9 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             page == "language" && android.os.Build.VERSION.SDK_INT >= 33 ->
                 android.content.Intent(android.provider.Settings.ACTION_APP_LOCALE_SETTINGS, Uri.parse("package:$pkg"))
             page == "language" -> android.content.Intent(android.provider.Settings.ACTION_LOCALE_SETTINGS)
+            page == "deviceInfo" -> android.content.Intent(android.provider.Settings.ACTION_DEVICE_INFO_SETTINGS)
+            // The phone's own flash notification has no public page on vivo or OPPO: open Settings.
+            page == "systemSettings" -> android.content.Intent(android.provider.Settings.ACTION_SETTINGS)
             page == "defaultApps" -> android.content.Intent(android.provider.Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
             // The SIM provider's call settings (forwarding, waiting, caller ID), from the phone service.
             page == "carrier" -> android.content.Intent(android.telecom.TelecomManager.ACTION_SHOW_CALL_SETTINGS)
@@ -421,6 +560,20 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
         return PhoneAccountHandle(component, id.substringAfter('|'))
     }
 
+    /**
+     * `*#*#<digits>#*#*` goes to the app that registered it (Android allows this for the default
+     * dialer); other codes (`*#06#`) to the system's MMI handling. False when nothing took it.
+     */
+    private fun handleSpecialCode(code: String): Boolean = runCatching {
+        val secret = Regex("""^\*#\*#(\d+)#\*#\*$""").find(code)?.groupValues?.get(1)
+        if (secret != null) {
+            context.getSystemService(TelephonyManager::class.java).sendDialerSpecialCode(secret)
+            true
+        } else {
+            context.getSystemService(TelecomManager::class.java).handleMmi(code)
+        }
+    }.onFailure { android.util.Log.w("CallBridge", "Special code not handled", it) }.getOrDefault(false)
+
     /** Keypad tone, only when the system "Dial pad tones" setting is on and the ringer isn't silenced. */
     private fun playTone(digit: Char) {
         val tone = TONES[digit] ?: return
@@ -446,6 +599,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
 
     companion object {
         const val METHOD_CHANNEL = "com.syedarhamraza.dialer/telecom"
+        const val DATA_CHANNEL = "com.syedarhamraza.dialer/data"
         const val EVENT_CHANNEL = "com.syedarhamraza.dialer/call_state"
         private const val TONE_VOLUME = 80
         private const val TONE_LENGTH_MS = 150

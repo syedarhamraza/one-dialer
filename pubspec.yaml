@@ -16,7 +16,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0-beta.7+11
+version: 1.0.0-beta.8+15
 
 environment:
   sdk: ^3.13.4
@@ -39,6 +39,7 @@ dependencies:
   permission_handler: ^13.0.2
   flutter_contacts: ^2.6.0
   shared_preferences: ^2.5.6
+  path_provider: ^2.1.6
   # shortcut: pinned below 2.5.0, whose JNI registrar keeps one "data_store" handler for the whole
   # process: when either engine (main, in-call) detaches it unregisters the other's, and the next
   # read throws "No instance named data_store". Unpin once the plugin registers per engine.
@@ -94,7 +95,6 @@ flutter:
           weight: 700
 
   assets:
-    - assets/app_icons/
     - assets/icons/
     - assets/fonts/Roboto-LICENSE.txt
     # The launcher icon's layers, for the setup page.

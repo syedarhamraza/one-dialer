@@ -22,6 +22,7 @@ The UI is laid out for English lengths; check these on the phone in Italian, esp
 | `soon` ★ | Soon → Presto (badge) |
 | `keypadDeleteHint`, `keypadDigitHint`, `keypadZeroHint` | Screen reader only, length doesn't matter; check wording |
 | `recentsFilterMissed` | Missed → Perse (filter tab) |
+| `deselectAll`, `selectItems` | Deselect all → Deseleziona tutto (selection header pill, beside Annulla) / Select items → Seleziona elementi (selection title) |
 | `keepUsing`, `getOfficialVersion` | Keep using → Continua a usarla / Get the official version → Scarica la versione ufficiale (one-time sideload warning buttons, side by side) |
 | `defaultSaveLocation`, `vibrateAnswerEnd`, `autoAnswer`, `speakerDefault` | Long settings rows |
 
@@ -33,7 +34,6 @@ The UI is laid out for English lengths; check these on the phone in Italian, esp
 | `hang_up` (`values-it`) | "Riaggancia" on the ongoing-call notification. |
 | `callScreenEffectsSubtitle` ★, `effectsFull/Reduced/Off`, `reduceVisualEffects` | ColorOS design names with no AOSP equivalent. |
 | `callScreenEdgeGlow`, `darkModeEdgeGlow`, `edgeGlowClassic/Soft/Bold` | "Bagliore bordi"; Tenue and Intenso for Soft and Bold. ColorOS names with no AOSP equivalent. |
-| `appIcon`, `appIconGlossy`, `appIconClassic` | "Lucida" and "Classica" (feminine, agreeing with icona). |
 | `settingsDialing`, `settingsPersonalisation`, `settingsGeneral`, `displayAndEffects`, `keypadAndRecents` | Settings section and page titles: Composizione, Personalizzazione, Generali, Schermo ed effetti, Tastierino e recenti. |
 | `contactLabel` ★ | Contact field labels; several are gendered (Figlio, Amico) where Android's own Italian uses the masculine. |
 | `contactsMerged` ★ | `=1` means one *group* merged ("Contatti uniti"). |
@@ -45,3 +45,8 @@ The UI is laid out for English lengths; check these on the phone in Italian, esp
 | `changelog` | "Novità" rather than a literal "Registro modifiche". |
 | `glassStyle`, `navBarGlass`, `navGlass*` | Display & effects rows: "Stile vetro"; "Vetro liquido", "Rifrazione completa". |
 | `glassSettings`, `navBarFrosted`, `darkModeEdgeGlow`, `liquidGlassOn`, `liquidScope*`, `navGlassAuto`, `glassExperimentalNote` | Glass & blur page: "Vetro e sfocatura", "Bagliore bordi", "Intensità bagliore", "Vetro liquido su", "Tutto", "Barra e pulsanti", "Solo barra di navigazione", "Automatico", and the experimental note. |
+| `logIncoming/Outgoing/Missed/Rejected/Blocked`, `logRangFor` | Contact page call history: "In entrata", "In uscita", "Persa", "Rifiutata", "Bloccata"; "Persa (ha squillato per 29 s)". |
+| `record`, `stopRecording`, `recordSetUpFirst`, `recordingNow`, `callRecording`, `recorder*`, `recording*`, `recordAllCalls*`, `recordings`, `noRecordings*`, `deleteAllRecordings*` | Call recording (with One Recorder): "Registra", "Registrazione chiamate", the consent notice "Prima di registrare" / "Ho capito". The recorder app's own strings are in `companion/app/src/main/res/values-it/strings.xml`. |
+| `autoRecord*`, `neverRecord*`, `recordTheseContacts`, `volumeBoost*`, `boost*`, `micSource*`, `autoDelete*`, `storage*`, `saveToPhone`, `recordingsSaved`, `deleteRecordings`, `star`, `unstar`, `filterStarred`, `filterUnknown`, `rename*`, `searchRecordings`, `noMatchingRecordings`, `addContact` | Recordings v2: "Registrazione automatica", "Non registrare mai", "Amplificazione volume", "Sorgente microfono", "Eliminazione automatica"; "Speciali" for starred, as Android's Italian contacts. |
+| `*Subtitle` hints (`glassStyle`, `darkModeEdgeGlow`, `liquidGlassOn`, `navBarGlass`, `tapRecentCall`, `callScreenEdgeGlow`, `answerButtons`, `carrierSettings`) | One-line Settings summaries under the row titles; "Leggero" and "Rifrazione completa" must match the `navGlass*` choices. |
+| `callBackground*` | Call screen: "Sfondo chiamata", "Foto del contatto", "Come tutte le chiamate", "Predefinito", "Colore", "Foto", "Scegli foto". |

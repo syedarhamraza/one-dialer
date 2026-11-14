@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Notification and announcement text from the Kotlin layer. The Flutter UI's text is in lib/l10n/app_en.arb. -->
+<resources>
+    <string name="channel_incoming">Incoming calls</string>
+    <string name="channel_incoming_quiet">Incoming calls (quiet)</string>
+    <string name="channel_ongoing">Ongoing calls</string>
+    <string name="channel_missed">Missed calls</string>
+    <string name="unknown">Unknown</string>
+    <string name="conference_call">Conference call</string>
+    <string name="unknown_caller">Unknown caller</string>
+    <string name="announce_calling">%1$s calling</string>
+    <string name="incoming_call">Incoming call</string>
+    <string name="island_incoming">Incoming</string>
+    <string name="decline">Decline</string>
+    <string name="answer">Answer</string>
+    <string name="ongoing_call">Ongoing call</string>
+    <string name="on_hold">On hold</string>
+    <string name="calling_ellipsis">Calling…</string>
+    <string name="island_calling">Calling</string>
+    <string name="island_on_call">On call</string>
+    <string name="hang_up">Hang up</string>
+    <string name="missed_call">Missed call</string>
+    <plurals name="missed_calls">
+        <item quantity="one">%d missed call</item>
+        <item quantity="other">%d missed calls</item>
+    </plurals>
+    <string name="missed_latest">Latest: %1$s</string>
+    <string name="call_back">Call back</string>
+    <string name="message">Message</string>
+    <!-- Android's default quick responses (Settings › Quick decline messages until edited). -->
+    <string-array name="quick_replies">
+        <item>Can\'t talk now. What\'s up?</item>
+        <item>I\'ll call you right back.</item>
+        <item>I\'ll call you later.</item>
+        <item>Can\'t talk now. Call me later?</item>
+    </string-array>
+</resources>

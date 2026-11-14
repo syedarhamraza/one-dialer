@@ -49,6 +49,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get deselectAll => 'Deseleziona tutto';
 
   @override
+  String get selectItems => 'Seleziona elementi';
+
+  @override
   String get search => 'Cerca';
 
   @override
@@ -792,7 +795,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get saveAnyway => 'Salva comunque';
 
   @override
-  String get saveOrDiscard => 'Salvare le modifiche o ignorarle?';
+  String get saveOrDiscard => 'Salvare le modifiche?';
 
   @override
   String get couldNotLoadContactRetry =>
@@ -821,6 +824,9 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get newContact => 'Nuovo contatto';
+
+  @override
+  String get addToExistingContact => 'Aggiungi a contatto esistente';
 
   @override
   String get editContact => 'Modifica contatto';
@@ -994,7 +1000,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get editNote => 'Modifica nota';
 
   @override
-  String get videoCall => 'Videochiamata';
+  String get videoCall => 'Videochiamata (Meet)';
+
+  @override
+  String get switchToVideoCall => 'Passa a videochiamata';
 
   @override
   String get mute => 'Muto';
@@ -1077,10 +1086,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get switchCall => 'Passa';
 
   @override
-  String get declineWithSms => 'Rifiuta con SMS';
-
-  @override
-  String get noQuickReplies => 'Nessuna risposta rapida salvata';
+  String get declineWithSms => 'Rispondi con SMS';
 
   @override
   String get answer => 'Rispondi';
@@ -1143,6 +1149,27 @@ class AppLocalizationsIt extends AppLocalizations {
       'Pronuncia il nome di chi chiama mentre squilla';
 
   @override
+  String get flashOnCall => 'Notifica con flash';
+
+  @override
+  String get flashOnCallSubtitle =>
+      'Fa lampeggiare il flash mentre arriva una chiamata';
+
+  @override
+  String get systemFlash => 'Il telefono ha già una notifica con flash';
+
+  @override
+  String get systemFlashSubtitle =>
+      'Disattivane una, altrimenti lampeggeranno entrambe. La trovi in Impostazioni, sotto Notifiche o Accessibilità';
+
+  @override
+  String get liveUpdateCapsule => 'Capsula Live Update (Sperimentale)';
+
+  @override
+  String get liveUpdateCapsuleSubtitle =>
+      'Android 16: mostra la chiamata in corso nel chip della barra di stato e nella capsula su ColorOS, OxygenOS e realme UI';
+
+  @override
   String get swipeUpToAnswer => 'Scorri verso l\'alto per rispondere';
 
   @override
@@ -1166,6 +1193,20 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get callScreenEffectsSubtitle =>
       'Vetro e bagliore nella schermata di chiamata';
+
+  @override
+  String get callScreenAnimations => 'Animazioni schermata di chiamata';
+
+  @override
+  String get callScreenAnimationsSubtitle =>
+      'Movimento quando la schermata di chiamata si apre, risponde e cambia';
+
+  @override
+  String get hideContactNumbers => 'Nascondi i numeri dei contatti';
+
+  @override
+  String get hideContactNumbersSubtitle =>
+      'Mostra solo il nome dei contatti salvati nella schermata di chiamata e in Chiamate';
 
   @override
   String secondsCount(int count) {
@@ -1317,21 +1358,29 @@ class AppLocalizationsIt extends AppLocalizations {
   String get reduceVisualEffects => 'Riduci effetti visivi';
 
   @override
+  String get displaySize => 'Dimensioni schermo';
+
+  @override
+  String get displaySizeSmall => 'Piccole';
+
+  @override
+  String get displaySizeDefault => 'Predefinite';
+
+  @override
+  String get displaySizeLarge => 'Grandi';
+
+  @override
+  String get displaySizeLarger => 'Più grandi';
+
+  @override
+  String get displaySizeApp => 'App';
+
+  @override
+  String get displaySizeNavBar => 'Barra di navigazione';
+
+  @override
   String get reduceVisualEffectsSubtitle =>
       'Meno sfocatura, più fluidità sui telefoni lenti';
-
-  @override
-  String get appIcon => 'Icona dell\'app';
-
-  @override
-  String get appIconGlossy => 'Lucida';
-
-  @override
-  String get appIconClassic => 'Classica';
-
-  @override
-  String get appIconFootnote =>
-      'Cambia sia l\'icona di Telefono sia quella di Contatti. Il launcher può impiegare qualche secondo e le icone nella schermata Home potrebbero dover essere aggiunte di nuovo dal cassetto delle app.';
 
   @override
   String get callScreenEdgeGlow => 'Bagliore bordi nella chiamata';
@@ -1516,6 +1565,18 @@ class AppLocalizationsIt extends AppLocalizations {
   String get reportIdCopied => 'ID segnalazione copiato';
 
   @override
+  String get editSpeedDial => 'Modifica chiamata rapida';
+
+  @override
+  String get clearNumber => 'Cancella numero';
+
+  @override
+  String get changeNumber => 'Cambia numero';
+
+  @override
+  String get numberCopied => 'Numero copiato';
+
+  @override
   String get noEmailApp => 'Nessuna app email trovata';
 
   @override
@@ -1618,26 +1679,353 @@ class AppLocalizationsIt extends AppLocalizations {
   String get autoUpdateAlways => 'Con Wi-Fi o dati mobili';
 
   @override
-  String get settingsCalls => 'Chiamate';
-
-  @override
-  String get settingsDialing => 'Composizione';
-
-  @override
-  String get settingsSpamBlocking => 'Spam e blocco';
-
-  @override
-  String get settingsPersonalisation => 'Personalizzazione';
-
-  @override
-  String get settingsGeneral => 'Generali';
-
-  @override
-  String get settingsAbout => 'Informazioni';
-
-  @override
   String get displayAndEffects => 'Schermo ed effetti';
 
   @override
   String get keypadAndRecents => 'Tastierino e recenti';
+
+  @override
+  String get logIncoming => 'In entrata';
+
+  @override
+  String get logOutgoing => 'In uscita';
+
+  @override
+  String get logMissed => 'Persa';
+
+  @override
+  String get logRejected => 'Rifiutata';
+
+  @override
+  String get logBlocked => 'Bloccata';
+
+  @override
+  String logRangFor(String type, String duration) {
+    return '$type (ha squillato per $duration)';
+  }
+
+  @override
+  String get record => 'Registra';
+
+  @override
+  String get stopRecording => 'Interrompi registrazione';
+
+  @override
+  String get recordSetUpFirst => 'Registra (configura in Impostazioni)';
+
+  @override
+  String get recordingNow => 'Registrazione in corso';
+
+  @override
+  String get callRecording => 'Registrazione chiamate';
+
+  @override
+  String get recorderApp => 'One Recorder';
+
+  @override
+  String get recorderReady => 'Pronto per registrare';
+
+  @override
+  String get recorderNeedsMic => 'Consenti il microfono in One Recorder';
+
+  @override
+  String get recorderNeedsAccessibility =>
+      'Attiva il suo servizio di accessibilità';
+
+  @override
+  String get recorderUntrusted =>
+      'Il registratore funziona solo con One Dialer da Google Play. Installalo da Play o aggiorna entrambe le app.';
+
+  @override
+  String get recordingConsentTitle => 'Prima di registrare';
+
+  @override
+  String get recordingConsentBody =>
+      'Le leggi sulla registrazione variano da paese a paese e alcune richiedono il consenso di tutti i partecipanti alla chiamata. Sei responsabile di informare l\'altra persona e di ottenere il suo consenso. Le registrazioni restano su questo telefono e non vengono mai caricate.';
+
+  @override
+  String get recordingConsentAccept => 'Ho capito';
+
+  @override
+  String get recordings => 'Registrazioni';
+
+  @override
+  String get noRecordings => 'Ancora nessuna registrazione';
+
+  @override
+  String get noRecordingsSubtitle =>
+      'Durante una chiamata tocca ⋮ › Registra nella schermata di chiamata';
+
+  @override
+  String get deleteAllRecordings => 'Elimina tutte le registrazioni';
+
+  @override
+  String get deleteAllRecordingsTitle => 'Eliminare tutte le registrazioni?';
+
+  @override
+  String get deleteAllRecordingsMessage => 'Non potranno essere recuperate.';
+
+  @override
+  String get recordingNotSetUp => 'Le chiamate non vengono registrate';
+
+  @override
+  String get recordingNotSetUpSubtitle =>
+      'La registrazione automatica è attiva, ma One Recorder non è configurato';
+
+  @override
+  String get rename => 'Rinomina';
+
+  @override
+  String get star => 'Aggiungi a speciali';
+
+  @override
+  String get unstar => 'Rimuovi da speciali';
+
+  @override
+  String get filterStarred => 'Speciali';
+
+  @override
+  String get filterUnknown => 'Sconosciuti';
+
+  @override
+  String get saveToPhone => 'Salva sul telefono';
+
+  @override
+  String get searchRecordings => 'Cerca registrazioni';
+
+  @override
+  String get renameRecording => 'Rinomina registrazione';
+
+  @override
+  String recordingsSaved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count registrazioni salvate in Recordings/One Dialer',
+      one: 'Salvata in Recordings/One Dialer',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recordingSaveFailed => 'Impossibile salvare sul telefono';
+
+  @override
+  String deleteRecordings(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Eliminare $count registrazioni?',
+      one: 'Eliminare questa registrazione?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get noMatchingRecordings => 'Nessuna registrazione corrispondente';
+
+  @override
+  String get addContact => 'Aggiungi contatto';
+
+  @override
+  String get autoRecord => 'Registrazione automatica';
+
+  @override
+  String get autoRecordOff => 'Disattivata';
+
+  @override
+  String get autoRecordAll => 'Tutte le chiamate';
+
+  @override
+  String get autoRecordUnknown => 'Numeri sconosciuti';
+
+  @override
+  String get autoRecordContacts => 'Contatti selezionati';
+
+  @override
+  String get recordTheseContacts => 'Contatti da registrare';
+
+  @override
+  String get neverRecord => 'Non registrare mai';
+
+  @override
+  String get neverRecordSubtitle =>
+      'Contatti sempre esclusi dalla registrazione automatica';
+
+  @override
+  String get recordingSound => 'Audio';
+
+  @override
+  String get volumeBoost => 'Amplificazione volume';
+
+  @override
+  String get volumeBoostSubtitle =>
+      'Alza la voce dell\'altra persona, che il microfono sente appena';
+
+  @override
+  String get boostOff => 'Disattivata';
+
+  @override
+  String get boostNormal => 'Normale';
+
+  @override
+  String get boostStrong => 'Forte';
+
+  @override
+  String get micSource => 'Sorgente microfono';
+
+  @override
+  String get micSourceSubtitle =>
+      'Automatica prova ciascuna alla prima chiamata e tiene la più forte';
+
+  @override
+  String get micSourceAuto => 'Automatica';
+
+  @override
+  String get micSourceRecognition => 'Riconoscimento vocale';
+
+  @override
+  String get micSourceCommunication => 'Comunicazione vocale';
+
+  @override
+  String get micSourceMic => 'Microfono';
+
+  @override
+  String get storage => 'Spazio';
+
+  @override
+  String get storageUsed => 'Spazio occupato';
+
+  @override
+  String get autoDelete => 'Eliminazione automatica';
+
+  @override
+  String get autoDeleteSubtitle =>
+      'Le registrazioni speciali vengono sempre conservate';
+
+  @override
+  String get autoDeleteNever => 'Mai';
+
+  @override
+  String autoDeleteDays(int days) {
+    return 'Dopo $days giorni';
+  }
+
+  @override
+  String get imeiTitle => 'IMEI';
+
+  @override
+  String get imeiUnavailable =>
+      'Android non consente alle app di mostrare l\'IMEI. Puoi trovarlo nelle impostazioni del telefono, in Info sul telefono.';
+
+  @override
+  String get aboutPhone => 'Info sul telefono';
+
+  @override
+  String get glassStyleSubtitle =>
+      'Il vetro liquido piega ciò che sta dietro, ma consuma di più';
+
+  @override
+  String get darkModeEdgeGlowSubtitle =>
+      'Quanto brillano i bordi del vetro in modalità scura';
+
+  @override
+  String get liquidGlassOnSubtitle =>
+      'Quali parti dell\'app usano il vetro liquido';
+
+  @override
+  String get navBarGlassSubtitle =>
+      'Rifrazione completa è più bella; Leggero è più fluido sui telefoni lenti';
+
+  @override
+  String get tapRecentCallSubtitle =>
+      'Cosa succede quando tocchi una chiamata in Chiamate';
+
+  @override
+  String get callScreenEdgeGlowSubtitle =>
+      'Quanto brillano i bordi di vetro dei pulsanti di chiamata';
+
+  @override
+  String get answerButtonsSubtitle =>
+      'Come rispondi e l\'aspetto della schermata di chiamata';
+
+  @override
+  String get carrierSettingsSubtitle =>
+      'Trasferimento, avviso di chiamata e ID chiamante';
+
+  @override
+  String get callBackground => 'Sfondo chiamata';
+
+  @override
+  String get callBackgroundAllSubtitle =>
+      'Per ogni chiamata, salvo i contatti che ne hanno uno proprio';
+
+  @override
+  String get callBackgroundDefault => 'Predefinito';
+
+  @override
+  String get callBackgroundColour => 'Colore';
+
+  @override
+  String get callBackgroundPhoto => 'Foto';
+
+  @override
+  String get callBackgroundChoosePhoto => 'Scegli foto';
+
+  @override
+  String get callBackgroundContactPhoto => 'Foto del contatto';
+
+  @override
+  String get callBackgroundContactPhotoSubtitle =>
+      'Android salva le foto dei contatti piccole; scegli una foto per una più nitida';
+
+  @override
+  String get callBackgroundSameAsAll => 'Come tutte le chiamate';
+
+  @override
+  String get callBackgroundAllNote =>
+      'Un contatto con un proprio sfondo, impostato nella sua scheda, usa quello.';
+
+  @override
+  String get callBackgroundContactNote =>
+      'Usato per questo contatto al posto dello sfondo per tutte le chiamate.';
+
+  @override
+  String get exportSettings => 'Esporta impostazioni';
+
+  @override
+  String get exportSettingsSubtitle =>
+      'Salva impostazioni, note e sfondi delle chiamate in un file';
+
+  @override
+  String get importSettings => 'Importa impostazioni';
+
+  @override
+  String get importSettingsSubtitle => 'Ripristinale da un file esportato';
+
+  @override
+  String get importSettingsTitle => 'Sostituire le impostazioni?';
+
+  @override
+  String get importSettingsMessage =>
+      'Impostazioni, chiamata rapida, note e sfondi delle chiamate vengono sostituiti da quelli del file. Poi One Dialer si riavvia.';
+
+  @override
+  String get importSettingsInCall =>
+      'Non puoi importare le impostazioni durante una chiamata';
+
+  @override
+  String get settingsExported => 'Impostazioni esportate';
+
+  @override
+  String get couldNotSaveSettings => 'Impossibile salvare il file';
+
+  @override
+  String get notASettingsFile =>
+      'Questo non è un file di impostazioni di One Dialer';
+
+  @override
+  String endHeldCall(String name) {
+    return 'Termina la chiamata con $name';
+  }
 }

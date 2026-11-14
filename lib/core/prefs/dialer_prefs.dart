@@ -1,7 +1,11 @@
+import 'dart:async';
+
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../features/recents/call_log.dart' show numberKey;
+import '../crash_reporting.dart' show crashReportingStarted;
 import '../telecom/telecom_bridge.dart';
 
 /// Small app settings: speed dial slots and per-contact default SIM.
@@ -122,6 +126,19 @@ class DialerPrefs {
     changes.value++;
   }
 
+  /// The call screen background for a contact id, or `all` for every call: `color:<argb hex>`,
+  /// `photo:<file name>` or `contact:` (see `CallBackground`); null is the default.
+  Future<String?> callBackground(String scope) => _prefs.getString('call_bg_$scope');
+
+  Future<void> setCallBackground(String scope, String? value) async {
+    if (value == null) {
+      await _prefs.remove('call_bg_$scope');
+    } else {
+      await _prefs.setString('call_bg_$scope', value);
+    }
+    changes.value++;
+  }
+
   /// Settings › "Tap a recent call": `details` (open its page), `dial` (write the number
   /// in the keypad) or `sim` (dual SIM only: pick a SIM and call). Notifiers so rows read
   /// it synchronously; [loadChoices] fills them at startup.
@@ -181,30 +198,77 @@ class DialerPrefs {
   final navStyle = ValueNotifier('frosted');
 
   /// Settings › "Glass effect", for `liquid` glass: `premium`, `standard` or `auto` (the glass
-  /// package picks per phone; see `LiquidQualityScope`).
-  final navGlass = ValueNotifier('premium');
+  /// package picks per phone; see `LiquidQualityScope`). Automatic by default: premium at 120 Hz
+  /// out-rastered a Snapdragon 7+ Gen 3's frame budget.
+  final navGlass = ValueNotifier('auto');
 
   /// Settings › Glass › "Liquid glass on", for `liquid` glass: `all`, `controls` (the nav bar and
   /// buttons; menus and modals stay frosted) or `navbar` (the nav bar only).
   final liquidScope = ValueNotifier('all');
 
+  /// Settings › Display & effects › Display size, each one of [displaySizes] (loaded with
+  /// [loadAppearance], in the main engine only: the call screen keeps its own size): the pages,
+  /// multiplying `DesignWidth`'s scale (the top buttons keep their size, see `headerScale`); the
+  /// nav bar (`navBarScale`).
+  final displaySize = ValueNotifier(1.0);
+  final navBarSize = ValueNotifier(1.0);
+  static const displaySizes = [0.9, 1.0, 1.1, 1.2];
+
+  late final _sizeKeys = {displaySize: 'display_size', navBarSize: 'nav_bar_size'};
+
+  void _loadDisplaySize(Map<String, Object?> saved) {
+    for (final MapEntry(key: notifier, value: key) in _sizeKeys.entries) {
+      final size = (saved[key] as num?)?.toDouble();
+      // A test build's Largest (1.3) comes back as the top step, Larger.
+      if (size != null && size > displaySizes.last) notifier.value = displaySizes.last;
+      if (displaySizes.contains(size)) notifier.value = size!;
+    }
+  }
+
+  Future<void> setSize(ValueNotifier<double> notifier, double value) async {
+    notifier.value = value;
+    await _prefs.setDouble(_sizeKeys[notifier]!, value);
+  }
+
   /// Awaited before the first frame, so the app doesn't open dark and then turn light, or
   /// frosted and then flat.
   Future<void> loadAppearance() async {
-    final mode = await _prefs.getString('theme_mode');
+    // One read for every key: each separate read is a platform round trip before the first frame.
+    final saved = await _prefs.getAll(
+      allowList: {
+        ..._sizeKeys.values,
+        'theme_mode',
+        'visual_effects',
+        'glass_dark',
+        'nav_style',
+        'nav_glass',
+        'liquid_scope',
+      },
+    );
+    _loadDisplaySize(saved);
+    String? read(String key) => switch (saved[key]) {
+      final String value => value,
+      _ => null,
+    };
+    final mode = read('theme_mode');
     if (mode == 'system' || mode == 'light' || mode == 'dark') themeMode.value = mode!;
-    final effects = await _prefs.getString('visual_effects');
+    final effects = read('visual_effects');
+    effectsSaved = effects != null;
     if (effects == null) visualEffects.value = await _effectsDefault();
     if (effects == 'full' || effects == 'reduced' || effects == 'off') visualEffects.value = effects!;
-    final dark = await _prefs.getString('glass_dark');
+    final dark = read('glass_dark');
     if (dark == 'classic' || dark == 'soft' || dark == 'bold') glassDark.value = dark!;
-    final nav = await _prefs.getString('nav_style');
+    final nav = read('nav_style');
     if (nav == 'frosted' || nav == 'liquid') navStyle.value = nav!;
-    final navEffect = await _prefs.getString('nav_glass');
+    final navEffect = read('nav_glass');
     if (navEffect == 'premium' || navEffect == 'standard' || navEffect == 'auto') navGlass.value = navEffect!;
-    final scope = await _prefs.getString('liquid_scope');
+    final scope = read('liquid_scope');
     if (scope == 'all' || scope == 'controls' || scope == 'navbar') liquidScope.value = scope!;
   }
+
+  /// Whether the user ever picked a [visualEffects] level; until then it's the phone's default,
+  /// which `OneUIEffectsController.stepDown` may lower for the session.
+  bool effectsSaved = false;
 
   /// Settings › Language: `system` or a language tag. Kept natively (`AppLanguage.kt`), where
   /// Android 13+ keeps its own per-app language, so it's read again on every resume.
@@ -223,11 +287,34 @@ class DialerPrefs {
   }
 
   /// The level until the user picks one: never saved, so a later cutoff still reaches them.
+  /// Off on budget chips, reduced on midrange, full above (`DeviceTier.kt`), until a level is saved.
   Future<String> _effectsDefault() async {
+    final Map<String, Object?> pick;
     try {
-      return await TelecomBridge.instance.isLowEndDevice() ? 'reduced' : 'full';
+      pick = await TelecomBridge.instance.effectsDefault();
     } catch (_) {
       return 'full';
+    }
+    final tier = pick['tier'];
+    final level = tier == 'off' || tier == 'reduced' || tier == 'full' ? tier as String : 'full';
+    unawaited(_logDevice(pick, level));
+    return level;
+  }
+
+  /// Every crash and lag report then shows the chip and the level it was given. Not awaited, so
+  /// it never holds up the first frame.
+  Future<void> _logDevice(Map<String, Object?> pick, String level) async {
+    try {
+      // Firebase starts unawaited, alongside the first frame.
+      await crashReportingStarted;
+      final crashlytics = FirebaseCrashlytics.instance;
+      for (final key in ['soc', 'platform', 'hardware', 'gpu']) {
+        await crashlytics.setCustomKey('device_$key', '${pick[key] ?? ''}');
+      }
+      await crashlytics.setCustomKey('effects_default', level);
+      await crashlytics.setCustomKey('effects_source', '${pick['source'] ?? ''}');
+    } catch (_) {
+      // Firebase isn't set up (tests, builds without google-services.json).
     }
   }
 
@@ -246,7 +333,27 @@ class DialerPrefs {
   /// Settings › Answer buttons › Answer call, with 1 button: swipe `up` or `down` to answer.
   final answerDirection = ValueNotifier('up');
 
+  /// Settings › "Call screen animations" (on by default). Off stills the whole call screen,
+  /// as Android's "Remove animations" does. Loaded with [callEffects].
+  final callAnimations = ValueNotifier(true);
+
+  /// Settings › "Hide contact phone numbers": a saved caller shows only their name on the
+  /// call screen and in Calls. Loaded with [callEffects].
+  final hideContactNumbers = ValueNotifier(false);
+
+  Future<void> setCallAnimations(bool value) async {
+    callAnimations.value = value;
+    await _prefs.setBool('call_animations', value);
+  }
+
+  Future<void> setHideContactNumbers(bool value) async {
+    hideContactNumbers.value = value;
+    await _prefs.setBool('hide_contact_numbers', value);
+  }
+
   Future<void> loadCallEffects() async {
+    callAnimations.value = await _prefs.getBool('call_animations') ?? true;
+    hideContactNumbers.value = await _prefs.getBool('hide_contact_numbers') ?? false;
     final effects = await _prefs.getString('call_effects');
     if (effects == null) callEffects.value = await _effectsDefault();
     if (effects == 'full' || effects == 'reduced' || effects == 'off') callEffects.value = effects!;
@@ -279,6 +386,7 @@ class DialerPrefs {
   }
 
   Future<void> setVisualEffects(String value) async {
+    effectsSaved = true;
     visualEffects.value = value;
     await _prefs.setString('visual_effects', value);
   }

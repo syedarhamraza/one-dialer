@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/cupertino.dart' show CupertinoIcons;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter/services.dart';
@@ -24,6 +26,7 @@ import '../../../widgets/press_glow.dart';
 import 'contact_form.dart';
 import 'editor_widgets.dart';
 import '../../../l10n/l10n.dart';
+import '../../../app/layout.dart';
 
 /// Opens the editor: a new contact (optionally with [number] and [name], as another app's
 /// "add contact" sends) or [contactId] (optionally adding [number] to it). Returns the saved contact's id, or null if cancelled. With
@@ -291,7 +294,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
       }
       if (_active) _close(id);
     } on PlatformException catch (e) {
-      debugPrint('Saving the contact failed: ${e.code} ${e.message}');
+      if (kDebugMode) debugPrint('Saving the contact failed: ${e.code} ${e.message}');
       if (!mounted || _closing) return;
       setState(() => _saving = false);
       OneUIToast.show(
@@ -350,17 +353,18 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
     return choice == true && _active;
   }
 
-  /// "Save your changes or discard them?" on back with unsaved changes.
+  /// "Save your edits?" on back with unsaved changes.
   Future<void> _confirmLeave() async {
     _confirming = true;
     final choice = await showCosActions<String?>(
       context,
-      message: context.l10n.saveOrDiscard,
+      title: context.l10n.saveOrDiscard,
+      // Back or a tap outside keeps editing. Saving needs the form loaded; until then Discard | Cancel.
       actions: [
-        // Saving needs the form loaded; until then only Discard and Cancel make sense.
-        if (_loadReady.value) (label: context.l10n.save, value: 'save', destructive: false),
-        (label: context.l10n.discard, value: 'discard', destructive: true),
-        (label: context.l10n.cancel, value: null, destructive: false),
+        (label: context.l10n.discard, value: 'discard', destructive: false),
+        _loadReady.value
+            ? (label: context.l10n.save, value: 'save', destructive: false)
+            : (label: context.l10n.cancel, value: null, destructive: false),
       ],
     );
     _confirming = false;
@@ -404,7 +408,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                         _ringtoneCard(),
                         _groupsCard(form),
                         _listCard(
-                          icon: Icons.mail_outline_rounded,
+                          icon: CupertinoIcons.mail,
                           title: context.l10n.email,
                           addLabel: context.l10n.addEmail,
                           rows: form.emails,
@@ -417,7 +421,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                           _workCard(form),
                           _datesCard(form),
                           _listCard(
-                            icon: Icons.language_rounded,
+                            icon: CupertinoIcons.globe,
                             title: context.l10n.website,
                             addLabel: context.l10n.addWebsite,
                             rows: form.websites,
@@ -426,7 +430,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                             newLabel: 'homepage',
                           ),
                           _listCard(
-                            icon: Icons.diversity_3_outlined,
+                            icon: CupertinoIcons.person_2,
                             title: context.l10n.relationships,
                             addLabel: context.l10n.addRelationship,
                             rows: form.relations,
@@ -437,7 +441,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                           EditorCard(
                             children: [
                               EditorRow(
-                                icon: Icons.sticky_note_2_outlined,
+                                icon: CupertinoIcons.doc_text,
                                 child: EditorField(
                                   hint: context.l10n.notes,
                                   value: form.notes,
@@ -455,7 +459,12 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                           child: TextButton.icon(
                             onPressed: () => setState(() => _more = !_more),
                             iconAlignment: IconAlignment.end,
-                            icon: Icon(_more ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded),
+                            icon: AnimatedRotation(
+                              turns: _more ? 0.5 : 0,
+                              duration: const Duration(milliseconds: 250),
+                              curve: Curves.easeInOut,
+                              child: const Icon(CupertinoIcons.chevron_down, size: 18),
+                            ),
                             label: Text(
                               _more ? context.l10n.showLess : context.l10n.showMore,
                               style: const TextStyle(fontSize: 17),
@@ -479,43 +488,42 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
 
   // --- Header --------------------------------------------------------------
 
-  /// ColorOS's top bar: Cancel | title | Done, as call-glass pills tinted red and green
-  /// (a wash through the glass, white text); a disabled Done is plain glass.
+  /// ColorOS's top bar: Cancel | title | Done, as plain call-glass pills; a disabled Done is dimmed.
   Widget _header({required bool canSave}) {
-    Widget pill(String label, VoidCallback? onPressed, Color tint) => CallGlass(
+    Widget pill(String label, VoidCallback? onPressed) => CallGlass(
       radius: 24,
-      child: DecoratedBox(
-        decoration: ShapeDecoration(
-          color: onPressed == null ? null : tint.withValues(alpha: .28),
+      child: TextButton(
+        onPressed: onPressed,
+        style: TextButton.styleFrom(
+          foregroundColor: context.palette.textPrimary,
+          disabledForegroundColor: context.palette.textTertiary,
+          minimumSize: const Size(0, 48),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           shape: const StadiumBorder(),
         ),
-        child: TextButton(
-          onPressed: onPressed,
-          style: TextButton.styleFrom(
-            foregroundColor: context.palette.textPrimary,
-            disabledForegroundColor: context.palette.textTertiary,
-            minimumSize: const Size(0, 48),
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            shape: const StadiumBorder(),
-          ),
-          child: Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-        ),
+        child: Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
       ),
     );
 
     return Padding(
       padding: EdgeInsets.fromLTRB(16, MediaQuery.paddingOf(context).top + 8, 16, 8),
+      // Laid out at the top buttons size, then drawn at it.
       child: SizedBox(
-        height: 48,
-        child: NavigationToolbar(
-          leading: pill(context.l10n.cancel, _requestLeave, OneUITheme.accentRed),
-          middle: Text(
-            _isNew ? context.l10n.newContact : context.l10n.editContact,
-            style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
+        height: 48 * headerScale(context),
+        child: HeaderScaled(
+          child: SizedBox(
+            height: 48,
+            child: NavigationToolbar(
+              leading: pill(context.l10n.cancel, _requestLeave),
+              middle: Text(
+                _isNew ? context.l10n.newContact : context.l10n.editContact,
+                style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
+              ),
+              trailing: pill(context.l10n.done, canSave ? _save : null),
+              middleSpacing: 12,
+            ),
           ),
-          trailing: pill(context.l10n.done, canSave ? _save : null, OneUITheme.accentGreen),
-          middleSpacing: 12,
         ),
       ),
     );
@@ -673,9 +681,9 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
                 Expanded(
                   child: Material(
                     color: context.palette.cardHighlight,
-                    borderRadius: BorderRadius.circular(20),
+                    shape: SquircleBorder(borderRadius: BorderRadius.circular(20)),
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(20),
+                      customBorder: SquircleBorder(borderRadius: BorderRadius.circular(20)),
                       onTap: () => Navigator.pop(ctx, value),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 18),
@@ -697,9 +705,9 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
             const SizedBox(height: 12),
             Material(
               color: context.palette.cardHighlight,
-              borderRadius: BorderRadius.circular(20),
+              shape: SquircleBorder(borderRadius: BorderRadius.circular(20)),
               child: InkWell(
-                borderRadius: BorderRadius.circular(20),
+                customBorder: SquircleBorder(borderRadius: BorderRadius.circular(20)),
                 onTap: () => Navigator.pop(ctx, 'delete'),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
@@ -746,13 +754,13 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
     return EditorCard(
       children: [
         InkWell(
-          borderRadius: OneUITheme.cardBorderRadius,
+          customBorder: OneUITheme.cardShape,
           onTap: () async {
             final picked = await TelecomBridge.instance.pickRingtone(_ringtone.isEmpty ? null : _ringtone);
             if (picked != null && _active) setState(() => _ringtone = picked);
           },
           child: EditorRow(
-            icon: Icons.notifications_none_rounded,
+            icon: CupertinoIcons.bell,
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Text(
@@ -822,11 +830,16 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
       EditorCard(
         children: [
           EditorRow(
-            icon: Icons.person_outline_rounded,
+            icon: CupertinoIcons.person,
             trailing: IconButton(
               tooltip: _nameExpanded ? context.l10n.fewerNameFields : context.l10n.moreNameFields,
               onPressed: () => setState(() => _nameExpanded = !_nameExpanded),
-              icon: Icon(_nameExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded, size: 30),
+              icon: AnimatedRotation(
+                turns: _nameExpanded ? 0.5 : 0,
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+                child: const Icon(CupertinoIcons.chevron_down, size: 22),
+              ),
             ),
             child: _nameExpanded
                 ? Column(
@@ -870,7 +883,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
           for (final (i, phone) in form.phones.indexed)
             EditorRow(
               key: ObjectKey(phone),
-              icon: i == 0 ? Icons.call_outlined : null,
+              icon: i == 0 ? CupertinoIcons.phone : null,
               trailing: phone.value.trim().isEmpty && i == form.phones.length - 1
                   ? null
                   : RemoveButton(onPressed: () => setState(() => form.phones.remove(phone))),
@@ -905,13 +918,13 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
       children: [
         if (!_workOpen)
           PlaceholderRow(
-            icon: Icons.work_outline_rounded,
+            icon: CupertinoIcons.briefcase,
             label: context.l10n.workInfo,
             onTap: () => setState(() => _workOpen = true),
           )
         else
           EditorRow(
-            icon: Icons.work_outline_rounded,
+            icon: CupertinoIcons.briefcase,
             child: Column(
               children: [
                 EditorField(
@@ -1007,7 +1020,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
       return EditorCard(
         children: [
           PlaceholderRow(
-            icon: Icons.location_on_outlined,
+            icon: CupertinoIcons.location,
             label: context.l10n.address,
             onTap: () => setState(() => form.addresses.add(AddressValue())),
           ),
@@ -1019,7 +1032,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
         for (final (i, a) in form.addresses.indexed)
           EditorRow(
             key: ObjectKey(a),
-            icon: i == 0 ? Icons.location_on_outlined : null,
+            icon: i == 0 ? CupertinoIcons.location : null,
             trailing: RemoveButton(onPressed: () => setState(() => form.addresses.remove(a))),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1133,7 +1146,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
     if (form.dates.isEmpty) {
       return EditorCard(
         children: [
-          PlaceholderRow(icon: Icons.event_note_outlined, label: context.l10n.importantDates, onTap: () => pick(null)),
+          PlaceholderRow(icon: CupertinoIcons.calendar, label: context.l10n.importantDates, onTap: () => pick(null)),
         ],
       );
     }
@@ -1142,7 +1155,7 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
         for (final (i, d) in form.dates.indexed)
           EditorRow(
             key: ObjectKey(d),
-            icon: i == 0 ? Icons.event_note_outlined : null,
+            icon: i == 0 ? CupertinoIcons.calendar : null,
             trailing: RemoveButton(onPressed: () => setState(() => form.dates.remove(d))),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1173,10 +1186,10 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
     return EditorCard(
       children: [
         InkWell(
-          borderRadius: OneUITheme.cardBorderRadius,
+          customBorder: OneUITheme.cardShape,
           onTap: _groups.isEmpty ? null : () => _chooseGroups(form),
           child: EditorRow(
-            icon: Icons.group_outlined,
+            icon: CupertinoIcons.person_3,
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Text(

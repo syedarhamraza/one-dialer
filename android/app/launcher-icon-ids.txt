@@ -1,0 +1,1 @@
+com.syedarhamraza.onedialer:mipmap/ic_launcher = 0x7f0d0107

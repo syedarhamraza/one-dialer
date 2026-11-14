@@ -23,11 +23,18 @@ void main() {
     final bridge = TelecomBridge.instance;
     await bridge.hangUp('call-1');
     await bridge.answer('call-1');
-    await bridge.rejectWithMessage('call-1', 'Busy');
+    await bridge.reject('call-1');
     await bridge.playDtmf('call-1', '5');
-    expect(calls.map((c) => c.method), ['hangUp', 'answer', 'rejectWithMessage', 'playDtmf']);
-    expect(calls[2].arguments, {'id': 'call-1', 'message': 'Busy'});
+    expect(calls.map((c) => c.method), ['hangUp', 'answer', 'reject', 'playDtmf']);
+    expect(calls[2].arguments, {'id': 'call-1'});
     expect(calls[3].arguments, {'id': 'call-1', 'digit': '5'});
+  });
+
+  test('a SIM choice names the waiting call and the SIM', () async {
+    error = 'NO_CALL';
+    await TelecomBridge.instance.selectSim('call-1', 'component|1');
+    expect(calls.single.method, 'selectSim');
+    expect(calls.single.arguments, {'id': 'call-1', 'simId': 'component|1'});
   });
 
   test('other failures still reach the caller', () async {

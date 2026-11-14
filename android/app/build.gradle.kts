@@ -27,6 +27,13 @@ android {
     compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
+    // vivo's launcher caches its Colored and Dark icon renders by resource ID and never refreshes
+    // them, so an icon on a reused ID showed an old (or another) icon. launcher-icon-ids.txt pins each
+    // launcher icon to an ID no earlier build used; give an icon a new, never-used ID when it changes.
+    androidResources {
+        additionalParameters += listOf("--stable-ids", file("launcher-icon-ids.txt").absolutePath)
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

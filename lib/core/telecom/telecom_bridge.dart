@@ -13,6 +13,9 @@ class TelecomBridge {
   static const _methods = MethodChannel('com.syedarhamraza.dialer/telecom');
   static const _events = EventChannel('com.syedarhamraza.dialer/call_state');
 
+  /// Big reads, answered off Android's main thread (see `CallBridge.readData`).
+  static const _data = MethodChannel('com.syedarhamraza.dialer/data');
+
   /// Fires when the app is opened from a `tel:` link while already running.
   void Function(String number)? onDialIntent;
 
@@ -60,8 +63,8 @@ class TelecomBridge {
   Future<Map<Object?, Object?>?> consumeContactAction() =>
       _methods.invokeMapMethod<Object?, Object?>('consumeContactAction');
 
-  /// Android's photo picker; returns the picked photo as JPEG bytes (max 720px), or null.
-  Future<Uint8List?> pickPhoto() => _methods.invokeMethod<Uint8List>('pickPhoto');
+  /// Android's photo picker; returns the picked photo as JPEG bytes ([max] px on the long side), or null.
+  Future<Uint8List?> pickPhoto({int max = 720}) => _methods.invokeMethod<Uint8List>('pickPhoto', {'max': max});
 
   /// The camera's quick capture (a small photo); null when cancelled.
   Future<Uint8List?> takePhoto() => _methods.invokeMethod<Uint8List>('takePhoto');
@@ -92,6 +95,13 @@ class TelecomBridge {
   /// A .vcf file's text from the files app; null when cancelled.
   Future<String?> pickVcf() => _methods.invokeMethod<String>('pickVcf');
 
+  /// Saves the settings file where the user picks; true when saved, null when cancelled.
+  Future<bool?> exportSettings() => _methods.invokeMethod<bool>('exportSettings');
+
+  /// Reads a settings file the user picks and restarts the app with it; false when the file isn't
+  /// one, null when cancelled. Throws `IN_CALL` during a call.
+  Future<bool?> importSettings() => _methods.invokeMethod<bool>('importSettings');
+
   Future<void> unlinkRawContacts(String contactId, List<int> rawIds) =>
       _methods.invokeMethod('unlinkRawContacts', {'contactId': contactId, 'rawIds': rawIds});
 
@@ -102,6 +112,16 @@ class TelecomBridge {
   /// The contact's custom ringtone's name, or null when it follows the system.
   Future<String?> getRingtoneTitle(String contactId) =>
       _methods.invokeMethod<String>('getRingtoneTitle', {'contactId': contactId});
+
+  /// Each number grouped for display, and its country ("Pakistan"); nulls when it doesn't parse.
+  Future<List<({String? formatted, String? location})>> describeNumbers(List<String> numbers) async {
+    final raw = await _methods.invokeListMethod<Map<Object?, Object?>>('describeNumbers', {'numbers': numbers});
+    return [for (final m in raw ?? const []) (formatted: m['formatted'] as String?, location: m['location'] as String?)];
+  }
+
+  /// The keypad's number grouped as it's typed ("0333 333"); digits and a leading + only.
+  Future<String> formatAsYouType(String number) async =>
+      await _methods.invokeMethod<String>('formatAsYouType', {'number': number}) ?? number;
 
   Future<void> setRingtone(String contactId, String? uri) =>
       _methods.invokeMethod('setRingtone', {'contactId': contactId, 'uri': uri});
@@ -119,13 +139,12 @@ class TelecomBridge {
   Future<Map<Object?, Object?>> getCallHealth() async =>
       await _methods.invokeMapMethod<Object?, Object?>('getCallHealth') ?? const {};
 
-  /// The launcher icon style (`default`, which is Glossy, or `classic`) for both Phone and Contacts.
-  Future<String> getLauncherIcon() async => await _methods.invokeMethod<String>('getLauncherIcon') ?? 'default';
 
-  Future<void> setLauncherIcon(String style) => _methods.invokeMethod('setLauncherIcon', {'style': style});
-
-  /// Phones with 4 GB of RAM or less, whose GPUs can't keep up with the full blurs.
-  Future<bool> isLowEndDevice() async => await _methods.invokeMethod<bool>('isLowEndDevice') ?? false;
+  /// The visual effects level this phone starts on (`DeviceTier.kt`): `tier` (`off`, `reduced` or
+  /// `full`), `source` (`soc`, `platform`, `gpu` or `ram`) and the raw `soc`, `platform`,
+  /// `hardware` and `gpu` strings it was read from.
+  Future<Map<String, Object?>> effectsDefault() async =>
+      (await _methods.invokeMapMethod<String, Object?>('effectsDefault')) ?? const {};
 
   /// `notifications`, `fullScreen`, `defaultApps`, `contactsStorage`, `googleContactsSync`, `app`,
   /// or `url:https://…`. Throws `NO_ACTIVITY` when the phone has no such screen.
@@ -157,10 +176,58 @@ class TelecomBridge {
   Future<void> setCallSetting(String key, Object value) =>
       _methods.invokeMethod('setCallSetting', {'key': key, 'value': value});
 
+  // Call recording, through the sideloaded companion (RecorderCompanion.kt)
+  /// Null when One Recorder isn't installed.
+  Future<RecorderInfo?> getRecorder() async {
+    final map = await _methods.invokeMapMethod<Object?, Object?>('getRecorder');
+    return map == null ? null : RecorderInfo.fromMap(map);
+  }
+
+  /// Starts or stops recording the active call; false when nothing could be done.
+  Future<bool> toggleRecording() async => await _methods.invokeMethod<bool>('toggleRecording') ?? false;
+
+  Future<List<CallRecording>> listRecordings() async =>
+      (await _methods.invokeListMethod<Object?>('listRecordings') ?? const [])
+          .map((r) => CallRecording.fromMap(r! as Map<Object?, Object?>))
+          .toList();
+
+  Future<void> deleteRecording(String name) => _methods.invokeMethod('deleteRecording', {'name': name});
+
+  Future<void> deleteAllRecordings() => _methods.invokeMethod('deleteAllRecordings');
+
+  Future<void> openRecording(String name) => _methods.invokeMethod('openRecording', {'name': name});
+
+  /// Shares one or more recordings in one go.
+  Future<void> shareRecordings(List<String> names) => _methods.invokeMethod('shareRecording', {'names': names});
+
+  Future<void> starRecording(String name, bool starred) =>
+      _methods.invokeMethod('starRecording', {'name': name, 'starred': starred});
+
+  Future<void> renameRecording(String name, String title) =>
+      _methods.invokeMethod('renameRecording', {'name': name, 'title': title});
+
+  /// Save to phone: a copy in the shared Recordings/One Dialer folder named [displayName] and the time.
+  Future<bool> exportRecording(String name, String displayName) async =>
+      await _methods.invokeMethod<bool>('exportRecording', {'name': name, 'displayName': displayName}) ?? false;
+
+  /// The recorder's own settings: `sourceMode`, `boost`, `retentionDays`.
+  Future<Map<Object?, Object?>> getRecorderSettings() async =>
+      await _methods.invokeMapMethod<Object?, Object?>('getRecorderSettings') ?? const {};
+
+  Future<void> setRecorderSetting(String key, Object value) =>
+      _methods.invokeMethod('setRecorderSetting', {'key': key, 'value': value});
+
+  Future<void> openRecorderSetup() => _methods.invokeMethod('openRecorderSetup');
+
   // Call log
   /// Newest first, up to 500 calls. Throws [PlatformException] `NO_PERMISSION` without call-log access.
   Future<List<Map<Object?, Object?>>> getCallLog() async =>
-      await _methods.invokeListMethod<Map<Object?, Object?>>('getCallLog') ?? const [];
+      await _data.invokeListMethod<Map<Object?, Object?>>('getCallLog') ?? const [];
+
+  /// Every contact, sorted by name: `[id, displayName, first, middle, last, starred,
+  /// [[number, label, customLabel, isPrimary]], ["type|name"]]` (`ContactsSource.kt`).
+  Future<List<List<Object?>>> getContacts() async =>
+      await _data.invokeListMethod<List<Object?>>('getContacts') ?? const [];
 
   Future<void> deleteCalls(List<int> ids) => _methods.invokeMethod('deleteCalls', {'ids': ids});
 
@@ -181,8 +248,9 @@ class TelecomBridge {
   Future<Uint8List?> appIcon(String package) =>
       _appIcons[package] ??= _methods.invokeMethod<Uint8List>('getAppIcon', {'package': package});
 
-  /// Opens the default SMS app on a conversation with [number].
-  Future<void> sendSms(String number) => _methods.invokeMethod('sendSms', {'number': number});
+  /// Opens the default SMS app on a conversation with [number], [body] typed in.
+  Future<void> sendSms(String number, {String? body}) =>
+      _methods.invokeMethod('sendSms', {'number': number, 'body': body});
 
   /// Call-capable SIMs in slot order; empty without READ_PHONE_STATE.
   Future<List<SimCard>> getSims() async {
@@ -192,13 +260,13 @@ class TelecomBridge {
 
   /// Keypad feedback tone (respects the system "Dial pad tones" setting).
   Future<void> playTone(String digit) => _methods.invokeMethod('playTone', {'digit': digit});
+  /// Hands a keypad code (`*#06#`, `*#*#4636#*#*`) to the system; false when nothing handled it.
+  Future<bool> handleSpecialCode(String code) async =>
+      await _methods.invokeMethod<bool>('handleSpecialCode', {'code': code}) ?? false;
   Future<void> stopTone() => _methods.invokeMethod('stopTone');
 
   Future<void> answer(String id) => _call('answer', id);
   Future<void> reject(String id) => _call('reject', id);
-
-  /// Declines and texts [message] to the caller.
-  Future<void> rejectWithMessage(String id, String message) => _call('rejectWithMessage', id, {'message': message});
 
   /// Opens the keypad to place another call; Telecom holds the current one.
   Future<void> openDialer() => _methods.invokeMethod('openDialer');
@@ -214,6 +282,9 @@ class TelecomBridge {
   Future<void> unhold(String id) => _call('unhold', id);
   Future<void> merge(String id) => _call('merge', id);
   Future<void> swap(String id) => _call('swap', id);
+
+  /// Answers Telecom's "which SIM?" for a call waiting in [CallState.selectPhoneAccount].
+  Future<void> selectSim(String id, String simId) => _call('selectSim', id, {'simId': simId});
 
   Future<void> playDtmf(String id, String digit) => _call('playDtmf', id, {'digit': digit});
   Future<void> stopDtmf(String id) => _call('stopDtmf', id);

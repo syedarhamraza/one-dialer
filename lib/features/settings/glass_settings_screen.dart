@@ -47,6 +47,7 @@ class _GlassSettingsScreenState extends State<GlassSettingsScreen> {
                 choiceRow(
                   context,
                   title: l10n.glassStyle,
+                  subtitle: l10n.glassStyleSubtitle,
                   anchor: _styleKey,
                   value: prefs.navStyle,
                   labels: GlassSettingsScreen.styleLabels(l10n),
@@ -56,6 +57,7 @@ class _GlassSettingsScreenState extends State<GlassSettingsScreen> {
                   choiceRow(
                     context,
                     title: l10n.darkModeEdgeGlow,
+                    subtitle: l10n.darkModeEdgeGlowSubtitle,
                     anchor: _glassDarkKey,
                     value: prefs.glassDark,
                     labels: edgeGlowLabels(l10n),
@@ -65,6 +67,7 @@ class _GlassSettingsScreenState extends State<GlassSettingsScreen> {
                   choiceRow(
                     context,
                     title: l10n.liquidGlassOn,
+                    subtitle: l10n.liquidGlassOnSubtitle,
                     anchor: _scopeKey,
                     value: prefs.liquidScope,
                     labels: {
@@ -79,6 +82,7 @@ class _GlassSettingsScreenState extends State<GlassSettingsScreen> {
                   choiceRow(
                     context,
                     title: l10n.navBarGlass,
+                    subtitle: l10n.navBarGlassSubtitle,
                     anchor: _effectKey,
                     value: prefs.navGlass,
                     labels: {

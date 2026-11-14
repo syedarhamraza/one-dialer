@@ -12,7 +12,9 @@ import '../../core/contacts/contacts_repository.dart';
 import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
+import '../../widgets/place_call.dart';
 import 'call_control_panel.dart';
+import 'call_background.dart';
 import 'call_controls.dart';
 import 'call_screen_widgets.dart';
 import 'incoming_controls.dart';
@@ -33,6 +35,23 @@ class _InCallScreenState extends State<InCallScreen> {
 
   /// The last snapshot that had a call in it.
   CallSnapshot? _last;
+
+  /// The call already asked "which SIM?", so the menu shows once.
+  String? _askedSim;
+
+  /// Telecom holds a call started outside the app (another app, a car kit, a notification) on
+  /// dual SIM with no default until the call screen names a SIM. No pick ends it, as Android's own chooser does.
+  Future<void> _chooseSim(CallInfo call) async {
+    final telecom = TelecomBridge.instance;
+    try {
+      final sims = _sims.isNotEmpty ? _sims : await telecom.getSims();
+      if (!mounted) return;
+      final sim = sims.length == 1 ? sims.first : (sims.isEmpty ? null : await pickSim(context, sims));
+      await (sim == null ? telecom.hangUp(call.id) : telecom.selectSim(call.id, sim.id));
+    } on PlatformException {
+      await telecom.hangUp(call.id);
+    }
+  }
 
   /// The keypad's open progress, which dims the backdrop behind it.
   final _keypadBlur = ValueNotifier<double>(0);
@@ -71,14 +90,40 @@ class _InCallScreenState extends State<InCallScreen> {
         if (snapshot.data?.primary != null) _last = snapshot.data;
         final state = _last;
         final call = state?.primary;
+        if (snapshot.data != null && snapshot.data!.primary == null) {
+          // This engine outlives the call: a menu or sheet left open would cover the next one.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+          });
+        }
+        if (call != null && call.state == CallState.selectPhoneAccount && _askedSim != call.id) {
+          _askedSim = call.id;
+          WidgetsBinding.instance.addPostFrameCallback((_) => _chooseSim(call));
+        }
         return ListenableBuilder(
-          // Contacts load in late (the aurora's tint follows the caller's name).
-          listenable: ContactsRepository.instance.contacts,
+          // Contacts load in late (the aurora's tint follows the caller's name), and so do the
+          // caller's photo and saved background.
+          listenable: Listenable.merge([
+            ContactsRepository.instance.contacts,
+            CallBackgrounds.instance,
+          ]),
           builder: (context, _) {
+            final contact = call == null || call.isPrivate || call.isConference
+                ? null
+                : ContactsRepository.instance.contactFor(call.number ?? '');
             return CallBackdrop(
               shown: call != null,
               dim: _keypadBlur,
               seed: call == null ? null : backdropSeed(call),
+              background: call == null ? null : CallBackgrounds.instance.forCall(contact?.id),
+              // Placing a call or connected (the same buttons, frosted under them as soon as they
+              // show); an answered call stays frosted on the ended summary rather than sharpening as
+              // it closes, while a declined or missed one stays sharp. Ringing is the sharp reveal.
+              frosted: switch (call?.state) {
+                CallState.dialing || CallState.connecting || CallState.active || CallState.holding => true,
+                CallState.disconnecting || CallState.disconnected => call?.connectTime != null,
+                _ => false,
+              },
               child: SafeArea(
                 child: switch ((state, call)) {
                   (final state?, final call?) => _CallSession(
@@ -195,13 +240,22 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     });
     // The ball takes its time to spring into End, longest for the 1-button swiped up, from furthest away.
     _fly.duration = Duration(
-      milliseconds: !_oneButton ? 1000 : (DialerPrefs.instance.answerDirection.value == 'up' ? 1100 : 900),
+      milliseconds: !_oneButton ? 800 : (DialerPrefs.instance.answerDirection.value == 'up' ? 1100 : 900),
     );
-    _springIn = GlassSpringCurve(GlassSpring.bouncy(duration: _fly.duration! * .6), _fly.duration!);
-    // The 2-button ball drops ahead of sliding across, so it curves in from above instead of a straight line.
-    _springDrop = _oneButton
-        ? _springIn
-        : GlassSpringCurve(GlassSpring.bouncy(duration: _fly.duration! * .35), _fly.duration!);
+    if (_oneButton) {
+      _springIn = GlassSpringCurve(GlassSpring.bouncy(duration: _fly.duration! * .6), _fly.duration!);
+      _springDrop = _springSize = _springIn;
+    } else {
+      // Fitted to a 120 fps ColorOS 17 recording: it drops fast and overshoots 3% before easing back,
+      // slides across late with no overshoot (so it curves in from above), and is a pill by ~280 ms.
+      Curve spring(double stiffness, double ratio) => GlassSpringCurve(
+        SpringDescription.withDampingRatio(mass: 1, stiffness: stiffness, ratio: ratio),
+        _fly.duration!,
+      );
+      _springIn = spring(90, 1);
+      _springDrop = spring(142, .75);
+      _springSize = spring(290, 1);
+    }
     _rise.forward(from: 0);
     // If Telecom never connects, don't leave the ball hanging.
     _ballTimeout = Timer(const Duration(seconds: 4), _land);
@@ -243,12 +297,15 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     return MatrixUtils.transformRect(stack!.getTransformTo(null)..invert(), global);
   }
 
-  // The ball springs into End on the glass package's bouncy spring over the whole flight: a soft,
-  // unhurried overshoot past the pill's size and place, then settling. It stays green for the first
-  // ~120 ms, then crossfades to red (the handset tipping over meanwhile).
+  // Across, down and size each on their own spring (see [_answered]). The 1-button ball stays green
+  // for the first ~120 ms, then crossfades to red (the handset tipping over meanwhile).
   Curve _springIn = Curves.linear;
   Curve _springDrop = Curves.linear;
+  Curve _springSize = Curves.linear;
   static const _turn = Interval(.14, .43, curve: Curves.easeInOut);
+
+  // The 2-button ball tips its handset over the first 320 ms.
+  static const _tip = Interval(0, .4, curve: Curves.easeInOut);
 
   Widget _flyingBall() {
     final from = _localRect(_ball!.shift(Offset(0, -_lift * Curves.easeOutCubic.transform(_rise.value))));
@@ -268,16 +325,24 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
           lerpDouble(from.center.dx, to.center.dx, move)!,
           lerpDouble(from.center.dy, to.center.dy, _springDrop.transform(t))!,
         ),
-        width: lerpDouble(from.width, to.width, move)!,
-        height: lerpDouble(from.height, to.height, move)!,
+        width: lerpDouble(from.width, to.width, _springSize.transform(t))!,
+        height: lerpDouble(from.height, to.height, _springSize.transform(t))!,
       );
     }
-    // Green crossfades to End's red (not a colour tween): half way both layers are half see-through,
-    // the muddy amber of ColorOS's morph. It lands as the pill itself.
-    final red = _turn.transform(t);
+    // Green crossfades to End's red (not a colour tween), so mid-way it is see-through. It lands as
+    // the pill itself. The 2-button ball follows the recording: green gone by 80 ms (the ball almost
+    // clear around 70 ms), red half there at 110 ms and solid at 330 ms.
+    final ms = t * _fly.duration!.inMilliseconds;
+    final red = _oneButton
+        ? _turn.transform(t)
+        : ms < 110
+        ? .5 * ((ms - 50) / 60).clamp(0.0, 1.0)
+        : .5 + .5 * math.pow(((ms - 110) / 220).clamp(0.0, 1.0), 1.5).toDouble();
+    final green = _oneButton ? 1 - red : 1 - (ms / 80).clamp(0.0, 1.0);
+    final tip = _oneButton ? red : _tip.transform(t);
     // The same shared finish as the End pill, so the hand-off on landing is invisible.
     final shape = RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(rect.shortestSide / 2));
-    final iconSize = lerpDouble(from.shortestSide * .52, 46, red)!;
+    final iconSize = lerpDouble(from.shortestSide * .52, 46, tip)!;
     return Positioned.fromRect(
       rect: rect,
       child: IgnorePointer(
@@ -290,7 +355,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
             alignment: Alignment.center,
             children: [
               Opacity(
-                opacity: 1 - red,
+                opacity: green,
                 child: DecoratedBox(decoration: glassBody(answerGreen, shape, flat: callFlat(context))),
               ),
               Opacity(
@@ -300,11 +365,11 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
               // Our hang-up glyph is the handset turned 135°, so the handset simply tips over (growing to
               // CallGlyph's hang-up size) and lands already as End's icon.
               Transform.rotate(
-                angle: 3 * math.pi / 4 * red,
+                angle: 3 * math.pi / 4 * tip,
                 child: CallGlyph(
                   Icons.call_rounded,
                   color: Colors.white,
-                  size: iconSize * lerpDouble(1, CallGlyph.tipGrowth, red)!,
+                  size: iconSize * lerpDouble(1, CallGlyph.tipGrowth, tip)!,
                 ),
               ),
             ],
@@ -402,6 +467,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
                           key: const ValueKey('connected'),
                           call: call,
                           audio: widget.snapshot.audio,
+                          recorder: widget.snapshot.recording,
                           callCount: widget.snapshot.calls.length,
                           width: landscape ? (constraints.maxWidth - 56) / 2 : constraints.maxWidth - 32,
                           compact: compact,
@@ -444,12 +510,19 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
                                     child: HeldCallCard(
                                       call: held,
                                       onSwitch: () => TelecomBridge.instance.unhold(held.id),
+                                      onEnd: () => TelecomBridge.instance.hangUp(held.id),
                                     ),
                                   )
                                 : const SizedBox(width: double.infinity),
                           ),
                         ),
-                        CallHeader(call: call, sims: widget.sims, compact: compact, keypadProgress: progress),
+                        CallHeader(
+                          call: call,
+                          sims: widget.sims,
+                          compact: compact,
+                          keypadProgress: progress,
+                          recording: widget.snapshot.recording?.recording ?? false,
+                        ),
                       ],
                     ),
                   );

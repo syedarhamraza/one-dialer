@@ -131,7 +131,7 @@ class OneUIFloatingModal extends StatelessWidget {
                       onPressed: () => Navigator.pop(ctx, false),
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: SquircleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       child: Text(
                         cancelLabel ?? context.l10n.cancel,
@@ -153,7 +153,7 @@ class OneUIFloatingModal extends StatelessWidget {
                       },
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: SquircleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       child: Text(
                         confirmLabel ?? context.l10n.delete,
@@ -292,7 +292,7 @@ class _OneUIFloatingTextInputModalState extends State<_OneUIFloatingTextInputMod
                   onPressed: () => Navigator.pop(context),
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: SquircleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                   child: Text(
                     widget.cancelLabel,
@@ -311,7 +311,7 @@ class _OneUIFloatingTextInputModalState extends State<_OneUIFloatingTextInputMod
                   onPressed: () => Navigator.pop(context, _controller.text.trim()),
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: SquircleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                   child: Text(
                     widget.confirmLabel,

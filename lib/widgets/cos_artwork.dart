@@ -1,22 +1,22 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
 import '../theme/one_ui_theme.dart';
 import 'cached_paint.dart';
 
-/// The update / about artwork, after ColorOS 17's, in polished glass and the app's greens: a
-/// deep green sky, a glossy glass ribbon sweeping up to the right (crisp rim on its crest, a
-/// shine along it, a soft shadow below) and a glass sphere resting on it (the ribbon refracted
-/// inside, a rim bright at the top left, a soft inner edge light, a curved reflection, a contact
-/// shadow). Rendered to an image once ([CachedPaint]), so page slides only draw that image.
+/// The update / about artwork, in the app's greens: a deep green sky lit by a soft aurora, and
+/// two sheets of silk made of fine threads of light, twisting through a bright fold as they
+/// sweep up to the right. Rendered to an image once ([CachedPaint]), so page slides only draw
+/// that image.
 class CosArtwork extends StatelessWidget {
   const CosArtwork({super.key, this.fadeToBlack = 0, this.waveShift = 0, this.blur = 0, this.dim = 0});
 
   /// How much of the bottom fades into the black page (0 = none, .5 = the lower half).
   final double fadeToBlack;
 
-  /// Moves the ribbon and sphere down by this share of the height, leaving sky for text.
+  /// Moves the silk down by this share of the height, leaving sky for text.
   final double waveShift;
 
   /// Softens the whole artwork, behind text on the cards.
@@ -68,159 +68,15 @@ class _ArtworkPainter extends CustomPainter {
     );
     canvas.save();
     canvas.translate(0, h * shift);
-    canvas.drawCircle(Offset(w * .6, h * .7), w * .7, _blur(const Color(0x442FAE52), 120));
+    // Aurora behind the silk: green rising on the right, teal low on the left, a mint spark.
+    final glow = light ? .55 : 1.0;
+    canvas.drawCircle(Offset(w * .8, h * .6), w * .5, _blur(Color.fromRGBO(47, 174, 82, .34 * glow), w * .22));
+    canvas.drawCircle(Offset(w * .1, h * .88), w * .42, _blur(Color.fromRGBO(14, 138, 122, .3 * glow), w * .2));
+    canvas.drawCircle(Offset(w * .98, h * .36), w * .2, _blur(Color.fromRGBO(139, 240, 176, .22 * glow), w * .14));
 
-    // The ribbon's crest, low left to high right, and the whole band.
-    Path crest(double dy) => Path()
-      ..moveTo(-w * .2, h * .86 + dy)
-      ..cubicTo(w * .2, h * .70 + dy, w * .45, h * .80 + dy, w * .7, h * .62 + dy)
-      ..cubicTo(w * .85, h * .52 + dy, w * 1.0, h * .46 + dy, w * 1.2, h * .48 + dy);
-    final ribbon = crest(0)
-      ..lineTo(w * 1.2, h * .66)
-      ..cubicTo(w * 1.0, h * .64, w * .85, h * .72, w * .7, h * .82)
-      ..cubicTo(w * .45, h * 1.0, w * .2, h * .92, -w * .2, h * 1.06)
-      ..close();
-    final waveRect = Rect.fromLTWH(0, h * .45, w, h * .6);
-
-    // Soft shadow under the ribbon.
-    canvas.save();
-    canvas.translate(0, 16);
-    canvas.drawPath(ribbon, _blur(light ? const Color(0x400B3D24) : const Color(0x8C000000), 22));
-    canvas.restore();
-
-    // The ribbon's glass: mint toward the crest, deeper green toward the underside.
-    void ribbonBody(double brighten) => canvas.drawPath(
-      ribbon,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            for (final c in const [Color(0xF28BF0B0), Color(0xD92FAE52), Color(0xB30E6E46), Color(0x990A3A2C)])
-              Color.lerp(c, Colors.white, brighten)!,
-          ],
-          stops: const [0, .3, .65, 1],
-        ).createShader(waveRect),
-    );
-    ribbonBody(0);
-
-    // Shine running along the ribbon, just below its crest.
-    canvas.save();
-    canvas.clipPath(ribbon);
-    canvas.drawPath(
-      crest(h * .035),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = h * .035
-        ..color = const Color(0x73FFFFFF)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, h * .01),
-    );
-    canvas.drawPath(
-      crest(h * .02),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2
-        ..color = const Color(0xCCFFFFFF),
-    );
-    canvas.restore();
-    // Crisp rim along the crest.
-    canvas.drawPath(
-      crest(0),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.6
-        ..shader = const LinearGradient(colors: [Color(0x66FFFFFF), Color(0xF2FFFFFF), Color(0x99E8FFF0)])
-            .createShader(waveRect),
-    );
-
-    // The sphere, resting on the ribbon.
-    final c = Offset(w * .62, h * .6);
-    final r = w * .3;
-    final sphere = Rect.fromCircle(center: c, radius: r);
-    canvas.drawOval(
-      Rect.fromCenter(center: c + Offset(0, r * .95), width: r * 1.6, height: r * .35),
-      _blur(light ? const Color(0x4D0B3D24) : const Color(0x99000000), r * .14),
-    );
-    canvas.drawCircle(c, r * 1.15, _blur(const Color(0x332FAE52), r * .3));
-
-    canvas.save();
-    canvas.clipPath(Path()..addOval(sphere));
-    // Seen through the glass: lighter sky, the ribbon shifted and brighter.
-    canvas.drawRect(sphere, Paint()..color = const Color(0x24FFFFFF));
-    canvas.save();
-    canvas.translate(-r * .14, -r * .12);
-    ribbonBody(.22);
-    canvas.restore();
-    // Body: clear in the centre, the glass thickening (and lighter) toward the edge.
-    canvas.drawCircle(
-      c,
-      r,
-      Paint()
-        ..shader = const RadialGradient(
-          colors: [Color(0x00FFFFFF), Color(0x0AFFFFFF), Color(0x47E8FFF0)],
-          stops: [0, .72, 1],
-        ).createShader(sphere),
-    );
-    // A cooler shade low on the right, where the glass turns from the light.
-    canvas.drawCircle(
-      c,
-      r,
-      Paint()
-        ..shader = const RadialGradient(
-          center: Alignment(.75, .8),
-          radius: .8,
-          colors: [Color(0x400B3D24), Color(0x000B3D24)],
-        ).createShader(sphere),
-    );
-    // A slim curved reflection in the upper left.
-    final reflect = Rect.fromCircle(center: c + Offset(r * .04, r * .06), radius: r * .86);
-    canvas.drawArc(
-      reflect,
-      math.pi * 1.08,
-      math.pi * .5,
-      false,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = r * .07
-        ..strokeCap = StrokeCap.round
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, r * .025)
-        ..shader = const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0x8CFFFFFF), Color(0x26FFFFFF), Color(0x00FFFFFF)],
-        ).createShader(reflect),
-    );
-    canvas.restore();
-
-    // Soft inner edge light, then the crisp rim: bright top left, a mint return bottom right.
-    canvas.drawCircle(
-      c,
-      r - r * .04,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = r * .08
-        ..color = const Color(0x1FFFFFFF)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, r * .03),
-    );
-    canvas.drawCircle(
-      c,
-      r - .8,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.8
-        ..shader = const SweepGradient(
-          colors: [
-            Color(0x80C8FFE0),
-            Color(0x26FFFFFF),
-            Color(0x33FFFFFF),
-            Color(0xFFFFFFFF),
-            Color(0xB3FFFFFF),
-            Color(0x80C8FFE0),
-          ],
-          stops: [0, .25, .5, .65, .8, 1],
-        ).createShader(sphere),
-    );
-    canvas.drawCircle(c + Offset(-r * .52, -r * .55), r * .04, _blur(Colors.white, r * .025));
+    // Two sheets of silk crossing: the wide one sweeps up to the right, a fainter one answers it.
+    _silk(canvas, w, h, const [.68, .98, .40, .80, .92, .46, .52, .10], 110, 1);
+    _silk(canvas, w, h, const [.50, .66, .90, .70, .40, .66, .78, 1.00], 60, .45);
     canvas.restore();
 
     if (dim > 0) {
@@ -237,6 +93,58 @@ class _ArtworkPainter extends CustomPainter {
             colors: [page.withValues(alpha: 0), page.withValues(alpha: 0), page],
             stops: [0, 1 - fade, 1],
           ).createShader(rect),
+      );
+    }
+  }
+
+  /// A sheet of silk, drawn as [count] fine threads of light. [y] holds, as shares of the
+  /// height, where the first and the last thread sit at the left edge, at the two control points
+  /// and at the right edge; a pair that runs the other way twists the sheet, so the threads
+  /// gather into a bright fold and fan out again. Sheen bands run across the threads.
+  void _silk(Canvas canvas, double w, double h, List<double> y, int count, double strength) {
+    // The thread's alpha goes into its colours: a modulate colour filter leaves the colour at
+    // full strength under BlendMode.plus on Impeller, which burns the whole sheet out to white.
+    ui.Gradient shader(double alpha) => ui.Gradient.linear(
+      Offset.zero,
+      Offset(w, 0),
+      [
+        for (final c
+            in light
+                ? const [Color(0x001E8A43), Color(0xFF2FAE52), Color(0xFF0E6E46), Color(0xFF2FAE52), Color(0x001E8A43)]
+                : const [Color(0x002FAE52), Color(0xFF2FAE52), Color(0xFFD6FFE6), Color(0xFF4CC77C), Color(0x000E6E46)])
+          c.withValues(alpha: c.a * alpha),
+      ],
+      const [0, .22, .56, .82, 1],
+    );
+    for (var i = 0; i < count; i++) {
+      final u = i / (count - 1);
+      // Each point moves across the sheet at its own pace, so the threads cross along a soft
+      // fold instead of all meeting at one point.
+      double at(int k) => h * (y[k] + (y[k + 1] - y[k]) * math.pow(u, const [1, 1.7, .6, 1.25][k ~/ 2]));
+      final thread = Path()
+        ..moveTo(-w * .1, at(0))
+        ..cubicTo(w * .28, at(2), w * .58, at(4), w * 1.1, at(6));
+      final sheen = .5 + .5 * math.sin(u * math.pi * 5 + 1);
+      final alpha = strength * math.pow(math.sin(math.pi * u), .7) * (.12 + .88 * sheen * sheen);
+      // Every sixth thread also lays a soft wide glow, the body of the sheet.
+      if (i % 6 == 0) {
+        canvas.drawPath(
+          thread,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = h * .03
+            ..shader = shader(alpha * .16)
+            ..blendMode = light ? BlendMode.srcOver : BlendMode.plus
+            ..maskFilter = MaskFilter.blur(BlurStyle.normal, h * .018),
+        );
+      }
+      canvas.drawPath(
+        thread,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.1
+          ..shader = shader(alpha * .42)
+          ..blendMode = light ? BlendMode.srcOver : BlendMode.plus,
       );
     }
   }

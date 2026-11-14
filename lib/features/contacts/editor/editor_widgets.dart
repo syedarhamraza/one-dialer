@@ -17,7 +17,7 @@ class EditorCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.fromLTRB(0, 4, 4, 4),
-      decoration: BoxDecoration(color: context.palette.card, borderRadius: BorderRadius.circular(20)),
+      decoration: ShapeDecoration(color: context.palette.card, shape: SquircleBorder(borderRadius: BorderRadius.circular(20))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
     );
   }
@@ -37,14 +37,26 @@ class EditorRow extends StatelessWidget {
     return ConstrainedBox(
       constraints: const BoxConstraints(minHeight: 60),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        // Icon and trailing stay level with the first line when the row grows (expanded name).
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
             width: 56,
+            height: 60,
             child: icon == null ? null : Icon(icon, size: 24, color: iconColor ?? context.palette.textPrimary),
           ),
-          Expanded(child: child),
-          SizedBox(width: 48, child: trailing),
+          Expanded(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 60),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [child],
+              ),
+            ),
+          ),
+          SizedBox(width: 48, height: 60, child: trailing == null ? null : Center(child: trailing)),
         ],
       ),
     );
@@ -96,7 +108,7 @@ class EditorField extends StatelessWidget {
         hintText: hint,
         hintStyle: TextStyle(fontSize: 18, color: context.palette.textTertiary),
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(vertical: 19),
         enabledBorder: divider ? _hairline : InputBorder.none,
         focusedBorder: divider ? _hairline : InputBorder.none,
       ),
@@ -213,7 +225,7 @@ class AddRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      customBorder: SquircleBorder(borderRadius: BorderRadius.circular(16)),
       child: EditorRow(
         icon: Icons.add_rounded,
         iconColor: OneUITheme.accentGreen,
@@ -238,7 +250,7 @@ class PlaceholderRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: OneUITheme.cardBorderRadius,
+      customBorder: OneUITheme.cardShape,
       child: EditorRow(
         icon: icon,
         child: Padding(

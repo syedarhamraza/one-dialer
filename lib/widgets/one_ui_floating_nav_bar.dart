@@ -5,6 +5,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../theme/one_ui_theme.dart';
 import 'call_glass.dart';
+import 'call_glyph.dart';
 import 'liquid_body.dart';
 import 'one_ui_morph_switcher.dart';
 
@@ -213,7 +214,7 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
                       key: ValueKey(_tabBarEpoch),
                       tabs: [
                         for (final item in items)
-                          GlassTab(icon: Icon(item.inactiveIcon), activeIcon: Icon(item.activeIcon), label: item.label),
+                          GlassTab(icon: CallGlyph(item.inactiveIcon), activeIcon: CallGlyph(item.activeIcon), label: item.label),
                       ],
                       selectedIndex: widget.currentIndex,
                       onTabSelected: widget.onTap,
@@ -222,7 +223,7 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
                       verticalPadding: 0,
                       settings: settings,
                       quality: quality,
-                      iconSize: 26,
+                      iconSize: 28,
                       labelFontSize: 12,
                       selectedIconColor: palette.textPrimary,
                       selectedLabelColor: palette.textPrimary,
@@ -286,10 +287,10 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
                       // Cross-fades the outline and filled icons instead of swapping them.
                       AnimatedSwitcher(
                         duration: duration,
-                        child: Icon(
+                        child: CallGlyph(
                           isSelected ? item.activeIcon : item.inactiveIcon,
                           key: ValueKey(isSelected),
-                          size: 26,
+                          size: 28,
                           color: color,
                         ),
                       ),

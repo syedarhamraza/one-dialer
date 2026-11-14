@@ -200,7 +200,7 @@ void main() {
     expect(canPop(), isFalse);
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
-    expect(find.text('Save your changes or discard them?'), findsOneWidget);
+    expect(find.text('Save your edits?'), findsOneWidget);
     await tester.binding.handlePopRoute(); // closes the dialog
     await tester.pumpAndSettle();
     await tester.enterText(nameField(), '');
@@ -251,7 +251,7 @@ void main() {
     expect(tester.testTextInput.isVisible, isFalse);
     await tester.tap(cancelPill());
     await tester.pumpAndSettle();
-    expect(find.text('Save your changes or discard them?'), findsOneWidget);
+    expect(find.text('Save your edits?'), findsOneWidget);
     await tester.tap(find.text('Discard'));
     await tester.pumpAndSettle();
     expect(find.byType(ContactEditorScreen), findsNothing);
@@ -330,7 +330,7 @@ void main() {
     expect(tester.testTextInput.isVisible, isFalse);
   });
 
-  testWidgets('confirmation Cancel preserves edits and repeated Cancel opens one dialog', (tester) async {
+  testWidgets('dismissing the confirmation preserves edits and repeated Cancel opens one dialog', (tester) async {
     accounts.complete(<Object?>[]);
     await open(tester);
     await tester.pumpAndSettle();
@@ -339,8 +339,8 @@ void main() {
     cancel();
     cancel();
     await tester.pumpAndSettle();
-    expect(find.text('Save your changes or discard them?'), findsOneWidget);
-    await tester.tap(find.text('Cancel').last);
+    expect(find.text('Save your edits?'), findsOneWidget);
+    await tester.tapAt(const Offset(10, 10)); // outside the alert: keep editing
     await tester.pumpAndSettle();
     expect(find.text('Keep these edits'), findsOneWidget);
     expect(writes, isEmpty);

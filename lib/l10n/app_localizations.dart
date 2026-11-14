@@ -176,6 +176,12 @@ abstract class AppLocalizations {
   /// **'Deselect all'**
   String get deselectAll;
 
+  /// No description provided for @selectItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Select items'**
+  String get selectItems;
+
   /// No description provided for @search.
   ///
   /// In en, this message translates to:
@@ -1301,7 +1307,7 @@ abstract class AppLocalizations {
   /// No description provided for @saveOrDiscard.
   ///
   /// In en, this message translates to:
-  /// **'Save your changes or discard them?'**
+  /// **'Save your edits?'**
   String get saveOrDiscard;
 
   /// No description provided for @couldNotLoadContactRetry.
@@ -1357,6 +1363,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New contact'**
   String get newContact;
+
+  /// No description provided for @addToExistingContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to existing contact'**
+  String get addToExistingContact;
 
   /// No description provided for @editContact.
   ///
@@ -1691,8 +1703,14 @@ abstract class AppLocalizations {
   /// No description provided for @videoCall.
   ///
   /// In en, this message translates to:
-  /// **'Video call'**
+  /// **'Video call (Meet)'**
   String get videoCall;
+
+  /// No description provided for @switchToVideoCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to video call'**
+  String get switchToVideoCall;
 
   /// REVIEW: In-call control label; AOSP uses "Disattiva audio", shortened to fit the button
   ///
@@ -1853,14 +1871,8 @@ abstract class AppLocalizations {
   /// No description provided for @declineWithSms.
   ///
   /// In en, this message translates to:
-  /// **'Decline with SMS'**
+  /// **'SMS reply'**
   String get declineWithSms;
-
-  /// No description provided for @noQuickReplies.
-  ///
-  /// In en, this message translates to:
-  /// **'No quick replies saved'**
-  String get noQuickReplies;
 
   /// No description provided for @answer.
   ///
@@ -1970,6 +1982,42 @@ abstract class AppLocalizations {
   /// **'Says the caller\'s name while it rings'**
   String get announceCallsSubtitle;
 
+  /// No description provided for @flashOnCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Flash notification'**
+  String get flashOnCall;
+
+  /// No description provided for @flashOnCallSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Blink the camera flash while a call rings'**
+  String get flashOnCallSubtitle;
+
+  /// No description provided for @systemFlash.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone has its own flash notification'**
+  String get systemFlash;
+
+  /// No description provided for @systemFlashSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn one of them off, or both will blink. Find it in Settings under Notifications or Accessibility'**
+  String get systemFlashSubtitle;
+
+  /// No description provided for @liveUpdateCapsule.
+  ///
+  /// In en, this message translates to:
+  /// **'Live Update capsule (Experimental)'**
+  String get liveUpdateCapsule;
+
+  /// No description provided for @liveUpdateCapsuleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Android 16: show a connected call in the status bar chip, and the capsule on ColorOS, OxygenOS and realme UI'**
+  String get liveUpdateCapsuleSubtitle;
+
   /// No description provided for @swipeUpToAnswer.
   ///
   /// In en, this message translates to:
@@ -2017,6 +2065,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Glass and glow on the call screen'**
   String get callScreenEffectsSubtitle;
+
+  /// No description provided for @callScreenAnimations.
+  ///
+  /// In en, this message translates to:
+  /// **'Call screen animations'**
+  String get callScreenAnimations;
+
+  /// No description provided for @callScreenAnimationsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Motion when the call screen opens, answers and changes'**
+  String get callScreenAnimationsSubtitle;
+
+  /// No description provided for @hideContactNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide contact phone numbers'**
+  String get hideContactNumbers;
+
+  /// No description provided for @hideContactNumbersSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Show only the name of saved contacts on the call screen and in Calls'**
+  String get hideContactNumbersSubtitle;
 
   /// No description provided for @secondsCount.
   ///
@@ -2282,35 +2354,53 @@ abstract class AppLocalizations {
   /// **'Reduce visual effects'**
   String get reduceVisualEffects;
 
+  /// No description provided for @displaySize.
+  ///
+  /// In en, this message translates to:
+  /// **'Display size'**
+  String get displaySize;
+
+  /// No description provided for @displaySizeSmall.
+  ///
+  /// In en, this message translates to:
+  /// **'Small'**
+  String get displaySizeSmall;
+
+  /// No description provided for @displaySizeDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get displaySizeDefault;
+
+  /// No description provided for @displaySizeLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Large'**
+  String get displaySizeLarge;
+
+  /// No description provided for @displaySizeLarger.
+  ///
+  /// In en, this message translates to:
+  /// **'Larger'**
+  String get displaySizeLarger;
+
+  /// No description provided for @displaySizeApp.
+  ///
+  /// In en, this message translates to:
+  /// **'App'**
+  String get displaySizeApp;
+
+  /// No description provided for @displaySizeNavBar.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation bar'**
+  String get displaySizeNavBar;
+
   /// No description provided for @reduceVisualEffectsSubtitle.
   ///
   /// In en, this message translates to:
   /// **'Less blur runs smoother on slower phones'**
   String get reduceVisualEffectsSubtitle;
-
-  /// No description provided for @appIcon.
-  ///
-  /// In en, this message translates to:
-  /// **'App icon'**
-  String get appIcon;
-
-  /// No description provided for @appIconGlossy.
-  ///
-  /// In en, this message translates to:
-  /// **'Glossy'**
-  String get appIconGlossy;
-
-  /// No description provided for @appIconClassic.
-  ///
-  /// In en, this message translates to:
-  /// **'Classic'**
-  String get appIconClassic;
-
-  /// No description provided for @appIconFootnote.
-  ///
-  /// In en, this message translates to:
-  /// **'Changes both the Phone and Contacts icons. The launcher may take a few seconds, and icons on the home screen may need adding again from the app drawer.'**
-  String get appIconFootnote;
 
   /// No description provided for @callScreenEdgeGlow.
   ///
@@ -2648,6 +2738,30 @@ abstract class AppLocalizations {
   /// **'Report ID copied'**
   String get reportIdCopied;
 
+  /// No description provided for @editSpeedDial.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit speed dial'**
+  String get editSpeedDial;
+
+  /// No description provided for @clearNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear number'**
+  String get clearNumber;
+
+  /// No description provided for @changeNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Change number'**
+  String get changeNumber;
+
+  /// No description provided for @numberCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Number copied'**
+  String get numberCopied;
+
   /// No description provided for @noEmailApp.
   ///
   /// In en, this message translates to:
@@ -2834,42 +2948,6 @@ abstract class AppLocalizations {
   /// **'Using Wi-Fi or mobile data'**
   String get autoUpdateAlways;
 
-  /// No description provided for @settingsCalls.
-  ///
-  /// In en, this message translates to:
-  /// **'Calls'**
-  String get settingsCalls;
-
-  /// No description provided for @settingsDialing.
-  ///
-  /// In en, this message translates to:
-  /// **'Dialing'**
-  String get settingsDialing;
-
-  /// No description provided for @settingsSpamBlocking.
-  ///
-  /// In en, this message translates to:
-  /// **'Spam & blocking'**
-  String get settingsSpamBlocking;
-
-  /// No description provided for @settingsPersonalisation.
-  ///
-  /// In en, this message translates to:
-  /// **'Personalisation'**
-  String get settingsPersonalisation;
-
-  /// No description provided for @settingsGeneral.
-  ///
-  /// In en, this message translates to:
-  /// **'General'**
-  String get settingsGeneral;
-
-  /// No description provided for @settingsAbout.
-  ///
-  /// In en, this message translates to:
-  /// **'About'**
-  String get settingsAbout;
-
   /// No description provided for @displayAndEffects.
   ///
   /// In en, this message translates to:
@@ -2881,6 +2959,600 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Keypad & recents'**
   String get keypadAndRecents;
+
+  /// No description provided for @logIncoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming'**
+  String get logIncoming;
+
+  /// No description provided for @logOutgoing.
+  ///
+  /// In en, this message translates to:
+  /// **'Outgoing'**
+  String get logOutgoing;
+
+  /// No description provided for @logMissed.
+  ///
+  /// In en, this message translates to:
+  /// **'Missed'**
+  String get logMissed;
+
+  /// No description provided for @logRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected'**
+  String get logRejected;
+
+  /// No description provided for @logBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked'**
+  String get logBlocked;
+
+  /// A missed or rejected call on the contact page's call history: its type, then how long it rang.
+  ///
+  /// In en, this message translates to:
+  /// **'{type} (Rang for {duration})'**
+  String logRangFor(String type, String duration);
+
+  /// Call screen ⋮ menu: start recording the call
+  ///
+  /// In en, this message translates to:
+  /// **'Record'**
+  String get record;
+
+  /// No description provided for @stopRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop recording'**
+  String get stopRecording;
+
+  /// Call screen ⋮ menu while One Recorder isn't set up
+  ///
+  /// In en, this message translates to:
+  /// **'Record (set up in Settings)'**
+  String get recordSetUpFirst;
+
+  /// Screen reader label for the red dot on the call screen
+  ///
+  /// In en, this message translates to:
+  /// **'Recording'**
+  String get recordingNow;
+
+  /// Settings row and page title
+  ///
+  /// In en, this message translates to:
+  /// **'Call recording'**
+  String get callRecording;
+
+  /// Name of the companion app; keep in English
+  ///
+  /// In en, this message translates to:
+  /// **'One Recorder'**
+  String get recorderApp;
+
+  /// No description provided for @recorderReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to record'**
+  String get recorderReady;
+
+  /// No description provided for @recorderNeedsMic.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow the microphone in One Recorder'**
+  String get recorderNeedsMic;
+
+  /// No description provided for @recorderNeedsAccessibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on its accessibility service'**
+  String get recorderNeedsAccessibility;
+
+  /// No description provided for @recorderUntrusted.
+  ///
+  /// In en, this message translates to:
+  /// **'The recorder works only with One Dialer from Google Play. Install it from Play, or update both apps.'**
+  String get recorderUntrusted;
+
+  /// No description provided for @recordingConsentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Before you record'**
+  String get recordingConsentTitle;
+
+  /// No description provided for @recordingConsentBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording laws differ by country, and some need everyone on the call to agree. You\'re responsible for telling the other person and getting their consent. Recordings stay on this phone and are never uploaded.'**
+  String get recordingConsentBody;
+
+  /// No description provided for @recordingConsentAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'I understand'**
+  String get recordingConsentAccept;
+
+  /// No description provided for @recordings.
+  ///
+  /// In en, this message translates to:
+  /// **'Recordings'**
+  String get recordings;
+
+  /// No description provided for @noRecordings.
+  ///
+  /// In en, this message translates to:
+  /// **'No recordings yet'**
+  String get noRecordings;
+
+  /// No description provided for @noRecordingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap ⋮ › Record on the call screen during a call'**
+  String get noRecordingsSubtitle;
+
+  /// No description provided for @deleteAllRecordings.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete all recordings'**
+  String get deleteAllRecordings;
+
+  /// No description provided for @deleteAllRecordingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete all recordings?'**
+  String get deleteAllRecordingsTitle;
+
+  /// No description provided for @deleteAllRecordingsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'They can\'t be recovered.'**
+  String get deleteAllRecordingsMessage;
+
+  /// No description provided for @recordingNotSetUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls aren\'t being recorded'**
+  String get recordingNotSetUp;
+
+  /// No description provided for @recordingNotSetUpSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-record is on, but One Recorder isn\'t set up'**
+  String get recordingNotSetUpSubtitle;
+
+  /// No description provided for @rename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get rename;
+
+  /// No description provided for @star.
+  ///
+  /// In en, this message translates to:
+  /// **'Star'**
+  String get star;
+
+  /// No description provided for @unstar.
+  ///
+  /// In en, this message translates to:
+  /// **'Unstar'**
+  String get unstar;
+
+  /// Recordings filter
+  ///
+  /// In en, this message translates to:
+  /// **'Starred'**
+  String get filterStarred;
+
+  /// Recordings filter: numbers without a contact
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get filterUnknown;
+
+  /// Copies a recording to the phone's Recordings folder
+  ///
+  /// In en, this message translates to:
+  /// **'Save to phone'**
+  String get saveToPhone;
+
+  /// No description provided for @searchRecordings.
+  ///
+  /// In en, this message translates to:
+  /// **'Search recordings'**
+  String get searchRecordings;
+
+  /// No description provided for @renameRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename recording'**
+  String get renameRecording;
+
+  /// No description provided for @recordingsSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Saved to Recordings/One Dialer} other{{count} recordings saved to Recordings/One Dialer}}'**
+  String recordingsSaved(int count);
+
+  /// No description provided for @recordingSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save to the phone'**
+  String get recordingSaveFailed;
+
+  /// No description provided for @deleteRecordings.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Delete this recording?} other{Delete {count} recordings?}}'**
+  String deleteRecordings(int count);
+
+  /// No description provided for @noMatchingRecordings.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching recordings'**
+  String get noMatchingRecordings;
+
+  /// No description provided for @addContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Add contact'**
+  String get addContact;
+
+  /// No description provided for @autoRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-record'**
+  String get autoRecord;
+
+  /// No description provided for @autoRecordOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get autoRecordOff;
+
+  /// No description provided for @autoRecordAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All calls'**
+  String get autoRecordAll;
+
+  /// No description provided for @autoRecordUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown numbers'**
+  String get autoRecordUnknown;
+
+  /// No description provided for @autoRecordContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected contacts'**
+  String get autoRecordContacts;
+
+  /// No description provided for @recordTheseContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Contacts to record'**
+  String get recordTheseContacts;
+
+  /// No description provided for @neverRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Never record'**
+  String get neverRecord;
+
+  /// No description provided for @neverRecordSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Contacts auto-record always skips'**
+  String get neverRecordSubtitle;
+
+  /// No description provided for @recordingSound.
+  ///
+  /// In en, this message translates to:
+  /// **'Sound'**
+  String get recordingSound;
+
+  /// No description provided for @volumeBoost.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume boost'**
+  String get volumeBoost;
+
+  /// No description provided for @volumeBoostSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lifts the other person\'s voice, which the mic only hears faintly'**
+  String get volumeBoostSubtitle;
+
+  /// No description provided for @boostOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get boostOff;
+
+  /// No description provided for @boostNormal.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get boostNormal;
+
+  /// No description provided for @boostStrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Strong'**
+  String get boostStrong;
+
+  /// No description provided for @micSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone source'**
+  String get micSource;
+
+  /// No description provided for @micSourceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic tries each on the first call and keeps the loudest'**
+  String get micSourceSubtitle;
+
+  /// No description provided for @micSourceAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get micSourceAuto;
+
+  /// No description provided for @micSourceRecognition.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice recognition'**
+  String get micSourceRecognition;
+
+  /// No description provided for @micSourceCommunication.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice communication'**
+  String get micSourceCommunication;
+
+  /// No description provided for @micSourceMic.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone'**
+  String get micSourceMic;
+
+  /// No description provided for @storage.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage'**
+  String get storage;
+
+  /// No description provided for @storageUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Space used'**
+  String get storageUsed;
+
+  /// No description provided for @autoDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-delete'**
+  String get autoDelete;
+
+  /// No description provided for @autoDeleteSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Starred recordings are always kept'**
+  String get autoDeleteSubtitle;
+
+  /// No description provided for @autoDeleteNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get autoDeleteNever;
+
+  /// No description provided for @autoDeleteDays.
+  ///
+  /// In en, this message translates to:
+  /// **'After {days} days'**
+  String autoDeleteDays(int days);
+
+  /// No description provided for @imeiTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'IMEI'**
+  String get imeiTitle;
+
+  /// No description provided for @imeiUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Android doesn\'t let apps show the IMEI. You can find it in your phone\'s settings under About phone.'**
+  String get imeiUnavailable;
+
+  /// No description provided for @aboutPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'About phone'**
+  String get aboutPhone;
+
+  /// No description provided for @glassStyleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Liquid glass bends what\'s behind it but uses more power'**
+  String get glassStyleSubtitle;
+
+  /// No description provided for @darkModeEdgeGlowSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How brightly the glass edges glow in dark mode'**
+  String get darkModeEdgeGlowSubtitle;
+
+  /// No description provided for @liquidGlassOnSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Which parts of the app use liquid glass'**
+  String get liquidGlassOnSubtitle;
+
+  /// No description provided for @navBarGlassSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Full refraction looks best; Light runs smoother on slower phones'**
+  String get navBarGlassSubtitle;
+
+  /// No description provided for @tapRecentCallSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What happens when you tap a call in Calls'**
+  String get tapRecentCallSubtitle;
+
+  /// No description provided for @callScreenEdgeGlowSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How brightly the call buttons\' glass edges glow'**
+  String get callScreenEdgeGlowSubtitle;
+
+  /// No description provided for @answerButtonsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How you answer, and how the call screen looks'**
+  String get answerButtonsSubtitle;
+
+  /// No description provided for @carrierSettingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Call forwarding, call waiting and caller ID'**
+  String get carrierSettingsSubtitle;
+
+  /// No description provided for @callBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'Call background'**
+  String get callBackground;
+
+  /// No description provided for @callBackgroundAllSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'For every call, unless a contact has its own'**
+  String get callBackgroundAllSubtitle;
+
+  /// No description provided for @callBackgroundDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get callBackgroundDefault;
+
+  /// No description provided for @callBackgroundColour.
+  ///
+  /// In en, this message translates to:
+  /// **'Colour'**
+  String get callBackgroundColour;
+
+  /// No description provided for @callBackgroundPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo'**
+  String get callBackgroundPhoto;
+
+  /// No description provided for @callBackgroundChoosePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose photo'**
+  String get callBackgroundChoosePhoto;
+
+  /// No description provided for @callBackgroundContactPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact\'s photo'**
+  String get callBackgroundContactPhoto;
+
+  /// No description provided for @callBackgroundContactPhotoSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Android keeps contact photos small; choose a photo for a sharper one'**
+  String get callBackgroundContactPhotoSubtitle;
+
+  /// No description provided for @callBackgroundSameAsAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Same as all calls'**
+  String get callBackgroundSameAsAll;
+
+  /// No description provided for @callBackgroundAllNote.
+  ///
+  /// In en, this message translates to:
+  /// **'A contact with their own call background, set on their contact page, uses it instead.'**
+  String get callBackgroundAllNote;
+
+  /// No description provided for @callBackgroundContactNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Used for this contact instead of the call background for all calls.'**
+  String get callBackgroundContactNote;
+
+  /// No description provided for @exportSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Export settings'**
+  String get exportSettings;
+
+  /// No description provided for @exportSettingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save settings, call notes and call backgrounds to a file'**
+  String get exportSettingsSubtitle;
+
+  /// No description provided for @importSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Import settings'**
+  String get importSettings;
+
+  /// No description provided for @importSettingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore them from an exported file'**
+  String get importSettingsSubtitle;
+
+  /// No description provided for @importSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace your settings?'**
+  String get importSettingsTitle;
+
+  /// No description provided for @importSettingsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your settings, speed dial, call notes and call backgrounds are replaced by the ones in the file. One Dialer then restarts.'**
+  String get importSettingsMessage;
+
+  /// No description provided for @importSettingsInCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings can\'t be imported during a call'**
+  String get importSettingsInCall;
+
+  /// No description provided for @settingsExported.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings exported'**
+  String get settingsExported;
+
+  /// No description provided for @couldNotSaveSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save the file'**
+  String get couldNotSaveSettings;
+
+  /// No description provided for @notASettingsFile.
+  ///
+  /// In en, this message translates to:
+  /// **'This isn\'t a One Dialer settings file'**
+  String get notASettingsFile;
+
+  /// No description provided for @endHeldCall.
+  ///
+  /// In en, this message translates to:
+  /// **'End call with {name}'**
+  String endHeldCall(String name);
 }
 
 class _AppLocalizationsDelegate

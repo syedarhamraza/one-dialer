@@ -1,0 +1,32 @@
+name: Translation
+description: Send a translation of the app into your language (no coding needed)
+labels: [translation]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you! How to make the files: [TRANSLATING.md](https://github.com/syedarhamraza/one-dialer/blob/HEAD/TRANSLATING.md).
+  - type: input
+    id: language
+    attributes:
+      label: Language
+      description: Its name and code, for example "Spanish (es)".
+    validations:
+      required: true
+  - type: textarea
+    id: files
+    attributes:
+      label: Your files
+      description: Drag app_xx.arb and strings_xx.xml here. If GitHub refuses them, zip them first or add .txt to their names.
+    validations:
+      required: true
+  - type: input
+    id: credit
+    attributes:
+      label: Credit
+      description: The name to credit you by, or leave empty to stay anonymous.
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything we should know?
+      description: Unfinished parts, texts you weren't sure about, how your language counts (one/few/many...).

@@ -1,3 +1,5 @@
+import 'dart:ui' show lerpDouble;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 
@@ -13,6 +15,7 @@ import '../../widgets/one_ui_floating_action_bar.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_status_bar_scrim.dart';
 import '../../widgets/call_glass.dart';
+import '../in_call/call_controls.dart';
 import '../../widgets/round_header_controls.dart';
 import '../../widgets/select_mark.dart';
 import '../search/search_screen.dart';
@@ -160,7 +163,13 @@ class _ContactsScreenState extends State<ContactsScreen> {
     );
   }
 
-  bool get _allSelected => _selected?.length == _shown.length;
+  bool get _allSelected => _shown.isNotEmpty && _selected?.length == _shown.length;
+
+  /// "Select items" until something is ticked, then "N selected" (ColorOS).
+  String _selectionTitle(BuildContext context) {
+    final n = _selected?.length ?? 0;
+    return n == 0 ? context.l10n.selectItems : context.l10n.selectedCount(n);
+  }
 
   void _toggleSelectAll() {
     final all = _shown;
@@ -251,10 +260,12 @@ class _ContactsScreenState extends State<ContactsScreen> {
                 backgroundColor: Colors.transparent,
                 // The page's top blur sits behind the header's pills, not over them.
                 // Ends at the bar's bottom: the big title right under it stays sharp.
-                flexibleSpace: OneUIStatusBarScrim(height: MediaQuery.paddingOf(context).top + kHeaderBarHeight),
+                flexibleSpace: OneUIStatusBarScrim(
+                  height: MediaQuery.paddingOf(context).top + headerBarHeight(context),
+                ),
                 surfaceTintColor: Colors.transparent,
                 scrolledUnderElevation: 0,
-                toolbarHeight: kHeaderBarHeight,
+                toolbarHeight: headerBarHeight(context),
                 // The glass press stretches the buttons past the bar; don't cut it off.
                 clipBehavior: Clip.none,
                 titleSpacing: 0,
@@ -263,13 +274,22 @@ class _ContactsScreenState extends State<ContactsScreen> {
                   builder: (context, _, _) => Stack(
                     children: [
                       HeaderTitle(collapse: _collapse, text: context.l10n.navContacts, hidden: selecting),
-                      _Header(
-                        selecting: selecting,
-                        allSelected: _allSelected,
-                        onToggleSelectAll: _toggleSelectAll,
-                        onCancel: _endSelection,
-                        menuKey: _menuKey,
-                        onMenu: _openMenu,
+                      HeaderTitle(
+                        collapse: _collapse,
+                        text: _selectionTitle(context),
+                        centered: true,
+                        hidden: !selecting,
+                      ),
+                      scaledToWidth(
+                        headerScale(context),
+                        _Header(
+                          selecting: selecting,
+                          allSelected: _allSelected,
+                          onToggleSelectAll: _toggleSelectAll,
+                          onCancel: _endSelection,
+                          menuKey: _menuKey,
+                          onMenu: _openMenu,
+                        ),
                       ),
                     ],
                   ),
@@ -285,9 +305,19 @@ class _ContactsScreenState extends State<ContactsScreen> {
                       builder: (context, _, _) => Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          BigTitle(
-                            collapse: _collapse,
-                            text: selecting ? context.l10n.selectedCount(_selected!.length) : context.l10n.navContacts,
+                          // Cross-faded between modes, as on Calls.
+                          AnimatedSwitcher(
+                            duration: MediaQuery.disableAnimationsOf(context)
+                                ? Duration.zero
+                                : const Duration(milliseconds: 220),
+                            layoutBuilder: (current, previous) =>
+                                Stack(alignment: Alignment.centerLeft, children: [...previous, ?current]),
+                            child: BigTitle(
+                              collapse: _collapse,
+                              text: selecting ? _selectionTitle(context) : context.l10n.navContacts,
+                              // Keyed on the mode only, so the count updates in place.
+                              key: ValueKey(selecting),
+                            ),
                           ),
                           const SizedBox(height: 2),
                           Text(
@@ -331,7 +361,11 @@ class _ContactsScreenState extends State<ContactsScreen> {
                         isLast: i == list.length - 1,
                         selectMark: ValueListenableBuilder(
                           valueListenable: _selectionChanged,
-                          builder: (context, _, _) => SelectMark(selected: _selected?.contains(c.id), gap: 12),
+                          builder: (context, _, _) => SelectMark(selected: _selected?.contains(c.id), end: 8),
+                        ),
+                        highlight: ValueListenableBuilder(
+                          valueListenable: _selectionChanged,
+                          builder: (context, _, _) => SelectHighlight(selected: _selected?.contains(c.id) ?? false),
                         ),
                         onTap: () => _selected != null ? _toggleSelected(c) : _open(c),
                         onLongPress: () => _selected != null ? _toggleSelected(c) : _startSelection(c),
@@ -347,7 +381,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
         if (_sections.length > 1)
           Positioned(
             right: 4,
-            top: top + kHeaderBarHeight + _titleHeight,
+            top: top + headerBarHeight(context) + _titleHeight,
             bottom: navBarClearance(context),
             width: 140,
             child: FastScroller(
@@ -361,8 +395,9 @@ class _ContactsScreenState extends State<ContactsScreen> {
   }
 }
 
-/// The Calls header's controls: glass search and menu; while selecting, a select-all
-/// pill on the left and Cancel on the right.
+/// The Contacts header's controls, morphing like the Calls header's (no glass fades, which
+/// flickered): glass search and menu; while selecting, search slides under the menu, the menu
+/// grows into Select all / Deselect all, and Cancel slides in from the left (ColorOS).
 class _Header extends StatelessWidget {
   const _Header({
     required this.selecting,
@@ -380,47 +415,126 @@ class _Header extends StatelessWidget {
   final GlobalKey menuKey;
   final VoidCallback onMenu;
 
+  static const double _button = 48;
+  static const double _gap = 8;
+  static const double _edge = 16;
+
+  /// The Calls header's morph spring.
+  static final _spring = GlassSpringCurve(
+    SpringDescription.withDampingRatio(mass: 1, stiffness: 240, ratio: .78),
+    const Duration(milliseconds: 550),
+  );
+
+  static double _out(double t) => (1 - t * 2).clamp(0.0, 1.0);
+  static double _in(double t) => (t * 2 - 1).clamp(0.0, 1.0);
+
+  static Widget _icon(BuildContext context, IconData icon, String tooltip, VoidCallback onTap) => IconButton(
+    tooltip: tooltip,
+    onPressed: onTap,
+    style: IconButton.styleFrom(
+      foregroundColor: context.palette.textPrimary,
+      fixedSize: const Size.square(_button),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    ),
+    icon: Icon(icon, size: 26),
+  );
+
   @override
   Widget build(BuildContext context) {
-    return AnimatedSwitcher(
-      duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 220),
-      child: Padding(
-        key: ValueKey(selecting),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-          children: selecting
-              ? [
-                  CallGlass(
-                    radius: 24,
-                    child: SizedBox(
-                      width: 100,
-                      height: 48,
-                      child: SelectAllCount(allSelected: allSelected, onTap: onToggleSelectAll),
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final cancelWidth = SelectionPillLabel.widthFor(context, context.l10n.cancel);
+    final selectAll = allSelected ? context.l10n.deselectAll : context.l10n.selectAll;
+    return SizedBox(
+      height: _button,
+      child: LayoutBuilder(
+        builder: (context, box) {
+          final menuLeft = box.maxWidth - _edge - _button;
+          final searchLeft = menuLeft - _gap - _button;
+          return TweenAnimationBuilder<double>(
+            tween: Tween(end: selecting ? 1 : 0),
+            duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 550),
+            curve: _spring,
+            builder: (context, sel, _) => TweenAnimationBuilder<double>(
+              tween: Tween(end: SelectionPillLabel.widthFor(context, selectAll)),
+              duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 600),
+              curve: FilterTabs.thumbSpring,
+              builder: (context, labelWidth, _) => Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // Search slides under the menu; its icon fades, its glass stays solid.
+                  Positioned(
+                    left: lerpDouble(searchLeft, menuLeft, sel),
+                    child: IgnorePointer(
+                      ignoring: selecting,
+                      child: CallGlass(
+                        child: Opacity(
+                          opacity: (1 - sel * 1.5).clamp(0.0, 1.0),
+                          child: _icon(context, Icons.search_rounded, context.l10n.search, () => openSearch(context)),
+                        ),
+                      ),
                     ),
                   ),
-                  const Spacer(),
-                  RoundIconButton(icon: Icons.close_rounded, tooltip: context.l10n.cancel, onTap: onCancel),
-                ]
-              : [
-                  const Spacer(),
-                  RoundIconButton(
-                    icon: Icons.search_rounded,
-                    tooltip: context.l10n.search,
-                    onTap: () => openSearch(context),
-                  ),
-                  const SizedBox(width: 8),
-                  // The menu measures this wrapper, outside the glass press, so holding the
-                  // button doesn't shift where the menu opens.
-                  KeyedSubtree(
-                    key: menuKey,
-                    child: RoundIconButton(
-                      icon: Icons.more_vert_rounded,
-                      tooltip: context.l10n.moreOptions,
-                      onTap: onMenu,
+                  // Menu, growing leftwards into Select all / Deselect all.
+                  Positioned(
+                    right: _edge,
+                    width: lerpDouble(_button, labelWidth, sel)!.clamp(_button - 6, labelWidth + 6),
+                    height: _button,
+                    // The menu measures this wrapper, outside the glass press, so holding the
+                    // button doesn't shift where the menu opens.
+                    child: KeyedSubtree(
+                      key: menuKey,
+                      child: CallGlass(
+                        radius: _button / 2,
+                        // Clipped only mid-morph.
+                        child: ClipRSuperellipse(
+                          borderRadius: const BorderRadius.all(Radius.circular(_button / 2)),
+                          clipBehavior: sel == 0 || sel == 1 ? Clip.none : Clip.antiAlias,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              IgnorePointer(
+                                ignoring: selecting,
+                                child: Opacity(
+                                  opacity: _out(sel),
+                                  child: _icon(context, Icons.more_vert_rounded, context.l10n.moreOptions, onMenu),
+                                ),
+                              ),
+                              IgnorePointer(
+                                ignoring: !selecting,
+                                child: Opacity(
+                                  opacity: _in(sel),
+                                  child: OverflowBox(
+                                    minWidth: labelWidth,
+                                    maxWidth: labelWidth,
+                                    child: SelectionPillLabel(text: selectAll, onTap: onToggleSelectAll),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                   ),
+                  // Cancel slides in from beyond the left edge (moved by layout, not a transform).
+                  if (sel > 0)
+                    Positioned(
+                      left: lerpDouble(-cancelWidth - _edge, _edge, sel),
+                      width: cancelWidth,
+                      height: _button,
+                      child: IgnorePointer(
+                        ignoring: !selecting,
+                        child: CallGlass(
+                          radius: _button / 2,
+                          child: SelectionPillLabel(text: context.l10n.cancel, onTap: onCancel),
+                        ),
+                      ),
+                    ),
                 ],
-        ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

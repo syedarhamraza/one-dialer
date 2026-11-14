@@ -25,6 +25,10 @@ void main() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
       nativeCalls.add(call);
       if (call.method == 'getSims') return [];
+      if (call.method == 'formatAsYouType') {
+        final n = call.arguments['number'] as String;
+        return n.length > 4 ? '${n.substring(0, 4)} ${n.substring(4)}' : n;
+      }
       return null;
     });
     ContactsRepository.instance.contacts.value = List.generate(
@@ -119,7 +123,7 @@ void main() {
   if (fontPath.isNotEmpty) {
     testWidgets('render keypad reference previews', (tester) async {
       await tester.runAsync(() async {
-        final loader = FontLoader('Roboto')
+        final loader = FontLoader('sans-serif')
           ..addFont(File(fontPath).readAsBytes().then((bytes) => ByteData.sublistView(bytes)));
         await loader.load();
         final icons = FontLoader('MaterialIcons')
@@ -199,6 +203,45 @@ void main() {
     expect(find.byTooltip('WhatsApp voice call'), findsNothing);
     expect(find.bySemanticsLabel('Call'), findsOneWidget);
     expect(nativeCalls.where((call) => call.method == 'placeCall'), isEmpty);
+  });
+
+  test('field offsets skip the grouping spaces', () {
+    expect(dialableOf('+92 311-935'), '+92311935');
+    expect(rawIndex('0333 333', 6), 5);
+    expect(fieldOffset('0333 333', 4), 4);
+    expect(fieldOffset('0333 333', 5), 6);
+    expect(fieldOffset('0333 333', 0), 0);
+  });
+
+  testWidgets('the number is grouped; keys and holds type at the tapped cursor', (tester) async {
+    final input = ValueNotifier('');
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: OneUITheme.darkTheme,
+        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: input)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    // Untapped, keys add at the end.
+    for (final d in '0333333'.split('')) {
+      await tester.tap(find.text(d).last);
+    }
+    await tester.pumpAndSettle();
+    expect(input.value, '0333333');
+    expect(find.text('0333 333'), findsOneWidget);
+    // Tap the number, put the cursor after "0333", then type and hold.
+    await tester.tap(find.byType(TextField));
+    await tester.pump();
+    tester.widget<TextField>(find.byType(TextField)).controller!.selection = const TextSelection.collapsed(offset: 4);
+    await tester.pump();
+    await tester.tap(find.text('1').last);
+    await tester.pumpAndSettle();
+    expect(input.value, '03331333');
+    await tester.longPress(find.text('*'));
+    await tester.pumpAndSettle();
+    expect(input.value, '03331,333');
   });
 
   testWidgets('typing and clearing leave the keys at the same position', (tester) async {

@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:dialer/app/layout.dart';
 import 'package:dialer/features/in_call/in_call_screen.dart';
+import 'package:dialer/features/in_call/incoming_controls.dart';
 import 'package:dialer/features/in_call/call_screen_widgets.dart';
 import 'package:dialer/widgets/one_ui_floating_modal.dart';
 import 'package:dialer/theme/one_ui_theme.dart';
@@ -129,7 +130,7 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.byKey(const ValueKey('swipe-Answer')), findsOneWidget);
     expect(find.byKey(const ValueKey('swipe-Decline')), findsOneWidget);
-    expect(find.text('Decline with SMS'), findsOneWidget);
+    expect(find.text('SMS reply'), findsOneWidget);
     expect(find.text('Alex Morgan'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
@@ -145,6 +146,8 @@ void main() {
     expect(nativeCalls.where((c) => c.method == 'answer'), hasLength(1));
     final ball = find.byKey(const ValueKey('answer-flight'));
     expect(ball, findsOneWidget);
+    // Let it glide to the top of its travel, where it waits for Telecom.
+    await tester.pump(const Duration(milliseconds: 300));
     final released = tester.getRect(ball);
 
     tester.binding.defaultBinaryMessenger.handlePlatformMessage(
@@ -162,21 +165,58 @@ void main() {
     // Lay out the connected controls, then start the flight clock.
     await tester.pump();
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 280));
-    double endOpacity() => tester
-        .widget<AnimatedOpacity>(find.ancestor(of: control('End call'), matching: find.byType(AnimatedOpacity)).first)
-        .opacity;
-    // Mid-flight: the ball has left where it was let go, and the real pill waits for it.
-    expect(tester.getRect(ball), isNot(released));
-    expect(endOpacity(), 0);
+    // Small steps: the ball aims at the End pill's last painted place, which rises in as it flies.
+    Future<void> fly(int ms) async {
+      for (var i = 0; i < ms; i += 25) {
+        await tester.pump(const Duration(milliseconds: 25));
+      }
+    }
 
-    // The flight has landed within about a second.
-    for (var i = 0; i < 12; i++) {
+    await fly(200);
+    final end = find.ancestor(of: control('End call'), matching: find.byType(AnimatedOpacity)).first;
+    double endOpacity() => tester.widget<AnimatedOpacity>(end).opacity;
+    final to = tester.getRect(end);
+    double down() => (tester.getRect(ball).center.dy - released.center.dy) / (to.center.dy - released.center.dy);
+    double across() => (tester.getRect(ball).center.dx - released.center.dx) / (to.center.dx - released.center.dx);
+    // 200 ms in, as in the ColorOS 17 recording: most of the way down, about half way across (it
+    // curves in from above), and the real pill waits for it.
+    expect(down(), closeTo(.82, .05));
+    expect(across(), closeTo(.57, .05));
+    expect(endOpacity(), 0);
+    // It dips just past the pill (3%) and eases back; across never overshoots.
+    await fly(200);
+    expect(down(), inInclusiveRange(1.0, 1.05));
+    expect(across(), lessThan(1));
+
+    // The flight has landed within 800 ms.
+    for (var i = 0; i < 5; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
     expect(ball, findsNothing);
     expect(endOpacity(), 1);
     expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('dragging Answer fades Decline and the SMS pill in step with the ball', (tester) async {
+    await open(tester);
+    await emit(tester, [call('ringing')]);
+    final answer = find.byKey(const ValueKey('swipe-Answer'));
+    final rest = tester.getCenter(answer).dy;
+    final gesture = await tester.startGesture(tester.getCenter(answer));
+    await gesture.moveBy(const Offset(0, -30));
+    await gesture.moveBy(const Offset(0, -40));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    // A straight line with the ball's height, gone at 75% of its travel.
+    final faded = 1 - (rest - tester.getCenter(answer).dy) / (SwipeUpButton.size * 2.08 * .75);
+    expect(faded, inExclusiveRange(.2, .8));
+    double opacityAbove(Finder child, int nth) =>
+        tester.widgetList<Opacity>(find.ancestor(of: child, matching: find.byType(Opacity))).elementAt(nth).opacity;
+    // The ball's own Opacity (hidden while it flies) is nearer than the fade's.
+    expect(opacityAbove(find.byKey(const ValueKey('swipe-Decline')), 1), closeTo(faded, .01));
+    expect(opacityAbove(find.text('SMS reply'), 0), closeTo(faded, .01));
+    await gesture.cancel();
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -188,6 +228,7 @@ void main() {
     await gesture.moveBy(const Offset(-20, -20));
     await gesture.moveBy(const Offset(-90, -90));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     final letGo = tester.getRect(answer);
     await gesture.up();
     await tester.pump();
@@ -208,7 +249,7 @@ void main() {
     const fontPath = String.fromEnvironment('PREVIEW_FONT');
     if (fontPath.isNotEmpty) {
       await tester.runAsync(() async {
-        await (FontLoader('Roboto')..addFont(File(fontPath).readAsBytes().then(ByteData.sublistView))).load();
+        await (FontLoader('sans-serif')..addFont(File(fontPath).readAsBytes().then(ByteData.sublistView))).load();
         await (FontLoader('MaterialIcons')..addFont(
               File('${File(fontPath).parent.path}/materialicons-regular.otf').readAsBytes().then(ByteData.sublistView),
             ))
@@ -255,20 +296,24 @@ void main() {
     }
   });
 
-  testWidgets('Add call takes the third slot and opens the dialer; More holds the rest', (tester) async {
+  testWidgets('the row is Mute, Hold, Notes, More; More holds Add call and video', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
-    await tester.tap(control('Add call'));
-    expect(nativeCalls.where((c) => c.method == 'openDialer'), hasLength(1));
+    for (final label in ['Mute', 'Hold', 'Notes', 'More']) {
+      expect(control(label), findsOneWidget, reason: label);
+    }
+    expect(control('Add call'), findsNothing);
     await tester.tap(control('More'));
     await tester.pumpAndSettle();
-    expect(find.text('Note'), findsOneWidget);
+    expect(find.text('Hold'), findsOneWidget); // Only the row's: without the recorder Hold isn't in the menu.
     // No Google Meet: Video stays in the menu, greyed out, and does nothing.
-    expect(find.text('Video call'), findsOneWidget);
-    await tester.tap(find.text('Video call'));
+    await tester.tap(find.text('Switch to video call'));
     await tester.pumpAndSettle();
     expect(nativeCalls.where((c) => c.method == 'meetCall'), isEmpty);
-    expect(find.text('Video call'), findsOneWidget); // The menu stayed open.
+    expect(find.text('Switch to video call'), findsOneWidget); // The menu stayed open.
+    await tester.tap(find.text('Add call'));
+    await tester.pumpAndSettle();
+    expect(nativeCalls.where((c) => c.method == 'openDialer'), hasLength(1));
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -278,7 +323,7 @@ void main() {
     await emit(tester, [call('active')]);
     await tester.tap(control('More'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Video call'));
+    await tester.tap(find.text('Switch to video call'));
     await tester.pumpAndSettle();
     expect(nativeCalls.where((c) => c.method == 'meetCall').single.arguments['number'], '5550100');
     await tester.pumpWidget(const SizedBox());
@@ -361,12 +406,10 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('More takes a note; with two calls Merge takes Add call\'s place', (tester) async {
+  testWidgets('Notes takes a note; with two calls More offers Merge in Add call\'s place', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
-    await tester.tap(control('More'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Note'));
+    await tester.tap(control('Notes'));
     await tester.pumpAndSettle();
     expect(find.text('Call note'), findsOneWidget);
     await tester.enterText(find.byType(TextField), 'Send the invoice');
@@ -381,14 +424,13 @@ void main() {
       call('holding', id: 'held'),
     ]);
     await tester.pumpAndSettle();
-    expect(control('Add call'), findsNothing);
-    expect(control('Merge'), findsOneWidget);
+    expect(tester.widget<IconButton>(control('Notes')).isSelected, isTrue); // Lit: the call has a note.
     await tester.tap(control('More'));
     await tester.pumpAndSettle();
-    expect(find.text('Edit note'), findsOneWidget);
-    await tester.tap(find.text('Add call'));
+    expect(find.text('Add call'), findsNothing);
+    await tester.tap(find.text('Merge'));
     await tester.pumpAndSettle();
-    expect(nativeCalls.where((c) => c.method == 'openDialer'), hasLength(1));
+    expect(nativeCalls.any((c) => c.method == 'merge' && c.arguments['id'] == 'call-1'), isTrue);
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -402,7 +444,8 @@ void main() {
       await tester.pumpAndSettle();
       Rect key(String digit) => tester.getRect(find.byKey(ValueKey('morph-key-$digit')));
       final rowGap = key('4').top - key('1').bottom;
-      final footerGap = tester.getRect(control('End call')).top - key('0').bottom;
+      // The row's circles: the End pill is shorter and centred on them.
+      final footerGap = tester.getRect(control('Dial pad')).top - key('0').bottom;
       expect(footerGap, inInclusiveRange(rowGap - 1, rowGap + 11));
       await tester.pumpWidget(const SizedBox());
     });
@@ -526,6 +569,39 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('a call waiting for a SIM asks once: a pick goes to Telecom, no pick ends the call', (tester) async {
+    await open(tester, reduceMotion: true);
+    await emit(tester, [call('selectPhoneAccount')]);
+    await tester.pumpAndSettle();
+    expect(find.text('SIM 1 · Personal'), findsOneWidget);
+    // Telecom repeats the state while it waits; the menu must not stack.
+    await emit(tester, [call('selectPhoneAccount')]);
+    await tester.pumpAndSettle();
+    expect(find.text('SIM 2 · Work'), findsOneWidget);
+    await tester.tap(find.text('SIM 2 · Work'));
+    await tester.pumpAndSettle();
+    final picks = nativeCalls.where((c) => c.method == 'selectSim').toList();
+    expect(picks.single.arguments, {'id': 'call-1', 'simId': 'sim2'});
+    expect(nativeCalls.any((c) => c.method == 'hangUp'), isFalse);
+
+    await emit(tester, [call('selectPhoneAccount', id: 'call-2')]);
+    await tester.pumpAndSettle();
+    expect(find.text('SIM 1 · Personal'), findsOneWidget);
+    await tester.tapAt(const Offset(4, 4)); // outside the menu
+    await tester.pumpAndSettle();
+    expect(nativeCalls.any((c) => c.method == 'hangUp' && c.arguments['id'] == 'call-2'), isTrue);
+    expect(nativeCalls.where((c) => c.method == 'selectSim'), hasLength(1));
+
+    // The call ends from outside while the menu is up: it must not wait for the next call.
+    await emit(tester, [call('selectPhoneAccount', id: 'call-3')]);
+    await tester.pumpAndSettle();
+    expect(find.text('SIM 1 · Personal'), findsOneWidget);
+    await emit(tester, []);
+    await tester.pumpAndSettle();
+    expect(find.text('SIM 1 · Personal'), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('audio output and quick replies use floating sheets', (tester) async {
     await open(tester, reduceMotion: true); // The ringing hint loops, which pumpAndSettle can't outwait.
     await emit(tester, [call('active')], bluetooth: true);
@@ -538,12 +614,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(nativeCalls.any((c) => c.method == 'setAudioRoute' && c.arguments['route'] == 'bluetooth'), isTrue);
     await emit(tester, [call('ringing', id: 'call-2')]);
-    await tester.tap(find.text('Decline with SMS'));
+    await tester.tap(find.text('SMS reply'));
     await tester.pumpAndSettle();
-    expect(find.byType(OneUIFloatingModal), findsOneWidget);
+    expect(find.text('Custom'), findsOneWidget); // the ColorOS SMS reply card
     await tester.tap(find.text("I'll call you back"));
     await tester.pumpAndSettle();
-    expect(nativeCalls.any((c) => c.method == 'rejectWithMessage' && c.arguments['id'] == 'call-2'), isTrue);
+    expect(nativeCalls.any((c) => c.method == 'reject' && c.arguments['id'] == 'call-2'), isTrue);
+    expect(nativeCalls.any((c) => c.method == 'sendSms' && c.arguments['body'] == "I'll call you back"), isTrue);
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -552,7 +629,7 @@ void main() {
     await emit(tester, [call('ringing', private: true)]);
     expect(find.text('Private number'), findsOneWidget);
     expect(find.text('5550100'), findsNothing);
-    expect(find.text('Decline with SMS'), findsNothing);
+    expect(find.text('SMS reply'), findsNothing);
     await emit(tester, [call('active', conference: true)]);
     expect(find.text('Conference call'), findsOneWidget);
     await emit(tester, [call('disconnected', conference: true)]);
@@ -568,14 +645,15 @@ void main() {
     await emit(tester, [call('dialing')]);
     expect(find.textContaining('Calling'), findsOneWidget);
     expect(tester.widget<IconButton>(control('Hold')).onPressed, isNull);
-    expect(control('Merge'), findsNothing); // One call: the slot holds Add call.
-    expect(control('Add call'), findsOneWidget);
     await emit(tester, [
       {...call('active'), 'canHold': true, 'canMerge': true},
       call('holding', id: 'held'),
     ]);
     await tester.tap(control('Hold'));
-    await tester.tap(control('Merge'));
+    await tester.tap(control('More'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Merge'));
+    await tester.pumpAndSettle();
     expect(find.text('On hold'), findsOneWidget); // The held call's card.
     await tester.tap(find.text('Switch'));
     expect(nativeCalls.any((c) => c.method == 'hold' && c.arguments['id'] == 'call-1'), isTrue);
@@ -849,12 +927,12 @@ void main() {
   testWidgets('a reply selected after the ringing call changes cannot reject it', (tester) async {
     await open(tester, reduceMotion: true);
     await emit(tester, [call('ringing')]);
-    await tester.tap(find.text('Decline with SMS'));
+    await tester.tap(find.text('SMS reply'));
     await tester.pumpAndSettle();
     await emit(tester, [call('active')]);
     await tester.tap(find.text("I'll call you back"));
     await tester.pumpAndSettle();
-    expect(nativeCalls.where((c) => c.method == 'rejectWithMessage'), isEmpty);
+    expect(nativeCalls.where((c) => c.method == 'reject' || c.method == 'sendSms'), isEmpty);
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -900,7 +978,7 @@ void main() {
   if (fontPath.isNotEmpty) {
     testWidgets('render One UI call previews with real fonts', (tester) async {
       await tester.runAsync(() async {
-        final font = FontLoader('Roboto')
+        final font = FontLoader('sans-serif')
           ..addFont(File(fontPath).readAsBytes().then((bytes) => ByteData.sublistView(bytes)));
         await font.load();
         final icons = FontLoader('MaterialIcons')

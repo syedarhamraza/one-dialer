@@ -8,17 +8,17 @@ import '../../core/diagnostics/lag_diagnostics.dart';
 import '../../core/contacts/contacts_repository.dart';
 import '../../core/telecom/call_info.dart';
 import '../../widgets/cos_dialog.dart';
-import '../../widgets/one_ui_toast.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../theme/one_ui_scroll.dart';
 import '../../core/prefs/dialer_prefs.dart';
+import '../contacts/editor/add_to_contacts.dart';
+import '../contacts/editor/contact_editor_screen.dart';
 import '../recents/call_log_repository.dart';
-import '../settings/settings_screen.dart';
+import 'special_codes.dart';
 import 'speed_dial_screen.dart';
 import '../../widgets/call_glass.dart';
 import '../../widgets/letter_avatar.dart';
-import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/place_call.dart';
 import '../../widgets/press_glow.dart';
 import '../../widgets/rise_route.dart';
@@ -45,6 +45,31 @@ class KeypadScreen extends StatefulWidget {
 
 const double _gap = 10;
 
+/// The typed number's band at the top of the screen, where the Calls header was.
+const double _numberHeight = 112;
+
+final _groupable = RegExp(r'^\+?[0-9]+$');
+final _dialable = RegExp(r'[0-9+*#,;]');
+
+/// The dialable characters of [text], dropping the grouping spaces and anything pasted.
+@visibleForTesting
+String dialableOf(String text) => _dialable.allMatches(text).map((m) => m[0]).join();
+
+/// How many dialable characters of [text] come before [offset].
+@visibleForTesting
+int rawIndex(String text, int offset) => dialableOf(text.substring(0, offset.clamp(0, text.length))).length;
+
+/// The offset in [text] just after its [raw]th dialable character.
+@visibleForTesting
+int fieldOffset(String text, int raw) {
+  if (raw <= 0) return 0;
+  var seen = 0;
+  for (var i = 0; i < text.length; i++) {
+    if (_dialable.hasMatch(text[i]) && ++seen == raw) return i + 1;
+  }
+  return text.length;
+}
+
 class _KeypadScreenState extends State<KeypadScreen> {
   final _telecom = TelecomBridge.instance;
   final _callKey = GlobalKey();
@@ -54,12 +79,94 @@ class _KeypadScreenState extends State<KeypadScreen> {
   // shortcut: read once per launch; re-read on resume if SIM hot-swap matters.
   List<SimCard> _askSims = const [];
 
+  /// The number as shown ("0333 333"), editable with a cursor and the system's selection
+  /// toolbar; [KeypadScreen.input] keeps the raw digits.
+  final _field = TextEditingController();
+  final _fieldFocus = FocusNode();
+
+  /// The text this state last put in [_field]; anything else there came from the toolbar.
+  String _shownText = '';
+
+  /// The selection as raw-digit indexes; the keys type over it once the number was tapped.
+  (int, int) _sel = (0, 0);
+
+  /// Where the cursor goes after the next change to the input; the end when null.
+  int? _pendingCursor;
+
   @override
   void initState() {
     super.initState();
     _telecom.getSims().then((sims) {
       if (mounted && sims.length > 1 && !sims.any((s) => s.isDefault)) setState(() => _askSims = sims);
     });
+    widget.input.addListener(_syncField);
+    _field.addListener(_onFieldChanged);
+    _syncField();
+  }
+
+  @override
+  void dispose() {
+    widget.input.removeListener(_syncField);
+    _field.dispose();
+    _fieldFocus.dispose();
+    super.dispose();
+  }
+
+  /// Shows the input in the field, grouped as Android's own dialer groups it.
+  void _syncField() {
+    final raw = widget.input.value;
+    final cursor = (_pendingCursor ?? raw.length).clamp(0, raw.length);
+    _pendingCursor = null;
+    _sel = (cursor, cursor);
+    if (raw.isEmpty) _fieldFocus.unfocus();
+    if (!_groupable.hasMatch(raw)) return _setField(raw, cursor);
+    // Waits for the grouping rather than showing the bare digits first, which would jump.
+    _telecom
+        .formatAsYouType(raw)
+        .then(
+          (text) {
+            if (mounted && widget.input.value == raw) _setField(dialableOf(text) == raw ? text : raw, cursor);
+          },
+          onError: (Object _) {
+            if (mounted && widget.input.value == raw) _setField(raw, cursor);
+          },
+        );
+  }
+
+  void _setField(String text, int cursor) {
+    _shownText = text;
+    _field.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: fieldOffset(text, cursor)),
+    );
+  }
+
+  void _onFieldChanged() {
+    final value = _field.value;
+    final sel = value.selection;
+    if (value.text != _shownText) {
+      // The toolbar's cut or paste: keep its dialable characters, cursor where it left it.
+      _shownText = value.text;
+      _pendingCursor = rawIndex(value.text, sel.isValid ? sel.end : value.text.length);
+      widget.input.value = dialableOf(value.text);
+    } else if (sel.isValid) {
+      _sel = (rawIndex(value.text, sel.start), rawIndex(value.text, sel.end));
+    }
+  }
+
+  /// Types [text] over the selection, or deletes it (or the digit before the cursor) when
+  /// empty. Until the number is tapped the cursor stays at the end.
+  void _replace(String text) {
+    final raw = widget.input.value;
+    var (start, end) = _fieldFocus.hasFocus ? _sel : (raw.length, raw.length);
+    start = start.clamp(0, raw.length);
+    end = end.clamp(start, raw.length);
+    if (text.isEmpty && start == end) {
+      if (start == 0) return;
+      start--;
+    }
+    _pendingCursor = start + text.length;
+    widget.input.value = raw.replaceRange(start, end, text);
   }
 
   /// The last search, so showing/hiding the sheet or opening a menu doesn't search again.
@@ -89,17 +196,39 @@ class _KeypadScreenState extends State<KeypadScreen> {
     LagDiagnostics.instance.action(DiagnosticAction.keypad);
     HapticFeedback.lightImpact();
     _telecom.playTone(key);
-    widget.input.value += key;
+    _replace(key);
+    final number = widget.input.value;
+    if (specialCode(number) case final code?) _special(code, number);
   }
 
-  /// Long-press: 0 types "+", 2–9 call their speed dial (or offer to assign one).
+  /// `*#06#` and the like act as soon as they're typed (and on Call), never dialled.
+  Future<void> _special(SpecialCode code, String number) async {
+    final handled = await _telecom.handleSpecialCode(number);
+    if (!mounted || widget.input.value != number) return;
+    if (handled) {
+      widget.input.value = '';
+    } else if (code case DeviceCode(isImei: true)) {
+      // Android doesn't let apps read the IMEI; the phone's own About page shows it.
+      widget.input.value = '';
+      final l10n = context.l10n;
+      if (await showCosConfirm(context, title: l10n.imeiTitle, message: l10n.imeiUnavailable, confirmLabel: l10n.aboutPhone)) {
+        await _telecom.openSystemSettings('deviceInfo');
+      }
+    }
+  }
+
+  /// Long-press (the key already typed its digit on press): 0 becomes "+", * a pause (","),
+  /// # a wait (";"); 2–9 alone call their speed dial (or offer to assign one).
   Future<void> _longPress(String digit) async {
-    if (digit == '0') {
-      widget.input.value += '+';
+    if (const {'0': '+', '*': ',', '#': ';'}[digit] case final char?) {
+      HapticFeedback.mediumImpact();
+      _replace('');
+      _replace(char);
       return;
     }
-    if (!DialerPrefs.speedDialDigits.contains(digit) || widget.input.value.isNotEmpty) return;
+    if (!DialerPrefs.speedDialDigits.contains(digit) || widget.input.value != digit) return;
     HapticFeedback.mediumImpact();
+    widget.input.value = '';
     final entry = await DialerPrefs.instance.speedDial(digit);
     if (entry != null) {
       if (mounted) await placeCall(context, entry.$2);
@@ -119,11 +248,8 @@ class _KeypadScreenState extends State<KeypadScreen> {
 
   void _backspace() {
     LagDiagnostics.instance.action(DiagnosticAction.backspace);
-    final text = widget.input.value;
-    if (text.isNotEmpty) widget.input.value = text.substring(0, text.length - 1);
+    _replace('');
   }
-
-  Future<void> _paste() => pasteNumber(widget.input);
 
   Future<void> _call([String? simId]) async {
     if (_calling) return;
@@ -133,15 +259,12 @@ class _KeypadScreenState extends State<KeypadScreen> {
       widget.input.value = CallLogRepository.instance.lastDialled ?? '';
       return;
     }
+    if (specialCode(number) case final code?) return _special(code, number);
     HapticFeedback.mediumImpact();
     setState(() => _calling = true);
     try {
       final called = await placeCall(context, number, simId: simId, anchorKey: _callKey);
       if (called && widget.input.value == number) widget.input.value = '';
-    } on PlatformException {
-      if (mounted) {
-        OneUIToast.show(context, context.l10n.couldNotPlaceCall);
-      }
     } finally {
       if (mounted) setState(() => _calling = false);
     }
@@ -163,16 +286,25 @@ class _KeypadScreenState extends State<KeypadScreen> {
             builder: (context, constraints) {
               final clearance = navBarClearance(context);
               final keyHeight = ((constraints.maxHeight - clearance) * 0.08).clamp(44.0, 60.0);
-              // Handle, number, five rows of keys and their gaps, then the nav bar.
-              final sheetHeight = 24 + (number.isEmpty ? 0 : 64) + keyHeight * 5 + _gap * 4 + 12 + clearance;
+              // Handle, five rows of keys and their gaps, then the nav bar.
+              final sheetHeight = 24 + keyHeight * 5 + _gap * 4 + 12 + clearance;
+              final top = MediaQuery.paddingOf(context).top;
               return Stack(
                 children: [
-                  // Nothing typed: no backdrop, so Calls shows and takes taps. The results start
-                  // under the Calls header bar, whose All | Missed pill morphs into Add to
-                  // Contacts while typing. They fade in on the first digit and out when the
-                  // number is cleared; the outgoing one keeps its last number while it fades.
+                  // Nothing typed: no backdrop, so Calls shows and takes taps. While typing the
+                  // Calls header steps aside for the number (ColorOS), with the results under it.
+                  // They fade in on the first digit and out when the number is cleared; the
+                  // outgoing one keeps its last number while it fades.
+                  if (number.isNotEmpty)
+                    Positioned(
+                      top: top,
+                      left: 0,
+                      right: 0,
+                      height: _numberHeight,
+                      child: _NumberDisplay(controller: _field, focusNode: _fieldFocus),
+                    ),
                   Positioned(
-                    top: MediaQuery.paddingOf(context).top + kHeaderBarHeight,
+                    top: top + _numberHeight,
                     left: 0,
                     right: 0,
                     bottom: 0,
@@ -192,6 +324,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
                               child: ValueListenableBuilder<List<DialerContact>>(
                                 valueListenable: ContactsRepository.instance.contacts,
                                 builder: (context, contacts, _) => _Results(
+                                  number: number,
                                   matches: _matches(number, contacts),
                                   expanded: !open,
                                   bottomPadding: open ? sheetHeight : clearance,
@@ -232,7 +365,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
                               constraints: BoxConstraints(maxHeight: constraints.maxHeight),
                               // Frosted like the nav bar: Calls shows blurred behind the keys. Costs a
                               // blur only on frames where something animates.
-                              child: ClipRRect(
+                              child: ClipRSuperellipse(
                                 borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
                                 child: _Frosted(
                                   builder: (blur) => DecoratedBox(
@@ -248,7 +381,6 @@ class _KeypadScreenState extends State<KeypadScreen> {
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           _Handle(onHide: _hide),
-                                          if (number.isNotEmpty) _NumberDisplay(number: number, onPaste: _paste),
                                           _keys = _keys?.keyHeight == keyHeight
                                               ? _keys!
                                               : _Keypad(onKey: _type, onLongPress: _longPress, keyHeight: keyHeight),
@@ -289,6 +421,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
 
 class _Results extends StatelessWidget {
   const _Results({
+    required this.number,
     required this.matches,
     required this.onPick,
     required this.onScroll,
@@ -296,6 +429,7 @@ class _Results extends StatelessWidget {
     required this.bottomPadding,
   });
 
+  final String number;
   final List<T9Match> matches;
   final ValueChanged<T9Match> onPick;
   final VoidCallback onScroll;
@@ -304,6 +438,24 @@ class _Results extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // No match: offer to save the number, as ColorOS does.
+    if (matches.isEmpty) {
+      return ListView(
+        padding: EdgeInsets.only(top: 4, bottom: bottomPadding),
+        children: [
+          _SaveRow(
+            icon: Icons.person_add_alt_outlined,
+            label: context.l10n.newContact,
+            onTap: () => openContactEditor(context, number: number),
+          ),
+          _SaveRow(
+            icon: Icons.save_outlined,
+            label: context.l10n.addToExistingContact,
+            onTap: () => addToExistingContact(context, number),
+          ),
+        ],
+      );
+    }
     return NotificationListener<ScrollStartNotification>(
       onNotification: (notification) {
         if (notification.dragDetails != null && !expanded) {
@@ -325,6 +477,53 @@ class _Results extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A ColorOS list row: outlined icon, label, chevron, and a divider under the label.
+class _SaveRow extends StatelessWidget {
+  const _SaveRow({required this.icon, required this.label, required this.onTap});
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    splashColor: context.palette.textPrimary.withValues(alpha: 0.06),
+    highlightColor: context.palette.textPrimary.withValues(alpha: 0.03),
+    child: Padding(
+      padding: const EdgeInsets.only(left: 20),
+      child: Row(
+        children: [
+          Icon(icon, size: 26, color: context.palette.textPrimary),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Container(
+              height: 60,
+              padding: const EdgeInsets.only(right: 20),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: context.palette.divider, width: 1)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500, letterSpacing: -0.2),
+                    ),
+                  ),
+                  Icon(Icons.chevron_right_rounded, color: context.palette.textSecondary),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 /// A T9 match laid out like a Calls row: avatar, name, and the number below, with the
@@ -403,57 +602,77 @@ class _ResultTile extends StatelessWidget {
   }
 }
 
+/// The typed number, big and centred at the top. Tap it for a cursor the keys type at;
+/// hold it for the system's selection toolbar (cut, copy, paste). The phone's keyboard
+/// never opens.
 class _NumberDisplay extends StatelessWidget {
-  const _NumberDisplay({required this.number, required this.onPaste});
+  const _NumberDisplay({required this.controller, required this.focusNode});
 
-  final String number;
-  final VoidCallback onPaste;
+  final TextEditingController controller;
+  final FocusNode focusNode;
 
-  void _menu(BuildContext context) => OneUIFloatingMenu.show(
-    context: context,
-    anchorContext: context,
-    centered: true,
-    items: [
-      OneUIFloatingMenuItem(
-        label: context.l10n.copy,
-        icon: Icons.copy_rounded,
-        onTap: () => Clipboard.setData(ClipboardData(text: number)),
-      ),
-      OneUIFloatingMenuItem(label: context.l10n.paste, icon: Icons.content_paste_rounded, onTap: onPaste),
-    ],
-  );
+  static const double _fontSize = 40;
+  static const double _minFontSize = 24;
+
+  /// The last measurement: moving the cursor or the selection rebuilds the field without changing it.
+  static ({String text, TextScaler scaler, double width})? _measured;
+
+  static double _widthOf(String text, TextStyle style, TextScaler scaler) {
+    if (_measured case final m? when m.text == text && m.scaler == scaler) return m.width;
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+      textScaler: scaler,
+      maxLines: 1,
+    )..layout();
+    _measured = (text: text, scaler: scaler, width: painter.width);
+    painter.dispose();
+    return _measured!.width;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      label: number.isEmpty ? context.l10n.keypadNumberEmpty : context.l10n.keypadNumber(number),
-      onLongPressHint: '${context.l10n.copy} / ${context.l10n.paste}',
-      child: GestureDetector(
-        onLongPress: () => _menu(context),
-        behavior: HitTestBehavior.opaque,
-        child: SizedBox(
-          height: 64,
-          width: double.infinity,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Row(
-                children: [
-                  Text(
-                    number,
-                    maxLines: 1,
-                    style: TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: 0.5,
-                      color: context.palette.textPrimary,
-                    ),
-                  ),
-                ],
+    final style = TextStyle(
+      fontSize: _fontSize,
+      fontWeight: FontWeight.w500,
+      letterSpacing: 0.5,
+      color: context.palette.textPrimary,
+    );
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: LayoutBuilder(
+        builder: (context, box) => ListenableBuilder(
+          listenable: controller,
+          builder: (context, _) {
+            // Shrinks to fit a long number, then scrolls.
+            final width = _widthOf(controller.text, style, MediaQuery.textScalerOf(context));
+            final fit = width > box.maxWidth ? _fontSize * box.maxWidth / width : _fontSize;
+            return Center(
+              child: TextSelectionTheme(
+                data: TextSelectionThemeData(
+                  cursorColor: OneUITheme.callGreen,
+                  selectionColor: OneUITheme.callGreen.withValues(alpha: .35),
+                  selectionHandleColor: OneUITheme.callGreen,
+                ),
+                child: TextField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  keyboardType: TextInputType.none,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  style: style.copyWith(fontSize: fit.clamp(_minFontSize, _fontSize)),
+                  cursorWidth: 2,
+                  // Pasted text keeps only what can be dialled; spaces are the grouping.
+                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9+*#,; ]'))],
+                  // Keys tapped below keep the cursor where it is.
+                  onTapOutside: (_) {},
+                  decoration: const InputDecoration.collapsed(hintText: null),
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
@@ -509,9 +728,9 @@ class _Keypad extends StatelessWidget {
     ('7', 'PQRS'),
     ('8', 'TUV'),
     ('9', 'WXYZ'),
-    ('*', ''),
+    ('*', ','),
     ('0', '+'),
-    ('#', ''),
+    ('#', ';'),
   ];
 
   @override
@@ -534,7 +753,8 @@ class _Keypad extends StatelessWidget {
                         '2' || '3' || '4' || '5' || '6' || '7' || '8' || '9' => context.l10n.keypadDigitHint(digit),
                         _ => digit,
                       },
-                      onTap: () => onKey(digit),
+                      onTap: null,
+                      onDown: () => onKey(digit),
                       onLongPress: () => onLongPress(digit),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -572,6 +792,7 @@ class _Pill extends StatelessWidget {
     required this.label,
     required this.onTap,
     required this.child,
+    this.onDown,
     this.onLongPress,
     this.color = OneUITheme.surfacePill,
     this.lit = false,
@@ -580,6 +801,10 @@ class _Pill extends StatelessWidget {
   final double height;
   final String label;
   final VoidCallback? onTap;
+
+  /// Fires on touch-down instead of [onTap] (digit keys): a tap only counts on release, after
+  /// winning the gesture arena, so quick or rolling presses dropped digits.
+  final VoidCallback? onDown;
   final VoidCallback? onLongPress;
   final Color color;
 
@@ -591,35 +816,40 @@ class _Pill extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
     button: true,
     label: label,
-    enabled: onTap != null,
+    enabled: onTap != null || onDown != null,
     excludeSemantics: true,
-    child: ListenableBuilder(
-      listenable: OneUIEffectsController.instance,
-      builder: (context, _) {
-        final fx = OneUIEffectsController.instance;
-        if (lit) return LitButton(color: color, shape: const StadiumBorder(), child: _ink());
-        // White glass keys in light mode press dark.
-        final light = context.palette.isLight;
-        return PressGlow(
-          // Below full visual effects light mode is flat One UI: no shadows.
-          shadows: context.palette.isLight && fx.isFull ? OneUIPalette.lightGlassShadow : null,
-          child: fx.isFull
-              // The nav bar's call glass without its backdrop blur (a save layer per key), rasterized
-              // once so presses and the sheet's slide only draw an image.
-              ? CallBodyArtwork(
-                  radius: height / 2,
-                  glow: kMainGlassGlow,
-                  opacity: mainGlass(context, classicOpacity: .75).opacity,
-                  edges: mainGlass(context).edges,
-                  child: _ink(light: light),
-                )
-              // Below full: a flat One UI key, translucent over the sheet when reduced, solid when off.
-              : _ink(
-                  fill: fx.oneUIFill(light: light),
-                  light: light,
-                ),
-        );
-      },
+    // Screen readers activate without a touch-down.
+    onTap: onDown,
+    child: Listener(
+      onPointerDown: onDown == null ? null : (_) => onDown!(),
+      child: ListenableBuilder(
+        listenable: OneUIEffectsController.instance,
+        builder: (context, _) {
+          final fx = OneUIEffectsController.instance;
+          if (lit) return LitButton(color: color, shape: const StadiumBorder(), child: _ink());
+          // White glass keys in light mode press dark.
+          final light = context.palette.isLight;
+          return PressGlow(
+            // Below full visual effects light mode is flat One UI: no shadows.
+            shadows: context.palette.isLight && fx.isFull ? OneUIPalette.lightGlassShadow : null,
+            child: fx.isFull
+                // The nav bar's call glass without its backdrop blur (a save layer per key), rasterized
+                // once so presses and the sheet's slide only draw an image.
+                ? CallBodyArtwork(
+                    radius: height / 2,
+                    glow: kMainGlassGlow,
+                    opacity: mainGlass(context, classicOpacity: .75).opacity,
+                    edges: mainGlass(context).edges,
+                    child: _ink(light: light),
+                  )
+                // Below full: a flat One UI key, translucent over the sheet when reduced, solid when off.
+                : _ink(
+                    fill: fx.oneUIFill(light: light),
+                    light: light,
+                  ),
+          );
+        },
+      ),
     ),
   );
 
@@ -755,39 +985,6 @@ Future<void> pasteNumber(ValueNotifier<String> input) async {
   final data = await Clipboard.getData(Clipboard.kTextPlain);
   final digits = data?.text?.replaceAll(RegExp(r'[^0-9+*#,;]'), '') ?? '';
   if (digits.isNotEmpty) input.value += digits;
-}
-
-/// The keypad's menu: typing actions while a number is entered, then speed dial and
-/// settings. Shown from the Calls header's menu button while typing.
-/// The keypad's menu items: typing actions while a number is entered, then speed dial
-/// and settings. Shown from the Calls header's menu while typing.
-List<OneUIFloatingMenuItem> keypadMenuItems(
-  BuildContext context, {
-  required ValueNotifier<String> input,
-  required ValueNotifier<bool> open,
-}) {
-  final typing = input.value.isNotEmpty;
-  return [
-    if (typing) ...[
-      OneUIFloatingMenuItem(
-        label: open.value ? context.l10n.hideKeypad : context.l10n.showKeypad,
-        onTap: () => open.value = !open.value,
-      ),
-      OneUIFloatingMenuItem(label: context.l10n.copy, onTap: () => Clipboard.setData(ClipboardData(text: input.value))),
-      OneUIFloatingMenuItem(label: context.l10n.paste, onTap: () => pasteNumber(input)),
-      OneUIFloatingMenuItem(label: context.l10n.addPause, onTap: () => input.value += ','),
-      OneUIFloatingMenuItem(label: context.l10n.addWait, onTap: () => input.value += ';'),
-      OneUIFloatingMenuItem(label: context.l10n.sendMessage, onTap: () => TelecomBridge.instance.sendSms(input.value)),
-    ],
-    OneUIFloatingMenuItem(
-      label: context.l10n.speedDialNumbers,
-      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SpeedDialScreen())),
-    ),
-    OneUIFloatingMenuItem(
-      label: context.l10n.settings,
-      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),
-    ),
-  ];
 }
 
 /// The sheet's frosted backing: Calls blurred behind the keys, and a solid backing with

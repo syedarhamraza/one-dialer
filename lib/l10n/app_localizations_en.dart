@@ -49,6 +49,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deselectAll => 'Deselect all';
 
   @override
+  String get selectItems => 'Select items';
+
+  @override
   String get search => 'Search';
 
   @override
@@ -787,7 +790,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saveAnyway => 'Save anyway';
 
   @override
-  String get saveOrDiscard => 'Save your changes or discard them?';
+  String get saveOrDiscard => 'Save your edits?';
 
   @override
   String get couldNotLoadContactRetry => 'Couldn\'t load the contact. Retry';
@@ -815,6 +818,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get newContact => 'New contact';
+
+  @override
+  String get addToExistingContact => 'Add to existing contact';
 
   @override
   String get editContact => 'Edit contact';
@@ -986,7 +992,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editNote => 'Edit note';
 
   @override
-  String get videoCall => 'Video call';
+  String get videoCall => 'Video call (Meet)';
+
+  @override
+  String get switchToVideoCall => 'Switch to video call';
 
   @override
   String get mute => 'Mute';
@@ -1069,10 +1078,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get switchCall => 'Switch';
 
   @override
-  String get declineWithSms => 'Decline with SMS';
-
-  @override
-  String get noQuickReplies => 'No quick replies saved';
+  String get declineWithSms => 'SMS reply';
 
   @override
   String get answer => 'Answer';
@@ -1134,6 +1140,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get announceCallsSubtitle => 'Says the caller\'s name while it rings';
 
   @override
+  String get flashOnCall => 'Flash notification';
+
+  @override
+  String get flashOnCallSubtitle => 'Blink the camera flash while a call rings';
+
+  @override
+  String get systemFlash => 'Your phone has its own flash notification';
+
+  @override
+  String get systemFlashSubtitle =>
+      'Turn one of them off, or both will blink. Find it in Settings under Notifications or Accessibility';
+
+  @override
+  String get liveUpdateCapsule => 'Live Update capsule (Experimental)';
+
+  @override
+  String get liveUpdateCapsuleSubtitle =>
+      'Android 16: show a connected call in the status bar chip, and the capsule on ColorOS, OxygenOS and realme UI';
+
+  @override
   String get swipeUpToAnswer => 'Swipe up to answer';
 
   @override
@@ -1156,6 +1182,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get callScreenEffectsSubtitle => 'Glass and glow on the call screen';
+
+  @override
+  String get callScreenAnimations => 'Call screen animations';
+
+  @override
+  String get callScreenAnimationsSubtitle =>
+      'Motion when the call screen opens, answers and changes';
+
+  @override
+  String get hideContactNumbers => 'Hide contact phone numbers';
+
+  @override
+  String get hideContactNumbersSubtitle =>
+      'Show only the name of saved contacts on the call screen and in Calls';
 
   @override
   String secondsCount(int count) {
@@ -1303,21 +1343,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reduceVisualEffects => 'Reduce visual effects';
 
   @override
+  String get displaySize => 'Display size';
+
+  @override
+  String get displaySizeSmall => 'Small';
+
+  @override
+  String get displaySizeDefault => 'Default';
+
+  @override
+  String get displaySizeLarge => 'Large';
+
+  @override
+  String get displaySizeLarger => 'Larger';
+
+  @override
+  String get displaySizeApp => 'App';
+
+  @override
+  String get displaySizeNavBar => 'Navigation bar';
+
+  @override
   String get reduceVisualEffectsSubtitle =>
       'Less blur runs smoother on slower phones';
-
-  @override
-  String get appIcon => 'App icon';
-
-  @override
-  String get appIconGlossy => 'Glossy';
-
-  @override
-  String get appIconClassic => 'Classic';
-
-  @override
-  String get appIconFootnote =>
-      'Changes both the Phone and Contacts icons. The launcher may take a few seconds, and icons on the home screen may need adding again from the app drawer.';
 
   @override
   String get callScreenEdgeGlow => 'Call screen edge glow';
@@ -1502,6 +1550,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportIdCopied => 'Report ID copied';
 
   @override
+  String get editSpeedDial => 'Edit speed dial';
+
+  @override
+  String get clearNumber => 'Clear number';
+
+  @override
+  String get changeNumber => 'Change number';
+
+  @override
+  String get numberCopied => 'Number copied';
+
+  @override
   String get noEmailApp => 'No email app found';
 
   @override
@@ -1602,26 +1662,348 @@ class AppLocalizationsEn extends AppLocalizations {
   String get autoUpdateAlways => 'Using Wi-Fi or mobile data';
 
   @override
-  String get settingsCalls => 'Calls';
-
-  @override
-  String get settingsDialing => 'Dialing';
-
-  @override
-  String get settingsSpamBlocking => 'Spam & blocking';
-
-  @override
-  String get settingsPersonalisation => 'Personalisation';
-
-  @override
-  String get settingsGeneral => 'General';
-
-  @override
-  String get settingsAbout => 'About';
-
-  @override
   String get displayAndEffects => 'Display & effects';
 
   @override
   String get keypadAndRecents => 'Keypad & recents';
+
+  @override
+  String get logIncoming => 'Incoming';
+
+  @override
+  String get logOutgoing => 'Outgoing';
+
+  @override
+  String get logMissed => 'Missed';
+
+  @override
+  String get logRejected => 'Rejected';
+
+  @override
+  String get logBlocked => 'Blocked';
+
+  @override
+  String logRangFor(String type, String duration) {
+    return '$type (Rang for $duration)';
+  }
+
+  @override
+  String get record => 'Record';
+
+  @override
+  String get stopRecording => 'Stop recording';
+
+  @override
+  String get recordSetUpFirst => 'Record (set up in Settings)';
+
+  @override
+  String get recordingNow => 'Recording';
+
+  @override
+  String get callRecording => 'Call recording';
+
+  @override
+  String get recorderApp => 'One Recorder';
+
+  @override
+  String get recorderReady => 'Ready to record';
+
+  @override
+  String get recorderNeedsMic => 'Allow the microphone in One Recorder';
+
+  @override
+  String get recorderNeedsAccessibility => 'Turn on its accessibility service';
+
+  @override
+  String get recorderUntrusted =>
+      'The recorder works only with One Dialer from Google Play. Install it from Play, or update both apps.';
+
+  @override
+  String get recordingConsentTitle => 'Before you record';
+
+  @override
+  String get recordingConsentBody =>
+      'Recording laws differ by country, and some need everyone on the call to agree. You\'re responsible for telling the other person and getting their consent. Recordings stay on this phone and are never uploaded.';
+
+  @override
+  String get recordingConsentAccept => 'I understand';
+
+  @override
+  String get recordings => 'Recordings';
+
+  @override
+  String get noRecordings => 'No recordings yet';
+
+  @override
+  String get noRecordingsSubtitle =>
+      'Tap ⋮ › Record on the call screen during a call';
+
+  @override
+  String get deleteAllRecordings => 'Delete all recordings';
+
+  @override
+  String get deleteAllRecordingsTitle => 'Delete all recordings?';
+
+  @override
+  String get deleteAllRecordingsMessage => 'They can\'t be recovered.';
+
+  @override
+  String get recordingNotSetUp => 'Calls aren\'t being recorded';
+
+  @override
+  String get recordingNotSetUpSubtitle =>
+      'Auto-record is on, but One Recorder isn\'t set up';
+
+  @override
+  String get rename => 'Rename';
+
+  @override
+  String get star => 'Star';
+
+  @override
+  String get unstar => 'Unstar';
+
+  @override
+  String get filterStarred => 'Starred';
+
+  @override
+  String get filterUnknown => 'Unknown';
+
+  @override
+  String get saveToPhone => 'Save to phone';
+
+  @override
+  String get searchRecordings => 'Search recordings';
+
+  @override
+  String get renameRecording => 'Rename recording';
+
+  @override
+  String recordingsSaved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count recordings saved to Recordings/One Dialer',
+      one: 'Saved to Recordings/One Dialer',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recordingSaveFailed => 'Couldn\'t save to the phone';
+
+  @override
+  String deleteRecordings(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Delete $count recordings?',
+      one: 'Delete this recording?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get noMatchingRecordings => 'No matching recordings';
+
+  @override
+  String get addContact => 'Add contact';
+
+  @override
+  String get autoRecord => 'Auto-record';
+
+  @override
+  String get autoRecordOff => 'Off';
+
+  @override
+  String get autoRecordAll => 'All calls';
+
+  @override
+  String get autoRecordUnknown => 'Unknown numbers';
+
+  @override
+  String get autoRecordContacts => 'Selected contacts';
+
+  @override
+  String get recordTheseContacts => 'Contacts to record';
+
+  @override
+  String get neverRecord => 'Never record';
+
+  @override
+  String get neverRecordSubtitle => 'Contacts auto-record always skips';
+
+  @override
+  String get recordingSound => 'Sound';
+
+  @override
+  String get volumeBoost => 'Volume boost';
+
+  @override
+  String get volumeBoostSubtitle =>
+      'Lifts the other person\'s voice, which the mic only hears faintly';
+
+  @override
+  String get boostOff => 'Off';
+
+  @override
+  String get boostNormal => 'Normal';
+
+  @override
+  String get boostStrong => 'Strong';
+
+  @override
+  String get micSource => 'Microphone source';
+
+  @override
+  String get micSourceSubtitle =>
+      'Automatic tries each on the first call and keeps the loudest';
+
+  @override
+  String get micSourceAuto => 'Automatic';
+
+  @override
+  String get micSourceRecognition => 'Voice recognition';
+
+  @override
+  String get micSourceCommunication => 'Voice communication';
+
+  @override
+  String get micSourceMic => 'Microphone';
+
+  @override
+  String get storage => 'Storage';
+
+  @override
+  String get storageUsed => 'Space used';
+
+  @override
+  String get autoDelete => 'Auto-delete';
+
+  @override
+  String get autoDeleteSubtitle => 'Starred recordings are always kept';
+
+  @override
+  String get autoDeleteNever => 'Never';
+
+  @override
+  String autoDeleteDays(int days) {
+    return 'After $days days';
+  }
+
+  @override
+  String get imeiTitle => 'IMEI';
+
+  @override
+  String get imeiUnavailable =>
+      'Android doesn\'t let apps show the IMEI. You can find it in your phone\'s settings under About phone.';
+
+  @override
+  String get aboutPhone => 'About phone';
+
+  @override
+  String get glassStyleSubtitle =>
+      'Liquid glass bends what\'s behind it but uses more power';
+
+  @override
+  String get darkModeEdgeGlowSubtitle =>
+      'How brightly the glass edges glow in dark mode';
+
+  @override
+  String get liquidGlassOnSubtitle => 'Which parts of the app use liquid glass';
+
+  @override
+  String get navBarGlassSubtitle =>
+      'Full refraction looks best; Light runs smoother on slower phones';
+
+  @override
+  String get tapRecentCallSubtitle =>
+      'What happens when you tap a call in Calls';
+
+  @override
+  String get callScreenEdgeGlowSubtitle =>
+      'How brightly the call buttons\' glass edges glow';
+
+  @override
+  String get answerButtonsSubtitle =>
+      'How you answer, and how the call screen looks';
+
+  @override
+  String get carrierSettingsSubtitle =>
+      'Call forwarding, call waiting and caller ID';
+
+  @override
+  String get callBackground => 'Call background';
+
+  @override
+  String get callBackgroundAllSubtitle =>
+      'For every call, unless a contact has its own';
+
+  @override
+  String get callBackgroundDefault => 'Default';
+
+  @override
+  String get callBackgroundColour => 'Colour';
+
+  @override
+  String get callBackgroundPhoto => 'Photo';
+
+  @override
+  String get callBackgroundChoosePhoto => 'Choose photo';
+
+  @override
+  String get callBackgroundContactPhoto => 'Contact\'s photo';
+
+  @override
+  String get callBackgroundContactPhotoSubtitle =>
+      'Android keeps contact photos small; choose a photo for a sharper one';
+
+  @override
+  String get callBackgroundSameAsAll => 'Same as all calls';
+
+  @override
+  String get callBackgroundAllNote =>
+      'A contact with their own call background, set on their contact page, uses it instead.';
+
+  @override
+  String get callBackgroundContactNote =>
+      'Used for this contact instead of the call background for all calls.';
+
+  @override
+  String get exportSettings => 'Export settings';
+
+  @override
+  String get exportSettingsSubtitle =>
+      'Save settings, call notes and call backgrounds to a file';
+
+  @override
+  String get importSettings => 'Import settings';
+
+  @override
+  String get importSettingsSubtitle => 'Restore them from an exported file';
+
+  @override
+  String get importSettingsTitle => 'Replace your settings?';
+
+  @override
+  String get importSettingsMessage =>
+      'Your settings, speed dial, call notes and call backgrounds are replaced by the ones in the file. One Dialer then restarts.';
+
+  @override
+  String get importSettingsInCall =>
+      'Settings can\'t be imported during a call';
+
+  @override
+  String get settingsExported => 'Settings exported';
+
+  @override
+  String get couldNotSaveSettings => 'Couldn\'t save the file';
+
+  @override
+  String get notASettingsFile => 'This isn\'t a One Dialer settings file';
+
+  @override
+  String endHeldCall(String name) {
+    return 'End call with $name';
+  }
 }

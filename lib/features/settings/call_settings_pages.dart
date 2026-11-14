@@ -1,3 +1,4 @@
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/prefs/dialer_prefs.dart';
@@ -5,9 +6,12 @@ import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/choice_row.dart';
 import '../../widgets/cos_subpage.dart';
 import '../../widgets/one_ui_group_card.dart';
+import '../../widgets/one_ui_switch.dart';
 import '../../widgets/showcase_picker.dart';
+import '../in_call/call_background.dart';
 import '../in_call/call_controls.dart' show answerGreen, endRed;
 import '../in_call/incoming_controls.dart' show ArcHint, oneButtonWhite;
+import 'call_background_screen.dart';
 import 'quick_replies_screen.dart';
 import '../../l10n/l10n.dart';
 
@@ -23,6 +27,8 @@ class _CallSettings {
       if (s['autoAnswer'] case final bool v) autoAnswer.value = v;
       if (s['autoAnswerDelay'] case final int v) delay.value = '$v';
       if (s['announceCalls'] case final String v) announce.value = v;
+      if (s['flashOnCall'] case final bool v) flash.value = v;
+      if (s['liveUpdates'] case final bool v) liveUpdates.value = v;
     });
   }
 
@@ -32,12 +38,14 @@ class _CallSettings {
   final autoAnswer = ValueNotifier(false);
   final delay = ValueNotifier<String?>('5');
   final announce = ValueNotifier('off');
+  final flash = ValueNotifier(false);
+  final liveUpdates = ValueNotifier(false);
 
   bool _disposed = false;
 
   void dispose() {
     _disposed = true;
-    for (final n in [incomingStyle, vibrate, speaker, autoAnswer, delay, announce]) {
+    for (final n in [incomingStyle, vibrate, speaker, autoAnswer, delay, announce, flash, liveUpdates]) {
       n.dispose();
     }
   }
@@ -121,6 +129,19 @@ class _IncomingCallRemindersScreenState extends State<IncomingCallRemindersScree
   final _settings = _CallSettings();
   final _announceKey = GlobalKey();
 
+  /// Skins with their own flash notification, where ours would blink on top of it.
+  static const _ownFlash = ['vivo', 'iqoo', 'oppo', 'oneplus', 'realme', 'samsung', 'xiaomi', 'honor', 'huawei'];
+  bool _systemFlash = false;
+
+  @override
+  void initState() {
+    super.initState();
+    DeviceInfoPlugin().androidInfo.then((info) {
+      final brand = '${info.manufacturer} ${info.brand}'.toLowerCase();
+      if (mounted) setState(() => _systemFlash = _ownFlash.any(brand.contains));
+    }, onError: (_) {}); // not on Android (tests)
+  }
+
   static Map<String, String> _announce(AppLocalizations l10n) => {
     'off': l10n.off,
     'always': l10n.always,
@@ -194,6 +215,36 @@ class _IncomingCallRemindersScreenState extends State<IncomingCallRemindersScree
               labels: _announce(context.l10n),
               onPick: (v) => _settings.set(_settings.announce, 'announceCalls', v),
             ),
+            OneUIGroupItem(
+              title: context.l10n.liveUpdateCapsule,
+              subtitle: context.l10n.liveUpdateCapsuleSubtitle,
+              onTap: () => _settings.set(_settings.liveUpdates, 'liveUpdates', !_settings.liveUpdates.value),
+              trailing: ValueListenableBuilder(
+                valueListenable: _settings.liveUpdates,
+                builder: (context, on, _) =>
+                    OneUISwitch(value: on, onChanged: (v) => _settings.set(_settings.liveUpdates, 'liveUpdates', v)),
+              ),
+            ),
+          ],
+        ),
+        OneUIGroupCard(
+          items: [
+            OneUIGroupItem(
+              title: context.l10n.flashOnCall,
+              subtitle: context.l10n.flashOnCallSubtitle,
+              onTap: () => _settings.set(_settings.flash, 'flashOnCall', !_settings.flash.value),
+              trailing: ValueListenableBuilder(
+                valueListenable: _settings.flash,
+                builder: (context, on, _) =>
+                    OneUISwitch(value: on, onChanged: (v) => _settings.set(_settings.flash, 'flashOnCall', v)),
+              ),
+            ),
+            if (_systemFlash)
+              OneUIGroupItem(
+                title: context.l10n.systemFlash,
+                subtitle: context.l10n.systemFlashSubtitle,
+                onTap: () => TelecomBridge.instance.openSystemSettings('systemSettings'),
+              ),
           ],
         ),
       ],
@@ -213,6 +264,12 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
   final _directionKey = GlobalKey();
   final _effectsKey = GlobalKey();
   final _glassKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    CallBackgrounds.instance.load('all');
+  }
 
   static Map<String, String> _directions(AppLocalizations l10n) => {
     'up': l10n.swipeUpToAnswer,
@@ -261,7 +318,13 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
           ],
         ),
         ListenableBuilder(
-          listenable: Listenable.merge([prefs.answerStyle, prefs.callEffects]),
+          listenable: Listenable.merge([
+            prefs.answerStyle,
+            prefs.callEffects,
+            prefs.callAnimations,
+            prefs.hideContactNumbers,
+            CallBackgrounds.instance,
+          ]),
           builder: (context, _) => OneUIGroupCard(
             items: [
               // Only 1 button has a direction to choose.
@@ -288,11 +351,32 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
                 choiceRow(
                   context,
                   title: context.l10n.callScreenEdgeGlow,
+                  subtitle: context.l10n.callScreenEdgeGlowSubtitle,
                   anchor: _glassKey,
                   value: prefs.callGlass,
                   labels: edgeGlowLabels(context.l10n),
                   onPick: prefs.setCallGlass,
                 ),
+              OneUIGroupItem(
+                title: context.l10n.callScreenAnimations,
+                subtitle: context.l10n.callScreenAnimationsSubtitle,
+                onTap: () => prefs.setCallAnimations(!prefs.callAnimations.value),
+                trailing: OneUISwitch(value: prefs.callAnimations.value, onChanged: prefs.setCallAnimations),
+              ),
+              OneUIGroupItem(
+                title: context.l10n.hideContactNumbers,
+                subtitle: context.l10n.hideContactNumbersSubtitle,
+                onTap: () => prefs.setHideContactNumbers(!prefs.hideContactNumbers.value),
+                trailing: OneUISwitch(value: prefs.hideContactNumbers.value, onChanged: prefs.setHideContactNumbers),
+              ),
+              OneUIGroupItem(
+                title: context.l10n.callBackground,
+                subtitle: context.l10n.callBackgroundAllSubtitle,
+                value: CallBackgroundScreen.label(context.l10n, CallBackgrounds.instance.stored('all')),
+                onTap: () =>
+                    Navigator.of(context)
+                        .push(MaterialPageRoute<void>(builder: (_) => const CallBackgroundScreen(scope: 'all'))),
+              ),
             ],
           ),
         ),

@@ -30,7 +30,7 @@ Future<String?> chooseNumber(BuildContext context, DialerContact contact) async 
           const SizedBox(height: 12),
           for (final (i, n) in contact.numbers.indexed)
             InkWell(
-              borderRadius: BorderRadius.circular(16),
+              customBorder: SquircleBorder(borderRadius: BorderRadius.circular(16)),
               onTap: () => setModal(() => selected = i),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),

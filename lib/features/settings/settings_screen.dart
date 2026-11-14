@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../app/app_info.dart';
 import '../../core/config/app_version.dart';
 import '../../core/prefs/dialer_prefs.dart';
+import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/cos_subpage.dart';
@@ -12,13 +13,14 @@ import '../../widgets/one_ui_subpage.dart';
 import '../../widgets/choice_row.dart';
 import '../contacts/manage_contacts_screen.dart';
 import '../../widgets/one_ui_toast.dart';
+import '../../widgets/cos_dialog.dart';
 import '../../widgets/one_ui_group_card.dart';
 import '../blocking/blocking_repository.dart';
 import '../blocking/blocking_screen.dart';
 import '../keypad/speed_dial_screen.dart';
 import '../updates/presentation/update_controller.dart';
 import 'about_screen.dart';
-import 'app_icon_screen.dart';
+import 'call_recording_screen.dart';
 import 'call_settings_pages.dart';
 import 'dialing_settings_screen.dart';
 import 'display_settings_screen.dart';
@@ -38,8 +40,10 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   final _telecom = TelecomBridge.instance;
   Map<Object?, Object?> _health = const {};
   bool _bluetoothNames = true;
+
+  /// One Recorder (the sideloaded companion); null when it isn't installed.
+  RecorderInfo? _recorder;
   AppVersion? _version;
-  String _icon = 'default';
 
   /// Android 17 lets VoIP apps share their calls with Recents; earlier phones have no switch for it.
   bool get _appCallLog => (_health['sdk'] as int? ?? 0) >= 37;
@@ -48,14 +52,29 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _refresh();
-    _loadIcon();
     // Their values show on the Display and Language rows.
     DialerPrefs.instance.themeMode.addListener(_rebuild);
     DialerPrefs.instance.language.addListener(_rebuild);
-    AppVersion.current().then((v) {
-      if (mounted) setState(() => _version = v);
-    });
+  }
+
+  bool _loadStarted = false;
+
+  /// The first load waits until the page has slid in: its replies would otherwise rebuild the
+  /// page (and its glass) during the transition.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_loadStarted) return;
+    _loadStarted = true;
+    final animation = ModalRoute.of(context)?.animation;
+    if (animation == null || animation.isCompleted) return _refreshAll();
+    void opened(AnimationStatus status) {
+      if (!status.isCompleted) return;
+      animation.removeStatusListener(opened);
+      _refreshAll();
+    }
+
+    animation.addStatusListener(opened);
   }
 
   @override
@@ -73,17 +92,22 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
 
   void _rebuild() => setState(() {});
 
-  void _loadIcon() => _telecom.getLauncherIcon().then((s) {
-    if (mounted) setState(() => _icon = s);
-  });
+  void _refreshAll() => _refresh(all: true);
 
-  Future<void> _refresh() async {
-    final health = await _telecom.getCallHealth();
-    final bluetoothNames = await Permission.bluetoothConnect.isGranted;
+  /// One rebuild for every reply; [all] adds the version, which only changes elsewhere.
+  Future<void> _refresh({bool all = false}) async {
+    final (health, bluetoothNames, recorder, version) = await (
+      _telecom.getCallHealth(),
+      Permission.bluetoothConnect.isGranted,
+      _telecom.getRecorder(),
+      all ? AppVersion.current() : Future.value(_version),
+    ).wait;
     if (mounted) {
       setState(() {
         _health = health;
+        _recorder = recorder;
         _bluetoothNames = bluetoothNames;
+        _version = version;
       });
     }
   }
@@ -95,6 +119,33 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   }
 
   void _push(Widget page) => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
+
+  Future<void> _exportSettings() async {
+    try {
+      final saved = await _telecom.exportSettings();
+      if (saved == true && mounted) OneUIToast.show(context, context.l10n.settingsExported);
+    } on PlatformException {
+      if (mounted) OneUIToast.show(context, context.l10n.couldNotSaveSettings);
+    }
+  }
+
+  Future<void> _importSettings() async {
+    final l10n = context.l10n;
+    final ok = await showCosConfirm(
+      context,
+      title: l10n.importSettingsTitle,
+      message: l10n.importSettingsMessage,
+      confirmLabel: l10n.import,
+    );
+    if (!ok || !mounted) return;
+    try {
+      // On success the app restarts with the imported settings and this never returns.
+      final read = await _telecom.importSettings();
+      if (read == false && mounted) OneUIToast.show(context, l10n.notASettingsFile);
+    } on PlatformException catch (e) {
+      if (mounted) OneUIToast.show(context, e.code == 'IN_CALL' ? l10n.importSettingsInCall : l10n.couldNotOpenFile);
+    }
+  }
 
   /// Rows only for problems; empty when everything incoming calls need is in place.
   List<OneUIGroupItem> get _problems {
@@ -120,6 +171,13 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         ),
       if ((rules.blockHidden || rules.blockNonContacts) && _health['screensCalls'] != true)
         _problem(context.l10n.blockingPaused, context.l10n.blockingPausedShort, () => _push(const BlockingScreen())),
+      // Auto-record is on but the companion can't record (its setup was undone).
+      if (_recorder case final r? when r.autoRecordMode != 'off' && r.consented && !r.ready)
+        _problem(
+          context.l10n.recordingNotSetUp,
+          context.l10n.recordingNotSetUpSubtitle,
+          () => _push(const CallRecordingScreen()),
+        ),
       if (!_bluetoothNames)
         _problem(context.l10n.bluetoothNamesHidden, context.l10n.bluetoothNamesHiddenSubtitle, _allowBluetoothNames),
     ];
@@ -138,28 +196,38 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   Widget build(BuildContext context) {
     final problems = _problems;
     final l10n = context.l10n;
-    // Grouped like ColorOS's Settings: one titled card per topic.
+    // Grouped like ColorOS's Settings: one untitled card per topic.
     return OneUISubpage(
       title: l10n.callSettings,
       builder: (context) => [
         if (problems.isNotEmpty) OneUIGroupCard(headerTitle: l10n.needsAttention, items: problems),
         OneUIGroupCard(
-          headerTitle: l10n.settingsCalls,
           items: [
             OneUIGroupItem(title: l10n.incomingCallReminders, onTap: () => _push(const IncomingCallRemindersScreen())),
-            OneUIGroupItem(title: l10n.answerButtons, onTap: () => _push(const AnswerButtonsScreen())),
+            OneUIGroupItem(
+              title: l10n.answerButtons,
+              subtitle: l10n.answerButtonsSubtitle,
+              onTap: () => _push(const AnswerButtonsScreen()),
+            ),
             OneUIGroupItem(title: l10n.answerEndCalls, onTap: () => _push(const AnswerEndCallsScreen())),
+            // Only with One Recorder installed (the sideloaded companion); the Play app can't record alone.
+            if (_recorder != null)
+              OneUIGroupItem(
+                title: l10n.callRecording,
+                onTap: () =>
+                    Navigator.of(context)
+                        .push(MaterialPageRoute<void>(builder: (_) => const CallRecordingScreen()))
+                        .then((_) => _refresh()),
+              ),
           ],
         ),
         OneUIGroupCard(
-          headerTitle: l10n.settingsDialing,
           items: [
             OneUIGroupItem(title: l10n.keypadAndRecents, onTap: () => _push(const DialingSettingsScreen())),
             OneUIGroupItem(title: l10n.speedDial, onTap: () => _push(const SpeedDialScreen())),
           ],
         ),
         OneUIGroupCard(
-          headerTitle: l10n.settingsSpamBlocking,
           items: [
             OneUIGroupItem(title: l10n.blockAndFilter, onTap: () => _push(const BlockingScreen())),
             OneUIGroupItem(
@@ -170,25 +238,15 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           ],
         ),
         OneUIGroupCard(
-          headerTitle: l10n.settingsPersonalisation,
           items: [
             OneUIGroupItem(
               title: l10n.displayAndEffects,
               value: DisplaySettingsScreen.themeLabels(l10n)[DialerPrefs.instance.themeMode.value],
               onTap: () => _push(const DisplaySettingsScreen()),
             ),
-            OneUIGroupItem(
-              title: l10n.appIcon,
-              value: AppIconScreen.labels(l10n)[_icon],
-              onTap: () =>
-                  Navigator.of(context)
-                      .push(MaterialPageRoute<void>(builder: (_) => const AppIconScreen()))
-                      .then((_) => _loadIcon()),
-            ),
           ],
         ),
         OneUIGroupCard(
-          headerTitle: l10n.settingsGeneral,
           items: [
             OneUIGroupItem(
               title: l10n.settingsLanguageHeader,
@@ -198,17 +256,30 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
             OneUIGroupItem(title: l10n.navContacts, onTap: () => _push(const _ContactsSettingsScreen())),
             OneUIGroupItem(title: l10n.notifications, onTap: () => _telecom.openSystemSettings('notifications')),
             OneUIGroupItem(title: l10n.defaultApps, onTap: () => _telecom.openSystemSettings('defaultApps')),
-            OneUIGroupItem(title: l10n.carrierSettings, onTap: () => openSystemSetting(context, 'carrier')),
+            OneUIGroupItem(
+              title: l10n.carrierSettings,
+              subtitle: l10n.carrierSettingsSubtitle,
+              onTap: () => openSystemSetting(context, 'carrier'),
+            ),
             if (_appCallLog)
               OneUIGroupItem(
                 title: l10n.callsFromOtherApps,
                 subtitle: l10n.callsFromOtherAppsSubtitle,
                 onTap: () => openSystemSetting(context, 'voipCallLog'),
               ),
+            OneUIGroupItem(
+              title: l10n.exportSettings,
+              subtitle: l10n.exportSettingsSubtitle,
+              onTap: _exportSettings,
+            ),
+            OneUIGroupItem(
+              title: l10n.importSettings,
+              subtitle: l10n.importSettingsSubtitle,
+              onTap: _importSettings,
+            ),
           ],
         ),
         OneUIGroupCard(
-          headerTitle: l10n.settingsAbout,
           items: [
             OneUIGroupItem(
               title: l10n.softwareUpdate,

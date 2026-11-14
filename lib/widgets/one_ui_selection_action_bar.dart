@@ -136,7 +136,7 @@ class OneUISelectionActionBar extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 21, color: itemColor),
+            Icon(icon, size: 23, color: itemColor),
             const SizedBox(height: 2),
             Text(
               label,

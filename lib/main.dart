@@ -11,6 +11,7 @@ import 'app/dialer_app.dart';
 import 'app/in_call_app.dart';
 import 'core/crash_reporting.dart';
 import 'core/prefs/dialer_prefs.dart';
+import 'features/in_call/call_background.dart';
 import 'features/in_call/call_screen_widgets.dart';
 import 'features/updates/presentation/update_controller.dart';
 
@@ -18,13 +19,15 @@ import 'features/updates/presentation/update_controller.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   _profileServiceAddress();
-  await initCrashReporting();
+  // Not awaited: the first frame mustn't wait on Firebase's round trips (as in inCallMain).
+  unawaited(initCrashReporting());
   // Not awaited: rows use the defaults until the saved choices arrive a moment later.
   DialerPrefs.instance.loadChoices();
-  await DialerPrefs.instance.loadAppearance();
+  // Both before the first frame (no flash of the wrong look or, below Android 13, which doesn't
+  // hand Flutter the per-app language, the wrong language), but side by side.
+  await (DialerPrefs.instance.loadAppearance(), DialerPrefs.instance.loadLanguage()).wait;
   DialerPrefs.instance.navStyle.addListener(_warmLiquidGlass);
   _warmLiquidGlass();
-  await DialerPrefs.instance.loadLanguage();
   AppLifecycleListener(onResume: DialerPrefs.instance.loadLanguage);
   // The bundled Roboto (the glass version numeral) under About › Open source licences.
   LicenseRegistry.addLicense(() async* {
@@ -72,6 +75,7 @@ Future<void> inCallMain() async {
   AppLifecycleListener(
     onResume: () {
       DialerPrefs.instance.loadCallEffects();
+      CallBackgrounds.instance.refresh();
       DialerPrefs.instance.loadLanguage();
     },
   );

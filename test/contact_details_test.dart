@@ -26,7 +26,7 @@ void main() {
       return null;
     });
     ContactsRepository.instance.contacts.value = const [
-      DialerContact(id: '7', name: 'Wasif', numbers: ['03111234567', '03001234567'], labels: ['Mobile', 'Work']),
+      DialerContact(id: '7', name: 'Sam', numbers: ['03111234567', '03001234567'], labels: ['Mobile', 'Work']),
     ];
   });
   tearDown(() {
@@ -99,11 +99,19 @@ void main() {
       CallLogEntry(id: 9, number: '0399999999', type: CallType.missed, date: DateTime(2026, 10, 9)),
     ];
     await pump(tester);
-    await tester.scrollUntilVisible(find.text('View all'), 200);
+    // Scrolled from the side margin: the action tiles claim drags that start on them.
+    for (var i = 0; i < 20 && find.text('View all').evaluate().isEmpty; i++) {
+      await tester.dragFrom(const Offset(4, 500), const Offset(0, -200));
+      await tester.pump();
+    }
+    await tester.ensureVisible(find.text('View all'));
+    await tester.pumpAndSettle();
     expect(find.text('Call logs'), findsOneWidget);
     expect(find.text('View all'), findsOneWidget);
-    expect(find.textContaining('+92 311 1234567', findRichText: true), findsNWidgets(3));
-    expect(find.textContaining('0399999999', findRichText: true), findsNothing);
+    // Only this contact's calls, the latest three, each with its number (the contact has two).
+    expect(find.byType(ContactCallLogRow), findsNWidgets(3));
+    expect(find.textContaining('Outgoing'), findsNWidgets(3));
+    expect(find.textContaining('0399999999'), findsNothing);
   });
 
   const fontPath = String.fromEnvironment('PREVIEW_FONT');
@@ -111,7 +119,7 @@ void main() {
     testWidgets('render contact details preview', (tester) async {
       await tester.runAsync(() async {
         for (final (family, file) in [
-          ('Roboto', fontPath),
+          ('sans-serif', fontPath),
           ('MaterialIcons', '${File(fontPath).parent.path}/materialicons-regular.otf'),
         ]) {
           await (FontLoader(family)..addFont(File(file).readAsBytes().then(ByteData.sublistView))).load();

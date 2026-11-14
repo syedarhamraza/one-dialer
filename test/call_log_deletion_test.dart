@@ -18,14 +18,15 @@ void main() {
     native = [row(2), row(1)];
     repo.calls.value = native.map(CallLogEntry.fromMap).toList();
     bridge.onCallLogChanged = null;
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
-      const MethodChannel('com.syedarhamraza.dialer/telecom'),
-      (call) async {
-        if (call.method == 'getCallLog') return native;
-        if (call.method == 'deleteCalls') await deletion.future;
-        return null;
-      },
-    );
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(const MethodChannel('com.syedarhamraza.dialer/data'), (call) async {
+      if (call.method == 'getCallLog') return native;
+      return null;
+    });
+    messenger.setMockMethodCallHandler(const MethodChannel('com.syedarhamraza.dialer/telecom'), (call) async {
+      if (call.method == 'deleteCalls') await deletion.future;
+      return null;
+    });
   });
   tearDown(() => repo.calls.value = []);
 

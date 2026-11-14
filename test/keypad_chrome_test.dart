@@ -77,20 +77,23 @@ void main() {
     expect(open_.value, isFalse);
   });
 
-  testWidgets('typing morphs All | Missed into Add to Contacts and back', (tester) async {
+  testWidgets('typing swaps the Calls header for the number and offers to save it', (tester) async {
     await open(tester);
     final input = tester.widget<KeypadScreen>(find.byType(KeypadScreen)).input;
     expect(find.text('Missed').hitTestable(), findsOneWidget);
     input.value = '5';
     await tester.pumpAndSettle();
-    expect(find.byTooltip('Add to Contacts').hitTestable(), findsOneWidget);
     expect(find.text('Missed').hitTestable(), findsNothing);
+    expect(find.byType(TextField), findsOneWidget);
+    expect(find.text('New contact').hitTestable(), findsOneWidget);
+    expect(find.text('Add to existing contact').hitTestable(), findsOneWidget);
     input.value = '';
     await tester.pumpAndSettle();
     expect(find.text('Missed').hitTestable(), findsOneWidget);
+    expect(find.byType(TextField), findsNothing);
   });
 
-  testWidgets('selecting morphs the header into the count and Cancel, and back', (tester) async {
+  testWidgets('selecting morphs the header into Cancel and Select all, and back', (tester) async {
     CallLogRepository.instance.calls.value = [
       CallLogEntry(id: 1, number: '03001234567', type: CallType.incoming, date: DateTime.now()),
     ];
@@ -101,10 +104,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.longPress(find.text('03001234567'));
     await tester.pumpAndSettle();
-    expect(find.byTooltip('Cancel').hitTestable(), findsOneWidget);
+    expect(find.text('Cancel').hitTestable(), findsOneWidget);
+    expect(find.text('Deselect all').hitTestable(), findsOneWidget);
     expect(find.byTooltip('Search').hitTestable(), findsNothing);
     expect(find.text('1 selected'), findsOneWidget);
-    await tester.tap(find.byTooltip('Cancel'));
+    await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
     expect(find.text('Missed').hitTestable(), findsOneWidget);
     expect(find.byTooltip('Search').hitTestable(), findsOneWidget);

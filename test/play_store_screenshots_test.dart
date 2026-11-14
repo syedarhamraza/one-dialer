@@ -17,7 +17,7 @@ import 'package:shared_preferences_platform_interface/in_memory_shared_preferenc
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
 /// Exports the Play Store phone screenshots (1080 × 2160, the bare app) and the 1024 × 500 feature
-/// graphic to `docs/play/`, rendered from the real screens with made-up contacts and calls.
+/// graphic to `build/play/` (not committed; the store images live in `docs/play-store/`), rendered from the real screens with made-up contacts and calls.
 /// Re-run after UI changes:
 /// `flutter test test/play_store_screenshots_test.dart --dart-define=PREVIEW_FONT=<Flutter SDK>/bin/cache/artifacts/material_fonts/roboto-regular.ttf`
 void main() {
@@ -126,7 +126,7 @@ void main() {
     await tester.runAsync(() async {
       final image = await (boundary.currentContext!.findRenderObject() as RenderRepaintBoundary).toImage();
       final rgba = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
-      final file = File('docs/play/$name.png');
+      final file = File('build/play/$name.png');
       await file.parent.create(recursive: true);
       await file.writeAsBytes(_rgbPng(rgba!.buffer.asUint8List(), image.width, image.height));
       image.dispose();

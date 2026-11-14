@@ -46,7 +46,7 @@ void main() {
   if (fontPath.isNotEmpty) {
     testWidgets('render setup previews', (tester) async {
       await tester.runAsync(() async {
-        await (FontLoader('Roboto')..addFont(File(fontPath).readAsBytes().then(ByteData.sublistView))).load();
+        await (FontLoader('sans-serif')..addFont(File(fontPath).readAsBytes().then(ByteData.sublistView))).load();
       });
       tester.view.physicalSize = const Size(420, 933);
       tester.view.devicePixelRatio = 1;

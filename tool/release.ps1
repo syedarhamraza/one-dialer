@@ -38,6 +38,9 @@ param(
   [string]$Target,
   # Don't pause for release notes (they must already be written).
   [switch]$Yes,
+  # Markdown whose "- " or "* " lines become the notes when the Changelog has no entry for
+  # this version yet (the release workflow passes the GitHub draft release's text).
+  [string]$NotesFile,
   # Bump, commit and tag without building (for trying the script out).
   [switch]$SkipBuild,
   [switch]$Help
@@ -48,6 +51,9 @@ Set-Location (Split-Path $PSScriptRoot -Parent)
 
 $pubspecPath = 'pubspec.yaml'
 $changelogPath = 'lib/core/config/changelog.dart'
+# This release's notes for Software update (Play gives none) and the website's "What's new";
+# the site is site/ in this repo, so the file is served as one-dialer/changelog.json.
+$notesJson = 'site/public/changelog.json'
 $utf8 = New-Object System.Text.UTF8Encoding $false
 
 function Show-Usage {
@@ -166,7 +172,7 @@ if (Invoke-Native { git tag --list "v$newName" }) {
 if (-not $SkipBuild -and -not (Test-Path 'android/key.properties')) {
   # Without it Gradle falls back to the DEBUG key, which Google Play rejects after the
   # version code and tag are already used up.
-  Fail 'android/key.properties is missing, so the release would be signed with the DEBUG key. See docs/play-release.md to set up your upload key (or use -SkipBuild).'
+  Fail 'android/key.properties is missing, so the release would be signed with the DEBUG key. Create it with your upload key (or use -SkipBuild).'
 }
 
 # Nothing has changed yet, so a failure here leaves the tree untouched.
@@ -193,7 +199,17 @@ if ([regex]::IsMatch($changelog, $entryPattern)) {
   $changelog = [regex]::Replace($changelog, $entryPattern, "version: '$newName',`$1date: '$month'")
 }
 else {
-  $entry = "    ChangelogEntry($nl      version: '$newName',$nl      date: '$month',$nl      changes: [$nl        'TODO: what changed',$nl      ],$nl    ),$nl"
+  $changes = @("'TODO: what changed'")
+  if ($NotesFile) {
+    $changes = @(Get-Content $NotesFile -Encoding UTF8 | ForEach-Object {
+        if ($_ -match '^\s*[*-]\s+(\S.*?)\s*$') { "'" + $Matches[1].Replace('\', '\\').Replace("'", "\'").Replace('$', '\$') + "'" }
+      })
+    if (-not $changes) {
+      Invoke-Native { git checkout -- $pubspecPath } | Out-Null
+      Fail "No '- ' lines in $NotesFile, so there are no release notes for $newName."
+    }
+  }
+  $entry = "    ChangelogEntry($nl      version: '$newName',$nl      date: '$month',$nl      changes: [$nl" + (($changes | ForEach-Object { "        $_,$nl" }) -join '') + "      ],$nl    ),$nl"
   $marker = 'static const List<ChangelogEntry> entries = ['
   $at = $changelog.IndexOf($marker)
   if ($at -lt 0) { Fail "Couldn't find the entries list in $changelogPath." }
@@ -203,7 +219,7 @@ else {
 [System.IO.File]::WriteAllText((Resolve-Path $changelogPath), $changelog, $utf8)
 
 function Restore-Files {
-  Invoke-Native { git checkout -- $pubspecPath $changelogPath } | Out-Null
+  Invoke-Native { git checkout -- $pubspecPath $changelogPath $notesJson } | Out-Null
 }
 
 if ((Get-Content $changelogPath -Raw).Contains("'TODO: what changed'")) {
@@ -218,9 +234,10 @@ if ((Get-Content $changelogPath -Raw).Contains("'TODO: what changed'")) {
 
 # The version tests check pubspec and the Changelog agree.
 Invoke-Checked 'Version check' { flutter test test/app_version_test.dart --reporter failures-only }
+Invoke-Checked 'Export release notes' { dart run tool/export_changelog.dart $newName $next.Code $notesJson }
 
 # --- Commit, build, tag -----------------------------------------------------------
-Invoke-Checked 'git add' { git add $pubspecPath $changelogPath }
+Invoke-Checked 'git add' { git add $pubspecPath $changelogPath $notesJson }
 Invoke-Checked 'git commit' { git commit -q -m "chore(release): $newName ($($next.Code))" }
 $sha = (Invoke-Native { git rev-parse --short HEAD }).Trim()
 
@@ -255,21 +272,21 @@ if (-not $SkipBuild) {
     Write-Host 'Symbol upload failed (run `npx firebase-tools login` once). Upload them later with:' -ForegroundColor Yellow
     Write-Host "  $uploadCommand" -ForegroundColor Yellow
   }
+
+  # One Recorder (companion/): the sideloaded call recorder, shared from the website, never Play.
+  Write-Host "`nBuilding One Recorder..."
+  $gradlew = 'companion/gradlew'
+  if ($env:OS -eq 'Windows_NT') { $gradlew = 'companion/gradlew.bat' }
+  Invoke-Native { & $gradlew -p companion assembleRelease -q }
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host 'The recorder build failed. Build it later with: companion/gradlew.bat -p companion assembleRelease' -ForegroundColor Yellow
+  }
 }
 
 if (-not (Invoke-Native { git tag --list "v$newName" })) { Invoke-Checked 'git tag' { git tag -a "v$newName" -m "One Dialer $newName" } }
 
-# --- Release notes for Software update ---------------------------------------------
-# Play doesn't say what's in an update, so the app reads this build's notes from the website.
-$website = 'D:\syedarhamraza.github.io'
-$notesJson = Join-Path $website 'public\one-dialer\changelog.json'
-if (Test-Path $website) {
-  Invoke-Checked 'Export release notes' { dart run tool/export_changelog.dart $newName $next.Code $notesJson }
-}
-else {
-  Write-Host "The website isn't at $website, so Software update won't show these notes. Export them with:" -ForegroundColor Yellow
-  Write-Host "  dart run tool/export_changelog.dart $newName $($next.Code) <website>\public\one-dialer\changelog.json" -ForegroundColor Yellow
-}
+# The release workflow's later steps (Play upload, GitHub release) read these.
+if ($env:GITHUB_OUTPUT) { Add-Content $env:GITHUB_OUTPUT "name=$newName`ncode=$($next.Code)`npre=$($next.Pre)" }
 
 # --- Next steps -------------------------------------------------------------------
 $track = 'Production'
@@ -283,5 +300,6 @@ if (-not $SkipBuild) {
   }
   else { Write-Host '  1. Install or share build/app/outputs/flutter-apk/app-release.apk (Play needs the .aab).' }
 }
+if (-not $SkipBuild) { Write-Host '     Recorder (website only): companion/app/build/outputs/apk/release/app-release.apk' }
 Write-Host '  2. Push the release commit and tag:  git push --follow-tags'
-Write-Host "  3. Commit and push the website ($website) so Software update shows the notes."
+Write-Host "     (the website redeploys from it, so Software update shows the notes)."

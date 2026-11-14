@@ -11,6 +11,7 @@ import '../../widgets/one_ui_floating_menu.dart';
 import 'call_controls.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/call_glyph.dart';
+import '../../widgets/call_icons.dart';
 
 /// Actions recede while the keypad rises within one reversible animated panel.
 /// The bottom row is outside the changing panel, so it never moves.
@@ -19,6 +20,7 @@ class CallControlPanel extends StatefulWidget {
     super.key,
     required this.call,
     required this.audio,
+    this.recorder,
     required this.callCount,
     required this.progress,
     required this.animating,
@@ -34,6 +36,9 @@ class CallControlPanel extends StatefulWidget {
   });
   final CallInfo call;
   final AudioInfo audio;
+
+  /// The companion recorder; null without it, and then More has no Record.
+  final RecorderInfo? recorder;
   final int callCount;
   final double progress;
   final bool animating;
@@ -86,30 +91,35 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
     final call = widget.call;
     final number = call.number ?? '';
     final canVideo = _canMeet && !call.isPrivate && !call.isConference && number.isNotEmpty;
+    final holding = call.state == CallState.holding;
+    final telecom = TelecomBridge.instance;
     OneUIFloatingMenu.show(
       context: context,
       anchorKey: _moreKey,
-      light: true,
       scale: 1.15,
-      width: 250,
+      width: 290,
       items: [
-        // With two calls Merge takes Add call's place in the row, so Add call moves here.
+        // Without the recorder, Hold sits in the row where Record would be.
+        if (widget.recorder != null)
+          OneUIFloatingMenuItem(
+            label: holding ? context.l10n.resume : context.l10n.hold,
+            glyph: CallIconShape.hold,
+            enabled: call.canHold || holding,
+            onTap: () => holding ? telecom.unhold(call.id) : telecom.hold(call.id),
+          ),
         if (merging)
           OneUIFloatingMenuItem(
-            label: context.l10n.addCall,
-            icon: Icons.add_call,
-            onTap: TelecomBridge.instance.openDialer,
-          ),
+            label: context.l10n.merge,
+            icon: Icons.call_merge_rounded,
+            onTap: () => telecom.merge(call.id),
+          )
+        else
+          OneUIFloatingMenuItem(label: context.l10n.addCall, glyph: CallIconShape.addCall, onTap: telecom.openDialer),
         OneUIFloatingMenuItem(
-          label: _hasNote ? context.l10n.editNote : context.l10n.note,
-          icon: Icons.edit_note_rounded,
-          onTap: _editNote,
-        ),
-        OneUIFloatingMenuItem(
-          label: context.l10n.videoCall,
-          icon: Icons.videocam_rounded,
+          label: context.l10n.switchToVideoCall,
+          glyph: CallIconShape.video,
           enabled: canVideo,
-          onTap: () => TelecomBridge.instance.meetCall(number),
+          onTap: () => telecom.meetCall(number),
         ),
       ],
     );
@@ -250,36 +260,41 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
     )!;
     final holding = widget.call.state == CallState.holding;
     final canMerge = widget.callCount > 1 && widget.call.canMerge;
-    final actions = <({IconData icon, String label, bool active, VoidCallback? tap, Key? key})>[
+    final recorder = widget.recorder;
+    // ColorOS 17's glyphs fill about half the circle (measured off screenshots), more than IconButton's default.
+    const glyphShare = .65;
+    final actions = <({CallIconShape glyph, String label, bool active, VoidCallback? tap, Key? key})>[
       (
         // ColorOS shows the slashed mic either way; muted lights the circle.
-        icon: Icons.mic_off_rounded,
+        glyph: CallIconShape.mute,
         label: context.l10n.mute,
         active: widget.audio.muted,
         tap: () => telecom.setMuted(!widget.audio.muted),
         key: null,
       ),
-      (
-        icon: Icons.pause_rounded,
-        label: holding ? context.l10n.resume : context.l10n.hold,
-        active: holding,
-        tap: widget.call.canHold || holding
-            ? () => holding ? telecom.unhold(widget.call.id) : telecom.hold(widget.call.id)
-            : null,
-        key: null,
-      ),
-      if (canMerge)
+      if (recorder != null)
         (
-          icon: Icons.call_merge_rounded,
-          label: context.l10n.merge,
-          active: false,
-          tap: () => telecom.merge(widget.call.id),
+          glyph: CallIconShape.record,
+          label: recorder.recording ? context.l10n.stopRecording : context.l10n.record,
+          active: recorder.recording,
+          tap: recorder.recording || (recorder.ready && widget.call.state == CallState.active)
+              ? telecom.toggleRecording
+              : null,
           key: null,
         )
       else
-        (icon: Icons.add_call, label: context.l10n.addCall, active: false, tap: telecom.openDialer, key: null),
+        (
+          glyph: CallIconShape.hold,
+          label: holding ? context.l10n.resume : context.l10n.hold,
+          active: holding,
+          tap: widget.call.canHold || holding
+              ? () => holding ? telecom.unhold(widget.call.id) : telecom.hold(widget.call.id)
+              : null,
+          key: null,
+        ),
+      (glyph: CallIconShape.notes, label: context.l10n.notes, active: _hasNote, tap: _editNote, key: null),
       (
-        icon: Icons.more_vert_rounded,
+        glyph: CallIconShape.more,
         label: context.l10n.more,
         active: false,
         tap: () => _openMore(canMerge),
@@ -287,6 +302,11 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
       ),
     ];
     final route = widget.audio.route;
+    final routeGlyph = switch (route) {
+      AudioRoute.bluetooth => CallIconShape.bluetooth,
+      AudioRoute.wiredHeadset => CallIconShape.headset,
+      _ => CallIconShape.speaker,
+    };
     final routeLabel = switch (route) {
       AudioRoute.bluetooth => widget.audio.activeBluetoothLabel,
       AudioRoute.wiredHeadset => context.l10n.headset,
@@ -335,19 +355,18 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                               for (final action in actions)
                                 Expanded(
                                   child: CallAction(
-                                    icon: action.icon,
+                                    icon: Icons.circle,
+                                    glyph: (color) => CallIcon(
+                                      action.glyph,
+                                      key: ValueKey(action.glyph),
+                                      color: color,
+                                      size: actionSize * glyphShare,
+                                    ),
                                     label: action.label,
                                     active: action.active,
                                     onPressed: action.tap,
                                     size: actionSize,
                                     circleKey: action.key,
-                                    // The plus pulls the glyph's box up and right of the handset; nudge it down left so it looks centred.
-                                    glyph: action.icon == Icons.add_call
-                                        ? (color) => Transform.translate(
-                                            offset: Offset(-actionSize * .02, actionSize * .02),
-                                            child: Icon(Icons.add_call, color: color),
-                                          )
-                                        : null,
                                   ),
                                 ),
                             ],
@@ -364,6 +383,9 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
         ),
       ),
     );
+    // ColorOS 17: the End pill is a little smaller than the row it sits in, 90% of the circles' height
+    // and 87.5% of the space between them (measured off a recording).
+    final endHeight = actionSize * .9;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -396,6 +418,8 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                   width: compact ? 72 : 92,
                   child: CallAction(
                     icon: audioRouteIcon(route == AudioRoute.earpiece ? AudioRoute.speaker : route),
+                    glyph: (color) =>
+                        CallIcon(routeGlyph, key: ValueKey(routeGlyph), color: color, size: actionSize * glyphShare),
                     label: routeLabel,
                     active: route != AudioRoute.earpiece,
                     size: actionSize,
@@ -413,69 +437,73 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                     child: Column(
                       children: [
                         LayoutBuilder(
-                          builder: (context, box) => Align(
-                            alignment: Alignment.topCenter,
-                            child: AnimatedOpacity(
-                              key: widget.endKey,
-                              opacity: widget.hideEnd ? 0 : (_ending ? .55 : 1),
-                              // Only ending dims gradually; the pill appears at once when the Answer ball lands on it.
-                              duration: _ending ? const Duration(milliseconds: 220) : Duration.zero,
-                              // The red glow sits outside the press below, whose clip would cut it off.
-                              child: AnimatedContainer(
-                                duration: MediaQuery.disableAnimationsOf(context)
-                                    ? Duration.zero
-                                    : const Duration(milliseconds: 280),
-                                curve: Curves.easeInOutCubic,
-                                decoration: ShapeDecoration(
-                                  shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(actionSize / 2)),
-                                  shadows: solidBody(
-                                    endRed,
-                                    RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(actionSize / 2)),
-                                    glow: _ending ? 0 : .3,
-                                    flat: callFlat(context),
-                                  ).shadows,
-                                ),
-                                // Solid red, but with the glass package's press: glow and stretch, no glass body.
-                                child: GlassButton.custom(
-                                  style: GlassButtonStyle.transparent,
-                                  onTap: _noTap,
-                                  excludeFromSemantics: true,
-                                  canRequestFocus: false,
-                                  // Below full call screen effects: no glass lighting on press.
-                                  glowColor: callFlat(context) ? Colors.transparent : null,
-                                  ambientBaseLight: callFlat(context) ? 0 : null,
-                                  shape: LiquidRoundedRectangle(borderRadius: actionSize / 2),
-                                  child: AnimatedContainer(
-                                    // While ending, the pill draws in to a circle.
-                                    duration: MediaQuery.disableAnimationsOf(context)
-                                        ? Duration.zero
-                                        : const Duration(milliseconds: 280),
-                                    curve: Curves.easeInOutCubic,
-                                    width: _ending ? actionSize : box.maxWidth,
-                                    height: actionSize,
-                                    // ColorOS 17's tomato red, lit from below like the other buttons, with
-                                    // squircle ends like the keys.
-                                    foregroundDecoration: callGlassGlow(
-                                      context,
-                                      RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(actionSize / 2)),
+                          builder: (context, box) => SizedBox(
+                            height: actionSize,
+                            child: Center(
+                              child: AnimatedOpacity(
+                                key: widget.endKey,
+                                opacity: widget.hideEnd ? 0 : (_ending ? .55 : 1),
+                                // Only ending dims gradually; the pill appears at once when the Answer ball lands on it.
+                                duration: _ending ? const Duration(milliseconds: 220) : Duration.zero,
+                                // The red glow sits outside the press below, whose clip would cut it off.
+                                child: AnimatedContainer(
+                                  duration: MediaQuery.disableAnimationsOf(context)
+                                      ? Duration.zero
+                                      : const Duration(milliseconds: 280),
+                                  curve: Curves.easeInOutCubic,
+                                  decoration: ShapeDecoration(
+                                    shape: RoundedSuperellipseBorder(
+                                      borderRadius: BorderRadius.circular(endHeight / 2),
                                     ),
-                                    decoration: glassBody(
+                                    shadows: solidBody(
                                       endRed,
-                                      RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(actionSize / 2)),
-                                      glow: 0,
+                                      RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(endHeight / 2)),
+                                      glow: _ending ? 0 : .3,
                                       flat: callFlat(context),
-                                    ),
-                                    child: Semantics(
-                                      label: context.l10n.endCall,
-                                      child: IconButton(
-                                        iconSize: 46,
-                                        style: IconButton.styleFrom(
-                                          foregroundColor: Colors.white,
-                                          disabledForegroundColor: Colors.white,
-                                          shape: const StadiumBorder(),
+                                    ).shadows,
+                                  ),
+                                  // Solid red, but with the glass package's press: glow and stretch, no glass body.
+                                  child: GlassButton.custom(
+                                    style: GlassButtonStyle.transparent,
+                                    onTap: _noTap,
+                                    excludeFromSemantics: true,
+                                    canRequestFocus: false,
+                                    // Below full call screen effects: no glass lighting on press.
+                                    glowColor: callFlat(context) ? Colors.transparent : null,
+                                    ambientBaseLight: callFlat(context) ? 0 : null,
+                                    shape: LiquidRoundedRectangle(borderRadius: endHeight / 2),
+                                    child: AnimatedContainer(
+                                      // While ending, the pill draws in to a circle.
+                                      duration: MediaQuery.disableAnimationsOf(context)
+                                          ? Duration.zero
+                                          : const Duration(milliseconds: 280),
+                                      curve: Curves.easeInOutCubic,
+                                      width: _ending ? endHeight : box.maxWidth * .875,
+                                      height: endHeight,
+                                      // ColorOS 17's tomato red, lit from below like the other buttons, with
+                                      // squircle ends like the keys.
+                                      foregroundDecoration: callGlassGlow(
+                                        context,
+                                        RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(endHeight / 2)),
+                                      ),
+                                      decoration: glassBody(
+                                        endRed,
+                                        RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(endHeight / 2)),
+                                        glow: 0,
+                                        flat: callFlat(context),
+                                      ),
+                                      child: Semantics(
+                                        label: context.l10n.endCall,
+                                        child: IconButton(
+                                          iconSize: 46,
+                                          style: IconButton.styleFrom(
+                                            foregroundColor: Colors.white,
+                                            disabledForegroundColor: Colors.white,
+                                            shape: const StadiumBorder(),
+                                          ),
+                                          onPressed: _ending ? null : _endCall,
+                                          icon: const CallGlyph(Icons.call_end_rounded),
                                         ),
-                                        onPressed: _ending ? null : _endCall,
-                                        icon: const CallGlyph(Icons.call_end_rounded),
                                       ),
                                     ),
                                   ),
@@ -500,7 +528,10 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                   child: CallAction(
                     // As on ColorOS: same button either way, lit white while the keypad is open.
                     icon: Icons.dialpad_rounded,
-                    glyph: (color) => DialPadGlyph(color: color),
+                    glyph: (color) => IconTheme.merge(
+                      data: IconThemeData(size: actionSize * glyphShare),
+                      child: DialPadGlyph(color: color),
+                    ),
                     label: context.l10n.dialPad,
                     active: widget.keypadOpen,
                     size: actionSize,

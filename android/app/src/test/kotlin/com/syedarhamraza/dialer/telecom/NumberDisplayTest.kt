@@ -20,6 +20,12 @@ class NumberDisplayTest {
     }
 
     @Test
+    fun keypadGroupsAsYouType() {
+        assertEquals("037", NumberDisplay.asYouType("PK", "037"))
+        assertEquals("0300 1234567", NumberDisplay.asYouType("PK", "03001234567"))
+    }
+
+    @Test
     fun shortCodeStaysAsDialled() {
         assertEquals(NumberDisplay(null, null), NumberDisplay.compute("PK", "1122"))
     }

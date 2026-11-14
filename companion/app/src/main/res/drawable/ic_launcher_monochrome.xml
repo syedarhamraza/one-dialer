@@ -1,0 +1,15 @@
+<!-- The launcher's sound wave (tool/icons/render_icons.py, RECORDER_FG), flat for themed icons. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:fillColor="#FFFFFFFF" android:pathData="M26.29,48.57a2.31,2.31 0,0 1,2.31,2.31v6.25a2.31,2.31 0,0 1,-4.61,0v-6.25a2.31,2.31 0,0 1,2.31,-2.31z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M34.20,43.56a2.31,2.31 0,0 1,2.31,2.31v16.27a2.31,2.31 0,0 1,-4.61,0v-16.27a2.31,2.31 0,0 1,2.31,-2.31z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M42.12,37.71a2.31,2.31 0,0 1,2.31,2.31v27.96a2.31,2.31 0,0 1,-4.61,0v-27.96a2.31,2.31 0,0 1,2.31,-2.31z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M50.05,33.12a2.31,2.31 0,0 1,2.31,2.31v37.15a2.31,2.31 0,0 1,-4.61,0v-37.15a2.31,2.31 0,0 1,2.31,-2.31z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M57.96,40.22a2.31,2.31 0,0 1,2.31,2.31v22.95a2.31,2.31 0,0 1,-4.61,0v-22.95a2.31,2.31 0,0 1,2.31,-2.31z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M65.89,35.21a2.31,2.31 0,0 1,2.31,2.31v32.97a2.31,2.31 0,0 1,-4.61,0v-32.97a2.31,2.31 0,0 1,2.31,-2.31z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M73.81,44.81a2.31,2.31 0,0 1,2.31,2.31v13.76a2.31,2.31 0,0 1,-4.61,0v-13.76a2.31,2.31 0,0 1,2.31,-2.31z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M81.73,49.41a2.31,2.31 0,0 1,2.31,2.31v4.58a2.31,2.31 0,0 1,-4.61,0v-4.58a2.31,2.31 0,0 1,2.31,-2.31z" />
+</vector>

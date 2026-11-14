@@ -1,0 +1,35 @@
+# The draft GitHub release of merged pull requests (workflows/release-drafter.yml).
+# Each "- " line becomes one release note in the app, on the website and on Google Play
+# (tool/release.ps1 -NotesFile), so the draft is copy-edited into user wording before a release.
+name-template: Next release
+change-template: "- $TITLE"
+# No "- " here: an empty draft must not turn into a release note.
+no-changes-template: Nothing merged yet.
+template: |
+  $CHANGES
+
+categories:
+  - title: New
+    when:
+      labels: [enhancement]
+  - title: Fixed
+    when:
+      labels: [bug]
+  - type: pre-exclude
+    when:
+      labels: [skip-changelog, dependencies]
+
+replacers:
+  # "feat(keypad): paste a number" -> "Paste a number"
+  - target: change-title
+    search: '/^(?:feat|fix|perf)(?:\([^)]*\))?!?: (.*)$/'
+    replace: '\u$1'
+
+# Labels from the branch names in AGENTS.md's Git workflow.
+autolabeler:
+  - labels: [enhancement]
+    branch: ['/^feat\/.+/']
+  - labels: [bug]
+    branch: ['/^fix\/.+/']
+  - labels: [skip-changelog]
+    branch: ['/^(docs|test|chore|ci|refactor)\/.+/']

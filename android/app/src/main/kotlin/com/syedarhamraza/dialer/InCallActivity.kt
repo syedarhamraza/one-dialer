@@ -23,6 +23,8 @@ class InCallActivity : FlutterActivity() {
     override fun onResume() {
         super.onResume()
         LagDiagnostics.foreground("in_call", true)
+        // Again on each resume: OPPO resets it, and the user may have changed it in Settings.
+        HighRefresh.apply(this)
     }
 
     override fun onPause() {
@@ -42,6 +44,12 @@ class InCallActivity : FlutterActivity() {
         WindowCompat.enableEdgeToEdge(window)
         CallManager.addListener(closeWhenIdle)
         answerFrom(intent)
+        if (!CallManager.isShowingCalls) {
+            // Opened from a call card left by a killed process: no call to show, so don't sit black.
+            CallNotifications.cancelIncoming(this)
+            CallNotifications.cancelOngoing(this)
+            finish()
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
