@@ -1715,6 +1715,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recorderNeedsAccessibility => 'Turn on its accessibility service';
 
   @override
+  String get recorderBothSides => 'Records both sides of your calls';
+
+  @override
+  String get recorderMicrophone => 'Records with the microphone';
+
+  @override
+  String get recorderHelperStopped =>
+      'Both sides is paused: start the helper in One Recorder';
+
+  @override
   String get recorderUntrusted =>
       'The recorder works only with One Dialer from Google Play. Install it from Play, or update both apps.';
 

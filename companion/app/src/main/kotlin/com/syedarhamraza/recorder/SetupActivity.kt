@@ -9,6 +9,8 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
+import com.syedarhamraza.recorder.shell.ShellHelper
+import kotlin.concurrent.thread
 
 /**
  * The companion's setup, laid out like One Dialer › Settings › Call recording (a ColorOS 17
@@ -44,6 +46,34 @@ class SetupActivity : Activity() {
         val scroll = page.scroll.scrollY
         page.content.removeAllViews()
 
+        val bothSides = ShellHelper.supported()
+        val helperUp = bothSides && ShellHelper.running(this)
+        if (bothSides) {
+            val paired = ShellHelper.paired(this)
+            val helper = when {
+                helperUp -> page.row(getString(R.string.setup_helper), getString(R.string.setup_done))
+                starting -> page.row(getString(R.string.setup_helper), getString(R.string.setup_helper_starting))
+                else -> page.row(getString(R.string.setup_helper), getString(R.string.setup_helper_detail), OneLook.RED,
+                    getString(R.string.setup_helper_start)) { startHelper() }
+            }
+            page.group(listOf(
+                page.row(getString(R.string.section_both_sides), getString(R.string.both_sides_intro)),
+                need(getString(R.string.setup_dev_options), getString(R.string.setup_dev_options_detail), ShellHelper.developerOptionsOn(this)) {
+                    startActivity(Intent(Settings.ACTION_DEVICE_INFO_SETTINGS))
+                },
+                need(getString(R.string.setup_pair), getString(R.string.setup_pair_detail), paired, done = R.string.setup_paired) {
+                    ShellHelper.askForPairingCode(this)
+                    startActivity(ShellHelper.wirelessDebuggingIntent())
+                },
+            ) + (if (paired) listOf(
+                helper,
+                page.row(
+                    getString(R.string.setup_restart),
+                    getString(if (ShellHelper.canRestart(this)) R.string.setup_restart_ready else R.string.setup_restart_detail),
+                ),
+            ) else emptyList()), header = getString(R.string.section_both_sides))
+        }
+
         page.group(listOf(
             need(getString(R.string.setup_mic), getString(R.string.setup_mic_detail), RecordingService.micGranted(this)) {
                 requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), 1)
@@ -51,6 +81,9 @@ class SetupActivity : Activity() {
             need(getString(R.string.setup_accessibility), accessibilityDetail(), RecordingService.accessibilityOn(this)) {
                 startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
             },
+        ), header = getString(if (helperUp) R.string.section_microphone_optional else R.string.section_microphone))
+
+        page.group(listOf(
             need(
                 getString(R.string.setup_notifications), getString(R.string.setup_notifications_detail),
                 getSystemService(NotificationManager::class.java).areNotificationsEnabled(),
@@ -74,7 +107,13 @@ class SetupActivity : Activity() {
             }))
         }
 
-        page.group(listOf(
+        page.group((if (bothSides) listOf(
+            setting(getString(R.string.setting_method), "method", listOf(
+                "auto" to getString(R.string.method_auto),
+                "shell" to getString(R.string.method_shell),
+                "mic" to getString(R.string.method_mic),
+            )),
+        ) else emptyList()) + listOf(
             setting(getString(R.string.setting_source), "sourceMode", listOf(
                 "auto" to getString(R.string.source_auto),
                 "recognition" to getString(R.string.source_recognition),
@@ -110,9 +149,24 @@ class SetupActivity : Activity() {
     private fun accessibilityDetail() = getString(R.string.setup_accessibility_detail)
 
     /** As One Dialer's Recorder row: the status, red with "Fix" and a chevron until it's done. */
-    private fun need(title: String, detail: String, ok: Boolean, fix: () -> Unit): View =
-        if (ok) page.row(title, getString(R.string.setup_done))
+    private fun need(title: String, detail: String, ok: Boolean, done: Int = R.string.setup_done, fix: () -> Unit): View =
+        if (ok) page.row(title, getString(done))
         else page.row(title, detail, OneLook.RED, getString(R.string.fix), onTap = fix)
+
+    private var starting = false
+
+    /** Starts the helper over Wireless debugging (several seconds of network work), then redraws. */
+    private fun startHelper() {
+        starting = true
+        render()
+        thread {
+            ShellHelper.start(applicationContext)
+            runOnUiThread {
+                starting = false
+                if (!isDestroyed) render()
+            }
+        }
+    }
 
     /** choiceRow: the current choice in grey before a chevron; tap opens the floating menu from it. */
     private fun setting(title: String, key: String, options: List<Pair<String, String>>) =

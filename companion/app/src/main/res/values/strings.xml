@@ -50,4 +50,35 @@
     <string name="theme_system">System default</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
+
+    <!-- Both sides: the shell helper started over Wireless debugging (shell/) -->
+    <string name="section_both_sides">Record both sides</string>
+    <string name="both_sides_intro">Records you and the other person at full volume, on the earpiece, speaker, Bluetooth or headphones. Set up once with Wireless debugging; no computer or root needed.</string>
+    <string name="setup_dev_options">Developer options</string>
+    <string name="setup_dev_options_detail">Settings › About phone: tap Build number 7 times</string>
+    <string name="setup_pair">Pair with Wireless debugging</string>
+    <string name="setup_pair_detail">Turn on Wireless debugging, tap Pair device with pairing code, then type the code into One Recorder\'s notification</string>
+    <string name="setup_paired">Paired</string>
+    <string name="setup_helper">Helper</string>
+    <string name="setup_helper_detail">Not running. Needs Wi-Fi and Wireless debugging to start</string>
+    <string name="setup_helper_running">Running</string>
+    <string name="setup_helper_start">Start</string>
+    <string name="setup_helper_starting">Starting…</string>
+    <string name="setup_restart">Start after a reboot</string>
+    <string name="setup_restart_ready">On Wi-Fi, by itself</string>
+    <string name="setup_restart_detail">Turns on the first time the helper starts</string>
+    <string name="section_microphone">Microphone method</string>
+    <string name="section_microphone_optional">Microphone method (optional)</string>
+    <string name="setting_method">Recording method</string>
+    <string name="method_auto">Auto: both sides when ready</string>
+    <string name="method_shell">Both sides only</string>
+    <string name="method_mic">Microphone only</string>
+    <string name="channel_setup">Setup</string>
+    <string name="pair_title">Pair One Recorder</string>
+    <string name="pair_steps">In Wireless debugging, tap Pair device with pairing code. Keep that open and type the 6-digit code here.</string>
+    <string name="pair_enter">Enter code</string>
+    <string name="pair_code">Pairing code</string>
+    <string name="pair_done">Paired. Calls are now recorded on both sides.</string>
+    <string name="pair_paired">Paired, but the helper didn\'t start. Tap Start in One Recorder.</string>
+    <string name="pair_failed">That didn\'t work. Keep the pairing dialog open and send the code again.</string>
 </resources>

@@ -192,6 +192,10 @@ class CallSnapshot {
 class RecorderInfo {
   const RecorderInfo({
     this.ready = false,
+    this.canRecord = false,
+    this.method = 'none',
+    this.helperPaired = false,
+    this.helperRunning = false,
     this.recording = false,
     this.trusted = true,
     this.accessibilityOn = false,
@@ -204,6 +208,10 @@ class RecorderInfo {
 
   factory RecorderInfo.fromMap(Map<Object?, Object?> map) => RecorderInfo(
     ready: map['ready'] as bool? ?? false,
+    canRecord: map['canRecord'] as bool? ?? false,
+    method: map['method'] as String? ?? 'none',
+    helperPaired: map['helperPaired'] as bool? ?? false,
+    helperRunning: map['helperRunning'] as bool? ?? false,
     recording: map['recording'] as bool? ?? false,
     trusted: map['trusted'] as bool? ?? true,
     accessibilityOn: map['accessibilityOn'] as bool? ?? false,
@@ -214,8 +222,18 @@ class RecorderInfo {
     error: map['error'] as String?,
   );
 
-  /// Set up (mic, accessibility service) and the consent notice accepted.
+  /// [canRecord] and the consent notice accepted.
   final bool ready;
+
+  /// One Recorder can record by some method (both sides, or the microphone).
+  final bool canRecord;
+
+  /// What the next recording would use: `shell` (both sides, through One Recorder's helper), `mic` or `none`.
+  final String method;
+
+  /// One Recorder is paired with Wireless debugging, and whether its both-sides helper is running.
+  final bool helperPaired;
+  final bool helperRunning;
   final bool recording;
 
   /// False when the companion refuses this build (its signing certificate isn't pinned).
@@ -230,7 +248,7 @@ class RecorderInfo {
   /// Space the recordings take.
   final int bytes;
 
-  /// Why the last start failed: `accessibility`, `microphone` or `start`.
+  /// Why the last start failed: `helper` (Both sides only, helper not running), `accessibility`, `microphone` or `start`.
   final String? error;
 }
 

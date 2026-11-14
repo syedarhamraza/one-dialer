@@ -45,17 +45,27 @@ object RecorderCompanion {
         null // not installed, or it doesn't trust this build's certificate
     }
 
-    /** `{ready, recording, startMillis, accessibilityOn, micGranted, notificationsOn, consented, autoRecord, trusted, error}`, null when not installed. */
+    /**
+     * `{ready, canRecord, method, helperPaired, helperRunning, recording, startMillis, accessibilityOn,
+     * micGranted, notificationsOn, consented, autoRecord, trusted, error}`, null when not installed.
+     */
     fun status(context: Context): Map<String, Any?>? {
         if (!installed(context)) return null
         val b = call(context, "status") ?: return mapOf("trusted" to false, "ready" to false, "recording" to false)
         val accessibility = b.getBoolean("accessibilityOn")
         val mic = b.getBoolean("micGranted")
+        // Both sides (the companion's shell helper) or the microphone. A companion from before both
+        // sides doesn't send canRecord: it records only through the microphone.
+        val canRecord = if (b.containsKey("canRecord")) b.getBoolean("canRecord") else accessibility && mic
         val prefs = CallPrefs.read(context)
         return mapOf(
             "trusted" to true,
             // Recording also waits for the user to accept the consent notice (Settings › Call recording).
-            "ready" to (accessibility && mic && prefs["recordingConsent"] == true),
+            "ready" to (canRecord && prefs["recordingConsent"] == true),
+            "canRecord" to canRecord,
+            "method" to (b.getString("method") ?: if (canRecord) "mic" else "none"),
+            "helperPaired" to b.getBoolean("helperPaired"),
+            "helperRunning" to b.getBoolean("helperRunning"),
             "consented" to prefs["recordingConsent"],
             "autoRecordMode" to prefs["autoRecordMode"],
             "bytes" to b.getLong("bytes"),

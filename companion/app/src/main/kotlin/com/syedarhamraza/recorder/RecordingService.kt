@@ -18,12 +18,14 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.provider.Settings
+import com.syedarhamraza.recorder.shell.ShellHelper
 import java.io.File
 
 /**
- * Records one call from the mic while it runs as a microphone foreground service. Android 10+
- * only lets it hear the mic during a call because [RecorderAccessibilityService] is enabled.
- * Started and stopped by One Dialer through [RecordingsProvider]; never exported itself.
+ * Records one call while it runs as a foreground service, by [RecordMethod]: both sides through
+ * the shell helper ([ShellHelper]), or the mic, which Android 10+ only lets it hear during a call
+ * because [RecorderAccessibilityService] is enabled. Started and stopped by One Dialer through
+ * [RecordingsProvider]; never exported itself.
  */
 class RecordingService : Service() {
     companion object {
@@ -40,7 +42,10 @@ class RecordingService : Service() {
         @Volatile var current: RecordingFile? = null
             private set
 
-        /** Why the last start failed: "accessibility", "microphone" or "start"; null after a good start. */
+        /**
+         * Why the last start failed: "helper" (Both sides only, and the helper isn't running),
+         * "accessibility", "microphone" or "start"; null after a good start.
+         */
         @Volatile var lastError: String? = null
             private set
 
@@ -73,11 +78,21 @@ class RecordingService : Service() {
             }
         }
 
+        /** The method the next recording would use; null when none is set up. */
+        fun method(context: Context) = RecordMethod.choose(
+            RecorderSettings.read(context)["method"] as String,
+            ShellHelper.supported() && ShellHelper.running(context),
+            accessibilityOn(context),
+            micGranted(context),
+        )
+
         fun start(context: Context, extras: android.os.Bundle?) {
             lastError = when {
+                method(context) != null -> null
+                RecorderSettings.read(context)["method"] == "shell" -> "helper"
                 !accessibilityOn(context) -> "accessibility"
                 !micGranted(context) -> "microphone"
-                else -> null
+                else -> "start"
             }
             if (lastError != null) return RecordingsProvider.notifyStatus(context)
             context.startForegroundService(Intent(context, RecordingService::class.java).apply { extras?.let(::putExtras) })
@@ -110,8 +125,12 @@ class RecordingService : Service() {
             finish()
             return START_NOT_STICKY
         }
+        val bothSides = current == null && method(this) == RecordMethod.BOTH_SIDES
+        // Both sides doesn't use this app's mic, so it isn't held to Android 14's while-in-use rule for one.
+        val type = if (bothSides && Build.VERSION.SDK_INT >= 34) ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+        else ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
         try {
-            startForeground(NOTIFICATION_ID, notification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE)
+            startForeground(NOTIFICATION_ID, notification(), type)
         } catch (e: Exception) {
             // Android 14+ refuses a microphone service started while nothing of ours or One Dialer's shows.
             lastError = "start"
@@ -119,24 +138,38 @@ class RecordingService : Service() {
             RecordingsProvider.notifyStatus(this)
             return START_NOT_STICKY
         }
-        if (current == null) begin(intent)
+        if (current == null) begin(intent, bothSides)
         return START_NOT_STICKY
     }
 
-    private fun begin(intent: Intent?) {
+    private fun begin(intent: Intent?, bothSides: Boolean) {
         val entry = RecordingFile.free(
             intent?.getLongExtra(EXTRA_START, 0L)?.takeIf { it > 0 } ?: System.currentTimeMillis(),
             intent?.getStringExtra(EXTRA_NUMBER),
         ) { File(dir(this), it).exists() }
         val target = File(dir(this), entry.name)
         val sources = RecorderSettings.sourcesToTry(this)
-        pipeline = AudioPipeline(
-            target, sources, Compressor.Level.of(RecorderSettings.read(this)["boost"] as String),
+        val boost = Compressor.Level.of(RecorderSettings.read(this)["boost"] as String)
+        if (bothSides) {
+            pipeline = ShellHelper.openPcm(this)?.let { pcm ->
+                AudioPipeline(target, emptyList(), boost, onSourceChosen = {}, onSilent = {}, input = pcm).takeIf { it.start() }
+            }
+            // Auto falls back to the mic when the helper won't record; "Both sides only" doesn't.
+            if (pipeline == null && RecorderSettings.read(this)["method"] == "shell") {
+                lastError = "helper"
+                finish()
+                return
+            }
+        }
+        // shortcut: a fallback inside a specialUse service (Android 14+) may be denied the mic in the background; tell users to pin a method if so.
+        val micOk = accessibilityOn(this) && micGranted(this)
+        if (pipeline == null && micOk) pipeline = AudioPipeline(
+            target, sources, boost,
             onSourceChosen = { RecorderSettings.saveSource(this, it) },
             onSilent = { RecorderSettings.forgetSource(this) },
         ).takeIf { it.start() }
         // The plain MediaRecorder path, for phones where AudioRecord won't open during a call.
-        if (pipeline == null) recorder = open(target, sources)
+        if (pipeline == null && micOk) recorder = open(target, sources)
         if (pipeline == null && recorder == null) {
             lastError = "start"
             finish()
