@@ -6,7 +6,7 @@ AI-assisted? <!-- No, or which tool (Claude Code, Codex, Cursor, Copilot...) -->
 
 ## Checklist
 
-- [ ] Targets the current `beta/<n>` branch, not `main`
+- [ ] Targets the current `beta/<n>` branch for app changes, or `main` for the website and docs
 - [ ] `flutter analyze` and `flutter test` pass
 - [ ] New UI text is in both `app_en.arb` and `app_it.arb`
 - [ ] I read the whole diff and tried the change on a phone (model and Android version: ...)
