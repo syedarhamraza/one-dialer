@@ -33,7 +33,7 @@ adb devices
 ## 2. Get the code
 
 1. Click **Fork** at the top of the [repository page](https://github.com/syedarhamraza/one-dialer) to make your own copy.
-2. Clone your fork and switch to the current beta branch, `beta/<n>` (the highest number on the repository's branch list). The default branch, `main`, holds only the last released beta and is never worked on:
+2. Clone your fork. For a change to the app, switch to the current beta branch, `beta/<n>` (the highest number on the repository's branch list); changes to the website (`site/`) or the docs stay on `main`:
 
    ```bash
    git clone https://github.com/<your-username>/one-dialer.git
@@ -130,7 +130,7 @@ Add `--ez private true` to the second command for a hidden number.
    git push -u origin fix/keypad-delete-long-press
    ```
 
-2. GitHub shows a **Compare & pull request** button. Make sure the base branch is the current **`beta/<n>`**, not `main` (`main` only moves when a beta ships).
+2. GitHub shows a **Compare & pull request** button. Make sure the base branch is right: the current **`beta/<n>`** for the app, **`main`** for the website or docs.
 3. Fill in the template. For anything you can see, add before/after screenshots or a short screen recording (with fake numbers).
 4. CI (analyze, tests, debug build) must pass; its run has the debug APK to download. The pull request's title becomes a line of the release notes, so say what changes for the user. Keep pull requests small and about one thing; they get reviewed faster.
 
