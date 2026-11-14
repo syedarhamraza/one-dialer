@@ -8,3 +8,8 @@ export const TESTING_URL = "https://play.google.com/apps/testing/com.syedarhamra
 export const PLAY_URL = "https://play.google.com/store/apps/details?id=com.syedarhamraza.onedialer";
 export const REPO_URL = "https://github.com/syedarhamraza/one-dialer";
 export const EMAIL = "arhamraza399@gmail.com";
+// Every GitHub release carries the recorder under this name and none is marked pre-release, so this is always the newest.
+export const RECORDER_URL = `${REPO_URL}/releases/latest/download/one-dialer-recorder.apk`;
+// Open GitHub's issue form straight on the repo's templates (.github/ISSUE_TEMPLATE).
+export const BUG_URL = `${REPO_URL}/issues/new?template=bug_report.yml`;
+export const FEATURE_URL = `${REPO_URL}/issues/new?template=feature_request.yml`;

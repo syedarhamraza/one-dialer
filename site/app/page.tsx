@@ -134,6 +134,9 @@ export default function OneDialer() {
           <a href="#whats-new" className="px-4 transition-colors hover:text-ink max-md:hidden">
             What&apos;s new
           </a>
+          <Link href="/recorder/" className="px-4 transition-colors hover:text-ink max-md:hidden">
+            Recorder
+          </Link>
           <Link href="/privacy/" className="px-4 transition-colors hover:text-ink max-md:hidden">
             Privacy
           </Link>
