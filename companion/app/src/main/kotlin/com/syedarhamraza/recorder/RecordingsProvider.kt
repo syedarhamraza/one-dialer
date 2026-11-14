@@ -35,7 +35,14 @@ class RecordingsProvider : ContentProvider() {
 
     override fun onCreate() = true
 
-    override fun call(method: String, arg: String?, extras: Bundle?): Bundle? {
+    override fun call(method: String, arg: String?, extras: Bundle?): Bundle? = try {
+        answer(method, arg, extras).also { if (method == "start") android.util.Log.i("OneRecorder", "$method -> $it") }
+    } catch (e: Exception) {
+        android.util.Log.w("OneRecorder", "$method failed", e)
+        throw e
+    }
+
+    private fun answer(method: String, arg: String?, extras: Bundle?): Bundle? {
         val context = context ?: return null
         if (!TrustedDialer.isTrusted(context, callingPackage)) throw SecurityException("Only One Dialer may use the recorder")
         return when (method) {
@@ -84,15 +91,13 @@ class RecordingsProvider : ContentProvider() {
     }
 
     private fun status(context: Context) = Bundle().apply {
-        val method = RecordingService.method(context)
-        // Both sides (shell helper) or microphone; One Dialer older than these keys uses accessibilityOn && micGranted.
-        putBoolean("canRecord", method != null)
-        putString("method", method?.key ?: "none")
+        val helperUp = RecordingService.canRecord(context)
+        // Both sides is the only method; One Dialer reads canRecord and method.
+        putBoolean("canRecord", helperUp)
+        putString("method", if (helperUp) "shell" else "none")
         putBoolean("bothSidesSupported", ShellHelper.supported())
         putBoolean("helperPaired", ShellHelper.paired(context))
-        putBoolean("helperRunning", method == RecordMethod.BOTH_SIDES || (ShellHelper.supported() && ShellHelper.running(context)))
-        putBoolean("accessibilityOn", RecordingService.accessibilityOn(context))
-        putBoolean("micGranted", RecordingService.micGranted(context))
+        putBoolean("helperRunning", helperUp)
         putBoolean("notificationsOn", context.getSystemService(NotificationManager::class.java).areNotificationsEnabled())
         putBoolean("recording", RecordingService.current != null)
         putLong("startMillis", RecordingService.current?.startMillis ?: 0L)

@@ -198,8 +198,6 @@ class RecorderInfo {
     this.helperRunning = false,
     this.recording = false,
     this.trusted = true,
-    this.accessibilityOn = false,
-    this.micGranted = false,
     this.consented = false,
     this.autoRecordMode = 'off',
     this.bytes = 0,
@@ -214,8 +212,6 @@ class RecorderInfo {
     helperRunning: map['helperRunning'] as bool? ?? false,
     recording: map['recording'] as bool? ?? false,
     trusted: map['trusted'] as bool? ?? true,
-    accessibilityOn: map['accessibilityOn'] as bool? ?? false,
-    micGranted: map['micGranted'] as bool? ?? false,
     consented: map['consented'] as bool? ?? false,
     autoRecordMode: map['autoRecordMode'] as String? ?? 'off',
     bytes: map['bytes'] as int? ?? 0,
@@ -225,10 +221,10 @@ class RecorderInfo {
   /// [canRecord] and the consent notice accepted.
   final bool ready;
 
-  /// One Recorder can record by some method (both sides, or the microphone).
+  /// One Recorder's both-sides helper is running, so a recording can start.
   final bool canRecord;
 
-  /// What the next recording would use: `shell` (both sides, through One Recorder's helper), `mic` or `none`.
+  /// `shell` (both sides, through One Recorder's helper) or `none`.
   final String method;
 
   /// One Recorder is paired with Wireless debugging, and whether its both-sides helper is running.
@@ -238,8 +234,6 @@ class RecorderInfo {
 
   /// False when the companion refuses this build (its signing certificate isn't pinned).
   final bool trusted;
-  final bool accessibilityOn;
-  final bool micGranted;
   final bool consented;
 
   /// Auto-record rule: `off`, `all`, `unknown` or `contacts` (`RecordRules.kt`).
@@ -248,7 +242,7 @@ class RecorderInfo {
   /// Space the recordings take.
   final int bytes;
 
-  /// Why the last start failed: `helper` (Both sides only, helper not running), `accessibility`, `microphone` or `start`.
+  /// Why the last start failed: `helper` (not running or won't record) or `start`.
   final String? error;
 }
 

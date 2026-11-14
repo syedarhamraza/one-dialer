@@ -22,7 +22,6 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.security.SecureRandom
-import android.os.Looper
 import kotlin.concurrent.thread
 
 /**
@@ -88,11 +87,11 @@ object ShellHelper {
     }
 
     /**
-     * Android refuses sockets on the main thread, even to 127.0.0.1; the setup screen and the
-     * service's start ask from there, so these short loopback calls run on a thread it waits for.
+     * Android refuses sockets on the main thread, even to 127.0.0.1, and a binder call carries the
+     * caller's main-thread rule along (One Dialer asks for status from its main thread), so these
+     * short loopback calls always run on a fresh thread this one waits for.
      */
     private fun <T> offMain(fallback: T, block: () -> T): T {
-        if (Looper.myLooper() != Looper.getMainLooper()) return block()
         var result = fallback
         thread { result = block() }.join(4000)
         return result
@@ -129,9 +128,11 @@ object ShellHelper {
             val port = 20_000 + random.nextInt(40_000)
             prefs(context).edit().putInt(PORT, port).putString(TOKEN, token).commit()
             val apk = context.applicationInfo.sourceDir
+            // adbd kills the shell's process group when a plain shell: command returns, before a
+            // background job even starts: setsid moves the helper out, and the sleep lets it get there.
             adb.shell(
-                "CLASSPATH='$apk' nohup app_process /system/bin ${ShellMain::class.java.name} $port $token '$apk' " +
-                    ">/dev/null 2>&1 &",
+                "CLASSPATH='$apk' setsid app_process /system/bin ${ShellMain::class.java.name} $port $token '$apk' " +
+                    "</dev/null >/dev/null 2>&1 & sleep 1",
             )
             val up = waitUntilRunning(context)
             if (up && switched) {

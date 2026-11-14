@@ -1706,19 +1706,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recorderApp => 'One Recorder';
 
   @override
-  String get recorderReady => 'Ready to record';
-
-  @override
-  String get recorderNeedsMic => 'Allow the microphone in One Recorder';
-
-  @override
-  String get recorderNeedsAccessibility => 'Turn on its accessibility service';
-
-  @override
   String get recorderBothSides => 'Records both sides of your calls';
 
   @override
-  String get recorderMicrophone => 'Records with the microphone';
+  String get recorderNeedsSetup => 'Set up both sides in One Recorder';
 
   @override
   String get recorderHelperStopped =>
@@ -1842,44 +1833,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get neverRecordSubtitle => 'Contacts auto-record always skips';
-
-  @override
-  String get recordingSound => 'Sound';
-
-  @override
-  String get volumeBoost => 'Volume boost';
-
-  @override
-  String get volumeBoostSubtitle =>
-      'Lifts the other person\'s voice, which the mic only hears faintly';
-
-  @override
-  String get boostOff => 'Off';
-
-  @override
-  String get boostNormal => 'Normal';
-
-  @override
-  String get boostStrong => 'Strong';
-
-  @override
-  String get micSource => 'Microphone source';
-
-  @override
-  String get micSourceSubtitle =>
-      'Automatic tries each on the first call and keeps the loudest';
-
-  @override
-  String get micSourceAuto => 'Automatic';
-
-  @override
-  String get micSourceRecognition => 'Voice recognition';
-
-  @override
-  String get micSourceCommunication => 'Voice communication';
-
-  @override
-  String get micSourceMic => 'Microphone';
 
   @override
   String get storage => 'Storage';

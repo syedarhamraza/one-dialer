@@ -1,6 +1,8 @@
 # Call recording plan (website APK only)
 
-## Built: the companion app (accessibility tier)
+## Built: the companion app
+
+**The accessibility (microphone) tier was removed on 14 November 2026.** On the vivo with Android 17 the audio system silenced it during calls (`dumpsys audio`: `silenced:true` for every source, voice recognition included, even with the accessibility service on and the recording service in the foreground). One Recorder now records only both sides, through the shell helper below; the bullets in this section that describe the microphone, the accessibility service and `MediaRecorder` are history.
 
 Instead of a second One Dialer build (the `web` flavor in sections 3 and 6, now dropped), recording lives in a small sideloaded companion, **One Recorder** (`companion/`, `com.syedarhamraza.onedialer.recorder`, plain Kotlin). The Play app stays the only dialer and keeps its Play updates; it carries no mic permission and no accessibility service, only a `<queries>` entry and `RecorderCompanion.kt`.
 
@@ -9,21 +11,21 @@ Instead of a second One Dialer build (the `web` flavor in sections 3 and 6, now 
 - Status changes are a `notifyChange` on the provider's `status` URI; `RecorderCompanion` observes it while calls exist and puts it in `CallManager.snapshot()["recording"]`.
 - Start: the call screen's ⋮ › Record, or auto-record (Settings › Call recording › Record all calls, `CallPrefs.autoRecord`) when a call turns active. Nothing records until the consent notice there is accepted (`CallPrefs.recordingConsent`). Stops when no call is active or held, or by the companion itself once the audio mode leaves the call (if One Dialer dies).
 - Recordings: `filesDir/recordings/<startMillis>_<number>.m4a` inside the companion (the file name is the index). Play and share go through a `PendingIntent` the companion returns with a FileProvider grant, sent by One Dialer while it's in front.
-- Audio (v2): `AudioPipeline` records with `AudioRecord` (48 kHz mono, AGC when the phone has it, no noise suppressor: it treats the faint caller as noise) through `Compressor` (Volume boost: Off by default, Normal, Strong) into AAC via `MediaCodec`/`MediaMuxer`; if `AudioRecord` won't open, the old `MediaRecorder` path records instead. Microphone source Auto spends about a second on each source on the first call, keeps the loudest (`SourcePicker`) and forgets it again if it records 5 s of silence.
+- Audio: the microphone method records with `MediaRecorder` (16 kHz AAC), trying voice recognition, voice communication, then the plain microphone until one starts (Microphone source picks one). v2's `AudioRecord` pipeline with Volume boost and source testing recorded only silence during calls on the vivo, so it was dropped; `AudioPipeline` now only encodes the both-sides helper's PCM.
 - Organisation (v2): `recordings/index.json` in the companion holds direction, SIM, star and title per file. One Dialer's Recordings page (Calls ⋮ › Recordings, or Settings › Call recording) shows contact names, day groups, search, filters (All / Starred / Contacts / Unknown) and per-item or selected Share / Save to phone (MediaStore `Recordings/One Dialer`) / Delete, plus Star and Rename.
 - Rules (v2): Auto-record Off / All / Unknown numbers / Selected contacts, and a Never record list (`RecordRules.kt`, contact ids in `CallPrefs`). Auto-delete after 30 or 90 days keeps starred recordings.
-- Verified on the vivo: recording works; on the earpiece the caller is much quieter than you (v1). Not yet verified: how much Volume boost helps, and whether Android 14+ ever refuses the companion's microphone service.
+- Verified on the vivo: recording works (v1); on the earpiece the caller is much quieter than you. Not yet verified: whether Android 14+ ever refuses the companion's microphone service.
 
 ## Built: both sides through a shell helper (Android 12+)
 
 The same idea as Shizuku, built into One Recorder (no separate app): the shell user may record `AudioSource.VOICE_CALL`, both sides straight from the call (scrcpy's `voice-call` source and ACR's helper rely on it).
 
 - Setup (One Recorder › Record both sides): Developer options, then pair with Wireless debugging. The pairing code is typed into One Recorder's notification while Settings' pairing dialog stays open; `shell/Adb.kt` (libadb-android, Conscrypt, SPAKE2) finds the pairing port over mDNS and pairs. Its RSA key and certificate stay in `filesDir/adb/`.
-- Start: over that connection, `CLASSPATH=<base.apk> nohup app_process /system/bin ...shell.ShellMain <port> <token> <apk> &`. `ShellMain` (uid 2000) listens on `127.0.0.1:<port>` and answers only `<token> ping|pcm|quit` (`BothSidesTest`); `pcm` streams 48 kHz mono 16-bit PCM from `AudioRecord(VOICE_CALL)` until One Recorder hangs up. It exits when One Recorder's APK goes away (uninstall or update). A loopback TCP port with a random token, not a Unix socket: SELinux may block an app connecting to shell's socket.
+- Start: over that connection, `CLASSPATH=<base.apk> setsid app_process /system/bin ...shell.ShellMain <port> <token> <apk> & sleep 1` (adbd kills a plain `shell:` command's process group when it returns, so `nohup ... &` alone never starts). `ShellMain` (uid 2000) listens on the loopback address (`::1` on the vivo) and answers only `<token> ping|pcm|quit` (`BothSidesTest`); `pcm` streams 48 kHz mono 16-bit PCM from `AudioRecord(VOICE_CALL)` until One Recorder hangs up. It exits when One Recorder's APK goes away (uninstall or update). A loopback TCP port with a random token, not a Unix socket: SELinux may block an app connecting to shell's socket.
 - The same start runs `pm grant ... WRITE_SECURE_SETTINGS`, so after a reboot or an update (`ShellReceiver`) One Recorder switches Wireless debugging on itself, reconnects with the saved key, starts the helper and switches it back off (left on if the phone ends the helper with it). Away from Wi-Fi it waits for a Wi-Fi network callback.
-- Recording method (One Recorder and `RecorderSettings["method"]`): Auto (both sides when the helper runs, else the microphone), Both sides only, Microphone only (`RecordMethod.choose`). Both sides feeds the helper's PCM into the same `AudioPipeline` (Compressor, AAC, `.m4a`), in a `specialUse` foreground service on Android 14+.
-- One Dialer reads `canRecord`, `method`, `helperPaired` and `helperRunning` from the status; a companion without `canRecord` falls back to `accessibilityOn && micGranted`.
-- Not yet verified on a phone: that vivo and Samsung give both sides from shell, that the helper survives Wireless debugging going off, the reboot restart, and Wi-Fi calling (some phones lose one side).
+- The helper's PCM goes into `AudioPipeline` (AAC, `.m4a`), in a `specialUse` foreground service on Android 14+. Without a running helper One Recorder can't record (`canRecord` false, error `helper`).
+- One Dialer reads `canRecord`, `method`, `helperPaired` and `helperRunning` from the status.
+- Verified on the vivo (Android 17): both sides records you and the other person. Not yet verified: Samsung, that the helper survives Wireless debugging going off, the reboot restart, and Wi-Fi calling (some phones lose one side).
 
 Goal (original): a second build of One Dialer, downloaded from the website, that records calls. The Google Play build never contains any recording code or permissions.
 

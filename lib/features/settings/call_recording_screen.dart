@@ -29,14 +29,10 @@ class _CallRecordingScreenState extends State<CallRecordingScreen> with WidgetsB
   RecorderInfo? _recorder;
   int _count = 0;
   final _mode = ValueNotifier<String?>('off');
-  final _boost = ValueNotifier<String?>('off');
-  final _source = ValueNotifier<String?>('auto');
   final _retention = ValueNotifier<String?>('0');
   List<String> _selectedIds = const [];
   List<String> _neverIds = const [];
   final _modeKey = GlobalKey();
-  final _boostKey = GlobalKey();
-  final _sourceKey = GlobalKey();
   final _retentionKey = GlobalKey();
 
   @override
@@ -54,7 +50,7 @@ class _CallRecordingScreenState extends State<CallRecordingScreen> with WidgetsB
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    for (final n in [_mode, _boost, _source, _retention]) {
+    for (final n in [_mode, _retention]) {
       n.dispose();
     }
     super.dispose();
@@ -82,8 +78,6 @@ class _CallRecordingScreenState extends State<CallRecordingScreen> with WidgetsB
       _neverIds = _ids(prefs['neverRecord']);
     });
     _mode.value = recorder?.autoRecordMode ?? 'off';
-    _boost.value = settings['boost'] as String? ?? 'off';
-    _source.value = settings['sourceMode'] as String? ?? 'auto';
     _retention.value = '${settings['retentionDays'] ?? 0}';
   }
 
@@ -100,10 +94,7 @@ class _CallRecordingScreenState extends State<CallRecordingScreen> with WidgetsB
     if (r.method == 'shell') return l10n.recorderBothSides;
     // Paired for both sides, but its helper has stopped (a reboot away from Wi-Fi, say).
     if (r.helperPaired && !r.helperRunning) return l10n.recorderHelperStopped;
-    if (r.method == 'mic') return l10n.recorderMicrophone;
-    if (!r.micGranted) return l10n.recorderNeedsMic;
-    if (!r.accessibilityOn) return l10n.recorderNeedsAccessibility;
-    return l10n.recorderReady;
+    return l10n.recorderNeedsSetup;
   }
 
   static String _size(int bytes) => bytes < 1024 * 1024
@@ -191,42 +182,6 @@ class _CallRecordingScreenState extends State<CallRecordingScreen> with WidgetsB
                   value: '${_neverIds.length}',
                   onTap: () => _push(RecordContactsScreen(prefKey: 'neverRecord', title: l10n.neverRecord)),
                 ),
-              ],
-            ),
-            OneUIGroupCard(
-              headerTitle: l10n.recordingSound,
-              items: [
-                choiceRow(
-                  context,
-                  title: l10n.volumeBoost,
-                  subtitle: l10n.volumeBoostSubtitle,
-                  anchor: _boostKey,
-                  value: _boost,
-                  labels: {'off': l10n.boostOff, 'normal': l10n.boostNormal, 'strong': l10n.boostStrong},
-                  onPick: (v) {
-                    _boost.value = v;
-                    _telecom.setRecorderSetting('boost', v);
-                  },
-                ),
-                // Both sides records the call itself, not the microphone.
-                if (r.method != 'shell')
-                  choiceRow(
-                    context,
-                    title: l10n.micSource,
-                    subtitle: l10n.micSourceSubtitle,
-                    anchor: _sourceKey,
-                    value: _source,
-                    labels: {
-                      'auto': l10n.micSourceAuto,
-                      'recognition': l10n.micSourceRecognition,
-                      'communication': l10n.micSourceCommunication,
-                      'mic': l10n.micSourceMic,
-                    },
-                    onPick: (v) {
-                      _source.value = v;
-                      _telecom.setRecorderSetting('sourceMode', v);
-                    },
-                  ),
               ],
             ),
             OneUIGroupCard(

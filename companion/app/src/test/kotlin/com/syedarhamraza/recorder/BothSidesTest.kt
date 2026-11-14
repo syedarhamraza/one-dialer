@@ -6,26 +6,6 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 class BothSidesTest {
-    private fun choose(setting: String, helper: Boolean, accessibility: Boolean, mic: Boolean) =
-        RecordMethod.choose(setting, helper, accessibility, mic)
-
-    @Test
-    fun autoPrefersBothSidesThenTheMicrophone() {
-        assertEquals(RecordMethod.BOTH_SIDES, choose("auto", helper = true, accessibility = true, mic = true))
-        assertEquals(RecordMethod.BOTH_SIDES, choose("auto", helper = true, accessibility = false, mic = false))
-        assertEquals(RecordMethod.MICROPHONE, choose("auto", helper = false, accessibility = true, mic = true))
-        assertNull(choose("auto", helper = false, accessibility = true, mic = false))
-        assertNull(choose("auto", helper = false, accessibility = false, mic = true))
-    }
-
-    @Test
-    fun aPinnedMethodNeverFallsBack() {
-        assertEquals(RecordMethod.BOTH_SIDES, choose("shell", helper = true, accessibility = false, mic = false))
-        assertNull(choose("shell", helper = false, accessibility = true, mic = true))
-        assertEquals(RecordMethod.MICROPHONE, choose("mic", helper = true, accessibility = true, mic = true))
-        assertNull(choose("mic", helper = true, accessibility = false, mic = true))
-    }
-
     private val token = "0123456789abcdef0123456789abcdef0123456789abcdef"
 
     @Test

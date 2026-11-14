@@ -70,6 +70,8 @@ object ShellMain {
         val context = shellContext()
         while (true) {
             val socket = try { server.accept() } catch (_: IOException) { continue }
+            // After an update the old APK is gone: quit now, so One Recorder's ping fails and it starts the new one.
+            if (!apk.exists()) exitProcess(0)
             thread { serve(socket, token, context) }
         }
     }
@@ -185,6 +187,8 @@ object ShellMain {
         override fun getOpPackageName() = SHELL
         override fun getApplicationContext(): Context = this
 
+        // Only Android 12+ asks for it, and the helper only runs there (ShellHelper.supported).
+        @SuppressLint("NewApi")
         override fun getAttributionSource(): AttributionSource =
             AttributionSource.Builder(Process.myUid()).setPackageName(SHELL).build()
     }
