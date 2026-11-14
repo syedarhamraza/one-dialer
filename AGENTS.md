@@ -35,10 +35,11 @@ Floating chrome is OneSpend's, 1:1 (no liquid glass; it was tried and removed). 
 
 ## Git workflow
 
-Remote: `https://github.com/syedarhamraza/one-dialer` (public, GPL-3.0; see `CONTRIBUTING.md`). Never commit to `main` or the beta branch directly. Never put real phone numbers, names or call logs in code, tests, commits or screenshots; use fakes like `0300 1234567`. While a beta is in progress the repo's default branch is that `beta/<n>` branch; set it back to `main` once the beta ships.
+Remote: `https://github.com/syedarhamraza/one-dialer` (public, GPL-3.0; see `CONTRIBUTING.md`). Never commit to `main` or the beta branch directly. Never put real phone numbers, names or call logs in code, tests, commits or screenshots; use fakes like `0300 1234567`. The repo's default branch is always `main`, but no work is ever done on it: it holds only the last released beta.
 
-- Each beta has its own long-lived branch cut from `main`, named `beta/<n>` (the current one is `beta/8`, for 1.0.0-beta.8). All work for that beta goes there: every change gets a branch (`feat/...`, `fix/...`, `docs/...`) cut from the beta branch, is pushed, and gets a pull request into the beta branch (`gh pr create --base beta/8`); merge only after the user approves.
-- `main` only moves when a beta ships: once the user says the beta is ready, the release commit (`tool/release.ps1`) goes on the beta branch, and the beta branch is merged into `main` with a pull request. Then cut `beta/<n+1>` from `main` and update the current branch name above.
+- Each beta has its own long-lived branch cut from `main`, named `beta/<n>` (the current one is `beta/9`, for 1.0.0-beta.9). All work for that beta goes there: every change gets a branch (`feat/...`, `fix/...`, `docs/...`) cut from the beta branch, is pushed, and gets a pull request into the beta branch (`gh pr create --base beta/9`); merge only after the user approves.
+- `main` only moves when a beta ships: once the user says the beta is released, the release commit (`tool/release.ps1`) goes on the beta branch, and the beta branch is merged into `main` with a pull request. Then cut `beta/<n+1>` from `main` and update the current branch name above.
+- Pull requests opened against `main` (Dependabot and ImgBot use the default branch, and so do contributors who miss the note) get retargeted to the current beta branch (`gh pr edit <n> --base beta/9`) before they're merged.
 
 ## Commands
 
