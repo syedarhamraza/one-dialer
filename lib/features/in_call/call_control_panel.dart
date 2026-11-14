@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
@@ -63,9 +64,18 @@ class CallControlPanel extends StatefulWidget {
 }
 
 class _CallControlPanelState extends State<CallControlPanel> with TickerProviderStateMixin {
-  /// The keys' own steady clock for their cascade, so it plays out evenly rather than riding the
-  /// panel's spring, which does most of its travel at the start.
+  /// The keys' and actions' own steady clock (0 closed, 1 open), so they play out evenly rather
+  /// than riding the panel's spring, which does most of its travel at the start.
   late final AnimationController _keysIn;
+
+  /// Which script the clock is playing: opening and closing move differently (ColorOS 17), so
+  /// each has its own, picked when it starts from rest. One interrupted mid-way is simply rewound.
+  bool _closing = false;
+
+  static const _scriptMs = 450.0;
+
+  /// Milliseconds into the script being played.
+  double get _ms => (_closing ? 1 - _keysIn.value : _keysIn.value) * _scriptMs;
 
   @override
   void initState() {
@@ -73,8 +83,7 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
     // Created here, not lazily: a lazy field would first be read after the keypad opened.
     _keysIn = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 650),
-      reverseDuration: const Duration(milliseconds: 450),
+      duration: const Duration(milliseconds: 450),
       value: widget.keypadOpen ? 1 : 0,
     );
     TelecomBridge.instance.canMeetCall().then((can) {
@@ -198,10 +207,9 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
     if (oldWidget.keypadOpen != widget.keypadOpen || oldWidget.call.id != widget.call.id) {
       if (MediaQuery.disableAnimationsOf(context) || oldWidget.call.id != widget.call.id) {
         _keysIn.value = widget.keypadOpen ? 1 : 0;
-      } else if (widget.keypadOpen) {
-        _keysIn.forward();
       } else {
-        _keysIn.reverse();
+        if (!_keysIn.isAnimating) _closing = !widget.keypadOpen;
+        widget.keypadOpen ? _keysIn.forward() : _keysIn.reverse();
       }
     }
   }
@@ -321,7 +329,8 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
           height: upperHeight,
           width: widget.width,
           child: Stack(
-            clipBehavior: Clip.hardEdge,
+            // The keys follow their own script, not the panel's growing edge (landscape scrolls, and clips).
+            clipBehavior: widget.landscape ? Clip.hardEdge : Clip.none,
             children: [
               if (p < 1 || !widget.keypadOpen)
                 Positioned(
@@ -341,32 +350,35 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                         const Interval(0, .62, curve: Curves.easeOutCubic),
                         AnimatedBuilder(
                           animation: _keysIn,
-                          builder: (context, child) {
-                            final hidden = _actionsOut.transform(_keysIn.value);
-                            return Transform.scale(
-                              scale: 1 - .06 * hidden,
-                              child: Opacity(opacity: 1 - hidden, child: child),
-                            );
-                          },
+                          builder: (context, child) => Opacity(opacity: _actionsScript.$2, child: child),
                           key: const ValueKey('receding-call-actions'),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               for (final action in actions)
                                 Expanded(
-                                  child: CallAction(
-                                    icon: Icons.circle,
-                                    glyph: (color) => CallIcon(
-                                      action.glyph,
-                                      key: ValueKey(action.glyph),
-                                      color: color,
-                                      size: actionSize * glyphShare,
+                                  // Each button shrinks toward a point just under its circle.
+                                  child: AnimatedBuilder(
+                                    animation: _keysIn,
+                                    builder: (context, child) => Transform.scale(
+                                      scale: _actionsScript.$1,
+                                      alignment: const Alignment(0, -.1),
+                                      child: child,
                                     ),
-                                    label: action.label,
-                                    active: action.active,
-                                    onPressed: action.tap,
-                                    size: actionSize,
-                                    circleKey: action.key,
+                                    child: CallAction(
+                                      icon: Icons.circle,
+                                      glyph: (color) => CallIcon(
+                                        action.glyph,
+                                        key: ValueKey(action.glyph),
+                                        color: color,
+                                        size: actionSize * glyphShare,
+                                      ),
+                                      label: action.label,
+                                      active: action.active,
+                                      onPressed: action.tap,
+                                      size: actionSize,
+                                      circleKey: action.key,
+                                    ),
                                   ),
                                 ),
                             ],
@@ -458,7 +470,8 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                                     shadows: solidBody(
                                       endRed,
                                       RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(endHeight / 2)),
-                                      glow: _ending ? 0 : .3,
+                                      // ColorOS 17's End casts only a faint glow.
+                                      glow: _ending ? 0 : .15,
                                       flat: callFlat(context),
                                     ).shadows,
                                   ),
@@ -480,16 +493,9 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                                       curve: Curves.easeInOutCubic,
                                       width: _ending ? endHeight : box.maxWidth * .875,
                                       height: endHeight,
-                                      // ColorOS 17's tomato red, lit from below like the other buttons, with
-                                      // squircle ends like the keys.
-                                      foregroundDecoration: callGlassGlow(
-                                        context,
+                                      // ColorOS 17's solid tomato red, with squircle ends like the keys.
+                                      decoration: endPillBody(
                                         RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(endHeight / 2)),
-                                      ),
-                                      decoration: glassBody(
-                                        endRed,
-                                        RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(endHeight / 2)),
-                                        glow: 0,
                                         flat: callFlat(context),
                                       ),
                                       child: Semantics(
@@ -552,10 +558,39 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
   // Room above the top row so its edge reveal reaches full opacity.
   static const double _keypadTop = 16;
 
-  /// Bouncier than the package's own bouncy preset, so a key visibly floats past its place.
-  static final _keyFloat = GlassSpringCurve(GlassSpring.bouncy(extraBounce: .2), const Duration(milliseconds: 800));
+  // The scripts below were measured per frame off a 120 fps ColorOS 17 recording (docs/call-screens.md).
 
-  static const _actionsOut = Interval(0, .2, curve: Curves.easeOut);
+  /// Opening: how far below its place a key is, as a share of its distance from the bottom row,
+  /// by milliseconds. The keypad spreads up from the bottom row, 3% past its place, and eases back.
+  static const _spread = [
+    (0.0, .36), (8.0, .34), (33.0, .26), (50.0, .21), (67.0, .15), (83.0, .10), (100.0, .06), //
+    (117.0, .02), (133.0, .0), (150.0, -.012), (167.0, -.02), (183.0, -.025), (200.0, -.029),
+    (234.0, -.029), (250.0, -.025), (267.0, -.02), (300.0, -.016), (325.0, -.012), (350.0, -.006), (392.0, .0),
+  ];
+
+  static double _sample(List<(double, double)> points, double x) {
+    if (x <= points.first.$1) return points.first.$2;
+    for (var i = 1; i < points.length; i++) {
+      final (x0, y0) = points[i - 1];
+      final (x1, y1) = points[i];
+      if (x <= x1) return y0 + (y1 - y0) * (x - x0) / (x1 - x0);
+    }
+    return points.last.$2;
+  }
+
+  /// The action row's scale and opacity. Opening, each button shrinks to half and fades in 105 ms;
+  /// closing, they wait 200 ms for the keys to go, then grow back (170 ms) and fade in (250 ms).
+  (double, double) get _actionsScript {
+    if (_closing) {
+      final ms = _ms - 200;
+      return (
+        .5 + .5 * Curves.decelerate.transform((ms / 170).clamp(0.0, 1.0)),
+        Curves.decelerate.transform((ms / 250).clamp(0.0, 1.0)),
+      );
+    }
+    final out = (_ms / 105).clamp(0.0, 1.0);
+    return (1 - .5 * out, 1 - out);
+  }
 
   /// When this call's note was first opened; the note's identity for Recents.
   DateTime? _noteAt;
@@ -571,16 +606,20 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
 
   Widget _keypadKey(int index, double p, double size, double stride, double upperHeight) {
     final (digit, letters) = _keys[index];
-    // ColorOS 17: every key has its own entrance. Rows arrive bottom-up a beat apart, and in each
-    // row the middle key leads its neighbours; each fades in and floats up, overshooting its place
-    // on the glass package's bouncy spring before settling into it.
+    // ColorOS 17: the keypad spreads up out of the bottom row. Rows fade in bottom-up 29 ms apart,
+    // upper rows more slowly and trailing 11 ms each, and in each row the middle key leads its
+    // neighbours by 18 ms. Closing, every key sinks back toward the bottom row and fades together.
     final row = index ~/ 3;
-    final delay = (3 - row) * .09 + (index % 3 == 1 ? 0 : .05);
-    final interval = Interval(.06 + delay, .64 + delay);
+    final fromBottom = 3 - row;
+    final side = index % 3 != 1;
+    // From the key's centre to the bottom row's top edge, where the spread is anchored.
+    final reach = 58 + fromBottom * stride;
     final fullHeight = _keypadTop + stride * 4 - (widget.landscape ? 4 : 0);
     final top = upperHeight - fullHeight + _keypadTop + row * stride;
-    // Reveal whole circles as space opens, avoiding a sliced circle at either edge.
-    final edgeReveal = (top / 16).clamp(0.0, 1.0) * ((upperHeight - top - size) / 4).clamp(0.0, 1.0);
+    // Landscape clips at the panel's edge: reveal whole keys as space opens, never a sliced one.
+    final edgeReveal = widget.landscape
+        ? (top / 16).clamp(0.0, 1.0) * ((upperHeight - top - size) / 4).clamp(0.0, 1.0)
+        : 1.0;
     final column = widget.width / 3;
     return Positioned(
       key: ValueKey('morph-key-$digit'),
@@ -591,22 +630,22 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
       child: AnimatedBuilder(
         animation: _keysIn,
         builder: (context, child) {
-          // The same stagger and paint values run backwards on close. Resuming either
-          // direction from the current clock avoids opacity, scale and position jumps.
-          final t = interval.transform(_keysIn.value);
-          final float = _keyFloat.transform(t);
-          final opacity = Curves.easeOut.transform(t);
-          final rise = 40 * (1 - float);
-          final scale = .86 + .14 * float;
+          final ms = _ms;
+          final double below, opacity;
+          if (_closing) {
+            below = .0021 * math.min(ms, 160);
+            opacity = math.pow(1 - (ms / 160).clamp(0.0, 1.0), 1.6).toDouble();
+          } else {
+            below = _sample(_spread, ms - 11 * fromBottom - (side ? 18 : 0));
+            opacity = Curves.decelerate.transform(
+              ((ms - 29 * fromBottom) / ((110 + 37 * fromBottom) * (side ? 1.2 : 1))).clamp(0.0, 1.0),
+            );
+          }
           return Opacity(
             key: ValueKey('keypad-fade-$digit'),
             opacity: opacity * edgeReveal,
             // Paint-only, so the key's hit area stays put.
-            child: Transform(
-              alignment: Alignment.center,
-              transform: Matrix4.translationValues(0, rise, 0)..scaleByDouble(scale, scale, 1, 1),
-              child: child,
-            ),
+            child: Transform.translate(offset: Offset(0, below * reach), child: child),
           );
         },
         child: ExcludeSemantics(

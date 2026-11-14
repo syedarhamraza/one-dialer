@@ -103,10 +103,7 @@ class _InCallScreenState extends State<InCallScreen> {
         return ListenableBuilder(
           // Contacts load in late (the aurora's tint follows the caller's name), and so do the
           // caller's photo and saved background.
-          listenable: Listenable.merge([
-            ContactsRepository.instance.contacts,
-            CallBackgrounds.instance,
-          ]),
+          listenable: Listenable.merge([ContactsRepository.instance.contacts, CallBackgrounds.instance]),
           builder: (context, _) {
             final contact = call == null || call.isPrivate || call.isConference
                 ? null
@@ -348,19 +345,19 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
       child: IgnorePointer(
         child: Container(
           key: const ValueKey('answer-flight'),
-          foregroundDecoration: callGlassGlow(context, shape),
           alignment: Alignment.center,
           child: Stack(
             fit: StackFit.expand,
             alignment: Alignment.center,
             children: [
+              // The ball as it was let go, in the same raised finish.
               Opacity(
                 opacity: green,
-                child: DecoratedBox(decoration: glassBody(answerGreen, shape, flat: callFlat(context))),
+                child: DecoratedBox(decoration: raisedBody(answerGreen, shape, flat: callFlat(context))),
               ),
               Opacity(
                 opacity: red,
-                child: DecoratedBox(decoration: glassBody(endRed, shape, flat: callFlat(context))),
+                child: DecoratedBox(decoration: endPillBody(shape, flat: callFlat(context))),
               ),
               // Our hang-up glyph is the handset turned 135°, so the handset simply tips over (growing to
               // CallGlyph's hang-up size) and lands already as End's icon.
@@ -369,7 +366,8 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
                 child: CallGlyph(
                   Icons.call_rounded,
                   color: Colors.white,
-                  size: iconSize * lerpDouble(1, CallGlyph.tipGrowth, tip)!,
+                  // The ball's handset is already drawn at the hang-up glyph's size.
+                  size: iconSize * CallGlyph.tipGrowth,
                 ),
               ),
             ],
