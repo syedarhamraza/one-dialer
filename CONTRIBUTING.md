@@ -33,11 +33,12 @@ adb devices
 ## 2. Get the code
 
 1. Click **Fork** at the top of the [repository page](https://github.com/syedarhamraza/one-dialer) to make your own copy.
-2. Clone your fork and switch to the current beta branch (the repository's default branch, `beta/<n>`):
+2. Clone your fork and switch to the current beta branch, `beta/<n>` (the highest number on the repository's branch list). The default branch, `main`, holds only the last released beta and is never worked on:
 
    ```bash
    git clone https://github.com/<your-username>/one-dialer.git
    cd one-dialer
+   git switch beta/<n>
    flutter pub get
    ```
 
