@@ -395,6 +395,31 @@ body {
     color: var(--color-ink);
     scroll-margin-top: 5.5rem;
   }
+  /* The recorder guide's lists, in the policy's type. */
+  .guide ul,
+  .guide ol {
+    margin-top: 1.1em;
+    padding-left: 1.4em;
+    color: var(--color-ink-2);
+  }
+  .guide ul {
+    list-style: disc;
+  }
+  .guide ol {
+    list-style: decimal;
+  }
+  .guide li + li {
+    margin-top: 0.7em;
+  }
+  .guide li::marker {
+    color: rgb(255 255 255 / 0.35);
+  }
+  .guide code {
+    font-size: 0.9em;
+    padding: 0.1em 0.4em;
+    border-radius: 6px;
+    background: rgb(255 255 255 / 0.08);
+  }
   .policy strong {
     font-weight: 600;
     color: var(--color-ink);
