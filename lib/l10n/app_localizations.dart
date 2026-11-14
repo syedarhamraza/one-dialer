@@ -3032,23 +3032,23 @@ abstract class AppLocalizations {
   /// **'One Recorder'**
   String get recorderApp;
 
-  /// No description provided for @recorderReady.
+  /// No description provided for @recorderBothSides.
   ///
   /// In en, this message translates to:
-  /// **'Ready to record'**
-  String get recorderReady;
+  /// **'Records both sides of your calls'**
+  String get recorderBothSides;
 
-  /// No description provided for @recorderNeedsMic.
+  /// No description provided for @recorderNeedsSetup.
   ///
   /// In en, this message translates to:
-  /// **'Allow the microphone in One Recorder'**
-  String get recorderNeedsMic;
+  /// **'Set up both sides in One Recorder'**
+  String get recorderNeedsSetup;
 
-  /// No description provided for @recorderNeedsAccessibility.
+  /// No description provided for @recorderHelperStopped.
   ///
   /// In en, this message translates to:
-  /// **'Turn on its accessibility service'**
-  String get recorderNeedsAccessibility;
+  /// **'Both sides is paused: start the helper in One Recorder'**
+  String get recorderHelperStopped;
 
   /// No description provided for @recorderUntrusted.
   ///
@@ -3247,78 +3247,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Contacts auto-record always skips'**
   String get neverRecordSubtitle;
-
-  /// No description provided for @recordingSound.
-  ///
-  /// In en, this message translates to:
-  /// **'Sound'**
-  String get recordingSound;
-
-  /// No description provided for @volumeBoost.
-  ///
-  /// In en, this message translates to:
-  /// **'Volume boost'**
-  String get volumeBoost;
-
-  /// No description provided for @volumeBoostSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Lifts the other person\'s voice, which the mic only hears faintly'**
-  String get volumeBoostSubtitle;
-
-  /// No description provided for @boostOff.
-  ///
-  /// In en, this message translates to:
-  /// **'Off'**
-  String get boostOff;
-
-  /// No description provided for @boostNormal.
-  ///
-  /// In en, this message translates to:
-  /// **'Normal'**
-  String get boostNormal;
-
-  /// No description provided for @boostStrong.
-  ///
-  /// In en, this message translates to:
-  /// **'Strong'**
-  String get boostStrong;
-
-  /// No description provided for @micSource.
-  ///
-  /// In en, this message translates to:
-  /// **'Microphone source'**
-  String get micSource;
-
-  /// No description provided for @micSourceSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Automatic tries each on the first call and keeps the loudest'**
-  String get micSourceSubtitle;
-
-  /// No description provided for @micSourceAuto.
-  ///
-  /// In en, this message translates to:
-  /// **'Automatic'**
-  String get micSourceAuto;
-
-  /// No description provided for @micSourceRecognition.
-  ///
-  /// In en, this message translates to:
-  /// **'Voice recognition'**
-  String get micSourceRecognition;
-
-  /// No description provided for @micSourceCommunication.
-  ///
-  /// In en, this message translates to:
-  /// **'Voice communication'**
-  String get micSourceCommunication;
-
-  /// No description provided for @micSourceMic.
-  ///
-  /// In en, this message translates to:
-  /// **'Microphone'**
-  String get micSourceMic;
 
   /// No description provided for @storage.
   ///

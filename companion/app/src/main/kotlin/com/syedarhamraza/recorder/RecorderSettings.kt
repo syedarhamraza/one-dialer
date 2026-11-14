@@ -9,16 +9,7 @@ object RecorderSettings {
 
     /** Every setting with its default; One Dialer reads and writes these keys. */
     val DEFAULTS: Map<String, Any> = mapOf(
-        "sourceMode" to "auto", // or "recognition", "communication", "mic"
-        "boost" to "off", // Compressor.Level: off, normal, strong
         "retentionDays" to 0, // 0 keeps recordings forever
-    )
-
-    /** Mic sources a normal app may use, best guess first; Auto tests them on the first call. */
-    val SOURCES = mapOf(
-        "recognition" to MediaRecorder.AudioSource.VOICE_RECOGNITION,
-        "communication" to MediaRecorder.AudioSource.VOICE_COMMUNICATION,
-        "mic" to MediaRecorder.AudioSource.MIC,
     )
 
     private fun prefs(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -37,11 +28,9 @@ object RecorderSettings {
             is String -> edit.putString(key, value as? String ?: return)
             else -> return
         }
-        if (key == "sourceMode") edit.remove(SAVED_SOURCE) // a new choice starts fresh
         edit.apply()
     }
 
-    private const val SAVED_SOURCE = "source"
     private const val CONSENT = "consentAccepted"
 
     /** The first-run "Before you record" page was agreed to. Not in [DEFAULTS]: One Dialer doesn't change it. */
@@ -55,17 +44,4 @@ object RecorderSettings {
     fun theme(context: Context) = prefs(context).getString(THEME, "system") ?: "system"
 
     fun setTheme(context: Context, theme: String) = prefs(context).edit().putString(THEME, theme).apply()
-
-    /** The sources to try at the start of a recording: one when known, all of them when Auto hasn't tested yet. */
-    fun sourcesToTry(context: Context): List<Int> {
-        val mode = read(context)["sourceMode"] as String
-        SOURCES[mode]?.let { return listOf(it) }
-        val saved = prefs(context).getInt(SAVED_SOURCE, -1)
-        return if (saved >= 0) listOf(saved) else SOURCES.values.toList()
-    }
-
-    fun saveSource(context: Context, source: Int) = prefs(context).edit().putInt(SAVED_SOURCE, source).apply()
-
-    /** The saved source recorded silence: test again on the next call. */
-    fun forgetSource(context: Context) = prefs(context).edit().remove(SAVED_SOURCE).apply()
 }

@@ -1723,14 +1723,14 @@ class AppLocalizationsIt extends AppLocalizations {
   String get recorderApp => 'One Recorder';
 
   @override
-  String get recorderReady => 'Pronto per registrare';
+  String get recorderBothSides => 'Registra entrambe le voci delle chiamate';
 
   @override
-  String get recorderNeedsMic => 'Consenti il microfono in One Recorder';
+  String get recorderNeedsSetup => 'Configura entrambe le voci in One Recorder';
 
   @override
-  String get recorderNeedsAccessibility =>
-      'Attiva il suo servizio di accessibilità';
+  String get recorderHelperStopped =>
+      'Entrambe le voci in pausa: avvia l\'helper in One Recorder';
 
   @override
   String get recorderUntrusted =>
@@ -1851,44 +1851,6 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get neverRecordSubtitle =>
       'Contatti sempre esclusi dalla registrazione automatica';
-
-  @override
-  String get recordingSound => 'Audio';
-
-  @override
-  String get volumeBoost => 'Amplificazione volume';
-
-  @override
-  String get volumeBoostSubtitle =>
-      'Alza la voce dell\'altra persona, che il microfono sente appena';
-
-  @override
-  String get boostOff => 'Disattivata';
-
-  @override
-  String get boostNormal => 'Normale';
-
-  @override
-  String get boostStrong => 'Forte';
-
-  @override
-  String get micSource => 'Sorgente microfono';
-
-  @override
-  String get micSourceSubtitle =>
-      'Automatica prova ciascuna alla prima chiamata e tiene la più forte';
-
-  @override
-  String get micSourceAuto => 'Automatica';
-
-  @override
-  String get micSourceRecognition => 'Riconoscimento vocale';
-
-  @override
-  String get micSourceCommunication => 'Comunicazione vocale';
-
-  @override
-  String get micSourceMic => 'Microfono';
 
   @override
   String get storage => 'Spazio';

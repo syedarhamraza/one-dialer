@@ -210,7 +210,7 @@ class TelecomBridge {
   Future<bool> exportRecording(String name, String displayName) async =>
       await _methods.invokeMethod<bool>('exportRecording', {'name': name, 'displayName': displayName}) ?? false;
 
-  /// The recorder's own settings: `sourceMode`, `boost`, `retentionDays`.
+  /// The recorder's own settings: `retentionDays`.
   Future<Map<Object?, Object?>> getRecorderSettings() async =>
       await _methods.invokeMapMethod<Object?, Object?>('getRecorderSettings') ?? const {};
 

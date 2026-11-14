@@ -1,29 +1,25 @@
 package com.syedarhamraza.recorder
 
-import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.media.AudioManager
-import android.media.MediaRecorder
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
-import android.provider.Settings
+import com.syedarhamraza.recorder.shell.ShellHelper
 import java.io.File
 
 /**
- * Records one call from the mic while it runs as a microphone foreground service. Android 10+
- * only lets it hear the mic during a call because [RecorderAccessibilityService] is enabled.
- * Started and stopped by One Dialer through [RecordingsProvider]; never exported itself.
+ * Records one call, both sides, from the shell helper ([ShellHelper]) while it runs as a
+ * foreground service. Started and stopped by One Dialer through [RecordingsProvider]; never
+ * exported itself.
  */
 class RecordingService : Service() {
     companion object {
@@ -40,26 +36,11 @@ class RecordingService : Service() {
         @Volatile var current: RecordingFile? = null
             private set
 
-        /** Why the last start failed: "accessibility", "microphone" or "start"; null after a good start. */
+        /** Why the last start failed: "helper" (not running or won't record) or "start"; null after a good start. */
         @Volatile var lastError: String? = null
             private set
 
         fun dir(context: Context) = File(context.filesDir, "recordings").apply { mkdirs() }
-
-        fun micGranted(context: Context) =
-            context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-
-        fun accessibilityOn(context: Context): Boolean {
-            val me = ComponentName(context, RecorderAccessibilityService::class.java)
-            // AccessibilityManager first: vivo hides the secure setting from apps, so it alone read as off.
-            val running = context.getSystemService(android.view.accessibility.AccessibilityManager::class.java)
-                .getEnabledAccessibilityServiceList(android.accessibilityservice.AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
-                .any { ComponentName.unflattenFromString(it.id) == me }
-            if (running) return true
-            val enabled = Settings.Secure.getString(context.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
-                ?: return false
-            return enabled.split(':').any { ComponentName.unflattenFromString(it) == me }
-        }
 
         /** Auto-delete (Settings › Call recording): drops recordings older than the kept days, never starred ones. */
         fun prune(context: Context) {
@@ -73,12 +54,12 @@ class RecordingService : Service() {
             }
         }
 
+        /** Whether a recording can start: the helper is up. */
+        fun canRecord(context: Context) = ShellHelper.supported() && ShellHelper.running(context)
+
         fun start(context: Context, extras: android.os.Bundle?) {
-            lastError = when {
-                !accessibilityOn(context) -> "accessibility"
-                !micGranted(context) -> "microphone"
-                else -> null
-            }
+            lastError = if (canRecord(context)) null else "helper"
+            android.util.Log.i("OneRecorder", "start: error=$lastError")
             if (lastError != null) return RecordingsProvider.notifyStatus(context)
             context.startForegroundService(Intent(context, RecordingService::class.java).apply { extras?.let(::putExtras) })
         }
@@ -89,8 +70,6 @@ class RecordingService : Service() {
     }
 
     private var pipeline: AudioPipeline? = null
-    private var recorder: MediaRecorder? = null
-    private var file: File? = null
     private val handler = Handler(Looper.getMainLooper())
     private var idleChecks = 0
 
@@ -111,9 +90,11 @@ class RecordingService : Service() {
             return START_NOT_STICKY
         }
         try {
-            startForeground(NOTIFICATION_ID, notification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE)
+            // The helper records, not this app's mic, so it's a special use, not a microphone service.
+            if (Build.VERSION.SDK_INT >= 34) startForeground(NOTIFICATION_ID, notification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+            else startForeground(NOTIFICATION_ID, notification())
         } catch (e: Exception) {
-            // Android 14+ refuses a microphone service started while nothing of ours or One Dialer's shows.
+            android.util.Log.w("OneRecorder", "startForeground refused", e)
             lastError = "start"
             stopSelf()
             RecordingsProvider.notifyStatus(this)
@@ -129,20 +110,13 @@ class RecordingService : Service() {
             intent?.getStringExtra(EXTRA_NUMBER),
         ) { File(dir(this), it).exists() }
         val target = File(dir(this), entry.name)
-        val sources = RecorderSettings.sourcesToTry(this)
-        pipeline = AudioPipeline(
-            target, sources, Compressor.Level.of(RecorderSettings.read(this)["boost"] as String),
-            onSourceChosen = { RecorderSettings.saveSource(this, it) },
-            onSilent = { RecorderSettings.forgetSource(this) },
-        ).takeIf { it.start() }
-        // The plain MediaRecorder path, for phones where AudioRecord won't open during a call.
-        if (pipeline == null) recorder = open(target, sources)
-        if (pipeline == null && recorder == null) {
-            lastError = "start"
+        pipeline = ShellHelper.openPcm(this)?.let { pcm -> AudioPipeline(target, pcm).also { it.start() } }
+        android.util.Log.i("OneRecorder", "begin: recording=${pipeline != null}")
+        if (pipeline == null) {
+            lastError = "helper"
             finish()
             return
         }
-        file = target
         current = entry
         RecordingIndex.update(this, entry.name) {
             it.put("direction", intent?.getStringExtra(EXTRA_DIRECTION) ?: "")
@@ -154,42 +128,10 @@ class RecordingService : Service() {
         RecordingsProvider.notifyStatus(this)
     }
 
-    private fun open(target: File, sources: List<Int>): MediaRecorder? {
-        for (source in sources) {
-            val r = if (Build.VERSION.SDK_INT >= 31) MediaRecorder(this) else @Suppress("DEPRECATION") MediaRecorder()
-            try {
-                r.setAudioSource(source)
-                r.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-                r.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                r.setAudioChannels(1)
-                r.setAudioSamplingRate(16000)
-                r.setAudioEncodingBitRate(32000)
-                r.setOutputFile(target.path)
-                r.prepare()
-                r.start()
-                return r
-            } catch (_: Exception) {
-                r.release()
-                target.delete()
-            }
-        }
-        return null
-    }
-
     private fun finish() {
         handler.removeCallbacks(watchCall)
         pipeline?.stop()
         pipeline = null
-        recorder?.let {
-            try {
-                it.stop()
-            } catch (_: RuntimeException) {
-                file?.delete() // stopped before any audio was written
-            }
-            it.release()
-        }
-        recorder = null
-        file = null
         current = null
         prune(this)
         stopForeground(STOP_FOREGROUND_REMOVE)
@@ -198,7 +140,7 @@ class RecordingService : Service() {
     }
 
     override fun onDestroy() {
-        if (recorder != null || pipeline != null) finish()
+        if (pipeline != null) finish()
         super.onDestroy()
     }
 
