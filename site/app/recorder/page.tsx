@@ -37,6 +37,7 @@ const SECTIONS = [
   { id: "recordings", title: "Your recordings" },
   { id: "sound", title: "Getting a clearer caller" },
   { id: "how", title: "How it works" },
+  { id: "privacy", title: "Privacy" },
   { id: "trouble", title: "If it doesn't work" },
   { id: "update", title: "Update or remove it" },
 ];
@@ -200,8 +201,17 @@ export default function OneRecorder() {
               Play app free of microphone access.
             </p>
             <p>
-              One Dialer tells One Recorder when to start and stop. One Recorder records the audio, keeps the files, and answers only the Play-signed One Dialer. More in the{" "}
-              <Link href="/privacy/">privacy policy</Link>.
+              One Dialer tells One Recorder when to start and stop. One Recorder records the audio, keeps the files, and answers only the Play-signed One Dialer.
+            </p>
+
+            <h2 id="privacy">Privacy</h2>
+            <p>
+              One Recorder uses the microphone only while a call you chose to record is going on. The audio is saved only inside One Recorder on your phone. It&apos;s never uploaded, there&apos;s no
+              account, and nothing about you or your calls leaves the phone unless you share a recording yourself. Recordings are deleted when you delete them or uninstall One Recorder.
+            </p>
+            <p>
+              Its accessibility service reads nothing on your screen and does nothing by itself; it&apos;s there only because Android needs it for the microphone during a call. Recording laws differ by
+              country, and you&apos;re responsible for getting the other person&apos;s consent where it&apos;s required.
             </p>
 
             <h2 id="trouble">If it doesn&apos;t work</h2>

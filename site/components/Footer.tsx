@@ -4,8 +4,11 @@ import { BUG_URL, EMAIL, FEATURE_URL, REPO_URL } from "@/app/links";
 
 const pill = "press inline-flex h-12 items-center gap-2.5 rounded-full bg-white/10 px-6 text-[15px] font-semibold text-ink transition-colors hover:bg-white/[0.16]";
 
-/** The page's close: feedback, the name at full width, then the small print. */
-export function Footer() {
+/**
+ * The page's close: feedback, the name at full width, then the small print. `recorder={false}` on the
+ * privacy page: it's One Dialer's privacy URL on Google Play, which mustn't point to the recorder.
+ */
+export function Footer({ recorder = true }: { recorder?: boolean }) {
   return (
     <footer className="mx-auto max-w-[1440px] overflow-hidden px-[clamp(16px,4.4vw,64px)] pt-10 pb-10">
       <div className="mb-14 flex flex-wrap items-center justify-between gap-x-10 gap-y-6 border-t border-white/10 pt-10">
@@ -29,9 +32,11 @@ export function Footer() {
       <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-8 text-[15px] text-ink-2">
         <span>© {new Date().getFullYear()} Syed Arham Raza</span>
         <nav aria-label="Footer" className="flex flex-wrap gap-x-7 gap-y-3">
-          <Link href="/recorder/" className="link">
-            One Recorder
-          </Link>
+          {recorder && (
+            <Link href="/recorder/" className="link">
+              One Recorder
+            </Link>
+          )}
           <Link href="/privacy/" className="link">
             Privacy policy
           </Link>
