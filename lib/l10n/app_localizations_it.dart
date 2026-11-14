@@ -1733,6 +1733,16 @@ class AppLocalizationsIt extends AppLocalizations {
       'Attiva il suo servizio di accessibilità';
 
   @override
+  String get recorderBothSides => 'Registra entrambe le voci delle chiamate';
+
+  @override
+  String get recorderMicrophone => 'Registra con il microfono';
+
+  @override
+  String get recorderHelperStopped =>
+      'Entrambe le voci in pausa: avvia l\'helper in One Recorder';
+
+  @override
   String get recorderUntrusted =>
       'Il registratore funziona solo con One Dialer da Google Play. Installalo da Play o aggiorna entrambe le app.';
 

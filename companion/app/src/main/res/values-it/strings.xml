@@ -49,4 +49,34 @@
     <string name="theme_system">Predefinito di sistema</string>
     <string name="theme_light">Chiaro</string>
     <string name="theme_dark">Scuro</string>
+    <!-- Entrambe le voci: l'helper shell avviato con il Debug wireless (shell/) -->
+    <string name="section_both_sides">Registra entrambe le voci</string>
+    <string name="both_sides_intro">Registra te e l\'altra persona a pieno volume, con l\'auricolare, il vivavoce, il Bluetooth o le cuffie. Si configura una volta con il Debug wireless; non servono computer né root.</string>
+    <string name="setup_dev_options">Opzioni sviluppatore</string>
+    <string name="setup_dev_options_detail">Impostazioni › Info sul telefono: tocca 7 volte Numero build</string>
+    <string name="setup_pair">Associa con il Debug wireless</string>
+    <string name="setup_pair_detail">Attiva il Debug wireless, tocca Associa dispositivo con codice di accoppiamento, poi scrivi il codice nella notifica di One Recorder</string>
+    <string name="setup_paired">Associato</string>
+    <string name="setup_helper">Helper</string>
+    <string name="setup_helper_detail">Non attivo. Per avviarlo servono il Wi-Fi e il Debug wireless</string>
+    <string name="setup_helper_running">Attivo</string>
+    <string name="setup_helper_start">Avvia</string>
+    <string name="setup_helper_starting">Avvio…</string>
+    <string name="setup_restart">Avvio dopo il riavvio</string>
+    <string name="setup_restart_ready">Da solo, con il Wi-Fi</string>
+    <string name="setup_restart_detail">Si attiva al primo avvio dell\'helper</string>
+    <string name="section_microphone">Metodo microfono</string>
+    <string name="section_microphone_optional">Metodo microfono (facoltativo)</string>
+    <string name="setting_method">Metodo di registrazione</string>
+    <string name="method_auto">Automatico: entrambe le voci quando pronto</string>
+    <string name="method_shell">Solo entrambe le voci</string>
+    <string name="method_mic">Solo microfono</string>
+    <string name="channel_setup">Configurazione</string>
+    <string name="pair_title">Associa One Recorder</string>
+    <string name="pair_steps">Nel Debug wireless tocca Associa dispositivo con codice di accoppiamento. Lascialo aperto e scrivi qui il codice di 6 cifre.</string>
+    <string name="pair_enter">Inserisci codice</string>
+    <string name="pair_code">Codice di accoppiamento</string>
+    <string name="pair_done">Associato. Ora le chiamate si registrano con entrambe le voci.</string>
+    <string name="pair_paired">Associato, ma l\'helper non si è avviato. Tocca Avvia in One Recorder.</string>
+    <string name="pair_failed">Non ha funzionato. Lascia aperta la finestra di associazione e invia di nuovo il codice.</string>
 </resources>

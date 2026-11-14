@@ -97,6 +97,10 @@ class _CallRecordingScreenState extends State<CallRecordingScreen> with WidgetsB
 
   String _statusText(AppLocalizations l10n, RecorderInfo r) {
     if (!r.trusted) return l10n.recorderUntrusted;
+    if (r.method == 'shell') return l10n.recorderBothSides;
+    // Paired for both sides, but its helper has stopped (a reboot away from Wi-Fi, say).
+    if (r.helperPaired && !r.helperRunning) return l10n.recorderHelperStopped;
+    if (r.method == 'mic') return l10n.recorderMicrophone;
     if (!r.micGranted) return l10n.recorderNeedsMic;
     if (!r.accessibilityOn) return l10n.recorderNeedsAccessibility;
     return l10n.recorderReady;
@@ -124,7 +128,7 @@ class _CallRecordingScreenState extends State<CallRecordingScreen> with WidgetsB
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final r = _recorder;
-    final set = r != null && r.trusted && r.micGranted && r.accessibilityOn;
+    final set = r != null && r.trusted && r.canRecord;
     return CosSubpage(
       title: l10n.callRecording,
       children: [
@@ -204,23 +208,25 @@ class _CallRecordingScreenState extends State<CallRecordingScreen> with WidgetsB
                     _telecom.setRecorderSetting('boost', v);
                   },
                 ),
-                choiceRow(
-                  context,
-                  title: l10n.micSource,
-                  subtitle: l10n.micSourceSubtitle,
-                  anchor: _sourceKey,
-                  value: _source,
-                  labels: {
-                    'auto': l10n.micSourceAuto,
-                    'recognition': l10n.micSourceRecognition,
-                    'communication': l10n.micSourceCommunication,
-                    'mic': l10n.micSourceMic,
-                  },
-                  onPick: (v) {
-                    _source.value = v;
-                    _telecom.setRecorderSetting('sourceMode', v);
-                  },
-                ),
+                // Both sides records the call itself, not the microphone.
+                if (r.method != 'shell')
+                  choiceRow(
+                    context,
+                    title: l10n.micSource,
+                    subtitle: l10n.micSourceSubtitle,
+                    anchor: _sourceKey,
+                    value: _source,
+                    labels: {
+                      'auto': l10n.micSourceAuto,
+                      'recognition': l10n.micSourceRecognition,
+                      'communication': l10n.micSourceCommunication,
+                      'mic': l10n.micSourceMic,
+                    },
+                    onPick: (v) {
+                      _source.value = v;
+                      _telecom.setRecorderSetting('sourceMode', v);
+                    },
+                  ),
               ],
             ),
             OneUIGroupCard(

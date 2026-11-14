@@ -20,6 +20,8 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0.0"
+        // Phones only: the ADB libraries' x86 builds (emulators) would add about 5 MB.
+        ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }
 
     signingConfigs {
@@ -49,5 +51,9 @@ android {
 
 dependencies {
     implementation("androidx.core:core:1.18.0")
+    // Both sides: pairs with Wireless debugging and starts the shell helper (shell/Adb.kt).
+    implementation("com.github.MuntashirAkon:libadb-android:3.1.1")
+    implementation("com.github.MuntashirAkon:sun-security-android:1.1") // the pairing certificate
+    implementation("org.conscrypt:conscrypt-android:2.5.3") // TLS 1.3 key export for pairing
     testImplementation("junit:junit:4.13.2")
 }

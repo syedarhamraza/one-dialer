@@ -15,6 +15,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import androidx.core.content.FileProvider
+import com.syedarhamraza.recorder.shell.ShellHelper
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -83,6 +84,13 @@ class RecordingsProvider : ContentProvider() {
     }
 
     private fun status(context: Context) = Bundle().apply {
+        val method = RecordingService.method(context)
+        // Both sides (shell helper) or microphone; One Dialer older than these keys uses accessibilityOn && micGranted.
+        putBoolean("canRecord", method != null)
+        putString("method", method?.key ?: "none")
+        putBoolean("bothSidesSupported", ShellHelper.supported())
+        putBoolean("helperPaired", ShellHelper.paired(context))
+        putBoolean("helperRunning", method == RecordMethod.BOTH_SIDES || (ShellHelper.supported() && ShellHelper.running(context)))
         putBoolean("accessibilityOn", RecordingService.accessibilityOn(context))
         putBoolean("micGranted", RecordingService.micGranted(context))
         putBoolean("notificationsOn", context.getSystemService(NotificationManager::class.java).areNotificationsEnabled())

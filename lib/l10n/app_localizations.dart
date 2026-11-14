@@ -3050,6 +3050,24 @@ abstract class AppLocalizations {
   /// **'Turn on its accessibility service'**
   String get recorderNeedsAccessibility;
 
+  /// No description provided for @recorderBothSides.
+  ///
+  /// In en, this message translates to:
+  /// **'Records both sides of your calls'**
+  String get recorderBothSides;
+
+  /// No description provided for @recorderMicrophone.
+  ///
+  /// In en, this message translates to:
+  /// **'Records with the microphone'**
+  String get recorderMicrophone;
+
+  /// No description provided for @recorderHelperStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Both sides is paused: start the helper in One Recorder'**
+  String get recorderHelperStopped;
+
   /// No description provided for @recorderUntrusted.
   ///
   /// In en, this message translates to:

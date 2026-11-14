@@ -9,6 +9,7 @@ object RecorderSettings {
 
     /** Every setting with its default; One Dialer reads and writes these keys. */
     val DEFAULTS: Map<String, Any> = mapOf(
+        "method" to "auto", // RecordMethod.choose: "auto", "shell" (both sides) or "mic"
         "sourceMode" to "auto", // or "recognition", "communication", "mic"
         "boost" to "off", // Compressor.Level: off, normal, strong
         "retentionDays" to 0, // 0 keeps recordings forever

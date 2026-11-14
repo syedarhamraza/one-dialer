@@ -9,11 +9,16 @@ import android.media.MediaFormat
 import android.media.MediaMuxer
 import android.media.audiofx.AutomaticGainControl
 import java.io.File
+import java.io.IOException
+import java.io.InputStream
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 /**
  * mic (AudioRecord) → [Compressor] → AAC (MediaCodec) → .m4a (MediaMuxer), on its own thread.
  * With several [sources] it spends about a second on each, keeps the loudest (reported through
  * [onSourceChosen]) and records on with it; the audio stays one continuous file throughout.
+ * With [input] (both sides: the shell helper's 48 kHz mono 16-bit PCM) it reads that instead of the mic.
  */
 class AudioPipeline(
     private val file: File,
@@ -21,6 +26,7 @@ class AudioPipeline(
     boost: Compressor.Level,
     private val onSourceChosen: (Int) -> Unit,
     private val onSilent: () -> Unit,
+    private val input: InputStream? = null,
 ) {
     private val compressor = Compressor(boost, RATE)
     @Volatile private var running = false
@@ -30,6 +36,11 @@ class AudioPipeline(
 
     /** Opens the first source that works; false when none does (the caller falls back to MediaRecorder). */
     fun start(): Boolean {
+        if (input != null) {
+            running = true
+            thread = Thread({ loop(-1) }, "recorder").apply { start() }
+            return true
+        }
         val first = sources.firstNotNullOfOrNull { s -> open(s)?.let { s to it } } ?: return false
         record = first.second
         running = true
@@ -40,6 +51,7 @@ class AudioPipeline(
     /** Finishes the file; blocks until the encoder has written its last frame. */
     fun stop() {
         running = false
+        runCatching { input?.close() } // unblocks a read waiting on the helper
         thread?.join(3000)
         thread = null
     }
@@ -116,7 +128,7 @@ class AudioPipeline(
 
         try {
             while (running) {
-                val n = record?.read(pcm, 0, CHUNK) ?: break
+                val n = read(pcm)
                 // A dead or revoked microphone answers with the same error forever: end the file
                 // with what was heard rather than spin on it.
                 if (n < 0) break
@@ -168,6 +180,21 @@ class AudioPipeline(
             muxer?.release()
             if (!writer.started) file.delete() // nothing was recorded
         }
+    }
+
+    private val bytes = ByteArray(CHUNK * 2)
+
+    /** Samples read into [pcm]; negative once the source has ended. */
+    private fun read(pcm: ShortArray): Int {
+        val stream = input ?: return record?.read(pcm, 0, CHUNK) ?: -1
+        var n = try { stream.read(bytes, 0, bytes.size) } catch (_: IOException) { -1 }
+        if (n <= 0) return -1
+        if (n % 2 == 1) { // half a sample: wait for its other byte
+            val b = try { stream.read() } catch (_: IOException) { -1 }
+            if (b < 0) n-- else bytes[n++] = b.toByte()
+        }
+        ByteBuffer.wrap(bytes, 0, n).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(pcm, 0, n / 2)
+        return n / 2
     }
 
     /** Feeds PCM into the encoder and moves encoded frames into the muxer. */
