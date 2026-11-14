@@ -12,8 +12,9 @@ export const metadata: Metadata = {
 };
 
 const PROS = [
-  "No root, no extra tools. Install one small app and turn on three switches.",
-  "One Dialer from Google Play never gets your microphone. Only One Recorder does, and only during a call you record.",
+  "Both sides of the call at full volume, on Android 12 and later: you and the other person, on the earpiece, speaker, Bluetooth or headphones. No root, no computer, no separate Shizuku app.",
+  "After a reboot it starts again by itself once you're on Wi-Fi.",
+  "No microphone permission and no accessibility service. One Recorder records the call itself, only during a call you record.",
   "Recordings stay on your phone. Nothing is uploaded, there's no account and no ads.",
   "Record when you choose, or automatically: every call, unknown numbers, or only the contacts you pick.",
   "Your recordings live in One Dialer, with contact names, search, stars, sharing and auto-delete.",
@@ -21,22 +22,24 @@ const PROS = [
 ];
 
 const CONS = [
-  "The caller's volume depends on your phone. Android doesn't let normal apps record the call line itself, so One Recorder records through the microphone. Your voice is always clear; the other person is clear on speaker, but on the earpiece some phones record them much quieter, or barely at all.",
-  "It relies on an accessibility service. Android only lets apps with one use the microphone during a call. Some phones switch these services off after an update, or when battery saving closes the app, and then nothing records until you turn it back on.",
-  "Android 13 and later hide the accessibility switch for apps installed from a file until you allow restricted settings. It's one extra step, but it looks alarming.",
+  "Both sides needs Developer options and Wireless debugging turned on once, and Wi-Fi whenever it starts. If it can't start again after a reboot (no Wi-Fi, or Developer options off), you tap Start in One Recorder.",
+  "Some banking and payment apps refuse to open while Developer options is on.",
+  "On some phones, calls over Wi-Fi calling record only one side. That's the phone's audio driver, not One Recorder.",
+  "It needs Android 12 or later. Android 10 and 11 can't start the helper over Wireless debugging, and there's no other way to record there.",
   "It doesn't update itself. Google Play doesn't know about it, so you come back here for new versions.",
-  "It works only with One Dialer from Google Play, not with a copy installed from a file.",
+  "It works only with One Dialer from Google Play, version 1.0.0-beta.9 or later, not with a copy installed from a file.",
   "The other person isn't told you're recording. That's on you, and in some places it's against the law without their consent.",
 ];
 
 const SECTIONS = [
   { id: "before", title: "Before you start" },
   { id: "install", title: "Install the app" },
-  { id: "setup", title: "Set it up" },
+  { id: "both", title: "Record both sides" },
+  { id: "setup", title: "Notifications and battery" },
   { id: "record", title: "Record a call" },
   { id: "recordings", title: "Your recordings" },
-  { id: "sound", title: "Getting a clearer caller" },
   { id: "how", title: "How it works" },
+  { id: "nomic", title: "Why there's no microphone method" },
   { id: "privacy", title: "Privacy" },
   { id: "trouble", title: "If it doesn't work" },
   { id: "update", title: "Update or remove it" },
@@ -81,14 +84,14 @@ export default function OneRecorder() {
           <span className="text-ink-2">Recorder.</span>
         </h1>
         <p className="mt-7 max-w-[46ch] text-[18px] leading-relaxed text-ink-2">
-          Call recording for One Dialer. It&apos;s a separate app, so One Dialer from Google Play never touches your microphone.
+          Call recording for One Dialer. It&apos;s a separate app, so One Dialer from Google Play never records anything itself.
         </p>
         <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-4">
           <a href={RECORDER_URL} className="press lit inline-flex h-14 items-center gap-2.5 rounded-full px-7 text-[16px] font-semibold">
             <DownloadSimpleIcon size={20} weight="bold" />
             Download APK
           </a>
-          <span className="text-[15px] text-ink-2">Latest version, from GitHub Releases · Android 10 or later</span>
+          <span className="text-[15px] text-ink-2">Latest version, from GitHub Releases · Android 12 or later</span>
         </div>
 
         <div className="mt-20 grid grid-cols-1 gap-5 md:mt-28 lg:grid-cols-2">
@@ -109,9 +112,9 @@ export default function OneRecorder() {
 
             <h2 id="before">Before you start</h2>
             <ul>
-              <li>An Android phone on Android 10 or later.</li>
+              <li>An Android phone on Android 12 or later, and Wi-Fi for the first setup and whenever the helper starts.</li>
               <li>
-                <strong>One Dialer from Google Play</strong>, set as your default phone app. One Recorder checks that it&apos;s talking to the official app and ignores any other.
+                <strong>One Dialer from Google Play</strong>, version 1.0.0-beta.9 or later, set as your default phone app. One Recorder checks that it&apos;s talking to the official app and ignores any other.
               </li>
               <li>A few megabytes free for the app, and room for recordings: roughly half a megabyte per minute of call.</li>
             </ul>
@@ -130,26 +133,40 @@ export default function OneRecorder() {
               </li>
             </ol>
 
-            <h2 id="setup">Set it up</h2>
-            <p>Open One Recorder. Its one screen lists what it needs, and each row turns to Ready as you go.</p>
+            <h2 id="both">Record both sides</h2>
+            <p>
+              Open One Recorder: <strong>Record both sides</strong> is at the top, and each row turns to Ready as you go.
+            </p>
             <ol>
               <li>
-                <strong>Microphone.</strong> Tap it and choose Allow. This is how it records.
+                <strong>Developer options.</strong> If they&apos;re off, open <strong>Settings › About phone</strong> (on some phones, About phone › Software information) and tap{" "}
+                <strong>Build number</strong> seven times.
               </li>
               <li>
-                <strong>Accessibility service.</strong> Tap it, find One Recorder under Installed apps (or Downloaded apps) and turn it on. Android warns that the app could see your screen. It doesn&apos;t: the
-                service reads nothing and does nothing by itself. It&apos;s there only because Android lets apps with one use the microphone during a call.
+                <strong>Pair with Wireless debugging.</strong> Tap the row. One Recorder opens Developer options and posts a notification. Turn on <strong>Wireless debugging</strong>, open it, and
+                tap <strong>Pair device with pairing code</strong>.
               </li>
               <li>
-                <strong>If the switch is grey or says Restricted setting</strong> (Android 13 and later): go back, tap <strong>Open App info</strong>, tap <strong>⋮</strong> in the top corner, choose{" "}
-                <strong>Allow restricted settings</strong> and confirm with your PIN or fingerprint. Then turn the service on.
+                Keep that code on screen, pull down the notification from One Recorder, tap <strong>Enter code</strong> and type the six digits. One Recorder pairs and starts its helper. You only
+                pair once.
               </li>
+              <li>
+                <strong>Helper: Ready.</strong> If it says Not running, make sure you&apos;re on Wi-Fi and tap <strong>Start</strong>. <strong>Start after a reboot</strong> turns on by itself the
+                first time the helper starts.
+              </li>
+            </ol>
+            <p>
+              You can turn Wireless debugging off again: One Recorder switches it on for a moment when it needs to start the helper, and back off afterwards. If your phone stops the helper when
+              Wireless debugging goes off, One Recorder leaves it on.
+            </p>
+
+            <h2 id="setup">Notifications and battery</h2>
+            <ol>
               <li>
                 <strong>Notifications.</strong> Allow them, so you can see when a call is being recorded.
               </li>
               <li>
-                <strong>Battery: Unrestricted.</strong> Optional, but recommended. It stops the phone from closing the recorder while it waits for a call, which on some phones also turns the accessibility
-                service off.
+                <strong>Battery: Unrestricted.</strong> Optional, but recommended. It stops the phone from closing the recorder while it waits for a call.
               </li>
             </ol>
 
@@ -175,60 +192,61 @@ export default function OneRecorder() {
               <strong>Auto-delete</strong> can clear recordings after 30 or 90 days, always keeping starred ones.
             </p>
 
-            <h2 id="sound">Getting a clearer caller</h2>
-            <p>Your own voice is always clear. How well the other person comes through depends on your phone, and these help:</p>
-            <ul>
-              <li>
-                <strong>Use the speaker.</strong> The microphone hears the caller properly only when they&apos;re loud enough in the room.
-              </li>
-              <li>
-                <strong>Volume boost</strong> (Settings › Call recording › Sound): Normal or Strong lifts quiet voices in the recording. Off by default.
-              </li>
-              <li>
-                <strong>Microphone source:</strong> Automatic tries each of the phone&apos;s sources for a second on the first call and keeps the loudest. If one phone records the caller better on a
-                particular source, pick it here.
-              </li>
-            </ul>
-
             <h2 id="how">How it works</h2>
             <p>
-              The cleanest way to record a call is straight from the phone line, with both voices at full volume. Android keeps that for apps built into the phone, and no app you install can use it,
-              without root. Every call recorder you can install works the way One Recorder does: through the microphone.
+              The cleanest way to record a call is straight from the phone line, with both voices at full volume. Android keeps that for apps built into the phone, and for the{" "}
+              <strong>shell</strong>: the account Android&apos;s own debugging tools run commands as. Wireless debugging lets an app on the phone start a program as that account, the way Shizuku does.
             </p>
             <p>
-              Since Android 10, an app using the microphone during a call gets silence, unless it has an accessibility service turned on. That&apos;s why One Recorder has one, and why it does nothing
-              else with it. It&apos;s also why recording lives in a separate app instead of One Dialer: Google Play doesn&apos;t allow accessibility services that are only there for this, and it keeps the
-              Play app free of microphone access.
+              That&apos;s what <strong>Record both sides</strong> does. Once paired, One Recorder starts a small helper from its own app as the shell. The helper does one thing: while One Recorder asks,
+              it records the call and hands the sound back over a private connection inside the phone that only One Recorder holds the key to. It stops when One Recorder is updated or removed.
             </p>
             <p>
               One Dialer tells One Recorder when to start and stop. One Recorder records the audio, keeps the files, and answers only the Play-signed One Dialer.
             </p>
 
+            <h2 id="nomic">Why there&apos;s no microphone method</h2>
+            <p>
+              Earlier versions could also record with the microphone, using an accessibility service. Since Android 10, an app using the microphone during a call gets silence, and Android makes an
+              exception only for some accessibility apps, in narrow cases. Phone makers close even those: on the phone we tested, a vivo on Android 17, recordings made that way were silent, with Android muting the
+              microphone for the whole call.
+            </p>
+            <p>
+              A method that silently records nothing is worse than none, so it&apos;s gone, along with the microphone permission, the accessibility service, and the Volume boost and Microphone source
+              settings that only it used. Recording both sides through Wireless debugging is the only way now, and it records both voices at full volume.
+            </p>
+
             <h2 id="privacy">Privacy</h2>
             <p>
-              One Recorder uses the microphone only while a call you chose to record is going on. The audio is saved only inside One Recorder on your phone. It&apos;s never uploaded, there&apos;s no
+              One Recorder records only while a call you chose to record is going on. The audio is saved only inside One Recorder on your phone. It&apos;s never uploaded, there&apos;s no
               account, and nothing about you or your calls leaves the phone unless you share a recording yourself. Recordings are deleted when you delete them or uninstall One Recorder.
             </p>
             <p>
-              Its accessibility service reads nothing on your screen and does nothing by itself; it&apos;s there only because Android needs it for the microphone during a call. Recording laws differ by
+              Its pairing with Wireless debugging is a key kept in One Recorder&apos;s private storage on your phone; it can&apos;t be backed up or read by other apps. The helper only records calls
+              for One Recorder and can&apos;t run anything else. One Recorder has no microphone permission and no accessibility service. Recording laws differ by
               country, and you&apos;re responsible for getting the other person&apos;s consent where it&apos;s required.
             </p>
 
             <h2 id="trouble">If it doesn&apos;t work</h2>
             <ul>
               <li>
+                <strong>&ldquo;Both sides is paused&rdquo; in One Dialer, or Helper: Not running:</strong> the phone restarted away from Wi-Fi, or Developer options was turned off. Connect to
+                Wi-Fi and tap <strong>Start</strong> in One Recorder. Until it&apos;s running, calls can&apos;t be recorded.
+              </li>
+              <li>
+                <strong>The pairing code isn&apos;t accepted:</strong> keep the pairing dialog open while you type the code, on the same Wi-Fi network. If it still fails, close the dialog, open it again
+                for a new code and try once more.
+              </li>
+              <li>
+                <strong>The recording has only one voice, or nothing:</strong> some phones lose one side over Wi-Fi calling, and a few don&apos;t allow recording the line at all. Try the same call
+                over the mobile network.
+              </li>
+              <li>
                 <strong>&ldquo;Calls aren&apos;t being recorded&rdquo; in One Dialer:</strong> auto-record is on but One Recorder isn&apos;t ready. Open it and fix any row that isn&apos;t Ready, usually
-                the accessibility service.
+                the helper.
               </li>
               <li>
-                <strong>Recordings are silent:</strong> the accessibility service has been switched off. Turn it back on, and set Battery to Unrestricted so the phone doesn&apos;t switch it off again.
-              </li>
-              <li>
-                <strong>Only your voice is in the recording:</strong> use the speaker, turn on Volume boost, or try a different Microphone source. On some phones the earpiece is simply too quiet for the
-                microphone.
-              </li>
-              <li>
-                <strong>&ldquo;The recorder works only with One Dialer from Google Play&rdquo;:</strong> One Dialer was installed from a file. Uninstall it and install it from Google Play, or update
+                <strong>&ldquo;The recorder works only with One Dialer from Google Play&rdquo;:</strong> One Dialer was installed from a file, or it&apos;s older than 1.0.0-beta.9. Install it from Google Play, or update
                 both apps.
               </li>
               <li>
