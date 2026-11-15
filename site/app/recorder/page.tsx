@@ -41,6 +41,7 @@ const SECTIONS = [
   { id: "how", title: "How it works" },
   { id: "nomic", title: "Why there's no microphone method" },
   { id: "privacy", title: "Privacy" },
+  { id: "legal", title: "Legal notice" },
   { id: "trouble", title: "If it doesn't work" },
   { id: "update", title: "Update or remove it" },
 ];
@@ -226,6 +227,12 @@ export default function OneRecorder() {
               for One Recorder and can&apos;t run anything else. One Recorder has no microphone permission and no accessibility service. Recording laws differ by
               country, and you&apos;re responsible for getting the other person&apos;s consent where it&apos;s required.
             </p>
+            <p>
+              <strong>Legal notice.</strong> One Recorder is provided as is, without any warranty. It can record both sides of a call, and call recording laws differ by country and region: some places need everyone on the call to agree, and some don&apos;t allow recording at all. You alone are responsible for knowing and following the laws where you and the other person are, for telling them and getting their consent where it&apos;s required, and for how you use your recordings. Syed Arham Raza, who makes One Recorder and One Dialer, isn&apos;t responsible for how you use it or for any recording you make with it.
+            </p>
+
+            <h2 id="legal">Legal notice</h2>
+            <p>One Recorder is provided as is, without any warranty. It can record both sides of a call, and call recording laws differ by country and region: some places need everyone on the call to agree, and some don&apos;t allow recording at all. You alone are responsible for knowing and following the laws where you and the other person are, for telling them and getting their consent where it&apos;s required, and for how you use your recordings. Syed Arham Raza, who makes One Recorder and One Dialer, isn&apos;t responsible for how you use it or for any recording you make with it.</p>
 
             <h2 id="trouble">If it doesn&apos;t work</h2>
             <ul>
