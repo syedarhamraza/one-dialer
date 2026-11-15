@@ -557,7 +557,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
                             Column(
                               children: [
                                 // ColorOS 17 keeps the caller at the top, left-aligned.
-                                SizedBox(height: compact ? 12 : 36),
+                                SizedBox(height: compact ? 12 : 66),
                                 header,
                                 const SizedBox(height: 16),
                                 const Spacer(),

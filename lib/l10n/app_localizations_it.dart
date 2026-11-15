@@ -1209,6 +1209,19 @@ class AppLocalizationsIt extends AppLocalizations {
       'Mostra solo il nome dei contatti salvati nella schermata di chiamata e in Chiamate';
 
   @override
+  String get callerPhoto => 'Foto del chiamante';
+
+  @override
+  String get callerPhotoSubtitle =>
+      'Dove appare la foto del contatto nella schermata di chiamata';
+
+  @override
+  String get callerPhotoSide => 'Accanto al nome';
+
+  @override
+  String get callerPhotoStacked => 'Sopra il nome';
+
+  @override
   String secondsCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

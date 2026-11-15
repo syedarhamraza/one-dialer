@@ -9,6 +9,7 @@ import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/letter_avatar.dart';
+import '../../widgets/sim_badge.dart';
 import 'call_controls.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/call_glyph.dart';
@@ -427,14 +428,16 @@ class CallHeader extends StatelessWidget {
     final sim = sims.where((s) => s.id == call.simId).firstOrNull;
     final k = keypadProgress.clamp(0.0, 1.0);
     final fade = 1 - Curves.easeOut.transform(k);
-    final avatarSize = compact ? 60.0 : 76.0;
+    // Stacked (Settings › Caller photo): status, a big round photo, then the name, all centred.
+    final stacked = photo != null && DialerPrefs.instance.callerLayout.value == 'stacked';
+    final side = photo != null && !stacked;
     // ColorOS 17: a contact with a photo gets name, number and status on the left and the photo in
     // a circle on the right; everyone else gets them centred with no circle. As the keypad opens
     // the photo folds away, the lines glide to the centre and the number and city fold up, all
     // with the keypad's progress.
     final folded = k; // Already eased by the screen; easing it again made it lurch mid-way.
-    final line = AlignmentDirectional(photo == null ? 0 : folded - 1, -1);
-    final textAlign = photo == null || folded == 1 ? TextAlign.center : TextAlign.start;
+    final line = AlignmentDirectional(side ? folded - 1 : 0, -1);
+    final textAlign = !side || folded == 1 ? TextAlign.center : TextAlign.start;
     // ColorOS puts the number and the city on lines of their own.
     final subtitles = [
       if (name != shownNumber &&
@@ -445,12 +448,92 @@ class CallHeader extends StatelessWidget {
         shownNumber,
       ?call.location,
     ];
+    final subtitleStyle = TextStyle(fontSize: 16, color: Colors.white.withValues(alpha: .72));
     final held = call.state == CallState.holding;
     final ended = call.state == CallState.disconnected || call.state == CallState.disconnecting;
-    return AnimatedOpacity(
-      opacity: ended ? .6 : (held ? .55 : 1),
-      duration: const Duration(milliseconds: 250),
-      child: Row(
+    // Just the photo, as on ColorOS: no ring and no ripple.
+    Widget avatar(double size) => FutureBuilder(
+      future: ContactsRepository.instance.fullPhoto(contact!.id),
+      builder: (context, full) => LetterAvatar(name: name, photo: full.data ?? photo, size: size),
+    );
+    final nameText = Align(
+      alignment: line,
+      child: Text(
+        name,
+        textAlign: textAlign,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: compact ? 28 : 36,
+          height: 1.15,
+          // Semibold, not bold: vivo's system font draws 700 very heavy.
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+      ),
+    );
+    final subtitleLines = ClipRect(
+      child: Align(
+        alignment: Alignment.topCenter,
+        heightFactor: 1 - folded,
+        child: Opacity(
+          opacity: fade,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final (i, subtitle) in subtitles.indexed) ...[
+                SizedBox(height: i == 0 ? 4 : 2),
+                Align(
+                  alignment: line,
+                  child: Text(
+                    subtitle,
+                    textAlign: textAlign,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: subtitleStyle,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+    final status = CallStatus(
+      call: call,
+      recording: recording,
+      sim: sims.length > 1 ? sim : null,
+      simSlot: sim == null ? 0 : sims.indexOf(sim) + 1,
+      alignment: line,
+    );
+    final Widget body;
+    if (stacked) {
+      // The photo folds up into the status line as the keypad opens.
+      body = Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          status,
+          ClipRect(
+            child: Align(
+              alignment: Alignment.topCenter,
+              heightFactor: 1 - folded,
+              child: Opacity(
+                opacity: fade,
+                child: Padding(
+                  padding: EdgeInsets.only(top: compact ? 14 : 20, bottom: compact ? 16 : 24),
+                  child: Center(child: avatar(compact ? 96 : 120)),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: compact ? 8 * folded : 12 * folded),
+          nameText,
+          subtitleLines,
+        ],
+      );
+    } else {
+      body = Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
@@ -458,62 +541,15 @@ class CallHeader extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Align(
-                  alignment: line,
-                  child: Text(
-                    name,
-                    textAlign: textAlign,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: compact ? 26 : 32,
-                      height: 1.15,
-                      // Medium, not bold: vivo's system font draws 700 very heavy.
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                ClipRect(
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    heightFactor: 1 - folded,
-                    child: Opacity(
-                      opacity: fade,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          for (final (i, subtitle) in subtitles.indexed) ...[
-                            SizedBox(height: i == 0 ? 4 : 2),
-                            Align(
-                              alignment: line,
-                              child: Text(
-                                subtitle,
-                                textAlign: textAlign,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 16, color: Colors.white.withValues(alpha: .72)),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: compact ? 12 : 18),
-                CallStatus(
-                  call: call,
-                  recording: recording,
-                  sim: sims.length > 1 ? sim : null,
-                  simSlot: sim == null ? 0 : sims.indexOf(sim) + 1,
-                  alignment: line,
-                ),
+                nameText,
+                subtitleLines,
+                SizedBox(height: compact ? 16 : 24),
+                status,
               ],
             ),
           ),
           // The photo folds away sideways as the keypad opens.
-          if (photo != null)
+          if (side)
             ClipRect(
               child: Align(
                 alignment: AlignmentDirectional.centerEnd,
@@ -521,18 +557,21 @@ class CallHeader extends StatelessWidget {
                 child: Opacity(
                   opacity: fade,
                   child: Padding(
-                    padding: const EdgeInsetsDirectional.only(start: 16, top: 4),
-                    // Just the photo, as on ColorOS: no ring and no ripple.
-                    child: FutureBuilder(
-                      future: ContactsRepository.instance.fullPhoto(contact!.id),
-                      builder: (context, full) => LetterAvatar(name: name, photo: full.data ?? photo, size: avatarSize),
-                    ),
+                    // Its top lines up with the top of the name's capitals.
+                    padding: const EdgeInsetsDirectional.only(start: 16, top: 8),
+                    child: avatar(compact ? 64 : 80),
                   ),
                 ),
               ),
             ),
         ],
-      ),
+      );
+    }
+    return AnimatedOpacity(
+      opacity: ended ? .6 : (held ? .55 : 1),
+      duration: const Duration(milliseconds: 250),
+      // ColorOS keeps the caller a little further from the edges than the controls.
+      child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: body),
     );
   }
 }
@@ -659,7 +698,7 @@ class _CallStatusState extends State<CallStatus> with SingleTickerProviderStateM
       CallState.unknown => context.l10n.phoneCall,
     };
     final style = TextStyle(
-      fontSize: 20,
+      fontSize: 22,
       height: 1.2,
       color: call.state == CallState.active ? Colors.white : Colors.white.withValues(alpha: .85),
       fontFeatures: const [FontFeature.tabularFigures()],
@@ -699,7 +738,7 @@ class _CallStatusState extends State<CallStatus> with SingleTickerProviderStateM
       if (widget.sim case final sim?)
         Semantics(
           label: sim.label,
-          child: ExcludeSemantics(child: _SimMark(slot: widget.simSlot)),
+          child: SimBadge(label: widget.simSlot > 0 ? '${widget.simSlot}' : '', color: Colors.white70, height: 18),
         ),
     ];
     return SizedBox(
@@ -734,84 +773,6 @@ class _CallStatusState extends State<CallStatus> with SingleTickerProviderStateM
     final rest = (seconds % 60).toString().padLeft(2, '0');
     return seconds >= 3600 ? '${seconds ~/ 3600}:$minutes:$rest' : '$minutes:$rest';
   }
-}
-
-/// ColorOS's SIM mark: a small outlined SIM card, clipped at one corner, with its slot number.
-class _SimMark extends StatelessWidget {
-  const _SimMark({required this.slot});
-  final int slot;
-
-  @override
-  Widget build(BuildContext context) => CustomPaint(
-    painter: const SimOutline(),
-    child: SizedBox(
-      width: 12,
-      height: 15,
-      child: Center(
-        child: Text(
-          slot > 0 ? '$slot' : '',
-          style: const TextStyle(fontSize: 8.5, height: 1, fontWeight: FontWeight.w800, color: Colors.white70),
-        ),
-      ),
-    ),
-  );
-}
-
-/// ColorOS's SIM card outline, clipped at one corner; also the contact page's SIM icon.
-class SimOutline extends CustomPainter {
-  const SimOutline({
-    this.color = Colors.white70,
-    this.strokeWidth = 1.3,
-    this.corner = 2,
-    this.cut = 4,
-    this.chip = false,
-  });
-
-  final Color color;
-  final double strokeWidth, corner, cut;
-
-  /// Adds the chip's outline, so the card doesn't look empty without a slot number.
-  final bool chip;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final r = Offset.zero & size;
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeJoin = StrokeJoin.round
-      ..strokeCap = StrokeCap.round
-      ..color = color;
-    if (chip) {
-      final pad = Rect.fromCenter(
-        center: r.center.translate(0, size.height * .1),
-        width: size.width * .5,
-        height: size.height * .38,
-      );
-      canvas
-        ..drawRRect(RRect.fromRectAndRadius(pad, Radius.circular(strokeWidth)), paint)
-        ..drawLine(pad.centerLeft, pad.centerRight, paint)
-        ..drawLine(pad.topCenter, pad.bottomCenter, paint);
-    }
-    canvas.drawPath(
-      Path()
-        ..moveTo(r.left + corner, r.top)
-        ..lineTo(r.right - cut, r.top)
-        ..lineTo(r.right, r.top + cut)
-        ..lineTo(r.right, r.bottom - corner)
-        ..quadraticBezierTo(r.right, r.bottom, r.right - corner, r.bottom)
-        ..lineTo(r.left + corner, r.bottom)
-        ..quadraticBezierTo(r.left, r.bottom, r.left, r.bottom - corner)
-        ..lineTo(r.left, r.top + corner)
-        ..quadraticBezierTo(r.left, r.top, r.left + corner, r.top)
-        ..close(),
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(SimOutline oldDelegate) =>
-      oldDelegate.color != color || oldDelegate.strokeWidth != strokeWidth || oldDelegate.chip != chip;
 }
 
 /// ColorOS's HD call mark: a handset with a small "HD" beside its top.

@@ -2090,6 +2090,30 @@ abstract class AppLocalizations {
   /// **'Show only the name of saved contacts on the call screen and in Calls'**
   String get hideContactNumbersSubtitle;
 
+  /// No description provided for @callerPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Caller photo'**
+  String get callerPhoto;
+
+  /// No description provided for @callerPhotoSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Where a contact’s photo sits on the call screen'**
+  String get callerPhotoSubtitle;
+
+  /// No description provided for @callerPhotoSide.
+  ///
+  /// In en, this message translates to:
+  /// **'Beside the name'**
+  String get callerPhotoSide;
+
+  /// No description provided for @callerPhotoStacked.
+  ///
+  /// In en, this message translates to:
+  /// **'Above the name'**
+  String get callerPhotoStacked;
+
   /// No description provided for @secondsCount.
   ///
   /// In en, this message translates to:

@@ -1198,6 +1198,19 @@ class AppLocalizationsEn extends AppLocalizations {
       'Show only the name of saved contacts on the call screen and in Calls';
 
   @override
+  String get callerPhoto => 'Caller photo';
+
+  @override
+  String get callerPhotoSubtitle =>
+      'Where a contact’s photo sits on the call screen';
+
+  @override
+  String get callerPhotoSide => 'Beside the name';
+
+  @override
+  String get callerPhotoStacked => 'Above the name';
+
+  @override
   String secondsCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

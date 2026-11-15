@@ -657,6 +657,10 @@
   "callScreenAnimationsSubtitle": "Motion when the call screen opens, answers and changes",
   "hideContactNumbers": "Hide contact phone numbers",
   "hideContactNumbersSubtitle": "Show only the name of saved contacts on the call screen and in Calls",
+  "callerPhoto": "Caller photo",
+  "callerPhotoSubtitle": "Where a contact’s photo sits on the call screen",
+  "callerPhotoSide": "Beside the name",
+  "callerPhotoStacked": "Above the name",
   "@callScreenEffectsSubtitle": {
     "description": "REVIEW: \"Glass and glow\" names the design's frosted-glass look; keep it short"
   },
