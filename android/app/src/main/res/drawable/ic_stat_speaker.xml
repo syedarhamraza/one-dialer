@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Speaker glyph alone, for skins that tint a notification action's icon and draw their own
+     disc behind it (ColorOS); island_speaker.png carries vivo's disc. The waves are separate round
+     strokes: render_icons.py's VOLUME fused them at this size. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Fills the viewport: ColorOS draws an action icon well inside its disc. -->
+    <group android:pivotX="12.1" android:pivotY="12" android:scaleX="1.4" android:scaleY="1.4">
+    <path android:fillColor="#FFFFFFFF" android:strokeColor="#FFFFFFFF" android:strokeWidth="1.4"
+        android:strokeLineJoin="round" android:pathData="M4.5 9.6h2.9l4.3-3.9v12.6l-4.3-3.9H4.5z" />
+    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="1.7" android:strokeLineCap="round"
+        android:pathData="M14.6 9.2a4 4 0 0 1 0 5.6M17.1 6.4a7.6 7.6 0 0 1 0 11.2" />
+    </group>
+</vector>
