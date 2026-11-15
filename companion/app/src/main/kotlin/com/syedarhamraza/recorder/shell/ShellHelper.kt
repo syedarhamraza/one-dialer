@@ -221,6 +221,7 @@ object ShellHelper {
         return Notification.Builder(context, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_record)
             .setContentTitle(context.getString(R.string.pair_title))
+            .setColor(com.syedarhamraza.recorder.OneLook.CALL_GREEN)
             .setStyle(Notification.BigTextStyle())
     }
 
