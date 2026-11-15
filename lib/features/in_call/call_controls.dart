@@ -841,6 +841,87 @@ class _DialPadDots extends CustomPainter {
 /// End's red, shared by the End pill, Decline and the Answer flight's landing.
 const endRed = Color(0xFFD2463A);
 
+/// ColorOS 17's solid call buttons (sampled off a screenshot of its End pill): opaque [color] with
+/// no glass over it, shaped by light along its edge so it reads as a raised cushion. A thick soft
+/// glow hugs the bottom edge and curves up around the ends, a thin highlight runs along the top,
+/// and the top half is a shade deeper. [flat] is the plain fill of reduced call screen effects.
+Decoration raisedBody(Color color, OutlinedBorder shape, {bool flat = false}) =>
+    flat ? ShapeDecoration(color: color, shape: shape) : _RaisedBody(color, shape);
+
+/// The connected screen's End pill: [raisedBody] in ColorOS 17's own End red.
+Decoration endPillBody(OutlinedBorder shape, {bool flat = false}) =>
+    flat ? ShapeDecoration(color: endRed, shape: shape) : _RaisedBody(const Color(0xFFC34237), shape);
+
+class _RaisedBody extends Decoration {
+  const _RaisedBody(this.color, this.shape);
+  final Color color;
+  final OutlinedBorder shape;
+
+  @override
+  BoxPainter createBoxPainter([VoidCallback? onChanged]) => _RaisedBodyPainter(color, shape);
+}
+
+class _RaisedBodyPainter extends BoxPainter {
+  _RaisedBodyPainter(Color color, this.shape)
+    : _body = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color.lerp(color, Colors.black, .04)!, color],
+        stops: const [.25, .6],
+      ),
+      // The bottom glow, a lighter and fuller tint of the body: nothing above the middle, full at
+      // the bottom edge, so it thins up the ends.
+      _under = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          for (final a in const [.0, .0, .11]) _tint(color).withValues(alpha: a),
+        ],
+        stops: const [0, .5, 1],
+      );
+  final OutlinedBorder shape;
+  final LinearGradient _body;
+  final LinearGradient _under;
+
+  static Color _tint(Color color) {
+    final hsl = HSLColor.fromColor(color);
+    return hsl.withSaturation(1).withLightness((hsl.lightness + .24).clamp(0.0, 1.0)).toColor();
+  }
+
+  static const _top = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0x4DFFFFFF), Color(0x00FFFFFF)],
+    stops: [0, .35],
+  );
+
+  @override
+  void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
+    final rect = offset & configuration.size!;
+    final path = shape.getOuterPath(rect);
+    canvas.drawPath(path, Paint()..shader = _body.createShader(rect));
+    canvas.save();
+    canvas.clipPath(path);
+    // Six stacked strokes along the edge, each reaching further in: a soft falloff over 18% of the
+    // height without a blur (a mask blur here costs frames on Adreno).
+    final under = Paint()
+      ..style = PaintingStyle.stroke
+      ..shader = _under.createShader(rect);
+    for (var i = 1; i <= 6; i++) {
+      // Centred on the edge, so half of each stroke is clipped away.
+      canvas.drawPath(path, under..strokeWidth = rect.height * .06 * i);
+    }
+    canvas.drawPath(
+      path,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.4
+        ..shader = _top.createShader(rect),
+    );
+    canvas.restore();
+  }
+}
+
 /// Answer's green, shared by Answer, the start of the Answer flight and the keypad's call button.
 const answerGreen = Color(0xFF2FAE52);
 
