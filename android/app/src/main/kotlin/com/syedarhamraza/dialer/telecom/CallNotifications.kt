@@ -93,9 +93,11 @@ object CallNotifications {
             // CallStyle still needs a full-screen intent; not high priority when the island pops up instead.
             .setFullScreenIntent(fullScreen, !quiet)
 
-        // On vivo a CallStyle call gets vivo's own call island next to ours (below), so it's plain
-        // actions whenever ours is posted, as in updateOngoing.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !(vivoIsland && !screenOpening)) {
+        // On an unlocked vivo our island card is the pop-up (below), and a CallStyle call would get
+        // vivo's own call island next to it, so it's plain actions there, as in updateOngoing.
+        // Locked it's a plain CallStyle call with no island extras: vivo hides a notification with
+        // them on the lock screen, which left no way back after leaving the call screen there.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !(island && !screenOpening)) {
             val person = Person.Builder().setName(caller).setIcon(callerIcon(context, details.handle?.schemeSpecificPart))
                 .setImportant(true).build()
             builder.setStyle(Notification.CallStyle.forIncomingCall(person, decline, answer))
@@ -112,7 +114,7 @@ object CallNotifications {
         }
         val icon = callerIcon(context, details.handle?.schemeSpecificPart)
             ?: Icon.createWithResource(context, R.drawable.island_caller) // LetterAvatar's no-photo person
-        if (vivoIsland && !screenOpening) {
+        if (island && !screenOpening) {
             // Answering here keeps the call in the island; the full call screen is a tap away.
             val answerHere = CallActionReceiver.pendingIntent(context, CallActionReceiver.ACTION_ANSWER_IN_ISLAND, callId)
             builder.addExtras(
