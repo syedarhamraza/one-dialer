@@ -24,7 +24,7 @@ class SetupActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        page = Subpage(this, getString(R.string.app_name)) { finish() }
+        page = Subpage(this, getString(R.string.app_name), onBack = null)
         if (!RecorderSettings.consentAccepted(this)) {
             startActivity(Intent(this, ConsentActivity::class.java).putExtra(ConsentActivity.FIRST_RUN, true))
             @Suppress("DEPRECATION") overridePendingTransition(0, 0)
@@ -42,55 +42,74 @@ class SetupActivity : Activity() {
         RecordingsProvider.notifyStatus(this)
     }
 
+    /** One setup step: done once [ok]; [fix] is what tapping it (or the hero's Continue) does. */
+    private class Step(val title: String, val detail: String, val ok: Boolean, val done: String, val fix: (() -> Unit)?)
+
     private fun render() {
         val scroll = page.scroll.scrollY
         page.content.removeAllViews()
+        val pal = OneLook.palette(this)
 
-        val helperUp = ShellHelper.supported() && ShellHelper.running(this)
+        val notificationsOn = getSystemService(NotificationManager::class.java).areNotificationsEnabled()
+        // vivo and other OEM battery managers stop idle apps, which ends the recording or the helper's restart.
+        val unrestricted = getSystemService(android.os.PowerManager::class.java).isIgnoringBatteryOptimizations(packageName)
+        val notificationsStep = Step(getString(R.string.setup_notifications), getString(R.string.setup_notifications_detail),
+            notificationsOn, getString(R.string.setup_done)) {
+            if (Build.VERSION.SDK_INT >= 33) requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 2)
+            else startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName))
+        }
+        val batteryStep = Step(getString(R.string.setup_battery), getString(R.string.setup_battery_detail),
+            unrestricted, getString(R.string.setup_done)) {
+            startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName")))
+        }
+
         if (!ShellHelper.supported()) {
-            page.group(listOf(page.row(getString(R.string.section_both_sides), getString(R.string.both_sides_unsupported), OneLook.RED)))
+            page.hero(getString(R.string.status_unsupported), OneLook.RED, getString(R.string.both_sides_unsupported), null)
         } else {
             val paired = ShellHelper.paired(this)
-            val helper = when {
-                helperUp -> page.row(getString(R.string.setup_helper), getString(R.string.setup_done))
-                starting -> page.row(getString(R.string.setup_helper), getString(R.string.setup_helper_starting))
-                else -> page.row(getString(R.string.setup_helper), getString(R.string.setup_helper_detail), OneLook.RED,
-                    getString(R.string.setup_helper_start)) { startHelper() }
-            }
-            page.group(listOf(
-                page.row(getString(R.string.section_both_sides), getString(R.string.both_sides_intro)),
-                need(getString(R.string.setup_dev_options), getString(R.string.setup_dev_options_detail), ShellHelper.developerOptionsOn(this)) {
+            val steps = listOf(
+                Step(getString(R.string.setup_dev_options), getString(R.string.setup_dev_options_detail),
+                    ShellHelper.developerOptionsOn(this), getString(R.string.setup_done)) {
                     startActivity(Intent(Settings.ACTION_DEVICE_INFO_SETTINGS))
                 },
-                need(getString(R.string.setup_pair), getString(R.string.setup_pair_detail), paired, done = R.string.setup_paired) {
+                Step(getString(R.string.setup_pair), getString(R.string.setup_pair_detail), paired, getString(R.string.setup_paired)) {
                     ShellHelper.askForPairingCode(this)
                     startActivity(ShellHelper.wirelessDebuggingIntent())
                 },
-            ) + (if (paired) listOf(
-                helper,
-                page.row(
-                    getString(R.string.setup_restart),
-                    getString(if (ShellHelper.canRestart(this)) R.string.setup_restart_ready else R.string.setup_restart_detail),
-                ),
-            ) else emptyList()), header = getString(R.string.section_both_sides))
+                Step(getString(R.string.setup_helper),
+                    getString(if (starting) R.string.setup_helper_starting else R.string.setup_helper_detail),
+                    ShellHelper.running(this), getString(R.string.setup_done),
+                    if (starting) null else ({ startHelper() })),
+                notificationsStep,
+                batteryStep,
+            )
+            val next = steps.indexOfFirst { !it.ok }
+            if (next < 0) {
+                val dialer = packageManager.getLaunchIntentForPackage(TrustedDialer.PACKAGE)
+                page.hero(getString(R.string.status_ready), OneLook.CALL_GREEN, getString(R.string.status_ready_detail),
+                    dialer?.let { getString(R.string.open_dialer) to { startActivity(it) } })
+            } else {
+                page.hero(getString(R.string.status_step, next + 1, steps.size, steps[next].title), pal.text,
+                    getString(R.string.both_sides_intro), steps[next].fix?.let { getString(R.string.status_continue) to it })
+            }
+            page.group(steps.mapIndexed { i, step ->
+                when {
+                    step.ok -> page.row(step.title, step.done, leading = Glyph.check(OneLook.CALL_GREEN))
+                    i == next -> page.row(step.title, step.detail, OneLook.RED,
+                        if (step.fix != null) getString(R.string.fix) else null,
+                        leading = Glyph.step(i + 1, pal.text), onTap = step.fix)
+                    else -> page.row(step.title, getString(R.string.step_after, i), leading = Glyph.step(i + 1, pal.text2))
+                }
+            } + (if (paired) listOf(page.row(
+                getString(R.string.setup_restart),
+                getString(if (ShellHelper.canRestart(this)) R.string.setup_restart_ready else R.string.setup_restart_detail),
+            )) else emptyList()), header = getString(R.string.section_setup))
         }
 
-        page.group(listOf(
-            need(
-                getString(R.string.setup_notifications), getString(R.string.setup_notifications_detail),
-                getSystemService(NotificationManager::class.java).areNotificationsEnabled(),
-            ) {
-                if (Build.VERSION.SDK_INT >= 33) requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 2)
-                else startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName))
-            },
-            // vivo and other OEM battery managers stop idle apps, which ends the recording or the helper's restart.
-            need(
-                getString(R.string.setup_battery), getString(R.string.setup_battery_detail),
-                getSystemService(android.os.PowerManager::class.java).isIgnoringBatteryOptimizations(packageName),
-            ) {
-                startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName")))
-            },
-        ), header = getString(R.string.section_permissions))
+        if (!ShellHelper.supported()) page.group(listOf(notificationsStep, batteryStep).map {
+            if (it.ok) page.row(it.title, it.done, leading = Glyph.check(OneLook.CALL_GREEN))
+            else page.row(it.title, it.detail, OneLook.RED, getString(R.string.fix), onTap = it.fix)
+        }, header = getString(R.string.section_permissions))
 
         val themes = listOf(
             "system" to getString(R.string.theme_system),
@@ -110,11 +129,6 @@ class SetupActivity : Activity() {
 
         page.scroll.post { page.scroll.scrollTo(0, scroll) }
     }
-
-    /** As One Dialer's Recorder row: the status, red with "Fix" and a chevron until it's done. */
-    private fun need(title: String, detail: String, ok: Boolean, done: Int = R.string.setup_done, fix: () -> Unit): View =
-        if (ok) page.row(title, getString(done))
-        else page.row(title, detail, OneLook.RED, getString(R.string.fix), onTap = fix)
 
     private var starting = false
 

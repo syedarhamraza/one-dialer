@@ -31,7 +31,7 @@ import android.widget.TextView
  * with the title beside it pinned at the top over ColorOS 17's header blur, and the cards
  * scrolling (and bouncing) under it. Build rows into [content] with the helpers below.
  */
-class Subpage(private val activity: Activity, title: String, onBack: () -> Unit) {
+class Subpage(private val activity: Activity, title: String, onBack: (() -> Unit)?) {
     val content = LinearLayout(activity).apply {
         orientation = LinearLayout.VERTICAL
         clipChildren = false
@@ -75,13 +75,13 @@ class Subpage(private val activity: Activity, title: String, onBack: () -> Unit)
             gravity = Gravity.CENTER_VERTICAL
             clipChildren = false
             clipToPadding = false
-            addView(backButton(onBack), LinearLayout.LayoutParams(di(48f), di(48f)))
+            if (onBack != null) addView(backButton(onBack), LinearLayout.LayoutParams(di(48f), di(48f)))
             addView(TextView(activity).apply {
                 text = title
                 maxLines = 1
                 ellipsize = TextUtils.TruncateAt.END
                 OneLook.style(this, 22f, p.text, 600, -.3f)
-            }, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f).apply { marginStart = di(14f) })
+            }, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f).apply { marginStart = di(if (onBack != null) 14f else 2f) })
         }
         root.addView(scroll, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
         root.addView(scrim, FrameLayout.LayoutParams(MATCH_PARENT, 0))
@@ -213,10 +213,13 @@ class Subpage(private val activity: Activity, title: String, onBack: () -> Unit)
         subtitleColor: Int? = null,
         value: String? = null,
         anchor: ((View) -> Unit)? = null,
+        leading: Drawable? = null,
         onTap: (() -> Unit)? = null,
     ): View = LinearLayout(activity).apply {
         gravity = Gravity.CENTER_VERTICAL
         setPadding(di(18f), di(17f), di(18f), di(17f))
+        if (leading != null) addView(ImageView(activity).apply { setImageDrawable(leading) },
+            LinearLayout.LayoutParams(di(24f), di(24f)).apply { marginEnd = di(14f) })
         addView(LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
             addView(TextView(activity).apply {
@@ -247,6 +250,40 @@ class Subpage(private val activity: Activity, title: String, onBack: () -> Unit)
             isClickable = true
             setOnClickListener { onTap() }
         }
+    }
+
+    // ---- Status hero ----
+
+    /**
+     * The top of a root page: the app's icon (drawn in the phone's own icon shape), a big
+     * [status] in [statusColor], a grey [detail] and, when there's something to do, a lit button.
+     */
+    fun hero(status: String, statusColor: Int, detail: String, action: Pair<String, () -> Unit>?) {
+        val box = LinearLayout(activity).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            clipChildren = false
+            setPadding(di(8f), di(12f), di(8f), di(28f))
+            addView(ImageView(activity).apply {
+                setImageDrawable(activity.packageManager.getApplicationIcon(activity.packageName))
+                importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            }, LinearLayout.LayoutParams(di(88f), di(88f)).apply { bottomMargin = di(18f) })
+            addView(TextView(activity).apply {
+                text = status
+                gravity = Gravity.CENTER
+                OneLook.style(this, 22f, statusColor, 600, -.3f, 1.2f)
+            })
+            addView(TextView(activity).apply {
+                text = detail
+                gravity = Gravity.CENTER
+                OneLook.style(this, 15f, p.text2, 400, 0f, 1.3f)
+                setPadding(di(8f), di(6f), di(8f), 0)
+            })
+            if (action != null) addView(glowButton(action.first, lit = true, action.second).apply {
+                layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, layoutParams.height).apply { topMargin = di(22f) }
+            })
+        }
+        content.addView(box, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
     }
 
     // ---- GlowButton ----

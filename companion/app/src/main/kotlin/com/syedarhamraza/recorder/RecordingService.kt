@@ -155,6 +155,11 @@ class RecordingService : Service() {
         return Notification.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_record)
             .setContentTitle(getString(R.string.recording_call))
+            .setContentText(getString(R.string.recording_detail))
+            .setColor(OneLook.RED)
+            .setContentIntent(packageManager.getLaunchIntentForPackage(TrustedDialer.PACKAGE)?.let {
+                PendingIntent.getActivity(this, 1, it, PendingIntent.FLAG_IMMUTABLE)
+            })
             .setUsesChronometer(true)
             .setWhen(System.currentTimeMillis())
             .setOngoing(true)

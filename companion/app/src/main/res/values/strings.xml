@@ -5,7 +5,6 @@
     <string name="recording_call">Recording call</string>
     <string name="stop">Stop</string>
     <string name="fix">Fix</string>
-    <string name="setup_intro">Lets One Dialer record your calls. Start and stop recordings from the call screen in One Dialer, and find them in One Dialer › Settings › Call recording.</string>
     <string name="setup_notifications">Notifications</string>
     <string name="setup_notifications_detail">Shows while a call is being recorded</string>
     <string name="setup_done">Ready</string>
@@ -17,7 +16,7 @@
     <string name="consent_title">Before you record</string>
     <string name="consent_intro">Please read this before you record a call.</string>
     <string name="consent_choice_title">Recording is your choice</string>
-    <string name="consent_choice">Nothing is recorded on its own. You start and stop every recording yourself, from One Dialer\'s call screen.</string>
+    <string name="consent_choice">You choose what\'s recorded: start a recording from One Dialer\'s call screen, or turn on auto-record in One Dialer\'s settings.</string>
     <string name="consent_law_title">Follow the law where you live</string>
     <string name="consent_law">Call recording laws differ by country and region. Some places allow it when one person on the call agrees, others need everyone on the call to agree, and some don\'t allow it at all.</string>
     <string name="consent_tell_title">Tell the other person</string>
@@ -35,27 +34,34 @@
 
     <!-- Both sides: the shell helper started over Wireless debugging (shell/) -->
     <string name="section_both_sides">Record both sides</string>
-    <string name="both_sides_unsupported">Needs Android 12 or later: older versions can\'t start the helper over Wireless debugging.</string>
+    <string name="both_sides_unsupported">Recording both sides needs Android 12 or later.</string>
     <string name="both_sides_intro">Records you and the other person at full volume, on the earpiece, speaker, Bluetooth or headphones. Set up once with Wireless debugging; no computer or root needed.</string>
     <string name="setup_dev_options">Developer options</string>
     <string name="setup_dev_options_detail">Settings › About phone: tap Build number 7 times</string>
     <string name="setup_pair">Pair with Wireless debugging</string>
     <string name="setup_pair_detail">Turn on Wireless debugging, tap Pair device with pairing code, then type the code into One Recorder\'s notification</string>
     <string name="setup_paired">Paired</string>
-    <string name="setup_helper">Helper</string>
+    <string name="setup_helper">Start the recording service</string>
     <string name="setup_helper_detail">Not running. Needs Wi-Fi and Wireless debugging to start</string>
-    <string name="setup_helper_running">Running</string>
-    <string name="setup_helper_start">Start</string>
     <string name="setup_helper_starting">Starting…</string>
     <string name="setup_restart">Start after a reboot</string>
     <string name="setup_restart_ready">On Wi-Fi, by itself</string>
-    <string name="setup_restart_detail">Turns on the first time the helper starts</string>
+    <string name="setup_restart_detail">Turns on the first time the recording service starts</string>
     <string name="channel_setup">Setup</string>
     <string name="pair_title">Pair One Recorder</string>
     <string name="pair_steps">In Wireless debugging, tap Pair device with pairing code. Keep that open and type the 6-digit code here.</string>
     <string name="pair_enter">Enter code</string>
     <string name="pair_code">Pairing code</string>
     <string name="pair_done">Paired. Calls are now recorded on both sides.</string>
-    <string name="pair_paired">Paired, but the helper didn\'t start. Tap Start in One Recorder.</string>
+    <string name="pair_paired">Paired, but the recording service didn\'t start. Open One Recorder and tap Continue.</string>
     <string name="pair_failed">That didn\'t work. Keep the pairing dialog open and send the code again.</string>
+    <string name="section_setup">Set up</string>
+    <string name="status_ready">Ready to record both sides</string>
+    <string name="status_ready_detail">Start and stop recordings from One Dialer\'s call screen, and find them in One Dialer › Calls ⋮ › Recordings.</string>
+    <string name="status_step">Step %1$d of %2$d: %3$s</string>
+    <string name="status_unsupported">Can\'t record on this phone</string>
+    <string name="status_continue">Continue</string>
+    <string name="open_dialer">Open One Dialer</string>
+    <string name="step_after">After step %d</string>
+    <string name="recording_detail">Both sides · tap to return to the call</string>
 </resources>
