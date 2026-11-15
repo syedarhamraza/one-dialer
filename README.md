@@ -75,6 +75,9 @@ Most phones ship a dialer you can't change, and most replacements either look da
 ### Call recording (optional)
 Recording lives in a separate, sideloaded companion app, **One Recorder**. Install it from [GitHub Releases](https://github.com/syedarhamraza/one-dialer/releases) and recording controls appear in the call screen and Settings. Without it, One Dialer never touches the microphone. Recording laws differ by country, so check yours first.
 
+#### Legal notice
+One Recorder is provided as is, without any warranty. It can record both sides of a call, and call recording laws differ by country and region: some places need everyone on the call to agree, and some don't allow recording at all. You alone are responsible for knowing and following the laws where you and the other person are, for telling them and getting their consent where it's required, and for how you use your recordings. Syed Arham Raza, who makes One Recorder and One Dialer, isn't responsible for how you use it or for any recording you make with it.
+
 ## Install
 
 1. Join the closed test on [Google Play](https://play.google.com/apps/testing/com.syedarhamraza.onedialer) and install One Dialer.
