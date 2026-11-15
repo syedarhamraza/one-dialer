@@ -272,7 +272,9 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
         // account), so make an empty one natively and fill it in.
         id = await TelecomBridge.instance.createLocalContact();
         try {
-          await FlutterContacts.update(form.applyTo(Contact(id: id)));
+          // update() refuses a contact it didn't fetch itself (no metadata), so read the empty one back.
+          final empty = await FlutterContacts.get(id, properties: ContactProperties.all);
+          await FlutterContacts.update(form.applyTo(empty ?? Contact(id: id)));
         } catch (_) {
           await FlutterContacts.delete(id);
           rethrow;
