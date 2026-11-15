@@ -341,6 +341,15 @@ class DialerPrefs {
   /// call screen and in Calls. Loaded with [callEffects].
   final hideContactNumbers = ValueNotifier(false);
 
+  /// Settings › "Caller photo": `side` (beside the name, ColorOS 17) or `stacked` (above it,
+  /// centred). Loaded with [callEffects].
+  final callerLayout = ValueNotifier('side');
+
+  Future<void> setCallerLayout(String value) async {
+    callerLayout.value = value;
+    await _prefs.setString('caller_layout', value);
+  }
+
   Future<void> setCallAnimations(bool value) async {
     callAnimations.value = value;
     await _prefs.setBool('call_animations', value);
@@ -361,6 +370,8 @@ class DialerPrefs {
     if (glass == 'classic' || glass == 'soft' || glass == 'bold') callGlass.value = glass!;
     final style = await _prefs.getString('answer_style');
     if (style == 'two' || style == 'one') answerStyle.value = style!;
+    final layout = await _prefs.getString('caller_layout');
+    if (layout == 'side' || layout == 'stacked') callerLayout.value = layout!;
     final direction = await _prefs.getString('answer_direction');
     if (direction == 'up' || direction == 'down') answerDirection.value = direction!;
   }

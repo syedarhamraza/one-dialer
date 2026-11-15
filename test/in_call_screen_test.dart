@@ -13,6 +13,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dialer/l10n/app_localizations.dart';
 import 'package:dialer/core/prefs/dialer_prefs.dart';
+import 'package:dialer/core/contacts/contacts_repository.dart';
+import 'package:dialer/widgets/letter_avatar.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
@@ -364,6 +366,41 @@ void main() {
     semantics.dispose();
     await tester.pumpWidget(const SizedBox());
   });
+
+  for (final layout in ['side', 'stacked']) {
+    testWidgets('a contact photo sits ${layout == 'side' ? 'beside' : 'centred above'} the name', (tester) async {
+      // A 1×1 PNG.
+      final png = Uint8List.fromList(const [
+        137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1, 0, 0, 0, 1,
+        8, 6, 0, 0, 0, 31, 21, 196, 137, 0, 0, 0, 13, 73, 68, 65, 84, 120, 156, 99, 248, 255, 255, 255,
+        127, 0, 9, 251, 3, 253, 42, 134, 227, 138, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
+      ]);
+      final repo = ContactsRepository.instance
+        ..debugSetContacts([
+          const DialerContact(id: '7', name: 'Alex Morgan', numbers: ['5550100'], labels: ['Mobile']),
+        ])
+        ..debugSetPhoto('7', png);
+      addTearDown(() => repo.debugSetContacts([]));
+      DialerPrefs.instance.callerLayout.value = layout;
+      addTearDown(() => DialerPrefs.instance.callerLayout.value = 'side');
+      await open(tester);
+      await emit(tester, [call('active')]);
+      final photo = tester.getRect(find.byType(LetterAvatar));
+      final name = tester.getRect(find.text('Alex Morgan'));
+      final timer = tester.getRect(find.textContaining(RegExp(r'^\d\d:\d\d$')));
+      if (layout == 'side') {
+        expect(photo.left, greaterThan(name.right));
+        expect(photo.width, 80);
+        expect(timer.top, greaterThan(name.bottom));
+      } else {
+        expect(photo.center.dx, moreOrLessEquals(name.center.dx, epsilon: 1));
+        expect(photo.width, 120);
+        expect(timer.bottom, lessThan(photo.top));
+        expect(photo.bottom, lessThan(name.top));
+      }
+      await tester.pumpWidget(const SizedBox());
+    });
+  }
 
   testWidgets('the backdrop is a gradient aurora, never the wallpaper', (tester) async {
     await open(tester);

@@ -263,6 +263,7 @@ class AnswerButtonsScreen extends StatefulWidget {
 class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
   final _directionKey = GlobalKey();
   final _effectsKey = GlobalKey();
+  final _callerLayoutKey = GlobalKey();
   final _glassKey = GlobalKey();
 
   @override
@@ -270,6 +271,11 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
     super.initState();
     CallBackgrounds.instance.load('all');
   }
+
+  static Map<String, String> _callerLayouts(AppLocalizations l10n) => {
+    'side': l10n.callerPhotoSide,
+    'stacked': l10n.callerPhotoStacked,
+  };
 
   static Map<String, String> _directions(AppLocalizations l10n) => {
     'up': l10n.swipeUpToAnswer,
@@ -323,6 +329,7 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
             prefs.callEffects,
             prefs.callAnimations,
             prefs.hideContactNumbers,
+            prefs.callerLayout,
             CallBackgrounds.instance,
           ]),
           builder: (context, _) => OneUIGroupCard(
@@ -368,6 +375,15 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
                 subtitle: context.l10n.hideContactNumbersSubtitle,
                 onTap: () => prefs.setHideContactNumbers(!prefs.hideContactNumbers.value),
                 trailing: OneUISwitch(value: prefs.hideContactNumbers.value, onChanged: prefs.setHideContactNumbers),
+              ),
+              choiceRow(
+                context,
+                title: context.l10n.callerPhoto,
+                subtitle: context.l10n.callerPhotoSubtitle,
+                anchor: _callerLayoutKey,
+                value: prefs.callerLayout,
+                labels: _callerLayouts(context.l10n),
+                onPick: prefs.setCallerLayout,
               ),
               OneUIGroupItem(
                 title: context.l10n.callBackground,
