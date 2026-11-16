@@ -37,6 +37,9 @@ The UI is laid out for English lengths; check these on the phone in Italian, esp
 | `callScreenEdgeGlow`, `darkModeEdgeGlow`, `edgeGlowClassic/Soft/Bold` | "Bagliore bordi"; Tenue and Intenso for Soft and Bold. ColorOS names with no AOSP equivalent. |
 | `settingsDialing`, `settingsPersonalisation`, `settingsGeneral`, `displayAndEffects`, `keypadAndRecents` | Settings section and page titles: Composizione, Personalizzazione, Generali, Schermo ed effetti, Tastierino e recenti. |
 | `contactLabel` ★ | Contact field labels; several are gendered (Figlio, Amico) where Android's own Italian uses the masculine. |
+| `callBackgroundSoft`, `callBackgroundSoftSubtitle`, `callBackgroundAuto`, `callBackgroundAutoNote`, `callBackgroundColourNote`, `callBackgroundChangePhoto` | "Sfoca e scurisci" / "Ammorbidisce la foto dietro la chiamata": the call background's Blur & dim switch. Automatico / Cambia foto: the aurora's Auto colour and the photo row. |
+| `callBackgroundPhotoBackupNote`, `callBackgroundPhotoBackupLink` | One sentence split in two: the note, then the tappable link that exports settings. Check it still reads as one sentence. |
+| `backUpRestore`, `autoBackup`, `backupFootnote` and the other `backup*` keys | Settings › Backup e ripristino; "backup" kept as Android's Italian uses it. |
 | `contactsMerged` ★ | `=1` means one *group* merged ("Contatti uniti"). |
 | `selectedCount`, `foundCount` | Masculine plural agreement (selezionati, trovati). |
 | `announce_calling` (`values-it`) | Spoken by text-to-speech: "{name} ti sta chiamando". TTS speaks in the phone's TTS language, not the app's. |

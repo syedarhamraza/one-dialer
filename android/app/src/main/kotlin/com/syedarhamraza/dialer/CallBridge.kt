@@ -77,6 +77,9 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
     /** Set by [MainActivity]: exports (true) or imports (false) the settings file; see [SettingsBackup]. */
     var settingsBackup: ((Boolean, MethodChannel.Result) -> Unit)? = null
 
+    /** Set by [MainActivity]: picks the backup folder; the result is [AutoBackup.status] or null. */
+    var backupFolderChooser: ((MethodChannel.Result) -> Unit)? = null
+
     /** Set by [MainActivity]: the system ringtone picker; the result is the picked URI, "" for Default, null if cancelled. */
     var ringtonePicker: ((String?, MethodChannel.Result) -> Unit)? = null
 
@@ -222,6 +225,14 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 ?: result.error("NO_ACTIVITY", "Files can only be picked from the main screen", null)
             "exportSettings", "importSettings" -> settingsBackup?.invoke(call.method == "exportSettings", result)
                 ?: result.error("NO_ACTIVITY", "Files can only be picked from the main screen", null)
+            "chooseBackupFolder" -> backupFolderChooser?.invoke(result)
+                ?: result.error("NO_ACTIVITY", "Folders can only be picked from the main screen", null)
+            "getBackupStatus" -> result.success(AutoBackup.status(context))
+            "setAutoBackup" -> {
+                AutoBackup.setInterval(context, call.argument<Int>("hours") ?: 0)
+                AutoBackup.runIfDue(context)
+                result.success(AutoBackup.status(context))
+            }
             "pickPhoto" -> photoPicker?.invoke(call.argument<Int>("max") ?: 720, result)
                 ?: result.error("NO_ACTIVITY", "Photos can only be picked from the main screen", null)
             "takePhoto" -> photoTaker?.invoke(result)

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -15,13 +16,14 @@ import '../../l10n/l10n.dart';
 import '../../widgets/call_glyph.dart';
 import 'call_background.dart';
 
-/// The call backdrop: a soft aurora tinted from the caller's avatar colour (or the [background]
-/// picked for the call), under black fades at the top and bottom.
+/// The call backdrop: a soft aurora tinted from the caller's photo or avatar colour (or the
+/// [background] picked for the call), under black fades at the top and bottom.
 class CallBackdrop extends StatelessWidget {
   const CallBackdrop({
     super.key,
     required this.child,
     this.seed,
+    this.tones,
     this.background,
     this.frosted = false,
     this.dim,
@@ -36,6 +38,9 @@ class CallBackdrop extends StatelessWidget {
   /// The caller's name, tinting the aurora; null keeps it blue, teal and violet for private,
   /// conference and unknown calls.
   final String? seed;
+
+  /// The caller's photo colours ([photoTones]), tinting the aurora in place of [seed]'s.
+  final List<Color>? tones;
 
   /// A colour or photo in place of the caller's tint (see [CallBackgrounds.forCall]).
   final CallBackground? background;
@@ -57,7 +62,10 @@ class CallBackdrop extends StatelessWidget {
           duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 400),
           layoutBuilder: (current, previous) => Stack(fit: StackFit.expand, children: [...previous, ?current]),
           child: shown
-              ? KeyedSubtree(key: ValueKey((seed, background)), child: _fill(seed, background, frosted, dim))
+              ? KeyedSubtree(
+                  key: ValueKey((seed, tones == null ? null : Object.hashAll(tones!), background)),
+                  child: _fill(seed, tones, background, frosted, dim),
+                )
               : const SizedBox.expand(key: ValueKey('black')),
         ),
         ValueListenableBuilder(
@@ -88,22 +96,38 @@ class CallBackdrop extends StatelessWidget {
     );
   }
 
-  static Widget _fill(String? seed, CallBackground? background, bool frosted, ValueListenable<double>? dim) {
+  static Widget _fill(
+    String? seed,
+    List<Color>? tones,
+    CallBackground? background,
+    bool frosted,
+    ValueListenable<double>? dim,
+  ) {
     final hue = switch ((background?.colour, seed)) {
       (final colour?, _) => HSLColor.fromColor(colour).hue,
       (_, final seed?) => HSLColor.fromColor(LetterAvatar.colorFor(seed)).hue,
       _ => 200.0,
     };
     final image = background?.image;
-    if (image == null) return _aurora(hue);
-    return _PhotoFill(image: image, fallback: _aurora(hue), frosted: frosted, dim: dim);
+    // The photo's colours only for the default background: a picked colour or photo wins.
+    if (image == null) return _aurora(hue, background?.colour == null ? tones : null);
+    return _PhotoFill(image: image, fallback: _aurora(hue), frosted: frosted, soft: background!.soft, dim: dim);
   }
 
-  /// A soft aurora: a dark base with blurred-looking blobs in hues around [hue]. Painted once.
-  static Widget _aurora(double hue) {
+  /// A soft aurora: a dark base with blurred-looking blobs in hues around [hue], or in the photo's
+  /// [tones] (base, then one per blob; their saturation caps the aurora's). Painted once.
+  static Widget _aurora(double hue, [List<Color>? tones]) {
     const shifts = [0.0, 45.0, -50.0, 20.0, -30.0];
-    Color tone(int i, double lightness, double saturation) =>
-        HSLColor.fromAHSL(1, (hue + shifts[i % shifts.length]) % 360, saturation, lightness).toColor();
+    // tone(0-3) are the blobs (and 0 the base's top-left), tone(4) the base: the photo's regions.
+    const region = [1, 2, 3, 4, 0];
+    Color tone(int i, double lightness, double saturation) {
+      if (tones == null) {
+        return HSLColor.fromAHSL(1, (hue + shifts[i % shifts.length]) % 360, saturation, lightness).toColor();
+      }
+      final hsl = HSLColor.fromColor(tones[region[i % 5]]);
+      return HSLColor.fromAHSL(1, hsl.hue, math.min(saturation, hsl.saturation), lightness).toColor();
+    }
+
     Widget blob(Alignment centre, double radius, Color color) => DecoratedBox(
       decoration: BoxDecoration(
         gradient: RadialGradient(center: centre, radius: radius, colors: [color, color.withValues(alpha: 0)]),
@@ -136,12 +160,13 @@ class CallBackdrop extends StatelessWidget {
 /// soft already), so the photo carries it: sharp while ringing, frosted toward the bottom once
 /// [frosted] (connected), and blurred all over with the keypad's [dim] progress. Both blurred
 /// copies are made once, then only cross-faded: no blur runs per frame. [fallback] shows while
-/// the photo decodes, or if it can't.
+/// the photo decodes, or if it can't. [soft] (Blur & dim) shows it blurred and dimmed all over.
 class _PhotoFill extends StatefulWidget {
-  const _PhotoFill({required this.image, required this.fallback, required this.frosted, this.dim});
+  const _PhotoFill({required this.image, required this.fallback, required this.frosted, this.soft = false, this.dim});
   final ImageProvider image;
   final Widget fallback;
   final bool frosted;
+  final bool soft;
   final ValueListenable<double>? dim;
 
   @override
@@ -207,9 +232,9 @@ class _PhotoFillState extends State<_PhotoFill> with SingleTickerProviderStateMi
     if (image != null) {
       final ratio = MediaQuery.devicePixelRatioOf(context);
       final old = _painter;
-      if (old == null || old.image != image || old.ratio != ratio || old.dim != widget.dim) {
+      if (old == null || old.image != image || old.ratio != ratio || old.dim != widget.dim || old.soft != widget.soft) {
         old?.dispose();
-        _painter = _PhotoPainter(image, ratio, _frost, widget.dim);
+        _painter = _PhotoPainter(image, ratio, _frost, widget.dim, soft: widget.soft);
       }
     }
     return Stack(
@@ -239,13 +264,16 @@ class _PhotoFillState extends State<_PhotoFill> with SingleTickerProviderStateMi
 }
 
 /// The blurred copies laid over the photo: frosted under the controls ([frost]) and all over
-/// ([dim], the keypad). Made once per size (the keypad one on first use), then only drawn at their opacities.
+/// ([dim], the keypad). Made once per size (the keypad one on first use), then only drawn at their
+/// opacities. [soft] draws only a dimmer all-over copy, always.
 class _PhotoPainter extends CustomPainter {
-  _PhotoPainter(this.image, this.ratio, this.frost, this.dim) : super(repaint: Listenable.merge([frost, ?dim]));
+  _PhotoPainter(this.image, this.ratio, this.frost, this.dim, {this.soft = false})
+    : super(repaint: soft ? null : Listenable.merge([frost, ?dim]));
   final ui.Image image;
   final double ratio;
   final Animation<double> frost;
   final ValueListenable<double>? dim;
+  final bool soft;
 
   /// How soft the blurred copies are.
   static const _sigma = 22.0;
@@ -265,7 +293,8 @@ class _PhotoPainter extends CustomPainter {
       Paint()..imageFilter = ui.ImageFilter.blur(sigmaX: _sigma, sigmaY: _sigma, tileMode: TileMode.clamp),
     );
     paintImage(canvas: canvas, rect: rect, image: image, fit: BoxFit.cover, filterQuality: FilterQuality.medium);
-    canvas.drawRect(rect, Paint()..color = const Color(0x33000000));
+    // Blur & dim: darker, as a wallpaper under the call.
+    canvas.drawRect(rect, Paint()..color = soft ? const Color(0x73000000) : const Color(0x33000000));
     canvas.restore();
     if (fade) {
       // Sharp under the name, frosted under the buttons.
@@ -303,12 +332,21 @@ class _PhotoPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (size.isEmpty) return;
+    final rect = Offset.zero & size;
+    if (soft) {
+      if (_size != size) {
+        dispose();
+        _blurred = _bake(size, fade: false);
+        _size = size;
+      }
+      _draw(canvas, _blurred!, rect, 1);
+      return;
+    }
     if (_size != size) {
       dispose();
       _frosted = _bake(size, fade: true);
       _size = size;
     }
-    final rect = Offset.zero & size;
     _draw(canvas, _frosted!, rect, frost.value);
     // Made only once the keypad opens: most calls never do, and each copy is a full-screen bake.
     final dimmed = dim?.value ?? 0;
@@ -322,7 +360,7 @@ class _PhotoPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_PhotoPainter old) => old.image != image || old.ratio != ratio;
+  bool shouldRepaint(_PhotoPainter old) => old.image != image || old.ratio != ratio || old.soft != soft;
 }
 
 /// Started by `inCallMain`, long before the call screen first draws (only once its activity
@@ -348,6 +386,7 @@ abstract final class CallerLookup {
           // The header loads the full photo anyway; the backdrop shares it.
           backgrounds.load(contact.id);
           backgrounds.loadPhoto(contact.id);
+          backgrounds.loadTones(contact.id);
         }
       }
     }
@@ -428,7 +467,7 @@ class CallHeader extends StatelessWidget {
     final sim = sims.where((s) => s.id == call.simId).firstOrNull;
     final k = keypadProgress.clamp(0.0, 1.0);
     final fade = 1 - Curves.easeOut.transform(k);
-    // Stacked (Settings › Caller photo): status, a big round photo, then the name, all centred.
+    // Stacked (Settings › Caller photo): a big round photo, the name, then the status, all centred.
     final stacked = photo != null && DialerPrefs.instance.callerLayout.value == 'stacked';
     final side = photo != null && !stacked;
     // ColorOS 17: a contact with a photo gets name, number and status on the left and the photo in
@@ -513,7 +552,6 @@ class CallHeader extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          status,
           ClipRect(
             child: Align(
               alignment: Alignment.topCenter,
@@ -521,15 +559,17 @@ class CallHeader extends StatelessWidget {
               child: Opacity(
                 opacity: fade,
                 child: Padding(
-                  padding: EdgeInsets.only(top: compact ? 14 : 20, bottom: compact ? 16 : 24),
+                  padding: EdgeInsets.only(bottom: compact ? 16 : 24),
                   child: Center(child: avatar(compact ? 96 : 120)),
                 ),
               ),
             ),
           ),
-          SizedBox(height: compact ? 8 * folded : 12 * folded),
           nameText,
           subtitleLines,
+          // Under the name, as in the side layout: the time reads with who it's with.
+          SizedBox(height: compact ? 16 : 24),
+          status,
         ],
       );
     } else {
