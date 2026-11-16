@@ -35,7 +35,7 @@ jobs:
           NEXT_PUBLIC_SITE_URL: https://syedarhamraza.github.io
       # Pull requests only build. A private repo has no Pages to deploy to.
       - if: github.event_name != 'pull_request' && !github.event.repository.private
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: site/out
 
