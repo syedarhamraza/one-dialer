@@ -1,6 +1,6 @@
 # One Dialer — Privacy Policy
 
-_Last updated: 14 November 2026_
+_Last updated: 16 November 2026_
 
 One Dialer is a phone app for Android made by Syed Arham Raza. This policy explains what the app accesses and what it does with it.
 
@@ -21,7 +21,7 @@ When you make One Dialer your default phone app, Android gives it access to:
 
 **Your calls, call history and contacts never leave your phone.** One Dialer has no account and no servers, and it doesn't sell, share or upload any of this data. Settings you choose in the app (speed dial, blocking rules, quick decline messages, the SIM to use for a contact) are stored only on your phone.
 
-**Backups.** If you have turned on your phone's own backup (Google's, or your phone maker's), Android includes One Dialer's settings, call notes and call backgrounds in it, so they come back when you reinstall the app or move to a new phone. That backup belongs to your Google or phone-maker account; One Dialer never sees or controls it. Settings › Export settings saves the same data to a file wherever you choose, and Import settings reads it back. One Dialer never uploads that file.
+**Backups.** If you have turned on your phone's own backup (Google's, or your phone maker's), Android includes One Dialer's settings, call notes and call backgrounds in it, so they come back when you reinstall the app or move to a new phone. That backup belongs to your Google or phone-maker account; One Dialer never sees or controls it. Settings › Back up & restore saves the same data, including the photos you picked for call backgrounds, to one file on your phone's storage, "One Dialer backup.zip" in a "One Dialer" folder inside a folder you pick (the page shows its full path), and Restore reads a backup back. If you turn on Auto backup, the app replaces that same file every day, 3 days, week or month, whichever you choose, when you open the app or a call ends. The file stays where it is if you uninstall One Dialer. One Dialer never uploads it, but other apps that can read that folder (a file manager, or a cloud sync app you set up for it) can.
 
 When Google Play has an update for One Dialer, Software update downloads that update's release notes from this website (syedarhamraza.github.io). Nothing about you or your phone is sent with the request.
 
