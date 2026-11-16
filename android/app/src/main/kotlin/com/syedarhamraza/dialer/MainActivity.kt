@@ -18,6 +18,7 @@ class MainActivity : FlutterActivity() {
         LagDiagnostics.foreground("main", true)
         // Again on each resume: OPPO resets it, and the user may have changed it in Settings.
         HighRefresh.apply(this)
+        AutoBackup.runIfDue(this)
     }
 
     override fun onPause() {
@@ -38,6 +39,10 @@ class MainActivity : FlutterActivity() {
     private var pendingVcfResult: MethodChannel.Result? = null
     private var pendingBackupResult: MethodChannel.Result? = null
 
+    /** Back up now with no folder yet: picks the folder, then backs up (true) or only picks it (false). */
+    private var pendingFolderResult: MethodChannel.Result? = null
+    private var backUpAfterFolder = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Android 15 forces edge-to-edge for SDK 35; opting in on older versions too keeps them the same.
@@ -53,6 +58,7 @@ class MainActivity : FlutterActivity() {
             it.photoTaker = ::takePhoto
             it.vcfPicker = ::pickVcf
             it.settingsBackup = ::settingsBackup
+            it.backupFolderChooser = { result -> chooseBackupFolder(result, backUp = false) }
             it.ringtonePicker = ::pickRingtone
             it.pendingDialNumber = dialNumberFrom(intent)
             it.pendingOpenRecents = intent.getBooleanExtra(EXTRA_OPEN_RECENTS, false)
@@ -111,39 +117,47 @@ class MainActivity : FlutterActivity() {
     }
 
     /**
-     * Settings › Export / Import settings: where to save the file, or which one to read. The
-     * result is true when done (an import restarts the app instead), false for a file that isn't
-     * a settings file, null when cancelled.
+     * Settings › Back up & restore. Back up now ([export]) writes the one backup file in the
+     * picked folder (picking it first if there is none); Restore picks the file to read, opening
+     * on the backup folder. The result is true when done (a restore restarts the app instead),
+     * false for a file that isn't a backup or a folder that can't be written, null when cancelled.
      */
     private fun settingsBackup(export: Boolean, result: MethodChannel.Result) {
-        // An import restarts the process, which would drop the call.
-        if (!export && CallManager.all().isNotEmpty()) return result.error("IN_CALL", null, null)
+        if (export) {
+            if (AutoBackup.tree(this) == null) return chooseBackupFolder(result, backUp = true)
+            val app = applicationContext
+            Thread {
+                val ok = AutoBackup.write(app)
+                runOnUiThread { result.success(ok) }
+            }.start()
+            return
+        }
+        // A restore restarts the process, which would drop the call.
+        if (CallManager.all().isNotEmpty()) return result.error("IN_CALL", null, null)
         pendingBackupResult?.success(null)
         pendingBackupResult = result
-        val intent = if (export) {
-            Intent(Intent.ACTION_CREATE_DOCUMENT)
-                .addCategory(Intent.CATEGORY_OPENABLE)
-                .setType("application/zip")
-                .putExtra(Intent.EXTRA_TITLE, "one-dialer-settings-${java.time.LocalDate.now()}.zip")
-        } else {
-            Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*")
-        }
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*")
+            .putExtra(android.provider.DocumentsContract.EXTRA_INITIAL_URI, AutoBackup.documentsUri)
         @Suppress("DEPRECATION")
-        startActivityForResult(intent, if (export) REQUEST_EXPORT else REQUEST_IMPORT)
+        startActivityForResult(intent, REQUEST_IMPORT)
     }
 
-    private fun finishBackup(export: Boolean, uri: android.net.Uri, result: MethodChannel.Result) = Thread {
-        val outcome = runCatching {
-            if (export) {
-                contentResolver.openOutputStream(uri, "wt")!!.use { SettingsBackup.export(this, it) }
-                true
-            } else {
-                contentResolver.openInputStream(uri)!!.use { SettingsBackup.import(this, it) }
-            }
-        }
+    /** The folder for backups, picked once in the system picker (opening on Documents). */
+    private fun chooseBackupFolder(result: MethodChannel.Result, backUp: Boolean) {
+        pendingFolderResult?.success(null)
+        pendingFolderResult = result
+        backUpAfterFolder = backUp
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+            .putExtra(android.provider.DocumentsContract.EXTRA_INITIAL_URI, AutoBackup.documentsUri)
+        @Suppress("DEPRECATION")
+        startActivityForResult(intent, REQUEST_BACKUP_FOLDER)
+    }
+
+    private fun finishRestore(uri: android.net.Uri, result: MethodChannel.Result) = Thread {
+        val outcome = runCatching { contentResolver.openInputStream(uri)!!.use { SettingsBackup.import(this, it) } }
         runOnUiThread {
             val done = outcome.getOrElse { return@runOnUiThread result.error("FAILED", it.message, null) }
-            if (export || !done) return@runOnUiThread result.success(done)
+            if (!done) return@runOnUiThread result.success(false)
             // Every preference is cached in memory (DataStore, SharedPreferences): start afresh.
             startActivity(Intent.makeRestartActivityTask(android.content.ComponentName(this, MainActivity::class.java)))
             Runtime.getRuntime().exit(0)
@@ -186,13 +200,27 @@ class MainActivity : FlutterActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         @Suppress("DEPRECATION")
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_EXPORT || requestCode == REQUEST_IMPORT) {
+        if (requestCode == REQUEST_BACKUP_FOLDER) {
+            val result = pendingFolderResult ?: return
+            pendingFolderResult = null
+            val uri = data?.data.takeIf { resultCode == RESULT_OK } ?: return result.success(null)
+            val picked = runCatching { AutoBackup.setTree(this, uri) }
+            if (picked.isFailure) return result.error("FAILED", picked.exceptionOrNull()?.message, null)
+            if (!backUpAfterFolder) return result.success(AutoBackup.status(this))
+            val app = applicationContext
+            Thread {
+                val ok = AutoBackup.write(app)
+                runOnUiThread { result.success(ok) }
+            }.start()
+            return
+        }
+        if (requestCode == REQUEST_IMPORT) {
             val result = pendingBackupResult ?: return
             pendingBackupResult = null
             val uri = data?.data.takeIf { resultCode == RESULT_OK } ?: return result.success(null)
             // shortcut: a call that starts during the second the import takes still drops; rare enough.
-            if (requestCode == REQUEST_IMPORT && CallManager.all().isNotEmpty()) return result.error("IN_CALL", null, null)
-            finishBackup(requestCode == REQUEST_EXPORT, uri, result)
+            if (CallManager.all().isNotEmpty()) return result.error("IN_CALL", null, null)
+            finishRestore(uri, result)
             return
         }
         if (requestCode == REQUEST_VCF) {
@@ -337,7 +365,7 @@ class MainActivity : FlutterActivity() {
         private const val REQUEST_RINGTONE = 1003
         private const val REQUEST_CAMERA = 1004
         private const val REQUEST_VCF = 1005
-        private const val REQUEST_EXPORT = 1006
+        private const val REQUEST_BACKUP_FOLDER = 1006
         private const val REQUEST_IMPORT = 1007
         private const val EXTRA_OPEN_RECENTS = "open_recents"
 

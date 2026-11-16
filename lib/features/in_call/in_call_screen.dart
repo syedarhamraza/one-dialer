@@ -112,6 +112,7 @@ class _InCallScreenState extends State<InCallScreen> {
               shown: call != null,
               dim: _keypadBlur,
               seed: call == null ? null : backdropSeed(call),
+              tones: contact == null ? null : CallBackgrounds.instance.tones(contact.id),
               background: call == null ? null : CallBackgrounds.instance.forCall(contact?.id),
               // Placing a call or connected (the same buttons, frosted under them as soon as they
               // show); an answered call stays frosted on the ended summary rather than sharpening as

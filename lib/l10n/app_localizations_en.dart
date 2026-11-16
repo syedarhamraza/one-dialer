@@ -1925,7 +1925,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get callBackgroundPhoto => 'Photo';
 
   @override
-  String get callBackgroundChoosePhoto => 'Choose photo';
+  String get callBackgroundAurora => 'Aurora';
+
+  @override
+  String get callBackgroundAuto => 'Auto';
+
+  @override
+  String get callBackgroundAutoNote =>
+      'Auto: every caller gets their own colours, from their contact photo or their name.';
+
+  @override
+  String get callBackgroundColourNote => 'Every call uses this colour.';
+
+  @override
+  String get callBackgroundChangePhoto => 'Change photo';
+
+  @override
+  String get callBackgroundPhotoBackupNote =>
+      'Photos are saved only on this phone. To keep them after reinstalling One Dialer or on a new phone,';
+
+  @override
+  String get callBackgroundPhotoBackupLink => 'back up your settings';
+
+  @override
+  String get callBackgroundSoft => 'Blur & dim';
+
+  @override
+  String get callBackgroundSoftSubtitle => 'Softens the photo behind the call';
 
   @override
   String get callBackgroundContactPhoto => 'Contact\'s photo';
@@ -1946,17 +1972,67 @@ class AppLocalizationsEn extends AppLocalizations {
       'Used for this contact instead of the call background for all calls.';
 
   @override
-  String get exportSettings => 'Export settings';
+  String get backUpRestore => 'Back up & restore';
 
   @override
-  String get exportSettingsSubtitle =>
-      'Save settings, call notes and call backgrounds to a file';
+  String get backUpRestoreSubtitle =>
+      'Settings, call notes and call backgrounds, in one file on this phone';
 
   @override
-  String get importSettings => 'Import settings';
+  String get backUpNow => 'Back up now';
 
   @override
-  String get importSettingsSubtitle => 'Restore them from an exported file';
+  String lastBackup(String time) {
+    return 'Last backup: $time';
+  }
+
+  @override
+  String get backupNever => 'Not backed up yet';
+
+  @override
+  String get restoreBackup => 'Restore';
+
+  @override
+  String get restoreBackupSubtitle =>
+      'Pick a backup file; the files app opens on Documents';
+
+  @override
+  String get autoBackup => 'Auto backup';
+
+  @override
+  String get backupFrequency => 'Frequency';
+
+  @override
+  String get backupEveryDay => 'Every day';
+
+  @override
+  String get backupEvery3Days => 'Every 3 days';
+
+  @override
+  String get backupEveryWeek => 'Every week';
+
+  @override
+  String get backupEveryMonth => 'Every month';
+
+  @override
+  String get backupLocation => 'Location';
+
+  @override
+  String get backupLocationNone => 'Choose a folder; Documents is a good place';
+
+  @override
+  String get backupFailed =>
+      'The last backup failed. Tap Location to choose the folder again.';
+
+  @override
+  String get backupFootnote =>
+      'A backup holds your settings, speed dial, call notes and call backgrounds with their photos. It\'s one file, replaced by each backup, so it never fills your storage. Auto backup runs when you open One Dialer or a call ends.';
+
+  @override
+  String get backedUp => 'Backed up';
+
+  @override
+  String get couldNotBackUp => 'Couldn\'t back up to that folder';
 
   @override
   String get importSettingsTitle => 'Replace your settings?';
@@ -1968,12 +2044,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get importSettingsInCall =>
       'Settings can\'t be imported during a call';
-
-  @override
-  String get settingsExported => 'Settings exported';
-
-  @override
-  String get couldNotSaveSettings => 'Couldn\'t save the file';
 
   @override
   String get notASettingsFile => 'This isn\'t a One Dialer settings file';

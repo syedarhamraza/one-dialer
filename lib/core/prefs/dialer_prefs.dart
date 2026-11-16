@@ -127,7 +127,8 @@ class DialerPrefs {
   }
 
   /// The call screen background for a contact id, or `all` for every call: `color:<argb hex>`,
-  /// `photo:<file name>` or `contact:` (see `CallBackground`); null is the default.
+  /// `photo:<file name>`, `soft:<file name>`, `contact:`, `contact:soft` or `auto:` (see `CallBackground`);
+  /// null is the default.
   Future<String?> callBackground(String scope) => _prefs.getString('call_bg_$scope');
 
   Future<void> setCallBackground(String scope, String? value) async {
@@ -137,6 +138,19 @@ class DialerPrefs {
       await _prefs.setString('call_bg_$scope', value);
     }
     changes.value++;
+  }
+
+  /// The photo picked for [scope]'s call background (`photo:<file name>` or `soft:<file name>`),
+  /// kept while another background is in use so choosing Photo again brings it back. Its file is
+  /// in the backgrounds folder, so Export settings carries it.
+  Future<String?> keptCallPhoto(String scope) => _prefs.getString('call_bg_photo_$scope');
+
+  Future<void> setKeptCallPhoto(String scope, String? value) async {
+    if (value == null) {
+      await _prefs.remove('call_bg_photo_$scope');
+    } else {
+      await _prefs.setString('call_bg_photo_$scope', value);
+    }
   }
 
   /// Settings › "Tap a recent call": `details` (open its page), `dial` (write the number

@@ -395,8 +395,9 @@ void main() {
       } else {
         expect(photo.center.dx, moreOrLessEquals(name.center.dx, epsilon: 1));
         expect(photo.width, 120);
-        expect(timer.bottom, lessThan(photo.top));
         expect(photo.bottom, lessThan(name.top));
+        // The call time reads under the name, not above the photo.
+        expect(timer.top, greaterThan(name.bottom));
       }
       await tester.pumpWidget(const SizedBox());
     });

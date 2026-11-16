@@ -108,7 +108,11 @@ class DialerInCallService : InCallService() {
     override fun onCallRemoved(call: Call) {
         CallManager.onCallRemoved(call)
         if (CallManager.all().none { (_, c) -> CallManager.stateOf(c) == Call.STATE_RINGING }) CallFlash.stop()
-        if (!CallManager.hasCalls) CallNotifications.cancelIncoming(this)
+        if (!CallManager.hasCalls) {
+            CallNotifications.cancelIncoming(this)
+            // The app ran: a good moment for a due auto backup (never during a call).
+            com.syedarhamraza.dialer.AutoBackup.runIfDue(this)
+        }
     }
 
     /** Settings › Answer/End calls: a buzz on answer and hang-up, and the speaker on answer. */

@@ -41,4 +41,34 @@ void main() {
     expect(value.value, 'full');
     expect([selected(0), selected(1)], [false, true]);
   });
+
+  testWidgets('a disabled picker ignores taps', (tester) async {
+    final value = ValueNotifier('a');
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ShowcasePicker(
+            value: value,
+            enabled: false,
+            onPick: (v) => value.value = v,
+            options: const [
+              ShowcaseOption(
+                value: 'a',
+                label: 'A',
+                preview: PhonePreview(child: SizedBox()),
+              ),
+              ShowcaseOption(
+                value: 'b',
+                label: 'B',
+                preview: PhonePreview(avatar: SizedBox(), child: SizedBox()),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.byType(PhonePreview).last, warnIfMissed: false);
+    await tester.pump();
+    expect(value.value, 'a');
+  });
 }

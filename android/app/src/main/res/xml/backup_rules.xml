@@ -5,4 +5,6 @@
     <exclude domain="sharedpref" path="device_tier.xml" />
     <!-- Blocked calls waiting to be hidden from the call log: this phone's log only. -->
     <exclude domain="sharedpref" path="blocked_pending.xml" />
+    <!-- The backup folder's permission belongs to this install only. -->
+    <exclude domain="sharedpref" path="backup.xml" />
 </full-backup-content>

@@ -70,7 +70,7 @@ Map<String, String> effectsLabels(AppLocalizations l10n) => {
 };
 
 /// Decline and Answer at the bottom of a [PhonePreview], each under its swipe arc.
-const _callButtons = Positioned(
+const previewCallButtons = Positioned(
   left: 0,
   right: 0,
   bottom: 30,
@@ -200,7 +200,7 @@ class _IncomingCallRemindersScreenState extends State<IncomingCallRemindersScree
             ShowcaseOption(
               value: 'full',
               label: context.l10n.fullScreen,
-              preview: const PhonePreview(child: Stack(children: [_callButtons])),
+              preview: const PhonePreview(child: Stack(children: [previewCallButtons])),
             ),
           ],
         ),
@@ -295,7 +295,7 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
             ShowcaseOption(
               value: 'two',
               label: context.l10n.twoButtons,
-              preview: const PhonePreview(child: Stack(children: [_callButtons])),
+              preview: const PhonePreview(child: Stack(children: [previewCallButtons])),
             ),
             ShowcaseOption(
               value: 'one',
