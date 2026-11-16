@@ -1,7 +1,7 @@
 name: Release
 
 # One Dialer to Google Play, the recorder APK to GitHub Releases, the notes to the website.
-# Started by hand on the beta branch: Actions > Release > Run workflow (or the GitHub phone app).
+# Started by hand on `develop` (never main): Actions > Release > Run workflow (or the GitHub phone app).
 on:
   workflow_dispatch:
     inputs:
