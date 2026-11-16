@@ -25,6 +25,19 @@ class Changelog {
 
   static const List<ChangelogEntry> entries = [
     ChangelogEntry(
+      version: '1.0.0',
+      date: 'Nov 2026',
+      changes: [
+        'Call backgrounds in your caller\'s photo colours, Blur & dim, and Back up & restore with auto backup',
+        'Call screen: caller name and photo look like ColorOS 17, with an option to put the photo above the name',
+        'Speaker button on the ongoing-call notification on ColorOS, turn on Live alerts for One dialer',
+        'Call screen: the keypad opens and closes like ColorOS 17, and the call buttons look raised',
+        'vivo: a minimised incoming call stays on the lock screen',
+        'vivo shows one island for an incoming call, not two',
+        'Saving a new contact to Device works again',
+      ],
+    ),
+    ChangelogEntry(
       version: '1.0.0-beta.8',
       date: 'Nov 2026',
       changes: [
