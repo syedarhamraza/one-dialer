@@ -1,10 +1,10 @@
 name: Release Drafter
 
-# Keeps a draft GitHub release ("Next release") listing the pull requests merged into the beta
-# branch; the Release workflow turns its lines into the release notes. Rules: ../release-drafter.yml.
+# Keeps a draft GitHub release ("Next release") listing the pull requests merged into `develop`;
+# the Release workflow turns its lines into the release notes. Rules: ../release-drafter.yml.
 on:
   push:
-    branches: ["beta/**"]
+    branches: [develop]
   # Labels pull requests by branch name. pull_request_target so it also works on forks' pull
   # requests; safe here because the job never checks out or runs their code.
   pull_request_target:
