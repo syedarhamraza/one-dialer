@@ -13,6 +13,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dialer/l10n/app_localizations.dart';
 import 'package:dialer/core/prefs/dialer_prefs.dart';
+import 'package:dialer/core/contacts/contacts_repository.dart';
+import 'package:dialer/widgets/letter_avatar.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
@@ -365,6 +367,42 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  for (final layout in ['side', 'stacked']) {
+    testWidgets('a contact photo sits ${layout == 'side' ? 'beside' : 'centred above'} the name', (tester) async {
+      // A 1×1 PNG.
+      final png = Uint8List.fromList(const [
+        137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1, 0, 0, 0, 1,
+        8, 6, 0, 0, 0, 31, 21, 196, 137, 0, 0, 0, 13, 73, 68, 65, 84, 120, 156, 99, 248, 255, 255, 255,
+        127, 0, 9, 251, 3, 253, 42, 134, 227, 138, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
+      ]);
+      final repo = ContactsRepository.instance
+        ..debugSetContacts([
+          const DialerContact(id: '7', name: 'Alex Morgan', numbers: ['5550100'], labels: ['Mobile']),
+        ])
+        ..debugSetPhoto('7', png);
+      addTearDown(() => repo.debugSetContacts([]));
+      DialerPrefs.instance.callerLayout.value = layout;
+      addTearDown(() => DialerPrefs.instance.callerLayout.value = 'side');
+      await open(tester);
+      await emit(tester, [call('active')]);
+      final photo = tester.getRect(find.byType(LetterAvatar));
+      final name = tester.getRect(find.text('Alex Morgan'));
+      final timer = tester.getRect(find.textContaining(RegExp(r'^\d\d:\d\d$')));
+      if (layout == 'side') {
+        expect(photo.left, greaterThan(name.right));
+        expect(photo.width, 80);
+        expect(timer.top, greaterThan(name.bottom));
+      } else {
+        expect(photo.center.dx, moreOrLessEquals(name.center.dx, epsilon: 1));
+        expect(photo.width, 120);
+        expect(photo.bottom, lessThan(name.top));
+        // The call time reads under the name, not above the photo.
+        expect(timer.top, greaterThan(name.bottom));
+      }
+      await tester.pumpWidget(const SizedBox());
+    });
+  }
+
   testWidgets('the backdrop is a gradient aurora, never the wallpaper', (tester) async {
     await open(tester);
     await emit(tester, [call('active')]);
@@ -702,14 +740,31 @@ void main() {
     final speaker = tester.getRect(control('Speaker'));
     await tester.tap(control('Dial pad'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 210));
-    // Actions fade out in place; keys fade in.
-    expect(muteFade(), lessThan(1));
+    await tester.pump(const Duration(milliseconds: 60));
+    // Actions fade out in place, each shrinking; keys fade in.
+    expect(muteFade(), inExclusiveRange(0, 1));
+    expect(
+      tester
+          .widgetList<Transform>(find.ancestor(of: control('Mute'), matching: find.byType(Transform)))
+          .map((t) => t.transform.storage[0]),
+      contains(inExclusiveRange(.5, 1)),
+    );
     double fade(String digit) => tester.widget<Opacity>(find.byKey(ValueKey('keypad-fade-$digit'))).opacity;
-    // Bottom row first, and in each row the middle key leads its neighbours.
-    expect(fade('0'), greaterThan(fade('2')));
+    double below(String digit) => tester
+        .widget<Transform>(
+          find.descendant(of: find.byKey(ValueKey('keypad-fade-$digit')), matching: find.byType(Transform)).first,
+        )
+        .transform
+        .getTranslation()
+        .y;
+    // Bottom row first (the top row hasn't started), and in each row the middle key leads its neighbours.
+    expect(fade('2'), 0);
     expect(fade('0'), greaterThan(fade('*')));
     expect(fade('0'), inExclusiveRange(0, 1));
+    // The keypad spreads up out of the bottom row: the higher the key, the further it has to come.
+    expect(below('0'), greaterThan(0));
+    expect(below('8'), greaterThan(below('0')));
+    expect(below('*'), greaterThan(below('0')));
     final middle = tester.getTopLeft(find.byKey(const ValueKey('morph-key-1')));
     expect(tester.getSize(panel).height, greaterThan(height));
     expect(tester.getRect(control('End call')), end);
@@ -720,14 +775,18 @@ void main() {
     await tester.tap(control('End call'));
     expect(nativeCalls.last.method, 'hangUp');
     final endCenter = tester.getCenter(control('End call'));
-    // The spring's tail is longer than the old fixed curve; let it come to rest.
-    for (var i = 0; i < 6; i++) {
+    // 200 ms in, the top row has passed its place by 3% of its reach before easing back.
+    await tester.pump(const Duration(milliseconds: 140));
+    expect(below('2'), lessThan(0));
+    // The panel's spring has a long tail; let it come to rest.
+    for (var i = 0; i < 8; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
     final settled = tester.getTopLeft(find.byKey(const ValueKey('morph-key-1')));
     expect(settled.dx, middle.dx);
     expect(actions, findsNothing);
     expect(fade('8'), 1);
+    expect(below('2'), 0);
     // Once tapped, End call draws in to a circle around the same centre (the glass press spring
     // may still be a fraction of a pixel from rest).
     expect(tester.getCenter(control('End call')), within(distance: .5, from: endCenter));
@@ -738,7 +797,7 @@ void main() {
   });
 
   for (final size in [const Size(412, 915), const Size(320, 568), const Size(700, 360)]) {
-    testWidgets('closing reverses the key cascade and restores actions at $size', (tester) async {
+    testWidgets('closing sinks the keys together, then restores actions at $size', (tester) async {
       await open(tester, size: size);
       await emit(tester, [call('active')]);
       final panel = find.byKey(const ValueKey('call-upper-panel'));
@@ -749,11 +808,18 @@ void main() {
       final speaker = tester.getRect(control('Speaker'));
       await tester.tap(control('Dial pad'));
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 220));
+      await tester.pump(const Duration(milliseconds: 60));
       double fade(String digit) => tester.widget<Opacity>(find.byKey(ValueKey('keypad-fade-$digit'))).opacity;
-      // Reverse the opening order: top row leaves before the bottom row.
-      expect(fade('2'), lessThan(fade('0')));
+      // No cascade on the way out: every key fades together, gone in 160 ms.
+      expect(fade('#'), fade('0'));
+      // (Landscape also fades a row at the collapsing panel's edge.)
+      if (size.width < size.height) expect(fade('8'), fade('0'));
       expect(fade('0'), inExclusiveRange(0, 1));
+      // The actions wait for the keys to go.
+      expect(
+        tester.widget<Opacity>(find.ancestor(of: control('Mute'), matching: find.byType(Opacity)).first).opacity,
+        0,
+      );
       expect(tester.widget<CallHeader>(find.byType(CallHeader)).keypadProgress, lessThan(1));
       // Closing must block DTMF throughout the reversed cascade.
       await tester.tapAt(tester.getCenter(find.byKey(const ValueKey('morph-key-5'))));
@@ -764,8 +830,9 @@ void main() {
       expect(opacity, inExclusiveRange(0, 1));
       await tester.pump(const Duration(milliseconds: 32));
       expect(tester.widget<Opacity>(muteOpacity).opacity, greaterThan(opacity));
-      expect(tester.getRect(control('End call')), end);
-      expect(tester.getRect(control('Speaker')), speaker);
+      // Anchored (to rounding: the panel above is mid-collapse).
+      expect(tester.getRect(control('End call')).top, moreOrLessEquals(end.top, epsilon: .01));
+      expect(tester.getRect(control('Speaker')).top, moreOrLessEquals(speaker.top, epsilon: .01));
       await tester.pumpAndSettle();
       expect(tester.getSize(panel).height, lessThan(height));
       expect(tester.widget<Opacity>(muteOpacity).opacity, 1);

@@ -451,6 +451,25 @@ class Glyph(private val color: Int, private val draw: (Canvas, Paint) -> Unit) :
             c.drawPath(Path().apply { moveTo(19f, 12f); lineTo(5.4f, 12f); moveTo(11.3f, 5.7f); lineTo(5f, 12f); lineTo(11.3f, 18.3f) }, p)
         }
 
+        /** Icons.check_circle_rounded: a white tick on a filled circle. */
+        fun check(color: Int) = Glyph(color) { c, p ->
+            c.drawCircle(12f, 12f, 10f, p)
+            stroke(p, 2.2f)
+            p.color = Color.WHITE
+            c.drawPath(Path().apply { moveTo(7.6f, 12.3f); lineTo(10.6f, 15.2f); lineTo(16.4f, 9.2f) }, p)
+        }
+
+        /** A numbered step still to do: the number inside a thin ring. */
+        fun step(n: Int, color: Int) = Glyph(color) { c, p ->
+            stroke(p, 1.6f)
+            c.drawCircle(12f, 12f, 10f, p)
+            p.style = Paint.Style.FILL
+            p.textSize = 12.5f
+            p.textAlign = Paint.Align.CENTER
+            p.typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, 600, false)
+            c.drawText(n.toString(), 12f, 12f - (p.descent() + p.ascent()) / 2, p)
+        }
+
         /** Icons.radio_button_checked_rounded / _unchecked_rounded. */
         fun radio(color: Int, checked: Boolean) = Glyph(color) { c, p ->
             stroke(p, 2f)

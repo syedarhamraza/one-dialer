@@ -2090,6 +2090,30 @@ abstract class AppLocalizations {
   /// **'Show only the name of saved contacts on the call screen and in Calls'**
   String get hideContactNumbersSubtitle;
 
+  /// No description provided for @callerPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Caller photo'**
+  String get callerPhoto;
+
+  /// No description provided for @callerPhotoSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Where a contact’s photo sits on the call screen'**
+  String get callerPhotoSubtitle;
+
+  /// No description provided for @callerPhotoSide.
+  ///
+  /// In en, this message translates to:
+  /// **'Beside the name'**
+  String get callerPhotoSide;
+
+  /// No description provided for @callerPhotoStacked.
+  ///
+  /// In en, this message translates to:
+  /// **'Above the name'**
+  String get callerPhotoStacked;
+
   /// No description provided for @secondsCount.
   ///
   /// In en, this message translates to:
@@ -3032,23 +3056,23 @@ abstract class AppLocalizations {
   /// **'One Recorder'**
   String get recorderApp;
 
-  /// No description provided for @recorderReady.
+  /// No description provided for @recorderBothSides.
   ///
   /// In en, this message translates to:
-  /// **'Ready to record'**
-  String get recorderReady;
+  /// **'Records both sides of your calls'**
+  String get recorderBothSides;
 
-  /// No description provided for @recorderNeedsMic.
+  /// No description provided for @recorderNeedsSetup.
   ///
   /// In en, this message translates to:
-  /// **'Allow the microphone in One Recorder'**
-  String get recorderNeedsMic;
+  /// **'Set up both sides in One Recorder'**
+  String get recorderNeedsSetup;
 
-  /// No description provided for @recorderNeedsAccessibility.
+  /// No description provided for @recorderHelperStopped.
   ///
   /// In en, this message translates to:
-  /// **'Turn on its accessibility service'**
-  String get recorderNeedsAccessibility;
+  /// **'Both sides is paused: start the helper in One Recorder'**
+  String get recorderHelperStopped;
 
   /// No description provided for @recorderUntrusted.
   ///
@@ -3248,78 +3272,6 @@ abstract class AppLocalizations {
   /// **'Contacts auto-record always skips'**
   String get neverRecordSubtitle;
 
-  /// No description provided for @recordingSound.
-  ///
-  /// In en, this message translates to:
-  /// **'Sound'**
-  String get recordingSound;
-
-  /// No description provided for @volumeBoost.
-  ///
-  /// In en, this message translates to:
-  /// **'Volume boost'**
-  String get volumeBoost;
-
-  /// No description provided for @volumeBoostSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Lifts the other person\'s voice, which the mic only hears faintly'**
-  String get volumeBoostSubtitle;
-
-  /// No description provided for @boostOff.
-  ///
-  /// In en, this message translates to:
-  /// **'Off'**
-  String get boostOff;
-
-  /// No description provided for @boostNormal.
-  ///
-  /// In en, this message translates to:
-  /// **'Normal'**
-  String get boostNormal;
-
-  /// No description provided for @boostStrong.
-  ///
-  /// In en, this message translates to:
-  /// **'Strong'**
-  String get boostStrong;
-
-  /// No description provided for @micSource.
-  ///
-  /// In en, this message translates to:
-  /// **'Microphone source'**
-  String get micSource;
-
-  /// No description provided for @micSourceSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Automatic tries each on the first call and keeps the loudest'**
-  String get micSourceSubtitle;
-
-  /// No description provided for @micSourceAuto.
-  ///
-  /// In en, this message translates to:
-  /// **'Automatic'**
-  String get micSourceAuto;
-
-  /// No description provided for @micSourceRecognition.
-  ///
-  /// In en, this message translates to:
-  /// **'Voice recognition'**
-  String get micSourceRecognition;
-
-  /// No description provided for @micSourceCommunication.
-  ///
-  /// In en, this message translates to:
-  /// **'Voice communication'**
-  String get micSourceCommunication;
-
-  /// No description provided for @micSourceMic.
-  ///
-  /// In en, this message translates to:
-  /// **'Microphone'**
-  String get micSourceMic;
-
   /// No description provided for @storage.
   ///
   /// In en, this message translates to:
@@ -3452,11 +3404,59 @@ abstract class AppLocalizations {
   /// **'Photo'**
   String get callBackgroundPhoto;
 
-  /// No description provided for @callBackgroundChoosePhoto.
+  /// No description provided for @callBackgroundAurora.
   ///
   /// In en, this message translates to:
-  /// **'Choose photo'**
-  String get callBackgroundChoosePhoto;
+  /// **'Aurora'**
+  String get callBackgroundAurora;
+
+  /// No description provided for @callBackgroundAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get callBackgroundAuto;
+
+  /// No description provided for @callBackgroundAutoNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto: every caller gets their own colours, from their contact photo or their name.'**
+  String get callBackgroundAutoNote;
+
+  /// No description provided for @callBackgroundColourNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Every call uses this colour.'**
+  String get callBackgroundColourNote;
+
+  /// No description provided for @callBackgroundChangePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Change photo'**
+  String get callBackgroundChangePhoto;
+
+  /// No description provided for @callBackgroundPhotoBackupNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos are saved only on this phone. To keep them after reinstalling One Dialer or on a new phone,'**
+  String get callBackgroundPhotoBackupNote;
+
+  /// No description provided for @callBackgroundPhotoBackupLink.
+  ///
+  /// In en, this message translates to:
+  /// **'back up your settings'**
+  String get callBackgroundPhotoBackupLink;
+
+  /// No description provided for @callBackgroundSoft.
+  ///
+  /// In en, this message translates to:
+  /// **'Blur & dim'**
+  String get callBackgroundSoft;
+
+  /// No description provided for @callBackgroundSoftSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Softens the photo behind the call'**
+  String get callBackgroundSoftSubtitle;
 
   /// No description provided for @callBackgroundContactPhoto.
   ///
@@ -3488,29 +3488,119 @@ abstract class AppLocalizations {
   /// **'Used for this contact instead of the call background for all calls.'**
   String get callBackgroundContactNote;
 
-  /// No description provided for @exportSettings.
+  /// No description provided for @backUpRestore.
   ///
   /// In en, this message translates to:
-  /// **'Export settings'**
-  String get exportSettings;
+  /// **'Back up & restore'**
+  String get backUpRestore;
 
-  /// No description provided for @exportSettingsSubtitle.
+  /// No description provided for @backUpRestoreSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Save settings, call notes and call backgrounds to a file'**
-  String get exportSettingsSubtitle;
+  /// **'Settings, call notes and call backgrounds, in one file on this phone'**
+  String get backUpRestoreSubtitle;
 
-  /// No description provided for @importSettings.
+  /// No description provided for @backUpNow.
   ///
   /// In en, this message translates to:
-  /// **'Import settings'**
-  String get importSettings;
+  /// **'Back up now'**
+  String get backUpNow;
 
-  /// No description provided for @importSettingsSubtitle.
+  /// No description provided for @lastBackup.
   ///
   /// In en, this message translates to:
-  /// **'Restore them from an exported file'**
-  String get importSettingsSubtitle;
+  /// **'Last backup: {time}'**
+  String lastBackup(String time);
+
+  /// No description provided for @backupNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Not backed up yet'**
+  String get backupNever;
+
+  /// No description provided for @restoreBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get restoreBackup;
+
+  /// No description provided for @restoreBackupSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a backup file; the files app opens on Documents'**
+  String get restoreBackupSubtitle;
+
+  /// No description provided for @autoBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto backup'**
+  String get autoBackup;
+
+  /// No description provided for @backupFrequency.
+  ///
+  /// In en, this message translates to:
+  /// **'Frequency'**
+  String get backupFrequency;
+
+  /// No description provided for @backupEveryDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Every day'**
+  String get backupEveryDay;
+
+  /// No description provided for @backupEvery3Days.
+  ///
+  /// In en, this message translates to:
+  /// **'Every 3 days'**
+  String get backupEvery3Days;
+
+  /// No description provided for @backupEveryWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Every week'**
+  String get backupEveryWeek;
+
+  /// No description provided for @backupEveryMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Every month'**
+  String get backupEveryMonth;
+
+  /// No description provided for @backupLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get backupLocation;
+
+  /// No description provided for @backupLocationNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a folder; Documents is a good place'**
+  String get backupLocationNone;
+
+  /// No description provided for @backupFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The last backup failed. Tap Location to choose the folder again.'**
+  String get backupFailed;
+
+  /// No description provided for @backupFootnote.
+  ///
+  /// In en, this message translates to:
+  /// **'A backup holds your settings, speed dial, call notes and call backgrounds with their photos. It\'s one file, replaced by each backup, so it never fills your storage. Auto backup runs when you open One Dialer or a call ends.'**
+  String get backupFootnote;
+
+  /// No description provided for @backedUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Backed up'**
+  String get backedUp;
+
+  /// No description provided for @couldNotBackUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t back up to that folder'**
+  String get couldNotBackUp;
 
   /// No description provided for @importSettingsTitle.
   ///
@@ -3529,18 +3619,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Settings can\'t be imported during a call'**
   String get importSettingsInCall;
-
-  /// No description provided for @settingsExported.
-  ///
-  /// In en, this message translates to:
-  /// **'Settings exported'**
-  String get settingsExported;
-
-  /// No description provided for @couldNotSaveSettings.
-  ///
-  /// In en, this message translates to:
-  /// **'Couldn\'t save the file'**
-  String get couldNotSaveSettings;
 
   /// No description provided for @notASettingsFile.
   ///

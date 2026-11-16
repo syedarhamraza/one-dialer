@@ -15,6 +15,7 @@ import android.graphics.Canvas
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Shader
+import android.graphics.Color
 import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
@@ -92,7 +93,11 @@ object CallNotifications {
             // CallStyle still needs a full-screen intent; not high priority when the island pops up instead.
             .setFullScreenIntent(fullScreen, !quiet)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        // On an unlocked vivo our island card is the pop-up (below), and a CallStyle call would get
+        // vivo's own call island next to it, so it's plain actions there, as in updateOngoing.
+        // Locked it's a plain CallStyle call with no island extras: vivo hides a notification with
+        // them on the lock screen, which left no way back after leaving the call screen there.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !(island && !screenOpening)) {
             val person = Person.Builder().setName(caller).setIcon(callerIcon(context, details.handle?.schemeSpecificPart))
                 .setImportant(true).build()
             builder.setStyle(Notification.CallStyle.forIncomingCall(person, decline, answer))
@@ -104,10 +109,12 @@ object CallNotifications {
             // Asks for a Live Update (status bar chip) beside the banner only: with the call screen up
             // (or opening over the lock screen) the chip doubled it. On vivo it'd be a second island.
             builder.addExtras(Bundle().apply { putBoolean(Notification.EXTRA_REQUEST_PROMOTED_ONGOING, true) })
+            // The ColorOS capsule's text while ringing (see updateOngoing).
+            if (oplusCapsule) builder.setShortCriticalText(res.getString(R.string.island_incoming))
         }
         val icon = callerIcon(context, details.handle?.schemeSpecificPart)
             ?: Icon.createWithResource(context, R.drawable.island_caller) // LetterAvatar's no-photo person
-        if (vivoIsland && !screenOpening) {
+        if (island && !screenOpening) {
             // Answering here keeps the call in the island; the full call screen is a tap away.
             val answerHere = CallActionReceiver.pendingIntent(context, CallActionReceiver.ACTION_ANSWER_IN_ISLAND, callId)
             builder.addExtras(
@@ -205,7 +212,12 @@ object CallNotifications {
 
     /** OPPO, OnePlus and realme share one capsule (Fluid Cloud / Live Alerts), fed by Live Updates. */
     private val oplusCapsule: Boolean by lazy {
-        Build.MANUFACTURER.lowercase() in setOf("oppo", "oneplus", "realme")
+        Build.MANUFACTURER.lowercase() in setOf("oppo", "oneplus", "realme") ||
+            // ColorOS ported to another maker's phone still reports that maker; its ROM version doesn't.
+            runCatching {
+                Class.forName("android.os.SystemProperties").getMethod("get", String::class.java)
+                    .invoke(null, "ro.build.version.oplusrom") as String
+            }.getOrDefault("").isNotEmpty()
     }
 
     fun cancelIncoming(context: Context) {
@@ -273,6 +285,30 @@ object CallNotifications {
             builder.setStyle(Notification.CallStyle.forOngoingCall(person, hangUp))
         } else {
             builder.addAction(Notification.Action.Builder(null, res.getString(R.string.hang_up), hangUp).build())
+        }
+        // vivo's island card has its own Speaker button (below).
+        if (!vivoIsland) {
+            @Suppress("DEPRECATION") // CallAudioState still reports the route on API 34+
+            val onSpeaker = CallManager.service?.callAudioState?.route == CallAudioState.ROUTE_SPEAKER
+            builder.addAction(
+                Notification.Action.Builder(
+                    Icon.createWithResource(context, R.drawable.ic_stat_speaker),
+                    // On: a full-length colour span is Android's way to set a call action's fill (the shade's button).
+                    res.getString(if (onSpeaker) R.string.speaker_off else R.string.speaker).let {
+                        if (onSpeaker) SpannableString(it).apply { setSpan(ForegroundColorSpan(Color.WHITE), 0, length, 0) } else it
+                    },
+                    CallActionReceiver.pendingIntent(context, CallActionReceiver.ACTION_SPEAKER, callId),
+                ).apply {
+                    // ColorOS's capsule fills a button's disc with this colour and tints the glyph to
+                    // contrast (read from its SystemUI plugin): the lit Speaker, like vivo's. Ignored elsewhere.
+                    if (onSpeaker) {
+                        addExtras(Bundle().apply {
+                            putInt("oplus_key_action_type", 1)
+                            putString("oplus_key_action_config", JSONObject().put("oplus_bg_color", Color.WHITE).toString())
+                        })
+                    }
+                }.build()
+            )
         }
         // Experimental and off by default (Settings › Incoming call reminders › Live Update capsule):
         // whether ColorOS gives a third-party dialer's call the capsule is still unverified.

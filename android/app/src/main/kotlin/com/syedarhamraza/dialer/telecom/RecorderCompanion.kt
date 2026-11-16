@@ -14,8 +14,8 @@ import android.telecom.Call
 import org.json.JSONArray
 
 /**
- * Talks to the sideloaded One Recorder (`companion/`), which holds the mic and the
- * accessibility service, so this Play app carries neither. Everything goes through its
+ * Talks to the sideloaded One Recorder (`companion/`), which records both sides of a call
+ * through a shell helper, so this Play app carries no recording at all. Everything goes through its
  * provider's `call()`, which checks our signing certificate. Without the companion, all of
  * this returns null and the UI hides recording.
  */
@@ -45,22 +45,26 @@ object RecorderCompanion {
         null // not installed, or it doesn't trust this build's certificate
     }
 
-    /** `{ready, recording, startMillis, accessibilityOn, micGranted, notificationsOn, consented, autoRecord, trusted, error}`, null when not installed. */
+    /**
+     * `{ready, canRecord, method, helperPaired, helperRunning, recording, startMillis, notificationsOn,
+     * consented, autoRecord, trusted, error}`, null when not installed.
+     */
     fun status(context: Context): Map<String, Any?>? {
         if (!installed(context)) return null
         val b = call(context, "status") ?: return mapOf("trusted" to false, "ready" to false, "recording" to false)
-        val accessibility = b.getBoolean("accessibilityOn")
-        val mic = b.getBoolean("micGranted")
+        val canRecord = b.getBoolean("canRecord") // its both-sides helper is running
         val prefs = CallPrefs.read(context)
         return mapOf(
             "trusted" to true,
             // Recording also waits for the user to accept the consent notice (Settings › Call recording).
-            "ready" to (accessibility && mic && prefs["recordingConsent"] == true),
+            "ready" to (canRecord && prefs["recordingConsent"] == true),
+            "canRecord" to canRecord,
+            "method" to (b.getString("method") ?: "none"),
+            "helperPaired" to b.getBoolean("helperPaired"),
+            "helperRunning" to b.getBoolean("helperRunning"),
             "consented" to prefs["recordingConsent"],
             "autoRecordMode" to prefs["autoRecordMode"],
             "bytes" to b.getLong("bytes"),
-            "accessibilityOn" to accessibility,
-            "micGranted" to mic,
             "notificationsOn" to b.getBoolean("notificationsOn"),
             "recording" to b.getBoolean("recording"),
             "startMillis" to b.getLong("startMillis"),
@@ -181,7 +185,7 @@ object RecorderCompanion {
     fun export(context: Context, name: String?, displayName: String?): Boolean =
         call(context, "export", name, Bundle().apply { putString("displayName", displayName) })?.getBoolean("ok") == true
 
-    /** The companion's own settings: `{sourceMode, boost, retentionDays}`. */
+    /** The companion's own settings: `{retentionDays}`. */
     fun settings(context: Context): Map<String, Any?> {
         val json = call(context, "settings")?.getString("json") ?: return emptyMap()
         val o = org.json.JSONObject(json)

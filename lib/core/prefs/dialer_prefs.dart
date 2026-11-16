@@ -127,7 +127,8 @@ class DialerPrefs {
   }
 
   /// The call screen background for a contact id, or `all` for every call: `color:<argb hex>`,
-  /// `photo:<file name>` or `contact:` (see `CallBackground`); null is the default.
+  /// `photo:<file name>`, `soft:<file name>`, `contact:`, `contact:soft` or `auto:` (see `CallBackground`);
+  /// null is the default.
   Future<String?> callBackground(String scope) => _prefs.getString('call_bg_$scope');
 
   Future<void> setCallBackground(String scope, String? value) async {
@@ -137,6 +138,19 @@ class DialerPrefs {
       await _prefs.setString('call_bg_$scope', value);
     }
     changes.value++;
+  }
+
+  /// The photo picked for [scope]'s call background (`photo:<file name>` or `soft:<file name>`),
+  /// kept while another background is in use so choosing Photo again brings it back. Its file is
+  /// in the backgrounds folder, so Export settings carries it.
+  Future<String?> keptCallPhoto(String scope) => _prefs.getString('call_bg_photo_$scope');
+
+  Future<void> setKeptCallPhoto(String scope, String? value) async {
+    if (value == null) {
+      await _prefs.remove('call_bg_photo_$scope');
+    } else {
+      await _prefs.setString('call_bg_photo_$scope', value);
+    }
   }
 
   /// Settings › "Tap a recent call": `details` (open its page), `dial` (write the number
@@ -341,6 +355,15 @@ class DialerPrefs {
   /// call screen and in Calls. Loaded with [callEffects].
   final hideContactNumbers = ValueNotifier(false);
 
+  /// Settings › "Caller photo": `side` (beside the name, ColorOS 17) or `stacked` (above it,
+  /// centred). Loaded with [callEffects].
+  final callerLayout = ValueNotifier('side');
+
+  Future<void> setCallerLayout(String value) async {
+    callerLayout.value = value;
+    await _prefs.setString('caller_layout', value);
+  }
+
   Future<void> setCallAnimations(bool value) async {
     callAnimations.value = value;
     await _prefs.setBool('call_animations', value);
@@ -361,6 +384,8 @@ class DialerPrefs {
     if (glass == 'classic' || glass == 'soft' || glass == 'bold') callGlass.value = glass!;
     final style = await _prefs.getString('answer_style');
     if (style == 'two' || style == 'one') answerStyle.value = style!;
+    final layout = await _prefs.getString('caller_layout');
+    if (layout == 'side' || layout == 'stacked') callerLayout.value = layout!;
     final direction = await _prefs.getString('answer_direction');
     if (direction == 'up' || direction == 'down') answerDirection.value = direction!;
   }

@@ -103,10 +103,7 @@ class _InCallScreenState extends State<InCallScreen> {
         return ListenableBuilder(
           // Contacts load in late (the aurora's tint follows the caller's name), and so do the
           // caller's photo and saved background.
-          listenable: Listenable.merge([
-            ContactsRepository.instance.contacts,
-            CallBackgrounds.instance,
-          ]),
+          listenable: Listenable.merge([ContactsRepository.instance.contacts, CallBackgrounds.instance]),
           builder: (context, _) {
             final contact = call == null || call.isPrivate || call.isConference
                 ? null
@@ -115,6 +112,7 @@ class _InCallScreenState extends State<InCallScreen> {
               shown: call != null,
               dim: _keypadBlur,
               seed: call == null ? null : backdropSeed(call),
+              tones: contact == null ? null : CallBackgrounds.instance.tones(contact.id),
               background: call == null ? null : CallBackgrounds.instance.forCall(contact?.id),
               // Placing a call or connected (the same buttons, frosted under them as soon as they
               // show); an answered call stays frosted on the ended summary rather than sharpening as
@@ -348,19 +346,19 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
       child: IgnorePointer(
         child: Container(
           key: const ValueKey('answer-flight'),
-          foregroundDecoration: callGlassGlow(context, shape),
           alignment: Alignment.center,
           child: Stack(
             fit: StackFit.expand,
             alignment: Alignment.center,
             children: [
+              // The ball as it was let go, in the same raised finish.
               Opacity(
                 opacity: green,
-                child: DecoratedBox(decoration: glassBody(answerGreen, shape, flat: callFlat(context))),
+                child: DecoratedBox(decoration: raisedBody(answerGreen, shape, flat: callFlat(context))),
               ),
               Opacity(
                 opacity: red,
-                child: DecoratedBox(decoration: glassBody(endRed, shape, flat: callFlat(context))),
+                child: DecoratedBox(decoration: endPillBody(shape, flat: callFlat(context))),
               ),
               // Our hang-up glyph is the handset turned 135°, so the handset simply tips over (growing to
               // CallGlyph's hang-up size) and lands already as End's icon.
@@ -369,7 +367,8 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
                 child: CallGlyph(
                   Icons.call_rounded,
                   color: Colors.white,
-                  size: iconSize * lerpDouble(1, CallGlyph.tipGrowth, tip)!,
+                  // The ball's handset is already drawn at the hang-up glyph's size.
+                  size: iconSize * CallGlyph.tipGrowth,
                 ),
               ),
             ],
@@ -559,7 +558,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
                             Column(
                               children: [
                                 // ColorOS 17 keeps the caller at the top, left-aligned.
-                                SizedBox(height: compact ? 12 : 36),
+                                SizedBox(height: compact ? 12 : 66),
                                 header,
                                 const SizedBox(height: 16),
                                 const Spacer(),

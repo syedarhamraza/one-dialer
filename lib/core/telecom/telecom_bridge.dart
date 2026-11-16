@@ -95,11 +95,25 @@ class TelecomBridge {
   /// A .vcf file's text from the files app; null when cancelled.
   Future<String?> pickVcf() => _methods.invokeMethod<String>('pickVcf');
 
-  /// Saves the settings file where the user picks; true when saved, null when cancelled.
+  /// Back up now: writes the one backup file in the backup folder, over the last one (picking the
+  /// folder first if there is none). True when saved, false when the folder can't be written,
+  /// null when the folder pick was cancelled.
   Future<bool?> exportSettings() => _methods.invokeMethod<bool>('exportSettings');
 
-  /// Reads a settings file the user picks and restarts the app with it; false when the file isn't
-  /// one, null when cancelled. Throws `IN_CALL` during a call.
+  /// Back up & restore's state: `interval` (hours, 0 off), `path` (the backup file's full path,
+  /// null before a folder is picked), `last` (millis, 0 never) and `failed` (the last backup).
+  Future<Map<String, Object?>> getBackupStatus() async =>
+      await _methods.invokeMapMethod<String, Object?>('getBackupStatus') ?? const {};
+
+  /// Picks the backup folder (the picker opens on Documents); the new status, or null when cancelled.
+  Future<Map<String, Object?>?> chooseBackupFolder() => _methods.invokeMapMethod<String, Object?>('chooseBackupFolder');
+
+  /// Auto backup every [hours] (0 off); the new status.
+  Future<Map<String, Object?>> setAutoBackup(int hours) async =>
+      await _methods.invokeMapMethod<String, Object?>('setAutoBackup', {'hours': hours}) ?? const {};
+
+  /// Restore: reads a backup file the user picks (opening on Documents) and restarts the app with
+  /// it; false when the file isn't one, null when cancelled. Throws `IN_CALL` during a call.
   Future<bool?> importSettings() => _methods.invokeMethod<bool>('importSettings');
 
   Future<void> unlinkRawContacts(String contactId, List<int> rawIds) =>
@@ -116,7 +130,9 @@ class TelecomBridge {
   /// Each number grouped for display, and its country ("Pakistan"); nulls when it doesn't parse.
   Future<List<({String? formatted, String? location})>> describeNumbers(List<String> numbers) async {
     final raw = await _methods.invokeListMethod<Map<Object?, Object?>>('describeNumbers', {'numbers': numbers});
-    return [for (final m in raw ?? const []) (formatted: m['formatted'] as String?, location: m['location'] as String?)];
+    return [
+      for (final m in raw ?? const []) (formatted: m['formatted'] as String?, location: m['location'] as String?),
+    ];
   }
 
   /// The keypad's number grouped as it's typed ("0333 333"); digits and a leading + only.
@@ -138,7 +154,6 @@ class TelecomBridge {
   /// What incoming calls need (default dialer, notifications, full-screen, screening) plus the app version.
   Future<Map<Object?, Object?>> getCallHealth() async =>
       await _methods.invokeMapMethod<Object?, Object?>('getCallHealth') ?? const {};
-
 
   /// The visual effects level this phone starts on (`DeviceTier.kt`): `tier` (`off`, `reduced` or
   /// `full`), `source` (`soc`, `platform`, `gpu` or `ram`) and the raw `soc`, `platform`,
@@ -210,7 +225,7 @@ class TelecomBridge {
   Future<bool> exportRecording(String name, String displayName) async =>
       await _methods.invokeMethod<bool>('exportRecording', {'name': name, 'displayName': displayName}) ?? false;
 
-  /// The recorder's own settings: `sourceMode`, `boost`, `retentionDays`.
+  /// The recorder's own settings: `retentionDays`.
   Future<Map<Object?, Object?>> getRecorderSettings() async =>
       await _methods.invokeMapMethod<Object?, Object?>('getRecorderSettings') ?? const {};
 
@@ -260,6 +275,7 @@ class TelecomBridge {
 
   /// Keypad feedback tone (respects the system "Dial pad tones" setting).
   Future<void> playTone(String digit) => _methods.invokeMethod('playTone', {'digit': digit});
+
   /// Hands a keypad code (`*#06#`, `*#*#4636#*#*`) to the system; false when nothing handled it.
   Future<bool> handleSpecialCode(String code) async =>
       await _methods.invokeMethod<bool>('handleSpecialCode', {'code': code}) ?? false;

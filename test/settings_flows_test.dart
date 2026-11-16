@@ -33,7 +33,7 @@ void main() {
         'getQuickReplies' => ['Hi'],
         'getRecorder' => recorder,
         'getCallSettings' => <String, Object?>{},
-        'getRecorderSettings' => <String, Object?>{'boost': 'off', 'sourceMode': 'auto', 'retentionDays': 0},
+        'getRecorderSettings' => <String, Object?>{'retentionDays': 0},
         'listRecordings' => [
           {'name': '1762600000000_+923001234567.m4a', 'number': '+923001234567', 'startMillis': 1762600000000, 'durationMs': 65000, 'bytes': 1000},
         ],
@@ -74,7 +74,7 @@ void main() {
   });
 
   testWidgets('call recording waits for the consent notice, then lists recordings', (tester) async {
-    recorder = {'trusted': true, 'ready': false, 'accessibilityOn': true, 'micGranted': true, 'consented': false};
+    recorder = {'trusted': true, 'ready': false, 'canRecord': true, 'method': 'shell', 'consented': false};
     await open(tester, const CallRecordingScreen());
     expect(find.text('Before you record'), findsOneWidget);
     expect(find.text('Auto-record'), findsNothing);
@@ -84,8 +84,8 @@ void main() {
     await tester.tap(find.text('I understand'));
     await tester.pumpAndSettle();
     expect(telecom.any((c) => c.method == 'setCallSetting' && c.arguments['key'] == 'recordingConsent'), isTrue);
-    expect(find.text('Volume boost'), findsOneWidget);
-    expect(find.text('Off'), findsWidgets); // boost is off until chosen
+    expect(find.text('Microphone source'), findsNothing);
+    expect(find.text('Volume boost'), findsNothing);
 
     await tester.tap(find.text('Auto-record').last);
     await tester.pumpAndSettle();

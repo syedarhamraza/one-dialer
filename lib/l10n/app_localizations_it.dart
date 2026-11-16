@@ -1209,6 +1209,19 @@ class AppLocalizationsIt extends AppLocalizations {
       'Mostra solo il nome dei contatti salvati nella schermata di chiamata e in Chiamate';
 
   @override
+  String get callerPhoto => 'Foto del chiamante';
+
+  @override
+  String get callerPhotoSubtitle =>
+      'Dove appare la foto del contatto nella schermata di chiamata';
+
+  @override
+  String get callerPhotoSide => 'Accanto al nome';
+
+  @override
+  String get callerPhotoStacked => 'Sopra il nome';
+
+  @override
   String secondsCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1723,14 +1736,14 @@ class AppLocalizationsIt extends AppLocalizations {
   String get recorderApp => 'One Recorder';
 
   @override
-  String get recorderReady => 'Pronto per registrare';
+  String get recorderBothSides => 'Registra entrambe le voci delle chiamate';
 
   @override
-  String get recorderNeedsMic => 'Consenti il microfono in One Recorder';
+  String get recorderNeedsSetup => 'Configura entrambe le voci in One Recorder';
 
   @override
-  String get recorderNeedsAccessibility =>
-      'Attiva il suo servizio di accessibilità';
+  String get recorderHelperStopped =>
+      'Entrambe le voci in pausa: avvia l\'helper in One Recorder';
 
   @override
   String get recorderUntrusted =>
@@ -1853,44 +1866,6 @@ class AppLocalizationsIt extends AppLocalizations {
       'Contatti sempre esclusi dalla registrazione automatica';
 
   @override
-  String get recordingSound => 'Audio';
-
-  @override
-  String get volumeBoost => 'Amplificazione volume';
-
-  @override
-  String get volumeBoostSubtitle =>
-      'Alza la voce dell\'altra persona, che il microfono sente appena';
-
-  @override
-  String get boostOff => 'Disattivata';
-
-  @override
-  String get boostNormal => 'Normale';
-
-  @override
-  String get boostStrong => 'Forte';
-
-  @override
-  String get micSource => 'Sorgente microfono';
-
-  @override
-  String get micSourceSubtitle =>
-      'Automatica prova ciascuna alla prima chiamata e tiene la più forte';
-
-  @override
-  String get micSourceAuto => 'Automatica';
-
-  @override
-  String get micSourceRecognition => 'Riconoscimento vocale';
-
-  @override
-  String get micSourceCommunication => 'Comunicazione vocale';
-
-  @override
-  String get micSourceMic => 'Microfono';
-
-  @override
   String get storage => 'Spazio';
 
   @override
@@ -1970,7 +1945,35 @@ class AppLocalizationsIt extends AppLocalizations {
   String get callBackgroundPhoto => 'Foto';
 
   @override
-  String get callBackgroundChoosePhoto => 'Scegli foto';
+  String get callBackgroundAurora => 'Aurora';
+
+  @override
+  String get callBackgroundAuto => 'Automatico';
+
+  @override
+  String get callBackgroundAutoNote =>
+      'Automatico: ogni chiamante ha i suoi colori, dalla foto del contatto o dal nome.';
+
+  @override
+  String get callBackgroundColourNote => 'Ogni chiamata usa questo colore.';
+
+  @override
+  String get callBackgroundChangePhoto => 'Cambia foto';
+
+  @override
+  String get callBackgroundPhotoBackupNote =>
+      'Le foto sono salvate solo su questo telefono. Per conservarle dopo aver reinstallato One Dialer o su un nuovo telefono,';
+
+  @override
+  String get callBackgroundPhotoBackupLink =>
+      'esegui il backup delle impostazioni';
+
+  @override
+  String get callBackgroundSoft => 'Sfoca e scurisci';
+
+  @override
+  String get callBackgroundSoftSubtitle =>
+      'Ammorbidisce la foto dietro la chiamata';
 
   @override
   String get callBackgroundContactPhoto => 'Foto del contatto';
@@ -1991,17 +1994,68 @@ class AppLocalizationsIt extends AppLocalizations {
       'Usato per questo contatto al posto dello sfondo per tutte le chiamate.';
 
   @override
-  String get exportSettings => 'Esporta impostazioni';
+  String get backUpRestore => 'Backup e ripristino';
 
   @override
-  String get exportSettingsSubtitle =>
-      'Salva impostazioni, note e sfondi delle chiamate in un file';
+  String get backUpRestoreSubtitle =>
+      'Impostazioni, note e sfondi delle chiamate, in un file su questo telefono';
 
   @override
-  String get importSettings => 'Importa impostazioni';
+  String get backUpNow => 'Esegui backup ora';
 
   @override
-  String get importSettingsSubtitle => 'Ripristinale da un file esportato';
+  String lastBackup(String time) {
+    return 'Ultimo backup: $time';
+  }
+
+  @override
+  String get backupNever => 'Nessun backup ancora';
+
+  @override
+  String get restoreBackup => 'Ripristina';
+
+  @override
+  String get restoreBackupSubtitle =>
+      'Scegli un file di backup; l\'app File si apre su Documenti';
+
+  @override
+  String get autoBackup => 'Backup automatico';
+
+  @override
+  String get backupFrequency => 'Frequenza';
+
+  @override
+  String get backupEveryDay => 'Ogni giorno';
+
+  @override
+  String get backupEvery3Days => 'Ogni 3 giorni';
+
+  @override
+  String get backupEveryWeek => 'Ogni settimana';
+
+  @override
+  String get backupEveryMonth => 'Ogni mese';
+
+  @override
+  String get backupLocation => 'Posizione';
+
+  @override
+  String get backupLocationNone => 'Scegli una cartella; Documenti va bene';
+
+  @override
+  String get backupFailed =>
+      'L\'ultimo backup non è riuscito. Tocca Posizione per scegliere di nuovo la cartella.';
+
+  @override
+  String get backupFootnote =>
+      'Il backup contiene impostazioni, chiamata rapida, note delle chiamate e sfondi delle chiamate con le loro foto. È un unico file, sostituito a ogni backup, quindi non riempie la memoria. Il backup automatico parte quando apri One Dialer o al termine di una chiamata.';
+
+  @override
+  String get backedUp => 'Backup eseguito';
+
+  @override
+  String get couldNotBackUp =>
+      'Impossibile eseguire il backup in quella cartella';
 
   @override
   String get importSettingsTitle => 'Sostituire le impostazioni?';
@@ -2013,12 +2067,6 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get importSettingsInCall =>
       'Non puoi importare le impostazioni durante una chiamata';
-
-  @override
-  String get settingsExported => 'Impostazioni esportate';
-
-  @override
-  String get couldNotSaveSettings => 'Impossibile salvare il file';
 
   @override
   String get notASettingsFile =>

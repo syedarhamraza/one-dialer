@@ -1198,6 +1198,19 @@ class AppLocalizationsEn extends AppLocalizations {
       'Show only the name of saved contacts on the call screen and in Calls';
 
   @override
+  String get callerPhoto => 'Caller photo';
+
+  @override
+  String get callerPhotoSubtitle =>
+      'Where a contact’s photo sits on the call screen';
+
+  @override
+  String get callerPhotoSide => 'Beside the name';
+
+  @override
+  String get callerPhotoStacked => 'Above the name';
+
+  @override
   String secondsCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1706,13 +1719,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recorderApp => 'One Recorder';
 
   @override
-  String get recorderReady => 'Ready to record';
+  String get recorderBothSides => 'Records both sides of your calls';
 
   @override
-  String get recorderNeedsMic => 'Allow the microphone in One Recorder';
+  String get recorderNeedsSetup => 'Set up both sides in One Recorder';
 
   @override
-  String get recorderNeedsAccessibility => 'Turn on its accessibility service';
+  String get recorderHelperStopped =>
+      'Both sides is paused: start the helper in One Recorder';
 
   @override
   String get recorderUntrusted =>
@@ -1834,44 +1848,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get neverRecordSubtitle => 'Contacts auto-record always skips';
 
   @override
-  String get recordingSound => 'Sound';
-
-  @override
-  String get volumeBoost => 'Volume boost';
-
-  @override
-  String get volumeBoostSubtitle =>
-      'Lifts the other person\'s voice, which the mic only hears faintly';
-
-  @override
-  String get boostOff => 'Off';
-
-  @override
-  String get boostNormal => 'Normal';
-
-  @override
-  String get boostStrong => 'Strong';
-
-  @override
-  String get micSource => 'Microphone source';
-
-  @override
-  String get micSourceSubtitle =>
-      'Automatic tries each on the first call and keeps the loudest';
-
-  @override
-  String get micSourceAuto => 'Automatic';
-
-  @override
-  String get micSourceRecognition => 'Voice recognition';
-
-  @override
-  String get micSourceCommunication => 'Voice communication';
-
-  @override
-  String get micSourceMic => 'Microphone';
-
-  @override
   String get storage => 'Storage';
 
   @override
@@ -1949,7 +1925,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get callBackgroundPhoto => 'Photo';
 
   @override
-  String get callBackgroundChoosePhoto => 'Choose photo';
+  String get callBackgroundAurora => 'Aurora';
+
+  @override
+  String get callBackgroundAuto => 'Auto';
+
+  @override
+  String get callBackgroundAutoNote =>
+      'Auto: every caller gets their own colours, from their contact photo or their name.';
+
+  @override
+  String get callBackgroundColourNote => 'Every call uses this colour.';
+
+  @override
+  String get callBackgroundChangePhoto => 'Change photo';
+
+  @override
+  String get callBackgroundPhotoBackupNote =>
+      'Photos are saved only on this phone. To keep them after reinstalling One Dialer or on a new phone,';
+
+  @override
+  String get callBackgroundPhotoBackupLink => 'back up your settings';
+
+  @override
+  String get callBackgroundSoft => 'Blur & dim';
+
+  @override
+  String get callBackgroundSoftSubtitle => 'Softens the photo behind the call';
 
   @override
   String get callBackgroundContactPhoto => 'Contact\'s photo';
@@ -1970,17 +1972,67 @@ class AppLocalizationsEn extends AppLocalizations {
       'Used for this contact instead of the call background for all calls.';
 
   @override
-  String get exportSettings => 'Export settings';
+  String get backUpRestore => 'Back up & restore';
 
   @override
-  String get exportSettingsSubtitle =>
-      'Save settings, call notes and call backgrounds to a file';
+  String get backUpRestoreSubtitle =>
+      'Settings, call notes and call backgrounds, in one file on this phone';
 
   @override
-  String get importSettings => 'Import settings';
+  String get backUpNow => 'Back up now';
 
   @override
-  String get importSettingsSubtitle => 'Restore them from an exported file';
+  String lastBackup(String time) {
+    return 'Last backup: $time';
+  }
+
+  @override
+  String get backupNever => 'Not backed up yet';
+
+  @override
+  String get restoreBackup => 'Restore';
+
+  @override
+  String get restoreBackupSubtitle =>
+      'Pick a backup file; the files app opens on Documents';
+
+  @override
+  String get autoBackup => 'Auto backup';
+
+  @override
+  String get backupFrequency => 'Frequency';
+
+  @override
+  String get backupEveryDay => 'Every day';
+
+  @override
+  String get backupEvery3Days => 'Every 3 days';
+
+  @override
+  String get backupEveryWeek => 'Every week';
+
+  @override
+  String get backupEveryMonth => 'Every month';
+
+  @override
+  String get backupLocation => 'Location';
+
+  @override
+  String get backupLocationNone => 'Choose a folder; Documents is a good place';
+
+  @override
+  String get backupFailed =>
+      'The last backup failed. Tap Location to choose the folder again.';
+
+  @override
+  String get backupFootnote =>
+      'A backup holds your settings, speed dial, call notes and call backgrounds with their photos. It\'s one file, replaced by each backup, so it never fills your storage. Auto backup runs when you open One Dialer or a call ends.';
+
+  @override
+  String get backedUp => 'Backed up';
+
+  @override
+  String get couldNotBackUp => 'Couldn\'t back up to that folder';
 
   @override
   String get importSettingsTitle => 'Replace your settings?';
@@ -1992,12 +2044,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get importSettingsInCall =>
       'Settings can\'t be imported during a call';
-
-  @override
-  String get settingsExported => 'Settings exported';
-
-  @override
-  String get couldNotSaveSettings => 'Couldn\'t save the file';
 
   @override
   String get notASettingsFile => 'This isn\'t a One Dialer settings file';

@@ -258,6 +258,13 @@ class ContactsRepository {
 
   /// Shows [entries] (sorted by name) without reading the device, e.g. demo data for store screenshots.
   @visibleForTesting
+  void debugSetPhoto(String id, Uint8List photo) {
+    _thumbnails[id] = photo;
+    _thumbnailLoads[id] = Future.value(photo);
+    _fullPhotos[id] = Future.value(photo);
+  }
+
+  @visibleForTesting
   void debugSetContacts(List<DialerContact> entries) {
     allContacts.value = entries;
     _publish([

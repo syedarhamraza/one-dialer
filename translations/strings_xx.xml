@@ -19,6 +19,8 @@
     <string name="island_calling">Calling</string>
     <string name="island_on_call">On call</string>
     <string name="hang_up">Hang up</string>
+    <string name="speaker">Speaker</string>
+    <string name="speaker_off">Speaker off</string>
     <string name="missed_call">Missed call</string>
     <plurals name="missed_calls">
         <item quantity="one">%d missed call</item>

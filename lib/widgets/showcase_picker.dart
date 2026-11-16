@@ -21,12 +21,22 @@ class ShowcaseOption {
 /// the options side by side, each a little phone showing it over its label and a radio. Tapping
 /// anywhere on an option picks it. [footnote] is the grey note under the card.
 class ShowcasePicker extends StatelessWidget {
-  const ShowcasePicker({super.key, required this.value, required this.options, required this.onPick, this.footnote});
+  const ShowcasePicker({
+    super.key,
+    required this.value,
+    required this.options,
+    required this.onPick,
+    this.footnote,
+    this.enabled = true,
+  });
 
   final ValueListenable<String> value;
   final List<ShowcaseOption> options;
   final ValueChanged<String> onPick;
   final String? footnote;
+
+  /// False: shown faded and untappable (a choice made elsewhere applies).
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -36,46 +46,58 @@ class ShowcasePicker extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.fromLTRB(12, 24, 12, 20),
-            decoration: ShapeDecoration(color: context.palette.card, shape: OneUITheme.cardShape),
-            child: ValueListenableBuilder(
-              valueListenable: value,
-              builder: (context, picked, _) => Row(
-                children: [
-                  for (final o in options)
-                    Expanded(
-                      child: Semantics(
-                        selected: o.value == picked,
-                        button: true,
-                        label: o.label,
-                        excludeSemantics: true,
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () {
-                            if (o.value == picked) return;
-                            Haptics.tap();
-                            onPick(o.value);
-                          },
-                          child: Column(
-                            children: [
-                              o.preview,
-                              const SizedBox(height: 16),
-                              Text(
-                                o.label,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: o.value == picked ? accent : context.palette.textSecondary,
-                                ),
+          AnimatedOpacity(
+            opacity: enabled ? 1 : .4,
+            duration: const Duration(milliseconds: 200),
+            child: IgnorePointer(
+              ignoring: !enabled,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(12, 24, 12, 20),
+                decoration: ShapeDecoration(color: context.palette.card, shape: OneUITheme.cardShape),
+                child: ValueListenableBuilder(
+                  valueListenable: value,
+                  builder: (context, picked, _) => Row(
+                    children: [
+                      for (final o in options)
+                        Expanded(
+                          child: Semantics(
+                            selected: o.value == picked,
+                            button: true,
+                            label: o.label,
+                            excludeSemantics: true,
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                if (o.value == picked) return;
+                                Haptics.tap();
+                                onPick(o.value);
+                              },
+                              child: Column(
+                                children: [
+                                  o.preview,
+                                  const SizedBox(height: 16),
+                                  // One line, shrunk to fit: a wrapped label would push its phone and radio out of line.
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      o.label,
+                                      maxLines: 1,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: o.value == picked ? accent : context.palette.textSecondary,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  OneUIRadio(isSelected: o.value == picked, selectedColor: accent),
+                                ],
                               ),
-                              const SizedBox(height: 12),
-                              OneUIRadio(isSelected: o.value == picked, selectedColor: accent),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                ],
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -90,13 +112,16 @@ class ShowcasePicker extends StatelessWidget {
   }
 }
 
-/// A small phone with a blue-to-teal screen and a caller's name and number as grey bars;
-/// [child] draws the choice on top (a banner, the call buttons).
+/// A small phone with a blue-to-teal screen (or [background]) and a caller's name and number as
+/// grey bars, with their [avatar] beside them when given; [child] draws the choice on top (a
+/// banner, the call buttons).
 class PhonePreview extends StatelessWidget {
-  const PhonePreview({super.key, required this.child, this.showCaller = true});
+  const PhonePreview({super.key, required this.child, this.showCaller = true, this.background, this.avatar});
 
   final Widget child;
   final bool showCaller;
+  final Widget? background;
+  final Widget? avatar;
 
   static const width = 112.0, height = 232.0;
 
@@ -123,7 +148,32 @@ class PhonePreview extends StatelessWidget {
             ),
             child: Stack(
               children: [
-                if (showCaller)
+                if (background case final b?) Positioned.fill(child: b),
+                // The call screen's layout: the name on the left, the photo on the right.
+                if (showCaller && avatar != null)
+                  Positioned(
+                    top: 34,
+                    left: 10,
+                    right: 10,
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _Bar(40, 8, .6),
+                              SizedBox(height: 6),
+                              _Bar(54, 3, .4),
+                              SizedBox(height: 5),
+                              _Bar(22, 3, .4),
+                            ],
+                          ),
+                        ),
+                        SizedBox.square(dimension: 24, child: ClipOval(child: avatar)),
+                      ],
+                    ),
+                  )
+                else if (showCaller)
                   const Positioned(
                     top: 40,
                     left: 0,
@@ -180,6 +230,10 @@ class PreviewCallButton extends StatelessWidget {
     height: size,
     decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     // A light button gets a dark glyph, as ColorOS's white 1-button ball.
-    child: CallGlyph(icon, size: size * .55, color: color.computeLuminance() > .5 ? const Color(0xFF2C2C2E) : Colors.white),
+    child: CallGlyph(
+      icon,
+      size: size * .55,
+      color: color.computeLuminance() > .5 ? const Color(0xFF2C2C2E) : Colors.white,
+    ),
   );
 }
