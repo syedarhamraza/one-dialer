@@ -49,6 +49,7 @@ class _DialingSettingsScreenState extends State<DialingSettingsScreen> {
               labels: {
                 'details': l10n.openDetails,
                 'dial': l10n.writeInKeypad,
+                'call': l10n.call,
                 if (_dualSim) 'sim': l10n.chooseSimAndCall,
               },
               onPick: prefs.setRecentTap,
@@ -62,6 +63,14 @@ class _DialingSettingsScreenState extends State<DialingSettingsScreen> {
               labels: {'buttons': l10n.twoCallButtons, 'menu': l10n.askEveryTime},
               onPick: prefs.setSimChoice,
             ),
+          ],
+        ),
+        // Quick calling, all off by default.
+        OneUIGroupCard(
+          items: [
+            switchRow(l10n.rowCallButton, prefs.rowCallButton, prefs.setRowCallButton, subtitle: l10n.rowCallButtonSubtitle),
+            switchRow(l10n.swipeToCall, prefs.swipeToCall, prefs.setSwipeToCall, subtitle: l10n.swipeToCallSubtitle),
+            switchRow(l10n.doubleTapCall, prefs.doubleTapCall, prefs.setDoubleTapCall, subtitle: l10n.doubleTapCallSubtitle),
           ],
         ),
       ],

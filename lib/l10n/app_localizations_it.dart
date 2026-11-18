@@ -2111,4 +2111,25 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get vipDndHint =>
       'Con Non disturbare attivo decide Android chi squilla: consenti i contatti speciali nelle sue impostazioni di Non disturbare.';
+
+  @override
+  String get rowCallButton => 'Pulsante di chiamata sulle righe';
+
+  @override
+  String get rowCallButtonSubtitle =>
+      'Un pulsante di chiamata su ogni riga di Chiamate e Contatti';
+
+  @override
+  String get swipeToCall => 'Scorri per chiamare o scrivere';
+
+  @override
+  String get swipeToCallSubtitle =>
+      'Scorri una riga a destra per chiamare, a sinistra per scrivere';
+
+  @override
+  String get doubleTapCall => 'Doppio tocco per chiamare';
+
+  @override
+  String get doubleTapCallSubtitle =>
+      'Tocca due volte una riga in Chiamate o Contatti per chiamare; un tocco singolo attende un attimo';
 }

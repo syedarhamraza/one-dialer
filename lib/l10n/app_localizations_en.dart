@@ -2085,4 +2085,25 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get vipDndHint =>
       'With Do Not Disturb on, Android decides who rings: allow starred contacts in its Do Not Disturb settings.';
+
+  @override
+  String get rowCallButton => 'Call button on rows';
+
+  @override
+  String get rowCallButtonSubtitle =>
+      'A call button on every row in Calls and Contacts';
+
+  @override
+  String get swipeToCall => 'Swipe to call or message';
+
+  @override
+  String get swipeToCallSubtitle =>
+      'Swipe a row right to call, left to message';
+
+  @override
+  String get doubleTapCall => 'Double-tap to call';
+
+  @override
+  String get doubleTapCallSubtitle =>
+      'Double-tap a row in Calls or Contacts to call; a single tap waits a moment';
 }

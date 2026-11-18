@@ -21,6 +21,7 @@ import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_status_bar_scrim.dart';
 import '../../widgets/round_header_controls.dart';
 import '../../widgets/place_call.dart';
+import '../../widgets/swipe_action.dart';
 import '../in_call/call_controls.dart';
 import '../keypad/keypad_screen.dart';
 import '../recordings/recordings_screen.dart';
@@ -278,6 +279,9 @@ class _RecentsScreenState extends State<RecentsScreen> {
           ContactsRepository.instance.contacts,
           BlockingRepository.instance.numbers,
           DialerPrefs.instance.hideContactNumbers, // rows read it directly
+          DialerPrefs.instance.rowCallButton,
+          DialerPrefs.instance.swipeToCall,
+          DialerPrefs.instance.doubleTapCall,
         ]),
         builder: (context, _) => _buildList(context),
       ),
@@ -476,18 +480,23 @@ class _RecentsScreenState extends State<RecentsScreen> {
     final call = group.latest;
     final day = dayLabel(context.l10n, call.date, now);
     void details() => openCallDetails(context, call);
+    final prefs = DialerPrefs.instance;
+    final callable = !call.isPrivate && call.number.isNotEmpty && !call.isApp;
+    void callNow(BuildContext row) => placeCall(context, call.number, anchorContext: row);
     // What a tap does is the Settings choice (DialerPrefs.recentTap): open the details page,
-    // write the number in the keypad so the call is one more, deliberate tap, or (dual SIM)
-    // pick a SIM from our menu and call.
+    // write the number in the keypad so the call is one more, deliberate tap, call it, or
+    // (dual SIM) pick a SIM from our menu and call.
     void tap(BuildContext row) {
       if (_selected != null) return _toggle(group);
       if (call.isApp) {
         showAppCallBack(context, call, anchorContext: row);
         return;
       }
-      final choice = DialerPrefs.instance.recentTap.value;
-      final callable = !call.isPrivate && call.number.isNotEmpty;
-      if (choice == 'sim' && callable && _sims.length > 1) {
+      final choice = prefs.recentTap.value;
+      if (choice == 'call' && callable) {
+        widget.keypadOpen?.value = false;
+        callNow(row);
+      } else if (choice == 'sim' && callable && _sims.length > 1) {
         placeCall(context, call.number, chooseSim: true, anchorContext: row);
       } else if (choice == 'dial' && callable && widget.dialInput != null) {
         widget.dialInput!.value = call.number;
@@ -504,7 +513,11 @@ class _RecentsScreenState extends State<RecentsScreen> {
         if (i > 0) Divider(height: 1, indent: 76, color: context.palette.divider),
         Builder(
           // The SIM menu pops from this row.
-          builder: (row) => _CallRow(
+          builder: (row) => _swipe(
+            enabled: prefs.swipeToCall.value && callable && _selected == null,
+            onCall: () => callNow(row),
+            onMessage: () => TelecomBridge.instance.sendSms(call.number),
+            child: _CallRow(
             group: group,
             simBadge: _simBadge(call.simId),
             note: _noteFor(group),
@@ -520,17 +533,26 @@ class _RecentsScreenState extends State<RecentsScreen> {
               builder: (context, _, _) => SelectHighlight(selected: _selected?.contains(call.id) ?? false),
             ),
             onTap: () => tap(row),
+            // Null keeps single taps instant; double-tap makes every tap wait a moment.
+            onDoubleTap: prefs.doubleTapCall.value && callable && _selected == null ? () => callNow(row) : null,
             onInfo: details,
+            // The call button takes the info button's place, unless a tap already calls.
+            onCall: prefs.rowCallButton.value && callable && prefs.recentTap.value != 'call' ? () => callNow(row) : null,
             onLongPress: () {
               HapticFeedback.mediumImpact();
               _toggle(group);
             },
+          ),
           ),
         ),
       ],
     );
   }
 }
+
+/// [SwipeAction] around [child] only when [enabled], so rows stay as they were with it off.
+Widget _swipe({required bool enabled, required VoidCallback onCall, required VoidCallback onMessage, required Widget child}) =>
+    enabled ? SwipeAction(onCall: onCall, onMessage: onMessage, child: child) : child;
 
 /// The Calls header, one set of glass controls that morph between two states
 /// instead of swapping:
@@ -768,7 +790,9 @@ class _CallRow extends StatelessWidget {
     required this.selectMark,
     required this.highlight,
     required this.onTap,
+    this.onDoubleTap,
     required this.onInfo,
+    this.onCall,
     required this.onLongPress,
   });
 
@@ -783,6 +807,7 @@ class _CallRow extends StatelessWidget {
   final Widget selectMark, highlight;
   final VoidCallback onTap;
   final VoidCallback onInfo;
+  final VoidCallback? onDoubleTap, onCall;
   final VoidCallback onLongPress;
 
   @override
@@ -792,6 +817,7 @@ class _CallRow extends StatelessWidget {
     final count = group.calls.length;
     final row = InkWell(
       onTap: onTap,
+      onDoubleTap: onDoubleTap,
       onLongPress: onLongPress,
       splashColor: context.palette.textPrimary.withValues(alpha: 0.06),
       highlightColor: context.palette.textPrimary.withValues(alpha: 0.03),
@@ -881,12 +907,18 @@ class _CallRow extends StatelessWidget {
                         child: Transform.scale(scale: t, child: child),
                       ),
                     ),
-              child: IconButton(
-                tooltip: context.l10n.callDetails,
-                onPressed: selecting ? null : onInfo,
-                // Light like the time beside it.
-                icon: Icon(CupertinoIcons.info, size: 24, color: context.palette.textSecondary),
-              ),
+              child: onCall != null
+                  ? IconButton(
+                      tooltip: context.l10n.call,
+                      onPressed: selecting ? null : onCall,
+                      icon: const Icon(Icons.call_rounded, size: 24, color: answerGreen),
+                    )
+                  : IconButton(
+                      tooltip: context.l10n.callDetails,
+                      onPressed: selecting ? null : onInfo,
+                      // Light like the time beside it.
+                      icon: Icon(CupertinoIcons.info, size: 24, color: context.palette.textSecondary),
+                    ),
             ),
             selectMark,
           ],
