@@ -76,6 +76,12 @@ void main() {
     expect(days.single.$2.length, 2);
   });
 
+  test('5G voice calls read their VoNR mark', () {
+    final entry = CallLogEntry.fromMap({'id': 1, 'number': '0300', 'type': 'outgoing', 'date': 0, 'volte': true, 'vonr': true});
+    expect((entry.isVolte, entry.isVonr), (true, true));
+    expect(CallLogEntry.fromMap({'id': 1, 'date': 0}).isVonr, false);
+  });
+
   test('day labels', () {
     expect(dayLabel(l10n, DateTime(2026, 10, 17), now), 'Today');
     expect(dayLabel(l10n, DateTime(2026, 10, 16), now), 'Yesterday');

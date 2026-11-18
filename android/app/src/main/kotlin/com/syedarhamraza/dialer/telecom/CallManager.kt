@@ -6,6 +6,8 @@ import android.os.Looper
 import android.telecom.Call
 import android.telecom.CallAudioState
 import android.telecom.DisconnectCause
+import android.telecom.TelecomManager
+import android.telephony.TelephonyManager
 import java.util.concurrent.CopyOnWriteArraySet
 
 /**
@@ -31,12 +33,21 @@ object CallManager {
             notifyChanged()
         }
 
-        override fun onDetailsChanged(call: Call, details: Call.Details) = notifyChanged()
+        override fun onDetailsChanged(call: Call, details: Call.Details) {
+            if (isVonr(details)) vonr += call
+            notifyChanged()
+        }
         override fun onChildrenChanged(call: Call, children: List<Call>) = notifyChanged()
 
         // Telecom says which calls can merge here, often after the second call connects.
         override fun onConferenceableCallsChanged(call: Call, conferenceableCalls: List<Call>) = notifyChanged()
     }
+
+    /** Calls seen on 5G voice (VoNR) at some point; the call log only marks them from Android 17. */
+    private val vonr = mutableSetOf<Call>()
+
+    private fun isVonr(details: Call.Details) =
+        details.extras?.getInt(TelecomManager.EXTRA_CALL_NETWORK_TYPE, -1) == TelephonyManager.NETWORK_TYPE_NR
 
     val hasCalls: Boolean get() = calls.isNotEmpty()
 
@@ -62,6 +73,7 @@ object CallManager {
 
     fun onCallRemoved(call: Call) {
         call.unregisterCallback(callback)
+        if (vonr.remove(call) || isVonr(call.details)) service?.let { CallLogSource.rememberVonr(it, call.details.creationTimeMillis) }
         lastState.remove(call)
         val id = ids.remove(call)?.also { calls.remove(it) }
         if (id != null && calls.isEmpty()) {

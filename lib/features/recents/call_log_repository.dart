@@ -78,7 +78,10 @@ class CallLogRepository {
           x.isNew != y.isNew ||
           x.app != y.app ||
           x.appPackage != y.appPackage ||
-          x.isVideo != y.isVideo) {
+          x.isVideo != y.isVideo ||
+          x.isHd != y.isHd ||
+          x.isVolte != y.isVolte ||
+          x.isVonr != y.isVonr) {
         return false;
       }
     }

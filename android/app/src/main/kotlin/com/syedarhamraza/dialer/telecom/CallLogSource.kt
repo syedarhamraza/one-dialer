@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.CallLog.Calls
 import android.telecom.TelecomManager
+import kotlin.math.abs
 
 /** Reads and edits the system call log (needs READ/WRITE_CALL_LOG, granted with the dialer role). */
 object CallLogSource {
@@ -91,6 +92,20 @@ object CallLogSource {
         edit.apply()
     }
 
+    private const val VONR_FILE = "vonr_calls"
+
+    /**
+     * Notes that the call created at [createdAt] went over VoNR: before Android 17 the call log
+     * has no VoNR bit (and before it, OEMs don't set it), so [query] matches these by time.
+     */
+    fun rememberVonr(context: Context, createdAt: Long) {
+        val prefs = context.getSharedPreferences(VONR_FILE, Context.MODE_PRIVATE)
+        val edit = prefs.edit().putLong("$createdAt", createdAt)
+        // shortcut: keeps the newest 500 (the log's LIMIT); older rows lose the mark, fine for a badge.
+        prefs.all.keys.mapNotNull { it.toLongOrNull() }.sortedDescending().drop(LIMIT - 1).forEach { edit.remove("$it") }
+        edit.apply()
+    }
+
     /** Newest first. `simId` matches the ids `CallBridge.getSims` returns. */
     fun query(context: Context): List<Map<String, Any?>> {
         fixBlocked(context)
@@ -106,6 +121,7 @@ object CallLogSource {
         val uri = readUri
         val ordinary = if (uri == Calls.CONTENT_URI) null else ordinaryIds(context)
         val labels = mutableMapOf<String, String?>()
+        val vonrTimes = context.getSharedPreferences(VONR_FILE, Context.MODE_PRIVATE).all.keys.mapNotNull { it.toLongOrNull() }
         context.contentResolver.query(uri, PROJECTION, args, null)?.use { c ->
             while (c.moveToNext()) {
                 val component = c.getString(6)
@@ -135,6 +151,8 @@ object CallLogSource {
                     // older phones just never set the bits.
                     "hd" to (c.getInt(10) and 0x4 != 0),
                     "volte" to (c.getInt(10) and 0x40 != 0),
+                    // FEATURES_VONR (API 37) by value, or seen live on 5G voice (Telecom logs the call's creation time).
+                    "vonr" to (c.getInt(10) and 0x100 != 0 || vonrTimes.any { abs(it - c.getLong(4)) < 5_000 }),
                     // Uninstalled apps keep the package name as their label.
                     "appPackage" to pkg,
                     "app" to (app ?: pkg),
