@@ -2052,4 +2052,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String endHeldCall(String name) {
     return 'End call with $name';
   }
+
+  @override
+  String get answerFromBanner => 'Answering from the banner';
+
+  @override
+  String get answerFromBannerSubtitle =>
+      'What Answer on the incoming call banner does while the phone is unlocked';
+
+  @override
+  String get stayInNotification => 'Stay in the notification';
+
+  @override
+  String get openCallScreen => 'Open call screen';
 }

@@ -2076,4 +2076,17 @@ class AppLocalizationsIt extends AppLocalizations {
   String endHeldCall(String name) {
     return 'Termina la chiamata con $name';
   }
+
+  @override
+  String get answerFromBanner => 'Risposta dal banner';
+
+  @override
+  String get answerFromBannerSubtitle =>
+      'Cosa fa Rispondi sul banner della chiamata in arrivo con il telefono sbloccato';
+
+  @override
+  String get stayInNotification => 'Resta nella notifica';
+
+  @override
+  String get openCallScreen => 'Apri schermata chiamata';
 }

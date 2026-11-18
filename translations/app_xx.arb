@@ -588,5 +588,9 @@
   "importSettingsMessage": "Your settings, speed dial, call notes and call backgrounds are replaced by the ones in the file. One Dialer then restarts.",
   "importSettingsInCall": "Settings can't be imported during a call",
   "notASettingsFile": "This isn't a One Dialer settings file",
-  "endHeldCall": "End call with {name}"
+  "endHeldCall": "End call with {name}",
+  "answerFromBanner": "Answering from the banner",
+  "answerFromBannerSubtitle": "What Answer on the incoming call banner does while the phone is unlocked",
+  "stayInNotification": "Stay in the notification",
+  "openCallScreen": "Open call screen"
 }

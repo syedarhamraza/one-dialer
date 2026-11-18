@@ -588,5 +588,9 @@
   "importSettingsMessage": "Impostazioni, chiamata rapida, note e sfondi delle chiamate vengono sostituiti da quelli del file. Poi One Dialer si riavvia.",
   "importSettingsInCall": "Non puoi importare le impostazioni durante una chiamata",
   "notASettingsFile": "Questo non è un file di impostazioni di One Dialer",
-  "endHeldCall": "Termina la chiamata con {name}"
+  "endHeldCall": "Termina la chiamata con {name}",
+  "answerFromBanner": "Risposta dal banner",
+  "answerFromBannerSubtitle": "Cosa fa Rispondi sul banner della chiamata in arrivo con il telefono sbloccato",
+  "stayInNotification": "Resta nella notifica",
+  "openCallScreen": "Apri schermata chiamata"
 }

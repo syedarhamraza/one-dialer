@@ -5,9 +5,11 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.app.Service
 import android.app.Person
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.BitmapShader
@@ -43,6 +45,9 @@ object CallNotifications {
     /** Whether the ringing notification was last posted without its pop-up for Full screen. */
     private var postedForScreen = false
 
+    /** Whether it was last posted while locked, when Answer opens the call screen. */
+    private var postedLocked = false
+
     /** [screenOpening]: Settings › Incoming call reminders › Full screen is opening the call screen. */
     fun showIncoming(context: Context, callId: String, call: Call, screenOpening: Boolean = false) {
         postedForScreen = screenOpening
@@ -53,6 +58,7 @@ object CallNotifications {
         val unlocked = context.getSystemService(PowerManager::class.java).isInteractive &&
             !context.getSystemService(KeyguardManager::class.java).isKeyguardLocked
         val island = vivoIsland && unlocked
+        postedLocked = !unlocked
         val quiet = screenOpening || island || InCallActivity.isFullScreen
         val channel = if (quiet) CHANNEL_INCOMING_QUIET else CHANNEL_INCOMING
         ensureChannel(
@@ -75,7 +81,9 @@ object CallNotifications {
         )
         // Unlocked, answering from the banner keeps you in what you were doing (a game, a video):
         // the ongoing notification carries the call and a tap on it opens the call screen.
-        val answer = if (unlocked && !screenOpening) {
+        // Settings › Incoming call reminders › Answering from the banner can open the call screen instead.
+        val stayInBanner = CallPrefs.read(context)["answerOpens"] != "screen"
+        val answer = if (unlocked && !screenOpening && stayInBanner) {
             CallActionReceiver.pendingIntent(context, CallActionReceiver.ACTION_ANSWER_IN_ISLAND, callId)
         } else {
             CallActionReceiver.answerIntent(context, callId)
@@ -147,6 +155,16 @@ object CallNotifications {
         if (!context.getSystemService(PowerManager::class.java).isInteractive ||
             context.getSystemService(KeyguardManager::class.java).isKeyguardLocked
         ) return
+        val (id, call) = CallManager.all().firstOrNull { CallManager.stateOf(it.second) == Call.STATE_RINGING } ?: return
+        showIncoming(context, id, call)
+    }
+
+    /**
+     * Unlocked while a call rings: the notification posted while locked has the call-screen
+     * Answer; repost it so Answer from the banner stays in the banner (Settings permitting).
+     */
+    fun repostAfterUnlock(context: Context) {
+        if (!postedLocked || postedForScreen || InCallActivity.isFullScreen) return
         val (id, call) = CallManager.all().firstOrNull { CallManager.stateOf(it.second) == Call.STATE_RINGING } ?: return
         showIncoming(context, id, call)
     }
@@ -262,7 +280,8 @@ object CallNotifications {
         }
         val builder = Notification.Builder(context, CHANNEL_ONGOING)
             // vivo's call island shows this as-is: the same green glyph as the incoming island.
-            .setSmallIcon(R.drawable.island_phone)
+            // Elsewhere it's the status bar icon, which draws only the alpha: the colour PNG was a blank.
+            .setSmallIcon(if (vivoIsland) R.drawable.island_phone else R.drawable.ic_stat_call)
             .setColor(ANSWER_GREEN)
             .setContentTitle(caller)
             .setContentText(status)
@@ -377,7 +396,14 @@ object CallNotifications {
                 )
             )
         }
-        manager.notify(ID_ONGOING, builder.build())
+        val notification = builder.build()
+        // A phone-call foreground service, as Google's dialer: CallStyle then needs no full-screen
+        // intent permission, and skins (realme, OnePlus) keep it on top instead of folding it away.
+        val service = CallManager.service
+        val foreground = service != null && runCatching {
+            service.startForeground(ID_ONGOING, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL)
+        }.isSuccess
+        if (!foreground) manager.notify(ID_ONGOING, notification)
     }
 
     /** The call the ongoing notification describes, or null when none qualifies. */
@@ -388,6 +414,7 @@ object CallNotifications {
     private var islandKey: String? = null
 
     private fun removeOngoing(manager: NotificationManager) {
+        CallManager.service?.stopForeground(Service.STOP_FOREGROUND_REMOVE)
         manager.cancel(ID_ONGOING)
         manager.cancel("VIVO_SUPERX_TAG", ID_ONGOING) // vivo's tag for ending an atomic notification
         islandKey = null

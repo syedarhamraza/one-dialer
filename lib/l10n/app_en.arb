@@ -1014,5 +1014,9 @@
         "type": "String"
       }
     }
-  }
+  },
+  "answerFromBanner": "Answering from the banner",
+  "answerFromBannerSubtitle": "What Answer on the incoming call banner does while the phone is unlocked",
+  "stayInNotification": "Stay in the notification",
+  "openCallScreen": "Open call screen"
 }

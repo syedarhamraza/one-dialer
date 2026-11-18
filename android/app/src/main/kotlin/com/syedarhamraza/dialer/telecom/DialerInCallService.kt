@@ -40,6 +40,12 @@ class DialerInCallService : InCallService() {
         RecorderCompanion.onCallsChanged(this)
     }
 
+    /** A call that rang while locked gets the unlocked banner's Answer once the phone unlocks. */
+    private val unlocked = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: android.content.Context, intent: android.content.Intent) =
+            CallNotifications.repostAfterUnlock(this@DialerInCallService)
+    }
+
     override fun onCreate() {
         super.onCreate()
         CallManager.service = this
@@ -48,6 +54,9 @@ class DialerInCallService : InCallService() {
         FlutterInjector.instance().flutterLoader().startInitialization(applicationContext)
         CallManager.addListener(onCallsChanged)
         RecorderCompanion.watch(this)
+        val unlock = android.content.IntentFilter(android.content.Intent.ACTION_USER_PRESENT)
+        if (android.os.Build.VERSION.SDK_INT >= 33) registerReceiver(unlocked, unlock, RECEIVER_NOT_EXPORTED)
+        else registerReceiver(unlocked, unlock)
         val power = getSystemService(PowerManager::class.java)
         if (power.isWakeLockLevelSupported(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK)) {
             proximityLock = power.newWakeLock(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK, "dialer:proximity")
@@ -61,6 +70,7 @@ class DialerInCallService : InCallService() {
         ttsThread.shutdown()
         CallManager.removeListener(onCallsChanged)
         RecorderCompanion.unwatch(this)
+        runCatching { unregisterReceiver(unlocked) }
         CallManager.service = null
         CallNotifications.cancelIncoming(this)
         CallNotifications.cancelOngoing(this)
