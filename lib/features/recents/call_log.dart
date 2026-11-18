@@ -23,6 +23,7 @@ class CallLogEntry {
     this.isVideo = false,
     this.isHd = false,
     this.isVolte = false,
+    this.isVonr = false,
   });
 
   factory CallLogEntry.fromMap(Map<Object?, Object?> map) {
@@ -42,14 +43,15 @@ class CallLogEntry {
       isVideo: map['video'] as bool? ?? false,
       isHd: map['hd'] as bool? ?? false,
       isVolte: map['volte'] as bool? ?? false,
+      isVonr: map['vonr'] as bool? ?? false,
     );
   }
 
   final int id;
   final String number;
 
-  /// HD voice, and carried over VoLTE (the history row's badges).
-  final bool isHd, isVolte;
+  /// HD voice, and carried over VoLTE or 5G voice (VoNR) (the history row's badges).
+  final bool isHd, isVolte, isVonr;
 
   /// The name Telecom cached when the call was logged; prefer the live contact name.
   final String? name;

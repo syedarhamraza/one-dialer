@@ -865,7 +865,7 @@ class ContactCallLogRow extends StatelessWidget {
               CallTypeIcon(type: c.type, size: 15),
               const SizedBox(width: 6),
               if (badge != null) ...[SimBadge(label: badge), const SizedBox(width: 6)],
-              if (c.isVolte) ...[_VolteMark(color: grey), const SizedBox(width: 6)],
+              if (c.isVonr || c.isVolte) ...[_VolteMark(color: grey, nr: c.isVonr), const SizedBox(width: 6)],
               if (c.isHd) ...[_HdMark(color: grey), const SizedBox(width: 6)],
               Flexible(
                 child: Text(
@@ -893,11 +893,12 @@ class ContactCallLogRow extends StatelessWidget {
   }
 }
 
-/// The history's VoLTE mark: "Vo" over "LTE", tiny and grey.
+/// The history's VoLTE mark: "Vo" over "LTE" (or "NR" for 5G voice), tiny and grey.
 class _VolteMark extends StatelessWidget {
-  const _VolteMark({required this.color});
+  const _VolteMark({required this.color, this.nr = false});
 
   final Color color;
+  final bool nr;
 
   @override
   Widget build(BuildContext context) {
@@ -907,7 +908,7 @@ class _VolteMark extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text('Vo', style: style),
-          Text('LTE', style: style),
+          Text(nr ? 'NR' : 'LTE', style: style),
         ],
       ),
     );
