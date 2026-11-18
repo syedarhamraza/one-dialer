@@ -18,9 +18,10 @@ void main() {
     await initializeDateFormatting('it');
   });
 
-  test('consecutive same-number calls on a day merge; missed stays separate', () {
+  test("a caller's calls that day share one row: any format, missed or not, adjacent or not", () {
     final days = groupByDay([
-      call(5, '+92 300 1234567', DateTime(2026, 10, 17, 11)),
+      call(6, '+92 300 1234567', DateTime(2026, 10, 17, 11)),
+      call(5, '0301', DateTime(2026, 10, 17, 10, 30)), // someone else in between
       call(4, '03001234567', DateTime(2026, 10, 17, 10)), // same number, local format
       call(3, '03001234567', DateTime(2026, 10, 17, 9), type: CallType.missed),
       call(2, '0301', DateTime(2026, 10, 16, 9)),
@@ -32,11 +33,22 @@ void main() {
     expect(
       [for (final g in days[0].$2) g.calls.map((c) => c.id).toList()],
       [
-        [5, 4],
-        [3],
+        [6, 4, 3],
+        [5],
       ],
     );
-    expect(days[1].$2.single.calls.length, 2);
+    expect(days[1].$2.single.calls.length, 2); // a new day starts new rows
+  });
+
+  test("keyOf merges a contact's different numbers", () {
+    final days = groupByDay(
+      [
+        call(2, '03001234567', DateTime(2026, 10, 17, 11)),
+        call(1, '0421234567', DateTime(2026, 10, 17, 10)),
+      ],
+      keyOf: (_) => 'contact:1',
+    );
+    expect(days.single.$2.single.calls.map((c) => c.id), [2, 1]);
   });
 
   test('private calls never merge', () {

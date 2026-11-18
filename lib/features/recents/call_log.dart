@@ -95,25 +95,26 @@ String numberKey(String number) {
 
 DateTime _day(DateTime d) => DateTime(d.year, d.month, d.day);
 
-/// Groups newest-first [calls] into days (newest first), each holding [CallGroup]s.
-List<(DateTime, List<CallGroup>)> groupByDay(List<CallLogEntry> calls) {
+/// Groups newest-first [calls] into days (newest first), each holding one [CallGroup] per caller:
+/// every call to the same [keyOf] (default [numberKey]) that day, missed or not, adjacent or not.
+/// A group sits where its newest call is. Private calls and an app's calls never merge with others.
+List<(DateTime, List<CallGroup>)> groupByDay(List<CallLogEntry> calls, {String Function(CallLogEntry)? keyOf}) {
   final days = <(DateTime, List<CallGroup>)>[];
+  var byCaller = <String, CallGroup>{};
   for (final call in calls) {
     final day = _day(call.date);
-    if (days.isEmpty || days.last.$1 != day) days.add((day, []));
-    final groups = days.last.$2;
-    final last = groups.isEmpty ? null : groups.last.latest;
-    final sameRow =
-        last != null &&
-        !call.isPrivate &&
-        !last.isPrivate &&
-        numberKey(last.number) == numberKey(call.number) &&
-        last.appPackage == call.appPackage &&
-        last.isMissed == call.isMissed;
-    if (sameRow) {
-      groups.last.calls.add(call);
+    if (days.isEmpty || days.last.$1 != day) {
+      days.add((day, []));
+      byCaller = {};
+    }
+    final key = call.isPrivate ? null : '${(keyOf ?? (c) => numberKey(c.number))(call)}|${call.appPackage}';
+    final group = key == null ? null : byCaller[key];
+    if (group != null) {
+      group.calls.add(call);
     } else {
-      groups.add(CallGroup([call]));
+      final created = CallGroup([call]);
+      days.last.$2.add(created);
+      if (key != null) byCaller[key] = created;
     }
   }
   return days;
