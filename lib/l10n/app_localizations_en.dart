@@ -2106,4 +2106,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get doubleTapCallSubtitle =>
       'Double-tap a row in Calls or Contacts to call; a single tap waits a moment';
+
+  @override
+  String get answerFromBanner => 'Answering from the banner';
+
+  @override
+  String get answerFromBannerSubtitle =>
+      'What Answer on the incoming call banner does while the phone is unlocked';
+
+  @override
+  String get stayInNotification => 'Stay in the notification';
+
+  @override
+  String get openCallScreen => 'Open call screen';
 }

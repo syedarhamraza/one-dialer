@@ -3727,6 +3727,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Double-tap a row in Calls or Contacts to call; a single tap waits a moment'**
   String get doubleTapCallSubtitle;
+
+  /// No description provided for @answerFromBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Answering from the banner'**
+  String get answerFromBanner;
+
+  /// No description provided for @answerFromBannerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What Answer on the incoming call banner does while the phone is unlocked'**
+  String get answerFromBannerSubtitle;
+
+  /// No description provided for @stayInNotification.
+  ///
+  /// In en, this message translates to:
+  /// **'Stay in the notification'**
+  String get stayInNotification;
+
+  /// No description provided for @openCallScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open call screen'**
+  String get openCallScreen;
 }
 
 class _AppLocalizationsDelegate

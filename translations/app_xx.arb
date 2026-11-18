@@ -604,5 +604,9 @@
   "swipeToCall": "Swipe to call or message",
   "swipeToCallSubtitle": "Swipe a row right to call, left to message",
   "doubleTapCall": "Double-tap to call",
-  "doubleTapCallSubtitle": "Double-tap a row in Calls or Contacts to call; a single tap waits a moment"
+  "doubleTapCallSubtitle": "Double-tap a row in Calls or Contacts to call; a single tap waits a moment",
+  "answerFromBanner": "Answering from the banner",
+  "answerFromBannerSubtitle": "What Answer on the incoming call banner does while the phone is unlocked",
+  "stayInNotification": "Stay in the notification",
+  "openCallScreen": "Open call screen"
 }

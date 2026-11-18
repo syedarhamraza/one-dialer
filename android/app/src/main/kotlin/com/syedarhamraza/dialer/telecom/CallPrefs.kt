@@ -14,6 +14,7 @@ object CallPrefs {
     /** Every setting with its default; the Dart side reads and writes these keys. */
     val DEFAULTS: Map<String, Any> = mapOf(
         "incomingStyle" to "banner", // or "full": the call screen opens while unlocked
+        "answerOpens" to "banner", // or "screen": Answer on the unlocked banner opens the call screen
         "vibrateAnswerEnd" to true,
         "speakerDefault" to false,
         "autoAnswer" to false,

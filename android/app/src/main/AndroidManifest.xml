@@ -19,8 +19,14 @@
     <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
     <!-- Proximity sensor turns the screen off at the ear during calls -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+<<<<<<< HEAD
     <!-- VIP calls ring on Silent: leaving Silent is a Do Not Disturb change (the user grants access). -->
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+=======
+    <!-- The ongoing-call notification is a phone-call foreground service (allowed to the default dialer). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
+>>>>>>> fix/call-notification-banner-and-icons
     <!-- No ads: drop the Advertising ID permissions Firebase merges in -->
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
     <uses-permission android:name="android.permission.ACCESS_ADSERVICES_AD_ID" tools:node="remove" />
@@ -115,6 +121,7 @@
         <!-- Telecom binds to this for every call once the app holds the dialer role -->
         <service
             android:name=".telecom.DialerInCallService"
+            android:foregroundServiceType="phoneCall"
             android:permission="android.permission.BIND_INCALL_SERVICE"
             android:exported="true">
             <meta-data

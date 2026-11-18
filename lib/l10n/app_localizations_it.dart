@@ -2132,4 +2132,17 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get doubleTapCallSubtitle =>
       'Tocca due volte una riga in Chiamate o Contatti per chiamare; un tocco singolo attende un attimo';
+
+  @override
+  String get answerFromBanner => 'Risposta dal banner';
+
+  @override
+  String get answerFromBannerSubtitle =>
+      'Cosa fa Rispondi sul banner della chiamata in arrivo con il telefono sbloccato';
+
+  @override
+  String get stayInNotification => 'Resta nella notifica';
+
+  @override
+  String get openCallScreen => 'Apri schermata chiamata';
 }
