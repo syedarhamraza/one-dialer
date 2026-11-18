@@ -36,6 +36,8 @@ class DialerScreeningService : CallScreeningService() {
             CallLogSource.rememberBlocked(this, number)
         }
         respondToCall(details, response.build())
+        // Telecom rings once screening answers; a VIP's ringer goes up before that.
+        if (incoming && !block) runCatching { VipRing.onIncoming(this, number) }
         // Telecom writes the log entry just after; fix it then too (also done on every read).
         val app = applicationContext
         android.os.Handler(mainLooper).postDelayed({ Thread { CallLogSource.fixBlocked(app) }.start() }, 3_000)

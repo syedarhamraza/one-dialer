@@ -1014,5 +1014,15 @@
         "type": "String"
       }
     }
-  }
+  },
+  "vipCalls": "VIP calls",
+  "vipCallsSubtitle": "Ring even on Silent or Vibrate",
+  "vipRing": "Ring on Silent for VIPs",
+  "vipRingSubtitle": "Calls from your VIPs ring even when the phone is on Silent or Vibrate, then it goes back",
+  "vipFavourites": "Include favourites",
+  "vipFavouritesSubtitle": "Your starred contacts count as VIPs",
+  "vipContacts": "VIP contacts",
+  "vipNeedsAccess": "VIP calls can't ring on Silent",
+  "vipNeedsAccessSubtitle": "Allow call screening and Do Not Disturb access",
+  "vipDndHint": "With Do Not Disturb on, Android decides who rings: allow starred contacts in its Do Not Disturb settings."
 }

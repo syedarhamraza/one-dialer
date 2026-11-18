@@ -3631,6 +3631,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'End call with {name}'**
   String endHeldCall(String name);
+
+  /// No description provided for @vipCalls.
+  ///
+  /// In en, this message translates to:
+  /// **'VIP calls'**
+  String get vipCalls;
+
+  /// No description provided for @vipCallsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ring even on Silent or Vibrate'**
+  String get vipCallsSubtitle;
+
+  /// No description provided for @vipRing.
+  ///
+  /// In en, this message translates to:
+  /// **'Ring on Silent for VIPs'**
+  String get vipRing;
+
+  /// No description provided for @vipRingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls from your VIPs ring even when the phone is on Silent or Vibrate, then it goes back'**
+  String get vipRingSubtitle;
+
+  /// No description provided for @vipFavourites.
+  ///
+  /// In en, this message translates to:
+  /// **'Include favourites'**
+  String get vipFavourites;
+
+  /// No description provided for @vipFavouritesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your starred contacts count as VIPs'**
+  String get vipFavouritesSubtitle;
+
+  /// No description provided for @vipContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'VIP contacts'**
+  String get vipContacts;
+
+  /// No description provided for @vipNeedsAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'VIP calls can\'t ring on Silent'**
+  String get vipNeedsAccess;
+
+  /// No description provided for @vipNeedsAccessSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow call screening and Do Not Disturb access'**
+  String get vipNeedsAccessSubtitle;
+
+  /// No description provided for @vipDndHint.
+  ///
+  /// In en, this message translates to:
+  /// **'With Do Not Disturb on, Android decides who rings: allow starred contacts in its Do Not Disturb settings.'**
+  String get vipDndHint;
 }
 
 class _AppLocalizationsDelegate

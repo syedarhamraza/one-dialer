@@ -2052,4 +2052,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String endHeldCall(String name) {
     return 'End call with $name';
   }
+
+  @override
+  String get vipCalls => 'VIP calls';
+
+  @override
+  String get vipCallsSubtitle => 'Ring even on Silent or Vibrate';
+
+  @override
+  String get vipRing => 'Ring on Silent for VIPs';
+
+  @override
+  String get vipRingSubtitle =>
+      'Calls from your VIPs ring even when the phone is on Silent or Vibrate, then it goes back';
+
+  @override
+  String get vipFavourites => 'Include favourites';
+
+  @override
+  String get vipFavouritesSubtitle => 'Your starred contacts count as VIPs';
+
+  @override
+  String get vipContacts => 'VIP contacts';
+
+  @override
+  String get vipNeedsAccess => 'VIP calls can\'t ring on Silent';
+
+  @override
+  String get vipNeedsAccessSubtitle =>
+      'Allow call screening and Do Not Disturb access';
+
+  @override
+  String get vipDndHint =>
+      'With Do Not Disturb on, Android decides who rings: allow starred contacts in its Do Not Disturb settings.';
 }

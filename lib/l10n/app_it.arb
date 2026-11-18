@@ -588,5 +588,15 @@
   "importSettingsMessage": "Impostazioni, chiamata rapida, note e sfondi delle chiamate vengono sostituiti da quelli del file. Poi One Dialer si riavvia.",
   "importSettingsInCall": "Non puoi importare le impostazioni durante una chiamata",
   "notASettingsFile": "Questo non è un file di impostazioni di One Dialer",
-  "endHeldCall": "Termina la chiamata con {name}"
+  "endHeldCall": "Termina la chiamata con {name}",
+  "vipCalls": "Chiamate VIP",
+  "vipCallsSubtitle": "Squillano anche in Silenzioso o Vibrazione",
+  "vipRing": "Squillo in Silenzioso per i VIP",
+  "vipRingSubtitle": "Le chiamate dei VIP squillano anche con il telefono in Silenzioso o Vibrazione, poi torna com'era",
+  "vipFavourites": "Includi preferiti",
+  "vipFavouritesSubtitle": "I contatti con la stella contano come VIP",
+  "vipContacts": "Contatti VIP",
+  "vipNeedsAccess": "Le chiamate VIP non possono squillare in Silenzioso",
+  "vipNeedsAccessSubtitle": "Consenti il filtro chiamate e l'accesso a Non disturbare",
+  "vipDndHint": "Con Non disturbare attivo decide Android chi squilla: consenti i contatti speciali nelle sue impostazioni di Non disturbare."
 }

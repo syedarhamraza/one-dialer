@@ -26,6 +26,7 @@ import 'dialing_settings_screen.dart';
 import 'display_settings_screen.dart';
 import 'help_feedback_screen.dart';
 import 'software_update_screen.dart';
+import 'vip_calls_screen.dart';
 import '../../l10n/l10n.dart';
 
 /// Call settings, plus a health check of everything incoming calls depend on.
@@ -144,6 +145,8 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         ),
       if ((rules.blockHidden || rules.blockNonContacts) && _health['screensCalls'] != true)
         _problem(context.l10n.blockingPaused, context.l10n.blockingPausedShort, () => _push(const BlockingScreen())),
+      if (_health['vipRing'] == true && (_health['screensCalls'] != true || _health['dndAccess'] != true))
+        _problem(context.l10n.vipNeedsAccess, context.l10n.vipNeedsAccessSubtitle, () => _push(const VipCallsScreen())),
       // Auto-record is on but the companion can't record (its setup was undone).
       if (_recorder case final r? when r.autoRecordMode != 'off' && r.consented && !r.ready)
         _problem(
@@ -183,6 +186,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               onTap: () => _push(const AnswerButtonsScreen()),
             ),
             OneUIGroupItem(title: l10n.answerEndCalls, onTap: () => _push(const AnswerEndCallsScreen())),
+            OneUIGroupItem(title: l10n.vipCalls, subtitle: l10n.vipCallsSubtitle, onTap: () => _push(const VipCallsScreen())),
             // Only with One Recorder installed (the sideloaded companion); the Play app can't record alone.
             if (_recorder != null)
               OneUIGroupItem(
