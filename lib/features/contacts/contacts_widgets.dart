@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../in_call/call_controls.dart' show answerGreen;
 import 'package:flutter/services.dart';
 
 import '../../core/contacts/contacts_repository.dart';
@@ -45,6 +46,8 @@ class ContactRow extends StatelessWidget {
     required this.selectMark,
     this.highlight,
     required this.onTap,
+    this.onDoubleTap,
+    this.onCall,
     required this.onLongPress,
   });
 
@@ -59,10 +62,14 @@ class ContactRow extends StatelessWidget {
   final Widget? highlight;
   final VoidCallback onTap, onLongPress;
 
+  /// Settings › Keypad & recents quick calling: double-tap to call, and a call button (null: none).
+  final VoidCallback? onDoubleTap, onCall;
+
   @override
   Widget build(BuildContext context) {
     final row = InkWell(
       onTap: onTap,
+      onDoubleTap: onDoubleTap,
       onLongPress: onLongPress,
       splashColor: context.palette.textPrimary.withValues(alpha: 0.06),
       highlightColor: context.palette.textPrimary.withValues(alpha: 0.03),
@@ -93,6 +100,12 @@ class ContactRow extends StatelessWidget {
                         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500, letterSpacing: -0.2),
                       ),
                     ),
+                    if (onCall case final call?)
+                      IconButton(
+                        tooltip: context.l10n.call,
+                        onPressed: call,
+                        icon: const Icon(Icons.call_rounded, size: 24, color: answerGreen),
+                      ),
                     selectMark,
                   ],
                 ),

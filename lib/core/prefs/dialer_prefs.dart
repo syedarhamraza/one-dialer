@@ -154,13 +154,19 @@ class DialerPrefs {
   }
 
   /// Settings › "Tap a recent call": `details` (open its page), `dial` (write the number
-  /// in the keypad) or `sim` (dual SIM only: pick a SIM and call). Notifiers so rows read
+  /// in the keypad), `call` (call it) or `sim` (dual SIM only: pick a SIM and call). Notifiers so rows read
   /// it synchronously; [loadChoices] fills them at startup.
   final recentTap = ValueNotifier('details');
 
   /// Settings › "Choose SIM for calls" (dual SIM, no default): `buttons` (two Call keys)
   /// or `menu` (ask on every call).
   final simChoice = ValueNotifier('buttons');
+
+  // Settings › Keypad & recents, quick calling (all off by default): a call button on Calls and
+  // Contacts rows, swipe right to call / left to message, double-tap to call.
+  final rowCallButton = ValueNotifier(false);
+  final swipeToCall = ValueNotifier(false);
+  final doubleTapCall = ValueNotifier(false);
 
   // Manage contacts. Accounts are keyed `type|name` (`|` is the phone itself).
   final showPhotos = ValueNotifier(true);
@@ -190,7 +196,10 @@ class DialerPrefs {
     saveAccount.value = await _prefs.getString('contacts_save_account');
     // Ignores values from earlier test builds that no longer exist.
     final tap = await _prefs.getString('recent_tap');
-    if (tap == 'details' || tap == 'dial' || tap == 'sim') recentTap.value = tap!;
+    if (tap == 'details' || tap == 'dial' || tap == 'call' || tap == 'sim') recentTap.value = tap!;
+    rowCallButton.value = await _prefs.getBool('row_call_button') ?? false;
+    swipeToCall.value = await _prefs.getBool('swipe_to_call') ?? false;
+    doubleTapCall.value = await _prefs.getBool('double_tap_call') ?? false;
     final sim = await _prefs.getString('sim_choice');
     if (sim == 'buttons' || sim == 'menu') simChoice.value = sim!;
   }
@@ -444,6 +453,21 @@ class DialerPrefs {
   Future<void> setRecentTap(String value) async {
     recentTap.value = value;
     await _prefs.setString('recent_tap', value);
+  }
+
+  Future<void> setRowCallButton(bool value) async {
+    rowCallButton.value = value;
+    await _prefs.setBool('row_call_button', value);
+  }
+
+  Future<void> setSwipeToCall(bool value) async {
+    swipeToCall.value = value;
+    await _prefs.setBool('swipe_to_call', value);
+  }
+
+  Future<void> setDoubleTapCall(bool value) async {
+    doubleTapCall.value = value;
+    await _prefs.setBool('double_tap_call', value);
   }
 
   Future<void> setShowPhotos(bool value) async {

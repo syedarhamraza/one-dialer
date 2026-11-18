@@ -3631,6 +3631,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'End call with {name}'**
   String endHeldCall(String name);
+
+  /// No description provided for @rowCallButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Call button on rows'**
+  String get rowCallButton;
+
+  /// No description provided for @rowCallButtonSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A call button on every row in Calls and Contacts'**
+  String get rowCallButtonSubtitle;
+
+  /// No description provided for @swipeToCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe to call or message'**
+  String get swipeToCall;
+
+  /// No description provided for @swipeToCallSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe a row right to call, left to message'**
+  String get swipeToCallSubtitle;
+
+  /// No description provided for @doubleTapCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Double-tap to call'**
+  String get doubleTapCall;
+
+  /// No description provided for @doubleTapCallSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Double-tap a row in Calls or Contacts to call; a single tap waits a moment'**
+  String get doubleTapCallSubtitle;
 }
 
 class _AppLocalizationsDelegate
