@@ -2076,4 +2076,39 @@ class AppLocalizationsIt extends AppLocalizations {
   String endHeldCall(String name) {
     return 'Termina la chiamata con $name';
   }
+
+  @override
+  String get vipCalls => 'Chiamate VIP';
+
+  @override
+  String get vipCallsSubtitle => 'Squillano anche in Silenzioso o Vibrazione';
+
+  @override
+  String get vipRing => 'Squillo in Silenzioso per i VIP';
+
+  @override
+  String get vipRingSubtitle =>
+      'Le chiamate dei VIP squillano anche con il telefono in Silenzioso o Vibrazione, poi torna com\'era';
+
+  @override
+  String get vipFavourites => 'Includi preferiti';
+
+  @override
+  String get vipFavouritesSubtitle =>
+      'I contatti con la stella contano come VIP';
+
+  @override
+  String get vipContacts => 'Contatti VIP';
+
+  @override
+  String get vipNeedsAccess =>
+      'Le chiamate VIP non possono squillare in Silenzioso';
+
+  @override
+  String get vipNeedsAccessSubtitle =>
+      'Consenti il filtro chiamate e l\'accesso a Non disturbare';
+
+  @override
+  String get vipDndHint =>
+      'Con Non disturbare attivo decide Android chi squilla: consenti i contatti speciali nelle sue impostazioni di Non disturbare.';
 }
