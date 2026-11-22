@@ -99,7 +99,7 @@ object CallNotifications {
         // vivo's own call island next to it, so it's plain actions there, as in updateOngoing.
         // Locked it's a plain CallStyle call with no island extras: vivo hides a notification with
         // them on the lock screen, which left no way back after leaving the call screen there.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !(island && !screenOpening)) {
+        if (callStyle(manager) && !(island && !screenOpening)) {
             val person = Person.Builder().setName(caller).setIcon(callerIcon(context, details.handle?.schemeSpecificPart))
                 .setImportant(true).build()
             builder.setStyle(Notification.CallStyle.forIncomingCall(person, decline, answer))
@@ -298,7 +298,7 @@ object CallNotifications {
             builder.setUsesChronometer(true).setWhen(details.connectTimeMillis).setShowWhen(true)
         }
         // On vivo a CallStyle call gets vivo's own call island next to ours, so it's a plain action there.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !vivoIsland) {
+        if (callStyle(manager) && !vivoIsland) {
             val person = Person.Builder().setName(caller).setIcon(callerIcon(context, details.handle?.schemeSpecificPart))
                 .setImportant(true).build()
             builder.setStyle(Notification.CallStyle.forOngoingCall(person, hangUp))
@@ -377,6 +377,13 @@ object CallNotifications {
         post(manager, ID_ONGOING, builder.build())
     }
 
+    /**
+     * Whether a call may use CallStyle: Android refuses (and the post threw) a CallStyle call without
+     * a full-screen intent, which it strips when the user or the skin (HyperOS) turned them off.
+     */
+    private fun callStyle(manager: NotificationManager) = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+        (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE || manager.canUseFullScreenIntent())
+
     /** The notification id the in-call service runs in the foreground with, or null. */
     private var foregroundId: Int? = null
 
@@ -395,7 +402,8 @@ object CallNotifications {
             foregroundId = id
             return
         }
-        manager.notify(id, notification)
+        // Never crash the in-call service over a refused notification; the call screen still works.
+        runCatching { manager.notify(id, notification) }.onFailure { android.util.Log.w("CallNotifications", "not posted", it) }
     }
 
     /** Ends the foreground service when it runs with [id]'s notification; true if it did. */
