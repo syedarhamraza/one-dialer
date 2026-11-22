@@ -437,11 +437,11 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             child: _ValueRow(
               label: [
                 labelDisplay(context.l10n, contact.labels[i]),
-                if (contact.numbers.length > 1 && i == contact.primaryIndex) context.l10n.defaultNumber,
                 _display[n]?.location,
                 simLabel,
               ].whereType<String>().where((s) => s.isNotEmpty).join('  |  '),
               value: _display[n]?.formatted ?? n,
+              tag: contact.numbers.length > 1 && i == contact.primaryIndex ? context.l10n.defaultNumber : null,
               onTap: () => _call(n, _numberKeys[n]!),
               onLongPress: () => _numberMenu(contact, n, _numberKeys[n]!),
             ),
@@ -774,11 +774,14 @@ class RowDivider extends StatelessWidget {
 /// A value over its grey label, ColorOS style, with no icon column ([leading] is a chat app's own
 /// icon); tappable when [onTap] is set.
 class _ValueRow extends StatelessWidget {
-  const _ValueRow({this.leading, this.label = '', required this.value, this.onTap, this.onLongPress});
+  const _ValueRow({this.leading, this.label = '', required this.value, this.tag, this.onTap, this.onLongPress});
 
   final Widget? leading;
   final String label;
   final String value;
+
+  /// A small grey tag after the value ("Default").
+  final String? tag;
 
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
@@ -798,7 +801,24 @@ class _ValueRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(value, style: const TextStyle(fontSize: 19, height: 1.3)),
+                  Row(
+                    children: [
+                      Flexible(child: Text(value, style: const TextStyle(fontSize: 19, height: 1.3))),
+                      if (tag case final tag?) ...[
+                        const SizedBox(width: 10),
+                        DecoratedBox(
+                          decoration: ShapeDecoration(
+                            color: context.palette.textPrimary.withValues(alpha: 0.08),
+                            shape: SquircleBorder(borderRadius: BorderRadius.circular(6)),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                            child: Text(tag, style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                   if (label.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(label, style: TextStyle(fontSize: 14, color: context.palette.textSecondary)),
