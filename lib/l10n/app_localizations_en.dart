@@ -2073,4 +2073,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get doubleTapCallSubtitle =>
       'Double-tap a row in Calls or Contacts to call; a single tap waits a moment';
+
+  @override
+  String get callsAndContactsRows => 'Rows in Calls and Contacts';
+
+  @override
+  String get simCards => 'SIM cards';
 }

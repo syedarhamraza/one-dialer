@@ -38,7 +38,9 @@ class _DialingSettingsScreenState extends State<DialingSettingsScreen> {
     return CosSubpage(
       title: l10n.keypadAndRecents,
       children: [
+        // What a row in Calls or Contacts does; the call options are off by default.
         OneUIGroupCard(
+          headerTitle: l10n.callsAndContactsRows,
           items: [
             choiceRow(
               context,
@@ -54,6 +56,14 @@ class _DialingSettingsScreenState extends State<DialingSettingsScreen> {
               },
               onPick: prefs.setRecentTap,
             ),
+            switchRow(l10n.rowCallButton, prefs.rowCallButton, prefs.setRowCallButton, subtitle: l10n.rowCallButtonSubtitle),
+            switchRow(l10n.swipeToCall, prefs.swipeToCall, prefs.setSwipeToCall, subtitle: l10n.swipeToCallSubtitle),
+            switchRow(l10n.doubleTapCall, prefs.doubleTapCall, prefs.setDoubleTapCall, subtitle: l10n.doubleTapCallSubtitle),
+          ],
+        ),
+        OneUIGroupCard(
+          headerTitle: l10n.simCards,
+          items: [
             choiceRow(
               context,
               title: l10n.chooseSimForCalls,
@@ -63,14 +73,6 @@ class _DialingSettingsScreenState extends State<DialingSettingsScreen> {
               labels: {'buttons': l10n.twoCallButtons, 'menu': l10n.askEveryTime},
               onPick: prefs.setSimChoice,
             ),
-          ],
-        ),
-        // Quick calling, all off by default.
-        OneUIGroupCard(
-          items: [
-            switchRow(l10n.rowCallButton, prefs.rowCallButton, prefs.setRowCallButton, subtitle: l10n.rowCallButtonSubtitle),
-            switchRow(l10n.swipeToCall, prefs.swipeToCall, prefs.setSwipeToCall, subtitle: l10n.swipeToCallSubtitle),
-            switchRow(l10n.doubleTapCall, prefs.doubleTapCall, prefs.setDoubleTapCall, subtitle: l10n.doubleTapCallSubtitle),
           ],
         ),
       ],

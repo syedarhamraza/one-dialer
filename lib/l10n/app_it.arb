@@ -594,5 +594,7 @@
   "swipeToCall": "Scorri per chiamare o scrivere",
   "swipeToCallSubtitle": "Scorri una riga a destra per chiamare, a sinistra per scrivere",
   "doubleTapCall": "Doppio tocco per chiamare",
-  "doubleTapCallSubtitle": "Tocca due volte una riga in Chiamate o Contatti per chiamare; un tocco singolo attende un attimo"
+  "doubleTapCallSubtitle": "Tocca due volte una riga in Chiamate o Contatti per chiamare; un tocco singolo attende un attimo",
+  "callsAndContactsRows": "Righe in Chiamate e Contatti",
+  "simCards": "Schede SIM"
 }

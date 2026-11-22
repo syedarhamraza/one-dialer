@@ -525,8 +525,9 @@ class _RecentsScreenState extends State<RecentsScreen> {
             // Null keeps single taps instant; double-tap makes every tap wait a moment.
             onDoubleTap: prefs.doubleTapCall.value && callable && _selected == null ? () => callNow(row) : null,
             onInfo: details,
-            // The call button takes the info button's place, unless a tap already calls.
-            onCall: prefs.rowCallButton.value && callable && prefs.recentTap.value != 'call' ? () => callNow(row) : null,
+            onCall: prefs.rowCallButton.value && callable ? () => callNow(row) : null,
+            // The call button takes the info button's place, unless a tap calls (then details need it).
+            showInfo: !(prefs.rowCallButton.value && callable) || prefs.recentTap.value == 'call',
             onLongPress: () {
               HapticFeedback.mediumImpact();
               _toggle(group);
@@ -782,6 +783,7 @@ class _CallRow extends StatelessWidget {
     this.onDoubleTap,
     required this.onInfo,
     this.onCall,
+    this.showInfo = true,
     required this.onLongPress,
   });
 
@@ -797,6 +799,7 @@ class _CallRow extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onInfo;
   final VoidCallback? onDoubleTap, onCall;
+  final bool showInfo;
   final VoidCallback onLongPress;
 
   @override
@@ -804,6 +807,7 @@ class _CallRow extends StatelessWidget {
     final call = group.latest;
     final name = callerName(context.l10n, call);
     final count = group.calls.length;
+    final slot = 48.0 * ((onCall != null ? 1 : 0) + (showInfo ? 1 : 0));
     final row = InkWell(
       onTap: onTap,
       onDoubleTap: onDoubleTap,
@@ -879,7 +883,7 @@ class _CallRow extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(when, style: TextStyle(fontSize: 14, color: context.palette.textSecondary)),
-            // Info leaves on the selection box's spring as the box comes in, in its place.
+            // Info (and the call button) leave on the selection box's spring as the box comes in, in their place.
             TweenAnimationBuilder<double>(
               tween: Tween(end: selecting ? 0 : 1),
               duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 450),
@@ -887,27 +891,33 @@ class _CallRow extends StatelessWidget {
               builder: (context, t, child) => t <= 0
                   ? const SizedBox.shrink()
                   : SizedBox(
-                      width: 48 * t.clamp(0.0, 1.0),
+                      width: slot * t.clamp(0.0, 1.0),
                       height: 48,
                       child: OverflowBox(
                         alignment: Alignment.centerLeft,
-                        minWidth: 48,
-                        maxWidth: 48,
+                        minWidth: slot,
+                        maxWidth: slot,
                         child: Transform.scale(scale: t, child: child),
                       ),
                     ),
-              child: onCall != null
-                  ? IconButton(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (onCall != null)
+                    IconButton(
                       tooltip: context.l10n.call,
                       onPressed: selecting ? null : onCall,
                       icon: const Icon(Icons.call_rounded, size: 24, color: answerGreen),
-                    )
-                  : IconButton(
+                    ),
+                  if (showInfo)
+                    IconButton(
                       tooltip: context.l10n.callDetails,
                       onPressed: selecting ? null : onInfo,
                       // Light like the time beside it.
                       icon: Icon(CupertinoIcons.info, size: 24, color: context.palette.textSecondary),
                     ),
+                ],
+              ),
             ),
             selectMark,
           ],

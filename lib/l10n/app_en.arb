@@ -1020,5 +1020,7 @@
   "swipeToCall": "Swipe to call or message",
   "swipeToCallSubtitle": "Swipe a row right to call, left to message",
   "doubleTapCall": "Double-tap to call",
-  "doubleTapCallSubtitle": "Double-tap a row in Calls or Contacts to call; a single tap waits a moment"
+  "doubleTapCallSubtitle": "Double-tap a row in Calls or Contacts to call; a single tap waits a moment",
+  "callsAndContactsRows": "Rows in Calls and Contacts",
+  "simCards": "SIM cards"
 }

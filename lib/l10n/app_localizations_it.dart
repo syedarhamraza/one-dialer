@@ -2097,4 +2097,10 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get doubleTapCallSubtitle =>
       'Tocca due volte una riga in Chiamate o Contatti per chiamare; un tocco singolo attende un attimo';
+
+  @override
+  String get callsAndContactsRows => 'Righe in Chiamate e Contatti';
+
+  @override
+  String get simCards => 'Schede SIM';
 }
