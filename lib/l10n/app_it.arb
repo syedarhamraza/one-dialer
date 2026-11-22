@@ -371,7 +371,6 @@
   "themeDark": "Scuro",
   "openDetails": "Apri dettagli",
   "writeInKeypad": "Scrivi nel tastierino",
-  "chooseSimAndCall": "Scegli SIM e chiama",
   "tapRecentCall": "Tocco su una chiamata recente",
   "chooseSimForCalls": "Con quale SIM chiamare",
   "appearance": "Aspetto",
@@ -624,7 +623,7 @@
   "keypadSettings": "Tastierino",
   "keypadSettingsSubtitle": "Due pulsanti Chiama, chiamata rapida",
   "phoneDefaultSim": "SIM predefinita del telefono",
-  "simRulesHint": "La SIM scelta per un contatto, nella sua pagina, ha sempre la precedenza. Scorri per chiamare non chiede mai: quando le chiamate chiederebbero, usa la SIM usata l'ultima volta con quel numero.",
+  "simRulesHint": "La SIM scelta per un contatto, nella sua pagina, ha sempre la precedenza.",
   "callButtonStyle": "Stile del pulsante di chiamata",
   "callButtonTint": "Tinta tenue",
   "callButtonGlyph": "Solo icona",
@@ -632,5 +631,10 @@
   "callsAndContactsRows": "Righe in Chiamate e Contatti",
   "callsRows": "Righe in Chiamate",
   "tapAlreadyCalls": "Toccare una chiamata chiama già",
-  "simCards": "Schede SIM"
+  "simCards": "Schede SIM",
+  "keypadAndContacts": "Tastierino e contatti",
+  "swipeToCallSim": "Scorri per chiamare",
+  "sameAsKeypad": "Come tastierino e contatti",
+  "tapSimUnused": "Si usa solo quando Tocco su una chiamata recente è impostato su Chiama, in Chiamata veloce",
+  "swipeSimUnused": "Si usa solo quando Scorri per chiamare è attivo, in Chiamata veloce"
 }

@@ -26,17 +26,6 @@ class _DialingSettingsScreenState extends State<DialingSettingsScreen> {
   final _swipeKey = GlobalKey();
   final _buttonKey = GlobalKey();
 
-  /// "Choose SIM and call" is offered only with two SIMs; with one, a saved `sim` reads as details.
-  bool _dualSim = false;
-
-  @override
-  void initState() {
-    super.initState();
-    TelecomBridge.instance.getSims().then((s) {
-      if (mounted) setState(() => _dualSim = s.length > 1);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final prefs = DialerPrefs.instance;
@@ -60,12 +49,7 @@ class _DialingSettingsScreenState extends State<DialingSettingsScreen> {
                     subtitle: l10n.tapRecentCallSubtitle,
                     anchor: _tapKey,
                     value: prefs.recentTap,
-                    labels: {
-                      'details': l10n.openDetails,
-                      'dial': l10n.writeInKeypad,
-                      'call': l10n.call,
-                      if (_dualSim) 'sim': l10n.chooseSimAndCall,
-                    },
+                    labels: {'details': l10n.openDetails, 'dial': l10n.writeInKeypad, 'call': l10n.call},
                     onPick: prefs.setRecentTap,
                   ),
                   switchRow(
@@ -120,7 +104,9 @@ class SimSettingsScreen extends StatefulWidget {
   const SimSettingsScreen({super.key});
 
   /// The choices for [DialerPrefs.simChoice]; Settings shows the picked one as the row's value.
-  static Map<String, String> choiceLabels(AppLocalizations l10n, List<SimCard> sims) => {
+  /// [perAction] adds `calls` (same as keypad and contacts) for the tap and swipe rows.
+  static Map<String, String> choiceLabels(AppLocalizations l10n, List<SimCard> sims, {bool perAction = false}) => {
+    if (perAction) 'calls': l10n.sameAsKeypad,
     'phone': l10n.simSameAsPhone,
     'menu': l10n.askEveryTime,
     'recent': l10n.useRecentSim,
@@ -133,6 +119,8 @@ class SimSettingsScreen extends StatefulWidget {
 
 class _SimSettingsScreenState extends State<SimSettingsScreen> with WidgetsBindingObserver {
   final _simKey = GlobalKey();
+  final _tapSimKey = GlobalKey();
+  final _swipeSimKey = GlobalKey();
   List<SimCard> _sims = const [];
 
   @override
@@ -167,17 +155,44 @@ class _SimSettingsScreenState extends State<SimSettingsScreen> with WidgetsBindi
     return CosSubpage(
       title: l10n.simCards,
       children: [
-        OneUIGroupCard(
-          items: [
-            choiceRow(
-              context,
-              title: l10n.chooseSimForCalls,
-              anchor: _simKey,
-              value: prefs.simChoice,
-              labels: SimSettingsScreen.choiceLabels(l10n, _sims),
-              onPick: prefs.setSimChoice,
-            ),
-          ],
+        // One row per way of calling, so "Ask every time" never seems to cover a swipe it doesn't.
+        // The tap and swipe rows stay, greyed with the reason, while those options don't call
+        // (Settings › Quick calling).
+        ListenableBuilder(
+          listenable: Listenable.merge([prefs.recentTap, prefs.swipeToCall]),
+          builder: (context, _) => OneUIGroupCard(
+            headerTitle: l10n.chooseSimForCalls,
+            items: [
+              choiceRow(
+                context,
+                title: l10n.keypadAndContacts,
+                anchor: _simKey,
+                value: prefs.simChoice,
+                labels: SimSettingsScreen.choiceLabels(l10n, _sims),
+                onPick: prefs.setSimChoice,
+              ),
+              choiceRow(
+                context,
+                title: l10n.tapRecentCall,
+                subtitle: prefs.tapCalls ? null : l10n.tapSimUnused,
+                enabled: prefs.tapCalls,
+                anchor: _tapSimKey,
+                value: prefs.tapSim,
+                labels: SimSettingsScreen.choiceLabels(l10n, _sims, perAction: true),
+                onPick: prefs.setTapSim,
+              ),
+              choiceRow(
+                context,
+                title: l10n.swipeToCallSim,
+                subtitle: prefs.swipeToCall.value ? null : l10n.swipeSimUnused,
+                enabled: prefs.swipeToCall.value,
+                anchor: _swipeSimKey,
+                value: prefs.swipeSim,
+                labels: SimSettingsScreen.choiceLabels(l10n, _sims, perAction: true),
+                onPick: prefs.setSwipeSim,
+              ),
+            ],
+          ),
         ),
         OneUIGroupCard(
           items: [

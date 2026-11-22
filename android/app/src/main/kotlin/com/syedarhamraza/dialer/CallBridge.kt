@@ -536,10 +536,6 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             page == "systemSettings" -> android.content.Intent(android.provider.Settings.ACTION_SETTINGS)
             page == "dndAccess" -> android.content.Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
             page == "defaultApps" -> android.content.Intent(android.provider.Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
-            // Android's SIM page, where its default SIM for calls is set; older phones' network settings.
-            page == "sim" && android.os.Build.VERSION.SDK_INT >= 34 ->
-                android.content.Intent(android.provider.Settings.ACTION_MANAGE_ALL_SIM_PROFILES_SETTINGS)
-            page == "sim" -> android.content.Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS)
             // The SIM provider's call settings (forwarding, waiting, caller ID), from the phone service.
             page == "carrier" -> android.content.Intent(android.telecom.TelecomManager.ACTION_SHOW_CALL_SETTINGS)
             // Android's "Contacts storage": the default account for new contacts (vivo hides it from its menus).
@@ -549,10 +545,24 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             page != null && page.startsWith("url:") -> android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(page.removePrefix("url:")))
             else -> android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$pkg"))
         }.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-        runCatching { context.startActivity(intent) }
-            .onSuccess { result.success(null) }
-            .onFailure { result.error("NO_ACTIVITY", it.message, null) }
+        val intents = if (page == "sim") simPages() else listOf(intent)
+        val opened = intents.any { runCatching { context.startActivity(it.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess }
+        if (opened) result.success(null) else result.error("NO_ACTIVITY", page, null)
     }
+
+    /**
+     * Where Android's default SIM for calls is set, most specific first: vivo's own page (Android's
+     * SIM action opens its eSIM manager, which refuses other apps), Android 14+'s SIMs page, the
+     * SIM list, then network settings.
+     */
+    private fun simPages(): List<android.content.Intent> = listOfNotNull(
+        android.content.Intent("com.android.phone.VivoCallDefaultSimSettings")
+            .takeIf { android.os.Build.MANUFACTURER.equals("vivo", ignoreCase = true) },
+        android.content.Intent(android.provider.Settings.ACTION_MANAGE_ALL_SIM_PROFILES_SETTINGS)
+            .takeIf { android.os.Build.VERSION.SDK_INT >= 34 && !android.os.Build.MANUFACTURER.equals("vivo", ignoreCase = true) },
+        android.content.Intent("android.settings.MOBILE_NETWORK_LIST"),
+        android.content.Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS),
+    )
 
     private fun isDefaultDialer(): Boolean =
         context.getSystemService(RoleManager::class.java).isRoleHeld(RoleManager.ROLE_DIALER)

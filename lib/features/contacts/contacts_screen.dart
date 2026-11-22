@@ -378,7 +378,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                       );
                       if (!quick || !prefs.swipeToCall.value) return row;
                       return SwipeAction(
-                        onCall: () => callContact(context, c, recentSim: true),
+                        onCall: () => callContact(context, c, rule: DialerPrefs.instance.swipeSim.value),
                         onMessage: () async {
                           final number = c.callNumber ?? await chooseNumber(context, c);
                           if (number != null) await TelecomBridge.instance.sendSms(number);
