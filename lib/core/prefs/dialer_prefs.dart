@@ -154,8 +154,8 @@ class DialerPrefs {
   }
 
   /// Settings › "Tap a recent call": `details` (open its page), `dial` (write the number
-  /// in the keypad), `call` (call it) or `sim` (dual SIM only: pick a SIM and call). Notifiers so rows read
-  /// it synchronously; [loadChoices] fills them at startup.
+  /// in the keypad) or `call` (call it, on [tapSim]). Notifiers so rows read it synchronously;
+  /// [loadChoices] fills them at startup.
   final recentTap = ValueNotifier('details');
 
   /// A tap on a Calls row calls: the row's call button steps aside then, since it'd only repeat it (Settings greys the button out and says why).
@@ -163,9 +163,17 @@ class DialerPrefs {
 
   /// Settings › SIM cards › "Which SIM to call with" (dual SIM): `phone` (Android's default SIM,
   /// asking when it's "Ask every time"), `menu` (always ask), `recent` (no asking: the SIM last used
-  /// with that number, see [CallLogRepository.recentSim]) or `sim:<id>` (always that SIM). It
-  /// overrides Android's default; a contact's own SIM still comes first ([placeCall]).
+  /// with that number, asking when there's none, see [CallLogRepository.recentSim]) or `sim:<id>`
+  /// (always that SIM). It overrides Android's default; a contact's own SIM still comes first ([placeCall]).
   final simChoice = ValueNotifier('phone');
+
+  /// The same choice for a tap that calls a Calls row ([recentTap] `call`) and for swipe to call,
+  /// each on its own row under SIM cards; `calls` follows [simChoice].
+  final tapSim = ValueNotifier('calls');
+  final swipeSim = ValueNotifier('calls');
+
+  static bool _isSimRule(String? v) =>
+      v == 'calls' || v == 'phone' || v == 'menu' || v == 'recent' || (v?.startsWith('sim:') ?? false);
 
   /// Settings › Keypad › "Two Call buttons": one per SIM on a dual SIM phone, whatever SIM cards
   /// says. Null until chosen: then the keypad shows them only where calls ask ([keypadTwoCallButtons]),
@@ -216,7 +224,14 @@ class DialerPrefs {
     saveAccount.value = await _prefs.getString('contacts_save_account');
     // Ignores values from earlier test builds that no longer exist.
     final tap = await _prefs.getString('recent_tap');
-    if (tap == 'details' || tap == 'dial' || tap == 'call' || tap == 'sim') recentTap.value = tap!;
+    if (tap == 'details' || tap == 'dial' || tap == 'call') recentTap.value = tap!;
+    if (await _prefs.getString('tap_sim') case final v? when _isSimRule(v)) tapSim.value = v;
+    if (await _prefs.getString('swipe_sim') case final v? when _isSimRule(v)) swipeSim.value = v;
+    // "Choose SIM and call" was a Tap option before each way of calling had its SIM row.
+    if (tap == 'sim') {
+      await setRecentTap('call');
+      await setTapSim('menu');
+    }
     rowCallButton.value = await _prefs.getBool('row_call_button') ?? false;
     swipeToCall.value = await _prefs.getBool('swipe_to_call') ?? false;
     groupByContact.value = await _prefs.getBool('group_by_contact') ?? true;
@@ -545,6 +560,16 @@ class DialerPrefs {
   Future<void> setSimChoice(String value) async {
     simChoice.value = value;
     await _prefs.setString('sim_call', value);
+  }
+
+  Future<void> setTapSim(String value) async {
+    tapSim.value = value;
+    await _prefs.setString('tap_sim', value);
+  }
+
+  Future<void> setSwipeSim(String value) async {
+    swipeSim.value = value;
+    await _prefs.setString('swipe_sim', value);
   }
 
   Future<void> setKeypadSimButtons(bool value) async {

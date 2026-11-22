@@ -12,10 +12,10 @@ import '../l10n/l10n.dart';
 import 'one_ui_floating_menu.dart';
 import 'one_ui_toast.dart';
 
-/// Calls [number]: on [simId] if given, else on the contact's own SIM, else as Settings › SIM cards
-/// says ([DialerPrefs.simChoice]); when that would ask, our SIM menu pops from [anchorKey]'s button
-/// (or [anchorContext]'s widget), except for a swipe ([recentSim]), which takes the recent SIM
-/// ([CallLogRepository.recentSim]) instead. [chooseSim] always asks on dual SIM.
+/// Calls [number]: on [simId] if given, else on the contact's own SIM, else by [rule], the SIM
+/// choice of the way this call was made (Settings › SIM cards: [DialerPrefs.tapSim],
+/// [DialerPrefs.swipeSim]; null or `calls` is [DialerPrefs.simChoice]). When it asks, our SIM menu
+/// pops from [anchorKey]'s button (or [anchorContext]'s widget).
 /// False when no call was placed: the SIM menu was dismissed, or Android refused (a toast says so).
 Future<bool> placeCall(
   BuildContext context,
@@ -23,19 +23,9 @@ Future<bool> placeCall(
   String? simId,
   GlobalKey? anchorKey,
   BuildContext? anchorContext,
-  bool chooseSim = false,
-  bool recentSim = false,
+  String? rule,
 }) async {
   final telecom = TelecomBridge.instance;
-  if (chooseSim) {
-    final sims = await telecom.quickSims();
-    if (sims.length > 1) {
-      if (!context.mounted) return false;
-      final sim = await pickSim(context, sims, anchorKey: anchorKey, anchorContext: anchorContext);
-      if (sim == null) return false;
-      simId = sim.id;
-    }
-  }
   // Read together, so the SIM menu waits on one lookup at most.
   final contact = simId == null ? ContactsRepository.instance.contactFor(number) : null;
   final (contactSim, sims) = await (
@@ -43,17 +33,17 @@ Future<bool> placeCall(
     simId == null ? telecom.quickSims() : Future.value(const <SimCard>[]),
   ).wait;
   simId ??= contactSim;
-  // Settings › SIM cards › Which SIM to call with; a swipe ([recentSim]) never asks.
+  // Settings › SIM cards › Which SIM to call with.
   if (simId == null) {
     if (sims.length > 1) {
       String? present(String? id) => sims.any((s) => s.id == id) ? id : null;
-      final rule = DialerPrefs.instance.simChoice.value;
+      if (rule == null || rule == 'calls') rule = DialerPrefs.instance.simChoice.value;
       if (rule.startsWith('sim:')) simId = present(rule.substring(4));
       // Null: Telecom calls on Android's default SIM.
       final phoneDecides = rule == 'phone' && sims.any((s) => s.isDefault);
       if (simId == null && !phoneDecides) {
-        if (rule == 'recent' || recentSim) simId = present(CallLogRepository.instance.recentSim(number));
-        // Asks: Ask every time, a removed fixed SIM, or no call history to take the recent SIM from.
+        if (rule == 'recent') simId = present(CallLogRepository.instance.recentSim(number));
+        // Asks: Ask every time, a removed fixed SIM, or no calls with this number to take the SIM from.
         if (simId == null) {
           if (!context.mounted) return false;
           final sim = await pickSim(context, sims, anchorKey: anchorKey, anchorContext: anchorContext);

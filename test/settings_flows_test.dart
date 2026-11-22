@@ -203,11 +203,23 @@ void main() {
     expect(find.text('Glow strength'), findsNothing);
   });
 
-  testWidgets('Keypad & recents offers Choose SIM and call on dual SIM', (tester) async {
-    await open(tester, const DialingSettingsScreen());
-    await tester.tap(find.text('Tap a recent call'));
+  testWidgets('SIM cards greys the Swipe to call row, saying why, while swipe to call is off', (tester) async {
+    final prefs = DialerPrefs.instance;
+    addTearDown(() => prefs.swipeToCall.value = false);
+    await open(tester, const SimSettingsScreen());
+    expect(find.text('Keypad and contacts'), findsOneWidget);
+    expect(find.text('Swipe to call'), findsOneWidget);
+    expect(find.text('Used only when Swipe to call is on, in Quick calling'), findsOneWidget);
+    await tester.tap(find.text('Swipe to call'));
     await tester.pumpAndSettle();
-    expect(find.text('Choose SIM and call'), findsOneWidget);
+    expect(find.text('Ask every time'), findsOneWidget); // only Phone's default SIM: no menu while it's unused
+
+    prefs.swipeToCall.value = true;
+    await tester.pumpAndSettle();
+    expect(find.text('Used only when Swipe to call is on, in Quick calling'), findsNothing);
+    await tester.tap(find.text('Swipe to call'));
+    await tester.pumpAndSettle();
+    expect(find.text('Ask every time'), findsNWidgets(2)); // and in the menu
   });
 
   testWidgets('settings search finds a row on a page and opens it', (tester) async {

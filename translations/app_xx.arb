@@ -371,7 +371,6 @@
   "themeDark": "Dark",
   "openDetails": "Open details",
   "writeInKeypad": "Write in keypad",
-  "chooseSimAndCall": "Choose SIM and call",
   "tapRecentCall": "Tap a recent call",
   "chooseSimForCalls": "Which SIM to call with",
   "appearance": "Appearance",
@@ -624,7 +623,7 @@
   "keypadSettings": "Keypad",
   "keypadSettingsSubtitle": "Two Call buttons, speed dial",
   "phoneDefaultSim": "Phone's default SIM",
-  "simRulesHint": "A contact's own SIM, set on their page, always comes first. Swipe to call never asks: when calls would ask, it uses the SIM you last used with that number.",
+  "simRulesHint": "A contact's own SIM, set on their page, always comes first.",
   "callButtonStyle": "Call button style",
   "callButtonTint": "Soft tint",
   "callButtonGlyph": "Glyph only",
@@ -634,5 +633,10 @@
   "tapAlreadyCalls": "Tapping a call already calls",
   "simCards": "SIM cards",
   "groupByContact": "Group by contact",
-  "dontGroupByContact": "Don't group by contact"
+  "dontGroupByContact": "Don't group by contact",
+  "keypadAndContacts": "Keypad and contacts",
+  "swipeToCallSim": "Swipe to call",
+  "sameAsKeypad": "Same as keypad and contacts",
+  "tapSimUnused": "Used only when Tap a recent call is set to Call, in Quick calling",
+  "swipeSimUnused": "Used only when Swipe to call is on, in Quick calling"
 }

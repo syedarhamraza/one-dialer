@@ -492,8 +492,8 @@ class _RecentsScreenState extends State<RecentsScreen> {
     final callable = !call.isPrivate && call.number.isNotEmpty && !call.isApp;
     void callNow(BuildContext row) => placeCall(context, call.number, anchorContext: row);
     // What a tap does is the Settings choice (DialerPrefs.recentTap): open the details page,
-    // write the number in the keypad so the call is one more, deliberate tap, call it, or
-    // (dual SIM) pick a SIM from our menu and call.
+    // write the number in the keypad so the call is one more, deliberate tap, or call it on the
+    // tap's own SIM choice (DialerPrefs.tapSim).
     void tap(BuildContext row) {
       if (_selected != null) return _toggle(group);
       if (call.isApp) {
@@ -503,9 +503,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
       final choice = prefs.recentTap.value;
       if (choice == 'call' && callable) {
         widget.keypadOpen?.value = false;
-        callNow(row);
-      } else if (choice == 'sim' && callable && _sims.length > 1) {
-        placeCall(context, call.number, chooseSim: true, anchorContext: row);
+        placeCall(context, call.number, anchorContext: row, rule: prefs.tapSim.value);
       } else if (choice == 'dial' && callable && widget.dialInput != null) {
         widget.dialInput!.value = call.number;
         widget.keypadOpen?.value = true;
@@ -523,8 +521,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
           // The SIM menu pops from this row.
           builder: (row) => _swipe(
             enabled: prefs.swipeToCall.value && callable && _selected == null,
-            // Never asks for a SIM: the one last used with this number.
-            onCall: () => placeCall(context, call.number, anchorContext: row, recentSim: true),
+            onCall: () => placeCall(context, call.number, anchorContext: row, rule: prefs.swipeSim.value),
             onMessage: () => TelecomBridge.instance.sendSms(call.number),
             child: _CallRow(
               group: group,

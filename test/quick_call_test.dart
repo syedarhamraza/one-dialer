@@ -103,22 +103,23 @@ void main() {
     tearDown(() {
       repo.calls.value = const [];
       DialerPrefs.instance.simChoice.value = 'phone';
+      DialerPrefs.instance.swipeSim.value = 'calls';
       defaultSim = null;
     });
 
-    test("is the SIM the number last used, else the newest call's, else none", () {
+    test('is the SIM the number last used, else none', () {
       repo.calls.value = [
         call(3, '0300 7654321', 'sim1'),
         call(2, '+92 300 1234567', 'sim2'),
         call(1, '03001234567', 'sim1'),
       ];
       expect(repo.recentSim('03001234567'), 'sim2');
-      expect(repo.recentSim('0311 0000000'), 'sim1');
+      expect(repo.recentSim('0311 0000000'), isNull); // never called: asks, not another number's SIM
       repo.calls.value = [call(1, '03001234567', null)];
       expect(repo.recentSim('03001234567'), isNull);
     });
 
-    testWidgets('swipe to call uses it without the SIM menu, and so does Use the recent SIM', (tester) async {
+    testWidgets("swipe to call on Use the recent SIM uses it without the SIM menu, and so do calls", (tester) async {
       repo.calls.value = [call(1, '03001234567', 'sim2')];
       await tester.pumpWidget(
         MaterialApp(
@@ -129,7 +130,7 @@ void main() {
       final context = tester.element(find.text('page'));
       Object? simOf(Iterable<MethodCall> calls) => calls.lastWhere((c) => c.method == 'placeCall').arguments['simId'];
 
-      await tester.runAsync(() => placeCall(context, '03001234567', recentSim: true));
+      await tester.runAsync(() => placeCall(context, '03001234567', rule: 'recent'));
       expect(simOf(native), 'sim2');
 
       native.clear();
@@ -149,7 +150,23 @@ void main() {
       );
       final context = tester.element(find.text('page'));
       // Falls through to the SIM menu (two SIMs, no default); nothing is placed until a pick.
-      unawaited(placeCall(context, '03001234567', recentSim: true));
+      unawaited(placeCall(context, '03001234567', rule: 'recent'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Personal'), findsOneWidget);
+      expect(native.where((c) => c.method == 'placeCall'), isEmpty);
+    });
+
+    testWidgets('a swipe on Same as keypad and contacts asks when calls ask', (tester) async {
+      DialerPrefs.instance.simChoice.value = 'menu';
+      repo.calls.value = [call(1, '03001234567', 'sim1')];
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: const Scaffold(body: Text('page')),
+        ),
+      );
+      final context = tester.element(find.text('page'));
+      unawaited(placeCall(context, '03001234567', rule: DialerPrefs.instance.swipeSim.value));
       await tester.pumpAndSettle();
       expect(find.textContaining('Personal'), findsOneWidget);
       expect(native.where((c) => c.method == 'placeCall'), isEmpty);
@@ -167,9 +184,9 @@ void main() {
       final context = tester.element(find.text('page'));
       Iterable<MethodCall> placed() => native.where((c) => c.method == 'placeCall');
 
-      // Same as phone: Telecom's default, no menu; a swipe too (it never overrides a set default).
+      // Same as phone: Telecom's default, no menu; a swipe that follows calls too.
       await tester.runAsync(() => placeCall(context, '03001234567'));
-      await tester.runAsync(() => placeCall(context, '03001234567', recentSim: true));
+      await tester.runAsync(() => placeCall(context, '03001234567', rule: 'calls'));
       expect(placed().map((c) => c.arguments['simId']), [null, null]);
 
       native.clear();
@@ -177,10 +194,10 @@ void main() {
       await tester.runAsync(() => placeCall(context, '03001234567'));
       expect(placed().single.arguments['simId'], 'sim2');
 
-      // Ask every time asks even with a default; a swipe takes the recent SIM instead.
+      // Ask every time asks even with a default; a swipe set to the recent SIM takes it instead.
       native.clear();
       DialerPrefs.instance.simChoice.value = 'menu';
-      await tester.runAsync(() => placeCall(context, '03001234567', recentSim: true));
+      await tester.runAsync(() => placeCall(context, '03001234567', rule: 'recent'));
       expect(placed().single.arguments['simId'], 'sim2');
       native.clear();
       // The SIM list kept from the calls above was read in real time; read it again in fake time.
@@ -191,6 +208,15 @@ void main() {
       expect(find.textContaining('Personal'), findsOneWidget);
       expect(placed(), isEmpty);
     });
+  });
+
+  test('the old "Choose SIM and call" tap becomes Call on Ask every time', () async {
+    await SharedPreferencesAsync().setString('recent_tap', 'sim');
+    final prefs = DialerPrefs.instance;
+    await prefs.loadChoices();
+    expect((prefs.recentTap.value, prefs.tapSim.value), ('call', 'menu'));
+    prefs.recentTap.value = 'details';
+    prefs.tapSim.value = 'calls';
   });
 
   test('the SIM rule survives a restart', () async {
