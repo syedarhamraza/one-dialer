@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/gestures.dart' show DragStartBehavior;
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
@@ -29,14 +30,14 @@ class SwipeAction extends StatefulWidget {
 class _SwipeActionState extends State<SwipeAction> with TickerProviderStateMixin {
   static const _threshold = 0.35;
   // Past the threshold the row follows the finger this much (a rubber band), so it can't fly off.
-  static const _resistance = 0.35;
+  static const _resistance = 0.5;
   // The app's ColorOS spring (the Calls header morph's).
   static final _spring = SpringDescription.withDampingRatio(mass: 1, stiffness: 240, ratio: .78);
 
   // Unbounded: the controller's value is the row's offset in pixels.
   late final _dx = AnimationController.unbounded(vsync: this)..addListener(() => setState(() {}));
   // The glass pill's swell when it arms, and its held flash when the swipe acts.
-  late final _pop = AnimationController(vsync: this, duration: const Duration(milliseconds: 320))
+  late final _pop = AnimationController(vsync: this, duration: const Duration(milliseconds: 220))
     ..addListener(() => setState(() {}));
   double _width = 1, _raw = 0;
   bool _armed = false, _confirmed = false;
@@ -106,20 +107,26 @@ class _SwipeActionState extends State<SwipeAction> with TickerProviderStateMixin
         final dx = _dx.value;
         final card = style == 'card';
         final p = (dx.abs() / (_width * _threshold)).clamp(0.0, 1.0);
-        Widget row = widget.child;
+        // Its own layer: sliding (and Card lift's shrink) only moves the row's picture, never
+        // repaints its text, avatar and buttons.
+        Widget row = RepaintBoundary(child: widget.child);
         // Opaque, so the background shows only where the row has moved away. Card lift turns the
-        // row into one of the app's grey cards as it pulls away.
-        row = card && dx != 0
-            ? DecoratedBox(
-                decoration: ShapeDecoration(
-                  color: context.palette.card,
-                  shape: SquircleBorder(borderRadius: BorderRadius.circular(OneUITheme.radiusCard * p)),
-                ),
-                child: row,
-              )
-            : ColoredBox(color: context.palette.page, child: row);
-        if (card && dx != 0) row = Transform.scale(scale: 1 - 0.04 * p, child: row);
+        // row into one of the app's grey cards as it pulls away. The same widgets at rest and while
+        // sliding, so starting a swipe never rebuilds the row.
+        final lift = card ? p : 0.0;
+        row = Transform.scale(
+          scale: 1 - 0.04 * lift,
+          child: DecoratedBox(
+            decoration: ShapeDecoration(
+              color: lift > 0 ? context.palette.card : context.palette.page,
+              shape: SquircleBorder(borderRadius: BorderRadius.circular(OneUITheme.radiusCard * lift)),
+            ),
+            child: row,
+          ),
+        );
         return GestureDetector(
+          // From touch-down, so the row stays under the finger instead of trailing it by the slop.
+          dragStartBehavior: DragStartBehavior.down,
           onHorizontalDragStart: _start,
           onHorizontalDragUpdate: _update,
           onHorizontalDragEnd: _end,
@@ -131,7 +138,7 @@ class _SwipeActionState extends State<SwipeAction> with TickerProviderStateMixin
           child: Stack(
             children: [
               if (dx != 0) Positioned.fill(child: _background(context, style, dx, p)),
-              Transform.translate(offset: Offset(dx, 0), child: row),
+              Transform.translate(key: const ValueKey('row'), offset: Offset(dx, 0), child: row),
             ],
           ),
         );
@@ -200,7 +207,8 @@ class _SwipeActionState extends State<SwipeAction> with TickerProviderStateMixin
             child: Transform.scale(
               scale: scale * swell,
               alignment: docked ? (right ? Alignment.centerRight : Alignment.centerLeft) : Alignment.center,
-              child: child,
+              // Drawn once (glass, rim, glow), then only moved and scaled.
+              child: RepaintBoundary(child: child),
             ),
           ),
         ),
