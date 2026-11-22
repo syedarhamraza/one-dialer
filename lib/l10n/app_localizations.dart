@@ -3907,6 +3907,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Same as keypad and contacts'**
   String get sameAsKeypad;
+
+  /// No description provided for @tapSimUnused.
+  ///
+  /// In en, this message translates to:
+  /// **'Used only when Tap a recent call is set to Call, in Quick calling'**
+  String get tapSimUnused;
+
+  /// No description provided for @swipeSimUnused.
+  ///
+  /// In en, this message translates to:
+  /// **'Used only when Swipe to call is on, in Quick calling'**
+  String get swipeSimUnused;
 }
 
 class _AppLocalizationsDelegate

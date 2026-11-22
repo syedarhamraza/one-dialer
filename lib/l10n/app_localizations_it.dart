@@ -2228,4 +2228,12 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get sameAsKeypad => 'Come tastierino e contatti';
+
+  @override
+  String get tapSimUnused =>
+      'Si usa solo quando Tocco su una chiamata recente è impostato su Chiama, in Chiamata veloce';
+
+  @override
+  String get swipeSimUnused =>
+      'Si usa solo quando Scorri per chiamare è attivo, in Chiamata veloce';
 }

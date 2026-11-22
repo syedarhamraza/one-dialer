@@ -1060,5 +1060,7 @@
   "simCards": "SIM cards",
   "keypadAndContacts": "Keypad and contacts",
   "swipeToCallSim": "Swipe to call",
-  "sameAsKeypad": "Same as keypad and contacts"
+  "sameAsKeypad": "Same as keypad and contacts",
+  "tapSimUnused": "Used only when Tap a recent call is set to Call, in Quick calling",
+  "swipeSimUnused": "Used only when Swipe to call is on, in Quick calling"
 }

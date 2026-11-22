@@ -634,5 +634,7 @@
   "simCards": "Schede SIM",
   "keypadAndContacts": "Tastierino e contatti",
   "swipeToCallSim": "Scorri per chiamare",
-  "sameAsKeypad": "Come tastierino e contatti"
+  "sameAsKeypad": "Come tastierino e contatti",
+  "tapSimUnused": "Si usa solo quando Tocco su una chiamata recente è impostato su Chiama, in Chiamata veloce",
+  "swipeSimUnused": "Si usa solo quando Scorri per chiamare è attivo, in Chiamata veloce"
 }

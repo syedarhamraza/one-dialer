@@ -2199,4 +2199,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sameAsKeypad => 'Same as keypad and contacts';
+
+  @override
+  String get tapSimUnused =>
+      'Used only when Tap a recent call is set to Call, in Quick calling';
+
+  @override
+  String get swipeSimUnused =>
+      'Used only when Swipe to call is on, in Quick calling';
 }
