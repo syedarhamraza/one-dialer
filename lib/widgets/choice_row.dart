@@ -5,17 +5,31 @@ import 'one_ui_floating_menu.dart';
 import 'one_ui_group_card.dart';
 import 'one_ui_switch.dart';
 
-/// A settings row with a switch on the right; tapping the row flips it too.
-OneUIGroupItem switchRow(String title, ValueNotifier<bool> value, ValueChanged<bool> onChanged, {String? subtitle}) =>
-    OneUIGroupItem(
-      title: title,
-      subtitle: subtitle,
-      onTap: () => onChanged(!value.value),
-      trailing: ValueListenableBuilder(
-        valueListenable: value,
-        builder: (context, v, _) => OneUISwitch(value: v, onChanged: onChanged),
-      ),
-    );
+/// A settings row with a switch on the right; tapping the row flips it too. When not [enabled]
+/// (another setting makes it redundant, which [subtitle] should say) it can't be flipped and the
+/// switch is dimmed, keeping its saved value for when it applies again.
+OneUIGroupItem switchRow(
+  String title,
+  ValueNotifier<bool> value,
+  ValueChanged<bool> onChanged, {
+  String? subtitle,
+  bool enabled = true,
+}) => OneUIGroupItem(
+  title: title,
+  subtitle: subtitle,
+  onTap: enabled ? () => onChanged(!value.value) : null,
+  trailing: ValueListenableBuilder(
+    valueListenable: value,
+    builder: (context, v, _) => enabled
+        ? OneUISwitch(value: v, onChanged: onChanged)
+        : Opacity(
+            opacity: .4,
+            child: IgnorePointer(
+              child: OneUISwitch(value: v, onChanged: (_) {}),
+            ),
+          ),
+  ),
+);
 
 /// A settings row whose current choice shows on the right in grey before a chevron, as
 /// ColorOS settings show values; tapping it opens the choices from there. A value missing

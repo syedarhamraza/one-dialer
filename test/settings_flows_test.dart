@@ -35,7 +35,13 @@ void main() {
         'getCallSettings' => <String, Object?>{},
         'getRecorderSettings' => <String, Object?>{'retentionDays': 0},
         'listRecordings' => [
-          {'name': '1762600000000_+923001234567.m4a', 'number': '+923001234567', 'startMillis': 1762600000000, 'durationMs': 65000, 'bytes': 1000},
+          {
+            'name': '1762600000000_+923001234567.m4a',
+            'number': '+923001234567',
+            'startMillis': 1762600000000,
+            'durationMs': 65000,
+            'bytes': 1000,
+          },
         ],
         'getSims' => [
           {'id': 'a', 'label': 'SIM 1'},
@@ -201,5 +207,33 @@ void main() {
     await tester.tap(find.text('Tap a recent call'));
     await tester.pumpAndSettle();
     expect(find.text('Choose SIM and call'), findsOneWidget);
+  });
+
+  testWidgets('with taps set to Call, the call button is greyed with the reason and keeps its value', (tester) async {
+    final prefs = DialerPrefs.instance;
+    prefs.rowCallButton.value = true;
+    addTearDown(() {
+      prefs.rowCallButton.value = false;
+      prefs.recentTap.value = 'details';
+    });
+    await open(tester, const DialingSettingsScreen());
+    expect(find.text('Call button style'), findsOneWidget);
+
+    prefs.recentTap.value = 'call';
+    await tester.pumpAndSettle();
+    expect(find.text('Tapping a call already calls'), findsOneWidget);
+    expect(find.text('Works in Contacts; tapping a call already calls'), findsOneWidget);
+    expect(find.text('Call button style'), findsNothing);
+    await tester.tap(find.text('Call button on rows'));
+    await tester.pumpAndSettle();
+    expect(prefs.rowCallButton.value, isTrue);
+
+    prefs.recentTap.value = 'details';
+    await tester.pumpAndSettle();
+    expect(find.text('Tapping a call already calls'), findsNothing);
+    expect(find.text('Call button style'), findsOneWidget);
+    await tester.tap(find.text('Call button on rows'));
+    await tester.pumpAndSettle();
+    expect(prefs.rowCallButton.value, isFalse);
   });
 }

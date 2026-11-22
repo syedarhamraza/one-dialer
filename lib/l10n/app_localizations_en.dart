@@ -2118,5 +2118,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get callsAndContactsRows => 'Rows in Calls and Contacts';
 
   @override
+  String get callsRows => 'Rows in Calls';
+
+  @override
+  String get tapAlreadyCalls => 'Tapping a call already calls';
+
+  @override
+  String get doubleTapContactsOnly =>
+      'Works in Contacts; tapping a call already calls';
+
+  @override
   String get simCards => 'SIM cards';
 }

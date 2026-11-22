@@ -2143,5 +2143,15 @@ class AppLocalizationsIt extends AppLocalizations {
   String get callsAndContactsRows => 'Righe in Chiamate e Contatti';
 
   @override
+  String get callsRows => 'Righe in Chiamate';
+
+  @override
+  String get tapAlreadyCalls => 'Toccare una chiamata chiama già';
+
+  @override
+  String get doubleTapContactsOnly =>
+      'Funziona in Contatti; toccare una chiamata chiama già';
+
+  @override
   String get simCards => 'Schede SIM';
 }

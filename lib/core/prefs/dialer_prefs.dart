@@ -158,6 +158,10 @@ class DialerPrefs {
   /// it synchronously; [loadChoices] fills them at startup.
   final recentTap = ValueNotifier('details');
 
+  /// A tap on a Calls row calls: the row's call button and Calls' double-tap step aside then,
+  /// since they'd only repeat it (Settings greys the button out and says why).
+  bool get tapCalls => recentTap.value == 'call';
+
   /// Settings › "Choose SIM for calls" (dual SIM, no default): `buttons` (two Call keys),
   /// `menu` (ask on every call) or `recent` (no asking: the SIM last used with that number, see
   /// [CallLogRepository.recentSim]).
