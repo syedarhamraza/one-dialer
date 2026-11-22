@@ -281,6 +281,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
           DialerPrefs.instance.hideContactNumbers, // rows read it directly
           DialerPrefs.instance.rowCallButton,
           DialerPrefs.instance.callButtonStyle,
+          DialerPrefs.instance.recentTap, // decides the info button
           DialerPrefs.instance.swipeToCall,
           DialerPrefs.instance.doubleTapCall,
         ]),
@@ -529,8 +530,8 @@ class _RecentsScreenState extends State<RecentsScreen> {
               onDoubleTap: prefs.doubleTapCall.value && callable && _selected == null ? () => callNow(row) : null,
               onInfo: details,
               onCall: prefs.rowCallButton.value && callable ? () => callNow(row) : null,
-              // The call button takes the info button's place, unless a tap calls (then details need it).
-              showInfo: !(prefs.rowCallButton.value && callable) || prefs.recentTap.value == 'call',
+              // With the call button, info shows only while a tap does something other than open details.
+              showInfo: !(prefs.rowCallButton.value && callable) || prefs.recentTap.value != 'details',
               onLongPress: () {
                 HapticFeedback.mediumImpact();
                 _toggle(group);
@@ -814,6 +815,11 @@ class _CallRow extends StatelessWidget {
     final call = group.latest;
     final name = callerName(context.l10n, call);
     final count = group.calls.length;
+    // With the call button, the time moves under the number (beside it when a note takes that line).
+    final timeBelow = onCall != null;
+    // Three lines fit the row's 61 dp only at a set line height, whatever the font's own.
+    final lineHeight = timeBelow ? 1.2 : null;
+    final secondary = TextStyle(fontSize: 14, height: lineHeight, color: context.palette.textSecondary);
     final slot =
         (onCall != null ? RowCallButton.widthFor(DialerPrefs.instance.callButtonStyle.value) : 0.0) +
         (showInfo ? 48.0 : 0);
@@ -844,6 +850,7 @@ class _CallRow extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 18,
+                      height: lineHeight,
                       fontWeight: FontWeight.w500,
                       letterSpacing: -0.2,
                       color: call.isMissed ? OneUITheme.accentRed : context.palette.textPrimary,
@@ -865,11 +872,13 @@ class _CallRow extends StatelessWidget {
                               : call.number,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 14, color: context.palette.textSecondary),
+                          style: secondary,
                         ),
                       ),
+                      if (timeBelow && note != null) Text(' · $when', style: secondary),
                     ],
                   ),
+                  if (timeBelow && note == null) ...[const SizedBox(height: 2), Text(when, style: secondary)],
                   if (note case final note?) ...[
                     const SizedBox(height: 2),
                     Row(
@@ -890,8 +899,7 @@ class _CallRow extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            Text(when, style: TextStyle(fontSize: 14, color: context.palette.textSecondary)),
+            if (!timeBelow) ...[const SizedBox(width: 8), Text(when, style: secondary)],
             // Info (and the call button) leave on the selection box's spring as the box comes in, in their place.
             TweenAnimationBuilder<double>(
               tween: Tween(end: selecting ? 0 : 1),

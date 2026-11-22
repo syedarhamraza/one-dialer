@@ -219,6 +219,42 @@ void main() {
     expect(find.byTooltip('Call details'), findsOneWidget);
   });
 
+  testWidgets('with the call button, info follows the tap choice as soon as it changes', (tester) async {
+    DialerPrefs.instance.rowCallButton.value = true;
+    addTearDown(() {
+      DialerPrefs.instance.rowCallButton.value = false;
+      DialerPrefs.instance.recentTap.value = 'details';
+    });
+    repo.calls.value = [call(1, '333')];
+    await open(tester, const RecentsScreen());
+    for (final (tap, info) in [('details', false), ('dial', true), ('details', false), ('sim', true), ('call', true)]) {
+      DialerPrefs.instance.recentTap.value = tap;
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Call details'), info ? findsOneWidget : findsNothing, reason: tap);
+    }
+  });
+
+  testWidgets('with the call button the time sits under the number, and the row keeps its height', (tester) async {
+    final now = DateTime.now();
+    repo.calls.value = [
+      for (final (id, number) in [(1, '0300 1234567'), (2, '0300 7654321')])
+        CallLogEntry(id: id, number: number, type: CallType.incoming, date: now),
+    ];
+    await open(tester, const RecentsScreen());
+    double pitch() => tester.getTopLeft(find.text('0300 7654321')).dy - tester.getTopLeft(find.text('0300 1234567')).dy;
+    final before = pitch();
+    DialerPrefs.instance.rowCallButton.value = true;
+    addTearDown(() => DialerPrefs.instance.rowCallButton.value = false);
+    await tester.pumpAndSettle();
+    expect(pitch(), before);
+    final number = tester.getRect(find.text('0300 1234567'));
+    final when = timeLabel(lookupAppLocalizations(const Locale('en')), repo.calls.value.first.date);
+    final time = tester.getRect(find.text(when).first);
+    expect(time.top, greaterThan(number.top));
+    expect(time.left, lessThan(number.right));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Calls search opens a page and Cancel closes it', (tester) async {
     await open(tester, const RecentsScreen());
     await tester.tap(find.byTooltip('Search'));

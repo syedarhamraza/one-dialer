@@ -1,12 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-
 import 'package:flutter/services.dart';
 
 import '../../core/contacts/contacts_repository.dart';
 import '../../theme/one_ui_theme.dart';
-import '../../widgets/row_call_button.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../l10n/l10n.dart';
 
@@ -49,7 +47,6 @@ class ContactRow extends StatelessWidget {
     this.highlight,
     required this.onTap,
     this.onDoubleTap,
-    this.onCall,
     required this.onLongPress,
   });
 
@@ -65,7 +62,7 @@ class ContactRow extends StatelessWidget {
   final VoidCallback onTap, onLongPress;
 
   /// Settings › Keypad & recents quick calling: double-tap to call, and a call button (null: none).
-  final VoidCallback? onDoubleTap, onCall;
+  final VoidCallback? onDoubleTap;
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +97,6 @@ class ContactRow extends StatelessWidget {
                         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500, letterSpacing: -0.2),
                       ),
                     ),
-                    if (onCall case final call?) RowCallButton(onPressed: call),
                     selectMark,
                   ],
                 ),

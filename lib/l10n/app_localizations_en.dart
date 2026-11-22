@@ -110,7 +110,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAndroidLanguage => 'Android language settings';
 
   @override
-  String get settingsAndroidLanguageSubtitle => 'Choose the language in Android\'s settings';
+  String get settingsAndroidLanguageSubtitle =>
+      'Choose the language in Android\'s settings';
 
   @override
   String get call => 'Call';
@@ -286,7 +287,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get deleteCallsMessage => 'The selected call history will be removed from this phone.';
+  String get deleteCallsMessage =>
+      'The selected call history will be removed from this phone.';
 
   @override
   String get couldNotDeleteCalls => 'Couldn\'t delete call history. Try again.';
@@ -320,16 +322,22 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get blockNumbersMessage => 'You won\'t get calls from blocked numbers.';
+  String get blockNumbersMessage =>
+      'You won\'t get calls from blocked numbers.';
 
   @override
   String selectedCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count selected');
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count selected',
+    );
     return '$_temp0';
   }
 
   @override
-  String get recentsSetDefaultMessage => 'Set Dialer as your default phone app to see recent calls';
+  String get recentsSetDefaultMessage =>
+      'Set Dialer as your default phone app to see recent calls';
 
   @override
   String get setAsDefault => 'Set as default';
@@ -413,7 +421,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String contactsCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count contacts', one: '1 contact');
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count contacts',
+      one: '1 contact',
+    );
     return '$_temp0';
   }
 
@@ -459,7 +472,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get deleteContactMessage => 'This contact will be removed from this phone and from its accounts.';
+  String get deleteContactMessage =>
+      'This contact will be removed from this phone and from its accounts.';
 
   @override
   String get shareVcf => 'vCard file (VCF)';
@@ -536,13 +550,15 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get deleteContactsMessage => 'They will be removed from this phone and from their accounts.';
+  String get deleteContactsMessage =>
+      'They will be removed from this phone and from their accounts.';
 
   @override
   String get manageContacts => 'Manage contacts';
 
   @override
-  String get contactsAccessMessage => 'Allow access to your contacts to see them here and show names for calls';
+  String get contactsAccessMessage =>
+      'Allow access to your contacts to see them here and show names for calls';
 
   @override
   String get alphabetIndex => 'Alphabet index';
@@ -663,7 +679,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String importToContacts(int count) {
-    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: 'Import $count to Contacts');
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Import $count to Contacts',
+    );
     return '$_temp0';
   }
 
@@ -683,7 +703,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get mergeGroupsMessage => 'Each group becomes one contact, with all its numbers and details.';
+  String get mergeGroupsMessage =>
+      'Each group becomes one contact, with all its numbers and details.';
 
   @override
   String contactsMerged(int count) {
@@ -718,7 +739,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String foundCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count found');
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count found',
+    );
     return '$_temp0';
   }
 
@@ -737,7 +762,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get change => 'Change';
 
   @override
-  String get contactReadOnly => 'This contact\'s account is read-only, so it can\'t be changed here';
+  String get contactReadOnly =>
+      'This contact\'s account is read-only, so it can\'t be changed here';
 
   @override
   String get couldNotSaveContact => 'Couldn\'t save the contact';
@@ -910,7 +936,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chooseFromContacts => 'Choose from contacts';
 
   @override
-  String get blockingNeedsScreeningRole => 'Set Dialer as your caller ID & spam app to block these calls';
+  String get blockingNeedsScreeningRole =>
+      'Set Dialer as your caller ID & spam app to block these calls';
 
   @override
   String get blockNumber => 'Block number';
@@ -928,7 +955,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get blockingPaused => 'Blocking rules are paused';
 
   @override
-  String get blockingPausedSubtitle => 'Another app screens your calls. Tap to let Dialer screen them.';
+  String get blockingPausedSubtitle =>
+      'Another app screens your calls. Tap to let Dialer screen them.';
 
   @override
   String get blockUnknown => 'Block unknown/private numbers';
@@ -1096,7 +1124,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get incomingCallReminders => 'Incoming call reminders';
 
   @override
-  String get incomingFootnote => 'Applies only to incoming calls received when your device is unlocked.';
+  String get incomingFootnote =>
+      'Applies only to incoming calls received when your device is unlocked.';
 
   @override
   String get banner => 'Banner';
@@ -1158,19 +1187,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get callScreenAnimations => 'Call screen animations';
 
   @override
-  String get callScreenAnimationsSubtitle => 'Motion when the call screen opens, answers and changes';
+  String get callScreenAnimationsSubtitle =>
+      'Motion when the call screen opens, answers and changes';
 
   @override
   String get hideContactNumbers => 'Hide contact phone numbers';
 
   @override
-  String get hideContactNumbersSubtitle => 'Show only the name of saved contacts on the call screen and in Calls';
+  String get hideContactNumbersSubtitle =>
+      'Show only the name of saved contacts on the call screen and in Calls';
 
   @override
   String get callerPhoto => 'Caller photo';
 
   @override
-  String get callerPhotoSubtitle => 'Where a contact’s photo sits on the call screen';
+  String get callerPhotoSubtitle =>
+      'Where a contact’s photo sits on the call screen';
 
   @override
   String get callerPhotoSide => 'Beside the name';
@@ -1180,7 +1212,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String secondsCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count seconds', one: '1 second');
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count seconds',
+      one: '1 second',
+    );
     return '$_temp0';
   }
 
@@ -1191,7 +1228,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get vibrateAnswerEnd => 'Vibrate when your calls are answered/ended';
 
   @override
-  String get autoAnswer => 'Auto-answer calls when connected to external audio device';
+  String get autoAnswer =>
+      'Auto-answer calls when connected to external audio device';
 
   @override
   String get autoAnswerSubtitle => 'Includes Bluetooth and wired headphones';
@@ -1206,7 +1244,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get speakerDefault => 'Calls default to speaker';
 
   @override
-  String get speakerDefaultSubtitle => 'Doesn\'t take effect when external devices are connected.';
+  String get speakerDefaultSubtitle =>
+      'Doesn\'t take effect when external devices are connected.';
 
   @override
   String get quickDeclineMessage => 'Quick decline message';
@@ -1233,13 +1272,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationsOff => 'Notifications are off';
 
   @override
-  String get notificationsOffSubtitle => 'You won\'t see incoming or missed calls';
+  String get notificationsOffSubtitle =>
+      'You won\'t see incoming or missed calls';
 
   @override
   String get fullScreenOff => 'Full-screen calls are off';
 
   @override
-  String get fullScreenOffSubtitle => 'Incoming calls only show as a notification';
+  String get fullScreenOffSubtitle =>
+      'Incoming calls only show as a notification';
 
   @override
   String get blockingPausedShort => 'Another app screens your calls';
@@ -1248,7 +1289,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bluetoothNamesHidden => 'Bluetooth names hidden';
 
   @override
-  String get bluetoothNamesHiddenSubtitle => 'Calls can\'t tell your watch from your earbuds';
+  String get bluetoothNamesHiddenSubtitle =>
+      'Calls can\'t tell your watch from your earbuds';
 
   @override
   String get fix => 'Fix';
@@ -1335,7 +1377,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get displaySizeNavBar => 'Navigation bar';
 
   @override
-  String get reduceVisualEffectsSubtitle => 'Less blur runs smoother on slower phones';
+  String get reduceVisualEffectsSubtitle =>
+      'Less blur runs smoother on slower phones';
 
   @override
   String get callScreenEdgeGlow => 'Call screen edge glow';
@@ -1396,16 +1439,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get callsFromOtherApps => 'Calls from other apps';
 
   @override
-  String get callsFromOtherAppsSubtitle => 'Show WhatsApp and other apps\' calls in Recents';
+  String get callsFromOtherAppsSubtitle =>
+      'Show WhatsApp and other apps\' calls in Recents';
 
   @override
-  String get manageContactsSubtitle => 'Display, save location, import and export, SIM, duplicates';
+  String get manageContactsSubtitle =>
+      'Display, save location, import and export, SIM, duplicates';
 
   @override
   String get googleContactsSync => 'Google Contacts sync';
 
   @override
-  String get googleContactsSyncSubtitle => 'Which accounts sync, and backing up phone contacts';
+  String get googleContactsSyncSubtitle =>
+      'Which accounts sync, and backing up phone contacts';
 
   @override
   String get defaultApps => 'Default apps';
@@ -1417,7 +1463,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get setupTitle => 'Set One Dialer as your default phone app';
 
   @override
-  String get setupBody => 'Needed to make and answer calls, show your call history and contacts, and block numbers.';
+  String get setupBody =>
+      'Needed to make and answer calls, show your call history and contacts, and block numbers.';
 
   @override
   String get settingUp => 'Setting up…';
@@ -1492,7 +1539,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sendReport => 'Send report';
 
   @override
-  String get reportUnavailable => 'Reporting unavailable or recently requested. Try again in a minute.';
+  String get reportUnavailable =>
+      'Reporting unavailable or recently requested. Try again in a minute.';
 
   @override
   String get reportQueued => 'Report queued';
@@ -1539,19 +1587,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get developer => 'Developer';
 
   @override
-  String get downloadStopped => 'The download stopped. Try again when you\'re connected.';
+  String get downloadStopped =>
+      'The download stopped. Try again when you\'re connected.';
 
   @override
-  String get couldNotInstallUpdate => 'Couldn\'t install the update. Try again.';
+  String get couldNotInstallUpdate =>
+      'Couldn\'t install the update. Try again.';
 
   @override
-  String get updateCancelled => 'Update cancelled. You can download it any time from here.';
+  String get updateCancelled =>
+      'Update cancelled. You can download it any time from here.';
 
   @override
   String get noInternet => 'No internet connection. Connect and try again.';
 
   @override
-  String get couldNotDownloadUpdate => 'Couldn\'t download the update. Try again.';
+  String get couldNotDownloadUpdate =>
+      'Couldn\'t download the update. Try again.';
 
   @override
   String get softwareInformation => 'Software information';
@@ -1575,7 +1627,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noNetwork => 'No network connection';
 
   @override
-  String get notFromPlay => 'Updates come from Google Play. This copy wasn\'t installed from Play.';
+  String get notFromPlay =>
+      'Updates come from Google Play. This copy wasn\'t installed from Play.';
 
   @override
   String get notFromPlayTitle => 'Not from Google Play';
@@ -1672,7 +1725,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recorderNeedsSetup => 'Set up both sides in One Recorder';
 
   @override
-  String get recorderHelperStopped => 'Both sides is paused: start the helper in One Recorder';
+  String get recorderHelperStopped =>
+      'Both sides is paused: start the helper in One Recorder';
 
   @override
   String get recorderUntrusted =>
@@ -1695,7 +1749,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noRecordings => 'No recordings yet';
 
   @override
-  String get noRecordingsSubtitle => 'Tap ⋮ › Record on the call screen during a call';
+  String get noRecordingsSubtitle =>
+      'Tap ⋮ › Record on the call screen during a call';
 
   @override
   String get deleteAllRecordings => 'Delete all recordings';
@@ -1710,7 +1765,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recordingNotSetUp => 'Calls aren\'t being recorded';
 
   @override
-  String get recordingNotSetUpSubtitle => 'Auto-record is on, but One Recorder isn\'t set up';
+  String get recordingNotSetUpSubtitle =>
+      'Auto-record is on, but One Recorder isn\'t set up';
 
   @override
   String get rename => 'Rename';
@@ -1822,34 +1878,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aboutPhone => 'About phone';
 
   @override
-  String get glassStyleSubtitle => 'Liquid glass bends what\'s behind it but uses more power';
+  String get glassStyleSubtitle =>
+      'Liquid glass bends what\'s behind it but uses more power';
 
   @override
-  String get darkModeEdgeGlowSubtitle => 'How brightly the glass edges glow in dark mode';
+  String get darkModeEdgeGlowSubtitle =>
+      'How brightly the glass edges glow in dark mode';
 
   @override
   String get liquidGlassOnSubtitle => 'Which parts of the app use liquid glass';
 
   @override
-  String get navBarGlassSubtitle => 'Full refraction looks best; Light runs smoother on slower phones';
+  String get navBarGlassSubtitle =>
+      'Full refraction looks best; Light runs smoother on slower phones';
 
   @override
-  String get tapRecentCallSubtitle => 'What happens when you tap a call in Calls';
+  String get tapRecentCallSubtitle =>
+      'What happens when you tap a call in Calls';
 
   @override
-  String get callScreenEdgeGlowSubtitle => 'How brightly the call buttons\' glass edges glow';
+  String get callScreenEdgeGlowSubtitle =>
+      'How brightly the call buttons\' glass edges glow';
 
   @override
-  String get answerButtonsSubtitle => 'How you answer, and how the call screen looks';
+  String get answerButtonsSubtitle =>
+      'How you answer, and how the call screen looks';
 
   @override
-  String get carrierSettingsSubtitle => 'Call forwarding, call waiting and caller ID';
+  String get carrierSettingsSubtitle =>
+      'Call forwarding, call waiting and caller ID';
 
   @override
   String get callBackground => 'Call background';
 
   @override
-  String get callBackgroundAllSubtitle => 'For every call, unless a contact has its own';
+  String get callBackgroundAllSubtitle =>
+      'For every call, unless a contact has its own';
 
   @override
   String get callBackgroundDefault => 'Default';
@@ -1904,13 +1968,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'A contact with their own call background, set on their contact page, uses it instead.';
 
   @override
-  String get callBackgroundContactNote => 'Used for this contact instead of the call background for all calls.';
+  String get callBackgroundContactNote =>
+      'Used for this contact instead of the call background for all calls.';
 
   @override
   String get backUpRestore => 'Back up & restore';
 
   @override
-  String get backUpRestoreSubtitle => 'Settings, call notes and call backgrounds, in one file on this phone';
+  String get backUpRestoreSubtitle =>
+      'Settings, call notes and call backgrounds, in one file on this phone';
 
   @override
   String get backUpNow => 'Back up now';
@@ -1927,7 +1993,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get restoreBackup => 'Restore';
 
   @override
-  String get restoreBackupSubtitle => 'Pick a backup file; the files app opens on Documents';
+  String get restoreBackupSubtitle =>
+      'Pick a backup file; the files app opens on Documents';
 
   @override
   String get autoBackup => 'Auto backup';
@@ -1954,7 +2021,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupLocationNone => 'Choose a folder; Documents is a good place';
 
   @override
-  String get backupFailed => 'The last backup failed. Tap Location to choose the folder again.';
+  String get backupFailed =>
+      'The last backup failed. Tap Location to choose the folder again.';
 
   @override
   String get backupFootnote =>
@@ -1974,7 +2042,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your settings, speed dial, call notes and call backgrounds are replaced by the ones in the file. One Dialer then restarts.';
 
   @override
-  String get importSettingsInCall => 'Settings can\'t be imported during a call';
+  String get importSettingsInCall =>
+      'Settings can\'t be imported during a call';
 
   @override
   String get notASettingsFile => 'This isn\'t a One Dialer settings file';
@@ -1988,19 +2057,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rowCallButton => 'Call button on rows';
 
   @override
-  String get rowCallButtonSubtitle => 'A call button on every row in Calls and Contacts';
+  String get rowCallButtonSubtitle => 'A call button on every row in Calls';
 
   @override
   String get swipeToCall => 'Swipe to call or message';
 
   @override
-  String get swipeToCallSubtitle => 'Swipe a row right to call, left to message';
+  String get swipeToCallSubtitle =>
+      'Swipe a row right to call, left to message';
 
   @override
   String get doubleTapCall => 'Double-tap to call';
 
   @override
-  String get doubleTapCallSubtitle => 'Double-tap a row in Calls or Contacts to call; a single tap waits a moment';
+  String get doubleTapCallSubtitle =>
+      'Double-tap a row in Calls or Contacts to call; a single tap waits a moment';
 
   @override
   String get swipeStyle => 'Swipe style';
@@ -2015,7 +2086,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickCalling => 'Quick calling';
 
   @override
-  String get quickCallingSubtitle => 'Tap, call button, swipe and double-tap on rows';
+  String get quickCallingSubtitle =>
+      'Tap, call button, swipe and double-tap on rows';
 
   @override
   String get useRecentSim => 'Use the recent SIM';

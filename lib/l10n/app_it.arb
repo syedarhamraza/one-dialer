@@ -590,7 +590,7 @@
   "notASettingsFile": "Questo non è un file di impostazioni di One Dialer",
   "endHeldCall": "Termina la chiamata con {name}",
   "rowCallButton": "Pulsante di chiamata sulle righe",
-  "rowCallButtonSubtitle": "Un pulsante di chiamata su ogni riga di Chiamate e Contatti",
+  "rowCallButtonSubtitle": "Un pulsante di chiamata su ogni riga in Chiamate",
   "swipeToCall": "Scorri per chiamare o scrivere",
   "swipeToCallSubtitle": "Scorri una riga a destra per chiamare, a sinistra per scrivere",
   "doubleTapCall": "Doppio tocco per chiamare",
