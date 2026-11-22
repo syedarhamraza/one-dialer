@@ -1,6 +1,6 @@
 # One Dialer — Privacy Policy
 
-_Last updated: 16 November 2026_
+_Last updated: 22 November 2026_
 
 One Dialer is a phone app for Android made by Syed Arham Raza. This policy explains what the app accesses and what it does with it.
 
@@ -16,6 +16,7 @@ When you make One Dialer your default phone app, Android gives it access to:
 | **Notifications** | Showing incoming, ongoing and missed calls |
 | **Nearby devices** (Bluetooth) | Showing the names of your connected Bluetooth devices (a watch, earbuds) so you can pick which one a call uses; nothing is sent anywhere |
 | **Blocked numbers** | Blocking and unblocking numbers you choose |
+| **Do Not Disturb access** (only if you allow it) | VIP calls: letting calls from the contacts you mark as VIPs, or your favourites, ring while the phone is on Silent or Vibrate, then putting the sound back as it was. The app asks for it only when you turn on VIP calls |
 
 ## Where your data goes
 
