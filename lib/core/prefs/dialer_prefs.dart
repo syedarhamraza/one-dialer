@@ -177,6 +177,10 @@ class DialerPrefs {
   final rowCallButton = ValueNotifier(false);
   final swipeToCall = ValueNotifier(false);
 
+  /// Calls ⋮ › Group by contact: one row per contact a day (all their numbers, any calls in
+  /// between), else only back-to-back calls from one number of one kind share a row.
+  final groupByContact = ValueNotifier(true);
+
   /// Beta: the look of the swipe ([swipeStyles]) and of the row call button ([callButtonStyles]),
   /// to compare on the phone before one is kept (`docs/beta-only.md`).
   final swipeStyle = ValueNotifier('pill');
@@ -215,6 +219,7 @@ class DialerPrefs {
     if (tap == 'details' || tap == 'dial' || tap == 'call' || tap == 'sim') recentTap.value = tap!;
     rowCallButton.value = await _prefs.getBool('row_call_button') ?? false;
     swipeToCall.value = await _prefs.getBool('swipe_to_call') ?? false;
+    groupByContact.value = await _prefs.getBool('group_by_contact') ?? true;
     if (await _prefs.getString('swipe_style') case final v? when swipeStyles.contains(v)) swipeStyle.value = v;
     // A style since removed (Pill, Glass) goes back to the default.
     final buttonStyle = await _prefs.getString('call_button_style');
@@ -485,6 +490,11 @@ class DialerPrefs {
   Future<void> setRowCallButton(bool value) async {
     rowCallButton.value = value;
     await _prefs.setBool('row_call_button', value);
+  }
+
+  Future<void> setGroupByContact(bool value) async {
+    groupByContact.value = value;
+    await _prefs.setBool('group_by_contact', value);
   }
 
   Future<void> setSwipeToCall(bool value) async {

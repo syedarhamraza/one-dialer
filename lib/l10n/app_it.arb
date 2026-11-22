@@ -632,5 +632,7 @@
   "callsAndContactsRows": "Righe in Chiamate e Contatti",
   "callsRows": "Righe in Chiamate",
   "tapAlreadyCalls": "Toccare una chiamata chiama già",
-  "simCards": "Schede SIM"
+  "simCards": "Schede SIM",
+  "groupByContact": "Raggruppa per contatto",
+  "dontGroupByContact": "Non raggruppare per contatto"
 }

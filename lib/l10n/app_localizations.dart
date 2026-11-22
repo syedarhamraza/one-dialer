@@ -3895,6 +3895,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'SIM cards'**
   String get simCards;
+
+  /// No description provided for @groupByContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Group by contact'**
+  String get groupByContact;
+
+  /// No description provided for @dontGroupByContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t group by contact'**
+  String get dontGroupByContact;
 }
 
 class _AppLocalizationsDelegate

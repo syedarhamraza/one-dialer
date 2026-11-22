@@ -632,5 +632,7 @@
   "callsAndContactsRows": "Rows in Calls and Contacts",
   "callsRows": "Rows in Calls",
   "tapAlreadyCalls": "Tapping a call already calls",
-  "simCards": "SIM cards"
+  "simCards": "SIM cards",
+  "groupByContact": "Group by contact",
+  "dontGroupByContact": "Don't group by contact"
 }

@@ -2222,4 +2222,10 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get simCards => 'Schede SIM';
+
+  @override
+  String get groupByContact => 'Raggruppa per contatto';
+
+  @override
+  String get dontGroupByContact => 'Non raggruppare per contatto';
 }
