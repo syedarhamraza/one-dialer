@@ -1,5 +1,6 @@
 import 'package:dialer/core/prefs/dialer_prefs.dart';
 import 'package:dialer/core/telecom/call_info.dart';
+import 'package:dialer/core/telecom/telecom_bridge.dart';
 import 'package:dialer/features/keypad/keypad_screen.dart';
 import 'package:dialer/features/recents/call_log.dart';
 import 'package:dialer/features/recents/call_log_repository.dart';
@@ -182,6 +183,9 @@ void main() {
       await tester.runAsync(() => placeCall(context, '03001234567', recentSim: true));
       expect(placed().single.arguments['simId'], 'sim2');
       native.clear();
+      // The SIM list kept from the calls above was read in real time; read it again in fake time.
+      TelecomBridge.instance.getSims().ignore();
+      await tester.pump();
       unawaited(placeCall(context, '03001234567'));
       await tester.pumpAndSettle();
       expect(find.textContaining('Personal'), findsOneWidget);

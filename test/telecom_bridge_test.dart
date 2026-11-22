@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dialer/core/telecom/telecom_bridge.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -40,5 +42,26 @@ void main() {
   test('other failures still reach the caller', () async {
     error = 'NO_PERMISSION';
     expect(() => TelecomBridge.instance.hangUp('call-1'), throwsA(isA<PlatformException>()));
+  });
+
+  test('the SIM menu reads the last SIM list at once, refreshed behind it, keeping it on a failed refresh', () async {
+    final bridge = TelecomBridge.instance;
+    var answer = Completer<Object?>()
+      ..complete([
+        {'id': 'a', 'label': 'One'},
+        {'id': 'b', 'label': 'Two'},
+      ]);
+    messenger.setMockMethodCallHandler(channel, (call) {
+      calls.add(call);
+      return answer.future;
+    });
+    expect(await bridge.quickSims(), hasLength(2)); // nothing kept yet: waits for Android
+    answer = Completer(); // Android slow to answer now
+    expect(await bridge.quickSims(), hasLength(2)); // no wait
+    expect(calls.where((c) => c.method == 'getSims'), hasLength(2)); // but it asked again
+    answer.completeError(PlatformException(code: 'X'));
+    await Future<void>.delayed(Duration.zero);
+    answer = Completer()..complete(const <Object?>[]);
+    expect(await bridge.quickSims(), hasLength(2));
   });
 }

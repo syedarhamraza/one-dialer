@@ -28,7 +28,7 @@ Future<bool> placeCall(
 }) async {
   final telecom = TelecomBridge.instance;
   if (chooseSim) {
-    final sims = await telecom.getSims();
+    final sims = await telecom.quickSims();
     if (sims.length > 1) {
       if (!context.mounted) return false;
       final sim = await pickSim(context, sims, anchorKey: anchorKey, anchorContext: anchorContext);
@@ -36,13 +36,15 @@ Future<bool> placeCall(
       simId = sim.id;
     }
   }
-  if (simId == null) {
-    final contact = ContactsRepository.instance.contactFor(number);
-    if (contact != null) simId = await DialerPrefs.instance.contactSim(contact.id);
-  }
+  // Read together, so the SIM menu waits on one lookup at most.
+  final contact = simId == null ? ContactsRepository.instance.contactFor(number) : null;
+  final (contactSim, sims) = await (
+    contact == null ? Future<String?>.value() : DialerPrefs.instance.contactSim(contact.id),
+    simId == null ? telecom.quickSims() : Future.value(const <SimCard>[]),
+  ).wait;
+  simId ??= contactSim;
   // Settings › SIM cards › Which SIM to call with; a swipe ([recentSim]) never asks.
   if (simId == null) {
-    final sims = await telecom.getSims();
     if (sims.length > 1) {
       String? present(String? id) => sims.any((s) => s.id == id) ? id : null;
       final rule = DialerPrefs.instance.simChoice.value;
