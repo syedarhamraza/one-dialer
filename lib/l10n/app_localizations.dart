@@ -3757,6 +3757,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clear default'**
   String get clearDefault;
+
+  /// No description provided for @callsAndContactsRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Rows in Calls and Contacts'**
+  String get callsAndContactsRows;
+
+  /// No description provided for @simCards.
+  ///
+  /// In en, this message translates to:
+  /// **'SIM cards'**
+  String get simCards;
 }
 
 class _AppLocalizationsDelegate

@@ -1035,5 +1035,7 @@
   "answerFromBannerSubtitle": "What Answer on the incoming call banner does while the phone is unlocked",
   "stayInNotification": "Stay in the notification",
   "openCallScreen": "Open call screen",
-  "clearDefault": "Clear default"
+  "clearDefault": "Clear default",
+  "callsAndContactsRows": "Rows in Calls and Contacts",
+  "simCards": "SIM cards"
 }

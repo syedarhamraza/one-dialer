@@ -609,5 +609,7 @@
   "answerFromBannerSubtitle": "Cosa fa Rispondi sul banner della chiamata in arrivo con il telefono sbloccato",
   "stayInNotification": "Resta nella notifica",
   "openCallScreen": "Apri schermata chiamata",
-  "clearDefault": "Rimuovi predefinito"
+  "clearDefault": "Rimuovi predefinito",
+  "callsAndContactsRows": "Righe in Chiamate e Contatti",
+  "simCards": "Schede SIM"
 }

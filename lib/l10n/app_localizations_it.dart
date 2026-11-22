@@ -2148,4 +2148,10 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get clearDefault => 'Rimuovi predefinito';
+
+  @override
+  String get callsAndContactsRows => 'Righe in Chiamate e Contatti';
+
+  @override
+  String get simCards => 'Schede SIM';
 }

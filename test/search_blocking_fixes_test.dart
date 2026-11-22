@@ -158,6 +158,30 @@ void main() {
     expect(tester.getRect(find.byKey(pill)).height, moreOrLessEquals(48 / DialerPrefs.displaySizes.last, epsilon: .5));
   });
 
+  testWidgets('the row call button calls the number', (tester) async {
+    DialerPrefs.instance.rowCallButton.value = true;
+    addTearDown(() => DialerPrefs.instance.rowCallButton.value = false);
+    repo.calls.value = [call(1, '333')];
+    await open(tester, const RecentsScreen());
+    expect(find.byTooltip('Call details'), findsNothing);
+    await tester.tap(find.byTooltip('Call'));
+    await tester.pumpAndSettle();
+    expect(native.map((c) => c.method), contains('placeCall'));
+  });
+
+  testWidgets('with taps set to call, the call button shows beside the info button', (tester) async {
+    DialerPrefs.instance.rowCallButton.value = true;
+    DialerPrefs.instance.recentTap.value = 'call';
+    addTearDown(() {
+      DialerPrefs.instance.rowCallButton.value = false;
+      DialerPrefs.instance.recentTap.value = 'details';
+    });
+    repo.calls.value = [call(1, '333')];
+    await open(tester, const RecentsScreen());
+    expect(find.byTooltip('Call'), findsOneWidget);
+    expect(find.byTooltip('Call details'), findsOneWidget);
+  });
+
   testWidgets('Calls search opens a page and Cancel closes it', (tester) async {
     await open(tester, const RecentsScreen());
     await tester.tap(find.byTooltip('Search'));

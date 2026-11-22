@@ -2122,4 +2122,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get clearDefault => 'Clear default';
+
+  @override
+  String get callsAndContactsRows => 'Rows in Calls and Contacts';
+
+  @override
+  String get simCards => 'SIM cards';
 }
