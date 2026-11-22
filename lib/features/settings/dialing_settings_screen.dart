@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../l10n/l10n.dart';
+import '../../theme/one_ui_theme.dart';
 import '../../widgets/choice_row.dart';
 import '../../widgets/cos_subpage.dart';
 import '../../widgets/one_ui_group_card.dart';
 
-/// Settings › Keypad & recents: what a tap on a recent call does, and how dual SIM phones
-/// pick a SIM.
+/// Settings › Making calls › Quick calling: what a tap on a row in Calls or Contacts does, and the
+/// quick-call options (call button, swipe, double-tap).
 class DialingSettingsScreen extends StatefulWidget {
   const DialingSettingsScreen({super.key});
 
@@ -18,7 +19,6 @@ class DialingSettingsScreen extends StatefulWidget {
 
 class _DialingSettingsScreenState extends State<DialingSettingsScreen> {
   final _tapKey = GlobalKey();
-  final _simKey = GlobalKey();
   final _swipeKey = GlobalKey();
   final _buttonKey = GlobalKey();
 
@@ -38,7 +38,7 @@ class _DialingSettingsScreenState extends State<DialingSettingsScreen> {
     final prefs = DialerPrefs.instance;
     final l10n = context.l10n;
     return CosSubpage(
-      title: l10n.keypadAndRecents,
+      title: l10n.quickCalling,
       children: [
         // What a row in Calls or Contacts does; the call options are off by default.
         // Beta: each style picker shows while its option is on (docs/beta-only.md).
@@ -89,12 +89,7 @@ class _DialingSettingsScreenState extends State<DialingSettingsScreen> {
                   title: l10n.swipeStyle,
                   anchor: _swipeKey,
                   value: prefs.swipeStyle,
-                  labels: {
-                    'pill': l10n.swipeStylePill,
-                    'wash': l10n.swipeStyleWash,
-                    'bubble': l10n.swipeStyleBubble,
-                    'card': l10n.swipeStyleCard,
-                  },
+                  labels: {'pill': l10n.swipeStylePill, 'flat': l10n.swipeStyleFlat},
                   onPick: prefs.setSwipeStyle,
                 ),
               switchRow(
@@ -106,8 +101,37 @@ class _DialingSettingsScreenState extends State<DialingSettingsScreen> {
             ],
           ),
         ),
+      ],
+    );
+  }
+}
+
+/// Settings › Making calls › SIM cards: how a dual SIM phone with no default SIM picks one.
+class SimSettingsScreen extends StatefulWidget {
+  const SimSettingsScreen({super.key});
+
+  /// Settings' summary of [DialerPrefs.simChoice].
+  static Map<String, String> choiceLabels(AppLocalizations l10n) => {
+    'buttons': l10n.twoCallButtons,
+    'menu': l10n.askEveryTime,
+    'recent': l10n.useRecentSim,
+  };
+
+  @override
+  State<SimSettingsScreen> createState() => _SimSettingsScreenState();
+}
+
+class _SimSettingsScreenState extends State<SimSettingsScreen> {
+  final _simKey = GlobalKey();
+
+  @override
+  Widget build(BuildContext context) {
+    final prefs = DialerPrefs.instance;
+    final l10n = context.l10n;
+    return CosSubpage(
+      title: l10n.simCards,
+      children: [
         OneUIGroupCard(
-          headerTitle: l10n.simCards,
           items: [
             choiceRow(
               context,
@@ -115,10 +139,14 @@ class _DialingSettingsScreenState extends State<DialingSettingsScreen> {
               subtitle: l10n.chooseSimSubtitle,
               anchor: _simKey,
               value: prefs.simChoice,
-              labels: {'buttons': l10n.twoCallButtons, 'menu': l10n.askEveryTime},
+              labels: SimSettingsScreen.choiceLabels(l10n),
               onPick: prefs.setSimChoice,
             ),
           ],
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+          child: Text(l10n.useRecentSimHint, style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
         ),
       ],
     );

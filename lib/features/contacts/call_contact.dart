@@ -11,9 +11,10 @@ import 'editor/contact_form.dart' show labelDisplay;
 
 /// Calls [contact]: its default (or only) number straight away, otherwise after Samsung's
 /// chooser, whose "Set as default" remembers the pick as Android's default number.
-Future<void> callContact(BuildContext context, DialerContact contact) async {
+/// [recentSim]: no SIM menu (swipe to call), see [placeCall].
+Future<void> callContact(BuildContext context, DialerContact contact, {bool recentSim = false}) async {
   final number = contact.callNumber ?? await chooseNumber(context, contact);
-  if (number != null && context.mounted) await placeCall(context, number);
+  if (number != null && context.mounted) await placeCall(context, number, recentSim: recentSim);
 }
 
 /// The chooser on its own (also used to message a contact). Null if dismissed.

@@ -4,6 +4,7 @@ import '../core/prefs/dialer_prefs.dart';
 import '../features/in_call/call_controls.dart' show answerGreen;
 import '../l10n/l10n.dart';
 import '../theme/one_ui_theme.dart';
+import 'call_glyph.dart';
 import 'press_glow.dart';
 
 /// Settings › Call button on rows: the call button at the end of a Calls or Contacts row, in
@@ -30,7 +31,7 @@ class RowCallButton extends StatelessWidget {
         return IconButton(
           tooltip: l10n.call,
           onPressed: onPressed,
-          icon: const Icon(Icons.call_rounded, size: 24, color: answerGreen),
+          icon: const CallGlyph(Icons.call_rounded, size: 24, color: answerGreen),
         );
       }
       final pill = style == 'pill';
@@ -52,7 +53,7 @@ class RowCallButton extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.call_rounded, size: pill ? 16 : 20, color: fg),
+                  CallGlyph(Icons.call_rounded, size: pill ? 16 : 20, color: fg),
                   if (pill) ...[
                     const SizedBox(width: 5),
                     Text(
