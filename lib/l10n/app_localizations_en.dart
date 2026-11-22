@@ -2109,8 +2109,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rowCallButton => 'Call button on rows';
 
   @override
-  String get rowCallButtonSubtitle =>
-      'A call button on every row in Calls and Contacts';
+  String get rowCallButtonSubtitle => 'A call button on every row in Calls';
 
   @override
   String get swipeToCall => 'Swipe to call or message';

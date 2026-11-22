@@ -2137,7 +2137,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get rowCallButtonSubtitle =>
-      'Un pulsante di chiamata su ogni riga di Chiamate e Contatti';
+      'Un pulsante di chiamata su ogni riga in Chiamate';
 
   @override
   String get swipeToCall => 'Scorri per chiamare o scrivere';

@@ -3737,7 +3737,7 @@ abstract class AppLocalizations {
   /// No description provided for @rowCallButtonSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'A call button on every row in Calls and Contacts'**
+  /// **'A call button on every row in Calls'**
   String get rowCallButtonSubtitle;
 
   /// No description provided for @swipeToCall.

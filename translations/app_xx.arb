@@ -606,7 +606,7 @@
   "vipNeedsAccessSubtitle": "Allow call screening and Do Not Disturb access",
   "vipDndHint": "With Do Not Disturb on, Android decides who rings: allow starred contacts in its Do Not Disturb settings.",
   "rowCallButton": "Call button on rows",
-  "rowCallButtonSubtitle": "A call button on every row in Calls and Contacts",
+  "rowCallButtonSubtitle": "A call button on every row in Calls",
   "swipeToCall": "Swipe to call or message",
   "swipeToCallSubtitle": "Swipe a row right to call, left to message",
   "doubleTapCall": "Double-tap to call",

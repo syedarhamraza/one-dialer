@@ -237,8 +237,6 @@ class _ContactsScreenState extends State<ContactsScreen> {
           ContactsRepository.instance.hasAccess,
           DialerPrefs.instance.onlyWithNumbers,
           DialerPrefs.instance.hiddenAccounts,
-          DialerPrefs.instance.rowCallButton,
-          DialerPrefs.instance.callButtonStyle,
           DialerPrefs.instance.swipeToCall,
           DialerPrefs.instance.doubleTapCall,
         ]),
@@ -378,7 +376,6 @@ class _ContactsScreenState extends State<ContactsScreen> {
                         ),
                         onTap: () => _selected != null ? _toggleSelected(c) : _open(c),
                         onDoubleTap: quick && prefs.doubleTapCall.value ? () => callContact(context, c) : null,
-                        onCall: quick && prefs.rowCallButton.value ? () => callContact(context, c) : null,
                         onLongPress: () => _selected != null ? _toggleSelected(c) : _startSelection(c),
                       );
                       if (!quick || !prefs.swipeToCall.value) return row;

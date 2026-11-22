@@ -606,7 +606,7 @@
   "vipNeedsAccessSubtitle": "Consenti il filtro chiamate e l'accesso a Non disturbare",
   "vipDndHint": "Con Non disturbare attivo decide Android chi squilla: consenti i contatti speciali nelle sue impostazioni di Non disturbare.",
   "rowCallButton": "Pulsante di chiamata sulle righe",
-  "rowCallButtonSubtitle": "Un pulsante di chiamata su ogni riga di Chiamate e Contatti",
+  "rowCallButtonSubtitle": "Un pulsante di chiamata su ogni riga in Chiamate",
   "swipeToCall": "Scorri per chiamare o scrivere",
   "swipeToCallSubtitle": "Scorri una riga a destra per chiamare, a sinistra per scrivere",
   "doubleTapCall": "Doppio tocco per chiamare",
