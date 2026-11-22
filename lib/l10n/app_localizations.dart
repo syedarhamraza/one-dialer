@@ -3752,18 +3752,6 @@ abstract class AppLocalizations {
   /// **'Swipe a row right to call, left to message'**
   String get swipeToCallSubtitle;
 
-  /// No description provided for @doubleTapCall.
-  ///
-  /// In en, this message translates to:
-  /// **'Double-tap to call'**
-  String get doubleTapCall;
-
-  /// No description provided for @doubleTapCallSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Double-tap a row in Calls or Contacts to call; a single tap waits a moment'**
-  String get doubleTapCallSubtitle;
-
   /// No description provided for @answerFromBanner.
   ///
   /// In en, this message translates to:
@@ -3821,7 +3809,7 @@ abstract class AppLocalizations {
   /// No description provided for @quickCallingSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Tap, call button, swipe and double-tap on rows'**
+  /// **'Tap, call button and swipe on rows'**
   String get quickCallingSubtitle;
 
   /// No description provided for @useRecentSim.
@@ -3937,12 +3925,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tapping a call already calls'**
   String get tapAlreadyCalls;
-
-  /// No description provided for @doubleTapContactsOnly.
-  ///
-  /// In en, this message translates to:
-  /// **'Works in Contacts; tapping a call already calls'**
-  String get doubleTapContactsOnly;
 
   /// No description provided for @simCards.
   ///

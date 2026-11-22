@@ -238,7 +238,6 @@ class _ContactsScreenState extends State<ContactsScreen> {
           DialerPrefs.instance.onlyWithNumbers,
           DialerPrefs.instance.hiddenAccounts,
           DialerPrefs.instance.swipeToCall,
-          DialerPrefs.instance.doubleTapCall,
         ]),
         builder: (context, _) => _build(context),
       ),
@@ -375,7 +374,6 @@ class _ContactsScreenState extends State<ContactsScreen> {
                           builder: (context, _, _) => SelectHighlight(selected: _selected?.contains(c.id) ?? false),
                         ),
                         onTap: () => _selected != null ? _toggleSelected(c) : _open(c),
-                        onDoubleTap: quick && prefs.doubleTapCall.value ? () => callContact(context, c) : null,
                         onLongPress: () => _selected != null ? _toggleSelected(c) : _startSelection(c),
                       );
                       if (!quick || !prefs.swipeToCall.value) return row;

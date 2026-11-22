@@ -206,22 +206,19 @@ void main() {
     expect(find.byTooltip('Call'), findsOneWidget);
   });
 
-  testWidgets('with taps set to call, the call button and double-tap step aside', (tester) async {
+  testWidgets('with taps set to call, the call button steps aside and taps call at once', (tester) async {
     DialerPrefs.instance
       ..rowCallButton.value = true
-      ..doubleTapCall.value = true
       ..recentTap.value = 'call';
     addTearDown(() {
       DialerPrefs.instance
         ..rowCallButton.value = false
-        ..doubleTapCall.value = false
         ..recentTap.value = 'details';
     });
     repo.calls.value = [call(1, '333')];
     await open(tester, const RecentsScreen());
     expect(find.byTooltip('Call'), findsNothing);
     expect(find.byTooltip('Call details'), findsOneWidget);
-    // No double-tap wait: the single tap calls at once.
     await tester.tap(find.text('333'));
     await tester.pump();
     expect(native.map((c) => c.method), contains('placeCall'));

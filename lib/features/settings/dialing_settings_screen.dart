@@ -13,7 +13,7 @@ import '../keypad/speed_dial_screen.dart';
 import 'settings_screen.dart' show openSystemSetting;
 
 /// Settings › Making calls › Quick calling: what a tap on a row in Calls or Contacts does, and the
-/// quick-call options (call button, swipe, double-tap).
+/// quick-call options (call button, swipe).
 class DialingSettingsScreen extends StatefulWidget {
   const DialingSettingsScreen({super.key});
 
@@ -110,12 +110,6 @@ class _DialingSettingsScreenState extends State<DialingSettingsScreen> {
                       labels: {'pill': l10n.swipeStylePill, 'flat': l10n.swipeStyleFlat},
                       onPick: prefs.setSwipeStyle,
                     ),
-                  switchRow(
-                    l10n.doubleTapCall,
-                    prefs.doubleTapCall,
-                    prefs.setDoubleTapCall,
-                    subtitle: prefs.tapCalls ? l10n.doubleTapContactsOnly : l10n.doubleTapCallSubtitle,
-                  ),
                 ],
               ),
             ],

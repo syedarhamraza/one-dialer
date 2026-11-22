@@ -1035,8 +1035,6 @@
   "rowCallButtonSubtitle": "A call button on every row in Calls",
   "swipeToCall": "Swipe to call or message",
   "swipeToCallSubtitle": "Swipe a row right to call, left to message",
-  "doubleTapCall": "Double-tap to call",
-  "doubleTapCallSubtitle": "Double-tap a row in Calls or Contacts to call; a single tap waits a moment",
   "answerFromBanner": "Answering from the banner",
   "answerFromBannerSubtitle": "What Answer on the incoming call banner does while the phone is unlocked",
   "stayInNotification": "Stay in the notification",
@@ -1046,7 +1044,7 @@
   "swipeStylePill": "Glass button",
   "swipeStyleFlat": "Flat",
   "quickCalling": "Quick calling",
-  "quickCallingSubtitle": "Tap, call button, swipe and double-tap on rows",
+  "quickCallingSubtitle": "Tap, call button and swipe on rows",
   "useRecentSim": "Use the recent SIM",
   "simSameAsPhone": "Same as phone",
   "alwaysSim": "Always {sim}",
@@ -1066,6 +1064,5 @@
   "callsAndContactsRows": "Rows in Calls and Contacts",
   "callsRows": "Rows in Calls",
   "tapAlreadyCalls": "Tapping a call already calls",
-  "doubleTapContactsOnly": "Works in Contacts; tapping a call already calls",
   "simCards": "SIM cards"
 }

@@ -284,7 +284,6 @@ class _RecentsScreenState extends State<RecentsScreen> {
           DialerPrefs.instance.callButtonStyle,
           DialerPrefs.instance.recentTap, // decides the info button
           DialerPrefs.instance.swipeToCall,
-          DialerPrefs.instance.doubleTapCall,
         ]),
         builder: (context, _) => _buildList(context),
       ),
@@ -537,10 +536,6 @@ class _RecentsScreenState extends State<RecentsScreen> {
                 builder: (context, _, _) => SelectHighlight(selected: _selected?.contains(call.id) ?? false),
               ),
               onTap: () => tap(row),
-              // Null keeps single taps instant; double-tap makes every tap wait a moment.
-              onDoubleTap: prefs.doubleTapCall.value && !prefs.tapCalls && callable && _selected == null
-                  ? () => callNow(row)
-                  : null,
               onInfo: details,
               onCall: prefs.rowCallButton.value && !prefs.tapCalls && callable ? () => callNow(row) : null,
               // With the call button, info shows only while a tap does something other than open details.
@@ -801,7 +796,6 @@ class _CallRow extends StatelessWidget {
     required this.selectMark,
     required this.highlight,
     required this.onTap,
-    this.onDoubleTap,
     required this.onInfo,
     this.onCall,
     this.showInfo = true,
@@ -819,7 +813,7 @@ class _CallRow extends StatelessWidget {
   final Widget selectMark, highlight;
   final VoidCallback onTap;
   final VoidCallback onInfo;
-  final VoidCallback? onDoubleTap, onCall;
+  final VoidCallback? onCall;
   final bool showInfo;
   final VoidCallback onLongPress;
 
@@ -838,7 +832,6 @@ class _CallRow extends StatelessWidget {
         (showInfo ? 48.0 : 0);
     final row = InkWell(
       onTap: onTap,
-      onDoubleTap: onDoubleTap,
       onLongPress: onLongPress,
       splashColor: context.palette.textPrimary.withValues(alpha: 0.06),
       highlightColor: context.palette.textPrimary.withValues(alpha: 0.03),

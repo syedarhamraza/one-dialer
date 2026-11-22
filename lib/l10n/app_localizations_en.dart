@@ -2119,13 +2119,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Swipe a row right to call, left to message';
 
   @override
-  String get doubleTapCall => 'Double-tap to call';
-
-  @override
-  String get doubleTapCallSubtitle =>
-      'Double-tap a row in Calls or Contacts to call; a single tap waits a moment';
-
-  @override
   String get answerFromBanner => 'Answering from the banner';
 
   @override
@@ -2154,8 +2147,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickCalling => 'Quick calling';
 
   @override
-  String get quickCallingSubtitle =>
-      'Tap, call button, swipe and double-tap on rows';
+  String get quickCallingSubtitle => 'Tap, call button and swipe on rows';
 
   @override
   String get useRecentSim => 'Use the recent SIM';
@@ -2217,10 +2209,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tapAlreadyCalls => 'Tapping a call already calls';
-
-  @override
-  String get doubleTapContactsOnly =>
-      'Works in Contacts; tapping a call already calls';
 
   @override
   String get simCards => 'SIM cards';

@@ -609,8 +609,6 @@
   "rowCallButtonSubtitle": "Un pulsante di chiamata su ogni riga in Chiamate",
   "swipeToCall": "Scorri per chiamare o scrivere",
   "swipeToCallSubtitle": "Scorri una riga a destra per chiamare, a sinistra per scrivere",
-  "doubleTapCall": "Doppio tocco per chiamare",
-  "doubleTapCallSubtitle": "Tocca due volte una riga in Chiamate o Contatti per chiamare; un tocco singolo attende un attimo",
   "answerFromBanner": "Risposta dal banner",
   "answerFromBannerSubtitle": "Cosa fa Rispondi sul banner della chiamata in arrivo con il telefono sbloccato",
   "stayInNotification": "Resta nella notifica",
@@ -620,7 +618,7 @@
   "swipeStylePill": "Pulsante di vetro",
   "swipeStyleFlat": "Piatto",
   "quickCalling": "Chiamata veloce",
-  "quickCallingSubtitle": "Tocco, pulsante di chiamata, scorrimento e doppio tocco sulle righe",
+  "quickCallingSubtitle": "Tocco, pulsante di chiamata e scorrimento sulle righe",
   "useRecentSim": "Usa la SIM recente",
   "simSameAsPhone": "Come il telefono",
   "alwaysSim": "Sempre {sim}",
@@ -640,6 +638,5 @@
   "callsAndContactsRows": "Righe in Chiamate e Contatti",
   "callsRows": "Righe in Chiamate",
   "tapAlreadyCalls": "Toccare una chiamata chiama già",
-  "doubleTapContactsOnly": "Funziona in Contatti; toccare una chiamata chiama già",
   "simCards": "Schede SIM"
 }

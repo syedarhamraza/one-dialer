@@ -2147,13 +2147,6 @@ class AppLocalizationsIt extends AppLocalizations {
       'Scorri una riga a destra per chiamare, a sinistra per scrivere';
 
   @override
-  String get doubleTapCall => 'Doppio tocco per chiamare';
-
-  @override
-  String get doubleTapCallSubtitle =>
-      'Tocca due volte una riga in Chiamate o Contatti per chiamare; un tocco singolo attende un attimo';
-
-  @override
   String get answerFromBanner => 'Risposta dal banner';
 
   @override
@@ -2183,7 +2176,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get quickCallingSubtitle =>
-      'Tocco, pulsante di chiamata, scorrimento e doppio tocco sulle righe';
+      'Tocco, pulsante di chiamata e scorrimento sulle righe';
 
   @override
   String get useRecentSim => 'Usa la SIM recente';
@@ -2245,10 +2238,6 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get tapAlreadyCalls => 'Toccare una chiamata chiama già';
-
-  @override
-  String get doubleTapContactsOnly =>
-      'Funziona in Contatti; toccare una chiamata chiama già';
 
   @override
   String get simCards => 'Schede SIM';

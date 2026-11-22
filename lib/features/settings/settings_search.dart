@@ -96,7 +96,7 @@ List<SettingsEntry> settingsIndex(AppLocalizations l10n, {bool recorder = false,
     l10n.quickCalling,
     page(const DialingSettingsScreen()),
     subtitle: l10n.quickCallingSubtitle,
-    rows: [l10n.tapRecentCall, l10n.rowCallButton, l10n.swipeToCall, l10n.doubleTapCall],
+    rows: [l10n.tapRecentCall, l10n.rowCallButton, l10n.swipeToCall],
   );
   add(
     making,

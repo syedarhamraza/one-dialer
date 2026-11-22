@@ -80,29 +80,4 @@ void main() {
     await open(tester);
     expect(find.byType(RowCallButton), findsNothing);
   });
-
-  testWidgets('double-tap still calls in Contacts while a tap on Calls calls', (tester) async {
-    final native = <String>[];
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
-      const MethodChannel('com.syedarhamraza.dialer/telecom'),
-      (call) async {
-        native.add(call.method);
-        return call.method == 'placeCall' ? true : null;
-      },
-    );
-    DialerPrefs.instance
-      ..doubleTapCall.value = true
-      ..recentTap.value = 'call';
-    addTearDown(() {
-      DialerPrefs.instance
-        ..doubleTapCall.value = false
-        ..recentTap.value = 'details';
-    });
-    await open(tester);
-    await tester.tap(find.text('Aname 1'));
-    await tester.pump(const Duration(milliseconds: 50));
-    await tester.tap(find.text('Aname 1'));
-    await tester.pumpAndSettle();
-    expect(native, contains('placeCall'));
-  });
 }
