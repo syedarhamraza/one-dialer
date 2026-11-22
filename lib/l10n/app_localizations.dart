@@ -62,7 +62,8 @@ import 'app_localizations_it.dart';
 /// be consistent with the languages listed in the AppLocalizations.supportedLocales
 /// property.
 abstract class AppLocalizations {
-  AppLocalizations(String locale) : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+  AppLocalizations(String locale)
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -70,7 +71,8 @@ abstract class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
   }
 
-  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
 
   /// A list of this localizations delegate along with the default localizations
   /// delegates.
@@ -82,15 +84,19 @@ abstract class AppLocalizations {
   /// Additional delegates can be added by appending to this list in
   /// MaterialApp. This list does not have to be used at all if a custom list
   /// of delegates is preferred or required.
-  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = <LocalizationsDelegate<dynamic>>[
-    delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-  ];
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
 
   /// A list of this localizations delegate's supported locales.
-  static const List<Locale> supportedLocales = <Locale>[Locale('en'), Locale('it')];
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('en'),
+    Locale('it'),
+  ];
 
   /// No description provided for @languageName.
   ///
@@ -1943,7 +1949,7 @@ abstract class AppLocalizations {
   /// No description provided for @incomingCallReminders.
   ///
   /// In en, this message translates to:
-  /// **'Incoming call reminders'**
+  /// **'Incoming calls'**
   String get incomingCallReminders;
 
   /// No description provided for @incomingFootnote.
@@ -2027,7 +2033,7 @@ abstract class AppLocalizations {
   /// No description provided for @answerButtons.
   ///
   /// In en, this message translates to:
-  /// **'Answer buttons'**
+  /// **'Call screen'**
   String get answerButtons;
 
   /// No description provided for @twoButtons.
@@ -2117,7 +2123,7 @@ abstract class AppLocalizations {
   /// No description provided for @answerEndCalls.
   ///
   /// In en, this message translates to:
-  /// **'Answer/End calls'**
+  /// **'Answering and ending calls'**
   String get answerEndCalls;
 
   /// No description provided for @vibrateAnswerEnd.
@@ -3359,8 +3365,56 @@ abstract class AppLocalizations {
   /// No description provided for @answerButtonsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'How you answer, and how the call screen looks'**
+  /// **'How you answer, effects, caller photo and background'**
   String get answerButtonsSubtitle;
+
+  /// No description provided for @incomingCallsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ringing style, announce caller, flash, Live Update'**
+  String get incomingCallsSubtitle;
+
+  /// No description provided for @answerEndCallsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-answer, reply with SMS, speaker'**
+  String get answerEndCallsSubtitle;
+
+  /// No description provided for @sectionCalls.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls'**
+  String get sectionCalls;
+
+  /// No description provided for @sectionMakingCalls.
+  ///
+  /// In en, this message translates to:
+  /// **'Making calls'**
+  String get sectionMakingCalls;
+
+  /// No description provided for @sectionBlocking.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocking and caller ID'**
+  String get sectionBlocking;
+
+  /// No description provided for @sectionDisplay.
+  ///
+  /// In en, this message translates to:
+  /// **'Display'**
+  String get sectionDisplay;
+
+  /// No description provided for @sectionSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Contacts and system'**
+  String get sectionSystem;
+
+  /// No description provided for @searchSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Search settings'**
+  String get searchSettings;
 
   /// No description provided for @carrierSettingsSubtitle.
   ///
@@ -3843,7 +3897,8 @@ abstract class AppLocalizations {
   String get simCards;
 }
 
-class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
@@ -3852,7 +3907,8 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
   }
 
   @override
-  bool isSupported(Locale locale) => <String>['en', 'it'].contains(locale.languageCode);
+  bool isSupported(Locale locale) =>
+      <String>['en', 'it'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;

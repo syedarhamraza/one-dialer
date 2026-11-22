@@ -25,6 +25,7 @@ import 'call_settings_pages.dart';
 import 'dialing_settings_screen.dart';
 import 'display_settings_screen.dart';
 import 'help_feedback_screen.dart';
+import 'settings_search.dart';
 import 'software_update_screen.dart';
 import 'vip_calls_screen.dart';
 import '../../l10n/l10n.dart';
@@ -176,21 +177,37 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   Widget build(BuildContext context) {
     final problems = _problems;
     final l10n = context.l10n;
-    // Grouped like ColorOS's Settings: one untitled card per topic.
+    // Headed sections, each entry naming what's inside it, and a search over every row.
     return OneUISubpage(
       title: l10n.callSettings,
       builder: (context) => [
+        SettingsSearchPill(
+          onTap: () => _push(SettingsSearchScreen(recorder: _recorder != null, appCallLog: _appCallLog)),
+        ),
         if (problems.isNotEmpty) OneUIGroupCard(headerTitle: l10n.needsAttention, items: problems),
         OneUIGroupCard(
+          headerTitle: l10n.sectionCalls,
           items: [
-            OneUIGroupItem(title: l10n.incomingCallReminders, onTap: () => _push(const IncomingCallRemindersScreen())),
+            OneUIGroupItem(
+              title: l10n.incomingCallReminders,
+              subtitle: l10n.incomingCallsSubtitle,
+              onTap: () => _push(const IncomingCallRemindersScreen()),
+            ),
             OneUIGroupItem(
               title: l10n.answerButtons,
               subtitle: l10n.answerButtonsSubtitle,
               onTap: () => _push(const AnswerButtonsScreen()),
             ),
-            OneUIGroupItem(title: l10n.answerEndCalls, onTap: () => _push(const AnswerEndCallsScreen())),
-            OneUIGroupItem(title: l10n.vipCalls, subtitle: l10n.vipCallsSubtitle, onTap: () => _push(const VipCallsScreen())),
+            OneUIGroupItem(
+              title: l10n.answerEndCalls,
+              subtitle: l10n.answerEndCallsSubtitle,
+              onTap: () => _push(const AnswerEndCallsScreen()),
+            ),
+            OneUIGroupItem(
+              title: l10n.vipCalls,
+              subtitle: l10n.vipCallsSubtitle,
+              onTap: () => _push(const VipCallsScreen()),
+            ),
             // Only with One Recorder installed (the sideloaded companion); the Play app can't record alone.
             if (_recorder != null)
               OneUIGroupItem(
@@ -203,21 +220,23 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           ],
         ),
         OneUIGroupCard(
+          headerTitle: l10n.sectionMakingCalls,
           items: [
-            OneUIGroupItem(
-              title: l10n.quickCalling,
-              subtitle: l10n.quickCallingSubtitle,
-              onTap: () => _push(const DialingSettingsScreen()),
-            ),
             OneUIGroupItem(
               title: l10n.simCards,
               value: SimSettingsScreen.choiceLabels(l10n)[DialerPrefs.instance.simChoice.value],
               onTap: () => _push(const SimSettingsScreen()),
             ),
+            OneUIGroupItem(
+              title: l10n.quickCalling,
+              subtitle: l10n.quickCallingSubtitle,
+              onTap: () => _push(const DialingSettingsScreen()),
+            ),
             OneUIGroupItem(title: l10n.speedDial, onTap: () => _push(const SpeedDialScreen())),
           ],
         ),
         OneUIGroupCard(
+          headerTitle: l10n.sectionBlocking,
           items: [
             OneUIGroupItem(title: l10n.blockAndFilter, onTap: () => _push(const BlockingScreen())),
             OneUIGroupItem(
@@ -228,22 +247,24 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           ],
         ),
         OneUIGroupCard(
+          headerTitle: l10n.sectionDisplay,
           items: [
             OneUIGroupItem(
               title: l10n.displayAndEffects,
               value: DisplaySettingsScreen.themeLabels(l10n)[DialerPrefs.instance.themeMode.value],
               onTap: () => _push(const DisplaySettingsScreen()),
             ),
-          ],
-        ),
-        OneUIGroupCard(
-          items: [
             OneUIGroupItem(
               title: l10n.settingsLanguageHeader,
               value: _languageLabels(l10n)[DialerPrefs.instance.language.value],
-              onTap: () => _push(const _LanguageScreen()),
+              onTap: () => _push(const LanguageScreen()),
             ),
-            OneUIGroupItem(title: l10n.navContacts, onTap: () => _push(const _ContactsSettingsScreen())),
+          ],
+        ),
+        OneUIGroupCard(
+          headerTitle: l10n.sectionSystem,
+          items: [
+            OneUIGroupItem(title: l10n.navContacts, onTap: () => _push(const ContactsSettingsScreen())),
             OneUIGroupItem(title: l10n.notifications, onTap: () => _telecom.openSystemSettings('notifications')),
             OneUIGroupItem(title: l10n.defaultApps, onTap: () => _telecom.openSystemSettings('defaultApps')),
             OneUIGroupItem(
@@ -311,14 +332,14 @@ Map<String, String> _languageLabels(AppLocalizations l10n) => {
 };
 
 /// Settings › Language: the app's own language, or Android's per-app page for it.
-class _LanguageScreen extends StatefulWidget {
-  const _LanguageScreen();
+class LanguageScreen extends StatefulWidget {
+  const LanguageScreen({super.key});
 
   @override
-  State<_LanguageScreen> createState() => _LanguageScreenState();
+  State<LanguageScreen> createState() => _LanguageScreenState();
 }
 
-class _LanguageScreenState extends State<_LanguageScreen> {
+class _LanguageScreenState extends State<LanguageScreen> {
   final _languageKey = GlobalKey();
 
   @override
@@ -348,8 +369,8 @@ class _LanguageScreenState extends State<_LanguageScreen> {
 }
 
 /// Settings › Contacts: which contacts show, and where they're stored and synced.
-class _ContactsSettingsScreen extends StatelessWidget {
-  const _ContactsSettingsScreen();
+class ContactsSettingsScreen extends StatelessWidget {
+  const ContactsSettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) => CosSubpage(
