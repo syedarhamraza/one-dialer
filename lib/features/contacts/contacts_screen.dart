@@ -238,6 +238,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
           DialerPrefs.instance.onlyWithNumbers,
           DialerPrefs.instance.hiddenAccounts,
           DialerPrefs.instance.rowCallButton,
+          DialerPrefs.instance.callButtonStyle,
           DialerPrefs.instance.swipeToCall,
           DialerPrefs.instance.doubleTapCall,
         ]),

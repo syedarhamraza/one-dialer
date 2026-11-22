@@ -1,10 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import '../in_call/call_controls.dart' show answerGreen;
+
+
 import 'package:flutter/services.dart';
 
 import '../../core/contacts/contacts_repository.dart';
 import '../../theme/one_ui_theme.dart';
+import '../../widgets/row_call_button.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../l10n/l10n.dart';
 
@@ -86,9 +88,7 @@ class ContactRow extends StatelessWidget {
                 // The divider and the name stop short of the letter index on the right.
                 margin: const EdgeInsets.only(right: 36),
                 decoration: BoxDecoration(
-                  border: isLast
-                      ? null
-                      : Border(bottom: BorderSide(color: context.palette.divider, width: 1)),
+                  border: isLast ? null : Border(bottom: BorderSide(color: context.palette.divider, width: 1)),
                 ),
                 child: Row(
                   children: [
@@ -100,12 +100,7 @@ class ContactRow extends StatelessWidget {
                         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500, letterSpacing: -0.2),
                       ),
                     ),
-                    if (onCall case final call?)
-                      IconButton(
-                        tooltip: context.l10n.call,
-                        onPressed: call,
-                        icon: const Icon(Icons.call_rounded, size: 24, color: answerGreen),
-                      ),
+                    if (onCall case final call?) RowCallButton(onPressed: call),
                     selectMark,
                   ],
                 ),

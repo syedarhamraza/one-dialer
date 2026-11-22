@@ -595,6 +595,17 @@
   "swipeToCallSubtitle": "Swipe a row right to call, left to message",
   "doubleTapCall": "Double-tap to call",
   "doubleTapCallSubtitle": "Double-tap a row in Calls or Contacts to call; a single tap waits a moment",
+  "swipeStyle": "Swipe style",
+  "swipeStylePill": "Glass pill",
+  "swipeStyleWash": "Colour wash",
+  "swipeStyleBubble": "Bubble",
+  "swipeStyleCard": "Card lift",
+  "callButtonStyle": "Call button style",
+  "callButtonTint": "Soft tint",
+  "callButtonGlyph": "Glyph only",
+  "callButtonGlass": "Glass circle",
+  "callButtonLit": "Green circle",
+  "callButtonPill": "Pill with label",
   "callsAndContactsRows": "Rows in Calls and Contacts",
   "simCards": "SIM cards"
 }

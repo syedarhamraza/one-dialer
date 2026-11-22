@@ -168,6 +168,13 @@ class DialerPrefs {
   final swipeToCall = ValueNotifier(false);
   final doubleTapCall = ValueNotifier(false);
 
+  /// Beta: the look of the swipe ([swipeStyles]) and of the row call button ([callButtonStyles]),
+  /// to compare on the phone before one is kept (`docs/beta-only.md`).
+  final swipeStyle = ValueNotifier('pill');
+  final callButtonStyle = ValueNotifier('tint');
+  static const swipeStyles = ['pill', 'wash', 'bubble', 'card'];
+  static const callButtonStyles = ['tint', 'glyph', 'glass', 'lit', 'pill'];
+
   // Manage contacts. Accounts are keyed `type|name` (`|` is the phone itself).
   final showPhotos = ValueNotifier(true);
   final onlyWithNumbers = ValueNotifier(true);
@@ -200,6 +207,10 @@ class DialerPrefs {
     rowCallButton.value = await _prefs.getBool('row_call_button') ?? false;
     swipeToCall.value = await _prefs.getBool('swipe_to_call') ?? false;
     doubleTapCall.value = await _prefs.getBool('double_tap_call') ?? false;
+    if (await _prefs.getString('swipe_style') case final v? when swipeStyles.contains(v)) swipeStyle.value = v;
+    if (await _prefs.getString('call_button_style') case final v? when callButtonStyles.contains(v)) {
+      callButtonStyle.value = v;
+    }
     final sim = await _prefs.getString('sim_choice');
     if (sim == 'buttons' || sim == 'menu') simChoice.value = sim!;
   }
@@ -463,6 +474,16 @@ class DialerPrefs {
   Future<void> setSwipeToCall(bool value) async {
     swipeToCall.value = value;
     await _prefs.setBool('swipe_to_call', value);
+  }
+
+  Future<void> setSwipeStyle(String value) async {
+    swipeStyle.value = value;
+    await _prefs.setString('swipe_style', value);
+  }
+
+  Future<void> setCallButtonStyle(String value) async {
+    callButtonStyle.value = value;
+    await _prefs.setString('call_button_style', value);
   }
 
   Future<void> setDoubleTapCall(bool value) async {

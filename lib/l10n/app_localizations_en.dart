@@ -2075,6 +2075,39 @@ class AppLocalizationsEn extends AppLocalizations {
       'Double-tap a row in Calls or Contacts to call; a single tap waits a moment';
 
   @override
+  String get swipeStyle => 'Swipe style';
+
+  @override
+  String get swipeStylePill => 'Glass pill';
+
+  @override
+  String get swipeStyleWash => 'Colour wash';
+
+  @override
+  String get swipeStyleBubble => 'Bubble';
+
+  @override
+  String get swipeStyleCard => 'Card lift';
+
+  @override
+  String get callButtonStyle => 'Call button style';
+
+  @override
+  String get callButtonTint => 'Soft tint';
+
+  @override
+  String get callButtonGlyph => 'Glyph only';
+
+  @override
+  String get callButtonGlass => 'Glass circle';
+
+  @override
+  String get callButtonLit => 'Green circle';
+
+  @override
+  String get callButtonPill => 'Pill with label';
+
+  @override
   String get callsAndContactsRows => 'Rows in Calls and Contacts';
 
   @override

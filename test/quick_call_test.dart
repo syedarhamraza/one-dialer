@@ -22,29 +22,47 @@ void main() {
     expect((prefs.recentTap.value, prefs.swipeToCall.value), ('call', true));
   });
 
-  testWidgets('a swipe past a third of the row calls (right) or messages (left); a short one does nothing', (
-    tester,
-  ) async {
-    final done = <String>[];
-    await tester.pumpWidget(
-      MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        home: Scaffold(
-          body: SwipeAction(
-            onCall: () => done.add('call'),
-            onMessage: () => done.add('message'),
-            child: const SizedBox(height: 60, width: double.infinity, child: Text('row')),
+  test('the swipe and call button styles default to pill and tint and ignore unknown ones', () async {
+    final prefs = DialerPrefs.instance;
+    await prefs.loadChoices();
+    expect((prefs.swipeStyle.value, prefs.callButtonStyle.value), ('pill', 'tint'));
+
+    await SharedPreferencesAsync().setString('swipe_style', 'gone');
+    await prefs.setCallButtonStyle('lit');
+    prefs.callButtonStyle.value = 'tint';
+    await prefs.loadChoices();
+    expect((prefs.swipeStyle.value, prefs.callButtonStyle.value), ('pill', 'lit'));
+    prefs.callButtonStyle.value = 'tint';
+  });
+
+  for (final style in DialerPrefs.swipeStyles) {
+    testWidgets('a $style swipe past a third of the row calls (right) or messages (left); a short one does nothing', (
+      tester,
+    ) async {
+      DialerPrefs.instance.swipeStyle.value = style;
+      addTearDown(() => DialerPrefs.instance.swipeStyle.value = 'pill');
+      final done = <String>[];
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: Scaffold(
+            body: SwipeAction(
+              onCall: () => done.add('call'),
+              onMessage: () => done.add('message'),
+              child: const SizedBox(height: 60, width: double.infinity, child: Text('row')),
+            ),
           ),
         ),
-      ),
-    );
-    final width = tester.getSize(find.byType(SwipeAction)).width;
-    await tester.drag(find.text('row'), Offset(width * 0.2, 0));
-    await tester.pumpAndSettle();
-    await tester.drag(find.text('row'), Offset(width * 0.5, 0));
-    await tester.pumpAndSettle();
-    await tester.drag(find.text('row'), Offset(-width * 0.5, 0));
-    await tester.pumpAndSettle();
-    expect(done, ['call', 'message']);
-  });
+      );
+      final width = tester.getSize(find.byType(SwipeAction)).width;
+      await tester.drag(find.text('row'), Offset(width * 0.2, 0));
+      await tester.pumpAndSettle();
+      await tester.drag(find.text('row'), Offset(width * 0.5, 0));
+      await tester.pumpAndSettle();
+      await tester.drag(find.text('row'), Offset(-width * 0.5, 0));
+      await tester.pumpAndSettle();
+      expect(done, ['call', 'message']);
+      expect(tester.takeException(), isNull);
+    });
+  }
 }
