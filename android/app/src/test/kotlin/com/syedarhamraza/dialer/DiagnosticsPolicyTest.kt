@@ -14,6 +14,11 @@ class DiagnosticsPolicyTest {
             "frames" to mapOf("buildP95Ms" to 15.0)), result)
     }
 
+    @Test fun contextKeepsOnlyABooleanEffectsSaved() {
+        assertEquals(true, DiagnosticsPolicy.context(mapOf("effectsSaved" to true))["effectsSaved"])
+        assertNull(DiagnosticsPolicy.context(mapOf("effectsSaved" to "yes"))["effectsSaved"])
+    }
+
     @Test fun engineSnapshotsDoNotShareMutableContext() {
         val main = DiagnosticsPolicy.context(mapOf("screen" to "calls"))
         val call = DiagnosticsPolicy.context(mapOf("screen" to "in_call"))

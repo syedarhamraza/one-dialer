@@ -103,6 +103,9 @@ void main() {
     final tops = {for (final c in categories) LagDiagnostics.incidentTrace(c).toString().split('\n').first};
     expect(tops.length, categories.length);
     expect(LagDiagnostics.incidentTrace('RenderStall').toString(), contains('_renderStall'));
+    // Distinct bodies, so release AOT can't fold them into one function (and one issue).
+    final marks = {for (final c in categories) (LagDiagnostics.incidentTrace(c), LagDiagnostics.lastTraced).$2};
+    expect(marks.length, categories.length);
   });
 
   test('a tap carries the worst frame drawn in the second after it', () async {

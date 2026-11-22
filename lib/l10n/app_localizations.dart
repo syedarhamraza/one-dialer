@@ -1424,6 +1424,12 @@ abstract class AppLocalizations {
   /// **'Couldn\'t open the camera'**
   String get couldNotOpenCamera;
 
+  /// No description provided for @couldNotOpenApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the app'**
+  String get couldNotOpenApp;
+
   /// No description provided for @followSystem.
   ///
   /// In en, this message translates to:

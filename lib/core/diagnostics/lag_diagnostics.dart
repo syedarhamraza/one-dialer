@@ -182,6 +182,7 @@ class LagDiagnostics with WidgetsBindingObserver {
         'callGlass': prefs.callGlass.value,
         'navStyle': prefs.navStyle.value,
         'navGlass': prefs.navGlass.value,
+        'effectsSaved': prefs.effectsSaved,
         'refreshRate': views.isEmpty ? 60.0 : views.first.display.refreshRate,
         'frames': _summary,
         if (_routeDepth > 0 && _shellSummary != null) 'shellFrames': _shellSummary,
@@ -300,6 +301,7 @@ class LagDiagnostics with WidgetsBindingObserver {
       'callGlass',
       'navStyle',
       'navGlass',
+      'effectsSaved',
       'refreshRate',
     ]) {
       await crashlytics.setCustomKey('lag_${engine}_$key', context[key] ?? 'unknown');
@@ -327,18 +329,49 @@ class LagDiagnostics with WidgetsBindingObserver {
     _ => StackTrace.current,
   };
 
+  // Each body writes its own number first: release AOT shares identical machine code between
+  // functions, and with bodies that were all just `StackTrace.current` every category reported
+  // as _severeFrameDelay, in one Crashlytics issue.
+  static int _traced = 0;
   @pragma('vm:never-inline')
-  static StackTrace _severeFrameDelay() => StackTrace.current;
+  static StackTrace _severeFrameDelay() {
+    _traced = 1;
+    return StackTrace.current;
+  }
+
   @pragma('vm:never-inline')
-  static StackTrace _nativeMainStall() => StackTrace.current;
+  static StackTrace _nativeMainStall() {
+    _traced = 2;
+    return StackTrace.current;
+  }
+
   @pragma('vm:never-inline')
-  static StackTrace _dartStall() => StackTrace.current;
+  static StackTrace _dartStall() {
+    _traced = 3;
+    return StackTrace.current;
+  }
+
   @pragma('vm:never-inline')
-  static StackTrace _renderStall() => StackTrace.current;
+  static StackTrace _renderStall() {
+    _traced = 4;
+    return StackTrace.current;
+  }
+
   @pragma('vm:never-inline')
-  static StackTrace _inputStall() => StackTrace.current;
+  static StackTrace _inputStall() {
+    _traced = 5;
+    return StackTrace.current;
+  }
+
   @pragma('vm:never-inline')
-  static StackTrace _userReportedLag() => StackTrace.current;
+  static StackTrace _userReportedLag() {
+    _traced = 6;
+    return StackTrace.current;
+  }
+
+  /// The category [incidentTrace] last built a trace for (keeps [_traced]'s writes alive).
+  @visibleForTesting
+  static int get lastTraced => _traced;
 
   @visibleForTesting
   void dispose() {

@@ -221,6 +221,7 @@
   "selectPhotos": "Select photos",
   "deleteProfilePicture": "Delete profile picture",
   "couldNotOpenCamera": "Couldn't open the camera",
+  "couldNotOpenApp": "Couldn't open the app",
   "followSystem": "Follow system",
   "customRingtone": "Custom ringtone",
   "fromFollowingAccount": "From the following account",

@@ -37,6 +37,10 @@ object ContactExtras {
                 Data.CONTENT_URI, arrayOf(Data._ID),
                 "${Data.CONTACT_ID} = ? AND ${Data.MIMETYPE} = ?", arrayOf(contactId, mime), null,
             )?.use { c -> if (c.moveToFirst()) c.getLong(0) else null } ?: continue
+            // A synced row (Meet's, from the Google account) stays when its app is missing or disabled,
+            // and tapping it opened nothing (NO_APP on vivo): show only rows the app can open.
+            val view = Intent(Intent.ACTION_VIEW).setDataAndType(ContentUris.withAppendedId(Data.CONTENT_URI, dataId), mime)
+            if (context.packageManager.queryIntentActivities(view.setPackage(pkg), 0).isEmpty()) continue
             out += mapOf("label" to label, "dataId" to dataId, "mimeType" to mime, "icon" to appIcon(context, pkg))
         }
         return out

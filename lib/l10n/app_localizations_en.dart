@@ -852,6 +852,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get couldNotOpenCamera => 'Couldn\'t open the camera';
 
   @override
+  String get couldNotOpenApp => 'Couldn\'t open the app';
+
+  @override
   String get followSystem => 'Follow system';
 
   @override

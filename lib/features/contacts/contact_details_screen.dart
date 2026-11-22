@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show Clipboard, ClipboardData;
+import 'package:flutter/services.dart' show Clipboard, ClipboardData, PlatformException;
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:intl/intl.dart';
 
@@ -120,8 +120,13 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   Iterable<Map<Object?, Object?>> get _chatApps => _apps.where((a) => !_isMeet(a));
   static bool _isMeet(Map<Object?, Object?> app) => (app['mimeType'] as String?)?.contains('tachyon') ?? false;
 
-  Future<void> _openApp(Map<Object?, Object?> app) =>
-      _bridge.openContactData(app['dataId']! as int, app['mimeType']! as String);
+  Future<void> _openApp(Map<Object?, Object?> app) async {
+    try {
+      await _bridge.openContactData(app['dataId']! as int, app['mimeType']! as String);
+    } on PlatformException {
+      if (mounted) OneUIToast.show(context, context.l10n.couldNotOpenApp);
+    }
+  }
 
   /// Reloads all fields (after editing, the repository notifies).
   Future<void> _loadFull() async {
@@ -450,7 +455,13 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           value: _ringtone ?? context.l10n.followSystem,
           label: context.l10n.ringtone,
           onTap: () async {
-            await ContactActions.changeRingtone(contact.id);
+            try {
+              await ContactActions.changeRingtone(contact.id);
+            } on PlatformException {
+              // No ringtone picker on this phone (the start failed).
+              if (mounted) OneUIToast.show(context, context.l10n.couldNotOpenApp);
+              return;
+            }
             final ringtone = await _bridge.getRingtoneTitle(contact.id);
             if (mounted) setState(() => _ringtone = ringtone);
           },
