@@ -20,7 +20,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dialer/l10n/app_localizations.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
@@ -176,7 +175,9 @@ void main() {
     await open(tester, const RecentsScreen());
     expect(find.byTooltip('Call'), findsNothing);
     await tester.runAsync(() async {
-      await SharedPreferencesAsync().setBool('row_call_button', true);
+      // Saved on by an earlier run, then read back as at startup.
+      await DialerPrefs.instance.setRowCallButton(true);
+      DialerPrefs.instance.rowCallButton.value = false;
       await DialerPrefs.instance.loadChoices();
     });
     await tester.pumpAndSettle();
