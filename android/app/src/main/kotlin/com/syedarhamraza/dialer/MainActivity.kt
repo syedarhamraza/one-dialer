@@ -57,6 +57,10 @@ class MainActivity : FlutterActivity() {
             it.photoPicker = ::pickPhoto
             it.photoTaker = ::takePhoto
             it.vcfPicker = ::pickVcf
+            // Android keeps the choice for every later cold start (Android 13+ only).
+            if (android.os.Build.VERSION.SDK_INT >= 33) it.splashIcon = { show ->
+                splashScreen.setSplashScreenTheme(if (show) android.content.res.Resources.ID_NULL else R.style.LaunchTheme_NoIcon)
+            }
             it.settingsBackup = ::settingsBackup
             it.backupFolderChooser = { result -> chooseBackupFolder(result, backUp = false) }
             it.ringtonePicker = ::pickRingtone

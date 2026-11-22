@@ -396,6 +396,8 @@
   "navGlassStandard": "Leggero",
   "navGlassAuto": "Automatico",
   "glassSettings": "Vetro e sfocatura",
+  "splashIcon": "Icona app all'avvio",
+  "splashIconSubtitle": "Disattiva per un avvio senza icona se la schermata Home usa un'icona diversa",
   "liquidGlassOn": "Vetro liquido su",
   "liquidScopeAll": "Tutto",
   "liquidScopeControls": "Barra e pulsanti",

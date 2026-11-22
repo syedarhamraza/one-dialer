@@ -1404,6 +1404,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get glassSettings => 'Glass & blur';
 
   @override
+  String get splashIcon => 'App icon on launch screen';
+
+  @override
+  String get splashIconSubtitle =>
+      'Turn off for a blank launch screen when your home screen uses a different icon';
+
+  @override
   String get liquidGlassOn => 'Liquid glass on';
 
   @override

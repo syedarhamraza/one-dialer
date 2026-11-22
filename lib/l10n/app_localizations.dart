@@ -2474,6 +2474,18 @@ abstract class AppLocalizations {
   /// **'Glass & blur'**
   String get glassSettings;
 
+  /// No description provided for @splashIcon.
+  ///
+  /// In en, this message translates to:
+  /// **'App icon on launch screen'**
+  String get splashIcon;
+
+  /// No description provided for @splashIconSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off for a blank launch screen when your home screen uses a different icon'**
+  String get splashIconSubtitle;
+
   /// No description provided for @liquidGlassOn.
   ///
   /// In en, this message translates to:

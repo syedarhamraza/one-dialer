@@ -55,3 +55,4 @@ The UI is laid out for English lengths; check these on the phone in Italian, esp
 | `*Subtitle` hints (`glassStyle`, `darkModeEdgeGlow`, `liquidGlassOn`, `navBarGlass`, `tapRecentCall`, `callScreenEdgeGlow`, `answerButtons`, `carrierSettings`) | One-line Settings summaries under the row titles; "Leggero" and "Rifrazione completa" must match the `navGlass*` choices. |
 | `callBackground*` | Call screen: "Sfondo chiamata", "Foto del contatto", "Come tutte le chiamate", "Predefinito", "Colore", "Foto", "Scegli foto". |
 | `vip*` | VIP calls: "Chiamate VIP", "Squillo in Silenzioso per i VIP", "Includi preferiti"; `vipDndHint` names Android's Do Not Disturb starred-contacts option ("contatti speciali"). |
+| `splashIcon*` | Display & effects: "Icona app all'avvio" (the launch splash's icon switch). |

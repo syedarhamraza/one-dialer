@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../core/prefs/dialer_prefs.dart';
+import '../../core/telecom/telecom_bridge.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/choice_row.dart';
 import '../../widgets/cos_subpage.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/one_ui_group_card.dart';
+import '../../widgets/one_ui_switch.dart';
 import 'call_settings_pages.dart' show effectsLabels;
 import 'glass_settings_screen.dart';
 
@@ -71,6 +73,7 @@ class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
           },
         ),
         const _DisplaySizeCard(),
+        const _SplashIconCard(),
       ],
     );
   }
@@ -120,6 +123,51 @@ class _DisplaySizeCardState extends State<_DisplaySizeCard> {
     return OneUIGroupCard(
       headerTitle: l10n.displaySize,
       items: [row(l10n.displaySizeApp, _prefs.displaySize), row(l10n.displaySizeNavBar, _prefs.navBarSize)],
+    );
+  }
+}
+
+/// The app icon on the launch splash: off leaves it blank, for launchers that draw another icon.
+/// Only Android 13+ can switch it; below that the card isn't shown.
+class _SplashIconCard extends StatefulWidget {
+  const _SplashIconCard();
+
+  @override
+  State<_SplashIconCard> createState() => _SplashIconCardState();
+}
+
+class _SplashIconCardState extends State<_SplashIconCard> {
+  bool? _on;
+
+  @override
+  void initState() {
+    super.initState();
+    () async {
+      if (!await TelecomBridge.instance.setSplashIcon()) return;
+      final on = await DialerPrefs.instance.splashIcon();
+      if (mounted) setState(() => _on = on);
+    }();
+  }
+
+  void _set(bool on) {
+    setState(() => _on = on);
+    DialerPrefs.instance.setSplashIcon(on);
+    TelecomBridge.instance.setSplashIcon(on);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final on = _on;
+    if (on == null) return const SizedBox.shrink();
+    return OneUIGroupCard(
+      items: [
+        OneUIGroupItem(
+          title: context.l10n.splashIcon,
+          subtitle: context.l10n.splashIconSubtitle,
+          trailing: OneUISwitch(value: on, onChanged: _set),
+          onTap: () => _set(!on),
+        ),
+      ],
     );
   }
 }

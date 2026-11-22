@@ -166,6 +166,11 @@ class TelecomBridge {
   Future<Map<String, Object?>> effectsDefault() async =>
       (await _methods.invokeMapMethod<String, Object?>('effectsDefault')) ?? const {};
 
+  /// Shows or hides the app icon on later launch splashes ([show] null only asks). Whether the
+  /// phone can (Android 13+).
+  Future<bool> setSplashIcon([bool? show]) async =>
+      await _methods.invokeMethod<bool>('setSplashIcon', {'show': show}) ?? false;
+
   /// `notifications`, `fullScreen`, `defaultApps`, `contactsStorage`, `googleContactsSync`, `app`,
   /// or `url:https://…`. Throws `NO_ACTIVITY` when the phone has no such screen.
   Future<void> openSystemSettings(String page) => _methods.invokeMethod('openSystemSettings', {'page': page});
