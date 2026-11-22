@@ -46,7 +46,6 @@ class ContactRow extends StatelessWidget {
     required this.selectMark,
     this.highlight,
     required this.onTap,
-    this.onDoubleTap,
     required this.onLongPress,
   });
 
@@ -61,14 +60,10 @@ class ContactRow extends StatelessWidget {
   final Widget? highlight;
   final VoidCallback onTap, onLongPress;
 
-  /// Settings › Keypad & recents quick calling: double-tap to call, and a call button (null: none).
-  final VoidCallback? onDoubleTap;
-
   @override
   Widget build(BuildContext context) {
     final row = InkWell(
       onTap: onTap,
-      onDoubleTap: onDoubleTap,
       onLongPress: onLongPress,
       splashColor: context.palette.textPrimary.withValues(alpha: 0.06),
       highlightColor: context.palette.textPrimary.withValues(alpha: 0.03),

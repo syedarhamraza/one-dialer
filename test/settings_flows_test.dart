@@ -222,7 +222,6 @@ void main() {
     prefs.recentTap.value = 'call';
     await tester.pumpAndSettle();
     expect(find.text('Tapping a call already calls'), findsOneWidget);
-    expect(find.text('Works in Contacts; tapping a call already calls'), findsOneWidget);
     expect(find.text('Call button style'), findsNothing);
     await tester.tap(find.text('Call button on rows'));
     await tester.pumpAndSettle();

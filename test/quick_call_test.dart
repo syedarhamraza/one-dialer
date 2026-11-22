@@ -20,7 +20,7 @@ void main() {
   test('quick calling is off by default and a tap can be set to call', () async {
     final prefs = DialerPrefs.instance;
     await prefs.loadChoices();
-    expect((prefs.rowCallButton.value, prefs.swipeToCall.value, prefs.doubleTapCall.value), (false, false, false));
+    expect((prefs.rowCallButton.value, prefs.swipeToCall.value), (false, false));
 
     await SharedPreferencesAsync().setString('recent_tap', 'call');
     await prefs.setSwipeToCall(true);
