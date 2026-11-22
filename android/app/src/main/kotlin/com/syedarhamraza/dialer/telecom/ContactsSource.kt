@@ -1,5 +1,6 @@
 package com.syedarhamraza.dialer.telecom
 
+import android.content.ContentValues
 import android.content.Context
 import android.provider.ContactsContract
 import android.provider.ContactsContract.CommonDataKinds.Phone
@@ -33,6 +34,9 @@ object ContactsSource {
         var middle: String? = null
         var last: String? = null
         val phones = mutableListOf<List<Any?>>()
+
+        /** Which of [phones] is the contact-wide default (Google Contacts', Android Auto's). */
+        var superPrimary = -1
         val accounts = linkedSetOf<String>()
     }
 
@@ -59,7 +63,7 @@ object ContactsSource {
             Data.CONTENT_URI,
             arrayOf(
                 Data.CONTACT_ID, Data.MIMETYPE, Phone.NUMBER, Phone.TYPE, Phone.LABEL, Data.IS_PRIMARY,
-                StructuredName.GIVEN_NAME, StructuredName.MIDDLE_NAME, StructuredName.FAMILY_NAME,
+                StructuredName.GIVEN_NAME, StructuredName.MIDDLE_NAME, StructuredName.FAMILY_NAME, Data.IS_SUPER_PRIMARY,
             ),
             "${Data.MIMETYPE} IN (?, ?)", arrayOf(Phone.CONTENT_ITEM_TYPE, StructuredName.CONTENT_ITEM_TYPE),
             null,
@@ -71,6 +75,7 @@ object ContactsSource {
                     val type = if (c.isNull(3)) null else c.getInt(3)
                     val label = phoneLabel(type)
                     // Like flutter_contacts: the label text counts only for a custom type.
+                    if (c.getInt(9) != 0) row.superPrimary = row.phones.size
                     row.phones += listOf(number, label, if (label == "custom") c.getString(4) else null, c.getInt(5) != 0)
                 } else if (row.first == null && row.middle == null && row.last == null) {
                     // Both kinds share the dataN columns; each is read by its own projection index.
@@ -94,7 +99,34 @@ object ContactsSource {
         }
 
         return rows.values.map {
-            listOf(it.id, it.name, it.first, it.middle, it.last, it.starred, it.phones, it.accounts.toList())
+            // A contact joined from several accounts can have a default in each; the contact-wide one wins.
+            val phones = if (it.superPrimary < 0) it.phones else it.phones.mapIndexed { i, p -> p.take(3) + (i == it.superPrimary) }
+            listOf(it.id, it.name, it.first, it.middle, it.last, it.starred, phones, it.accounts.toList())
         }
     }
+
+    /**
+     * Makes [number] (matched like the Dart side's numberKey) [contactId]'s default, or clears the
+     * default when [number] is null. Sets IS_SUPER_PRIMARY too: the contact-wide default that
+     * Google Contacts and Android Auto use; the provider clears it on the contact's other numbers.
+     */
+    fun setDefaultNumber(context: Context, contactId: String, number: String?): Boolean {
+        val resolver = context.contentResolver
+        val phones = mutableListOf<Pair<Long, String>>()
+        resolver.query(
+            Data.CONTENT_URI, arrayOf(Data._ID, Phone.NUMBER),
+            "${Data.CONTACT_ID} = ? AND ${Data.MIMETYPE} = ?", arrayOf(contactId, Phone.CONTENT_ITEM_TYPE), null,
+        )?.use { c -> while (c.moveToNext()) phones += c.getLong(0) to c.getString(1).orEmpty() }
+        val clear = ContentValues().apply { put(Data.IS_PRIMARY, 0); put(Data.IS_SUPER_PRIMARY, 0) }
+        if (number == null) {
+            for ((id, _) in phones) resolver.update(Data.CONTENT_URI, clear, "${Data._ID} = ?", arrayOf("$id"))
+            return true
+        }
+        val chosen = phones.firstOrNull { numberKey(it.second) == numberKey(number) } ?: return false
+        val set = ContentValues().apply { put(Data.IS_PRIMARY, 1); put(Data.IS_SUPER_PRIMARY, 1) }
+        return resolver.update(Data.CONTENT_URI, set, "${Data._ID} = ?", arrayOf("${chosen.first}")) > 0
+    }
+
+    /** Digits only, last 10: the Dart side's numberKey (call_log.dart). */
+    fun numberKey(number: String): String = number.filter(Char::isDigit).takeLast(10)
 }

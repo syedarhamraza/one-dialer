@@ -1014,5 +1014,6 @@
         "type": "String"
       }
     }
-  }
+  },
+  "clearDefault": "Clear default"
 }

@@ -2052,4 +2052,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String endHeldCall(String name) {
     return 'End call with $name';
   }
+
+  @override
+  String get clearDefault => 'Clear default';
 }

@@ -207,6 +207,9 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 )
             }
             "getRingtone" -> inBackground(result) { ContactExtras.ringtone(context, call.argument<String>("contactId")!!) }
+            "setDefaultNumber" -> inBackground(result) {
+                ContactsSource.setDefaultNumber(context, call.argument<String>("contactId")!!, call.argument<String>("number"))
+            }
             "getRingtoneTitle" -> inBackground(result) {
                 ContactExtras.ringtoneTitle(context, call.argument<String>("contactId")!!)
             }

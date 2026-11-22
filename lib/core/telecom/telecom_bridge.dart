@@ -124,6 +124,10 @@ class TelecomBridge {
       _methods.invokeMethod<String>('getRingtone', {'contactId': contactId});
 
   /// The contact's custom ringtone's name, or null when it follows the system.
+  /// Makes [number] the contact's default (Android's contact-wide default), or clears it when null.
+  Future<bool> setDefaultNumber(String contactId, String? number) async =>
+      await _methods.invokeMethod<bool>('setDefaultNumber', {'contactId': contactId, 'number': number}) ?? false;
+
   Future<String?> getRingtoneTitle(String contactId) =>
       _methods.invokeMethod<String>('getRingtoneTitle', {'contactId': contactId});
 

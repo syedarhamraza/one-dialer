@@ -3631,6 +3631,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'End call with {name}'**
   String endHeldCall(String name);
+
+  /// No description provided for @clearDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear default'**
+  String get clearDefault;
 }
 
 class _AppLocalizationsDelegate

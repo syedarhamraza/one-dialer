@@ -588,5 +588,6 @@
   "importSettingsMessage": "Impostazioni, chiamata rapida, note e sfondi delle chiamate vengono sostituiti da quelli del file. Poi One Dialer si riavvia.",
   "importSettingsInCall": "Non puoi importare le impostazioni durante una chiamata",
   "notASettingsFile": "Questo non è un file di impostazioni di One Dialer",
-  "endHeldCall": "Termina la chiamata con {name}"
+  "endHeldCall": "Termina la chiamata con {name}",
+  "clearDefault": "Rimuovi predefinito"
 }

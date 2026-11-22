@@ -2076,4 +2076,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String endHeldCall(String name) {
     return 'Termina la chiamata con $name';
   }
+
+  @override
+  String get clearDefault => 'Rimuovi predefinito';
 }
