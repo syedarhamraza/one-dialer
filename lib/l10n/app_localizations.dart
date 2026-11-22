@@ -3716,23 +3716,11 @@ abstract class AppLocalizations {
   /// **'Glyph only'**
   String get callButtonGlyph;
 
-  /// No description provided for @callButtonGlass.
-  ///
-  /// In en, this message translates to:
-  /// **'Glass circle'**
-  String get callButtonGlass;
-
   /// No description provided for @callButtonLit.
   ///
   /// In en, this message translates to:
   /// **'Green circle'**
   String get callButtonLit;
-
-  /// No description provided for @callButtonPill.
-  ///
-  /// In en, this message translates to:
-  /// **'Pill with label'**
-  String get callButtonPill;
 
   /// No description provided for @callsAndContactsRows.
   ///

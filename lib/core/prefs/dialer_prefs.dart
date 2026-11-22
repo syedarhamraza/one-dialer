@@ -176,7 +176,7 @@ class DialerPrefs {
   final swipeStyle = ValueNotifier('pill');
   final callButtonStyle = ValueNotifier('tint');
   static const swipeStyles = ['pill', 'flat'];
-  static const callButtonStyles = ['tint', 'glyph', 'glass', 'lit', 'pill'];
+  static const callButtonStyles = ['tint', 'glyph', 'lit'];
 
   // Manage contacts. Accounts are keyed `type|name` (`|` is the phone itself).
   final showPhotos = ValueNotifier(true);
@@ -210,9 +210,9 @@ class DialerPrefs {
     rowCallButton.value = await _prefs.getBool('row_call_button') ?? false;
     swipeToCall.value = await _prefs.getBool('swipe_to_call') ?? false;
     if (await _prefs.getString('swipe_style') case final v? when swipeStyles.contains(v)) swipeStyle.value = v;
-    if (await _prefs.getString('call_button_style') case final v? when callButtonStyles.contains(v)) {
-      callButtonStyle.value = v;
-    }
+    // A style since removed (Pill, Glass) goes back to the default.
+    final buttonStyle = await _prefs.getString('call_button_style');
+    callButtonStyle.value = callButtonStyles.contains(buttonStyle) ? buttonStyle! : callButtonStyles.first;
     final sim = await _prefs.getString('sim_choice');
     if (sim == 'buttons' || sim == 'menu' || sim == 'recent') simChoice.value = sim!;
   }

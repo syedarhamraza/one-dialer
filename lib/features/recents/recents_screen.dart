@@ -280,7 +280,6 @@ class _RecentsScreenState extends State<RecentsScreen> {
           BlockingRepository.instance.numbers,
           DialerPrefs.instance.hideContactNumbers, // rows read it directly
           DialerPrefs.instance.rowCallButton,
-          DialerPrefs.instance.callButtonStyle,
           DialerPrefs.instance.recentTap, // decides the info button
           DialerPrefs.instance.swipeToCall,
         ]),
@@ -816,9 +815,7 @@ class _CallRow extends StatelessWidget {
     // Three lines fit the row's 61 dp only at a set line height, whatever the font's own.
     final lineHeight = timeBelow ? 1.2 : null;
     final secondary = TextStyle(fontSize: 14, height: lineHeight, color: context.palette.textSecondary);
-    final slot =
-        (onCall != null ? RowCallButton.widthFor(DialerPrefs.instance.callButtonStyle.value) : 0.0) +
-        (showInfo ? 48.0 : 0);
+    final slot = (onCall != null ? RowCallButton.size : 0.0) + (showInfo ? 48.0 : 0);
     final row = InkWell(
       onTap: onTap,
       onLongPress: onLongPress,
