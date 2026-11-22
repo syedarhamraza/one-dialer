@@ -309,25 +309,11 @@ class ContactsRepository {
     return hasAccess.value;
   }
 
-  /// Makes [number] the contact's default number (Samsung's "Set as default").
-  Future<void> setDefaultNumber(String id, String number) async {
-    // Fetch only the phones, so update() can't touch anything else.
-    final contact = await FlutterContacts.get(id, properties: {ContactProperty.phone});
-    if (contact == null) return;
-    final key = numberKey(number);
-    await FlutterContacts.update(
-      contact.copyWith(
-        phones: [
-          for (final p in contact.phones)
-            Phone(
-              number: p.number,
-              normalizedNumber: p.normalizedNumber,
-              label: p.label,
-              isPrimary: numberKey(p.number) == key,
-            ),
-        ],
-      ),
-    );
+  /// Makes [number] the contact's default number (Samsung's "Set as default"), or clears the
+  /// default when null. Android's contact-wide default, so Google's apps and Android Auto use it too.
+  Future<void> setDefaultNumber(String id, String? number) async {
+    await TelecomBridge.instance.setDefaultNumber(id, number);
+    await _load(); // at once, so the page shows it without waiting for the change observer
   }
 
   Future<void> delete(List<String> ids) => FlutterContacts.deleteAll(ids);

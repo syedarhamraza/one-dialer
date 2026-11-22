@@ -137,8 +137,11 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
   // --- Share / More --------------------------------------------------------------
 
-  void _copyMenu(String number, GlobalKey anchor) {
+  /// Copy, and for a several-number contact Set as default / Clear default: the number calls,
+  /// Android Auto and Google's apps use without asking.
+  void _numberMenu(DialerContact contact, String number, GlobalKey anchor) {
     Haptics.longPress();
+    final isDefault = contact.callNumber != null && numberKey(contact.callNumber!) == numberKey(number);
     OneUIFloatingMenu.show(
       context: context,
       anchorKey: anchor,
@@ -150,6 +153,11 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             OneUIToast.show(context, context.l10n.numberCopied);
           },
         ),
+        if (contact.numbers.length > 1)
+          OneUIFloatingMenuItem(
+            label: isDefault ? context.l10n.clearDefault : context.l10n.setAsDefault,
+            onTap: () => ContactsRepository.instance.setDefaultNumber(contact.id, isDefault ? null : number),
+          ),
       ],
     );
   }
@@ -435,7 +443,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               ].whereType<String>().where((s) => s.isNotEmpty).join('  |  '),
               value: _display[n]?.formatted ?? n,
               onTap: () => _call(n, _numberKeys[n]!),
-              onLongPress: () => _copyMenu(n, _numberKeys[n]!),
+              onLongPress: () => _numberMenu(contact, n, _numberKeys[n]!),
             ),
           ),
         _ValueRow(

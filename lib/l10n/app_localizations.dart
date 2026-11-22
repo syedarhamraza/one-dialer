@@ -3751,6 +3751,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open call screen'**
   String get openCallScreen;
+
+  /// No description provided for @clearDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear default'**
+  String get clearDefault;
 }
 
 class _AppLocalizationsDelegate

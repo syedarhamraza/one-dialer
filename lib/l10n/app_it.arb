@@ -608,5 +608,6 @@
   "answerFromBanner": "Risposta dal banner",
   "answerFromBannerSubtitle": "Cosa fa Rispondi sul banner della chiamata in arrivo con il telefono sbloccato",
   "stayInNotification": "Resta nella notifica",
-  "openCallScreen": "Apri schermata chiamata"
+  "openCallScreen": "Apri schermata chiamata",
+  "clearDefault": "Rimuovi predefinito"
 }

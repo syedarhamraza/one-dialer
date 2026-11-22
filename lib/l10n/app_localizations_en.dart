@@ -2119,4 +2119,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openCallScreen => 'Open call screen';
+
+  @override
+  String get clearDefault => 'Clear default';
 }

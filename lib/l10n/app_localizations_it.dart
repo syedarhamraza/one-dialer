@@ -2145,4 +2145,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get openCallScreen => 'Apri schermata chiamata';
+
+  @override
+  String get clearDefault => 'Rimuovi predefinito';
 }
