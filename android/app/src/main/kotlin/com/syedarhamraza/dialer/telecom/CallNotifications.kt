@@ -212,7 +212,8 @@ object CallNotifications {
 
     /**
      * OPPO, OnePlus and realme on Android 16+ share one capsule (Fluid Cloud / Live Alerts), fed by
-     * Live Updates. Every other phone (and these below 16) gets Android's own call notifications.
+     * Live Updates; only the ringing call uses it, a connected call is Android's own notification.
+     * Every other phone (and these below 16) gets Android's own call notifications.
      */
     private val oplusCapsule: Boolean by lazy {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA && (
@@ -314,20 +315,6 @@ object CallNotifications {
                         })
                     }
                 }.build()
-            )
-        }
-        if (oplusCapsule) {
-            // A Live Update: ColorOS Fluid Cloud, OxygenOS Live Alerts and realme UI show it as their capsule.
-            builder.addExtras(Bundle().apply { putBoolean(Notification.EXTRA_REQUEST_PROMOTED_ONGOING, true) })
-            // Their capsule shows only the small icon and this text (about 7 characters), never the chronometer.
-            builder.setShortCriticalText(
-                res.getString(
-                    when (state) {
-                        Call.STATE_ACTIVE -> R.string.island_on_call
-                        Call.STATE_HOLDING -> R.string.on_hold
-                        else -> R.string.island_calling
-                    }
-                )
             )
         }
         if (vivoIsland) {
