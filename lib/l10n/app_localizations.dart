@@ -2006,18 +2006,6 @@ abstract class AppLocalizations {
   /// **'Turn one of them off, or both will blink. Find it in Settings under Notifications or Accessibility'**
   String get systemFlashSubtitle;
 
-  /// No description provided for @liveUpdateCapsule.
-  ///
-  /// In en, this message translates to:
-  /// **'Live Update capsule (Experimental)'**
-  String get liveUpdateCapsule;
-
-  /// No description provided for @liveUpdateCapsuleSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Android 16: show a connected call in the status bar chip, and the capsule on ColorOS, OxygenOS and realme UI'**
-  String get liveUpdateCapsuleSubtitle;
-
   /// No description provided for @swipeUpToAnswer.
   ///
   /// In en, this message translates to:
@@ -3668,6 +3656,18 @@ abstract class AppLocalizations {
   /// **'End call with {name}'**
   String endHeldCall(String name);
 
+  /// No description provided for @fullScreenAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming calls only show in the notification shade. On the next page, turn on full-screen notifications for One Dialer. If it already looks on, turn it off and on again.'**
+  String get fullScreenAsk;
+
+  /// No description provided for @notNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get notNow;
+
   /// No description provided for @vipCalls.
   ///
   /// In en, this message translates to:
@@ -3751,30 +3751,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Swipe a row right to call, left to message'**
   String get swipeToCallSubtitle;
-
-  /// No description provided for @answerFromBanner.
-  ///
-  /// In en, this message translates to:
-  /// **'Answering from the banner'**
-  String get answerFromBanner;
-
-  /// No description provided for @answerFromBannerSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'What Answer on the incoming call banner does while the phone is unlocked'**
-  String get answerFromBannerSubtitle;
-
-  /// No description provided for @stayInNotification.
-  ///
-  /// In en, this message translates to:
-  /// **'Stay in the notification'**
-  String get stayInNotification;
-
-  /// No description provided for @openCallScreen.
-  ///
-  /// In en, this message translates to:
-  /// **'Open call screen'**
-  String get openCallScreen;
 
   /// No description provided for @clearDefault.
   ///

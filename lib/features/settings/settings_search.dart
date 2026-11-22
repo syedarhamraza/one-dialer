@@ -57,7 +57,7 @@ List<SettingsEntry> settingsIndex(AppLocalizations l10n, {bool recorder = false,
     l10n.incomingCallReminders,
     page(const IncomingCallRemindersScreen()),
     subtitle: l10n.incomingCallsSubtitle,
-    rows: [l10n.answerFromBanner, l10n.announceCalls, l10n.liveUpdateCapsule, l10n.flashOnCall],
+    rows: [l10n.announceCalls, l10n.flashOnCall],
   );
   add(
     calls,

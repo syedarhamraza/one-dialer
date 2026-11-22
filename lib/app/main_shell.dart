@@ -14,6 +14,7 @@ import '../widgets/call_glyph.dart';
 import '../widgets/one_ui_floating_nav_bar.dart';
 import '../theme/one_ui_theme.dart';
 import '../widgets/press_glow.dart';
+import 'full_screen_prompt.dart';
 import 'layout.dart';
 import 'return_to_call_banner.dart';
 import 'sideload_warning.dart';
@@ -80,7 +81,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
       if (action != null) _contactAction(action);
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) warnIfSideloaded(context);
+      if (mounted) warnIfSideloaded(context).then((_) => mounted ? askForFullScreen(context) : null);
     });
   }
 

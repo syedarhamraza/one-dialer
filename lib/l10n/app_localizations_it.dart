@@ -1163,13 +1163,6 @@ class AppLocalizationsIt extends AppLocalizations {
       'Disattivane una, altrimenti lampeggeranno entrambe. La trovi in Impostazioni, sotto Notifiche o Accessibilità';
 
   @override
-  String get liveUpdateCapsule => 'Capsula Live Update (Sperimentale)';
-
-  @override
-  String get liveUpdateCapsuleSubtitle =>
-      'Android 16: mostra la chiamata in corso nel chip della barra di stato e nella capsula su ColorOS, OxygenOS e realme UI';
-
-  @override
   String get swipeUpToAnswer => 'Scorri verso l\'alto per rispondere';
 
   @override
@@ -2098,6 +2091,13 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get fullScreenAsk =>
+      'Le chiamate in arrivo compaiono solo nell\'area notifiche. Nella pagina successiva attiva le notifiche a schermo intero per One Dialer. Se risulta già attiva, disattivala e riattivala.';
+
+  @override
+  String get notNow => 'Non ora';
+
+  @override
   String get vipCalls => 'Chiamate VIP';
 
   @override
@@ -2145,19 +2145,6 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get swipeToCallSubtitle =>
       'Scorri una riga a destra per chiamare, a sinistra per scrivere';
-
-  @override
-  String get answerFromBanner => 'Risposta dal banner';
-
-  @override
-  String get answerFromBannerSubtitle =>
-      'Cosa fa Rispondi sul banner della chiamata in arrivo con il telefono sbloccato';
-
-  @override
-  String get stayInNotification => 'Resta nella notifica';
-
-  @override
-  String get openCallScreen => 'Apri schermata chiamata';
 
   @override
   String get clearDefault => 'Rimuovi predefinito';

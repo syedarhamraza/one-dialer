@@ -493,8 +493,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
         return mapOf(
             "isDefaultDialer" to isDefaultDialer(),
             "notificationsEnabled" to notifications.areNotificationsEnabled(),
-            // Android 14+ lets users revoke full-screen intents; without it calls only show as a notification.
-            "fullScreenAllowed" to if (android.os.Build.VERSION.SDK_INT >= 34) notifications.canUseFullScreenIntent() else true,
+            "fullScreenAllowed" to fullScreenAllowed(notifications),
             "screensCalls" to roles.isRoleHeld(RoleManager.ROLE_CALL_SCREENING),
             // VIP calls leave Silent, which Android counts as a Do Not Disturb change.
             "dndAccess" to notifications.isNotificationPolicyAccessGranted,
@@ -503,6 +502,20 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             "build" to info.longVersionCode,
             "sdk" to android.os.Build.VERSION.SDK_INT,
         )
+    }
+
+    /**
+     * Android 14+ lets users revoke full-screen intents; without them calls only show in the shade.
+     * vivo reports the permission granted but refuses it until its own switch is turned on, which
+     * sets the app op to allowed (it stays "default" until then), so on vivo that's what counts.
+     */
+    private fun fullScreenAllowed(notifications: android.app.NotificationManager): Boolean {
+        if (android.os.Build.VERSION.SDK_INT < 34) return true
+        if (!notifications.canUseFullScreenIntent()) return false
+        if (!android.os.Build.MANUFACTURER.equals("vivo", ignoreCase = true)) return true
+        return context.getSystemService(android.app.AppOpsManager::class.java).unsafeCheckOpNoThrow(
+            "android:use_full_screen_intent", android.os.Process.myUid(), context.packageName,
+        ) == android.app.AppOpsManager.MODE_ALLOWED
     }
 
     /** Opens the system screen that fixes a [callHealth] problem, or a web page (`url:` prefix). */

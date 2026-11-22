@@ -1153,13 +1153,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Turn one of them off, or both will blink. Find it in Settings under Notifications or Accessibility';
 
   @override
-  String get liveUpdateCapsule => 'Live Update capsule (Experimental)';
-
-  @override
-  String get liveUpdateCapsuleSubtitle =>
-      'Android 16: show a connected call in the status bar chip, and the capsule on ColorOS, OxygenOS and realme UI';
-
-  @override
   String get swipeUpToAnswer => 'Swipe up to answer';
 
   @override
@@ -2073,6 +2066,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get fullScreenAsk =>
+      'Incoming calls only show in the notification shade. On the next page, turn on full-screen notifications for One Dialer. If it already looks on, turn it off and on again.';
+
+  @override
+  String get notNow => 'Not now';
+
+  @override
   String get vipCalls => 'VIP calls';
 
   @override
@@ -2117,19 +2117,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get swipeToCallSubtitle =>
       'Swipe a row right to call, left to message';
-
-  @override
-  String get answerFromBanner => 'Answering from the banner';
-
-  @override
-  String get answerFromBannerSubtitle =>
-      'What Answer on the incoming call banner does while the phone is unlocked';
-
-  @override
-  String get stayInNotification => 'Stay in the notification';
-
-  @override
-  String get openCallScreen => 'Open call screen';
 
   @override
   String get clearDefault => 'Clear default';

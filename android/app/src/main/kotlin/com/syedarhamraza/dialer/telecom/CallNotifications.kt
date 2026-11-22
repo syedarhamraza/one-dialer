@@ -5,11 +5,9 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.Service
 import android.app.Person
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ServiceInfo
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.BitmapShader
@@ -49,9 +47,6 @@ object CallNotifications {
     /** Whether the ringing notification was last posted without its pop-up for Full screen. */
     private var postedForScreen = false
 
-    /** Whether it was last posted while locked, when Answer opens the call screen. */
-    private var postedLocked = false
-
     /** [screenOpening]: Settings › Incoming call reminders › Full screen is opening the call screen. */
     fun showIncoming(context: Context, callId: String, call: Call, screenOpening: Boolean = false) {
         postedForScreen = screenOpening
@@ -62,7 +57,6 @@ object CallNotifications {
         val unlocked = context.getSystemService(PowerManager::class.java).isInteractive &&
             !context.getSystemService(KeyguardManager::class.java).isKeyguardLocked
         val island = vivoIsland && unlocked
-        postedLocked = !unlocked
         val quiet = screenOpening || island || InCallActivity.isFullScreen
         val channel = if (quiet) CHANNEL_INCOMING_QUIET else CHANNEL_INCOMING
         ensureChannel(
@@ -83,11 +77,9 @@ object CallNotifications {
             context, 0, InCallActivity.intent(context),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
-        // Unlocked, answering from the banner keeps you in what you were doing (a game, a video):
-        // the ongoing notification carries the call and a tap on it opens the call screen.
-        // Settings › Incoming call reminders › Answering from the banner can open the call screen instead.
-        val stayInBanner = CallPrefs.read(context)["answerOpens"] != "screen"
-        val answer = if (unlocked && !screenOpening && stayInBanner) {
+        // Answer opens the call screen, as on stock Android. Where the skin has a call capsule
+        // (vivo's island, ColorOS's), answering unlocked keeps the call there instead.
+        val answer = if ((vivoIsland || oplusCapsule) && unlocked && !screenOpening) {
             CallActionReceiver.pendingIntent(context, CallActionReceiver.ACTION_ANSWER_IN_ISLAND, callId)
         } else {
             CallActionReceiver.answerIntent(context, callId)
@@ -109,7 +101,7 @@ object CallNotifications {
         // vivo's own call island next to it, so it's plain actions there, as in updateOngoing.
         // Locked it's a plain CallStyle call with no island extras: vivo hides a notification with
         // them on the lock screen, which left no way back after leaving the call screen there.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !(island && !screenOpening)) {
+        if (callStyle(manager) && !(island && !screenOpening)) {
             val person = Person.Builder().setName(caller).setIcon(callerIcon(context, details.handle?.schemeSpecificPart))
                 .setImportant(true).build()
             builder.setStyle(Notification.CallStyle.forIncomingCall(person, decline, answer))
@@ -117,12 +109,11 @@ object CallNotifications {
             builder.addAction(Notification.Action.Builder(null, res.getString(R.string.decline), decline).build())
             builder.addAction(Notification.Action.Builder(null, res.getString(R.string.answer), answer).build())
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA && !vivoIsland && !quiet && unlocked) {
-            // Asks for a Live Update (status bar chip) beside the banner only: with the call screen up
-            // (or opening over the lock screen) the chip doubled it. On vivo it'd be a second island.
+        if (oplusCapsule && !quiet && unlocked) {
+            // ColorOS's capsule is fed by Live Updates; beside the banner only: with the call screen
+            // up (or opening over the lock screen) it doubled it.
             builder.addExtras(Bundle().apply { putBoolean(Notification.EXTRA_REQUEST_PROMOTED_ONGOING, true) })
-            // The ColorOS capsule's text while ringing (see updateOngoing).
-            if (oplusCapsule) builder.setShortCriticalText(res.getString(R.string.island_incoming))
+            builder.setShortCriticalText(res.getString(R.string.island_incoming)) // see updateOngoing
         }
         val icon = callerIcon(context, details.handle?.schemeSpecificPart)
             ?: Icon.createWithResource(context, R.drawable.island_caller) // LetterAvatar's no-photo person
@@ -146,7 +137,7 @@ object CallNotifications {
             )
         }
 
-        manager.notify(ID_INCOMING, builder.build())
+        post(manager, ID_INCOMING, builder.build())
     }
 
     /**
@@ -159,16 +150,6 @@ object CallNotifications {
         if (!context.getSystemService(PowerManager::class.java).isInteractive ||
             context.getSystemService(KeyguardManager::class.java).isKeyguardLocked
         ) return
-        val (id, call) = CallManager.all().firstOrNull { CallManager.stateOf(it.second) == Call.STATE_RINGING } ?: return
-        showIncoming(context, id, call)
-    }
-
-    /**
-     * Unlocked while a call rings: the notification posted while locked has the call-screen
-     * Answer; repost it so Answer from the banner stays in the banner (Settings permitting).
-     */
-    fun repostAfterUnlock(context: Context) {
-        if (!postedLocked || postedForScreen || InCallActivity.isFullScreen) return
         val (id, call) = CallManager.all().firstOrNull { CallManager.stateOf(it.second) == Call.STATE_RINGING } ?: return
         showIncoming(context, id, call)
     }
@@ -228,19 +209,35 @@ object CallNotifications {
      * getSceneStatus says false for unapproved apps even though the card shows, so it isn't used.
      */
     private val vivoIsland: Boolean by lazy {
-        Build.MANUFACTURER.equals("vivo", ignoreCase = true) &&
+        capsuleAndroid &&
+            Build.MANUFACTURER.equals("vivo", ignoreCase = true) &&
             NotificationManager::class.java.declaredMethods.any { it.name == "getSceneStatus" }
     }
 
-    /** OPPO, OnePlus and realme share one capsule (Fluid Cloud / Live Alerts), fed by Live Updates. */
+    /**
+     * OPPO, OnePlus and realme on Android 16+ share one capsule (Fluid Cloud / Live Alerts), fed by
+     * Live Updates; only the ringing call uses it, a connected call is Android's own notification.
+     * Every other phone (and these below 16) gets Android's own call notifications.
+     */
     private val oplusCapsule: Boolean by lazy {
-        Build.MANUFACTURER.lowercase() in setOf("oppo", "oneplus", "realme") ||
+        capsuleAndroid && (
+            Build.MANUFACTURER.lowercase() in setOf("oppo", "oneplus", "realme") ||
             // ColorOS ported to another maker's phone still reports that maker; its ROM version doesn't.
-            runCatching {
-                Class.forName("android.os.SystemProperties").getMethod("get", String::class.java)
-                    .invoke(null, "ro.build.version.oplusrom") as String
-            }.getOrDefault("").isNotEmpty()
+            systemProperty("ro.build.version.oplusrom").isNotEmpty()
+            )
     }
+
+    /**
+     * Android 16+, where the capsules are used. Beta-only (docs/beta-only.md): after
+     * `adb shell setprop debug.onedialer.stock 1` and an app restart, this phone gets the stock
+     * notifications every other phone gets, as below Android 16.
+     */
+    private val capsuleAndroid: Boolean
+        get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA && systemProperty("debug.onedialer.stock") != "1"
+
+    private fun systemProperty(name: String): String = runCatching {
+        Class.forName("android.os.SystemProperties").getMethod("get", String::class.java).invoke(null, name) as String
+    }.getOrDefault("")
 
     fun cancelIncoming(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java)
@@ -294,7 +291,7 @@ object CallNotifications {
             .setOnlyAlertOnce(true)
             .setVisibility(Notification.VISIBILITY_PUBLIC)
             .setContentIntent(open)
-            // CallStyle needs a full-screen intent (or a foreground service); not high priority,
+            // CallStyle needs a full-screen intent; not high priority,
             // so it never interrupts on its own.
             .setFullScreenIntent(open, false)
 
@@ -302,7 +299,7 @@ object CallNotifications {
             builder.setUsesChronometer(true).setWhen(details.connectTimeMillis).setShowWhen(true)
         }
         // On vivo a CallStyle call gets vivo's own call island next to ours, so it's a plain action there.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !vivoIsland) {
+        if (callStyle(manager) && !vivoIsland) {
             val person = Person.Builder().setName(caller).setIcon(callerIcon(context, details.handle?.schemeSpecificPart))
                 .setImportant(true).build()
             builder.setStyle(Notification.CallStyle.forOngoingCall(person, hangUp))
@@ -332,28 +329,6 @@ object CallNotifications {
                     }
                 }.build()
             )
-        }
-        // Experimental and off by default (Settings › Incoming call reminders › Live Update capsule):
-        // whether ColorOS gives a third-party dialer's call the capsule is still unverified.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA && !vivoIsland &&
-            CallPrefs.read(context)["liveUpdates"] == true
-        ) {
-            // Asks for a Live Update: the status bar chip, and the capsule on skins that map Live
-            // Updates to their island (ColorOS Fluid Cloud, OxygenOS Live Alerts, realme UI).
-            builder.addExtras(Bundle().apply { putBoolean(Notification.EXTRA_REQUEST_PROMOTED_ONGOING, true) })
-            // Their capsule shows only the small icon and this text (about 7 characters), never the
-            // chronometer. Elsewhere it would replace the chip's live timer, so it's theirs alone.
-            if (oplusCapsule) {
-                builder.setShortCriticalText(
-                    res.getString(
-                        when (state) {
-                            Call.STATE_ACTIVE -> R.string.island_on_call
-                            Call.STATE_HOLDING -> R.string.on_hold
-                            else -> R.string.island_calling
-                        }
-                    )
-                )
-            }
         }
         if (vivoIsland) {
             @Suppress("DEPRECATION") // CallAudioState still reports the route on API 34+
@@ -400,14 +375,19 @@ object CallNotifications {
                 )
             )
         }
-        val notification = builder.build()
-        // A phone-call foreground service, as Google's dialer: CallStyle then needs no full-screen
-        // intent permission, and skins (realme, OnePlus) keep it on top instead of folding it away.
-        val service = CallManager.service
-        val foreground = service != null && runCatching {
-            service.startForeground(ID_ONGOING, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL)
-        }.isSuccess
-        if (!foreground) manager.notify(ID_ONGOING, notification)
+        post(manager, ID_ONGOING, builder.build())
+    }
+
+    /**
+     * Whether a call may use CallStyle: Android refuses (and the post threw) a CallStyle call without
+     * a full-screen intent, which it strips when the user or the skin (HyperOS) turned them off.
+     */
+    private fun callStyle(manager: NotificationManager) = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+        (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE || manager.canUseFullScreenIntent())
+
+    // Never crash the in-call service over a refused notification; the call screen still works.
+    private fun post(manager: NotificationManager, id: Int, notification: Notification) {
+        runCatching { manager.notify(id, notification) }.onFailure { android.util.Log.w("CallNotifications", "not posted", it) }
     }
 
     /** The call the ongoing notification describes, or null when none qualifies. */
@@ -418,7 +398,6 @@ object CallNotifications {
     private var islandKey: String? = null
 
     private fun removeOngoing(manager: NotificationManager) {
-        CallManager.service?.stopForeground(Service.STOP_FOREGROUND_REMOVE)
         manager.cancel(ID_ONGOING)
         manager.cancel("VIVO_SUPERX_TAG", ID_ONGOING) // vivo's tag for ending an atomic notification
         islandKey = null

@@ -22,32 +22,28 @@ class _CallSettings {
       // The page may have closed before the settings arrived.
       if (_disposed) return;
       if (s['incomingStyle'] case final String v) incomingStyle.value = v;
-      if (s['answerOpens'] case final String v) answerOpens.value = v;
       if (s['vibrateAnswerEnd'] case final bool v) vibrate.value = v;
       if (s['speakerDefault'] case final bool v) speaker.value = v;
       if (s['autoAnswer'] case final bool v) autoAnswer.value = v;
       if (s['autoAnswerDelay'] case final int v) delay.value = '$v';
       if (s['announceCalls'] case final String v) announce.value = v;
       if (s['flashOnCall'] case final bool v) flash.value = v;
-      if (s['liveUpdates'] case final bool v) liveUpdates.value = v;
     });
   }
 
   final incomingStyle = ValueNotifier('banner');
-  final answerOpens = ValueNotifier('banner');
   final vibrate = ValueNotifier(true);
   final speaker = ValueNotifier(false);
   final autoAnswer = ValueNotifier(false);
   final delay = ValueNotifier<String?>('5');
   final announce = ValueNotifier('off');
   final flash = ValueNotifier(false);
-  final liveUpdates = ValueNotifier(false);
 
   bool _disposed = false;
 
   void dispose() {
     _disposed = true;
-    for (final n in [incomingStyle, answerOpens, vibrate, speaker, autoAnswer, delay, announce, flash, liveUpdates]) {
+    for (final n in [incomingStyle, vibrate, speaker, autoAnswer, delay, announce, flash]) {
       n.dispose();
     }
   }
@@ -130,7 +126,6 @@ class IncomingCallRemindersScreen extends StatefulWidget {
 class _IncomingCallRemindersScreenState extends State<IncomingCallRemindersScreen> {
   final _settings = _CallSettings();
   final _announceKey = GlobalKey();
-  final _answerKey = GlobalKey();
 
   /// Skins with their own flash notification, where ours would blink on top of it.
   static const _ownFlash = ['vivo', 'iqoo', 'oppo', 'oneplus', 'realme', 'samsung', 'xiaomi', 'honor', 'huawei'];
@@ -211,31 +206,12 @@ class _IncomingCallRemindersScreenState extends State<IncomingCallRemindersScree
           items: [
             choiceRow(
               context,
-              title: context.l10n.answerFromBanner,
-              subtitle: context.l10n.answerFromBannerSubtitle,
-              anchor: _answerKey,
-              value: _settings.answerOpens,
-              labels: {'banner': context.l10n.stayInNotification, 'screen': context.l10n.openCallScreen},
-              onPick: (v) => _settings.set(_settings.answerOpens, 'answerOpens', v),
-            ),
-            choiceRow(
-              context,
               title: context.l10n.announceCalls,
               subtitle: context.l10n.announceCallsSubtitle,
               anchor: _announceKey,
               value: _settings.announce,
               labels: _announce(context.l10n),
               onPick: (v) => _settings.set(_settings.announce, 'announceCalls', v),
-            ),
-            OneUIGroupItem(
-              title: context.l10n.liveUpdateCapsule,
-              subtitle: context.l10n.liveUpdateCapsuleSubtitle,
-              onTap: () => _settings.set(_settings.liveUpdates, 'liveUpdates', !_settings.liveUpdates.value),
-              trailing: ValueListenableBuilder(
-                valueListenable: _settings.liveUpdates,
-                builder: (context, on, _) =>
-                    OneUISwitch(value: on, onChanged: (v) => _settings.set(_settings.liveUpdates, 'liveUpdates', v)),
-              ),
             ),
           ],
         ),

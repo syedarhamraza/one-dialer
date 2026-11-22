@@ -643,8 +643,6 @@
   "flashOnCallSubtitle": "Blink the camera flash while a call rings",
   "systemFlash": "Your phone has its own flash notification",
   "systemFlashSubtitle": "Turn one of them off, or both will blink. Find it in Settings under Notifications or Accessibility",
-  "liveUpdateCapsule": "Live Update capsule (Experimental)",
-  "liveUpdateCapsuleSubtitle": "Android 16: show a connected call in the status bar chip, and the capsule on ColorOS, OxygenOS and realme UI",
   "swipeUpToAnswer": "Swipe up to answer",
   "swipeDownToAnswer": "Swipe down to answer",
   "answerButtons": "Call screen",
@@ -1021,6 +1019,8 @@
       }
     }
   },
+  "fullScreenAsk": "Incoming calls only show in the notification shade. On the next page, turn on full-screen notifications for One Dialer. If it already looks on, turn it off and on again.",
+  "notNow": "Not now",
   "vipCalls": "VIP calls",
   "vipCallsSubtitle": "Ring even on Silent or Vibrate",
   "vipRing": "Ring on Silent for VIPs",
@@ -1035,10 +1035,6 @@
   "rowCallButtonSubtitle": "A call button on every row in Calls",
   "swipeToCall": "Swipe to call or message",
   "swipeToCallSubtitle": "Swipe a row right to call, left to message",
-  "answerFromBanner": "Answering from the banner",
-  "answerFromBannerSubtitle": "What Answer on the incoming call banner does while the phone is unlocked",
-  "stayInNotification": "Stay in the notification",
-  "openCallScreen": "Open call screen",
   "clearDefault": "Clear default",
   "swipeStyle": "Swipe style",
   "swipeStylePill": "Glass button",
