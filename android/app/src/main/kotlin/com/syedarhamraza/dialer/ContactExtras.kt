@@ -42,10 +42,19 @@ object ContactExtras {
         return out
     }
 
-    /** Opens a contact data row (e.g. WhatsApp's chat) the way Contacts apps do. */
+    /**
+     * Opens a contact data row (e.g. WhatsApp's chat) the way Contacts apps do, in the app that owns
+     * it: other apps (SHAREit) claim these links too, and WhatsApp opened from that chooser closed at once.
+     */
     fun openData(context: Context, dataId: Long, mimeType: String) {
         val uri = ContentUris.withAppendedId(Data.CONTENT_URI, dataId)
-        context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri, mimeType).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        val intent = Intent(Intent.ACTION_VIEW).setDataAndType(uri, mimeType).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        val owner = APPS.firstOrNull { it.third == mimeType }?.second
+        try {
+            context.startActivity(Intent(intent).setPackage(owner))
+        } catch (_: android.content.ActivityNotFoundException) {
+            context.startActivity(intent) // the owner can't open it itself; let Android pick
+        }
     }
 
     /** The raw contacts (one per account) linked into this contact: id, name, account type and name. */
