@@ -6,10 +6,8 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Person
-import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ServiceInfo
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.BitmapShader
@@ -239,7 +237,6 @@ object CallNotifications {
 
     fun cancelIncoming(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java)
-        stopForeground(ID_INCOMING)
         manager.cancel(ID_INCOMING)
         manager.cancel("VIVO_SUPERX_TAG", ID_INCOMING) // vivo's tag for ending an atomic notification
     }
@@ -290,7 +287,7 @@ object CallNotifications {
             .setOnlyAlertOnce(true)
             .setVisibility(Notification.VISIBILITY_PUBLIC)
             .setContentIntent(open)
-            // CallStyle needs a full-screen intent (or a foreground service); not high priority,
+            // CallStyle needs a full-screen intent; not high priority,
             // so it never interrupts on its own.
             .setFullScreenIntent(open, false)
 
@@ -384,34 +381,9 @@ object CallNotifications {
     private fun callStyle(manager: NotificationManager) = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
         (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE || manager.canUseFullScreenIntent())
 
-    /** The notification id the in-call service runs in the foreground with, or null. */
-    private var foregroundId: Int? = null
-
-    /**
-     * Below Android 16 the call notifications come from a phone-call foreground service, as Google's
-     * dialer posts them. Android 16 keeps plain notifications: vivo's island broke under the service.
-     */
+    // Never crash the in-call service over a refused notification; the call screen still works.
     private fun post(manager: NotificationManager, id: Int, notification: Notification) {
-        val service = CallManager.service
-        if (!capsuleAndroid && service != null && runCatching {
-                service.startForeground(id, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL)
-            }.isSuccess
-        ) {
-            // Moving the service to another notification leaves the old one posted.
-            foregroundId?.takeIf { it != id }?.let(manager::cancel)
-            foregroundId = id
-            return
-        }
-        // Never crash the in-call service over a refused notification; the call screen still works.
         runCatching { manager.notify(id, notification) }.onFailure { android.util.Log.w("CallNotifications", "not posted", it) }
-    }
-
-    /** Ends the foreground service when it runs with [id]'s notification; true if it did. */
-    private fun stopForeground(id: Int): Boolean {
-        if (foregroundId != id) return false
-        CallManager.service?.stopForeground(Service.STOP_FOREGROUND_REMOVE)
-        foregroundId = null
-        return true
     }
 
     /** The call the ongoing notification describes, or null when none qualifies. */
@@ -422,7 +394,6 @@ object CallNotifications {
     private var islandKey: String? = null
 
     private fun removeOngoing(manager: NotificationManager) {
-        stopForeground(ID_ONGOING)
         manager.cancel(ID_ONGOING)
         manager.cancel("VIVO_SUPERX_TAG", ID_ONGOING) // vivo's tag for ending an atomic notification
         islandKey = null
