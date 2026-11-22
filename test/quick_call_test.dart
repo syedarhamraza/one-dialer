@@ -238,4 +238,13 @@ void main() {
     prefs.simChoice.value = 'menu';
     expect(keypadTwoCallButtons(asking), isFalse);
   });
+
+  test('a saved Pill or Glass call button, both removed, falls back to Soft tint', () async {
+    final prefs = DialerPrefs.instance;
+    for (final gone in ['pill', 'glass']) {
+      await prefs.setCallButtonStyle(gone); // as an earlier beta saved it
+      await prefs.loadChoices();
+      expect(prefs.callButtonStyle.value, 'tint');
+    }
+  });
 }

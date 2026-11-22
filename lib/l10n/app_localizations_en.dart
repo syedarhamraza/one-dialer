@@ -2193,13 +2193,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get callButtonGlyph => 'Glyph only';
 
   @override
-  String get callButtonGlass => 'Glass circle';
-
-  @override
   String get callButtonLit => 'Green circle';
-
-  @override
-  String get callButtonPill => 'Pill with label';
 
   @override
   String get callsAndContactsRows => 'Rows in Calls and Contacts';

@@ -2222,13 +2222,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get callButtonGlyph => 'Solo icona';
 
   @override
-  String get callButtonGlass => 'Cerchio di vetro';
-
-  @override
   String get callButtonLit => 'Cerchio verde';
-
-  @override
-  String get callButtonPill => 'Pillola con testo';
 
   @override
   String get callsAndContactsRows => 'Righe in Chiamate e Contatti';
