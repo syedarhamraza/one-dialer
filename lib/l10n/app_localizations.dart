@@ -2336,12 +2336,6 @@ abstract class AppLocalizations {
   /// **'Write in keypad'**
   String get writeInKeypad;
 
-  /// No description provided for @twoCallButtons.
-  ///
-  /// In en, this message translates to:
-  /// **'Two Call buttons'**
-  String get twoCallButtons;
-
   /// No description provided for @chooseSimAndCall.
   ///
   /// In en, this message translates to:
@@ -2357,14 +2351,8 @@ abstract class AppLocalizations {
   /// No description provided for @chooseSimForCalls.
   ///
   /// In en, this message translates to:
-  /// **'Choose SIM for calls'**
+  /// **'Which SIM to call with'**
   String get chooseSimForCalls;
-
-  /// No description provided for @chooseSimSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Dual SIM with no default SIM'**
-  String get chooseSimSubtitle;
 
   /// No description provided for @appearance.
   ///
@@ -3842,11 +3830,41 @@ abstract class AppLocalizations {
   /// **'Use the recent SIM'**
   String get useRecentSim;
 
-  /// No description provided for @useRecentSimHint.
+  /// No description provided for @simSameAsPhone.
   ///
   /// In en, this message translates to:
-  /// **'Use the recent SIM calls on the SIM you last used with that number (or your last call\'s SIM) without asking. Swipe to call always works this way.'**
-  String get useRecentSimHint;
+  /// **'Same as phone'**
+  String get simSameAsPhone;
+
+  /// No description provided for @alwaysSim.
+  ///
+  /// In en, this message translates to:
+  /// **'Always {sim}'**
+  String alwaysSim(Object sim);
+
+  /// No description provided for @keypadSimButtons.
+  ///
+  /// In en, this message translates to:
+  /// **'Two Call buttons on the keypad'**
+  String get keypadSimButtons;
+
+  /// No description provided for @keypadSimButtonsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'One for each SIM, when calls ask which SIM'**
+  String get keypadSimButtonsSubtitle;
+
+  /// No description provided for @phoneDefaultSim.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone\'s default SIM'**
+  String get phoneDefaultSim;
+
+  /// No description provided for @simRulesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A contact\'s own SIM, set on their page, always comes first. Swipe to call never asks: when calls would ask, it uses the SIM you last used with that number.'**
+  String get simRulesHint;
 
   /// No description provided for @callButtonStyle.
   ///

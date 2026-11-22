@@ -77,6 +77,7 @@ void main() {
   group('recent SIM', () {
     final repo = CallLogRepository.instance;
     final native = <MethodCall>[];
+    String? defaultSim;
     CallLogEntry call(int id, String number, String? sim) =>
         CallLogEntry(id: id, number: number, type: CallType.outgoing, date: DateTime(2026, 11, 22), simId: sim);
 
@@ -88,8 +89,8 @@ void main() {
           native.add(c);
           if (c.method == 'getSims') {
             return [
-              {'id': 'sim1', 'label': 'Personal', 'isDefault': false},
-              {'id': 'sim2', 'label': 'Work', 'isDefault': false},
+              {'id': 'sim1', 'label': 'Personal', 'isDefault': defaultSim == 'sim1'},
+              {'id': 'sim2', 'label': 'Work', 'isDefault': defaultSim == 'sim2'},
             ];
           }
           return null;
@@ -98,7 +99,8 @@ void main() {
     });
     tearDown(() {
       repo.calls.value = const [];
-      DialerPrefs.instance.simChoice.value = 'buttons';
+      DialerPrefs.instance.simChoice.value = 'phone';
+      defaultSim = null;
     });
 
     test("is the SIM the number last used, else the newest call's, else none", () {
@@ -149,14 +151,62 @@ void main() {
       expect(find.textContaining('Personal'), findsOneWidget);
       expect(native.where((c) => c.method == 'placeCall'), isEmpty);
     });
+
+    testWidgets('Same as phone follows the default SIM; Ask every time and Always SIM override it', (tester) async {
+      defaultSim = 'sim1';
+      repo.calls.value = [call(1, '03001234567', 'sim2')];
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: const Scaffold(body: Text('page')),
+        ),
+      );
+      final context = tester.element(find.text('page'));
+      Iterable<MethodCall> placed() => native.where((c) => c.method == 'placeCall');
+
+      // Same as phone: Telecom's default, no menu; a swipe too (it never overrides a set default).
+      await tester.runAsync(() => placeCall(context, '03001234567'));
+      await tester.runAsync(() => placeCall(context, '03001234567', recentSim: true));
+      expect(placed().map((c) => c.arguments['simId']), [null, null]);
+
+      native.clear();
+      DialerPrefs.instance.simChoice.value = 'sim:sim2';
+      await tester.runAsync(() => placeCall(context, '03001234567'));
+      expect(placed().single.arguments['simId'], 'sim2');
+
+      // Ask every time asks even with a default; a swipe takes the recent SIM instead.
+      native.clear();
+      DialerPrefs.instance.simChoice.value = 'menu';
+      await tester.runAsync(() => placeCall(context, '03001234567', recentSim: true));
+      expect(placed().single.arguments['simId'], 'sim2');
+      native.clear();
+      unawaited(placeCall(context, '03001234567'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Personal'), findsOneWidget);
+      expect(placed(), isEmpty);
+    });
   });
 
-  test('Use the recent SIM survives a restart', () async {
+  test('the SIM rule survives a restart', () async {
     final prefs = DialerPrefs.instance;
-    await prefs.setSimChoice('recent');
-    prefs.simChoice.value = 'buttons';
+    for (final rule in ['recent', 'menu', 'sim:a|1', 'phone']) {
+      await prefs.setSimChoice(rule);
+      prefs.simChoice.value = 'x';
+      await prefs.loadChoices();
+      expect(prefs.simChoice.value, rule);
+    }
+  });
+
+  test("an old Ask every time (no keypad buttons) keeps its look after the update", () async {
+    final prefs = DialerPrefs.instance;
+    final store = SharedPreferencesAsync();
+    await store.remove('sim_call');
+    await store.remove('keypad_sim_buttons');
+    await store.setString('sim_choice', 'menu');
+    prefs.simChoice.value = 'phone'; // the default, which the old choice leaves alone
     await prefs.loadChoices();
-    expect(prefs.simChoice.value, 'recent');
-    prefs.simChoice.value = 'buttons';
+    expect(prefs.simChoice.value, 'phone');
+    expect(prefs.keypadSimButtons.value, isFalse);
+    prefs.keypadSimButtons.value = true;
   });
 }

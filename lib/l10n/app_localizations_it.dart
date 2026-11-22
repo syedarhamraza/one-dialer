@@ -1350,19 +1350,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get writeInKeypad => 'Scrivi nel tastierino';
 
   @override
-  String get twoCallButtons => 'Due pulsanti Chiama';
-
-  @override
   String get chooseSimAndCall => 'Scegli SIM e chiama';
 
   @override
   String get tapRecentCall => 'Tocco su una chiamata recente';
 
   @override
-  String get chooseSimForCalls => 'Scelta SIM per le chiamate';
-
-  @override
-  String get chooseSimSubtitle => 'Doppia SIM senza SIM predefinita';
+  String get chooseSimForCalls => 'Con quale SIM chiamare';
 
   @override
   String get appearance => 'Aspetto';
@@ -2195,8 +2189,26 @@ class AppLocalizationsIt extends AppLocalizations {
   String get useRecentSim => 'Usa la SIM recente';
 
   @override
-  String get useRecentSimHint =>
-      'Usa la SIM recente chiama con la SIM usata l\'ultima volta con quel numero (o quella dell\'ultima chiamata) senza chiedere. Scorri per chiamare funziona sempre così.';
+  String get simSameAsPhone => 'Come il telefono';
+
+  @override
+  String alwaysSim(Object sim) {
+    return 'Sempre $sim';
+  }
+
+  @override
+  String get keypadSimButtons => 'Due pulsanti Chiama nel tastierino';
+
+  @override
+  String get keypadSimButtonsSubtitle =>
+      'Uno per ogni SIM, quando le chiamate chiedono quale SIM';
+
+  @override
+  String get phoneDefaultSim => 'SIM predefinita del telefono';
+
+  @override
+  String get simRulesHint =>
+      'La SIM scelta per un contatto, nella sua pagina, ha sempre la precedenza. Scorri per chiamare non chiede mai: quando le chiamate chiederebbero, usa la SIM usata l\'ultima volta con quel numero.';
 
   @override
   String get callButtonStyle => 'Stile del pulsante di chiamata';

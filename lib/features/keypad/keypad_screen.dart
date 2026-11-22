@@ -75,9 +75,17 @@ class _KeypadScreenState extends State<KeypadScreen> {
   final _callKey = GlobalKey();
   bool _calling = false;
 
-  /// Only set on dual SIM with no default SIM, where the SIM choice applies.
+  /// Both SIMs on a dual SIM phone; empty with one.
   // shortcut: read once per launch; re-read on resume if SIM hot-swap matters.
-  List<SimCard> _askSims = const [];
+  List<SimCard> _sims = const [];
+
+  /// One Call button per SIM, when Settings › SIM cards says calls ask and the keypad shows them.
+  List<SimCard> get _askSims {
+    final prefs = DialerPrefs.instance;
+    final rule = prefs.simChoice.value;
+    final asks = rule == 'menu' || (rule == 'phone' && !_sims.any((s) => s.isDefault));
+    return prefs.keypadSimButtons.value && asks ? _sims : const [];
+  }
 
   /// The number as shown ("0333 333"), editable with a cursor and the system's selection
   /// toolbar; [KeypadScreen.input] keeps the raw digits.
@@ -97,7 +105,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
   void initState() {
     super.initState();
     _telecom.getSims().then((sims) {
-      if (mounted && sims.length > 1 && !sims.any((s) => s.isDefault)) setState(() => _askSims = sims);
+      if (mounted && sims.length > 1) setState(() => _sims = sims);
     });
     widget.input.addListener(_syncField);
     _field.addListener(_onFieldChanged);
@@ -211,7 +219,12 @@ class _KeypadScreenState extends State<KeypadScreen> {
       // Android doesn't let apps read the IMEI; the phone's own About page shows it.
       widget.input.value = '';
       final l10n = context.l10n;
-      if (await showCosConfirm(context, title: l10n.imeiTitle, message: l10n.imeiUnavailable, confirmLabel: l10n.aboutPhone)) {
+      if (await showCosConfirm(
+        context,
+        title: l10n.imeiTitle,
+        message: l10n.imeiUnavailable,
+        confirmLabel: l10n.aboutPhone,
+      )) {
         await _telecom.openSystemSettings('deviceInfo');
       }
     }
@@ -273,7 +286,12 @@ class _KeypadScreenState extends State<KeypadScreen> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge([widget.input, widget.open, DialerPrefs.instance.simChoice]),
+      listenable: Listenable.merge([
+        widget.input,
+        widget.open,
+        DialerPrefs.instance.simChoice,
+        DialerPrefs.instance.keypadSimButtons,
+      ]),
       builder: (context, _) {
         final number = widget.input.value;
         final open = widget.open.value;
@@ -388,9 +406,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
                                           _CallRow(
                                             keyHeight: keyHeight,
                                             callKey: _callKey,
-                                            sims: DialerPrefs.instance.simChoice.value == 'buttons'
-                                                ? _askSims
-                                                : const [],
+                                            sims: _askSims,
                                             onHide: _hide,
                                             onCall: _calling ? null : _call,
                                             onBackspace: _backspace,

@@ -14,8 +14,8 @@ class DialerPrefs {
 
   static final DialerPrefs instance = DialerPrefs._();
 
-  // Lazy: widgets read the notifiers below without touching storage.
-  late final _prefs = SharedPreferencesAsync();
+  // A thin handle over the platform store, made per use, so tests that swap the store reach it.
+  SharedPreferencesAsync get _prefs => SharedPreferencesAsync();
 
   /// Bumped on every change, so screens can rebuild.
   final ValueNotifier<int> changes = ValueNotifier(0);
@@ -158,10 +158,14 @@ class DialerPrefs {
   /// it synchronously; [loadChoices] fills them at startup.
   final recentTap = ValueNotifier('details');
 
-  /// Settings › "Choose SIM for calls" (dual SIM, no default): `buttons` (two Call keys),
-  /// `menu` (ask on every call) or `recent` (no asking: the SIM last used with that number, see
-  /// [CallLogRepository.recentSim]).
-  final simChoice = ValueNotifier('buttons');
+  /// Settings › SIM cards › "Which SIM to call with" (dual SIM): `phone` (Android's default SIM,
+  /// asking when it's "Ask every time"), `menu` (always ask), `recent` (no asking: the SIM last used
+  /// with that number, see [CallLogRepository.recentSim]) or `sim:<id>` (always that SIM). It
+  /// overrides Android's default; a contact's own SIM still comes first ([placeCall]).
+  final simChoice = ValueNotifier('phone');
+
+  /// Settings › SIM cards › "Two Call buttons on the keypad": one per SIM, when a call would ask.
+  final keypadSimButtons = ValueNotifier(true);
 
   // Settings › Keypad & recents, quick calling (all off by default): a call button on Calls and
   // Contacts rows, swipe right to call / left to message, double-tap to call.
@@ -212,8 +216,16 @@ class DialerPrefs {
     if (await _prefs.getString('call_button_style') case final v? when callButtonStyles.contains(v)) {
       callButtonStyle.value = v;
     }
-    final sim = await _prefs.getString('sim_choice');
-    if (sim == 'buttons' || sim == 'menu' || sim == 'recent') simChoice.value = sim!;
+    final sim = await _prefs.getString('sim_call');
+    if (sim == 'phone' || sim == 'menu' || sim == 'recent' || (sim?.startsWith('sim:') ?? false)) {
+      simChoice.value = sim!;
+    } else {
+      // Before SIM cards had one rule, `sim_choice` was only how to ask when Android has no default.
+      final old = await _prefs.getString('sim_choice');
+      if (old == 'recent') simChoice.value = 'recent';
+      if (old == 'menu') keypadSimButtons.value = false;
+    }
+    keypadSimButtons.value = await _prefs.getBool('keypad_sim_buttons') ?? keypadSimButtons.value;
   }
 
   /// Settings › "Appearance": `system`, `light` or `dark`.
@@ -524,7 +536,12 @@ class DialerPrefs {
 
   Future<void> setSimChoice(String value) async {
     simChoice.value = value;
-    await _prefs.setString('sim_choice', value);
+    await _prefs.setString('sim_call', value);
+  }
+
+  Future<void> setKeypadSimButtons(bool value) async {
+    keypadSimButtons.value = value;
+    await _prefs.setBool('keypad_sim_buttons', value);
   }
 
   /// Settings › Software update › Auto download (an `AutoUpdateCheck` name); null = never.

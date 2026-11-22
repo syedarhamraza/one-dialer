@@ -523,6 +523,10 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             page == "systemSettings" -> android.content.Intent(android.provider.Settings.ACTION_SETTINGS)
             page == "dndAccess" -> android.content.Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
             page == "defaultApps" -> android.content.Intent(android.provider.Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
+            // Android's SIM page, where its default SIM for calls is set; older phones' network settings.
+            page == "sim" && android.os.Build.VERSION.SDK_INT >= 34 ->
+                android.content.Intent(android.provider.Settings.ACTION_MANAGE_ALL_SIM_PROFILES_SETTINGS)
+            page == "sim" -> android.content.Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS)
             // The SIM provider's call settings (forwarding, waiting, caller ID), from the phone service.
             page == "carrier" -> android.content.Intent(android.telecom.TelecomManager.ACTION_SHOW_CALL_SETTINGS)
             // Android's "Contacts storage": the default account for new contacts (vivo hides it from its menus).

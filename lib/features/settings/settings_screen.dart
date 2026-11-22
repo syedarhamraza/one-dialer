@@ -47,6 +47,9 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   RecorderInfo? _recorder;
   AppVersion? _version;
 
+  /// For the SIM cards row's value (Always SIM 1...).
+  List<SimCard> _sims = const [];
+
   /// Android 17 lets VoIP apps share their calls with Recents; earlier phones have no switch for it.
   bool get _appCallLog => (_health['sdk'] as int? ?? 0) >= 37;
 
@@ -98,11 +101,12 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
 
   /// One rebuild for every reply; [all] adds the version, which only changes elsewhere.
   Future<void> _refresh({bool all = false}) async {
-    final (health, bluetoothNames, recorder, version) = await (
+    final (health, bluetoothNames, recorder, version, sims) = await (
       _telecom.getCallHealth(),
       Permission.bluetoothConnect.isGranted,
       _telecom.getRecorder(),
       all ? AppVersion.current() : Future.value(_version),
+      _telecom.getSims(),
     ).wait;
     if (mounted) {
       setState(() {
@@ -110,6 +114,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         _recorder = recorder;
         _bluetoothNames = bluetoothNames;
         _version = version;
+        _sims = sims;
       });
     }
   }
@@ -224,7 +229,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           items: [
             OneUIGroupItem(
               title: l10n.simCards,
-              value: SimSettingsScreen.choiceLabels(l10n)[DialerPrefs.instance.simChoice.value],
+              value: SimSettingsScreen.choiceLabels(l10n, _sims)[DialerPrefs.instance.simChoice.value],
               onTap: () => _push(const SimSettingsScreen()),
             ),
             OneUIGroupItem(

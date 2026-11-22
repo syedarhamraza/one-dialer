@@ -1335,19 +1335,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get writeInKeypad => 'Write in keypad';
 
   @override
-  String get twoCallButtons => 'Two Call buttons';
-
-  @override
   String get chooseSimAndCall => 'Choose SIM and call';
 
   @override
   String get tapRecentCall => 'Tap a recent call';
 
   @override
-  String get chooseSimForCalls => 'Choose SIM for calls';
-
-  @override
-  String get chooseSimSubtitle => 'Dual SIM with no default SIM';
+  String get chooseSimForCalls => 'Which SIM to call with';
 
   @override
   String get appearance => 'Appearance';
@@ -2168,8 +2162,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get useRecentSim => 'Use the recent SIM';
 
   @override
-  String get useRecentSimHint =>
-      'Use the recent SIM calls on the SIM you last used with that number (or your last call\'s SIM) without asking. Swipe to call always works this way.';
+  String get simSameAsPhone => 'Same as phone';
+
+  @override
+  String alwaysSim(Object sim) {
+    return 'Always $sim';
+  }
+
+  @override
+  String get keypadSimButtons => 'Two Call buttons on the keypad';
+
+  @override
+  String get keypadSimButtonsSubtitle =>
+      'One for each SIM, when calls ask which SIM';
+
+  @override
+  String get phoneDefaultSim => 'Phone\'s default SIM';
+
+  @override
+  String get simRulesHint =>
+      'A contact\'s own SIM, set on their page, always comes first. Swipe to call never asks: when calls would ask, it uses the SIM you last used with that number.';
 
   @override
   String get callButtonStyle => 'Call button style';

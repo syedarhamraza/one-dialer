@@ -90,7 +90,12 @@ List<SettingsEntry> settingsIndex(AppLocalizations l10n, {bool recorder = false,
   if (recorder) add(calls, l10n.callRecording, page(const CallRecordingScreen()));
 
   final making = l10n.sectionMakingCalls;
-  add(making, l10n.simCards, page(const SimSettingsScreen()), rows: [l10n.chooseSimForCalls]);
+  add(
+    making,
+    l10n.simCards,
+    page(const SimSettingsScreen()),
+    rows: [l10n.chooseSimForCalls, l10n.keypadSimButtons, l10n.phoneDefaultSim],
+  );
   add(
     making,
     l10n.quickCalling,
