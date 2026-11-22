@@ -129,19 +129,17 @@ class CallLogRepository {
     }
   }
 
-  /// The SIM to call [number] on without asking: the one its newest logged call used, else the
-  /// newest call's of any number; null when no logged call has a SIM. Call-log `simId`s are the same
-  /// `component|accountId` as `getSims()`, but may name a SIM since removed: callers check.
+  /// The SIM to call [number] on without asking: the one its newest logged call used; null when
+  /// it has none, and the caller asks. Call-log `simId`s are the same `component|accountId` as
+  /// `getSims()`, but may name a SIM since removed: callers check.
   String? recentSim(String number) {
     final key = numberKey(number);
-    String? newest;
+    if (key.isEmpty) return null;
     for (final c in calls.value) {
       final sim = c.simId;
-      if (sim == null || sim.isEmpty) continue;
-      newest ??= sim;
-      if (key.isNotEmpty && numberKey(c.number) == key) return sim;
+      if (sim != null && sim.isNotEmpty && numberKey(c.number) == key) return sim;
     }
-    return newest;
+    return null;
   }
 
   /// The most recently dialled number, for the keypad's empty-call-button redial.

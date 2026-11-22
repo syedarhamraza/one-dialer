@@ -1343,9 +1343,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get writeInKeypad => 'Scrivi nel tastierino';
 
   @override
-  String get chooseSimAndCall => 'Scegli SIM e chiama';
-
-  @override
   String get tapRecentCall => 'Tocco su una chiamata recente';
 
   @override
@@ -2197,7 +2194,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get simRulesHint =>
-      'La SIM scelta per un contatto, nella sua pagina, ha sempre la precedenza. Scorri per chiamare non chiede mai: quando le chiamate chiederebbero, usa la SIM usata l\'ultima volta con quel numero.';
+      'La SIM scelta per un contatto, nella sua pagina, ha sempre la precedenza.';
 
   @override
   String get callButtonStyle => 'Stile del pulsante di chiamata';
@@ -2222,4 +2219,13 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get simCards => 'Schede SIM';
+
+  @override
+  String get keypadAndContacts => 'Tastierino e contatti';
+
+  @override
+  String get swipeToCallSim => 'Scorri per chiamare';
+
+  @override
+  String get sameAsKeypad => 'Come tastierino e contatti';
 }

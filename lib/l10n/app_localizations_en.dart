@@ -1328,9 +1328,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get writeInKeypad => 'Write in keypad';
 
   @override
-  String get chooseSimAndCall => 'Choose SIM and call';
-
-  @override
   String get tapRecentCall => 'Tap a recent call';
 
   @override
@@ -2168,7 +2165,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get simRulesHint =>
-      'A contact\'s own SIM, set on their page, always comes first. Swipe to call never asks: when calls would ask, it uses the SIM you last used with that number.';
+      'A contact\'s own SIM, set on their page, always comes first.';
 
   @override
   String get callButtonStyle => 'Call button style';
@@ -2193,4 +2190,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get simCards => 'SIM cards';
+
+  @override
+  String get keypadAndContacts => 'Keypad and contacts';
+
+  @override
+  String get swipeToCallSim => 'Swipe to call';
+
+  @override
+  String get sameAsKeypad => 'Same as keypad and contacts';
 }

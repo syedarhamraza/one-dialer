@@ -2324,12 +2324,6 @@ abstract class AppLocalizations {
   /// **'Write in keypad'**
   String get writeInKeypad;
 
-  /// No description provided for @chooseSimAndCall.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose SIM and call'**
-  String get chooseSimAndCall;
-
   /// No description provided for @tapRecentCall.
   ///
   /// In en, this message translates to:
@@ -3845,7 +3839,7 @@ abstract class AppLocalizations {
   /// No description provided for @simRulesHint.
   ///
   /// In en, this message translates to:
-  /// **'A contact\'s own SIM, set on their page, always comes first. Swipe to call never asks: when calls would ask, it uses the SIM you last used with that number.'**
+  /// **'A contact\'s own SIM, set on their page, always comes first.'**
   String get simRulesHint;
 
   /// No description provided for @callButtonStyle.
@@ -3895,6 +3889,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'SIM cards'**
   String get simCards;
+
+  /// No description provided for @keypadAndContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Keypad and contacts'**
+  String get keypadAndContacts;
+
+  /// No description provided for @swipeToCallSim.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe to call'**
+  String get swipeToCallSim;
+
+  /// No description provided for @sameAsKeypad.
+  ///
+  /// In en, this message translates to:
+  /// **'Same as keypad and contacts'**
+  String get sameAsKeypad;
 }
 
 class _AppLocalizationsDelegate

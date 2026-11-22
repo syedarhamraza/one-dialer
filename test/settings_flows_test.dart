@@ -203,11 +203,16 @@ void main() {
     expect(find.text('Glow strength'), findsNothing);
   });
 
-  testWidgets('Keypad & recents offers Choose SIM and call on dual SIM', (tester) async {
-    await open(tester, const DialingSettingsScreen());
-    await tester.tap(find.text('Tap a recent call'));
+  testWidgets('SIM cards has a Swipe to call row only while swipe to call is on', (tester) async {
+    final prefs = DialerPrefs.instance;
+    addTearDown(() => prefs.swipeToCall.value = false);
+    await open(tester, const SimSettingsScreen());
+    expect(find.text('Keypad and contacts'), findsOneWidget);
+    expect(find.text('Swipe to call'), findsNothing);
+    prefs.swipeToCall.value = true;
     await tester.pumpAndSettle();
-    expect(find.text('Choose SIM and call'), findsOneWidget);
+    expect(find.text('Swipe to call'), findsOneWidget);
+    expect(find.text('Same as keypad and contacts'), findsOneWidget); // its default
   });
 
   testWidgets('settings search finds a row on a page and opens it', (tester) async {
