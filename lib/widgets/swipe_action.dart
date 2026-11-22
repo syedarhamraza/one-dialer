@@ -71,16 +71,17 @@ class _SwipeActionState extends State<SwipeAction> with SingleTickerProviderStat
         final card = style == 'card';
         final p = (dx.abs() / (_width * _threshold)).clamp(0.0, 1.0);
         Widget row = widget.child;
-        row = card && dx != 0
-            ? DecoratedBox(
+        // Opaque, so the background shows only where the row has moved away; its corners round
+        // as it pulls away, so it reads as a sheet over the colour rather than a cut.
+        row = dx == 0
+            ? ColoredBox(color: context.palette.page, child: row)
+            : DecoratedBox(
                 decoration: ShapeDecoration(
-                  color: context.palette.card,
+                  color: card ? context.palette.card : context.palette.page,
                   shape: SquircleBorder(borderRadius: BorderRadius.circular(18 * p)),
                 ),
                 child: row,
-              )
-            // Opaque, so the background shows only where the row has moved away.
-            : ColoredBox(color: context.palette.page, child: row);
+              );
         if (card && dx != 0) row = Transform.scale(scale: 1 - 0.04 * p, child: row);
         return GestureDetector(
           onHorizontalDragUpdate: _update,
@@ -117,7 +118,9 @@ class _SwipeActionState extends State<SwipeAction> with SingleTickerProviderStat
       alignment: right ? Alignment.centerLeft : Alignment.centerRight,
       child: SizedBox(
         width: gap,
+        // minWidth 0: else the gap's tight width stretches the content and it sits at the far edge.
         child: OverflowBox(
+          minWidth: 0,
           maxWidth: double.infinity,
           alignment: right ? Alignment.centerRight : Alignment.centerLeft,
           child: Padding(
