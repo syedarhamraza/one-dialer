@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dialer/l10n/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
@@ -167,6 +168,19 @@ void main() {
     await tester.tap(find.byTooltip('Call'));
     await tester.pumpAndSettle();
     expect(native.map((c) => c.method), contains('placeCall'));
+  });
+
+  testWidgets('a call button saved on shows once the saved choices load at startup', (tester) async {
+    addTearDown(() => DialerPrefs.instance.rowCallButton.value = false);
+    repo.calls.value = [call(1, '333')];
+    await open(tester, const RecentsScreen());
+    expect(find.byTooltip('Call'), findsNothing);
+    await tester.runAsync(() async {
+      await SharedPreferencesAsync().setBool('row_call_button', true);
+      await DialerPrefs.instance.loadChoices();
+    });
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Call'), findsOneWidget);
   });
 
   testWidgets('with taps set to call, the call button shows beside the info button', (tester) async {
