@@ -31,6 +31,10 @@ import com.syedarhamraza.dialer.AppLanguage
 import com.syedarhamraza.dialer.InCallActivity
 import com.syedarhamraza.dialer.R
 import org.json.JSONObject
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 object CallNotifications {
     private const val CHANNEL_INCOMING = "incoming_calls"
@@ -396,6 +400,7 @@ object CallNotifications {
     fun cancelOngoing(context: Context) {
         removeOngoing(context.getSystemService(NotificationManager::class.java))
         photos.clear() // A photo changed between calls is picked up next time.
+        photoLookups.clear()
     }
 
     /** Channels created in this process, by id and localized name: each create is a binder call. */
@@ -424,8 +429,28 @@ object CallNotifications {
         // Not getOrPut: it treats a cached null (no photo, most callers) as missing and queried
         // contacts again on every update of the ongoing notification.
         if (number in photos) return photos[number]
-        return lookupPhoto(context, number).also { photos[number] = it }
+        // The contacts provider can stall for seconds (an ANR from onCallAdded on realme), so the
+        // lookup runs off the main thread and the post waits briefly; a slow photo shows from the
+        // next update of the notification instead.
+        val app = context.applicationContext
+        val job = photoLookups.getOrPut(number) { photoThreads.submit<Icon?> { lookupPhoto(app, number) } }
+        return try {
+            job.get(PHOTO_WAIT_MS, TimeUnit.MILLISECONDS).also {
+                photos[number] = it
+                photoLookups.remove(number)
+            }
+        } catch (_: TimeoutException) {
+            null
+        } catch (_: Exception) {
+            photoLookups.remove(number)
+            photos[number] = null
+            null
+        }
     }
+
+    private val photoLookups = HashMap<String, Future<Icon?>>()
+    private val photoThreads = Executors.newCachedThreadPool()
+    private const val PHOTO_WAIT_MS = 300L
 
     /** Some skins (ColorOS) show a person's icon as-is, so round it like the call screen's avatar. */
     private fun circle(source: Bitmap): Bitmap {
