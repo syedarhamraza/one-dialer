@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart';
 
 import 'call_info.dart';
@@ -124,6 +125,10 @@ class TelecomBridge {
       _methods.invokeMethod<String>('getRingtone', {'contactId': contactId});
 
   /// The contact's custom ringtone's name, or null when it follows the system.
+  /// Makes [number] the contact's default (Android's contact-wide default), or clears it when null.
+  Future<bool> setDefaultNumber(String contactId, String? number) async =>
+      await _methods.invokeMethod<bool>('setDefaultNumber', {'contactId': contactId, 'number': number}) ?? false;
+
   Future<String?> getRingtoneTitle(String contactId) =>
       _methods.invokeMethod<String>('getRingtoneTitle', {'contactId': contactId});
 
@@ -267,11 +272,33 @@ class TelecomBridge {
   Future<void> sendSms(String number, {String? body}) =>
       _methods.invokeMethod('sendSms', {'number': number, 'body': body});
 
-  /// Call-capable SIMs in slot order; empty without READ_PHONE_STATE.
-  Future<List<SimCard>> getSims() async {
-    final raw = await _methods.invokeListMethod<Map<Object?, Object?>>('getSims') ?? const [];
-    return raw.map(SimCard.fromMap).toList();
+  /// Call-capable SIMs in slot order; empty without READ_PHONE_STATE. Always asks Android (a
+  /// few Telecom calls), and keeps the answer for [quickSims].
+  Future<List<SimCard>> getSims() {
+    final fresh = _methods
+        .invokeListMethod<Map<Object?, Object?>>('getSims')
+        .then((raw) => (raw ?? const []).map(SimCard.fromMap).toList());
+    fresh.then<void>((sims) => _lastSims = sims, onError: (_) {});
+    return fresh;
   }
+
+  /// The last list [getSims] got; a failed read keeps it.
+  static List<SimCard>? _lastSims;
+
+  /// [getSims] without waiting for Android when it has answered before: the SIM menu opens on the
+  /// tap. Refreshed behind it on every use and when the app comes back ([DialerApp]), so a change in
+  /// Android's SIM settings reaches at most the one call made right after it.
+  Future<List<SimCard>> quickSims() {
+    final last = _lastSims;
+    final fresh = getSims();
+    if (last == null) return fresh;
+    fresh.ignore();
+    return Future.value(last);
+  }
+
+  /// Tests: each starts from no SIMs read.
+  @visibleForTesting
+  static void forgetSims() => _lastSims = null;
 
   /// Keypad feedback tone (respects the system "Dial pad tones" setting).
   Future<void> playTone(String digit) => _methods.invokeMethod('playTone', {'digit': digit});

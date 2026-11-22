@@ -16,7 +16,6 @@ import '../../widgets/one_ui_toast.dart';
 import '../../widgets/one_ui_group_card.dart';
 import '../blocking/blocking_repository.dart';
 import '../blocking/blocking_screen.dart';
-import '../keypad/speed_dial_screen.dart';
 import '../updates/presentation/update_controller.dart';
 import 'about_screen.dart';
 import 'backup_screen.dart';
@@ -25,7 +24,9 @@ import 'call_settings_pages.dart';
 import 'dialing_settings_screen.dart';
 import 'display_settings_screen.dart';
 import 'help_feedback_screen.dart';
+import 'settings_search.dart';
 import 'software_update_screen.dart';
+import 'vip_calls_screen.dart';
 import '../../l10n/l10n.dart';
 
 /// Call settings, plus a health check of everything incoming calls depend on.
@@ -44,6 +45,9 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   /// One Recorder (the sideloaded companion); null when it isn't installed.
   RecorderInfo? _recorder;
   AppVersion? _version;
+
+  /// For the SIM cards row's value (Always SIM 1...).
+  List<SimCard> _sims = const [];
 
   /// Android 17 lets VoIP apps share their calls with Recents; earlier phones have no switch for it.
   bool get _appCallLog => (_health['sdk'] as int? ?? 0) >= 37;
@@ -96,11 +100,12 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
 
   /// One rebuild for every reply; [all] adds the version, which only changes elsewhere.
   Future<void> _refresh({bool all = false}) async {
-    final (health, bluetoothNames, recorder, version) = await (
+    final (health, bluetoothNames, recorder, version, sims) = await (
       _telecom.getCallHealth(),
       Permission.bluetoothConnect.isGranted,
       _telecom.getRecorder(),
       all ? AppVersion.current() : Future.value(_version),
+      _telecom.getSims(),
     ).wait;
     if (mounted) {
       setState(() {
@@ -108,6 +113,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         _recorder = recorder;
         _bluetoothNames = bluetoothNames;
         _version = version;
+        _sims = sims;
       });
     }
   }
@@ -118,7 +124,11 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     _refresh();
   }
 
-  void _push(Widget page) => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
+  // Back from a page: its summary on this one (SIM cards, Display, Language) may have changed.
+  void _push(Widget page) =>
+      Navigator.of(context)
+          .push(MaterialPageRoute<void>(builder: (_) => page))
+          .then((_) => mounted ? setState(() {}) : null);
 
   /// Rows only for problems; empty when everything incoming calls need is in place.
   List<OneUIGroupItem> get _problems {
@@ -144,6 +154,8 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         ),
       if ((rules.blockHidden || rules.blockNonContacts) && _health['screensCalls'] != true)
         _problem(context.l10n.blockingPaused, context.l10n.blockingPausedShort, () => _push(const BlockingScreen())),
+      if (_health['vipRing'] == true && (_health['screensCalls'] != true || _health['dndAccess'] != true))
+        _problem(context.l10n.vipNeedsAccess, context.l10n.vipNeedsAccessSubtitle, () => _push(const VipCallsScreen())),
       // Auto-record is on but the companion can't record (its setup was undone).
       if (_recorder case final r? when r.autoRecordMode != 'off' && r.consented && !r.ready)
         _problem(
@@ -169,20 +181,37 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   Widget build(BuildContext context) {
     final problems = _problems;
     final l10n = context.l10n;
-    // Grouped like ColorOS's Settings: one untitled card per topic.
+    // Headed sections, each entry naming what's inside it, and a search over every row.
     return OneUISubpage(
       title: l10n.callSettings,
       builder: (context) => [
+        SettingsSearchPill(
+          onTap: () => _push(SettingsSearchScreen(recorder: _recorder != null, appCallLog: _appCallLog)),
+        ),
         if (problems.isNotEmpty) OneUIGroupCard(headerTitle: l10n.needsAttention, items: problems),
         OneUIGroupCard(
+          headerTitle: l10n.sectionCalls,
           items: [
-            OneUIGroupItem(title: l10n.incomingCallReminders, onTap: () => _push(const IncomingCallRemindersScreen())),
+            OneUIGroupItem(
+              title: l10n.incomingCallReminders,
+              subtitle: l10n.incomingCallsSubtitle,
+              onTap: () => _push(const IncomingCallRemindersScreen()),
+            ),
             OneUIGroupItem(
               title: l10n.answerButtons,
               subtitle: l10n.answerButtonsSubtitle,
               onTap: () => _push(const AnswerButtonsScreen()),
             ),
-            OneUIGroupItem(title: l10n.answerEndCalls, onTap: () => _push(const AnswerEndCallsScreen())),
+            OneUIGroupItem(
+              title: l10n.answerEndCalls,
+              subtitle: l10n.answerEndCallsSubtitle,
+              onTap: () => _push(const AnswerEndCallsScreen()),
+            ),
+            OneUIGroupItem(
+              title: l10n.vipCalls,
+              subtitle: l10n.vipCallsSubtitle,
+              onTap: () => _push(const VipCallsScreen()),
+            ),
             // Only with One Recorder installed (the sideloaded companion); the Play app can't record alone.
             if (_recorder != null)
               OneUIGroupItem(
@@ -195,12 +224,27 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           ],
         ),
         OneUIGroupCard(
+          headerTitle: l10n.sectionMakingCalls,
           items: [
-            OneUIGroupItem(title: l10n.keypadAndRecents, onTap: () => _push(const DialingSettingsScreen())),
-            OneUIGroupItem(title: l10n.speedDial, onTap: () => _push(const SpeedDialScreen())),
+            OneUIGroupItem(
+              title: l10n.simCards,
+              value: SimSettingsScreen.choiceLabels(l10n, _sims)[DialerPrefs.instance.simChoice.value],
+              onTap: () => _push(const SimSettingsScreen()),
+            ),
+            OneUIGroupItem(
+              title: l10n.quickCalling,
+              subtitle: l10n.quickCallingSubtitle,
+              onTap: () => _push(const DialingSettingsScreen()),
+            ),
+            OneUIGroupItem(
+              title: l10n.keypadSettings,
+              subtitle: l10n.keypadSettingsSubtitle,
+              onTap: () => _push(const KeypadSettingsScreen()),
+            ),
           ],
         ),
         OneUIGroupCard(
+          headerTitle: l10n.sectionBlocking,
           items: [
             OneUIGroupItem(title: l10n.blockAndFilter, onTap: () => _push(const BlockingScreen())),
             OneUIGroupItem(
@@ -211,22 +255,24 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           ],
         ),
         OneUIGroupCard(
+          headerTitle: l10n.sectionDisplay,
           items: [
             OneUIGroupItem(
               title: l10n.displayAndEffects,
               value: DisplaySettingsScreen.themeLabels(l10n)[DialerPrefs.instance.themeMode.value],
               onTap: () => _push(const DisplaySettingsScreen()),
             ),
-          ],
-        ),
-        OneUIGroupCard(
-          items: [
             OneUIGroupItem(
               title: l10n.settingsLanguageHeader,
               value: _languageLabels(l10n)[DialerPrefs.instance.language.value],
-              onTap: () => _push(const _LanguageScreen()),
+              onTap: () => _push(const LanguageScreen()),
             ),
-            OneUIGroupItem(title: l10n.navContacts, onTap: () => _push(const _ContactsSettingsScreen())),
+          ],
+        ),
+        OneUIGroupCard(
+          headerTitle: l10n.sectionSystem,
+          items: [
+            OneUIGroupItem(title: l10n.navContacts, onTap: () => _push(const ContactsSettingsScreen())),
             OneUIGroupItem(title: l10n.notifications, onTap: () => _telecom.openSystemSettings('notifications')),
             OneUIGroupItem(title: l10n.defaultApps, onTap: () => _telecom.openSystemSettings('defaultApps')),
             OneUIGroupItem(
@@ -294,14 +340,14 @@ Map<String, String> _languageLabels(AppLocalizations l10n) => {
 };
 
 /// Settings › Language: the app's own language, or Android's per-app page for it.
-class _LanguageScreen extends StatefulWidget {
-  const _LanguageScreen();
+class LanguageScreen extends StatefulWidget {
+  const LanguageScreen({super.key});
 
   @override
-  State<_LanguageScreen> createState() => _LanguageScreenState();
+  State<LanguageScreen> createState() => _LanguageScreenState();
 }
 
-class _LanguageScreenState extends State<_LanguageScreen> {
+class _LanguageScreenState extends State<LanguageScreen> {
   final _languageKey = GlobalKey();
 
   @override
@@ -331,8 +377,8 @@ class _LanguageScreenState extends State<_LanguageScreen> {
 }
 
 /// Settings › Contacts: which contacts show, and where they're stored and synced.
-class _ContactsSettingsScreen extends StatelessWidget {
-  const _ContactsSettingsScreen();
+class ContactsSettingsScreen extends StatelessWidget {
+  const ContactsSettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) => CosSubpage(

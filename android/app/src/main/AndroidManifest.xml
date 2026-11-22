@@ -17,6 +17,8 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- Android 16 Live Updates: lets skins like OriginOS put the ringing call in their island -->
     <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
+    <!-- VIP calls ring on Silent: leaving Silent is a Do Not Disturb change (the user grants access). -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <!-- Below Android 16, call notifications come from a phone-call foreground service (allowed to the default dialer). -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />

@@ -24,6 +24,9 @@ object CallPrefs {
         "recordContacts" to "[]", // contact ids (JSON) recorded in "contacts" mode
         "neverRecord" to "[]", // contact ids (JSON) never auto-recorded
         "recordingConsent" to false, // the user accepted Settings › Call recording's consent notice
+        "vipRing" to false, // Settings › VIP calls: VIPs ring on Silent/Vibrate (VipRing)
+        "vipFavourites" to true, // favourites count as VIPs
+        "vipContacts" to "[]", // contact ids (JSON) of the VIP list
     )
 
     fun read(context: Context): Map<String, Any> {

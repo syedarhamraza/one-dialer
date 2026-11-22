@@ -44,7 +44,9 @@ class DialerApp extends StatelessWidget {
         // Status and navigation bar icons follow the page.
         builder: (context, child) => AnnotatedRegion(
           value: context.palette.isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light,
-          child: DesignWidth(child: LiquidQualityScope(child: ReducedMotionPages(child: child!))),
+          child: DesignWidth(
+            child: LiquidQualityScope(child: ReducedMotionPages(child: child!)),
+          ),
         ),
         home: const _SetupGate(),
       ),
@@ -86,7 +88,10 @@ class ReducedMotionPages extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MediaQuery.disableAnimationsOf(context)
-      ? Theme(data: Theme.of(context).copyWith(pageTransitionsTheme: _instant), child: child)
+      ? Theme(
+          data: Theme.of(context).copyWith(pageTransitionsTheme: _instant),
+          child: child,
+        )
       : child;
 }
 
@@ -131,7 +136,10 @@ class _SetupGateState extends State<_SetupGate> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _check(); // the role can be changed in Settings
+    if (state == AppLifecycleState.resumed) {
+      _check(); // the role can be changed in Settings
+      TelecomBridge.instance.getSims().ignore(); // and the SIMs, read ahead for the SIM menu (quickSims)
+    }
   }
 
   @override

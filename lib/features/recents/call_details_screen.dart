@@ -44,7 +44,6 @@ class CallDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final repo = CallLogRepository.instance;
-    final key = numberKey(call.number);
     // Built here, above the list's listener, so its rebuilds keep the same key.
     final callTileKey = GlobalKey();
     final addTileKey = GlobalKey();
@@ -55,12 +54,14 @@ class CallDetailsScreen extends StatelessWidget {
           ListenableBuilder(
             listenable: Listenable.merge([repo.calls, ContactsRepository.instance.contacts]),
             builder: (context, _) {
+              // Every call with this caller (all of a contact's numbers), like their Recents row.
               // Private calls have no number to match on; show just this one.
+              final key = callerKey(call);
               final history = call.isPrivate
                   ? repo.calls.value.where((c) => c.id == call.id).toList()
                   : [
                       for (final c in repo.calls.value)
-                        if (numberKey(c.number) == key) c,
+                        if (!c.isPrivate && callerKey(c) == key) c,
                     ];
               final name = callerName(context.l10n, call);
               final isContact = ContactsRepository.instance.nameFor(call.number) != null;
@@ -216,7 +217,7 @@ class CallDetailsScreen extends StatelessWidget {
                           ? [call.id]
                           : [
                               for (final c in repo.calls.value)
-                                if (!c.isPrivate && numberKey(c.number) == key) c.id,
+                                if (!c.isPrivate && callerKey(c) == callerKey(call)) c.id,
                             ];
                       final deleted = await confirmDeleteCalls(context, ids);
                       if (deleted && context.mounted) Navigator.of(context).pop();

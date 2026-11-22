@@ -1121,7 +1121,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onlyWithHeadphones => 'Only with headphones';
 
   @override
-  String get incomingCallReminders => 'Incoming call reminders';
+  String get incomingCallReminders => 'Incoming calls';
 
   @override
   String get incomingFootnote =>
@@ -1159,7 +1159,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get swipeDownToAnswer => 'Swipe down to answer';
 
   @override
-  String get answerButtons => 'Answer buttons';
+  String get answerButtons => 'Call screen';
 
   @override
   String get twoButtons => '2 buttons';
@@ -1215,7 +1215,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get answerEndCalls => 'Answer/End calls';
+  String get answerEndCalls => 'Answering and ending calls';
 
   @override
   String get vibrateAnswerEnd => 'Vibrate when your calls are answered/ended';
@@ -1328,19 +1328,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get writeInKeypad => 'Write in keypad';
 
   @override
-  String get twoCallButtons => 'Two Call buttons';
-
-  @override
   String get chooseSimAndCall => 'Choose SIM and call';
 
   @override
   String get tapRecentCall => 'Tap a recent call';
 
   @override
-  String get chooseSimForCalls => 'Choose SIM for calls';
-
-  @override
-  String get chooseSimSubtitle => 'Dual SIM with no default SIM';
+  String get chooseSimForCalls => 'Which SIM to call with';
 
   @override
   String get appearance => 'Appearance';
@@ -1895,7 +1889,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get answerButtonsSubtitle =>
-      'How you answer, and how the call screen looks';
+      'How you answer, effects, caller photo and background';
+
+  @override
+  String get incomingCallsSubtitle =>
+      'Ringing style, announce caller, flash, Live Update';
+
+  @override
+  String get answerEndCallsSubtitle => 'Auto-answer, reply with SMS, speaker';
+
+  @override
+  String get sectionCalls => 'Calls';
+
+  @override
+  String get sectionMakingCalls => 'Making calls';
+
+  @override
+  String get sectionBlocking => 'Blocking and caller ID';
+
+  @override
+  String get sectionDisplay => 'Display';
+
+  @override
+  String get sectionSystem => 'Contacts and system';
+
+  @override
+  String get searchSettings => 'Search settings';
 
   @override
   String get carrierSettingsSubtitle =>
@@ -2052,4 +2071,126 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notNow => 'Not now';
+
+  @override
+  String get vipCalls => 'VIP calls';
+
+  @override
+  String get vipCallsSubtitle => 'Ring even on Silent or Vibrate';
+
+  @override
+  String get vipRing => 'Ring on Silent for VIPs';
+
+  @override
+  String get vipRingSubtitle =>
+      'Calls from your VIPs ring even when the phone is on Silent or Vibrate, then it goes back';
+
+  @override
+  String get vipFavourites => 'Include favourites';
+
+  @override
+  String get vipFavouritesSubtitle => 'Your starred contacts count as VIPs';
+
+  @override
+  String get vipContacts => 'VIP contacts';
+
+  @override
+  String get vipNeedsAccess => 'VIP calls can\'t ring on Silent';
+
+  @override
+  String get vipNeedsAccessSubtitle =>
+      'Allow call screening and Do Not Disturb access';
+
+  @override
+  String get vipDndHint =>
+      'With Do Not Disturb on, Android decides who rings: allow starred contacts in its Do Not Disturb settings.';
+
+  @override
+  String get rowCallButton => 'Call button on rows';
+
+  @override
+  String get rowCallButtonSubtitle => 'A call button on every row in Calls';
+
+  @override
+  String get swipeToCall => 'Swipe to call or message';
+
+  @override
+  String get swipeToCallSubtitle =>
+      'Swipe a row right to call, left to message';
+
+  @override
+  String get clearDefault => 'Clear default';
+
+  @override
+  String get swipeStyle => 'Swipe style';
+
+  @override
+  String get swipeStylePill => 'Glass button';
+
+  @override
+  String get swipeStyleFlat => 'Flat';
+
+  @override
+  String get quickCalling => 'Quick calling';
+
+  @override
+  String get quickCallingSubtitle => 'Tap, call button and swipe on rows';
+
+  @override
+  String get useRecentSim => 'Use the recent SIM';
+
+  @override
+  String get simSameAsPhone => 'Same as phone';
+
+  @override
+  String alwaysSim(Object sim) {
+    return 'Always $sim';
+  }
+
+  @override
+  String get keypadSimButtons => 'Two Call buttons';
+
+  @override
+  String get keypadSimButtonsSubtitle =>
+      'One for each SIM, instead of a single Call button';
+
+  @override
+  String get keypadSimButtonsOneSim => 'Only on phones with two SIMs';
+
+  @override
+  String get keypadSettings => 'Keypad';
+
+  @override
+  String get keypadSettingsSubtitle => 'Two Call buttons, speed dial';
+
+  @override
+  String get phoneDefaultSim => 'Phone\'s default SIM';
+
+  @override
+  String get simRulesHint =>
+      'A contact\'s own SIM, set on their page, always comes first. Swipe to call never asks: when calls would ask, it uses the SIM you last used with that number.';
+
+  @override
+  String get callButtonStyle => 'Call button style';
+
+  @override
+  String get callButtonTint => 'Soft tint';
+
+  @override
+  String get callButtonGlyph => 'Glyph only';
+
+  @override
+  String get callButtonLit => 'Green circle';
+
+  @override
+  String get callsAndContactsRows => 'Rows in Calls and Contacts';
+
+  @override
+  String get callsRows => 'Rows in Calls';
+
+  @override
+  String get tapAlreadyCalls => 'Tapping a call already calls';
+
+  @override
+  String get simCards => 'SIM cards';
 }

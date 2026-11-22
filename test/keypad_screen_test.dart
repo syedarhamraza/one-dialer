@@ -43,7 +43,9 @@ void main() {
   });
   tearDown(() {
     ContactsRepository.instance.contacts.value = [];
-    DialerPrefs.instance.simChoice.value = 'buttons';
+    DialerPrefs.instance
+      ..simChoice.value = 'phone'
+      ..keypadSimButtons.value = null;
   });
 
   testWidgets('keys keep the vivo proportions on a narrower phone', (tester) async {
@@ -220,7 +222,9 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         theme: OneUITheme.darkTheme,
-        home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: input)),
+        home: Scaffold(
+          body: KeypadScreen(open: ValueNotifier(true), input: input),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -331,7 +335,9 @@ void main() {
   });
 
   testWidgets('ask mode: one call button offers both SIMs and routes the selected SIM', (tester) async {
-    DialerPrefs.instance.simChoice.value = 'menu';
+    DialerPrefs.instance
+      ..simChoice.value = 'menu'
+      ..keypadSimButtons.value = false;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
       nativeCalls.add(call);
       if (call.method == 'getSims') {
@@ -369,7 +375,9 @@ void main() {
   });
 
   testWidgets('cancelling SIM selection preserves the number and places no call', (tester) async {
-    DialerPrefs.instance.simChoice.value = 'menu';
+    DialerPrefs.instance
+      ..simChoice.value = 'menu'
+      ..keypadSimButtons.value = false;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
       nativeCalls.add(call);
       if (call.method == 'getSims') {
