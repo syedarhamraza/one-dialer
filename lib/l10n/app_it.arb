@@ -632,6 +632,8 @@
   "callsRows": "Righe in Chiamate",
   "tapAlreadyCalls": "Toccare una chiamata chiama già",
   "simCards": "Schede SIM",
+  "groupByContact": "Raggruppa per contatto",
+  "dontGroupByContact": "Non raggruppare per contatto",
   "keypadAndContacts": "Tastierino e contatti",
   "swipeToCallSim": "Scorri per chiamare",
   "sameAsKeypad": "Come tastierino e contatti",

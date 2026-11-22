@@ -40,14 +40,30 @@ void main() {
     expect(days[1].$2.single.calls.length, 2); // a new day starts new rows
   });
 
-  test("keyOf merges a contact's different numbers", () {
-    final days = groupByDay(
+  test('back to back: only consecutive same-number calls of one kind merge', () {
+    final days = groupByDay([
+      call(6, '+92 300 1234567', DateTime(2026, 10, 17, 11)),
+      call(5, '03001234567', DateTime(2026, 10, 17, 10, 45)), // same number, local format
+      call(4, '0301', DateTime(2026, 10, 17, 10, 30)), // someone else in between
+      call(3, '03001234567', DateTime(2026, 10, 17, 10)),
+      call(2, '03001234567', DateTime(2026, 10, 17, 9), type: CallType.missed),
+    ], backToBack: true);
+    expect(
+      [for (final g in days.single.$2) g.calls.map((c) => c.id).toList()],
       [
-        call(2, '03001234567', DateTime(2026, 10, 17, 11)),
-        call(1, '0421234567', DateTime(2026, 10, 17, 10)),
+        [6, 5],
+        [4],
+        [3],
+        [2],
       ],
-      keyOf: (_) => 'contact:1',
     );
+  });
+
+  test("keyOf merges a contact's different numbers", () {
+    final days = groupByDay([
+      call(2, '03001234567', DateTime(2026, 10, 17, 11)),
+      call(1, '0421234567', DateTime(2026, 10, 17, 10)),
+    ], keyOf: (_) => 'contact:1');
     expect(days.single.$2.single.calls.map((c) => c.id), [2, 1]);
   });
 
@@ -77,7 +93,14 @@ void main() {
   });
 
   test('5G voice calls read their VoNR mark', () {
-    final entry = CallLogEntry.fromMap({'id': 1, 'number': '0300', 'type': 'outgoing', 'date': 0, 'volte': true, 'vonr': true});
+    final entry = CallLogEntry.fromMap({
+      'id': 1,
+      'number': '0300',
+      'type': 'outgoing',
+      'date': 0,
+      'volte': true,
+      'vonr': true,
+    });
     expect((entry.isVolte, entry.isVonr), (true, true));
     expect(CallLogEntry.fromMap({'id': 1, 'date': 0}).isVonr, false);
   });

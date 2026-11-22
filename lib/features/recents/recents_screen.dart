@@ -146,6 +146,10 @@ class _RecentsScreenState extends State<RecentsScreen> {
         onTap: () => setState(() => _appsOnly = !_appsOnly),
       ),
     OneUIFloatingMenuItem(
+      label: DialerPrefs.instance.groupByContact.value ? context.l10n.dontGroupByContact : context.l10n.groupByContact,
+      onTap: () => DialerPrefs.instance.setGroupByContact(!DialerPrefs.instance.groupByContact.value),
+    ),
+    OneUIFloatingMenuItem(
       label: _hideBlocked ? context.l10n.showBlockedCalls : context.l10n.hideBlockedCalls,
       onTap: () => DialerPrefs.instance.setHideBlockedCalls(!_hideBlocked),
     ),
@@ -283,6 +287,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
           DialerPrefs.instance.rowCallButton,
           DialerPrefs.instance.recentTap, // decides the info button
           DialerPrefs.instance.swipeToCall,
+          DialerPrefs.instance.groupByContact,
         ]),
         builder: (context, _) => _buildList(context),
       ),
@@ -298,7 +303,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
   ];
 
   // groupByDay is only redone when the calls or the filter change, not on every selection tap.
-  (List<CallLogEntry>, CallFilter, bool, List<String>, bool, Object)? _groupedFor;
+  (List<CallLogEntry>, CallFilter, bool, List<String>, bool, Object, bool)? _groupedFor;
   List<(DateTime, List<CallGroup>)> _days = const [];
 
   List<(DateTime, List<CallGroup>)> get _groupedDays {
@@ -309,6 +314,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
       BlockingRepository.instance.numbers.value,
       _appsOnly,
       ContactsRepository.instance.contacts.value, // rows group by contact
+      DialerPrefs.instance.groupByContact.value,
     );
     final old = _groupedFor;
     if (old == null ||
@@ -317,9 +323,10 @@ class _RecentsScreenState extends State<RecentsScreen> {
         old.$3 != key.$3 ||
         !identical(old.$4, key.$4) ||
         old.$5 != key.$5 ||
-        !identical(old.$6, key.$6)) {
+        !identical(old.$6, key.$6) ||
+        old.$7 != key.$7) {
       _groupedFor = key;
-      _days = groupByDay(_visibleCalls, keyOf: callerKey);
+      _days = groupByDay(_visibleCalls, keyOf: callerKey, backToBack: !key.$7);
     }
     return _days;
   }

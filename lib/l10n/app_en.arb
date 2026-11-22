@@ -1058,6 +1058,8 @@
   "callsRows": "Rows in Calls",
   "tapAlreadyCalls": "Tapping a call already calls",
   "simCards": "SIM cards",
+  "groupByContact": "Group by contact",
+  "dontGroupByContact": "Don't group by contact",
   "keypadAndContacts": "Keypad and contacts",
   "swipeToCallSim": "Swipe to call",
   "sameAsKeypad": "Same as keypad and contacts",

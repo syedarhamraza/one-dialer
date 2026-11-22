@@ -2221,6 +2221,12 @@ class AppLocalizationsIt extends AppLocalizations {
   String get simCards => 'Schede SIM';
 
   @override
+  String get groupByContact => 'Raggruppa per contatto';
+
+  @override
+  String get dontGroupByContact => 'Non raggruppare per contatto';
+
+  @override
   String get keypadAndContacts => 'Tastierino e contatti';
 
   @override

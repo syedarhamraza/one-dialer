@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../../core/contacts/contacts_repository.dart';
 import '../../core/diagnostics/lag_diagnostics.dart';
+import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import 'call_log.dart';
 import '../../l10n/l10n.dart';
@@ -159,8 +160,10 @@ String callerName(AppLocalizations l10n, CallLogEntry call) {
       (cached != null && cached.isNotEmpty ? cached : call.number);
 }
 
-/// Who a call is with, for grouping: the saved contact (all their numbers), else the number.
+/// Who a call is with, for grouping: the saved contact (all their numbers), else the number;
+/// only the number while Calls doesn't group by contact ([DialerPrefs.groupByContact]).
 String callerKey(CallLogEntry call) {
+  if (!DialerPrefs.instance.groupByContact.value) return numberKey(call.number);
   final id = ContactsRepository.instance.contactFor(call.number)?.id;
   return id != null ? 'contact:$id' : numberKey(call.number);
 }

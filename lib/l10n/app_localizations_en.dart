@@ -2192,6 +2192,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get simCards => 'SIM cards';
 
   @override
+  String get groupByContact => 'Group by contact';
+
+  @override
+  String get dontGroupByContact => 'Don\'t group by contact';
+
+  @override
   String get keypadAndContacts => 'Keypad and contacts';
 
   @override
