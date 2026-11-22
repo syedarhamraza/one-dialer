@@ -164,7 +164,8 @@ object CallNotifications {
      * Answer; repost it so Answer from the banner stays in the banner (Settings permitting).
      */
     fun repostAfterUnlock(context: Context) {
-        if (!postedLocked || postedForScreen || InCallActivity.isFullScreen) return
+        // Only where it was reported (realme, OnePlus); on vivo a repost re-pops the island card.
+        if (!oplusCapsule || !postedLocked || postedForScreen || InCallActivity.isFullScreen) return
         val (id, call) = CallManager.all().firstOrNull { CallManager.stateOf(it.second) == Call.STATE_RINGING } ?: return
         showIncoming(context, id, call)
     }
@@ -397,10 +398,11 @@ object CallNotifications {
             )
         }
         val notification = builder.build()
-        // A phone-call foreground service, as Google's dialer: CallStyle then needs no full-screen
-        // intent permission, and skins (realme, OnePlus) keep it on top instead of folding it away.
+        // On realme, OnePlus and OPPO, a phone-call foreground service, as Google's dialer: those skins
+        // then keep it on top instead of folding it away. Only there: vivo's island broke under it,
+        // and other phones keep the plain notification they were tested with.
         val service = CallManager.service
-        val foreground = service != null && runCatching {
+        val foreground = oplusCapsule && service != null && runCatching {
             service.startForeground(ID_ONGOING, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL)
         }.isSuccess
         if (!foreground) manager.notify(ID_ONGOING, notification)
