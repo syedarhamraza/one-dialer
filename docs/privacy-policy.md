@@ -17,7 +17,6 @@ When you make One Dialer your default phone app, Android gives it access to:
 | **Nearby devices** (Bluetooth) | Showing the names of your connected Bluetooth devices (a watch, earbuds) so you can pick which one a call uses; nothing is sent anywhere |
 | **Blocked numbers** | Blocking and unblocking numbers you choose |
 | **Do Not Disturb access** (only if you allow it) | VIP calls: letting calls from the contacts you mark as VIPs, or your favourites, ring while the phone is on Silent or Vibrate, then putting the sound back as it was. The app asks for it only when you turn on VIP calls |
-| **Phone-call service** (Android 15 and older) | Keeping the incoming and ongoing call notification on screen while a call rings or is in progress; it runs only during calls |
 
 ## Where your data goes
 
