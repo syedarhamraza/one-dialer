@@ -158,8 +158,9 @@ class DialerPrefs {
   /// it synchronously; [loadChoices] fills them at startup.
   final recentTap = ValueNotifier('details');
 
-  /// Settings › "Choose SIM for calls" (dual SIM, no default): `buttons` (two Call keys)
-  /// or `menu` (ask on every call).
+  /// Settings › "Choose SIM for calls" (dual SIM, no default): `buttons` (two Call keys),
+  /// `menu` (ask on every call) or `recent` (no asking: the SIM last used with that number, see
+  /// [CallLogRepository.recentSim]).
   final simChoice = ValueNotifier('buttons');
 
   // Settings › Keypad & recents, quick calling (all off by default): a call button on Calls and
@@ -172,7 +173,7 @@ class DialerPrefs {
   /// to compare on the phone before one is kept (`docs/beta-only.md`).
   final swipeStyle = ValueNotifier('pill');
   final callButtonStyle = ValueNotifier('tint');
-  static const swipeStyles = ['pill', 'wash', 'bubble', 'card'];
+  static const swipeStyles = ['pill', 'flat'];
   static const callButtonStyles = ['tint', 'glyph', 'glass', 'lit', 'pill'];
 
   // Manage contacts. Accounts are keyed `type|name` (`|` is the phone itself).
@@ -212,7 +213,7 @@ class DialerPrefs {
       callButtonStyle.value = v;
     }
     final sim = await _prefs.getString('sim_choice');
-    if (sim == 'buttons' || sim == 'menu') simChoice.value = sim!;
+    if (sim == 'buttons' || sim == 'menu' || sim == 'recent') simChoice.value = sim!;
   }
 
   /// Settings › "Appearance": `system`, `light` or `dark`.

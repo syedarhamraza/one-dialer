@@ -119,7 +119,11 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     _refresh();
   }
 
-  void _push(Widget page) => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
+  // Back from a page: its summary on this one (SIM cards, Display, Language) may have changed.
+  void _push(Widget page) =>
+      Navigator.of(context)
+          .push(MaterialPageRoute<void>(builder: (_) => page))
+          .then((_) => mounted ? setState(() {}) : null);
 
   /// Rows only for problems; empty when everything incoming calls need is in place.
   List<OneUIGroupItem> get _problems {
@@ -200,7 +204,16 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         ),
         OneUIGroupCard(
           items: [
-            OneUIGroupItem(title: l10n.keypadAndRecents, onTap: () => _push(const DialingSettingsScreen())),
+            OneUIGroupItem(
+              title: l10n.quickCalling,
+              subtitle: l10n.quickCallingSubtitle,
+              onTap: () => _push(const DialingSettingsScreen()),
+            ),
+            OneUIGroupItem(
+              title: l10n.simCards,
+              value: SimSettingsScreen.choiceLabels(l10n)[DialerPrefs.instance.simChoice.value],
+              onTap: () => _push(const SimSettingsScreen()),
+            ),
             OneUIGroupItem(title: l10n.speedDial, onTap: () => _push(const SpeedDialScreen())),
           ],
         ),

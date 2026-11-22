@@ -517,7 +517,8 @@ class _RecentsScreenState extends State<RecentsScreen> {
           // The SIM menu pops from this row.
           builder: (row) => _swipe(
             enabled: prefs.swipeToCall.value && callable && _selected == null,
-            onCall: () => callNow(row),
+            // Never asks for a SIM: the one last used with this number.
+            onCall: () => placeCall(context, call.number, anchorContext: row, recentSim: true),
             onMessage: () => TelecomBridge.instance.sendSms(call.number),
             child: _CallRow(
               group: group,

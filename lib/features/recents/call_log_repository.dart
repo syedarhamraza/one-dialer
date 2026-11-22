@@ -129,6 +129,21 @@ class CallLogRepository {
     }
   }
 
+  /// The SIM to call [number] on without asking: the one its newest logged call used, else the
+  /// newest call's of any number; null when no logged call has a SIM. Call-log `simId`s are the same
+  /// `component|accountId` as `getSims()`, but may name a SIM since removed: callers check.
+  String? recentSim(String number) {
+    final key = numberKey(number);
+    String? newest;
+    for (final c in calls.value) {
+      final sim = c.simId;
+      if (sim == null || sim.isEmpty) continue;
+      newest ??= sim;
+      if (key.isNotEmpty && numberKey(c.number) == key) return sim;
+    }
+    return newest;
+  }
+
   /// The most recently dialled number, for the keypad's empty-call-button redial.
   String? get lastDialled {
     for (final c in calls.value) {

@@ -12,7 +12,7 @@ These were added for the betas but could stay in production if still useful.
 
 | What | Where | To remove |
 | --- | --- | --- |
-| Settings › Keypad & recents › Swipe style and Call button style (pickers to compare the designs) | `DialerPrefs.swipeStyle`/`callButtonStyle`, `lib/widgets/swipe_action.dart`, `lib/widgets/row_call_button.dart`, `dialing_settings_screen.dart` | Keep the style testers like, delete the others and both pickers |
+| Settings › Quick calling › Swipe style (Glass button, Flat) and Call button style (pickers to compare the designs) | `DialerPrefs.swipeStyle`/`callButtonStyle`, `lib/widgets/swipe_action.dart`, `lib/widgets/row_call_button.dart`, `dialing_settings_screen.dart` | Keep the style testers like, delete the others and both pickers |
 | Lag diagnostics (`SevereFrameDelay`, `NativeMainStall`, `DartStall`, `RenderStall`, `InputStall`), sent as Crashlytics non-fatals | `lib/core/diagnostics/lag_diagnostics.dart`, `LagDiagnostics.kt`, `DiagnosticsPolicy.kt`, the `dispatchTouchEvent` overrides in `MainActivity`/`InCallActivity`, the `LagDiagnostics.start` call in `crash_reporting.dart`, `integration_test/lag_*`, `docs/lag-diagnostics.md` | Delete those, then delete the "limited performance diagnostics" paragraphs from the privacy policy and the Diagnostics entry from Data safety (Crashlytics crash logs stay) |
 | Settings › Help & feedback › Report lag (`UserReportedLag`) | `lib/features/settings/help_feedback_screen.dart` (uses lag diagnostics) | Goes with lag diagnostics, or keep it on its own |
 
