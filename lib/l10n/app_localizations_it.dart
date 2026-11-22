@@ -1163,13 +1163,6 @@ class AppLocalizationsIt extends AppLocalizations {
       'Disattivane una, altrimenti lampeggeranno entrambe. La trovi in Impostazioni, sotto Notifiche o Accessibilità';
 
   @override
-  String get liveUpdateCapsule => 'Capsula Live Update (Sperimentale)';
-
-  @override
-  String get liveUpdateCapsuleSubtitle =>
-      'Android 16: mostra la chiamata in corso nel chip della barra di stato e nella capsula su ColorOS, OxygenOS e realme UI';
-
-  @override
   String get swipeUpToAnswer => 'Scorri verso l\'alto per rispondere';
 
   @override
@@ -2076,17 +2069,4 @@ class AppLocalizationsIt extends AppLocalizations {
   String endHeldCall(String name) {
     return 'Termina la chiamata con $name';
   }
-
-  @override
-  String get answerFromBanner => 'Risposta dal banner';
-
-  @override
-  String get answerFromBannerSubtitle =>
-      'Cosa fa Rispondi sul banner della chiamata in arrivo con il telefono sbloccato';
-
-  @override
-  String get stayInNotification => 'Resta nella notifica';
-
-  @override
-  String get openCallScreen => 'Apri schermata chiamata';
 }

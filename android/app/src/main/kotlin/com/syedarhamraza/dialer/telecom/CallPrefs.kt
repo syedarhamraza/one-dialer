@@ -14,7 +14,6 @@ object CallPrefs {
     /** Every setting with its default; the Dart side reads and writes these keys. */
     val DEFAULTS: Map<String, Any> = mapOf(
         "incomingStyle" to "banner", // or "full": the call screen opens while unlocked
-        "answerOpens" to "banner", // or "screen": Answer on the unlocked banner opens the call screen
         "vibrateAnswerEnd" to true,
         "speakerDefault" to false,
         "autoAnswer" to false,
@@ -25,7 +24,6 @@ object CallPrefs {
         "recordContacts" to "[]", // contact ids (JSON) recorded in "contacts" mode
         "neverRecord" to "[]", // contact ids (JSON) never auto-recorded
         "recordingConsent" to false, // the user accepted Settings › Call recording's consent notice
-        "liveUpdates" to false, // experimental: a connected call asks for an Android 16 Live Update (capsule)
     )
 
     fun read(context: Context): Map<String, Any> {

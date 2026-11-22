@@ -1153,13 +1153,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Turn one of them off, or both will blink. Find it in Settings under Notifications or Accessibility';
 
   @override
-  String get liveUpdateCapsule => 'Live Update capsule (Experimental)';
-
-  @override
-  String get liveUpdateCapsuleSubtitle =>
-      'Android 16: show a connected call in the status bar chip, and the capsule on ColorOS, OxygenOS and realme UI';
-
-  @override
   String get swipeUpToAnswer => 'Swipe up to answer';
 
   @override
@@ -2052,17 +2045,4 @@ class AppLocalizationsEn extends AppLocalizations {
   String endHeldCall(String name) {
     return 'End call with $name';
   }
-
-  @override
-  String get answerFromBanner => 'Answering from the banner';
-
-  @override
-  String get answerFromBannerSubtitle =>
-      'What Answer on the incoming call banner does while the phone is unlocked';
-
-  @override
-  String get stayInNotification => 'Stay in the notification';
-
-  @override
-  String get openCallScreen => 'Open call screen';
 }

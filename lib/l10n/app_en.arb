@@ -643,8 +643,6 @@
   "flashOnCallSubtitle": "Blink the camera flash while a call rings",
   "systemFlash": "Your phone has its own flash notification",
   "systemFlashSubtitle": "Turn one of them off, or both will blink. Find it in Settings under Notifications or Accessibility",
-  "liveUpdateCapsule": "Live Update capsule (Experimental)",
-  "liveUpdateCapsuleSubtitle": "Android 16: show a connected call in the status bar chip, and the capsule on ColorOS, OxygenOS and realme UI",
   "swipeUpToAnswer": "Swipe up to answer",
   "swipeDownToAnswer": "Swipe down to answer",
   "answerButtons": "Answer buttons",
@@ -1014,9 +1012,5 @@
         "type": "String"
       }
     }
-  },
-  "answerFromBanner": "Answering from the banner",
-  "answerFromBannerSubtitle": "What Answer on the incoming call banner does while the phone is unlocked",
-  "stayInNotification": "Stay in the notification",
-  "openCallScreen": "Open call screen"
+  }
 }

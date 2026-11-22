@@ -318,8 +318,6 @@
   "flashOnCallSubtitle": "Fa lampeggiare il flash mentre arriva una chiamata",
   "systemFlash": "Il telefono ha già una notifica con flash",
   "systemFlashSubtitle": "Disattivane una, altrimenti lampeggeranno entrambe. La trovi in Impostazioni, sotto Notifiche o Accessibilità",
-  "liveUpdateCapsule": "Capsula Live Update (Sperimentale)",
-  "liveUpdateCapsuleSubtitle": "Android 16: mostra la chiamata in corso nel chip della barra di stato e nella capsula su ColorOS, OxygenOS e realme UI",
   "swipeUpToAnswer": "Scorri verso l'alto per rispondere",
   "swipeDownToAnswer": "Scorri verso il basso per rispondere",
   "answerButtons": "Pulsanti di risposta",
@@ -588,9 +586,5 @@
   "importSettingsMessage": "Impostazioni, chiamata rapida, note e sfondi delle chiamate vengono sostituiti da quelli del file. Poi One Dialer si riavvia.",
   "importSettingsInCall": "Non puoi importare le impostazioni durante una chiamata",
   "notASettingsFile": "Questo non è un file di impostazioni di One Dialer",
-  "endHeldCall": "Termina la chiamata con {name}",
-  "answerFromBanner": "Risposta dal banner",
-  "answerFromBannerSubtitle": "Cosa fa Rispondi sul banner della chiamata in arrivo con il telefono sbloccato",
-  "stayInNotification": "Resta nella notifica",
-  "openCallScreen": "Apri schermata chiamata"
+  "endHeldCall": "Termina la chiamata con {name}"
 }
