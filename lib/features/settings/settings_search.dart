@@ -226,9 +226,9 @@ class _SettingsSearchScreenState extends State<SettingsSearchScreen> {
                 slivers: [
                   SliverPadding(
                     padding: EdgeInsets.fromLTRB(
-                      0,
+                      16,
                       padding.top + 8 + 48 * headerScale(context) + 16,
-                      0,
+                      16,
                       padding.bottom + 32,
                     ),
                     sliver: SliverToBoxAdapter(
