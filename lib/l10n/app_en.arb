@@ -1036,6 +1036,17 @@
   "stayInNotification": "Stay in the notification",
   "openCallScreen": "Open call screen",
   "clearDefault": "Clear default",
+  "swipeStyle": "Swipe style",
+  "swipeStylePill": "Glass pill",
+  "swipeStyleWash": "Colour wash",
+  "swipeStyleBubble": "Bubble",
+  "swipeStyleCard": "Card lift",
+  "callButtonStyle": "Call button style",
+  "callButtonTint": "Soft tint",
+  "callButtonGlyph": "Glyph only",
+  "callButtonGlass": "Glass circle",
+  "callButtonLit": "Green circle",
+  "callButtonPill": "Pill with label",
   "callsAndContactsRows": "Rows in Calls and Contacts",
   "simCards": "SIM cards"
 }

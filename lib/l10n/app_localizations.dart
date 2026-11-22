@@ -3758,6 +3758,72 @@ abstract class AppLocalizations {
   /// **'Clear default'**
   String get clearDefault;
 
+  /// No description provided for @swipeStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe style'**
+  String get swipeStyle;
+
+  /// No description provided for @swipeStylePill.
+  ///
+  /// In en, this message translates to:
+  /// **'Glass pill'**
+  String get swipeStylePill;
+
+  /// No description provided for @swipeStyleWash.
+  ///
+  /// In en, this message translates to:
+  /// **'Colour wash'**
+  String get swipeStyleWash;
+
+  /// No description provided for @swipeStyleBubble.
+  ///
+  /// In en, this message translates to:
+  /// **'Bubble'**
+  String get swipeStyleBubble;
+
+  /// No description provided for @swipeStyleCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Card lift'**
+  String get swipeStyleCard;
+
+  /// No description provided for @callButtonStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Call button style'**
+  String get callButtonStyle;
+
+  /// No description provided for @callButtonTint.
+  ///
+  /// In en, this message translates to:
+  /// **'Soft tint'**
+  String get callButtonTint;
+
+  /// No description provided for @callButtonGlyph.
+  ///
+  /// In en, this message translates to:
+  /// **'Glyph only'**
+  String get callButtonGlyph;
+
+  /// No description provided for @callButtonGlass.
+  ///
+  /// In en, this message translates to:
+  /// **'Glass circle'**
+  String get callButtonGlass;
+
+  /// No description provided for @callButtonLit.
+  ///
+  /// In en, this message translates to:
+  /// **'Green circle'**
+  String get callButtonLit;
+
+  /// No description provided for @callButtonPill.
+  ///
+  /// In en, this message translates to:
+  /// **'Pill with label'**
+  String get callButtonPill;
+
   /// No description provided for @callsAndContactsRows.
   ///
   /// In en, this message translates to:

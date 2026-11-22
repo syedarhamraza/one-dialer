@@ -610,6 +610,17 @@
   "stayInNotification": "Resta nella notifica",
   "openCallScreen": "Apri schermata chiamata",
   "clearDefault": "Rimuovi predefinito",
+  "swipeStyle": "Stile dello scorrimento",
+  "swipeStylePill": "Pillola di vetro",
+  "swipeStyleWash": "Colore pieno",
+  "swipeStyleBubble": "Bolla",
+  "swipeStyleCard": "Scheda sollevata",
+  "callButtonStyle": "Stile del pulsante di chiamata",
+  "callButtonTint": "Tinta tenue",
+  "callButtonGlyph": "Solo icona",
+  "callButtonGlass": "Cerchio di vetro",
+  "callButtonLit": "Cerchio verde",
+  "callButtonPill": "Pillola con testo",
   "callsAndContactsRows": "Righe in Chiamate e Contatti",
   "simCards": "Schede SIM"
 }

@@ -169,6 +169,28 @@ void main() {
     expect(native.map((c) => c.method), contains('placeCall'));
   });
 
+  for (final style in DialerPrefs.callButtonStyles) {
+    testWidgets('the $style row call button calls the number and fits beside the info button', (tester) async {
+      DialerPrefs.instance
+        ..rowCallButton.value = true
+        ..recentTap.value = 'call'
+        ..callButtonStyle.value = style;
+      addTearDown(() {
+        DialerPrefs.instance
+          ..rowCallButton.value = false
+          ..recentTap.value = 'details'
+          ..callButtonStyle.value = 'tint';
+      });
+      repo.calls.value = [call(1, '333')];
+      await open(tester, const RecentsScreen());
+      expect(find.byTooltip('Call details'), findsOneWidget);
+      await tester.tap(find.byTooltip('Call'));
+      await tester.pumpAndSettle();
+      expect(native.map((c) => c.method), contains('placeCall'));
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets('a call button saved on shows once the saved choices load at startup', (tester) async {
     addTearDown(() => DialerPrefs.instance.rowCallButton.value = false);
     repo.calls.value = [call(1, '333')];

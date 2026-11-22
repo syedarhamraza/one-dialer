@@ -13,6 +13,7 @@ import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../theme/one_ui_scroll.dart';
 
+import '../../widgets/row_call_button.dart';
 import '../../widgets/cos_dialog.dart';
 import '../../widgets/call_glass.dart';
 import '../../widgets/letter_avatar.dart';
@@ -280,6 +281,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
           BlockingRepository.instance.numbers,
           DialerPrefs.instance.hideContactNumbers, // rows read it directly
           DialerPrefs.instance.rowCallButton,
+          DialerPrefs.instance.callButtonStyle,
           DialerPrefs.instance.swipeToCall,
           DialerPrefs.instance.doubleTapCall,
         ]),
@@ -518,32 +520,32 @@ class _RecentsScreenState extends State<RecentsScreen> {
             onCall: () => callNow(row),
             onMessage: () => TelecomBridge.instance.sendSms(call.number),
             child: _CallRow(
-            group: group,
-            simBadge: _simBadge(call.simId),
-            note: _noteFor(group),
-            when: day == context.l10n.today ? timeLabel(context.l10n, call.date) : day,
-            selecting: _selected != null,
-            // Only the box and the background listen to selection taps; the rest of the row stays built.
-            selectMark: ValueListenableBuilder(
-              valueListenable: _selectionChanged,
-              builder: (context, _, _) => SelectMark(selected: _selected?.contains(call.id), gap: 8, end: 12),
+              group: group,
+              simBadge: _simBadge(call.simId),
+              note: _noteFor(group),
+              when: day == context.l10n.today ? timeLabel(context.l10n, call.date) : day,
+              selecting: _selected != null,
+              // Only the box and the background listen to selection taps; the rest of the row stays built.
+              selectMark: ValueListenableBuilder(
+                valueListenable: _selectionChanged,
+                builder: (context, _, _) => SelectMark(selected: _selected?.contains(call.id), gap: 8, end: 12),
+              ),
+              highlight: ValueListenableBuilder(
+                valueListenable: _selectionChanged,
+                builder: (context, _, _) => SelectHighlight(selected: _selected?.contains(call.id) ?? false),
+              ),
+              onTap: () => tap(row),
+              // Null keeps single taps instant; double-tap makes every tap wait a moment.
+              onDoubleTap: prefs.doubleTapCall.value && callable && _selected == null ? () => callNow(row) : null,
+              onInfo: details,
+              onCall: prefs.rowCallButton.value && callable ? () => callNow(row) : null,
+              // The call button takes the info button's place, unless a tap calls (then details need it).
+              showInfo: !(prefs.rowCallButton.value && callable) || prefs.recentTap.value == 'call',
+              onLongPress: () {
+                HapticFeedback.mediumImpact();
+                _toggle(group);
+              },
             ),
-            highlight: ValueListenableBuilder(
-              valueListenable: _selectionChanged,
-              builder: (context, _, _) => SelectHighlight(selected: _selected?.contains(call.id) ?? false),
-            ),
-            onTap: () => tap(row),
-            // Null keeps single taps instant; double-tap makes every tap wait a moment.
-            onDoubleTap: prefs.doubleTapCall.value && callable && _selected == null ? () => callNow(row) : null,
-            onInfo: details,
-            onCall: prefs.rowCallButton.value && callable ? () => callNow(row) : null,
-            // The call button takes the info button's place, unless a tap calls (then details need it).
-            showInfo: !(prefs.rowCallButton.value && callable) || prefs.recentTap.value == 'call',
-            onLongPress: () {
-              HapticFeedback.mediumImpact();
-              _toggle(group);
-            },
-          ),
           ),
         ),
       ],
@@ -552,8 +554,12 @@ class _RecentsScreenState extends State<RecentsScreen> {
 }
 
 /// [SwipeAction] around [child] only when [enabled], so rows stay as they were with it off.
-Widget _swipe({required bool enabled, required VoidCallback onCall, required VoidCallback onMessage, required Widget child}) =>
-    enabled ? SwipeAction(onCall: onCall, onMessage: onMessage, child: child) : child;
+Widget _swipe({
+  required bool enabled,
+  required VoidCallback onCall,
+  required VoidCallback onMessage,
+  required Widget child,
+}) => enabled ? SwipeAction(onCall: onCall, onMessage: onMessage, child: child) : child;
 
 /// The Calls header, one set of glass controls that morph between two states
 /// instead of swapping:
@@ -818,7 +824,9 @@ class _CallRow extends StatelessWidget {
     final call = group.latest;
     final name = callerName(context.l10n, call);
     final count = group.calls.length;
-    final slot = 48.0 * ((onCall != null ? 1 : 0) + (showInfo ? 1 : 0));
+    final slot =
+        (onCall != null ? RowCallButton.widthFor(DialerPrefs.instance.callButtonStyle.value) : 0.0) +
+        (showInfo ? 48.0 : 0);
     final row = InkWell(
       onTap: onTap,
       onDoubleTap: onDoubleTap,
@@ -914,12 +922,7 @@ class _CallRow extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (onCall != null)
-                    IconButton(
-                      tooltip: context.l10n.call,
-                      onPressed: selecting ? null : onCall,
-                      icon: const Icon(Icons.call_rounded, size: 24, color: answerGreen),
-                    ),
+                  if (onCall != null) RowCallButton(onPressed: selecting ? null : onCall),
                   if (showInfo)
                     IconButton(
                       tooltip: context.l10n.callDetails,

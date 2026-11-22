@@ -2150,6 +2150,39 @@ class AppLocalizationsIt extends AppLocalizations {
   String get clearDefault => 'Rimuovi predefinito';
 
   @override
+  String get swipeStyle => 'Stile dello scorrimento';
+
+  @override
+  String get swipeStylePill => 'Pillola di vetro';
+
+  @override
+  String get swipeStyleWash => 'Colore pieno';
+
+  @override
+  String get swipeStyleBubble => 'Bolla';
+
+  @override
+  String get swipeStyleCard => 'Scheda sollevata';
+
+  @override
+  String get callButtonStyle => 'Stile del pulsante di chiamata';
+
+  @override
+  String get callButtonTint => 'Tinta tenue';
+
+  @override
+  String get callButtonGlyph => 'Solo icona';
+
+  @override
+  String get callButtonGlass => 'Cerchio di vetro';
+
+  @override
+  String get callButtonLit => 'Cerchio verde';
+
+  @override
+  String get callButtonPill => 'Pillola con testo';
+
+  @override
   String get callsAndContactsRows => 'Righe in Chiamate e Contatti';
 
   @override
