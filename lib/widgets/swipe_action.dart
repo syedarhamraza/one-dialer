@@ -6,10 +6,11 @@ import 'package:flutter/services.dart';
 
 import '../core/haptics/haptics.dart';
 import '../core/prefs/dialer_prefs.dart';
-import '../features/in_call/call_controls.dart' show TintedCallBody, answerGreen;
+import '../features/in_call/call_controls.dart' show answerGreen;
 import '../l10n/l10n.dart';
 import '../theme/one_ui_theme.dart';
-import 'call_glass.dart' show kMainGlassGlow, mainGlass;
+import 'call_glass.dart' show CallGlass;
+import 'press_glow.dart' show LitButton;
 
 /// Settings › Swipe to call or message: a row slides right to call (green) or left to message
 /// (blue), acting on release past [_threshold] of its width, then springs back; never removed.
@@ -238,92 +239,63 @@ class _SwipeActionState extends State<SwipeAction> with TickerProviderStateMixin
       default: // pill
         return ColoredBox(
           color: page,
-          child: armedLerp((t) => _glassPill(context, right, color, gap, p, t, icon, label)),
+          child: _glassPill(
+            context,
+            right,
+            right ? color : OneUITheme.accentBlue,
+            gap,
+            p,
+            _armed || _confirmed,
+            icon,
+            label,
+          ),
         );
     }
   }
 
-  /// The glass pill: call glass that fills with the action colour from its outer edge as the row
-  /// slides (full exactly at the threshold), then lights up and glows; the icon rides at the
-  /// row's edge and the word joins it once there's room. [t] is how lit it is (0–1).
+  /// The glass pill: the Calls header's round glass button, centred in the gap the row leaves,
+  /// growing in as the row slides; once letting go would act it becomes the keypad's lit Call
+  /// button (or a blue one for Message) with the same pop. Only the app's own parts, so it
+  /// follows Settings › Reduce visual effects like they do.
   Widget _glassPill(
     BuildContext context,
     bool right,
     Color color,
     double gap,
     double p,
-    double t,
+    bool lit,
     IconData icon,
     String label,
   ) {
-    const height = 42.0; // the avatar's, so it lines up with the row
-    const outer = 12.0, inner = 8.0;
-    final width = math.max(0.0, gap - outer - inner);
-    final fx = OneUIEffectsController.instance;
-    final light = context.palette.isLight;
-    final look = mainGlass(context);
-    final swell = 1 + 0.06 * math.sin(math.pi * _pop.value);
-    final labelT = ((width - 96) / 32).clamp(0.0, 1.0);
-    final fg = Color.lerp(color, Colors.white, t)!;
-    final content = Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (right && labelT > 0) ...[_label(label, fg, labelT), const SizedBox(width: 6)],
-        Transform.scale(
-          scale: 0.6 + 0.4 * p,
-          child: AnimatedScale(
-            scale: t > .5 ? 1.12 : 1,
-            duration: const Duration(milliseconds: 260),
-            curve: Curves.easeOutBack,
-            child: Icon(icon, size: 22, color: fg, semanticLabel: label),
-          ),
-        ),
-        if (!right && labelT > 0) ...[const SizedBox(width: 6), _label(label, fg, labelT)],
-      ],
-    );
+    const size = 48.0; // the header buttons'
+    final grow = 0.55 + 0.45 * p;
+    final swell = 1 + 0.08 * math.sin(math.pi * _pop.value);
+    final button = lit
+        ? LitButton(
+            key: const ValueKey('lit'),
+            color: color,
+            shape: const CircleBorder(),
+            child: SizedBox.square(
+              dimension: size,
+              child: Icon(icon, size: 24, color: Colors.white, semanticLabel: label),
+            ),
+          )
+        : CallGlass(
+            key: const ValueKey('glass'),
+            blur: false, // on the plain page, where a blur shows nothing
+            child: SizedBox.square(
+              dimension: size,
+              child: Icon(icon, size: 24, color: context.palette.textPrimary, semanticLabel: label),
+            ),
+          );
     return Align(
       alignment: right ? Alignment.centerLeft : Alignment.centerRight,
-      child: Padding(
-        padding: EdgeInsets.only(left: right ? outer : 0, right: right ? 0 : outer),
-        child: Transform.scale(
-          scale: swell,
-          alignment: right ? Alignment.centerLeft : Alignment.centerRight,
-          child: SizedBox(
-            width: width,
-            height: height,
-            child: DecoratedBox(
-              decoration: ShapeDecoration(
-                shape: const StadiumBorder(),
-                // Below full effects: the flat One UI fill, no glow (reduced and off stay flat).
-                color: fx.isFull ? null : fx.oneUIFill(light: light),
-                shadows: fx.isFull && t > 0
-                    ? [
-                        // An even glow all round, not a drop shadow (that read as a second, darker edge).
-                        BoxShadow(color: color.withValues(alpha: .4 * t), blurRadius: 18),
-                      ]
-                    : null,
-              ),
-              child: CustomPaint(
-                painter: fx.isFull
-                    ? TintedCallBody(height / 2, glow: kMainGlassGlow * look.opacity, edges: look.edges, light: light)
-                    : null,
-                // Over the glass, under the icon and word.
-                child: CustomPaint(
-                  painter: _PillFill(color: color, progress: p, lit: t, fromLeft: right, glow: fx.isFull),
-                  child: ClipRect(
-                    child: OverflowBox(
-                      minWidth: 0,
-                      maxWidth: double.infinity,
-                      alignment: right ? Alignment.centerRight : Alignment.centerLeft,
-                      child: Padding(
-                        padding: EdgeInsets.only(left: right ? 0 : 12, right: right ? 12 : 0),
-                        child: content,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+      child: SizedBox(
+        width: gap,
+        child: Center(
+          child: Transform.scale(
+            scale: grow * swell,
+            child: SizedBox.square(dimension: size, child: button),
           ),
         ),
       ),
@@ -338,59 +310,4 @@ class _SwipeActionState extends State<SwipeAction> with TickerProviderStateMixin
       fontWeight: FontWeight.w600,
     ),
   );
-}
-
-/// The glass pill's colour: a stadium growing from the outer edge with the swipe ([progress],
-/// full at the threshold), solid once [lit], with the lit buttons' brighter lower edge when [glow].
-class _PillFill extends CustomPainter {
-  _PillFill({
-    required this.color,
-    required this.progress,
-    required this.lit,
-    required this.fromLeft,
-    required this.glow,
-  });
-
-  final Color color;
-  final double progress, lit;
-  final bool fromLeft, glow;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (size.isEmpty) return;
-    final r = Radius.circular(size.height / 2);
-    final w = size.width * math.max(progress, lit);
-    if (w > 0) {
-      // A full stadium reaching in from past the outer edge, cut to the pill: its leading edge is
-      // always round and its outer end follows the pill's curve, even while it's a sliver.
-      final h = size.height;
-      final rect = fromLeft ? Rect.fromLTRB(-h, 0, w, h) : Rect.fromLTRB(size.width - w, 0, size.width + h, h);
-      canvas
-        ..save()
-        ..clipRRect(RRect.fromRectAndRadius(Offset.zero & size, r))
-        ..drawRRect(RRect.fromRectAndRadius(rect, r), Paint()..color = color.withValues(alpha: 0.45 + 0.55 * lit))
-        ..restore();
-    }
-    if (glow && lit > 0) {
-      final whole = Offset.zero & size;
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(whole, r),
-        Paint()
-          ..shader = LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              const Color(0x00FFFFFF),
-              const Color(0x00FFFFFF),
-              Colors.white.withValues(alpha: .24 * lit),
-            ],
-            stops: const [0, .5, 1],
-          ).createShader(whole),
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_PillFill old) =>
-      old.color != color || old.progress != progress || old.lit != lit || old.fromLeft != fromLeft || old.glow != glow;
 }

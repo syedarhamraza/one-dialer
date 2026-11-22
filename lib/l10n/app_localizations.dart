@@ -3767,7 +3767,7 @@ abstract class AppLocalizations {
   /// No description provided for @swipeStylePill.
   ///
   /// In en, this message translates to:
-  /// **'Glass pill'**
+  /// **'Glass button'**
   String get swipeStylePill;
 
   /// No description provided for @swipeStyleWash.
