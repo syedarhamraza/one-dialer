@@ -2081,10 +2081,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get swipeStylePill => 'Glass button';
 
   @override
-  String get swipeStyleWash => 'Colour wash';
+  String get swipeStyleWash => 'Glass key';
 
   @override
-  String get swipeStyleBubble => 'Bubble';
+  String get swipeStyleBubble => 'Green button';
 
   @override
   String get swipeStyleCard => 'Card lift';

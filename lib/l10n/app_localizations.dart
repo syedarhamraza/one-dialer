@@ -3683,13 +3683,13 @@ abstract class AppLocalizations {
   /// No description provided for @swipeStyleWash.
   ///
   /// In en, this message translates to:
-  /// **'Colour wash'**
+  /// **'Glass key'**
   String get swipeStyleWash;
 
   /// No description provided for @swipeStyleBubble.
   ///
   /// In en, this message translates to:
-  /// **'Bubble'**
+  /// **'Green button'**
   String get swipeStyleBubble;
 
   /// No description provided for @swipeStyleCard.
