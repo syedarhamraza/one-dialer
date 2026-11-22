@@ -154,13 +154,29 @@ class DialerPrefs {
   }
 
   /// Settings › "Tap a recent call": `details` (open its page), `dial` (write the number
-  /// in the keypad) or `sim` (dual SIM only: pick a SIM and call). Notifiers so rows read
+  /// in the keypad), `call` (call it) or `sim` (dual SIM only: pick a SIM and call). Notifiers so rows read
   /// it synchronously; [loadChoices] fills them at startup.
   final recentTap = ValueNotifier('details');
 
-  /// Settings › "Choose SIM for calls" (dual SIM, no default): `buttons` (two Call keys)
-  /// or `menu` (ask on every call).
+  /// A tap on a Calls row calls: the row's call button steps aside then, since it'd only repeat it (Settings greys the button out and says why).
+  bool get tapCalls => recentTap.value == 'call';
+
+  /// Settings › "Choose SIM for calls" (dual SIM, no default): `buttons` (two Call keys),
+  /// `menu` (ask on every call) or `recent` (no asking: the SIM last used with that number, see
+  /// [CallLogRepository.recentSim]).
   final simChoice = ValueNotifier('buttons');
+
+  // Settings › Keypad & recents, quick calling (all off by default): a call button on Calls and
+  // Contacts rows, swipe right to call / left to message.
+  final rowCallButton = ValueNotifier(false);
+  final swipeToCall = ValueNotifier(false);
+
+  /// Beta: the look of the swipe ([swipeStyles]) and of the row call button ([callButtonStyles]),
+  /// to compare on the phone before one is kept (`docs/beta-only.md`).
+  final swipeStyle = ValueNotifier('pill');
+  final callButtonStyle = ValueNotifier('tint');
+  static const swipeStyles = ['pill', 'flat'];
+  static const callButtonStyles = ['tint', 'glyph', 'lit'];
 
   // Manage contacts. Accounts are keyed `type|name` (`|` is the phone itself).
   final showPhotos = ValueNotifier(true);
@@ -190,9 +206,15 @@ class DialerPrefs {
     saveAccount.value = await _prefs.getString('contacts_save_account');
     // Ignores values from earlier test builds that no longer exist.
     final tap = await _prefs.getString('recent_tap');
-    if (tap == 'details' || tap == 'dial' || tap == 'sim') recentTap.value = tap!;
+    if (tap == 'details' || tap == 'dial' || tap == 'call' || tap == 'sim') recentTap.value = tap!;
+    rowCallButton.value = await _prefs.getBool('row_call_button') ?? false;
+    swipeToCall.value = await _prefs.getBool('swipe_to_call') ?? false;
+    if (await _prefs.getString('swipe_style') case final v? when swipeStyles.contains(v)) swipeStyle.value = v;
+    // A style since removed (Pill, Glass) goes back to the default.
+    final buttonStyle = await _prefs.getString('call_button_style');
+    callButtonStyle.value = callButtonStyles.contains(buttonStyle) ? buttonStyle! : callButtonStyles.first;
     final sim = await _prefs.getString('sim_choice');
-    if (sim == 'buttons' || sim == 'menu') simChoice.value = sim!;
+    if (sim == 'buttons' || sim == 'menu' || sim == 'recent') simChoice.value = sim!;
   }
 
   /// Settings › "Appearance": `system`, `light` or `dark`.
@@ -444,6 +466,26 @@ class DialerPrefs {
   Future<void> setRecentTap(String value) async {
     recentTap.value = value;
     await _prefs.setString('recent_tap', value);
+  }
+
+  Future<void> setRowCallButton(bool value) async {
+    rowCallButton.value = value;
+    await _prefs.setBool('row_call_button', value);
+  }
+
+  Future<void> setSwipeToCall(bool value) async {
+    swipeToCall.value = value;
+    await _prefs.setBool('swipe_to_call', value);
+  }
+
+  Future<void> setSwipeStyle(String value) async {
+    swipeStyle.value = value;
+    await _prefs.setString('swipe_style', value);
+  }
+
+  Future<void> setCallButtonStyle(String value) async {
+    callButtonStyle.value = value;
+    await _prefs.setString('call_button_style', value);
   }
 
   Future<void> setShowPhotos(bool value) async {

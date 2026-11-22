@@ -13,6 +13,7 @@ import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../theme/one_ui_scroll.dart';
 
+import '../../widgets/row_call_button.dart';
 import '../../widgets/cos_dialog.dart';
 import '../../widgets/call_glass.dart';
 import '../../widgets/letter_avatar.dart';
@@ -21,6 +22,7 @@ import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_status_bar_scrim.dart';
 import '../../widgets/round_header_controls.dart';
 import '../../widgets/place_call.dart';
+import '../../widgets/swipe_action.dart';
 import '../in_call/call_controls.dart';
 import '../keypad/keypad_screen.dart';
 import '../recordings/recordings_screen.dart';
@@ -277,6 +279,9 @@ class _RecentsScreenState extends State<RecentsScreen> {
           ContactsRepository.instance.contacts,
           BlockingRepository.instance.numbers,
           DialerPrefs.instance.hideContactNumbers, // rows read it directly
+          DialerPrefs.instance.rowCallButton,
+          DialerPrefs.instance.recentTap, // decides the info button
+          DialerPrefs.instance.swipeToCall,
         ]),
         builder: (context, _) => _buildList(context),
       ),
@@ -465,18 +470,23 @@ class _RecentsScreenState extends State<RecentsScreen> {
     final call = group.latest;
     final day = dayLabel(context.l10n, call.date, now);
     void details() => openCallDetails(context, call);
+    final prefs = DialerPrefs.instance;
+    final callable = !call.isPrivate && call.number.isNotEmpty && !call.isApp;
+    void callNow(BuildContext row) => placeCall(context, call.number, anchorContext: row);
     // What a tap does is the Settings choice (DialerPrefs.recentTap): open the details page,
-    // write the number in the keypad so the call is one more, deliberate tap, or (dual SIM)
-    // pick a SIM from our menu and call.
+    // write the number in the keypad so the call is one more, deliberate tap, call it, or
+    // (dual SIM) pick a SIM from our menu and call.
     void tap(BuildContext row) {
       if (_selected != null) return _toggle(group);
       if (call.isApp) {
         showAppCallBack(context, call, anchorContext: row);
         return;
       }
-      final choice = DialerPrefs.instance.recentTap.value;
-      final callable = !call.isPrivate && call.number.isNotEmpty;
-      if (choice == 'sim' && callable && _sims.length > 1) {
+      final choice = prefs.recentTap.value;
+      if (choice == 'call' && callable) {
+        widget.keypadOpen?.value = false;
+        callNow(row);
+      } else if (choice == 'sim' && callable && _sims.length > 1) {
         placeCall(context, call.number, chooseSim: true, anchorContext: row);
       } else if (choice == 'dial' && callable && widget.dialInput != null) {
         widget.dialInput!.value = call.number;
@@ -493,33 +503,50 @@ class _RecentsScreenState extends State<RecentsScreen> {
         if (i > 0) Divider(height: 1, indent: 76, color: context.palette.divider),
         Builder(
           // The SIM menu pops from this row.
-          builder: (row) => _CallRow(
-            group: group,
-            simBadge: _simBadge(call.simId),
-            note: _noteFor(group),
-            when: day == context.l10n.today ? timeLabel(context.l10n, call.date) : day,
-            selecting: _selected != null,
-            // Only the box and the background listen to selection taps; the rest of the row stays built.
-            selectMark: ValueListenableBuilder(
-              valueListenable: _selectionChanged,
-              builder: (context, _, _) => SelectMark(selected: _selected?.contains(call.id), gap: 8, end: 12),
+          builder: (row) => _swipe(
+            enabled: prefs.swipeToCall.value && callable && _selected == null,
+            // Never asks for a SIM: the one last used with this number.
+            onCall: () => placeCall(context, call.number, anchorContext: row, recentSim: true),
+            onMessage: () => TelecomBridge.instance.sendSms(call.number),
+            child: _CallRow(
+              group: group,
+              simBadge: _simBadge(call.simId),
+              note: _noteFor(group),
+              when: day == context.l10n.today ? timeLabel(context.l10n, call.date) : day,
+              selecting: _selected != null,
+              // Only the box and the background listen to selection taps; the rest of the row stays built.
+              selectMark: ValueListenableBuilder(
+                valueListenable: _selectionChanged,
+                builder: (context, _, _) => SelectMark(selected: _selected?.contains(call.id), gap: 8, end: 12),
+              ),
+              highlight: ValueListenableBuilder(
+                valueListenable: _selectionChanged,
+                builder: (context, _, _) => SelectHighlight(selected: _selected?.contains(call.id) ?? false),
+              ),
+              onTap: () => tap(row),
+              onInfo: details,
+              onCall: prefs.rowCallButton.value && !prefs.tapCalls && callable ? () => callNow(row) : null,
+              // With the call button, info shows only while a tap does something other than open details.
+              showInfo: !(prefs.rowCallButton.value && callable) || prefs.recentTap.value != 'details',
+              onLongPress: () {
+                HapticFeedback.mediumImpact();
+                _toggle(group);
+              },
             ),
-            highlight: ValueListenableBuilder(
-              valueListenable: _selectionChanged,
-              builder: (context, _, _) => SelectHighlight(selected: _selected?.contains(call.id) ?? false),
-            ),
-            onTap: () => tap(row),
-            onInfo: details,
-            onLongPress: () {
-              HapticFeedback.mediumImpact();
-              _toggle(group);
-            },
           ),
         ),
       ],
     );
   }
 }
+
+/// [SwipeAction] around [child] only when [enabled], so rows stay as they were with it off.
+Widget _swipe({
+  required bool enabled,
+  required VoidCallback onCall,
+  required VoidCallback onMessage,
+  required Widget child,
+}) => enabled ? SwipeAction(onCall: onCall, onMessage: onMessage, child: child) : child;
 
 /// The Calls header, one set of glass controls that morph between two states
 /// instead of swapping:
@@ -758,6 +785,8 @@ class _CallRow extends StatelessWidget {
     required this.highlight,
     required this.onTap,
     required this.onInfo,
+    this.onCall,
+    this.showInfo = true,
     required this.onLongPress,
   });
 
@@ -772,6 +801,8 @@ class _CallRow extends StatelessWidget {
   final Widget selectMark, highlight;
   final VoidCallback onTap;
   final VoidCallback onInfo;
+  final VoidCallback? onCall;
+  final bool showInfo;
   final VoidCallback onLongPress;
 
   @override
@@ -779,6 +810,12 @@ class _CallRow extends StatelessWidget {
     final call = group.latest;
     final name = callerName(context.l10n, call);
     final count = group.calls.length;
+    // With the call button, the time moves under the number (beside it when a note takes that line).
+    final timeBelow = onCall != null;
+    // Three lines fit the row's 61 dp only at a set line height, whatever the font's own.
+    final lineHeight = timeBelow ? 1.2 : null;
+    final secondary = TextStyle(fontSize: 14, height: lineHeight, color: context.palette.textSecondary);
+    final slot = (onCall != null ? RowCallButton.size : 0.0) + (showInfo ? 48.0 : 0);
     final row = InkWell(
       onTap: onTap,
       onLongPress: onLongPress,
@@ -805,6 +842,7 @@ class _CallRow extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 18,
+                      height: lineHeight,
                       fontWeight: FontWeight.w500,
                       letterSpacing: -0.2,
                       color: call.isMissed ? OneUITheme.accentRed : context.palette.textPrimary,
@@ -826,11 +864,13 @@ class _CallRow extends StatelessWidget {
                               : call.number,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 14, color: context.palette.textSecondary),
+                          style: secondary,
                         ),
                       ),
+                      if (timeBelow && note != null) Text(' · $when', style: secondary),
                     ],
                   ),
+                  if (timeBelow && note == null) ...[const SizedBox(height: 2), Text(when, style: secondary)],
                   if (note case final note?) ...[
                     const SizedBox(height: 2),
                     Row(
@@ -851,9 +891,8 @@ class _CallRow extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            Text(when, style: TextStyle(fontSize: 14, color: context.palette.textSecondary)),
-            // Info leaves on the selection box's spring as the box comes in, in its place.
+            if (!timeBelow) ...[const SizedBox(width: 8), Text(when, style: secondary)],
+            // Info (and the call button) leave on the selection box's spring as the box comes in, in their place.
             TweenAnimationBuilder<double>(
               tween: Tween(end: selecting ? 0 : 1),
               duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 450),
@@ -861,20 +900,27 @@ class _CallRow extends StatelessWidget {
               builder: (context, t, child) => t <= 0
                   ? const SizedBox.shrink()
                   : SizedBox(
-                      width: 48 * t.clamp(0.0, 1.0),
+                      width: slot * t.clamp(0.0, 1.0),
                       height: 48,
                       child: OverflowBox(
                         alignment: Alignment.centerLeft,
-                        minWidth: 48,
-                        maxWidth: 48,
+                        minWidth: slot,
+                        maxWidth: slot,
                         child: Transform.scale(scale: t, child: child),
                       ),
                     ),
-              child: IconButton(
-                tooltip: context.l10n.callDetails,
-                onPressed: selecting ? null : onInfo,
-                // Light like the time beside it.
-                icon: Icon(CupertinoIcons.info, size: 24, color: context.palette.textSecondary),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (onCall != null) RowCallButton(onPressed: selecting ? null : onCall),
+                  if (showInfo)
+                    IconButton(
+                      tooltip: context.l10n.callDetails,
+                      onPressed: selecting ? null : onInfo,
+                      // Light like the time beside it.
+                      icon: Icon(CupertinoIcons.info, size: 24, color: context.palette.textSecondary),
+                    ),
+                ],
               ),
             ),
             selectMark,

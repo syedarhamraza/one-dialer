@@ -2076,4 +2076,65 @@ class AppLocalizationsIt extends AppLocalizations {
   String endHeldCall(String name) {
     return 'Termina la chiamata con $name';
   }
+
+  @override
+  String get rowCallButton => 'Pulsante di chiamata sulle righe';
+
+  @override
+  String get rowCallButtonSubtitle =>
+      'Un pulsante di chiamata su ogni riga in Chiamate';
+
+  @override
+  String get swipeToCall => 'Scorri per chiamare o scrivere';
+
+  @override
+  String get swipeToCallSubtitle =>
+      'Scorri una riga a destra per chiamare, a sinistra per scrivere';
+
+  @override
+  String get swipeStyle => 'Stile dello scorrimento';
+
+  @override
+  String get swipeStylePill => 'Pulsante di vetro';
+
+  @override
+  String get swipeStyleFlat => 'Piatto';
+
+  @override
+  String get quickCalling => 'Chiamata veloce';
+
+  @override
+  String get quickCallingSubtitle =>
+      'Tocco, pulsante di chiamata e scorrimento sulle righe';
+
+  @override
+  String get useRecentSim => 'Usa la SIM recente';
+
+  @override
+  String get useRecentSimHint =>
+      'Usa la SIM recente chiama con la SIM usata l\'ultima volta con quel numero (o quella dell\'ultima chiamata) senza chiedere. Scorri per chiamare funziona sempre così.';
+
+  @override
+  String get callButtonStyle => 'Stile del pulsante di chiamata';
+
+  @override
+  String get callButtonTint => 'Tinta tenue';
+
+  @override
+  String get callButtonGlyph => 'Solo icona';
+
+  @override
+  String get callButtonLit => 'Cerchio verde';
+
+  @override
+  String get callsAndContactsRows => 'Righe in Chiamate e Contatti';
+
+  @override
+  String get callsRows => 'Righe in Chiamate';
+
+  @override
+  String get tapAlreadyCalls => 'Toccare una chiamata chiama già';
+
+  @override
+  String get simCards => 'Schede SIM';
 }

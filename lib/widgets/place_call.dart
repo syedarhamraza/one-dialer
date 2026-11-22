@@ -7,13 +7,16 @@ import '../core/contacts/contacts_repository.dart';
 import '../core/prefs/dialer_prefs.dart';
 import '../core/telecom/call_info.dart';
 import '../core/telecom/telecom_bridge.dart';
+import '../features/recents/call_log_repository.dart';
 import '../l10n/l10n.dart';
 import 'one_ui_floating_menu.dart';
 import 'one_ui_toast.dart';
 
 /// Calls [number] the way Samsung does: on [simId] if given, else on the contact's chosen
-/// SIM, else (dual SIM with "Ask every time") after asking with our SIM menu, which pops
-/// from [anchorKey]'s button (or [anchorContext]'s widget) when given. [chooseSim] always asks on dual SIM.
+/// SIM, else on the recent SIM ([CallLogRepository.recentSim]) when [recentSim] (swipe to call) or
+/// Settings › SIM cards says so, else (dual SIM with "Ask every time") after asking with our SIM
+/// menu, which pops from [anchorKey]'s button (or [anchorContext]'s widget) when given. [chooseSim]
+/// always asks on dual SIM.
 /// False when no call was placed: the SIM menu was dismissed, or Android refused (a toast says so).
 Future<bool> placeCall(
   BuildContext context,
@@ -22,6 +25,7 @@ Future<bool> placeCall(
   GlobalKey? anchorKey,
   BuildContext? anchorContext,
   bool chooseSim = false,
+  bool recentSim = false,
 }) async {
   final telecom = TelecomBridge.instance;
   if (chooseSim) {
@@ -36,6 +40,12 @@ Future<bool> placeCall(
   if (simId == null) {
     final contact = ContactsRepository.instance.contactFor(number);
     if (contact != null) simId = await DialerPrefs.instance.contactSim(contact.id);
+  }
+  if (simId == null && (recentSim || DialerPrefs.instance.simChoice.value == 'recent')) {
+    final recent = CallLogRepository.instance.recentSim(number);
+    final sims = await telecom.getSims();
+    // Only a SIM that's still in the phone; with one SIM there's nothing to pick.
+    if (sims.length > 1 && sims.any((s) => s.id == recent)) simId = recent;
   }
   if (simId == null) {
     final sims = await telecom.getSims();

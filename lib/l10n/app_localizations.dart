@@ -3631,6 +3631,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'End call with {name}'**
   String endHeldCall(String name);
+
+  /// No description provided for @rowCallButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Call button on rows'**
+  String get rowCallButton;
+
+  /// No description provided for @rowCallButtonSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A call button on every row in Calls'**
+  String get rowCallButtonSubtitle;
+
+  /// No description provided for @swipeToCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe to call or message'**
+  String get swipeToCall;
+
+  /// No description provided for @swipeToCallSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe a row right to call, left to message'**
+  String get swipeToCallSubtitle;
+
+  /// No description provided for @swipeStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe style'**
+  String get swipeStyle;
+
+  /// No description provided for @swipeStylePill.
+  ///
+  /// In en, this message translates to:
+  /// **'Glass button'**
+  String get swipeStylePill;
+
+  /// No description provided for @swipeStyleFlat.
+  ///
+  /// In en, this message translates to:
+  /// **'Flat'**
+  String get swipeStyleFlat;
+
+  /// No description provided for @quickCalling.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick calling'**
+  String get quickCalling;
+
+  /// No description provided for @quickCallingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap, call button and swipe on rows'**
+  String get quickCallingSubtitle;
+
+  /// No description provided for @useRecentSim.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the recent SIM'**
+  String get useRecentSim;
+
+  /// No description provided for @useRecentSimHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the recent SIM calls on the SIM you last used with that number (or your last call\'s SIM) without asking. Swipe to call always works this way.'**
+  String get useRecentSimHint;
+
+  /// No description provided for @callButtonStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Call button style'**
+  String get callButtonStyle;
+
+  /// No description provided for @callButtonTint.
+  ///
+  /// In en, this message translates to:
+  /// **'Soft tint'**
+  String get callButtonTint;
+
+  /// No description provided for @callButtonGlyph.
+  ///
+  /// In en, this message translates to:
+  /// **'Glyph only'**
+  String get callButtonGlyph;
+
+  /// No description provided for @callButtonLit.
+  ///
+  /// In en, this message translates to:
+  /// **'Green circle'**
+  String get callButtonLit;
+
+  /// No description provided for @callsAndContactsRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Rows in Calls and Contacts'**
+  String get callsAndContactsRows;
+
+  /// No description provided for @callsRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Rows in Calls'**
+  String get callsRows;
+
+  /// No description provided for @tapAlreadyCalls.
+  ///
+  /// In en, this message translates to:
+  /// **'Tapping a call already calls'**
+  String get tapAlreadyCalls;
+
+  /// No description provided for @simCards.
+  ///
+  /// In en, this message translates to:
+  /// **'SIM cards'**
+  String get simCards;
 }
 
 class _AppLocalizationsDelegate

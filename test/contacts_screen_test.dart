@@ -1,4 +1,6 @@
 import 'package:dialer/core/contacts/contacts_repository.dart';
+import 'package:dialer/core/prefs/dialer_prefs.dart';
+import 'package:dialer/widgets/row_call_button.dart';
 import 'package:dialer/features/contacts/contacts_screen.dart';
 import 'package:dialer/features/contacts/contacts_widgets.dart';
 import 'package:dialer/theme/one_ui_theme.dart';
@@ -70,5 +72,12 @@ void main() {
     await tester.tap(find.descendant(of: find.byType(FastScroller), matching: find.text('M')));
     await tester.pump();
     expect(find.text('Mname 0'), findsOneWidget);
+  });
+
+  testWidgets('Contacts rows never show the call button', (tester) async {
+    DialerPrefs.instance.rowCallButton.value = true;
+    addTearDown(() => DialerPrefs.instance.rowCallButton.value = false);
+    await open(tester);
+    expect(find.byType(RowCallButton), findsNothing);
   });
 }

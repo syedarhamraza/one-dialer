@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
 import 'package:flutter/services.dart';
 
 import '../../core/contacts/contacts_repository.dart';
@@ -79,9 +80,7 @@ class ContactRow extends StatelessWidget {
                 // The divider and the name stop short of the letter index on the right.
                 margin: const EdgeInsets.only(right: 36),
                 decoration: BoxDecoration(
-                  border: isLast
-                      ? null
-                      : Border(bottom: BorderSide(color: context.palette.divider, width: 1)),
+                  border: isLast ? null : Border(bottom: BorderSide(color: context.palette.divider, width: 1)),
                 ),
                 child: Row(
                   children: [

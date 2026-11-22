@@ -2052,4 +2052,63 @@ class AppLocalizationsEn extends AppLocalizations {
   String endHeldCall(String name) {
     return 'End call with $name';
   }
+
+  @override
+  String get rowCallButton => 'Call button on rows';
+
+  @override
+  String get rowCallButtonSubtitle => 'A call button on every row in Calls';
+
+  @override
+  String get swipeToCall => 'Swipe to call or message';
+
+  @override
+  String get swipeToCallSubtitle =>
+      'Swipe a row right to call, left to message';
+
+  @override
+  String get swipeStyle => 'Swipe style';
+
+  @override
+  String get swipeStylePill => 'Glass button';
+
+  @override
+  String get swipeStyleFlat => 'Flat';
+
+  @override
+  String get quickCalling => 'Quick calling';
+
+  @override
+  String get quickCallingSubtitle => 'Tap, call button and swipe on rows';
+
+  @override
+  String get useRecentSim => 'Use the recent SIM';
+
+  @override
+  String get useRecentSimHint =>
+      'Use the recent SIM calls on the SIM you last used with that number (or your last call\'s SIM) without asking. Swipe to call always works this way.';
+
+  @override
+  String get callButtonStyle => 'Call button style';
+
+  @override
+  String get callButtonTint => 'Soft tint';
+
+  @override
+  String get callButtonGlyph => 'Glyph only';
+
+  @override
+  String get callButtonLit => 'Green circle';
+
+  @override
+  String get callsAndContactsRows => 'Rows in Calls and Contacts';
+
+  @override
+  String get callsRows => 'Rows in Calls';
+
+  @override
+  String get tapAlreadyCalls => 'Tapping a call already calls';
+
+  @override
+  String get simCards => 'SIM cards';
 }
