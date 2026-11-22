@@ -17,8 +17,8 @@ class RowCallButton extends StatelessWidget {
 
   static const double _circle = 38;
 
-  /// The pill's width holds the handset and the word, at the row's 15 sp.
-  static double widthFor(String style) => style == 'pill' ? 104 : 48;
+  /// The pill's width holds the handset and the word, at 13 sp.
+  static double widthFor(String style) => style == 'pill' ? 88 : 48;
 
   @override
   Widget build(BuildContext context) => ValueListenableBuilder(
@@ -44,20 +44,20 @@ class RowCallButton extends StatelessWidget {
         child: InkWell(
           onTap: onPressed,
           child: SizedBox(
-            height: pill ? 32 : _circle,
+            height: pill ? 30 : _circle,
             width: pill ? null : _circle,
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: pill ? 12 : 0),
+              padding: EdgeInsets.symmetric(horizontal: pill ? 11 : 0),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.call_rounded, size: pill ? 18 : 20, color: fg),
+                  Icon(Icons.call_rounded, size: pill ? 16 : 20, color: fg),
                   if (pill) ...[
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 5),
                     Text(
                       l10n.call,
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: fg),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: fg),
                     ),
                   ],
                 ],
@@ -67,7 +67,13 @@ class RowCallButton extends StatelessWidget {
         ),
       );
       final body = switch (style) {
-        'lit' => LitButton(color: answerGreen, shape: shape, child: ink),
+        // Flat: the keypad's LitButton shadow reads as a second disc under a button this small.
+        'lit' => PressGlow(
+          child: DecoratedBox(
+            decoration: ShapeDecoration(color: answerGreen, shape: shape),
+            child: ink,
+          ),
+        ),
         'glass' => PressGlow(
           child: DecoratedBox(
             decoration: ShapeDecoration(
