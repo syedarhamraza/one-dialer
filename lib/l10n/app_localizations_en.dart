@@ -2045,4 +2045,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String endHeldCall(String name) {
     return 'End call with $name';
   }
+
+  @override
+  String get fullScreenAsk =>
+      'Incoming calls only show in the notification shade. On the next page, turn on full-screen notifications for One Dialer. If it already looks on, turn it off and on again.';
+
+  @override
+  String get notNow => 'Not now';
 }

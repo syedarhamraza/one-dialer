@@ -3619,6 +3619,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'End call with {name}'**
   String endHeldCall(String name);
+
+  /// No description provided for @fullScreenAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming calls only show in the notification shade. On the next page, turn on full-screen notifications for One Dialer. If it already looks on, turn it off and on again.'**
+  String get fullScreenAsk;
+
+  /// No description provided for @notNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get notNow;
 }
 
 class _AppLocalizationsDelegate

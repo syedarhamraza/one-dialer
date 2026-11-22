@@ -2069,4 +2069,11 @@ class AppLocalizationsIt extends AppLocalizations {
   String endHeldCall(String name) {
     return 'Termina la chiamata con $name';
   }
+
+  @override
+  String get fullScreenAsk =>
+      'Le chiamate in arrivo compaiono solo nell\'area notifiche. Nella pagina successiva attiva le notifiche a schermo intero per One Dialer. Se risulta già attiva, disattivala e riattivala.';
+
+  @override
+  String get notNow => 'Non ora';
 }
