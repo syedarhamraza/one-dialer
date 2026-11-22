@@ -2156,10 +2156,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get swipeStylePill => 'Pulsante di vetro';
 
   @override
-  String get swipeStyleWash => 'Colore pieno';
+  String get swipeStyleWash => 'Tasto di vetro';
 
   @override
-  String get swipeStyleBubble => 'Bolla';
+  String get swipeStyleBubble => 'Pulsante verde';
 
   @override
   String get swipeStyleCard => 'Scheda sollevata';
