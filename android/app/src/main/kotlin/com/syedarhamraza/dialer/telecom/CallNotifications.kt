@@ -205,7 +205,7 @@ object CallNotifications {
      * getSceneStatus says false for unapproved apps even though the card shows, so it isn't used.
      */
     private val vivoIsland: Boolean by lazy {
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA &&
+        capsuleAndroid &&
             Build.MANUFACTURER.equals("vivo", ignoreCase = true) &&
             NotificationManager::class.java.declaredMethods.any { it.name == "getSceneStatus" }
     }
@@ -216,15 +216,24 @@ object CallNotifications {
      * Every other phone (and these below 16) gets Android's own call notifications.
      */
     private val oplusCapsule: Boolean by lazy {
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA && (
+        capsuleAndroid && (
             Build.MANUFACTURER.lowercase() in setOf("oppo", "oneplus", "realme") ||
             // ColorOS ported to another maker's phone still reports that maker; its ROM version doesn't.
-            runCatching {
-                Class.forName("android.os.SystemProperties").getMethod("get", String::class.java)
-                    .invoke(null, "ro.build.version.oplusrom") as String
-            }.getOrDefault("").isNotEmpty()
+            systemProperty("ro.build.version.oplusrom").isNotEmpty()
             )
     }
+
+    /**
+     * Android 16+, where the capsules are used. Beta-only (docs/beta-only.md): after
+     * `adb shell setprop debug.onedialer.stock 1` and an app restart, this phone gets the stock
+     * notifications every other phone gets, as below Android 16.
+     */
+    private val capsuleAndroid: Boolean
+        get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA && systemProperty("debug.onedialer.stock") != "1"
+
+    private fun systemProperty(name: String): String = runCatching {
+        Class.forName("android.os.SystemProperties").getMethod("get", String::class.java).invoke(null, name) as String
+    }.getOrDefault("")
 
     fun cancelIncoming(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java)

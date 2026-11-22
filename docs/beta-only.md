@@ -20,6 +20,7 @@ These were added for the betas but could stay in production if still useful.
 For reference: these never reach a release build, so nothing needs doing.
 
 - The fake "Test line" for incoming calls: `android/app/src/debug/` (debug source set only).
+- `debug.onedialer.stock` (`CallNotifications.capsuleAndroid`): a system property that gives a vivo or ColorOS phone the stock call notifications, to check them without another phone.
 - `TELEMETRY_IN_DEBUG` and `LAG_DIAGNOSTICS_TEST_HOOKS`: `--dart-define`s that are never passed to release commands.
 - `integration_test/` entry points: never built by `tool/release.ps1`.
 - `showPerformanceOverlay`: a local edit only, never committed.
