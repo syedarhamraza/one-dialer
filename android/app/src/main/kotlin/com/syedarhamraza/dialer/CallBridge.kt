@@ -553,13 +553,22 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
         val telecom = context.getSystemService(TelecomManager::class.java)
         val default = telecom.getDefaultOutgoingPhoneAccount("tel")
         val sims = telecom.callCapablePhoneAccounts.mapNotNull { handle ->
-            val account = telecom.getPhoneAccount(handle) ?: return@mapNotNull null
+            // Android 17 on some phones (OnePlus) wants READ_PHONE_NUMBERS here, which we don't hold.
+            // shortcut: such a phone lists every call-capable account as a SIM, unlabelled; declare
+            // READ_PHONE_NUMBERS if a VoIP account shows up as a SIM button there.
+            val account = try {
+                telecom.getPhoneAccount(handle) ?: return@mapNotNull null
+            } catch (_: SecurityException) {
+                null
+            }
             // Only real SIM cards; VoIP/SIP calling accounts aren't SIM buttons.
-            if (!account.hasCapabilities(android.telecom.PhoneAccount.CAPABILITY_SIM_SUBSCRIPTION)) return@mapNotNull null
+            if (account != null && !account.hasCapabilities(android.telecom.PhoneAccount.CAPABILITY_SIM_SUBSCRIPTION)) {
+                return@mapNotNull null
+            }
             mapOf(
                 "id" to "${handle.componentName.flattenToString()}|${handle.id}",
-                "label" to account.label?.toString(),
-                "color" to account.highlightColor,
+                "label" to account?.label?.toString(),
+                "color" to account?.highlightColor,
                 "isDefault" to (handle == default),
             )
         }

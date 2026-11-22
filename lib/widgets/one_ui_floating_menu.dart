@@ -384,6 +384,8 @@ class _MenuItemsState extends State<_MenuItems> {
       : (y / _row).floor().clamp(0, widget.items.length - 1);
 
   void _release(PointerUpEvent e, double width) {
+    // The lift can arrive after the menu closed (another finger picked, or Back): nothing to pick.
+    if (!mounted) return;
     final y = _finger.value;
     _finger.value = null;
     if (y == null || _picked) return;
