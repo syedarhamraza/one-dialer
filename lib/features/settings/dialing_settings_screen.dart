@@ -8,6 +8,8 @@ import '../../theme/one_ui_theme.dart';
 import '../../widgets/choice_row.dart';
 import '../../widgets/cos_subpage.dart';
 import '../../widgets/one_ui_group_card.dart';
+import '../keypad/keypad_screen.dart' show keypadTwoCallButtons;
+import '../keypad/speed_dial_screen.dart';
 import 'settings_screen.dart' show openSystemSetting;
 
 /// Settings › Making calls › Quick calling: what a tap on a row in Calls or Contacts does, and the
@@ -177,31 +179,17 @@ class _SimSettingsScreenState extends State<SimSettingsScreen> with WidgetsBindi
     return CosSubpage(
       title: l10n.simCards,
       children: [
-        ListenableBuilder(
-          listenable: Listenable.merge([prefs.simChoice, prefs.keypadSimButtons]),
-          builder: (context, _) {
-            final rule = prefs.simChoice.value;
-            return OneUIGroupCard(
-              items: [
-                choiceRow(
-                  context,
-                  title: l10n.chooseSimForCalls,
-                  anchor: _simKey,
-                  value: prefs.simChoice,
-                  labels: SimSettingsScreen.choiceLabels(l10n, _sims),
-                  onPick: prefs.setSimChoice,
-                ),
-                // Only while calls can ask: Ask every time, or Same as phone with no default SIM.
-                if (rule == 'menu' || (rule == 'phone' && phoneDefault == null))
-                  switchRow(
-                    l10n.keypadSimButtons,
-                    prefs.keypadSimButtons,
-                    prefs.setKeypadSimButtons,
-                    subtitle: l10n.keypadSimButtonsSubtitle,
-                  ),
-              ],
-            );
-          },
+        OneUIGroupCard(
+          items: [
+            choiceRow(
+              context,
+              title: l10n.chooseSimForCalls,
+              anchor: _simKey,
+              value: prefs.simChoice,
+              labels: SimSettingsScreen.choiceLabels(l10n, _sims),
+              onPick: prefs.setSimChoice,
+            ),
+          ],
         ),
         OneUIGroupCard(
           items: [
@@ -215,6 +203,58 @@ class _SimSettingsScreenState extends State<SimSettingsScreen> with WidgetsBindi
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
           child: Text(l10n.simRulesHint, style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
+        ),
+      ],
+    );
+  }
+}
+
+/// Settings › Making calls › Keypad: the keypad's own choices, apart from SIM cards.
+class KeypadSettingsScreen extends StatefulWidget {
+  const KeypadSettingsScreen({super.key});
+
+  @override
+  State<KeypadSettingsScreen> createState() => _KeypadSettingsScreenState();
+}
+
+class _KeypadSettingsScreenState extends State<KeypadSettingsScreen> {
+  List<SimCard> _sims = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    TelecomBridge.instance.getSims().then((s) {
+      if (mounted) setState(() => _sims = s);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final prefs = DialerPrefs.instance;
+    final l10n = context.l10n;
+    final dual = _sims.length > 1;
+    return CosSubpage(
+      title: l10n.keypadSettings,
+      children: [
+        // Shows what the keypad does now, including before it's been chosen ([keypadTwoCallButtons]).
+        ListenableBuilder(
+          listenable: Listenable.merge([prefs.keypadSimButtons, prefs.simChoice]),
+          builder: (context, _) => OneUIGroupCard(
+            items: [
+              switchRow(
+                l10n.keypadSimButtons,
+                ValueNotifier(keypadTwoCallButtons(_sims)),
+                prefs.setKeypadSimButtons,
+                subtitle: dual ? l10n.keypadSimButtonsSubtitle : l10n.keypadSimButtonsOneSim,
+                enabled: dual,
+              ),
+              OneUIGroupItem(
+                title: l10n.speedDial,
+                onTap: () =>
+                    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SpeedDialScreen())),
+              ),
+            ],
+          ),
         ),
       ],
     );

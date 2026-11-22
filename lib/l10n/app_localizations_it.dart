@@ -2197,11 +2197,20 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get keypadSimButtons => 'Due pulsanti Chiama nel tastierino';
+  String get keypadSimButtons => 'Due pulsanti Chiama';
 
   @override
   String get keypadSimButtonsSubtitle =>
-      'Uno per ogni SIM, quando le chiamate chiedono quale SIM';
+      'Uno per ogni SIM, invece di un solo pulsante Chiama';
+
+  @override
+  String get keypadSimButtonsOneSim => 'Solo sui telefoni con due SIM';
+
+  @override
+  String get keypadSettings => 'Tastierino';
+
+  @override
+  String get keypadSettingsSubtitle => 'Due pulsanti Chiama, chiamata rapida';
 
   @override
   String get phoneDefaultSim => 'SIM predefinita del telefono';

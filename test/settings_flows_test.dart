@@ -273,4 +273,17 @@ void main() {
     await tester.pumpAndSettle();
     expect(prefs.rowCallButton.value, isFalse);
   });
+
+  testWidgets('Settings › Keypad turns the two Call buttons off and back on', (tester) async {
+    final prefs = DialerPrefs.instance;
+    addTearDown(() => prefs.keypadSimButtons.value = null);
+    await open(tester, const KeypadSettingsScreen());
+    await tester.tap(find.text('Two Call buttons'));
+    await tester.pumpAndSettle();
+    expect(prefs.keypadSimButtons.value, isFalse);
+    await tester.tap(find.text('Two Call buttons'));
+    await tester.pumpAndSettle();
+    expect(prefs.keypadSimButtons.value, isTrue);
+    expect(find.text('Speed dial'), findsOneWidget);
+  });
 }

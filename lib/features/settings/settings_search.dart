@@ -90,12 +90,7 @@ List<SettingsEntry> settingsIndex(AppLocalizations l10n, {bool recorder = false,
   if (recorder) add(calls, l10n.callRecording, page(const CallRecordingScreen()));
 
   final making = l10n.sectionMakingCalls;
-  add(
-    making,
-    l10n.simCards,
-    page(const SimSettingsScreen()),
-    rows: [l10n.chooseSimForCalls, l10n.keypadSimButtons, l10n.phoneDefaultSim],
-  );
+  add(making, l10n.simCards, page(const SimSettingsScreen()), rows: [l10n.chooseSimForCalls, l10n.phoneDefaultSim]);
   add(
     making,
     l10n.quickCalling,
@@ -103,7 +98,14 @@ List<SettingsEntry> settingsIndex(AppLocalizations l10n, {bool recorder = false,
     subtitle: l10n.quickCallingSubtitle,
     rows: [l10n.tapRecentCall, l10n.rowCallButton, l10n.swipeToCall, l10n.doubleTapCall],
   );
-  add(making, l10n.speedDial, page(const SpeedDialScreen()));
+  add(
+    making,
+    l10n.keypadSettings,
+    page(const KeypadSettingsScreen()),
+    subtitle: l10n.keypadSettingsSubtitle,
+    rows: [l10n.keypadSimButtons],
+  );
+  entries.add(SettingsEntry(l10n.speedDial, '$making › ${l10n.keypadSettings}', page(const SpeedDialScreen())));
 
   final blocking = l10n.sectionBlocking;
   add(blocking, l10n.blockAndFilter, page(const BlockingScreen()), rows: [l10n.blockUnknown, l10n.blockNonContacts]);

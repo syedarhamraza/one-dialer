@@ -45,7 +45,7 @@ void main() {
     ContactsRepository.instance.contacts.value = [];
     DialerPrefs.instance
       ..simChoice.value = 'phone'
-      ..keypadSimButtons.value = true;
+      ..keypadSimButtons.value = null;
   });
 
   testWidgets('keys keep the vivo proportions on a narrower phone', (tester) async {

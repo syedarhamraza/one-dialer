@@ -2169,11 +2169,20 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get keypadSimButtons => 'Two Call buttons on the keypad';
+  String get keypadSimButtons => 'Two Call buttons';
 
   @override
   String get keypadSimButtonsSubtitle =>
-      'One for each SIM, when calls ask which SIM';
+      'One for each SIM, instead of a single Call button';
+
+  @override
+  String get keypadSimButtonsOneSim => 'Only on phones with two SIMs';
+
+  @override
+  String get keypadSettings => 'Keypad';
+
+  @override
+  String get keypadSettingsSubtitle => 'Two Call buttons, speed dial';
 
   @override
   String get phoneDefaultSim => 'Phone\'s default SIM';

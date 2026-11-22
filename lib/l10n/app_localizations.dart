@@ -3845,14 +3845,32 @@ abstract class AppLocalizations {
   /// No description provided for @keypadSimButtons.
   ///
   /// In en, this message translates to:
-  /// **'Two Call buttons on the keypad'**
+  /// **'Two Call buttons'**
   String get keypadSimButtons;
 
   /// No description provided for @keypadSimButtonsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'One for each SIM, when calls ask which SIM'**
+  /// **'One for each SIM, instead of a single Call button'**
   String get keypadSimButtonsSubtitle;
+
+  /// No description provided for @keypadSimButtonsOneSim.
+  ///
+  /// In en, this message translates to:
+  /// **'Only on phones with two SIMs'**
+  String get keypadSimButtonsOneSim;
+
+  /// No description provided for @keypadSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Keypad'**
+  String get keypadSettings;
+
+  /// No description provided for @keypadSettingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Two Call buttons, speed dial'**
+  String get keypadSettingsSubtitle;
 
   /// No description provided for @phoneDefaultSim.
   ///

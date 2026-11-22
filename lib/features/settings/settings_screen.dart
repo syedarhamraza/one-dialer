@@ -16,7 +16,6 @@ import '../../widgets/one_ui_toast.dart';
 import '../../widgets/one_ui_group_card.dart';
 import '../blocking/blocking_repository.dart';
 import '../blocking/blocking_screen.dart';
-import '../keypad/speed_dial_screen.dart';
 import '../updates/presentation/update_controller.dart';
 import 'about_screen.dart';
 import 'backup_screen.dart';
@@ -237,7 +236,11 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               subtitle: l10n.quickCallingSubtitle,
               onTap: () => _push(const DialingSettingsScreen()),
             ),
-            OneUIGroupItem(title: l10n.speedDial, onTap: () => _push(const SpeedDialScreen())),
+            OneUIGroupItem(
+              title: l10n.keypadSettings,
+              subtitle: l10n.keypadSettingsSubtitle,
+              onTap: () => _push(const KeypadSettingsScreen()),
+            ),
           ],
         ),
         OneUIGroupCard(

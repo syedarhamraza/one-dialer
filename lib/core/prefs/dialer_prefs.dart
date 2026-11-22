@@ -168,8 +168,10 @@ class DialerPrefs {
   /// overrides Android's default; a contact's own SIM still comes first ([placeCall]).
   final simChoice = ValueNotifier('phone');
 
-  /// Settings › SIM cards › "Two Call buttons on the keypad": one per SIM, when a call would ask.
-  final keypadSimButtons = ValueNotifier(true);
+  /// Settings › Keypad › "Two Call buttons": one per SIM on a dual SIM phone, whatever SIM cards
+  /// says. Null until chosen: then the keypad shows them only where calls ask ([keypadTwoCallButtons]),
+  /// as before this was its own setting.
+  final keypadSimButtons = ValueNotifier<bool?>(null);
 
   // Settings › Keypad & recents, quick calling (all off by default): a call button on Calls and
   // Contacts rows, swipe right to call / left to message, double-tap to call.

@@ -1,4 +1,6 @@
 import 'package:dialer/core/prefs/dialer_prefs.dart';
+import 'package:dialer/core/telecom/call_info.dart';
+import 'package:dialer/features/keypad/keypad_screen.dart';
 import 'package:dialer/features/recents/call_log.dart';
 import 'package:dialer/features/recents/call_log_repository.dart';
 import 'package:dialer/l10n/app_localizations.dart';
@@ -207,6 +209,29 @@ void main() {
     await prefs.loadChoices();
     expect(prefs.simChoice.value, 'phone');
     expect(prefs.keypadSimButtons.value, isFalse);
+    prefs.keypadSimButtons.value = null;
+  });
+
+  test("the keypad's two Call buttons follow their own switch, whatever SIM cards says", () {
+    final prefs = DialerPrefs.instance;
+    addTearDown(() {
+      prefs.keypadSimButtons.value = null;
+      prefs.simChoice.value = 'phone';
+    });
+    SimCard sim(String id, {bool isDefault = false}) =>
+        SimCard(id: id, label: id, color: const Color(0xFF000000), isDefault: isDefault);
+    final asking = [sim('a'), sim('b')];
+    final withDefault = [sim('a', isDefault: true), sim('b')];
+    // Not chosen yet: only where calls ask, as before.
+    expect(keypadTwoCallButtons(asking), isTrue);
+    expect(keypadTwoCallButtons(withDefault), isFalse);
+    // Chosen: on or off whatever the SIM rule; never with one SIM.
     prefs.keypadSimButtons.value = true;
+    prefs.simChoice.value = 'recent';
+    expect(keypadTwoCallButtons(withDefault), isTrue);
+    expect(keypadTwoCallButtons([sim('a')]), isFalse);
+    prefs.keypadSimButtons.value = false;
+    prefs.simChoice.value = 'menu';
+    expect(keypadTwoCallButtons(asking), isFalse);
   });
 }

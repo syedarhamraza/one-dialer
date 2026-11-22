@@ -70,6 +70,15 @@ int fieldOffset(String text, int raw) {
   return text.length;
 }
 
+/// Whether the keypad shows one Call button per SIM ([sims] from `getSims`): Settings › Keypad ›
+/// Two Call buttons, or, until that's chosen, only where calls would ask which SIM.
+bool keypadTwoCallButtons(List<SimCard> sims) {
+  if (sims.length < 2) return false;
+  final prefs = DialerPrefs.instance;
+  final rule = prefs.simChoice.value;
+  return prefs.keypadSimButtons.value ?? (rule == 'menu' || (rule == 'phone' && !sims.any((s) => s.isDefault)));
+}
+
 class _KeypadScreenState extends State<KeypadScreen> {
   final _telecom = TelecomBridge.instance;
   final _callKey = GlobalKey();
@@ -79,13 +88,8 @@ class _KeypadScreenState extends State<KeypadScreen> {
   // shortcut: read once per launch; re-read on resume if SIM hot-swap matters.
   List<SimCard> _sims = const [];
 
-  /// One Call button per SIM, when Settings › SIM cards says calls ask and the keypad shows them.
-  List<SimCard> get _askSims {
-    final prefs = DialerPrefs.instance;
-    final rule = prefs.simChoice.value;
-    final asks = rule == 'menu' || (rule == 'phone' && !_sims.any((s) => s.isDefault));
-    return prefs.keypadSimButtons.value && asks ? _sims : const [];
-  }
+  /// One Call button per SIM, as Settings › Keypad › Two Call buttons says.
+  List<SimCard> get _askSims => keypadTwoCallButtons(_sims) ? _sims : const [];
 
   /// The number as shown ("0333 333"), editable with a cursor and the system's selection
   /// toolbar; [KeypadScreen.input] keeps the raw digits.
