@@ -155,10 +155,13 @@ class _SwipeActionState extends State<SwipeAction> with TickerProviderStateMixin
 
     Widget button({required bool glass, bool key = false}) {
       final fg = glass ? context.palette.textPrimary : Colors.white;
-      final content = SizedBox(
-        width: key ? 112 : size,
+      final content = Container(
+        width: key ? null : size,
         height: size,
+        // The key fits its word (Message, Messaggio...) with the keypad keys' side room.
+        padding: EdgeInsets.symmetric(horizontal: key ? 22 : 0),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, size: 24, color: fg, semanticLabel: label),
@@ -209,8 +212,14 @@ class _SwipeActionState extends State<SwipeAction> with TickerProviderStateMixin
       // Glass key: the keypad's stadium key with the word, riding at the row's edge.
       // (shrunk to fit while the gap is narrower than the key, so it never runs off the screen)
       'wash' => place(
-        button(glass: !lit, key: true),
-        scale: math.min(grow, math.max(0.3, (gap - 24) / 112)),
+        ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: math.max(1, gap - 24)),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: button(glass: !lit, key: true),
+          ),
+        ),
+        scale: grow,
         docked: true,
       ),
       // Green button: the shell's lit green button the whole way, small until it would act.
