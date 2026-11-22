@@ -22,6 +22,7 @@ class _CallSettings {
       // The page may have closed before the settings arrived.
       if (_disposed) return;
       if (s['incomingStyle'] case final String v) incomingStyle.value = v;
+      if (s['answerOpens'] case final String v) answerOpens.value = v;
       if (s['vibrateAnswerEnd'] case final bool v) vibrate.value = v;
       if (s['speakerDefault'] case final bool v) speaker.value = v;
       if (s['autoAnswer'] case final bool v) autoAnswer.value = v;
@@ -33,6 +34,7 @@ class _CallSettings {
   }
 
   final incomingStyle = ValueNotifier('banner');
+  final answerOpens = ValueNotifier('banner');
   final vibrate = ValueNotifier(true);
   final speaker = ValueNotifier(false);
   final autoAnswer = ValueNotifier(false);
@@ -45,7 +47,7 @@ class _CallSettings {
 
   void dispose() {
     _disposed = true;
-    for (final n in [incomingStyle, vibrate, speaker, autoAnswer, delay, announce, flash, liveUpdates]) {
+    for (final n in [incomingStyle, answerOpens, vibrate, speaker, autoAnswer, delay, announce, flash, liveUpdates]) {
       n.dispose();
     }
   }
@@ -128,6 +130,7 @@ class IncomingCallRemindersScreen extends StatefulWidget {
 class _IncomingCallRemindersScreenState extends State<IncomingCallRemindersScreen> {
   final _settings = _CallSettings();
   final _announceKey = GlobalKey();
+  final _answerKey = GlobalKey();
 
   /// Skins with their own flash notification, where ours would blink on top of it.
   static const _ownFlash = ['vivo', 'iqoo', 'oppo', 'oneplus', 'realme', 'samsung', 'xiaomi', 'honor', 'huawei'];
@@ -206,6 +209,15 @@ class _IncomingCallRemindersScreenState extends State<IncomingCallRemindersScree
         ),
         OneUIGroupCard(
           items: [
+            choiceRow(
+              context,
+              title: context.l10n.answerFromBanner,
+              subtitle: context.l10n.answerFromBannerSubtitle,
+              anchor: _answerKey,
+              value: _settings.answerOpens,
+              labels: {'banner': context.l10n.stayInNotification, 'screen': context.l10n.openCallScreen},
+              onPick: (v) => _settings.set(_settings.answerOpens, 'answerOpens', v),
+            ),
             choiceRow(
               context,
               title: context.l10n.announceCalls,

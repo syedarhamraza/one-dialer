@@ -207,6 +207,9 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 )
             }
             "getRingtone" -> inBackground(result) { ContactExtras.ringtone(context, call.argument<String>("contactId")!!) }
+            "setDefaultNumber" -> inBackground(result) {
+                ContactsSource.setDefaultNumber(context, call.argument<String>("contactId")!!, call.argument<String>("number"))
+            }
             "getRingtoneTitle" -> inBackground(result) {
                 ContactExtras.ringtoneTitle(context, call.argument<String>("contactId")!!)
             }
@@ -493,6 +496,9 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             // Android 14+ lets users revoke full-screen intents; without it calls only show as a notification.
             "fullScreenAllowed" to if (android.os.Build.VERSION.SDK_INT >= 34) notifications.canUseFullScreenIntent() else true,
             "screensCalls" to roles.isRoleHeld(RoleManager.ROLE_CALL_SCREENING),
+            // VIP calls leave Silent, which Android counts as a Do Not Disturb change.
+            "dndAccess" to notifications.isNotificationPolicyAccessGranted,
+            "vipRing" to (com.syedarhamraza.dialer.telecom.CallPrefs.read(context)["vipRing"] == true),
             "version" to info.versionName,
             "build" to info.longVersionCode,
             "sdk" to android.os.Build.VERSION.SDK_INT,
@@ -515,7 +521,12 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             page == "deviceInfo" -> android.content.Intent(android.provider.Settings.ACTION_DEVICE_INFO_SETTINGS)
             // The phone's own flash notification has no public page on vivo or OPPO: open Settings.
             page == "systemSettings" -> android.content.Intent(android.provider.Settings.ACTION_SETTINGS)
+            page == "dndAccess" -> android.content.Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
             page == "defaultApps" -> android.content.Intent(android.provider.Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
+            // Android's SIM page, where its default SIM for calls is set; older phones' network settings.
+            page == "sim" && android.os.Build.VERSION.SDK_INT >= 34 ->
+                android.content.Intent(android.provider.Settings.ACTION_MANAGE_ALL_SIM_PROFILES_SETTINGS)
+            page == "sim" -> android.content.Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS)
             // The SIM provider's call settings (forwarding, waiting, caller ID), from the phone service.
             page == "carrier" -> android.content.Intent(android.telecom.TelecomManager.ACTION_SHOW_CALL_SETTINGS)
             // Android's "Contacts storage": the default account for new contacts (vivo hides it from its menus).

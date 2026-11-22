@@ -1129,7 +1129,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get onlyWithHeadphones => 'Solo con le cuffie';
 
   @override
-  String get incomingCallReminders => 'Avvisi chiamate in arrivo';
+  String get incomingCallReminders => 'Chiamate in arrivo';
 
   @override
   String get incomingFootnote =>
@@ -1176,7 +1176,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get swipeDownToAnswer => 'Scorri verso il basso per rispondere';
 
   @override
-  String get answerButtons => 'Pulsanti di risposta';
+  String get answerButtons => 'Schermata di chiamata';
 
   @override
   String get twoButtons => '2 pulsanti';
@@ -1233,7 +1233,7 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get answerEndCalls => 'Risposta/fine chiamate';
+  String get answerEndCalls => 'Risposta e fine chiamate';
 
   @override
   String get vibrateAnswerEnd =>
@@ -1350,19 +1350,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get writeInKeypad => 'Scrivi nel tastierino';
 
   @override
-  String get twoCallButtons => 'Due pulsanti Chiama';
-
-  @override
   String get chooseSimAndCall => 'Scegli SIM e chiama';
 
   @override
   String get tapRecentCall => 'Tocco su una chiamata recente';
 
   @override
-  String get chooseSimForCalls => 'Scelta SIM per le chiamate';
-
-  @override
-  String get chooseSimSubtitle => 'Doppia SIM senza SIM predefinita';
+  String get chooseSimForCalls => 'Con quale SIM chiamare';
 
   @override
   String get appearance => 'Aspetto';
@@ -1922,7 +1916,33 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get answerButtonsSubtitle =>
-      'Come rispondi e l\'aspetto della schermata di chiamata';
+      'Come rispondi, effetti, foto del chiamante e sfondo';
+
+  @override
+  String get incomingCallsSubtitle =>
+      'Stile di squillo, annuncio del chiamante, flash, Live Update';
+
+  @override
+  String get answerEndCallsSubtitle =>
+      'Risposta automatica, risposta con SMS, vivavoce';
+
+  @override
+  String get sectionCalls => 'Chiamate';
+
+  @override
+  String get sectionMakingCalls => 'Effettuare chiamate';
+
+  @override
+  String get sectionBlocking => 'Blocco e ID chiamante';
+
+  @override
+  String get sectionDisplay => 'Schermo';
+
+  @override
+  String get sectionSystem => 'Contatti e sistema';
+
+  @override
+  String get searchSettings => 'Cerca nelle impostazioni';
 
   @override
   String get carrierSettingsSubtitle =>
@@ -2078,6 +2098,41 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get vipCalls => 'Chiamate VIP';
+
+  @override
+  String get vipCallsSubtitle => 'Squillano anche in Silenzioso o Vibrazione';
+
+  @override
+  String get vipRing => 'Squillo in Silenzioso per i VIP';
+
+  @override
+  String get vipRingSubtitle =>
+      'Le chiamate dei VIP squillano anche con il telefono in Silenzioso o Vibrazione, poi torna com\'era';
+
+  @override
+  String get vipFavourites => 'Includi preferiti';
+
+  @override
+  String get vipFavouritesSubtitle =>
+      'I contatti con la stella contano come VIP';
+
+  @override
+  String get vipContacts => 'Contatti VIP';
+
+  @override
+  String get vipNeedsAccess =>
+      'Le chiamate VIP non possono squillare in Silenzioso';
+
+  @override
+  String get vipNeedsAccessSubtitle =>
+      'Consenti il filtro chiamate e l\'accesso a Non disturbare';
+
+  @override
+  String get vipDndHint =>
+      'Con Non disturbare attivo decide Android chi squilla: consenti i contatti speciali nelle sue impostazioni di Non disturbare.';
+
+  @override
   String get rowCallButton => 'Pulsante di chiamata sulle righe';
 
   @override
@@ -2090,6 +2145,22 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get swipeToCallSubtitle =>
       'Scorri una riga a destra per chiamare, a sinistra per scrivere';
+
+  @override
+  String get answerFromBanner => 'Risposta dal banner';
+
+  @override
+  String get answerFromBannerSubtitle =>
+      'Cosa fa Rispondi sul banner della chiamata in arrivo con il telefono sbloccato';
+
+  @override
+  String get stayInNotification => 'Resta nella notifica';
+
+  @override
+  String get openCallScreen => 'Apri schermata chiamata';
+
+  @override
+  String get clearDefault => 'Rimuovi predefinito';
 
   @override
   String get swipeStyle => 'Stile dello scorrimento';
@@ -2111,8 +2182,35 @@ class AppLocalizationsIt extends AppLocalizations {
   String get useRecentSim => 'Usa la SIM recente';
 
   @override
-  String get useRecentSimHint =>
-      'Usa la SIM recente chiama con la SIM usata l\'ultima volta con quel numero (o quella dell\'ultima chiamata) senza chiedere. Scorri per chiamare funziona sempre così.';
+  String get simSameAsPhone => 'Come il telefono';
+
+  @override
+  String alwaysSim(Object sim) {
+    return 'Sempre $sim';
+  }
+
+  @override
+  String get keypadSimButtons => 'Due pulsanti Chiama';
+
+  @override
+  String get keypadSimButtonsSubtitle =>
+      'Uno per ogni SIM, invece di un solo pulsante Chiama';
+
+  @override
+  String get keypadSimButtonsOneSim => 'Solo sui telefoni con due SIM';
+
+  @override
+  String get keypadSettings => 'Tastierino';
+
+  @override
+  String get keypadSettingsSubtitle => 'Due pulsanti Chiama, chiamata rapida';
+
+  @override
+  String get phoneDefaultSim => 'SIM predefinita del telefono';
+
+  @override
+  String get simRulesHint =>
+      'La SIM scelta per un contatto, nella sua pagina, ha sempre la precedenza. Scorri per chiamare non chiede mai: quando le chiamate chiederebbero, usa la SIM usata l\'ultima volta con quel numero.';
 
   @override
   String get callButtonStyle => 'Stile del pulsante di chiamata';

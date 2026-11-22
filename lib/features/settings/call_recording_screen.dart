@@ -211,8 +211,8 @@ class _CallRecordingScreenState extends State<CallRecordingScreen> with WidgetsB
   }
 }
 
-/// The contacts auto-record picks out: "Record these contacts" or "Never record" (contact ids
-/// in `CallPrefs`, read by `RecordRules.kt`).
+/// A list of picked contacts (contact ids in `CallPrefs`): auto-record's "Record these contacts"
+/// and "Never record" (read by `RecordRules.kt`), and the VIP list (`VipRing.kt`).
 class RecordContactsScreen extends StatefulWidget {
   const RecordContactsScreen({super.key, required this.prefKey, required this.title});
 

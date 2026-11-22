@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 
 import '../../core/prefs/dialer_prefs.dart';
+import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../l10n/l10n.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/choice_row.dart';
 import '../../widgets/cos_subpage.dart';
 import '../../widgets/one_ui_group_card.dart';
+import '../keypad/keypad_screen.dart' show keypadTwoCallButtons;
+import '../keypad/speed_dial_screen.dart';
+import 'settings_screen.dart' show openSystemSetting;
 
 /// Settings › Making calls › Quick calling: what a tap on a row in Calls or Contacts does, and the
 /// quick-call options (call button, swipe).
@@ -110,28 +114,56 @@ class _DialingSettingsScreenState extends State<DialingSettingsScreen> {
   }
 }
 
-/// Settings › Making calls › SIM cards: how a dual SIM phone with no default SIM picks one.
+/// Settings › Making calls › SIM cards: which SIM calls use on a dual SIM phone, over Android's
+/// own default, and whether the keypad offers one Call button per SIM when calls ask.
 class SimSettingsScreen extends StatefulWidget {
   const SimSettingsScreen({super.key});
 
-  /// Settings' summary of [DialerPrefs.simChoice].
-  static Map<String, String> choiceLabels(AppLocalizations l10n) => {
-    'buttons': l10n.twoCallButtons,
+  /// The choices for [DialerPrefs.simChoice]; Settings shows the picked one as the row's value.
+  static Map<String, String> choiceLabels(AppLocalizations l10n, List<SimCard> sims) => {
+    'phone': l10n.simSameAsPhone,
     'menu': l10n.askEveryTime,
     'recent': l10n.useRecentSim,
+    for (final sim in sims) 'sim:${sim.id}': l10n.alwaysSim(sim.label),
   };
 
   @override
   State<SimSettingsScreen> createState() => _SimSettingsScreenState();
 }
 
-class _SimSettingsScreenState extends State<SimSettingsScreen> {
+class _SimSettingsScreenState extends State<SimSettingsScreen> with WidgetsBindingObserver {
   final _simKey = GlobalKey();
+  List<SimCard> _sims = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _load();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // Back from Android's SIM settings: its default may have changed.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _load();
+  }
+
+  Future<void> _load() async {
+    final sims = await TelecomBridge.instance.getSims();
+    if (mounted) setState(() => _sims = sims);
+  }
 
   @override
   Widget build(BuildContext context) {
     final prefs = DialerPrefs.instance;
     final l10n = context.l10n;
+    final phoneDefault = _sims.where((s) => s.isDefault).firstOrNull;
     return CosSubpage(
       title: l10n.simCards,
       children: [
@@ -140,17 +172,77 @@ class _SimSettingsScreenState extends State<SimSettingsScreen> {
             choiceRow(
               context,
               title: l10n.chooseSimForCalls,
-              subtitle: l10n.chooseSimSubtitle,
               anchor: _simKey,
               value: prefs.simChoice,
-              labels: SimSettingsScreen.choiceLabels(l10n),
+              labels: SimSettingsScreen.choiceLabels(l10n, _sims),
               onPick: prefs.setSimChoice,
+            ),
+          ],
+        ),
+        OneUIGroupCard(
+          items: [
+            OneUIGroupItem(
+              title: l10n.phoneDefaultSim,
+              value: phoneDefault?.label ?? l10n.askEveryTime,
+              onTap: () => openSystemSetting(context, 'sim'),
             ),
           ],
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
-          child: Text(l10n.useRecentSimHint, style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
+          child: Text(l10n.simRulesHint, style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
+        ),
+      ],
+    );
+  }
+}
+
+/// Settings › Making calls › Keypad: the keypad's own choices, apart from SIM cards.
+class KeypadSettingsScreen extends StatefulWidget {
+  const KeypadSettingsScreen({super.key});
+
+  @override
+  State<KeypadSettingsScreen> createState() => _KeypadSettingsScreenState();
+}
+
+class _KeypadSettingsScreenState extends State<KeypadSettingsScreen> {
+  List<SimCard> _sims = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    TelecomBridge.instance.getSims().then((s) {
+      if (mounted) setState(() => _sims = s);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final prefs = DialerPrefs.instance;
+    final l10n = context.l10n;
+    final dual = _sims.length > 1;
+    return CosSubpage(
+      title: l10n.keypadSettings,
+      children: [
+        // Shows what the keypad does now, including before it's been chosen ([keypadTwoCallButtons]).
+        ListenableBuilder(
+          listenable: Listenable.merge([prefs.keypadSimButtons, prefs.simChoice]),
+          builder: (context, _) => OneUIGroupCard(
+            items: [
+              switchRow(
+                l10n.keypadSimButtons,
+                ValueNotifier(keypadTwoCallButtons(_sims)),
+                prefs.setKeypadSimButtons,
+                subtitle: dual ? l10n.keypadSimButtonsSubtitle : l10n.keypadSimButtonsOneSim,
+                enabled: dual,
+              ),
+              OneUIGroupItem(
+                title: l10n.speedDial,
+                onTap: () =>
+                    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SpeedDialScreen())),
+              ),
+            ],
+          ),
         ),
       ],
     );

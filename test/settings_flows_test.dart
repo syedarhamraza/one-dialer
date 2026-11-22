@@ -7,6 +7,7 @@ import 'package:dialer/features/settings/dialing_settings_screen.dart';
 import 'package:dialer/features/settings/display_settings_screen.dart';
 import 'package:dialer/features/settings/glass_settings_screen.dart';
 import 'package:dialer/features/settings/quick_replies_screen.dart';
+import 'package:dialer/features/settings/settings_search.dart';
 import 'package:dialer/theme/one_ui_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -209,6 +210,42 @@ void main() {
     expect(find.text('Choose SIM and call'), findsOneWidget);
   });
 
+  testWidgets('settings search finds a row on a page and opens it', (tester) async {
+    await open(tester, const SettingsSearchScreen());
+    await tester.enterText(find.byType(TextField), 'flash');
+    await tester.pumpAndSettle();
+    expect(find.text('Flash notification'), findsOneWidget);
+    expect(find.text('Calls › Incoming calls'), findsOneWidget);
+    await tester.tap(find.text('Flash notification'));
+    await tester.pumpAndSettle();
+    expect(find.text('Incoming calls'), findsWidgets);
+    expect(find.byType(TextField), findsNothing);
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'zzzz');
+    await tester.pumpAndSettle();
+    expect(find.text('No results found'), findsOneWidget);
+  });
+
+  testWidgets('every settings search entry opens', (tester) async {
+    await open(tester, const SettingsSearchScreen(recorder: true, appCallLog: true));
+    final context = tester.element(find.byType(SettingsSearchScreen));
+    final entries = settingsIndex(AppLocalizations.of(context), recorder: true, appCallLog: true);
+    expect(entries.length, greaterThan(40));
+    for (final e in entries) {
+      e.open(tester.element(find.byType(SettingsSearchScreen)));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      expect(tester.takeException(), isNull, reason: e.title);
+      final nav = tester.state<NavigatorState>(find.byType(Navigator).first);
+      while (nav.canPop()) {
+        nav.pop();
+        await tester.pump(const Duration(seconds: 1));
+      }
+    }
+  });
+
   testWidgets('with taps set to Call, the call button is greyed with the reason and keeps its value', (tester) async {
     final prefs = DialerPrefs.instance;
     prefs.rowCallButton.value = true;
@@ -234,5 +271,18 @@ void main() {
     await tester.tap(find.text('Call button on rows'));
     await tester.pumpAndSettle();
     expect(prefs.rowCallButton.value, isFalse);
+  });
+
+  testWidgets('Settings › Keypad turns the two Call buttons off and back on', (tester) async {
+    final prefs = DialerPrefs.instance;
+    addTearDown(() => prefs.keypadSimButtons.value = null);
+    await open(tester, const KeypadSettingsScreen());
+    await tester.tap(find.text('Two Call buttons'));
+    await tester.pumpAndSettle();
+    expect(prefs.keypadSimButtons.value, isFalse);
+    await tester.tap(find.text('Two Call buttons'));
+    await tester.pumpAndSettle();
+    expect(prefs.keypadSimButtons.value, isTrue);
+    expect(find.text('Speed dial'), findsOneWidget);
   });
 }

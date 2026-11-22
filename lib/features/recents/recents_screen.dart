@@ -276,6 +276,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
         listenable: Listenable.merge([
           _repo.calls,
           _repo.hasAccess,
+          _repo.loaded,
           ContactsRepository.instance.contacts,
           BlockingRepository.instance.numbers,
           DialerPrefs.instance.hideContactNumbers, // rows read it directly
@@ -297,20 +298,28 @@ class _RecentsScreenState extends State<RecentsScreen> {
   ];
 
   // groupByDay is only redone when the calls or the filter change, not on every selection tap.
-  (List<CallLogEntry>, CallFilter, bool, List<String>, bool)? _groupedFor;
+  (List<CallLogEntry>, CallFilter, bool, List<String>, bool, Object)? _groupedFor;
   List<(DateTime, List<CallGroup>)> _days = const [];
 
   List<(DateTime, List<CallGroup>)> get _groupedDays {
-    final key = (_repo.calls.value, _filter, _hideBlocked, BlockingRepository.instance.numbers.value, _appsOnly);
+    final key = (
+      _repo.calls.value,
+      _filter,
+      _hideBlocked,
+      BlockingRepository.instance.numbers.value,
+      _appsOnly,
+      ContactsRepository.instance.contacts.value, // rows group by contact
+    );
     final old = _groupedFor;
     if (old == null ||
         !identical(old.$1, key.$1) ||
         old.$2 != key.$2 ||
         old.$3 != key.$3 ||
         !identical(old.$4, key.$4) ||
-        old.$5 != key.$5) {
+        old.$5 != key.$5 ||
+        !identical(old.$6, key.$6)) {
       _groupedFor = key;
-      _days = groupByDay(_visibleCalls);
+      _days = groupByDay(_visibleCalls, keyOf: callerKey);
     }
     return _days;
   }
@@ -442,6 +451,8 @@ class _RecentsScreenState extends State<RecentsScreen> {
                       },
                     ),
                   )
+                else if (groups.isEmpty && !_repo.loaded.value)
+                  const SliverToBoxAdapter() // first read still on its way
                 else if (groups.isEmpty)
                   _Empty(
                     text: _appsOnly

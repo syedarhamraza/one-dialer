@@ -1949,7 +1949,7 @@ abstract class AppLocalizations {
   /// No description provided for @incomingCallReminders.
   ///
   /// In en, this message translates to:
-  /// **'Incoming call reminders'**
+  /// **'Incoming calls'**
   String get incomingCallReminders;
 
   /// No description provided for @incomingFootnote.
@@ -2033,7 +2033,7 @@ abstract class AppLocalizations {
   /// No description provided for @answerButtons.
   ///
   /// In en, this message translates to:
-  /// **'Answer buttons'**
+  /// **'Call screen'**
   String get answerButtons;
 
   /// No description provided for @twoButtons.
@@ -2123,7 +2123,7 @@ abstract class AppLocalizations {
   /// No description provided for @answerEndCalls.
   ///
   /// In en, this message translates to:
-  /// **'Answer/End calls'**
+  /// **'Answering and ending calls'**
   String get answerEndCalls;
 
   /// No description provided for @vibrateAnswerEnd.
@@ -2336,12 +2336,6 @@ abstract class AppLocalizations {
   /// **'Write in keypad'**
   String get writeInKeypad;
 
-  /// No description provided for @twoCallButtons.
-  ///
-  /// In en, this message translates to:
-  /// **'Two Call buttons'**
-  String get twoCallButtons;
-
   /// No description provided for @chooseSimAndCall.
   ///
   /// In en, this message translates to:
@@ -2357,14 +2351,8 @@ abstract class AppLocalizations {
   /// No description provided for @chooseSimForCalls.
   ///
   /// In en, this message translates to:
-  /// **'Choose SIM for calls'**
+  /// **'Which SIM to call with'**
   String get chooseSimForCalls;
-
-  /// No description provided for @chooseSimSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Dual SIM with no default SIM'**
-  String get chooseSimSubtitle;
 
   /// No description provided for @appearance.
   ///
@@ -3365,8 +3353,56 @@ abstract class AppLocalizations {
   /// No description provided for @answerButtonsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'How you answer, and how the call screen looks'**
+  /// **'How you answer, effects, caller photo and background'**
   String get answerButtonsSubtitle;
+
+  /// No description provided for @incomingCallsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ringing style, announce caller, flash, Live Update'**
+  String get incomingCallsSubtitle;
+
+  /// No description provided for @answerEndCallsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-answer, reply with SMS, speaker'**
+  String get answerEndCallsSubtitle;
+
+  /// No description provided for @sectionCalls.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls'**
+  String get sectionCalls;
+
+  /// No description provided for @sectionMakingCalls.
+  ///
+  /// In en, this message translates to:
+  /// **'Making calls'**
+  String get sectionMakingCalls;
+
+  /// No description provided for @sectionBlocking.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocking and caller ID'**
+  String get sectionBlocking;
+
+  /// No description provided for @sectionDisplay.
+  ///
+  /// In en, this message translates to:
+  /// **'Display'**
+  String get sectionDisplay;
+
+  /// No description provided for @sectionSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Contacts and system'**
+  String get sectionSystem;
+
+  /// No description provided for @searchSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Search settings'**
+  String get searchSettings;
 
   /// No description provided for @carrierSettingsSubtitle.
   ///
@@ -3632,6 +3668,66 @@ abstract class AppLocalizations {
   /// **'End call with {name}'**
   String endHeldCall(String name);
 
+  /// No description provided for @vipCalls.
+  ///
+  /// In en, this message translates to:
+  /// **'VIP calls'**
+  String get vipCalls;
+
+  /// No description provided for @vipCallsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ring even on Silent or Vibrate'**
+  String get vipCallsSubtitle;
+
+  /// No description provided for @vipRing.
+  ///
+  /// In en, this message translates to:
+  /// **'Ring on Silent for VIPs'**
+  String get vipRing;
+
+  /// No description provided for @vipRingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls from your VIPs ring even when the phone is on Silent or Vibrate, then it goes back'**
+  String get vipRingSubtitle;
+
+  /// No description provided for @vipFavourites.
+  ///
+  /// In en, this message translates to:
+  /// **'Include favourites'**
+  String get vipFavourites;
+
+  /// No description provided for @vipFavouritesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your starred contacts count as VIPs'**
+  String get vipFavouritesSubtitle;
+
+  /// No description provided for @vipContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'VIP contacts'**
+  String get vipContacts;
+
+  /// No description provided for @vipNeedsAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'VIP calls can\'t ring on Silent'**
+  String get vipNeedsAccess;
+
+  /// No description provided for @vipNeedsAccessSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow call screening and Do Not Disturb access'**
+  String get vipNeedsAccessSubtitle;
+
+  /// No description provided for @vipDndHint.
+  ///
+  /// In en, this message translates to:
+  /// **'With Do Not Disturb on, Android decides who rings: allow starred contacts in its Do Not Disturb settings.'**
+  String get vipDndHint;
+
   /// No description provided for @rowCallButton.
   ///
   /// In en, this message translates to:
@@ -3655,6 +3751,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Swipe a row right to call, left to message'**
   String get swipeToCallSubtitle;
+
+  /// No description provided for @answerFromBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Answering from the banner'**
+  String get answerFromBanner;
+
+  /// No description provided for @answerFromBannerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What Answer on the incoming call banner does while the phone is unlocked'**
+  String get answerFromBannerSubtitle;
+
+  /// No description provided for @stayInNotification.
+  ///
+  /// In en, this message translates to:
+  /// **'Stay in the notification'**
+  String get stayInNotification;
+
+  /// No description provided for @openCallScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open call screen'**
+  String get openCallScreen;
+
+  /// No description provided for @clearDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear default'**
+  String get clearDefault;
 
   /// No description provided for @swipeStyle.
   ///
@@ -3692,11 +3818,59 @@ abstract class AppLocalizations {
   /// **'Use the recent SIM'**
   String get useRecentSim;
 
-  /// No description provided for @useRecentSimHint.
+  /// No description provided for @simSameAsPhone.
   ///
   /// In en, this message translates to:
-  /// **'Use the recent SIM calls on the SIM you last used with that number (or your last call\'s SIM) without asking. Swipe to call always works this way.'**
-  String get useRecentSimHint;
+  /// **'Same as phone'**
+  String get simSameAsPhone;
+
+  /// No description provided for @alwaysSim.
+  ///
+  /// In en, this message translates to:
+  /// **'Always {sim}'**
+  String alwaysSim(Object sim);
+
+  /// No description provided for @keypadSimButtons.
+  ///
+  /// In en, this message translates to:
+  /// **'Two Call buttons'**
+  String get keypadSimButtons;
+
+  /// No description provided for @keypadSimButtonsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'One for each SIM, instead of a single Call button'**
+  String get keypadSimButtonsSubtitle;
+
+  /// No description provided for @keypadSimButtonsOneSim.
+  ///
+  /// In en, this message translates to:
+  /// **'Only on phones with two SIMs'**
+  String get keypadSimButtonsOneSim;
+
+  /// No description provided for @keypadSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Keypad'**
+  String get keypadSettings;
+
+  /// No description provided for @keypadSettingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Two Call buttons, speed dial'**
+  String get keypadSettingsSubtitle;
+
+  /// No description provided for @phoneDefaultSim.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone\'s default SIM'**
+  String get phoneDefaultSim;
+
+  /// No description provided for @simRulesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A contact\'s own SIM, set on their page, always comes first. Swipe to call never asks: when calls would ask, it uses the SIM you last used with that number.'**
+  String get simRulesHint;
 
   /// No description provided for @callButtonStyle.
   ///

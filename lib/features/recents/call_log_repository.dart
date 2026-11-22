@@ -20,6 +20,9 @@ class CallLogRepository {
   /// False when call-log access is missing (not the default dialer).
   final ValueNotifier<bool> hasAccess = ValueNotifier(true);
 
+  /// False until the first read answers, so Recents doesn't flash "No recent calls" on a cold start.
+  final ValueNotifier<bool> loaded = ValueNotifier(false);
+
   Future<void> start() async {
     // Once loaded with access, the call-log observer keeps it current.
     if (TelecomBridge.instance.onCallLogChanged != null && hasAccess.value) return;
@@ -46,11 +49,13 @@ class CallLogRepository {
       // Unchanged rows (a change elsewhere in the log) rebuild nothing.
       if (!sameCalls(loaded, calls.value)) calls.value = loaded;
       hasAccess.value = true;
+      this.loaded.value = true;
     } on PlatformException catch (e) {
       if (revision != _revision) return;
       if (e.code != 'NO_PERMISSION') rethrow;
       calls.value = const [];
       hasAccess.value = false;
+      loaded.value = true;
     } finally {
       LagDiagnostics.instance.action(DiagnosticAction.callLogLoad, elapsed: diagnosticTimer.elapsed);
     }
@@ -73,7 +78,10 @@ class CallLogRepository {
           x.isNew != y.isNew ||
           x.app != y.app ||
           x.appPackage != y.appPackage ||
-          x.isVideo != y.isVideo) {
+          x.isVideo != y.isVideo ||
+          x.isHd != y.isHd ||
+          x.isVolte != y.isVolte ||
+          x.isVonr != y.isVonr) {
         return false;
       }
     }
@@ -151,4 +159,10 @@ String callerName(AppLocalizations l10n, CallLogEntry call) {
   final cached = call.name?.trim();
   return ContactsRepository.instance.nameFor(call.number) ??
       (cached != null && cached.isNotEmpty ? cached : call.number);
+}
+
+/// Who a call is with, for grouping: the saved contact (all their numbers), else the number.
+String callerKey(CallLogEntry call) {
+  final id = ContactsRepository.instance.contactFor(call.number)?.id;
+  return id != null ? 'contact:$id' : numberKey(call.number);
 }

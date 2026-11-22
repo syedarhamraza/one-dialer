@@ -31,14 +31,14 @@ class SwipeAction extends StatefulWidget {
 class _SwipeActionState extends State<SwipeAction> with TickerProviderStateMixin {
   static const _threshold = 0.35;
   // Past the threshold the row follows the finger this much (a rubber band), so it can't fly off.
-  static const _resistance = 0.5;
-  // The app's ColorOS spring (the Calls header morph's).
-  static final _spring = SpringDescription.withDampingRatio(mass: 1, stiffness: 240, ratio: .78);
+  static const _resistance = 0.8;
+  // Stiffer than the Calls header morph's spring, with a hint of bounce: the row snaps home quickly.
+  static final _spring = SpringDescription.withDampingRatio(mass: 1, stiffness: 420, ratio: .82);
 
   // Unbounded: the controller's value is the row's offset in pixels.
   late final _dx = AnimationController.unbounded(vsync: this)..addListener(() => setState(() {}));
   // The glass pill's swell when it arms, and its held flash when the swipe acts.
-  late final _pop = AnimationController(vsync: this, duration: const Duration(milliseconds: 220))
+  late final _pop = AnimationController(vsync: this, duration: const Duration(milliseconds: 160))
     ..addListener(() => setState(() {}));
   double _width = 1, _raw = 0;
   bool _armed = false, _confirmed = false;
