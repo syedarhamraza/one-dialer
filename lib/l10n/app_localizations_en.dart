@@ -2078,7 +2078,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get swipeStyle => 'Swipe style';
 
   @override
-  String get swipeStylePill => 'Glass pill';
+  String get swipeStylePill => 'Glass button';
 
   @override
   String get swipeStyleWash => 'Colour wash';

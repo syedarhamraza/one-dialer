@@ -2102,7 +2102,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get swipeStyle => 'Stile dello scorrimento';
 
   @override
-  String get swipeStylePill => 'Pillola di vetro';
+  String get swipeStylePill => 'Pulsante di vetro';
 
   @override
   String get swipeStyleWash => 'Colore pieno';

@@ -1022,7 +1022,7 @@
   "doubleTapCall": "Double-tap to call",
   "doubleTapCallSubtitle": "Double-tap a row in Calls or Contacts to call; a single tap waits a moment",
   "swipeStyle": "Swipe style",
-  "swipeStylePill": "Glass pill",
+  "swipeStylePill": "Glass button",
   "swipeStyleWash": "Colour wash",
   "swipeStyleBubble": "Bubble",
   "swipeStyleCard": "Card lift",
