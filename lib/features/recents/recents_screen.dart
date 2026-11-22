@@ -538,9 +538,11 @@ class _RecentsScreenState extends State<RecentsScreen> {
               ),
               onTap: () => tap(row),
               // Null keeps single taps instant; double-tap makes every tap wait a moment.
-              onDoubleTap: prefs.doubleTapCall.value && callable && _selected == null ? () => callNow(row) : null,
+              onDoubleTap: prefs.doubleTapCall.value && !prefs.tapCalls && callable && _selected == null
+                  ? () => callNow(row)
+                  : null,
               onInfo: details,
-              onCall: prefs.rowCallButton.value && callable ? () => callNow(row) : null,
+              onCall: prefs.rowCallButton.value && !prefs.tapCalls && callable ? () => callNow(row) : null,
               // With the call button, info shows only while a tap does something other than open details.
               showInfo: !(prefs.rowCallButton.value && callable) || prefs.recentTap.value != 'details',
               onLongPress: () {

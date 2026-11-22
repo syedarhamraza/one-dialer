@@ -1061,5 +1061,8 @@
   "callButtonLit": "Green circle",
   "callButtonPill": "Pill with label",
   "callsAndContactsRows": "Rows in Calls and Contacts",
+  "callsRows": "Rows in Calls",
+  "tapAlreadyCalls": "Tapping a call already calls",
+  "doubleTapContactsOnly": "Works in Contacts; tapping a call already calls",
   "simCards": "SIM cards"
 }

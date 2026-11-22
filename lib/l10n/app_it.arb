@@ -635,5 +635,8 @@
   "callButtonLit": "Cerchio verde",
   "callButtonPill": "Pillola con testo",
   "callsAndContactsRows": "Righe in Chiamate e Contatti",
+  "callsRows": "Righe in Chiamate",
+  "tapAlreadyCalls": "Toccare una chiamata chiama già",
+  "doubleTapContactsOnly": "Funziona in Contatti; toccare una chiamata chiama già",
   "simCards": "Schede SIM"
 }

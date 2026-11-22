@@ -3908,6 +3908,24 @@ abstract class AppLocalizations {
   /// **'Rows in Calls and Contacts'**
   String get callsAndContactsRows;
 
+  /// No description provided for @callsRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Rows in Calls'**
+  String get callsRows;
+
+  /// No description provided for @tapAlreadyCalls.
+  ///
+  /// In en, this message translates to:
+  /// **'Tapping a call already calls'**
+  String get tapAlreadyCalls;
+
+  /// No description provided for @doubleTapContactsOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Works in Contacts; tapping a call already calls'**
+  String get doubleTapContactsOnly;
+
   /// No description provided for @simCards.
   ///
   /// In en, this message translates to:

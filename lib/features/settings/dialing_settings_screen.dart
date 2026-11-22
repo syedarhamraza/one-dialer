@@ -42,63 +42,79 @@ class _DialingSettingsScreenState extends State<DialingSettingsScreen> {
     return CosSubpage(
       title: l10n.quickCalling,
       children: [
-        // What a row in Calls or Contacts does; the call options are off by default.
+        // What a row in Calls or Contacts does; the call options are off by default. An option a
+        // tap that calls would only repeat is greyed, saying why ([DialerPrefs.tapCalls]).
         // Beta: each style picker shows while its option is on (docs/beta-only.md).
         ListenableBuilder(
-          listenable: Listenable.merge([prefs.rowCallButton, prefs.swipeToCall]),
-          builder: (context, _) => OneUIGroupCard(
-            headerTitle: l10n.callsAndContactsRows,
-            items: [
-              choiceRow(
-                context,
-                title: l10n.tapRecentCall,
-                subtitle: l10n.tapRecentCallSubtitle,
-                anchor: _tapKey,
-                value: prefs.recentTap,
-                labels: {
-                  'details': l10n.openDetails,
-                  'dial': l10n.writeInKeypad,
-                  'call': l10n.call,
-                  if (_dualSim) 'sim': l10n.chooseSimAndCall,
-                },
-                onPick: prefs.setRecentTap,
+          listenable: Listenable.merge([prefs.recentTap, prefs.rowCallButton, prefs.swipeToCall]),
+          builder: (context, _) => Column(
+            children: [
+              OneUIGroupCard(
+                headerTitle: l10n.callsRows,
+                items: [
+                  choiceRow(
+                    context,
+                    title: l10n.tapRecentCall,
+                    subtitle: l10n.tapRecentCallSubtitle,
+                    anchor: _tapKey,
+                    value: prefs.recentTap,
+                    labels: {
+                      'details': l10n.openDetails,
+                      'dial': l10n.writeInKeypad,
+                      'call': l10n.call,
+                      if (_dualSim) 'sim': l10n.chooseSimAndCall,
+                    },
+                    onPick: prefs.setRecentTap,
+                  ),
+                  switchRow(
+                    l10n.rowCallButton,
+                    prefs.rowCallButton,
+                    prefs.setRowCallButton,
+                    subtitle: prefs.tapCalls ? l10n.tapAlreadyCalls : l10n.rowCallButtonSubtitle,
+                    enabled: !prefs.tapCalls,
+                  ),
+                  if (prefs.rowCallButton.value && !prefs.tapCalls)
+                    choiceRow(
+                      context,
+                      title: l10n.callButtonStyle,
+                      anchor: _buttonKey,
+                      value: prefs.callButtonStyle,
+                      labels: {
+                        'tint': l10n.callButtonTint,
+                        'glyph': l10n.callButtonGlyph,
+                        'glass': l10n.callButtonGlass,
+                        'lit': l10n.callButtonLit,
+                        'pill': l10n.callButtonPill,
+                      },
+                      onPick: prefs.setCallButtonStyle,
+                    ),
+                ],
               ),
-              switchRow(
-                l10n.rowCallButton,
-                prefs.rowCallButton,
-                prefs.setRowCallButton,
-                subtitle: l10n.rowCallButtonSubtitle,
-              ),
-              if (prefs.rowCallButton.value)
-                choiceRow(
-                  context,
-                  title: l10n.callButtonStyle,
-                  anchor: _buttonKey,
-                  value: prefs.callButtonStyle,
-                  labels: {
-                    'tint': l10n.callButtonTint,
-                    'glyph': l10n.callButtonGlyph,
-                    'glass': l10n.callButtonGlass,
-                    'lit': l10n.callButtonLit,
-                    'pill': l10n.callButtonPill,
-                  },
-                  onPick: prefs.setCallButtonStyle,
-                ),
-              switchRow(l10n.swipeToCall, prefs.swipeToCall, prefs.setSwipeToCall, subtitle: l10n.swipeToCallSubtitle),
-              if (prefs.swipeToCall.value)
-                choiceRow(
-                  context,
-                  title: l10n.swipeStyle,
-                  anchor: _swipeKey,
-                  value: prefs.swipeStyle,
-                  labels: {'pill': l10n.swipeStylePill, 'flat': l10n.swipeStyleFlat},
-                  onPick: prefs.setSwipeStyle,
-                ),
-              switchRow(
-                l10n.doubleTapCall,
-                prefs.doubleTapCall,
-                prefs.setDoubleTapCall,
-                subtitle: l10n.doubleTapCallSubtitle,
+              OneUIGroupCard(
+                headerTitle: l10n.callsAndContactsRows,
+                items: [
+                  switchRow(
+                    l10n.swipeToCall,
+                    prefs.swipeToCall,
+                    prefs.setSwipeToCall,
+                    subtitle: l10n.swipeToCallSubtitle,
+                  ),
+                  if (prefs.swipeToCall.value)
+                    choiceRow(
+                      context,
+                      title: l10n.swipeStyle,
+                      anchor: _swipeKey,
+                      value: prefs.swipeStyle,
+                      labels: {'pill': l10n.swipeStylePill, 'flat': l10n.swipeStyleFlat},
+                      onPick: prefs.setSwipeStyle,
+                    ),
+                  switchRow(
+                    l10n.doubleTapCall,
+                    prefs.doubleTapCall,
+                    prefs.setDoubleTapCall,
+                    subtitle: prefs.tapCalls ? l10n.doubleTapContactsOnly : l10n.doubleTapCallSubtitle,
+                  ),
+                ],
               ),
             ],
           ),

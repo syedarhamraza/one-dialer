@@ -245,4 +245,32 @@ void main() {
       }
     }
   });
+
+  testWidgets('with taps set to Call, the call button is greyed with the reason and keeps its value', (tester) async {
+    final prefs = DialerPrefs.instance;
+    prefs.rowCallButton.value = true;
+    addTearDown(() {
+      prefs.rowCallButton.value = false;
+      prefs.recentTap.value = 'details';
+    });
+    await open(tester, const DialingSettingsScreen());
+    expect(find.text('Call button style'), findsOneWidget);
+
+    prefs.recentTap.value = 'call';
+    await tester.pumpAndSettle();
+    expect(find.text('Tapping a call already calls'), findsOneWidget);
+    expect(find.text('Works in Contacts; tapping a call already calls'), findsOneWidget);
+    expect(find.text('Call button style'), findsNothing);
+    await tester.tap(find.text('Call button on rows'));
+    await tester.pumpAndSettle();
+    expect(prefs.rowCallButton.value, isTrue);
+
+    prefs.recentTap.value = 'details';
+    await tester.pumpAndSettle();
+    expect(find.text('Tapping a call already calls'), findsNothing);
+    expect(find.text('Call button style'), findsOneWidget);
+    await tester.tap(find.text('Call button on rows'));
+    await tester.pumpAndSettle();
+    expect(prefs.rowCallButton.value, isFalse);
+  });
 }
