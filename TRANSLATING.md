@@ -2,7 +2,7 @@
 
 You don't need to know how to code. You fill in two text files, and the maintainer puts them in the app.
 
-It takes a few evenings: the app has about 540 short pieces of text. You can send a half-finished file too. Anything you leave in English shows in English until someone finishes it.
+It takes a few evenings: the app has about 640 short pieces of text. You can send a half-finished file too. Anything you leave in English shows in English until someone finishes it.
 
 ## Step 1: Download the two files
 
@@ -108,6 +108,12 @@ If you like, you'll be credited by the name you gave.
 
 **Keeping it up to date:** new versions of the app sometimes add text. Download `app_xx.arb` again and compare it with yours, or ask in your language's issue which lines are new.
 
+## Already translated
+
+English, Italian, Russian, Spanish, Turkish and German are in the app. The Italian was checked by hand; the other four were machine-assisted and wait for a native speaker ([docs/l10n-review.md](docs/l10n-review.md) lists what to look at first). Fixing a language that's already there is as welcome as adding a new one: open an issue, or send the corrected file.
+
+The website has its own text too: one file per language in [`site/i18n/`](site/i18n/), with `en.ts` as the English to translate from.
+
 ## Language codes
 
 | Language | Code | | Language | Code |
@@ -117,9 +123,7 @@ If you like, you'll be credited by the name you gave.
 | Chinese (Simplified) | `zh` | | Korean | `ko` |
 | Dutch | `nl` | | Persian | `fa` |
 | French | `fr` | | Polish | `pl` |
-| German | `de` | | Portuguese | `pt` |
-| Hindi | `hi` | | Russian | `ru` |
-| Spanish | `es` | | Turkish | `tr` |
+| Hindi | `hi` | | Portuguese | `pt` |
 | Urdu | `ur` | | Vietnamese | `vi` |
 
 Not listed? Use the two-letter [ISO 639-1 code](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) for your language.
