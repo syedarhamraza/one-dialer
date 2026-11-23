@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -7,6 +8,13 @@ import 'package:dialer/core/contacts/contacts_repository.dart';
 import 'package:dialer/features/in_call/in_call_screen.dart';
 import 'package:dialer/features/recents/call_log.dart';
 import 'package:dialer/features/recents/call_log_repository.dart';
+import 'package:dialer/features/blocking/blocking_repository.dart';
+import 'package:dialer/features/blocking/blocking_screen.dart';
+import 'package:dialer/features/contacts/contact_details_screen.dart';
+import 'package:dialer/features/settings/glass_settings_screen.dart';
+import 'package:dialer/core/telecom/call_info.dart';
+import 'package:dialer/core/telecom/telecom_bridge.dart';
+import 'package:dialer/widgets/place_call.dart';
 import 'package:dialer/theme/one_ui_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -20,9 +28,13 @@ import 'package:shared_preferences_platform_interface/shared_preferences_async_p
 /// graphic to `build/play/` (not committed; the store images live in `docs/play-store/`), rendered from the real screens with made-up contacts and calls.
 /// Re-run after UI changes:
 /// `flutter test test/play_store_screenshots_test.dart --dart-define=PREVIEW_FONT=<Flutter SDK>/bin/cache/artifacts/material_fonts/roboto-regular.ttf`
+/// (add `--dart-define=LOCALE=it` for Italian), then `python tool/store_panorama.py` lays them out as the store frames.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const fontPath = String.fromEnvironment('PREVIEW_FONT');
+  // `--dart-define=LOCALE=it` exports the Italian set to build/play/it/.
+  const lang = String.fromEnvironment('LOCALE', defaultValue: 'en');
+  final l10n = lookupAppLocalizations(const Locale(lang));
   const events = 'com.syedarhamraza.dialer/call_state';
   const phone = Size(420, 840); // DesignWidth, at Play's tallest allowed ratio (2:1)
   final now = DateTime.now();
@@ -47,16 +59,26 @@ void main() {
 
   var consumeDial = '';
   var consumeRecents = false;
+  var sims = <Map<String, Object>>[];
 
   setUp(() {
     SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.empty();
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     messenger.setMockMethodCallHandler(const MethodChannel(events), (_) async => null);
     messenger.setMockMethodCallHandler(const MethodChannel('flutter_contacts'), (_) async => null);
+    // Call backgrounds read their folder: an empty temp one keeps the default backdrop.
+    messenger.setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      (_) async => Directory.systemTemp.createTempSync('play').path,
+    );
     messenger.setMockMethodCallHandler(const MethodChannel('com.syedarhamraza.dialer/telecom'), (call) async {
       switch (call.method) {
         case 'getSims':
-          return [];
+          return sims;
+        case 'getBlocking':
+          return {'blockHidden': true, 'blockNonContacts': false};
+        case 'hasScreeningRole':
+          return true;
         case 'consumeDialNumber':
           return consumeDial.isEmpty ? null : consumeDial;
         case 'consumeOpenRecents':
@@ -102,9 +124,19 @@ void main() {
   });
 
   Future<void> loadFonts(WidgetTester tester) => tester.runAsync(() async {
-    await (FontLoader('Roboto')..addFont(File(fontPath).readAsBytes().then(ByteData.sublistView))).load();
+    // The app asks for the phone's own font (OneUITheme.fontFamily); the test engine has none, so Roboto stands in.
+    for (final family in ['Roboto', 'sys-sans-en', 'sans-serif']) {
+      await (FontLoader(family)..addFont(File(fontPath).readAsBytes().then(ByteData.sublistView))).load();
+    }
     await (FontLoader('MaterialIcons')..addFont(
           File('${File(fontPath).parent.path}/materialicons-regular.otf').readAsBytes().then(ByteData.sublistView),
+        ))
+        .load();
+    // CupertinoIcons (the Calls rows' info button), from the package's own font.
+    final config = File('.dart_tool/package_config.json').readAsStringSync();
+    final root = RegExp(r'"rootUri":\s*"([^"]*cupertino_icons[^"]*)"').firstMatch(config)!.group(1)!;
+    await (FontLoader('packages/cupertino_icons/CupertinoIcons')..addFont(
+          File('${Uri.parse(root).toFilePath()}/assets/CupertinoIcons.ttf').readAsBytes().then(ByteData.sublistView),
         ))
         .load();
   });
@@ -126,7 +158,7 @@ void main() {
     await tester.runAsync(() async {
       final image = await (boundary.currentContext!.findRenderObject() as RenderRepaintBoundary).toImage();
       final rgba = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
-      final file = File('build/play/$name.png');
+      final file = File('build/play/${lang == 'en' ? '' : '$lang/'}$name.png');
       await file.parent.create(recursive: true);
       await file.writeAsBytes(_rgbPng(rgba!.buffer.asUint8List(), image.width, image.height));
       image.dispose();
@@ -147,6 +179,7 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         debugShowCheckedModeBanner: false,
+        locale: const Locale(lang),
         theme: OneUITheme.darkTheme,
         scrollBehavior: OneUITheme.scrollBehavior,
         builder: (context, child) => RepaintBoundary(
@@ -223,7 +256,7 @@ void main() {
 
     boundary = await frame(tester, const MainShell());
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Contacts').last);
+    await tester.tap(find.text(l10n.navContacts).last);
     await tester.pumpAndSettle();
     await save(tester, boundary, '3-contacts');
 
@@ -247,6 +280,44 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
     }
     await save(tester, boundary, 'feature-graphic');
+
+    // Phones for the store panorama (tool/store_panorama.py).
+    final calls = CallLogRepository.instance.calls.value;
+    CallLogRepository.instance.calls.value = [
+      for (final (i, n) in ['', '555-0187', '', '555-0142'].indexed)
+        CallLogEntry.fromMap({
+          'id': 100 + i,
+          'number': n,
+          'type': CallType.blocked.name,
+          'date': now.subtract(Duration(hours: 2 + i * 7)).millisecondsSinceEpoch,
+          'duration': 0,
+          'isNew': false,
+        }),
+      ...calls,
+    ];
+    boundary = await frame(tester, const BlockingScreen());
+    await tester.pumpAndSettle();
+    BlockingRepository.instance.numbers.value = ['555-0187', '555-0142'];
+    await tester.pumpAndSettle();
+    await save(tester, boundary, '6-blocking');
+    CallLogRepository.instance.calls.value = calls;
+
+    sims = [
+      {'id': 'sim1', 'label': 'Work', 'color': 0xFF5390F5},
+      {'id': 'sim2', 'label': 'Personal', 'color': 0xFF48B5A0},
+    ];
+    TelecomBridge.forgetSims();
+    boundary = await frame(tester, const ContactDetailsScreen(contactId: '5'));
+    await tester.pumpAndSettle();
+    final call = tester.element(find.text(l10n.call).first);
+    unawaited(pickSim(call, [for (final s in sims) SimCard.fromMap(s)], anchorContext: call));
+    await tester.pumpAndSettle();
+    await save(tester, boundary, '7-dual-sim');
+    sims = [];
+
+    boundary = await frame(tester, const GlassSettingsScreen());
+    await tester.pumpAndSettle();
+    await save(tester, boundary, '8-glass');
     await tester.pumpWidget(const SizedBox());
   });
 }
