@@ -1422,6 +1422,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get glassSettings => 'Vetro e sfocatura';
 
   @override
+  String get splashIcon => 'Icona app all\'avvio';
+
+  @override
+  String get splashIconSubtitle =>
+      'Disattiva per un avvio senza icona se la schermata Home usa un\'icona diversa';
+
+  @override
   String get liquidGlassOn => 'Vetro liquido su';
 
   @override

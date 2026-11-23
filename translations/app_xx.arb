@@ -397,6 +397,8 @@
   "navGlassStandard": "Light",
   "navGlassAuto": "Automatic",
   "glassSettings": "Glass & blur",
+  "splashIcon": "App icon on launch screen",
+  "splashIconSubtitle": "Turn off for a blank launch screen when your home screen uses a different icon",
   "liquidGlassOn": "Liquid glass on",
   "liquidScopeAll": "Everything",
   "liquidScopeControls": "Nav bar and buttons",

@@ -608,7 +608,6 @@ IconData audioRouteIcon(AudioRoute route) => switch (route) {
 Future<void> chooseCallAudioRoute(BuildContext context, AudioInfo audio, GlobalKey anchor) => OneUIFloatingMenu.show(
   context: context,
   anchorKey: anchor,
-  light: true,
   scale: 1.15,
   width: 250,
   items: [
@@ -839,7 +838,7 @@ class _DialPadDots extends CustomPainter {
 }
 
 /// End's red, shared by the End pill, Decline and the Answer flight's landing.
-const endRed = Color(0xFFD2463A);
+const endRed = Color(0xFFD2352B); // ColorOS 17's own End red.
 
 /// ColorOS 17's solid call buttons (sampled off a screenshot of its End pill): opaque [color] with
 /// no glass over it, shaped by light along its edge so it reads as a raised cushion. A thick soft
@@ -850,7 +849,7 @@ Decoration raisedBody(Color color, OutlinedBorder shape, {bool flat = false}) =>
 
 /// The connected screen's End pill: [raisedBody] in ColorOS 17's own End red.
 Decoration endPillBody(OutlinedBorder shape, {bool flat = false}) =>
-    flat ? ShapeDecoration(color: endRed, shape: shape) : _RaisedBody(const Color(0xFFC34237), shape);
+    flat ? ShapeDecoration(color: endRed, shape: shape) : _RaisedBody(endRed, shape);
 
 class _RaisedBody extends Decoration {
   const _RaisedBody(this.color, this.shape);

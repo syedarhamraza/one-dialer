@@ -6,7 +6,7 @@ import 'package:dialer/l10n/app_localizations.dart';
 
 void main() {
   // A button mid-screen, where a long menu fits neither above nor below.
-  Future<GlobalKey> open(WidgetTester tester, double buttonTop) async {
+  Future<GlobalKey> open(WidgetTester tester, double buttonTop, {double? left = 20, double? right}) async {
     tester.view.physicalSize = const Size(420, 933);
     tester.view.devicePixelRatio = 1;
     tester.view.padding = const FakeViewPadding(top: 40, bottom: 30);
@@ -22,7 +22,8 @@ void main() {
             children: [
               Positioned(
                 top: buttonTop,
-                left: 20,
+                left: left,
+                right: right,
                 child: Builder(
                   builder: (context) => TextButton(
                     key: key,
@@ -57,5 +58,19 @@ void main() {
     final key = await open(tester, 120);
     final button = tester.getRect(find.byKey(key));
     expect(tester.getRect(find.text('Item 0')).top, greaterThan(button.bottom));
+  });
+
+  // ColorOS lines the menu up with the button's outer edge (the Speaker and More menus).
+  Rect menuRect(WidgetTester tester) =>
+      tester.getRect(find.ancestor(of: find.text('Item 0'), matching: find.byType(ClipRSuperellipse)).first);
+
+  testWidgets('a menu from a left button lines up with its left edge', (tester) async {
+    final key = await open(tester, 120, left: 40);
+    expect(menuRect(tester).left, closeTo(tester.getRect(find.byKey(key)).left, .5));
+  });
+
+  testWidgets('a menu from a right button lines up with its right edge', (tester) async {
+    final key = await open(tester, 120, left: null, right: 40);
+    expect(menuRect(tester).right, closeTo(tester.getRect(find.byKey(key)).right, .5));
   });
 }

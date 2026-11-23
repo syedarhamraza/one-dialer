@@ -57,7 +57,6 @@ class OneUIFloatingMenu {
     double fallbackRight = 16.0,
     double width = 200.0,
     bool centered = false,
-    bool light = false,
     // Scales the rows, text and icons: the call screen's menus sit beside 76 dp buttons.
     double scale = 1,
   }) async {
@@ -90,14 +89,16 @@ class OneUIFloatingMenu {
     final upwards = anchor.center.dy > screen.height / 2
         ? roomAbove >= height || roomAbove >= roomBelow
         : roomBelow < height && roomAbove > roomBelow;
-    // Lined up with the button's right edge, or ([centered]) right over its middle.
-    final right = (centered ? anchor.center.dx + menuWidth / 2 : anchor.right).clamp(
-      _edge + menuWidth,
-      screen.width - _edge,
-    );
+    // Lined up with the button's outer edge, as ColorOS does (left edge for a button on the
+    // left half, right edge otherwise), or ([centered]) right over its middle.
+    final left = centered
+        ? anchor.center.dx - menuWidth / 2
+        : anchor.center.dx < screen.width / 2
+        ? anchor.left
+        : anchor.right - menuWidth;
     final top = upwards ? anchor.top - _gap - height : anchor.bottom + _gap;
     final menu = Rect.fromLTWH(
-      right - menuWidth,
+      left.clamp(_edge, screen.width - _edge - menuWidth),
       top.clamp(minTop, math.max(minTop, maxBottom - height)),
       menuWidth,
       height,
@@ -123,7 +124,6 @@ class OneUIFloatingMenu {
             menu: menu,
             upwards: upwards,
             animation: animation,
-            light: light,
             size: scale,
           ),
           transitionsBuilder: (context, animation, secondary, child) => child,
@@ -146,7 +146,6 @@ class _PopoverMenu extends StatelessWidget {
     required this.menu,
     required this.upwards,
     required this.animation,
-    this.light = false,
     this.size = 1,
   });
 
@@ -156,9 +155,6 @@ class _PopoverMenu extends StatelessWidget {
   final Rect menu;
   final bool upwards;
   final Animation<double> animation;
-
-  /// The call screen's menus: a flat, solid white card with dark rows and no blur.
-  final bool light;
 
   /// ~94% at 150 ms, peak ~1.5% over at ~290 ms, settled by ~330 ms.
   static final _spring = GlassSpringCurve(
@@ -183,7 +179,7 @@ class _PopoverMenu extends StatelessWidget {
     final pivot = Alignment((pivotX - menu.left) / menu.width * 2 - 1, upwards ? 1 : -1);
     // Built once, on its own layer; only the glass around it animates.
     final items = RepaintBoundary(
-      child: _MenuItems(items: this.items, light: light, size: size),
+      child: _MenuItems(items: this.items, size: size),
     );
     return AnimatedBuilder(
       animation: animation,
@@ -240,25 +236,9 @@ class _PopoverMenu extends StatelessWidget {
                       rect: glass,
                       child: ClipRSuperellipse(
                         borderRadius: BorderRadius.all(Radius.circular(OneUIFloatingMenu._radius * size * scale)),
-                        child: light
-                            ? Opacity(
-                                opacity: fade,
-                                child: OverflowBox(
-                                  alignment: Alignment.topLeft,
-                                  minWidth: menu.width,
-                                  maxWidth: menu.width,
-                                  minHeight: menu.height,
-                                  maxHeight: menu.height,
-                                  child: Transform.scale(
-                                    scale: scale,
-                                    alignment: Alignment.topLeft,
-                                    child: ColoredBox(color: Colors.white, child: items),
-                                  ),
-                                ),
-                              )
-                            // Glass style › Liquid glass: the package's glass, laid out at the grown
-                            // size like the blur below, with a thin base so rows read over list text.
-                            : fx.liquidPopups
+                        // Glass style › Liquid glass: the package's glass, laid out at the grown
+                        // size like the blur below, with a thin base so rows read over list text.
+                        child: fx.liquidPopups
                             ? liquidBody(
                                 context,
                                 radius: OneUIFloatingMenu._radius * size * scale,
@@ -354,10 +334,9 @@ class _PopoverMenu extends StatelessWidget {
 /// which springs row to row as it slides and stays on the nearest row off the card;
 /// lifting picks the row under the finger, and lifting off the card picks nothing.
 class _MenuItems extends StatefulWidget {
-  const _MenuItems({required this.items, this.light = false, this.size = 1});
+  const _MenuItems({required this.items, this.size = 1});
 
   final List<OneUIFloatingMenuItem> items;
-  final bool light;
   final double size;
 
   @override
@@ -444,9 +423,7 @@ class _MenuItemsState extends State<_MenuItems> {
                           duration: const Duration(milliseconds: 120),
                           child: DecoratedBox(
                             decoration: ShapeDecoration(
-                              color: widget.light || context.palette.isLight
-                                  ? const Color(0x14000000)
-                                  : const Color(0x3DFFFFFF),
+                              color: context.palette.isLight ? const Color(0x14000000) : const Color(0x3DFFFFFF),
                               shape: RoundedSuperellipseBorder(
                                 borderRadius: BorderRadius.all(Radius.circular(_row / 2)),
                               ),
@@ -469,7 +446,7 @@ class _MenuItemsState extends State<_MenuItems> {
                                 item.onTap();
                               }
                             : null,
-                        child: _MenuRow(item: item, light: widget.light, size: widget.size),
+                        child: _MenuRow(item: item, size: widget.size),
                       ),
                   ],
                 ),
@@ -483,15 +460,14 @@ class _MenuItemsState extends State<_MenuItems> {
 }
 
 class _MenuRow extends StatelessWidget {
-  const _MenuRow({required this.item, this.light = false, this.size = 1});
+  const _MenuRow({required this.item, this.size = 1});
 
   final OneUIFloatingMenuItem item;
-  final bool light;
   final double size;
 
   @override
   Widget build(BuildContext context) {
-    final base = light || context.palette.isLight ? const Color(0xFF111418) : OneUITheme.textPrimary;
+    final base = context.palette.isLight ? const Color(0xFF111418) : OneUITheme.textPrimary;
     final color = item.enabled ? base : base.withValues(alpha: .38);
     return SizedBox(
       height: OneUIFloatingMenu._rowHeight * size,

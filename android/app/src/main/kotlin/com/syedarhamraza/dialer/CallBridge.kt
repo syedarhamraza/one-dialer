@@ -74,6 +74,9 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
     /** Set by [MainActivity]: picks a .vcf file; the result is its text or null. */
     var vcfPicker: ((MethodChannel.Result) -> Unit)? = null
 
+    /** Set by [MainActivity] on Android 13+: shows or hides the icon on later launch splashes. */
+    var splashIcon: ((Boolean) -> Unit)? = null
+
     /** Set by [MainActivity]: exports (true) or imports (false) the settings file; see [SettingsBackup]. */
     var settingsBackup: ((Boolean, MethodChannel.Result) -> Unit)? = null
 
@@ -247,6 +250,10 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             }
             "getCallHealth" -> inBackground(result) { callHealth() }
             "effectsDefault" -> inBackground(result) { effectsDefault() }
+            "setSplashIcon" -> {
+                call.argument<Boolean>("show")?.let { splashIcon?.invoke(it) }
+                result.success(splashIcon != null)
+            }
             // The font picked in ColorOS / realme UI's Display settings ("OPPO Sans", "OPPO Serif"),
             // null elsewhere or if Android won't let us read it.
             "systemFontName" -> result.success(

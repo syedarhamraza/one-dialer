@@ -41,10 +41,29 @@ class _CallIconPainter extends CustomPainter {
     void bar(double x, double y1, double y2) => canvas.drawLine(Offset(x, y1), Offset(x, y2), line);
     switch (shape) {
       case CallIconShape.mute:
-        canvas.drawRRect(RRect.fromLTRBR(9, 3, 15, 14.5, const Radius.circular(3)), line);
-        canvas.drawArc(Rect.fromCircle(center: const Offset(12, 11), radius: 6), 0, math.pi, false, line);
-        bar(12, 17, 20.5);
-        canvas.drawLine(const Offset(4.5, 4.5), const Offset(19.5, 19.5), line);
+        // A solid capsule on a cradle, stem and foot, slashed. Its own layer, so the gap around
+        // the slash is cut through to the button's glass rather than painted black.
+        canvas.saveLayer(Offset.zero & const Size(24, 24), Paint());
+        canvas.drawRRect(RRect.fromLTRBR(9.25, 3, 14.75, 13.5, const Radius.circular(2.75)), fill);
+        canvas.drawArc(
+          Rect.fromCenter(center: const Offset(12, 11.5), width: 10.5, height: 8),
+          0,
+          math.pi,
+          false,
+          line,
+        );
+        bar(12, 15.5, 18.75);
+        canvas.drawLine(const Offset(9.5, 19.25), const Offset(14.5, 19.25), line);
+        const a = Offset(4.75, 4.75), b = Offset(19.25, 19.25);
+        canvas.drawLine(
+          a,
+          b,
+          Paint()
+            ..blendMode = BlendMode.clear
+            ..strokeWidth = 3.6,
+        );
+        canvas.drawLine(a, b, line);
+        canvas.restore();
       case CallIconShape.record:
         const heights = [3.0, 8, 12, 17, 11, 7, 3];
         for (var i = 0; i < heights.length; i++) {

@@ -37,6 +37,12 @@ class DialerPrefs {
     changes.value++;
   }
 
+  /// Display & effects › "App icon on launch screen" (on by default). Android itself keeps the
+  /// splash choice; this only remembers the switch.
+  Future<bool> splashIcon() async => await _prefs.getBool('splash_icon') ?? true;
+
+  Future<void> setSplashIcon(bool value) => _prefs.setBool('splash_icon', value);
+
   /// Recents › "Hide blocked calls" (on by default; they're always in Block numbers).
   Future<bool> hideBlockedCalls() async => await _prefs.getBool('hide_blocked_calls') ?? true;
 
