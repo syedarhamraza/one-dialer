@@ -13,8 +13,9 @@ export const metadata: Metadata = {
 
 const PROS = [
   "Both sides of the call at full volume, on Android 12 and later: you and the other person, on the earpiece, speaker, Bluetooth or headphones. No root, no computer, no separate Shizuku app.",
+  "Developer options turn themselves off once it's running, so banking and payment apps open.",
   "After a reboot it starts again by itself once you're on Wi-Fi.",
-  "No microphone permission and no accessibility service. One Recorder records the call itself, only during a call you record.",
+  "No microphone permission. One Recorder records the call itself, only during a call you record. Its one accessibility service is optional: it only reads the pairing code, then turns itself off.",
   "Recordings stay on your phone. Nothing is uploaded, there's no account and no ads.",
   "Record when you choose, or automatically: every call, unknown numbers, or only the contacts you pick.",
   "Your recordings live in One Dialer, with contact names, search, stars, sharing and auto-delete.",
@@ -22,8 +23,8 @@ const PROS = [
 ];
 
 const CONS = [
-  "Both sides needs Developer options and Wireless debugging turned on once, and Wi-Fi whenever it starts. If it can't start again after a reboot (no Wi-Fi, or Developer options off), you tap Start in One Recorder.",
-  "Some banking and payment apps refuse to open while Developer options is on.",
+  "Both sides needs Developer options and Wireless debugging turned on once, and Wi-Fi whenever the helper starts. If it can't start again after a reboot (no Wi-Fi), you tap Start in One Recorder.",
+  "Some phones stop the helper when USB or Wireless debugging goes off. There, One Recorder leaves that one on, and a banking app that checks for it may still refuse to open.",
   "On some phones, calls over Wi-Fi calling record only one side. That's the phone's audio driver, not One Recorder.",
   "It needs Android 12 or later. Android 10 and 11 can't start the helper over Wireless debugging, and there's no other way to record there.",
   "It doesn't update itself. Google Play doesn't know about it, so you come back here for new versions.",
@@ -35,7 +36,7 @@ const SECTIONS = [
   { id: "before", title: "Before you start" },
   { id: "install", title: "Install the app" },
   { id: "both", title: "Record both sides" },
-  { id: "setup", title: "Notifications and battery" },
+  { id: "setup", title: "Battery" },
   { id: "record", title: "Record a call" },
   { id: "recordings", title: "Your recordings" },
   { id: "how", title: "How it works" },
@@ -140,6 +141,9 @@ export default function OneRecorder() {
             </p>
             <ol>
               <li>
+                <strong>Notifications.</strong> Allow them first: the pairing code goes in One Recorder&apos;s notification, and you see when a call is being recorded.
+              </li>
+              <li>
                 <strong>Developer options.</strong> If they&apos;re off, open <strong>Settings › About phone</strong> (on some phones, About phone › Software information) and tap{" "}
                 <strong>Build number</strong> seven times.
               </li>
@@ -152,24 +156,28 @@ export default function OneRecorder() {
                 pair once.
               </li>
               <li>
+                Or skip typing: tap <strong>Pair automatically</strong> first and turn on One Recorder in <strong>Accessibility</strong>. It reads the code from the pairing dialog itself, then turns
+                itself off. If Android 13 or later greys it out, open One Recorder&apos;s <strong>App info › ⋮ › Allow restricted settings</strong> first.
+              </li>
+              <li>
                 <strong>Helper: Ready.</strong> If it says Not running, make sure you&apos;re on Wi-Fi and tap <strong>Start</strong>. <strong>Start after a reboot</strong> turns on by itself the
                 first time the helper starts.
               </li>
             </ol>
             <p>
-              You can turn Wireless debugging off again: One Recorder switches it on for a moment when it needs to start the helper, and back off afterwards. If your phone stops the helper when
-              Wireless debugging goes off, One Recorder leaves it on.
+              <strong>Turn off Developer options</strong> is on by default. Once the helper runs, One Recorder turns off Developer options, USB debugging and Wireless debugging, one at a time, so
+              banking apps open, and turns them on for a moment whenever it needs to start the helper again. If your phone stops the helper when one of them goes off, One Recorder turns that one
+              back on and leaves it on, and the row says which.
+            </p>
+            <p>
+              <strong>Start without Wi-Fi</strong> (experimental, Android 12 to 16, off by default) tries to start the helper after a reboot away from Wi-Fi, for up to two minutes, through a
+              hotspot only your phone uses. It needs Location on, and asks for Nearby devices (Android 13 and later) or Location (Android 12) when you turn it on. It may not work on every phone.
             </p>
 
-            <h2 id="setup">Notifications and battery</h2>
-            <ol>
-              <li>
-                <strong>Notifications.</strong> Allow them, so you can see when a call is being recorded.
-              </li>
-              <li>
-                <strong>Battery: Unrestricted.</strong> Optional, but recommended. It stops the phone from closing the recorder while it waits for a call.
-              </li>
-            </ol>
+            <h2 id="setup">Battery</h2>
+            <p>
+              <strong>Battery: Unrestricted.</strong> Optional, but recommended. It stops the phone from closing the recorder while it waits for a call.
+            </p>
 
             <h2 id="record">Record a call</h2>
             <ul>
@@ -213,7 +221,7 @@ export default function OneRecorder() {
               microphone for the whole call.
             </p>
             <p>
-              A method that silently records nothing is worse than none, so it&apos;s gone, along with the microphone permission, the accessibility service, and the Volume boost and Microphone source
+              A method that silently records nothing is worse than none, so it&apos;s gone, along with the microphone permission, that accessibility service, and the Volume boost and Microphone source
               settings that only it used. Recording both sides through Wireless debugging is the only way now, and it records both voices at full volume.
             </p>
 
@@ -224,7 +232,9 @@ export default function OneRecorder() {
             </p>
             <p>
               Its pairing with Wireless debugging is a key kept in One Recorder&apos;s private storage on your phone; it can&apos;t be backed up or read by other apps. The helper only records calls
-              for One Recorder and can&apos;t run anything else. One Recorder has no microphone permission and no accessibility service. Recording laws differ by
+              for One Recorder and can&apos;t run anything else, apart from turning Developer options and debugging off and on. One Recorder has no microphone permission. Its optional pairing
+              accessibility service reads only the Settings app, never taps anything, and turns itself off once paired or after five minutes. Nearby devices or Location is asked for only if you
+              turn on Start without Wi-Fi, to open the local hotspot. Recording laws differ by
               country, and you&apos;re responsible for getting the other person&apos;s consent where it&apos;s required.
             </p>
             <p>
@@ -237,8 +247,12 @@ export default function OneRecorder() {
             <h2 id="trouble">If it doesn&apos;t work</h2>
             <ul>
               <li>
-                <strong>&ldquo;Both sides is paused&rdquo; in One Dialer, or Helper: Not running:</strong> the phone restarted away from Wi-Fi, or Developer options was turned off. Connect to
+                <strong>&ldquo;Both sides is paused&rdquo; in One Dialer, or Helper: Not running:</strong> the phone restarted away from Wi-Fi. Connect to
                 Wi-Fi and tap <strong>Start</strong> in One Recorder. Until it&apos;s running, calls can&apos;t be recorded.
+              </li>
+              <li>
+                <strong>A banking app still won&apos;t open:</strong> look at <strong>Turn off Developer options</strong> in One Recorder. If it says your phone needs USB or Wireless debugging to stay
+                on, that app is checking for it, and there&apos;s no way around it on that phone.
               </li>
               <li>
                 <strong>The pairing code isn&apos;t accepted:</strong> keep the pairing dialog open while you type the code, on the same Wi-Fi network. If it still fails, close the dialog, open it again
