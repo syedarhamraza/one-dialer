@@ -65,6 +65,7 @@
   "keypadNumberEmpty": "Number, empty. Long-press to paste",
   "keypadNumber": "Number {number}",
   "keypadZeroHint": "0, long-press for plus",
+  "keypadVoicemailHint": "1, long-press for voicemail",
   "keypadDigitHint": "{digit}, long-press for speed dial",
   "hideKeypad": "Hide keypad",
   "callWithSim": "Call with SIM {slot}, {sim}",

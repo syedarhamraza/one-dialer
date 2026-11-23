@@ -17,6 +17,7 @@ import 'one_ui_toast.dart';
 /// [DialerPrefs.swipeSim]; null or `calls` is [DialerPrefs.simChoice]). When it asks, our SIM menu
 /// pops from [anchorKey]'s button (or [anchorContext]'s widget).
 /// False when no call was placed: the SIM menu was dismissed, or Android refused (a toast says so).
+/// [voicemail] calls the chosen SIM's voicemail instead ([number] is then ignored).
 Future<bool> placeCall(
   BuildContext context,
   String number, {
@@ -24,10 +25,11 @@ Future<bool> placeCall(
   GlobalKey? anchorKey,
   BuildContext? anchorContext,
   String? rule,
+  bool voicemail = false,
 }) async {
   final telecom = TelecomBridge.instance;
   // Read together, so the SIM menu waits on one lookup at most.
-  final contact = simId == null ? ContactsRepository.instance.contactFor(number) : null;
+  final contact = simId == null && !voicemail ? ContactsRepository.instance.contactFor(number) : null;
   final (contactSim, sims) = await (
     contact == null ? Future<String?>.value() : DialerPrefs.instance.contactSim(contact.id),
     simId == null ? telecom.quickSims() : Future.value(const <SimCard>[]),
@@ -54,7 +56,7 @@ Future<bool> placeCall(
     }
   }
   // The page may have closed during the lookups above; the call still goes out, and only the toast needs the page.
-  final placed = await _placed(() => telecom.placeCall(number, simId: simId));
+  final placed = await _placed(() => telecom.placeCall(number, simId: simId, voicemail: voicemail));
   if (!placed && context.mounted) OneUIToast.show(context, context.l10n.couldNotPlaceCall);
   return placed;
 }

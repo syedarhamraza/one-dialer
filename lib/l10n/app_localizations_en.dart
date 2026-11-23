@@ -226,6 +226,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get keypadZeroHint => '0, long-press for plus';
 
   @override
+  String get keypadVoicemailHint => '1, long-press for voicemail';
+
+  @override
   String keypadDigitHint(String digit) {
     return '$digit, long-press for speed dial';
   }
