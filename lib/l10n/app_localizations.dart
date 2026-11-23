@@ -2798,6 +2798,30 @@ abstract class AppLocalizations {
   /// **'Send feedback'**
   String get sendFeedback;
 
+  /// No description provided for @feedbackTypeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s it about?'**
+  String get feedbackTypeTitle;
+
+  /// No description provided for @feedbackBug.
+  ///
+  /// In en, this message translates to:
+  /// **'Report a problem'**
+  String get feedbackBug;
+
+  /// No description provided for @feedbackIdea.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest an idea'**
+  String get feedbackIdea;
+
+  /// No description provided for @feedbackQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask a question'**
+  String get feedbackQuestion;
+
   /// No description provided for @developer.
   ///
   /// In en, this message translates to:
