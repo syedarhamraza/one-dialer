@@ -11,7 +11,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 /**
- * Both sides: the shell helper's 48 kHz mono 16-bit PCM ([input]) → AAC (MediaCodec) → .m4a
+ * Both sides: the shell helper's 48 kHz mono 16-bit PCM ([input]) → [Leveler] → AAC (MediaCodec) → .m4a
  * (MediaMuxer), on its own thread. The microphone method records with MediaRecorder instead.
  */
 class AudioPipeline(private val file: File, private val input: InputStream) {
@@ -56,6 +56,7 @@ class AudioPipeline(private val file: File, private val input: InputStream) {
             return
         }
         val pcm = ShortArray(CHUNK)
+        val leveler = Leveler(RATE)
         var written = 0L
 
         try {
@@ -63,6 +64,7 @@ class AudioPipeline(private val file: File, private val input: InputStream) {
                 val n = read(pcm)
                 if (n < 0) break // the helper hung up
                 if (n == 0) continue
+                leveler.process(pcm, n)
                 writer.feed(pcm, n, written * 1_000_000L / RATE)
                 written += n
             }
