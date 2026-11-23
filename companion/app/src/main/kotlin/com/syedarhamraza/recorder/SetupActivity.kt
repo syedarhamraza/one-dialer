@@ -81,10 +81,7 @@ class SetupActivity : Activity() {
                     ShellHelper.askForPairingCode(this)
                     startActivity(ShellHelper.wirelessDebuggingIntent())
                 },
-                Step(getString(R.string.setup_helper),
-                    getString(if (starting) R.string.setup_helper_starting else R.string.setup_helper_detail),
-                    ShellHelper.running(this), getString(R.string.setup_done),
-                    if (starting) null else ({ startHelper() })),
+                helperStep(),
                 batteryStep,
             )
             val next = steps.indexOfFirst { !it.ok }
@@ -133,7 +130,36 @@ class SetupActivity : Activity() {
             startActivity(Intent(this, ConsentActivity::class.java))
         }), header = getString(R.string.section_law))
 
+        // Which build this is, for testers' reports: One Dialer's version and the commit (build.gradle.kts).
+        page.content.addView(android.widget.TextView(this).apply {
+            text = getString(R.string.version, BuildConfig.VERSION_NAME)
+            OneLook.style(this, 13f, pal.text2)
+            gravity = android.view.Gravity.CENTER
+            setPadding(0, 0, 0, OneLook.px(this@SetupActivity, 24f).toInt())
+        })
+
         page.scroll.post { page.scroll.scrollTo(0, scroll) }
+    }
+
+    /** Starting the helper; after a failed start it says why, and its fix is the way out. */
+    private fun helperStep(): Step {
+        val problem = if (ShellHelper.startFailed && !starting) ShellHelper.problem(this) else null
+        val detail = when {
+            starting -> R.string.setup_helper_starting
+            problem == ShellHelper.Problem.WIFI -> R.string.setup_helper_no_wifi
+            problem == ShellHelper.Problem.DEBUGGING -> R.string.setup_helper_debugging_off
+            problem == ShellHelper.Problem.CONNECT -> R.string.setup_helper_connect_failed
+            else -> R.string.setup_helper_detail
+        }
+        val fix: (() -> Unit)? = when {
+            starting -> null
+            problem == ShellHelper.Problem.DEBUGGING -> ({
+                thread { ShellHelper.showDeveloperOptions(applicationContext) }
+                runCatching { startActivity(ShellHelper.wirelessDebuggingIntent()) }
+            })
+            else -> ({ startHelper() })
+        }
+        return Step(getString(R.string.setup_helper), getString(detail), ShellHelper.running(this), getString(R.string.setup_done), fix)
     }
 
     private var starting = false
@@ -177,11 +203,27 @@ class SetupActivity : Activity() {
                 runOnUiThread { if (!isDestroyed) render() }
             }
         }
+        rows += choice(getString(R.string.off_wifi), onOff(RecorderSettings.keepRecordingOffWifi(this)), switch,
+            getString(if (canRestart) R.string.off_wifi_detail else R.string.off_wifi_needs_restart)) { value ->
+            val on = value == "on"
+            RecorderSettings.setKeepRecordingOffWifi(app, on)
+            thread {
+                ShellHelper.keepUsbDebugging(app, on)
+                runOnUiThread { if (!isDestroyed) render() }
+            }
+        }
         if (NoWifiStart.supported()) rows += choice(getString(R.string.no_wifi), onOff(RecorderSettings.startWithoutWifi(this)), switch,
             getString(R.string.no_wifi_detail)) { value ->
             RecorderSettings.setStartWithoutWifi(app, value == "on")
             if (value == "on" && !NoWifiStart.hasPermissions(this)) requestPermissions(NoWifiStart.permissions(), 3)
             render()
+        }
+        // The way back when Wireless debugging no longer takes One Recorder, without clearing its data.
+        rows += page.row(getString(R.string.pair_again), getString(R.string.pair_again_detail)) {
+            thread {
+                ShellHelper.forgetPairing(app)
+                runOnUiThread { if (!isDestroyed) render() }
+            }
         }
         return rows
     }

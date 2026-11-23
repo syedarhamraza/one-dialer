@@ -300,6 +300,7 @@ if (-not $SkipBuild) {
   }
   else { Write-Host '  1. Install or share build/app/outputs/flutter-apk/app-release.apk (Play needs the .aab).' }
 }
-if (-not $SkipBuild) { Write-Host '     Recorder (website only): companion/app/build/outputs/apk/release/app-release.apk' }
+# One Recorder carries this version and commit (companion/app/build.gradle.kts).
+if (-not $SkipBuild) { Write-Host "     One Recorder $newName ($sha), website only: companion/app/build/outputs/apk/release/app-release.apk" }
 Write-Host '  2. Push the release commit and tag:  git push --follow-tags'
 Write-Host "     (the website redeploys from it, so Software update shows the notes)."

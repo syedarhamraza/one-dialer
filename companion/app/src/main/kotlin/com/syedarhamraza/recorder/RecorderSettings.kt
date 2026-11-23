@@ -50,6 +50,7 @@ object RecorderSettings {
     private const val NO_WIFI = "startWithoutWifi"
     private const val KEEP_WIRELESS = "keepWirelessDebugging"
     private const val KEEP_USB = "keepUsbDebugging"
+    private const val OFF_WIFI = "keepRecordingOffWifi"
 
     /** This phone ends the helper when USB debugging goes off, so hiding leaves it on. */
     fun keepUsbDebugging(context: Context) = prefs(context).getBoolean(KEEP_USB, false)
@@ -60,6 +61,11 @@ object RecorderSettings {
     fun keepWirelessDebugging(context: Context) = prefs(context).getBoolean(KEEP_WIRELESS, false)
 
     fun setKeepWirelessDebugging(context: Context, value: Boolean) = prefs(context).edit().putBoolean(KEEP_WIRELESS, value).apply()
+
+    /** Setup's Keep recording away from Wi-Fi: USB debugging stays on so the helper outlives Wi-Fi. Off by default. */
+    fun keepRecordingOffWifi(context: Context) = prefs(context).getBoolean(OFF_WIFI, false)
+
+    fun setKeepRecordingOffWifi(context: Context, on: Boolean) = prefs(context).edit().putBoolean(OFF_WIFI, on).apply()
 
     /** Turn Developer options, USB and Wireless debugging off once the helper runs, for banking apps. */
     fun hideDeveloperOptions(context: Context) = prefs(context).getBoolean(HIDE_DEV, true)
