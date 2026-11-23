@@ -1610,6 +1610,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sendFeedback => 'Отправить отзыв';
 
   @override
+  String get feedbackTypeTitle => 'О чём речь?';
+
+  @override
+  String get feedbackBug => 'Сообщить о проблеме';
+
+  @override
+  String get feedbackIdea => 'Предложить идею';
+
+  @override
+  String get feedbackQuestion => 'Задать вопрос';
+
+  @override
   String get developer => 'Разработчик';
 
   @override
@@ -2274,4 +2286,44 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get swipeSimUnused =>
       'Используется, только если в Быстром вызове включён Свайп для вызова';
+
+  @override
+  String get onboardingSkip => 'Пропустить';
+
+  @override
+  String get onboardingNext => 'Далее';
+
+  @override
+  String get onboardingStart => 'Начать';
+
+  @override
+  String get onboardingLookTitle => 'Под себя';
+
+  @override
+  String get onboardingLookBody =>
+      'Выберите язык приложения и светлую или тёмную тему.';
+
+  @override
+  String get onboardingAnswerTitle => 'Ответ на вызовы';
+
+  @override
+  String get onboardingAnswerBody =>
+      'Выберите, как выглядят входящие вызовы и как на них отвечать.';
+
+  @override
+  String get onboardingHealthTitle => 'Готово к вызовам';
+
+  @override
+  String get onboardingHealthBody =>
+      'Для входящих вызовов это нужно от Android. Нажмите на пункт, чтобы исправить.';
+
+  @override
+  String get onboardingAllSet => 'Всё готово';
+
+  @override
+  String get onboardingCallingTitle => 'Исходящие вызовы';
+
+  @override
+  String get onboardingCallingBody =>
+      'Выберите SIM для вызовов и что делает нажатие или свайп по вызову.';
 }

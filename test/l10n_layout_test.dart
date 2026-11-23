@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:dialer/app/layout.dart';
 import 'package:dialer/core/contacts/contacts_repository.dart';
+import 'package:dialer/features/setup/onboarding_screen.dart';
 import 'package:dialer/features/blocking/blocking_screen.dart';
 import 'package:dialer/features/contacts/contacts_screen.dart';
 import 'package:dialer/features/contacts/manage_contacts_screen.dart';
@@ -87,7 +88,9 @@ void main() {
 
   final pages = <String, Widget Function()>{
     'setup': () => SetupScreen(onDone: () {}),
-    'keypad': () => Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('0300'))),
+    'keypad': () => Scaffold(
+      body: KeypadScreen(open: ValueNotifier(true), input: ValueNotifier('0300')),
+    ),
     'recents': () => const Scaffold(body: RecentsScreen()),
     'contacts': () => const Scaffold(body: ContactsScreen()),
     'settings': () => const SettingsScreen(),
@@ -112,6 +115,8 @@ void main() {
     'backup': () => const BackupScreen(),
     'help': () => const HelpFeedbackScreen(),
     'about': () => const AboutScreen(),
+    // First run: each page of the walk-through, reached by tapping Next (see the loop below).
+    for (var i = 0; i < 4; i++) 'onboarding-$i': () => OnboardingScreen(onDone: () {}),
     'call-active': () => const InCallScreen(),
     'call-ringing': () => const InCallScreen(),
   };
@@ -147,7 +152,9 @@ void main() {
   for (final locale in AppLocalizations.supportedLocales) {
     for (final size in const [Size(360, 780), Size(320, 640)]) {
       for (final MapEntry(key: name, value: page) in pages.entries) {
-        testWidgets('${locale.languageCode} $name fits at ${size.width.toInt()}x${size.height.toInt()}', (tester) async {
+        testWidgets('${locale.languageCode} $name fits at ${size.width.toInt()}x${size.height.toInt()}', (
+          tester,
+        ) async {
           tester.view.physicalSize = size;
           tester.view.devicePixelRatio = 1;
           addTearDown(tester.view.reset);
@@ -166,6 +173,16 @@ void main() {
           );
           for (var i = 0; i < 4; i++) {
             await tester.pump(const Duration(milliseconds: 250));
+          }
+          if (name.startsWith('onboarding-')) {
+            for (var i = int.parse(name.split('-').last); i > 0; i--) {
+              final next = find.text(lookupAppLocalizations(locale).onboardingNext);
+              if (next.evaluate().isEmpty) break;
+              await tester.tap(next);
+              for (var f = 0; f < 4; f++) {
+                await tester.pump(const Duration(milliseconds: 250));
+              }
+            }
           }
           if (name.startsWith('call-')) await emitCall(tester, name == 'call-active' ? 'active' : 'ringing');
           if (previews && size.width == 360) {

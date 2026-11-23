@@ -78,4 +78,15 @@
     <string name="auto_pair_detail">Включите One Recorder в Спец. возможностях — он сам прочитает код подключения и отключится. Android 13+: если пункт серый, сначала откройте О приложении › ⋮ › Разрешить доступ к настройкам с ограничениями</string>
     <string name="auto_pair_service">Подключение One Recorder</string>
     <string name="auto_pair_service_description">Читает 6-значный код в окне подключения Отладки по Wi-Fi, чтобы вам не пришлось его вводить. Только читает Настройки, ничего не нажимает и отключается после подключения или через 5 минут.</string>
+    <string name="setup_helper_no_wifi">Не запущено: подключитесь к Wi-Fi и нажмите здесь</string>
+    <string name="setup_helper_debugging_off">Не запущено: отладка по Wi-Fi выключена. Включите её в параметрах разработчика (если их не видно, 7 раз нажмите Номер сборки), затем вернитесь и нажмите Исправить</string>
+    <string name="setup_helper_connect_failed">Не запущено: отладка по Wi-Fi не приняла One Recorder. Нажмите здесь, чтобы повторить, или Подключить заново ниже</string>
+    <string name="pair_again">Подключить заново</string>
+    <string name="pair_again_detail">Если служба записи больше не запускается. Записи и настройки сохранятся</string>
+    <string name="off_wifi">Записывать и без Wi-Fi</string>
+    <string name="off_wifi_detail">Оставляет отладку по USB включённой, чтобы служба записи работала и без Wi-Fi. Пока она включена, некоторые банковские приложения не открываются</string>
+    <string name="off_wifi_needs_restart">Нужен Запуск после перезагрузки, чтобы One Recorder мог держать отладку по USB включённой</string>
+    <string name="stopped_title">Запись обеих сторон остановлена</string>
+    <string name="stopped_detail">Wi-Fi снова есть, но служба записи не смогла запуститься сама. Нажмите, чтобы запустить её снова</string>
+    <string name="version">One Recorder %1$s</string>
 </resources>

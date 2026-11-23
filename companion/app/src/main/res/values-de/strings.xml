@@ -78,4 +78,15 @@
     <string name="auto_pair_detail">Schalte One Recorder in den Bedienungshilfen ein, dann liest es den Kopplungscode selbst und schaltet sich danach aus. Android 13+: Ist es ausgegraut, öffne zuerst App-Info › ⋮ › Eingeschränkte Einstellungen zulassen</string>
     <string name="auto_pair_service">One Recorder-Kopplung</string>
     <string name="auto_pair_service_description">Liest den 6-stelligen Code im Kopplungsdialog von Drahtloses Debugging, damit du ihn nicht eintippen musst. Liest nur die Einstellungen, tippt nie etwas an und schaltet sich nach dem Koppeln oder nach 5 Minuten aus.</string>
+    <string name="setup_helper_no_wifi">Nicht gestartet: Verbinde dich mit dem WLAN und tippe dann hier</string>
+    <string name="setup_helper_debugging_off">Nicht gestartet: Drahtloses Debugging ist aus. Schalte es in den Entwickleroptionen ein (tippe 7-mal auf Build-Nummer, falls sie ausgeblendet sind), komm zurück und tippe auf Beheben</string>
+    <string name="setup_helper_connect_failed">Nicht gestartet: Drahtloses Debugging hat One Recorder nicht angenommen. Tippe hier für einen neuen Versuch oder unten auf Erneut koppeln</string>
+    <string name="pair_again">Erneut koppeln</string>
+    <string name="pair_again_detail">Falls der Aufnahmedienst nicht mehr startet. Deine Aufnahmen und Einstellungen bleiben</string>
+    <string name="off_wifi">Ohne WLAN weiter aufnehmen</string>
+    <string name="off_wifi_detail">Lässt USB-Debugging an, damit der Aufnahmedienst weiterläuft, wenn das WLAN weg ist. Manche Banking-Apps öffnen sich nicht, solange es an ist</string>
+    <string name="off_wifi_needs_restart">Braucht Nach Neustart starten, damit One Recorder USB-Debugging anlassen kann</string>
+    <string name="stopped_title">Aufnahme beider Seiten gestoppt</string>
+    <string name="stopped_detail">Das WLAN ist zurück, aber der Aufnahmedienst konnte nicht von selbst starten. Tippe, um ihn neu zu starten</string>
+    <string name="version">One Recorder %1$s</string>
 </resources>

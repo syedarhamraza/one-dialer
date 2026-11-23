@@ -1596,6 +1596,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get sendFeedback => 'Enviar comentarios';
 
   @override
+  String get feedbackTypeTitle => '¿De qué se trata?';
+
+  @override
+  String get feedbackBug => 'Informar de un problema';
+
+  @override
+  String get feedbackIdea => 'Sugerir una idea';
+
+  @override
+  String get feedbackQuestion => 'Hacer una pregunta';
+
+  @override
   String get developer => 'Desarrollador';
 
   @override
@@ -2254,4 +2266,44 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get swipeSimUnused =>
       'Solo se usa cuando Deslizar para llamar está activado, en Llamada rápida';
+
+  @override
+  String get onboardingSkip => 'Omitir';
+
+  @override
+  String get onboardingNext => 'Siguiente';
+
+  @override
+  String get onboardingStart => 'Empezar';
+
+  @override
+  String get onboardingLookTitle => 'Hazla tuya';
+
+  @override
+  String get onboardingLookBody =>
+      'Elige el idioma de la app y si se ve clara u oscura.';
+
+  @override
+  String get onboardingAnswerTitle => 'Responder llamadas';
+
+  @override
+  String get onboardingAnswerBody =>
+      'Elige cómo se ven las llamadas entrantes y cómo las respondes.';
+
+  @override
+  String get onboardingHealthTitle => 'Lista para llamadas';
+
+  @override
+  String get onboardingHealthBody =>
+      'Las llamadas entrantes necesitan esto de Android. Toca uno para arreglarlo.';
+
+  @override
+  String get onboardingAllSet => 'Todo listo';
+
+  @override
+  String get onboardingCallingTitle => 'Hacer llamadas';
+
+  @override
+  String get onboardingCallingBody =>
+      'Elige la SIM para llamar y qué hace un toque o un deslizamiento sobre una llamada.';
 }
