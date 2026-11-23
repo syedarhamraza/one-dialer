@@ -63,7 +63,7 @@ Things to know before the first run:
 | `lib/features/` | One folder per screen: `keypad`, `recents`, `contacts`, `in_call`, `settings`, `blocking`, ... |
 | `lib/widgets/` | Shared widgets: glass surfaces, buttons, menus, pages |
 | `lib/core/` | Non-UI code: telecom bridge, contacts, preferences, crash reporting |
-| `lib/l10n/` | The app's text in each language (`app_en.arb`, `app_it.arb`) |
+| `lib/l10n/` | The app's text in each language (`app_en.arb`, `app_it.arb`, `app_ru.arb`, `app_es.arb`, `app_tr.arb`, `app_de.arb`) |
 | `android/app/src/main/kotlin/.../telecom/` | The Kotlin side that talks to Android's call system |
 | `companion/` | One Recorder, the separate call-recording app |
 | `test/` | Flutter tests |
@@ -96,7 +96,7 @@ Two Flutter engines run in one app: one for the main screens and one, kept warm,
 
 [AGENTS.md](AGENTS.md) is the full list. These catch new contributors most often:
 
-- **No user-facing text in code.** UI text goes in `lib/l10n/app_en.arb` **and** `lib/l10n/app_it.arb` (English is fine for the Italian file if you don't speak it; say so in the PR) and is read as `context.l10n.key`. `test/l10n_test.dart` checks that both files have the same keys. Notification text goes in `android/app/src/main/res/values*/strings.xml`.
+- **No user-facing text in code.** UI text goes in `lib/l10n/app_en.arb` **and** every other `lib/l10n/app_*.arb` (English is fine in the other files if you don't speak the language; say so in the PR) and is read as `context.l10n.key`. `test/l10n_test.dart` checks that every file has the same keys. Notification text goes in `android/app/src/main/res/values*/strings.xml`.
 - **The design language is ColorOS 17.** Rounded rectangles use `SquircleBorder`, pages use `OneUISubpage`/`OneUIGroupCard`, and big buttons use `GlowButton`.
 - **Follow *Reduce visual effects*.** New blur or glass must look right at Full, Reduced and Off (`OneUIEffectsController`).
 - **Keep lists lazy** (`SliverList.builder`). Don't add new full-screen `BackdropFilter` layers.
@@ -146,7 +146,7 @@ Welcome, even if you've never written Flutter. If you want a feature for yoursel
    Read AGENTS.md and CONTRIBUTING.md first. I'm working on my fork of One Dialer.
    I want: <describe the feature or bug, what you expect to happen>.
    Make the smallest change that does it, on a new feat/... or fix/... branch.
-   Put any new text in both app_en.arb and app_it.arb.
+   Put any new text in app_en.arb and every other app_*.arb.
    Then run flutter analyze, flutter test and flutter build apk --debug,
    and tell me how to install it and what to try on my phone.
    ```

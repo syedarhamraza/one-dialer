@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 /** The policy's sections, with the one being read marked as the page scrolls. */
-export function Toc({ sections, className = "" }: { sections: { id: string; title: string }[]; className?: string }) {
+export function Toc({ sections, label = "On this page", className = "" }: { sections: { id: string; title: string }[]; label?: string; className?: string }) {
   const [active, setActive] = useState(sections[0]?.id);
 
   useEffect(() => {
@@ -17,7 +17,7 @@ export function Toc({ sections, className = "" }: { sections: { id: string; titl
   }, [sections]);
 
   return (
-    <nav aria-label="On this page" className={className}>
+    <nav aria-label={label} className={className}>
       <ol>
         {sections.map((s) => (
           <li key={s.id}>

@@ -70,7 +70,7 @@ Most phones ship a dialer you can't change, and most replacements either look da
 - Light, dark or system theme. **Glass & blur** lets you choose between Edge glow and Liquid glass.
 - **Reduce visual effects** (Full, Reduced or Off) for the app and, separately, for the call screen. It defaults to what your phone's chip handles smoothly.
 - Glossy or Classic app icons.
-- English and Italian ([add your language](TRANSLATING.md)).
+- English, Italian, Russian, Spanish, Turkish and German, for One Dialer, One Recorder and this website ([add your language](TRANSLATING.md)).
 
 ### Call recording (optional)
 Recording lives in a separate, sideloaded companion app, **One Recorder**. Install it from [GitHub Releases](https://github.com/syedarhamraza/one-dialer/releases) and recording controls appear in the call screen and Settings. Without it, One Dialer never touches the microphone. Recording laws differ by country, so check yours first.

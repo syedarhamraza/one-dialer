@@ -6,7 +6,7 @@ import { marked } from "marked";
 import { CaretLeftIcon } from "@phosphor-icons/react/dist/ssr";
 import { Footer } from "@/components/Footer";
 import { SmoothScroll } from "@/components/SmoothScroll";
-import { Toc } from "./Toc";
+import { Toc } from "@/components/Toc";
 
 export const metadata: Metadata = { title: "Privacy policy · One Dialer" };
 

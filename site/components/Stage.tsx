@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ArrowRightIcon } from "@phosphor-icons/react";
@@ -15,6 +15,7 @@ gsap.registerPlugin(ScrollTrigger);
 ScrollTrigger.config({ ignoreMobileResize: true });
 
 export type Screen = { src: string; title: string; body: string };
+export type StageText = { headline: string[]; intro: string; small: string; screens: string; alt: string; joinBeta: string; play: string };
 
 // The aurora behind each step, like the call screen's caller tint: [large glow, small glow].
 const TINTS: [string, string][] = [
@@ -40,12 +41,27 @@ const turn = (p: number) => {
  * (slabScene.ts) draws the words and the slab from those same boxes, with real refraction. Below Full, without
  * WebGL, or for reduced motion, the DOM words and a CSS slab show instead.
  */
-export function Stage({ screens }: { screens: Screen[] }) {
+export function Stage({ screens, t }: { screens: Screen[]; t: StageText }) {
   const wrap = useRef<HTMLElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const live = useRef({ p: 0, nx: 0, ny: 0, intro: 0, scene: null as ReturnType<typeof createSlabScene> | null, st: null as ScrollTrigger | null });
   const fx = useFx();
   const N = screens.length;
+
+  // The giant words are sized for English; a longer word in another language shrinks until it fits between the
+  // page's margins. Runs before the effects below, and again once the font is in, so the scene measures fitted words.
+  useLayoutEffect(() => {
+    const fit = () =>
+      wrap.current!.querySelectorAll<HTMLElement>(".stage-word").forEach((w) => {
+        w.style.fontSize = "";
+        const room = wrap.current!.clientWidth - 2 * w.offsetLeft;
+        if (w.offsetWidth > room) w.style.fontSize = `${(parseFloat(getComputedStyle(w).fontSize) * room) / w.offsetWidth}px`;
+      });
+    fit();
+    document.fonts.ready.then(fit);
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, [screens]);
 
   // Scroll, pointer and the per-frame update. Runs once; the WebGL scene comes and goes underneath it.
   useEffect(() => {
@@ -185,16 +201,16 @@ export function Stage({ screens }: { screens: Screen[] }) {
 
       <h1 data-word className="stage-word">
         <span data-seg>
-          Calls,
+          {t.headline[0]}
           <i />
         </span>{" "}
         <span data-seg>
-          in
+          {t.headline[1]}
           <i />
         </span>
         <br className="max-md:hidden" />{" "}
         <span data-seg className="text-green">
-          glass.
+          {t.headline[2]}
           <i />
         </span>
       </h1>
@@ -221,7 +237,7 @@ export function Stage({ screens }: { screens: Screen[] }) {
           </div>
           {screens.map((x, i) => (
             // eslint-disable-next-line @next/next/no-img-element
-            <img key={x.src} data-face className="slab-face" src={x.src} alt={`${x.title} screen in One Dialer`} width={720} height={1487} loading={i ? "lazy" : "eager"} decoding="async" />
+            <img key={x.src} data-face className="slab-face" src={x.src} alt={t.alt.replace("{title}", x.title)} width={720} height={1487} loading={i ? "lazy" : "eager"} decoding="async" />
           ))}
         </div>
       </div>
@@ -229,7 +245,7 @@ export function Stage({ screens }: { screens: Screen[] }) {
       <div className="stage-copy">
         <div data-intro className="grid text-[clamp(1.05rem,1.45vw,1.3rem)] leading-[1.4] text-ink-2">
           <p data-cap className="stage-cap">
-            A fast, private phone app for Android. Smart T9, call blocking and dual SIM, on true black.
+            {t.intro}
           </p>
           {screens.map((x) => (
             <div key={x.title} data-cap className="stage-cap opacity-0">
@@ -241,18 +257,18 @@ export function Stage({ screens }: { screens: Screen[] }) {
         <div data-intro className="mt-6">
           <span data-magnetic className="inline-block">
             {RELEASED ? (
-              <PlayButton />
+              <PlayButton label={t.play} />
             ) : (
               <a href="#join" className="lit press group inline-flex h-14 items-center gap-2.5 rounded-full px-7 text-[16px] font-semibold">
-                Join the beta <ArrowRightIcon size={18} weight="bold" className="transition-transform duration-500 ease-settle group-hover:translate-x-1" />
+                {t.joinBeta} <ArrowRightIcon size={18} weight="bold" className="transition-transform duration-500 ease-settle group-hover:translate-x-1" />
               </a>
             )}
           </span>
-          <p className="mt-4 text-[14px] text-ink-3 max-md:hidden">Free · No ads · Android 10 and newer</p>
+          <p className="mt-4 text-[14px] text-ink-3 max-md:hidden">{t.small}</p>
         </div>
       </div>
 
-      <nav data-intro aria-label="Screens" className="stage-index">
+      <nav data-intro aria-label={t.screens} className="stage-index">
         <ol className="flex flex-col items-end max-md:flex-row">
           {screens.map((x, k) => (
             <li key={x.title}>

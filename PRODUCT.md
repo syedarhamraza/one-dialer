@@ -42,7 +42,7 @@ All four together are the difference; future work keeps every one:
 - Designed at 420 dp wide and scaled to the screen; no per-device breakpoints.
 - Performance is a product constraint: lazy lists, few backdrop reads, everything new honours Reduce visual effects and the separate Call screen effects.
 - Light, dark and system theme; Glass style: Edge glow or Liquid glass (Full effects only).
-- English and Italian; no user-facing literal outside the l10n files.
+- English, Italian, Russian, Spanish, Turkish and German; no user-facing literal outside the l10n files. The Russian keypad shows Cyrillic letters, and T9 finds Cyrillic and accented names in every language.
 - Call recording only through One Recorder; recording laws differ by country.
 - Never real names, numbers or call logs in code, tests or screenshots.
 
