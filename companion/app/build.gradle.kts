@@ -54,6 +54,6 @@ dependencies {
     // Both sides: pairs with Wireless debugging and starts the shell helper (shell/Adb.kt).
     implementation("com.github.MuntashirAkon:libadb-android:3.1.1")
     implementation("com.github.MuntashirAkon:sun-security-android:1.1") // the pairing certificate
-    implementation("org.conscrypt:conscrypt-android:2.5.3") // TLS 1.3 key export for pairing
+    implementation("org.conscrypt:conscrypt-android:2.9.0") // TLS 1.3 key export for pairing
     testImplementation("junit:junit:4.13.2")
 }
