@@ -55,6 +55,36 @@ const _keys = {
   'z': '9',
 };
 
+/// Accented Latin letters fold to their base letter's key, and Cyrillic has its own phone
+/// keypad layout, both as AOSP Dialer's SmartDial maps do, so "Иван" and "José" are found
+/// whatever the app's language.
+final _foreignKeys = () {
+  const groups = {
+    '2': 'àáâãäåāăąæçćĉċč' 'абвг',
+    '3': 'ďđèéêëēĕėęě' 'деёжз',
+    '4': 'ĝğġģĥħìíîïĩīĭįıİ' 'ийкл',
+    '5': 'ĵķĺļľŀł' 'мноп',
+    '6': 'ñńņňŉòóôõöøōŏőœ' 'рсту',
+    '7': 'ŕŗřśŝşšßș' 'фхцч',
+    '8': 'ţťŧțùúûüũūŭůűų' 'шщъы',
+    '9': 'ŵýÿŷźżž' 'ьэюя',
+  };
+  return {
+    for (final MapEntry(key: digit, value: letters) in groups.entries)
+      for (final ch in letters.split('')) ch: digit,
+  };
+}();
+
+const _cyrillicKeys = {'2': 'АБВГ', '3': 'ДЕЖЗ', '4': 'ИЙКЛ', '5': 'МНОП', '6': 'РСТУ', '7': 'ФХЦЧ', '8': 'ШЩЪЫ', '9': 'ЬЭЮЯ'};
+
+/// A key's printed letters: [latin], plus the Cyrillic ones when the app is in Russian, as
+/// Google's and Samsung's dialers print them (one line, so the key keeps its height).
+String keyLetters(String digit, String latin, String localeName) =>
+    localeName == 'ru' && _cyrillicKeys[digit] != null ? '$latin ${_cyrillicKeys[digit]}' : latin;
+
+// Combining accents (a decomposed "é" is "e" + U+0301) belong to the letter before them.
+final _combining = RegExp('[̀-ͯ]');
+
 // Built once: these run per character of every contact on each keypad digit.
 final _digit = RegExp(r'[0-9]');
 final _allDigits = RegExp(r'^[0-9]+$');
@@ -62,7 +92,8 @@ final _dialChar = RegExp(r'[0-9+*#]');
 
 String? _digitOf(String ch) {
   final c = ch.toLowerCase();
-  if (_keys[c] case final d?) return d;
+  // Raw [ch] too: Turkish İ lowercases to two characters.
+  if (_keys[c] ?? _foreignKeys[c] ?? _foreignKeys[ch] case final d?) return d;
   return _digit.hasMatch(c) ? c : null;
 }
 
@@ -100,6 +131,7 @@ List<(int, String, bool)> _letters(String name) {
   var wordStart = true;
   for (var i = 0; i < name.length; i++) {
     final d = _digitOf(name[i]);
+    if (d == null && _combining.hasMatch(name[i])) continue;
     if (d == null) {
       wordStart = true;
       continue;

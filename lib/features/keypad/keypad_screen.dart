@@ -801,7 +801,11 @@ class _Keypad extends StatelessWidget {
                           if (letters == 'VM')
                             Icon(Icons.voicemail_rounded, size: 14, color: context.palette.textSecondary)
                           else if (letters.isNotEmpty)
-                            Text(letters, style: TextStyle(fontSize: 11, color: context.palette.textSecondary)),
+                            Text(
+                              keyLetters(digit, letters, context.l10n.localeName),
+                              maxLines: 1,
+                              style: TextStyle(fontSize: 11, color: context.palette.textSecondary),
+                            ),
                         ],
                       ),
                     ),

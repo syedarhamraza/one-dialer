@@ -1,4 +1,4 @@
-# Italian: strings for human review
+# Translations: strings for human review
 
 The Italian was written to AOSP Dialer/Contacts terminology but has not been checked by a native speaker. These need one, roughly in order of risk. Keys are in `lib/l10n/app_it.arb` unless a file is named; the ones marked ★ also carry a `REVIEW:` description in `app_en.arb`.
 
@@ -56,3 +56,22 @@ The UI is laid out for English lengths; check these on the phone in Italian, esp
 | `callBackground*` | Call screen: "Sfondo chiamata", "Foto del contatto", "Come tutte le chiamate", "Predefinito", "Colore", "Foto", "Scegli foto". |
 | `vip*` | VIP calls: "Chiamate VIP", "Squillo in Silenzioso per i VIP", "Includi preferiti"; `vipDndHint` names Android's Do Not Disturb starred-contacts option ("contatti speciali"). |
 | `splashIcon*` | Display & effects: "Icona app all'avvio" (the launch splash's icon switch). |
+
+## Russian, Spanish, Turkish, German
+
+Written to each language's AOSP Dialer and Contacts terms (glossaries in `docs/localization.md`), not yet checked by native speakers. Check in this order:
+
+| Key | Why |
+| --- | --- |
+| `setupDisclosure`, `reportLagMessage` | Google Play prominent disclosure and what a lag report sends: must match the privacy policy and Android's own permission names in each language (Russian quotes them: «Телефон», «Журнал звонков», «Контакты», «Уведомления»). |
+| `recordingConsentBody` and One Recorder's `consent_*`, `setup_consent` (`companion/.../values-xx`) | Legal wording about recording consent. |
+| `importContactsMessage`, `deleteContactMessage`, `deleteContactsMessage`, `deleteCallsMessage` | Describe data being removed or saved. |
+| `mute`, `hold`, `addCall`, `speaker` | Under round in-call buttons: shortened (de Stumm, Halten, Hinzufügen; ru Без звука, Удержать, Добавить; es Silenciar, Retener, Añadir). |
+| Russian plurals (`deleteCallsTitle`, `contactsCount`, `recordingsSaved`, `autoDeleteDays`...) and `missed_calls` (`values-ru`) | one/few/many forms; 1 reads "1 вызов" rather than a number-less singular. |
+| Turkish messages with a name or number | Suffixes can't attach to a placeholder, so they are rephrased ("{name} silinsin mi?", "Kaldır: {item}", "Aramayı bitir: {name}"). Check they read naturally. |
+| `contactLabel` | Gendered relation labels (de Freund, Verwandter; es Hijo/a, Amigo/a; ru Друг, Родственник). |
+| `answerVerb`, `declineVerb`, `swipeUpHint`, `swipeUpDownHint` | Screen-reader hint built from a verb: de "um anzunehmen", tr "yanıtlamak için". |
+| `sameAsKeypad` | Shortened to fit as a grey value: "Wie Wähltastatur", "Как на клавиатуре". |
+| `quick_replies` (`values-xx`) | Android's default quick responses in each language; only shown until edited. |
+| `announce_calling` (`values-xx`) | Spoken by text-to-speech in the phone's TTS language. |
+

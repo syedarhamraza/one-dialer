@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="channel_incoming">Llamadas entrantes</string>
+    <string name="channel_incoming_quiet">Llamadas entrantes (silenciosas)</string>
+    <string name="channel_ongoing">Llamadas en curso</string>
+    <string name="channel_missed">Llamadas perdidas</string>
+    <string name="unknown">Desconocido</string>
+    <string name="conference_call">Llamada de conferencia</string>
+    <string name="unknown_caller">Llamada desconocida</string>
+    <string name="announce_calling">Te llama %1$s</string>
+    <string name="incoming_call">Llamada entrante</string>
+    <string name="island_incoming">Entrante</string>
+    <string name="decline">Rechazar</string>
+    <string name="answer">Responder</string>
+    <string name="ongoing_call">Llamada en curso</string>
+    <string name="on_hold">En espera</string>
+    <string name="calling_ellipsis">Llamando…</string>
+    <string name="island_calling">Llamando</string>
+    <string name="hang_up">Colgar</string>
+    <string name="speaker">Altavoz</string>
+    <string name="speaker_off">Altavoz desactivado</string>
+    <string name="missed_call">Llamada perdida</string>
+    <plurals name="missed_calls">
+        <item quantity="one">%d llamada perdida</item>
+        <item quantity="many">%d llamadas perdidas</item>
+        <item quantity="other">%d llamadas perdidas</item>
+    </plurals>
+    <string name="missed_latest">Última: %1$s</string>
+    <string name="call_back">Devolver llamada</string>
+    <string name="message">Mensaje</string>
+    <string-array name="quick_replies">
+        <item>Ahora no puedo hablar. ¿Qué pasa?</item>
+        <item>Te llamo enseguida.</item>
+        <item>Te llamo más tarde.</item>
+        <item>Ahora no puedo hablar. ¿Me llamas luego?</item>
+    </string-array>
+</resources>

@@ -69,4 +69,22 @@ void main() {
     expect(t9Search('', all), isEmpty);
     expect(t9Search('564669', all), isEmpty); // Johnny has no number
   });
+  test('accented and Cyrillic names match like AOSP SmartDial', () {
+    const ivan = T9Entry(name: 'Иван Петров', numbers: ['0300 1234567']);
+    const jose = T9Entry(name: 'José', numbers: ['0300 1234568']);
+    const muller = T9Entry(name: 'Müller', numbers: ['0300 1234569']);
+    const sukru = T9Entry(name: 'Şükrü', numbers: ['0300 1234570']);
+    const ipek = T9Entry(name: 'İpek', numbers: ['0300 1234571']);
+    const decomposed = T9Entry(name: 'José Luis', numbers: ['0300 1234572']);
+    final people = [ivan, jose, muller, sukru, ipek, decomposed];
+
+    expect(t9Search('4225', people).single.entry, ivan);
+    expect(t9Search('536', people).single.entry, ivan); // Пет(ров)
+    expect(t9Search('5673', people).map((m) => m.entry), [jose, decomposed]);
+    expect(t9Search('685537', people).single.entry, muller);
+    expect(t9Search('78578', people).single.entry, sukru);
+    expect(t9Search('4735', people).single.entry, ipek);
+    // The combining accent stays inside the word: "José L".
+    expect(t9Search('56735', people).single.nameRange, (0, 7));
+  });
 }

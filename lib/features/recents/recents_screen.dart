@@ -372,7 +372,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
                     final scale = headerScale(context);
                     // With big top buttons (a small App size) All | Missed slides left beside Search; the small title
                     // gives way if it would reach it. The controls are laid out at width / scale.
-                    final tabsLeft = _HeaderControls.tabsLeftFor(box.maxWidth / scale) * scale;
+                    final tabsLeft = _HeaderControls.tabsLeftFor(context, box.maxWidth / scale) * scale;
                     final clash = HeaderTitle.rightEdge(context, context.l10n.navCalls) + 8 > tabsLeft;
                     return Stack(
                       children: [
@@ -589,7 +589,6 @@ class _HeaderControls extends StatelessWidget {
   final GlobalKey menuKey;
   final List<OneUIFloatingMenuItem> Function() menuItems;
 
-  static const _tabCount = 2; // All | Missed
   static const double _button = 48;
   static const double _gap = 8;
   static const double _edge = 16;
@@ -606,8 +605,10 @@ class _HeaderControls extends StatelessWidget {
 
   /// Where All | Missed starts in a header [w] wide: centred, or beside Search when centred would
   /// touch it (big top buttons lay the header out narrower).
-  static double tabsLeftFor(double w) {
-    final tabs = FilterTabs.sizeFor(_tabCount);
+  static List<String> tabLabels(BuildContext context) => [context.l10n.all, context.l10n.recentsFilterMissed];
+
+  static double tabsLeftFor(BuildContext context, double w) {
+    final tabs = FilterTabs.sizeFor(context, tabLabels(context));
     final searchLeft = w - _edge - _button - _gap - _button;
     return math.min((w - tabs.width) / 2, searchLeft - _gap - tabs.width);
   }
@@ -633,7 +634,7 @@ class _HeaderControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tabs = FilterTabs.sizeFor(_tabCount);
+    final tabs = FilterTabs.sizeFor(context, tabLabels(context));
     return SizedBox(
       height: _button,
       child: LayoutBuilder(
@@ -641,7 +642,7 @@ class _HeaderControls extends StatelessWidget {
           final w = box.maxWidth;
           final menuLeft = w - _edge - _button;
           final searchLeft = menuLeft - _gap - _button;
-          final tabsLeft = tabsLeftFor(w);
+          final tabsLeft = tabsLeftFor(context, w);
           final cancelWidth = SelectionPillLabel.widthFor(context, context.l10n.cancel);
           final selectAllWidth = SelectionPillLabel.widthFor(
             context,
@@ -756,7 +757,7 @@ class _HeaderControls extends StatelessWidget {
                                 minWidth: tabs.width,
                                 maxWidth: tabs.width,
                                 child: FilterTabs(
-                                  labels: [context.l10n.all, context.l10n.recentsFilterMissed],
+                                  labels: tabLabels(context),
                                   index: filterIndex,
                                   onChanged: onFilter,
                                   bare: true,

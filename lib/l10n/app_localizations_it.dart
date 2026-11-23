@@ -2246,7 +2246,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get swipeToCallSim => 'Scorri per chiamare';
 
   @override
-  String get sameAsKeypad => 'Come tastierino e contatti';
+  String get sameAsKeypad => 'Come tastierino';
 
   @override
   String get tapSimUnused =>

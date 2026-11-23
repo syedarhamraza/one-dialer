@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="channel_incoming">Входящие вызовы</string>
+    <string name="channel_incoming_quiet">Входящие вызовы (без звука)</string>
+    <string name="channel_ongoing">Текущие вызовы</string>
+    <string name="channel_missed">Пропущенные вызовы</string>
+    <string name="unknown">Неизвестный</string>
+    <string name="conference_call">Конференц-связь</string>
+    <string name="unknown_caller">Неизвестный абонент</string>
+    <string name="announce_calling">Звонит %1$s</string>
+    <string name="incoming_call">Входящий вызов</string>
+    <string name="island_incoming">Входящий</string>
+    <string name="decline">Отклонить</string>
+    <string name="answer">Ответить</string>
+    <string name="ongoing_call">Текущий вызов</string>
+    <string name="on_hold">На удержании</string>
+    <string name="calling_ellipsis">Вызов…</string>
+    <string name="island_calling">Вызов</string>
+    <string name="hang_up">Завершить</string>
+    <string name="speaker">Динамик</string>
+    <string name="speaker_off">Выкл. динамик</string>
+    <string name="missed_call">Пропущенный вызов</string>
+    <plurals name="missed_calls">
+        <item quantity="one">%d пропущенный вызов</item>
+        <item quantity="few">%d пропущенных вызова</item>
+        <item quantity="many">%d пропущенных вызовов</item>
+        <item quantity="other">%d пропущенного вызова</item>
+    </plurals>
+    <string name="missed_latest">Последний: %1$s</string>
+    <string name="call_back">Перезвонить</string>
+    <string name="message">Сообщение</string>
+    <string-array name="quick_replies">
+        <item>Не могу говорить. Что случилось?</item>
+        <item>Сейчас перезвоню.</item>
+        <item>Перезвоню позже.</item>
+        <item>Не могу говорить. Перезвонишь позже?</item>
+    </string-array>
+</resources>

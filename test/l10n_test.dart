@@ -66,4 +66,21 @@ void main() {
     expect(l10n.deleteCallsTitle(3), 'Eliminare 3 chiamate?');
     expect(l10n.deleteCallsTitle(1), 'Eliminare la chiamata?');
   });
+
+  test('every language names itself and translates the tabs', () {
+    final names = {for (final l in AppLocalizations.supportedLocales) lookupAppLocalizations(l).languageName};
+    expect(names, {'English', 'Italiano', 'Русский', 'Español', 'Türkçe', 'Deutsch'});
+    expect(lookupAppLocalizations(const Locale('de')).navCalls, 'Anrufe');
+    expect(lookupAppLocalizations(const Locale('tr')).navContacts, 'Kişiler');
+    expect(lookupAppLocalizations(const Locale('es')).callTypeMissed, 'Llamada perdida');
+  });
+
+  test('Russian uses its one, few and many forms', () {
+    final ru = lookupAppLocalizations(const Locale('ru'));
+    expect(ru.contactsCount(1), '1 контакт');
+    expect(ru.contactsCount(3), '3 контакта');
+    expect(ru.contactsCount(5), '5 контактов');
+    expect(ru.contactsCount(21), '21 контакт');
+    expect(ru.autoDeleteDays(30), 'Через 30 дней');
+  });
 }
