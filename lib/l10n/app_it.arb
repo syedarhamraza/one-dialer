@@ -65,6 +65,7 @@
   "keypadNumberEmpty": "Numero, vuoto. Tieni premuto per incollare",
   "keypadNumber": "Numero {number}",
   "keypadZeroHint": "0, tieni premuto per il segno più",
+  "keypadVoicemailHint": "1, tieni premuto per la segreteria",
   "keypadDigitHint": "{digit}, tieni premuto per la chiamata rapida",
   "hideKeypad": "Nascondi tastierino",
   "callWithSim": "Chiama con SIM {slot}, {sim}",

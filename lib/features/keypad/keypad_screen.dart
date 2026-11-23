@@ -235,12 +235,18 @@ class _KeypadScreenState extends State<KeypadScreen> {
   }
 
   /// Long-press (the key already typed its digit on press): 0 becomes "+", * a pause (","),
-  /// # a wait (";"); 2–9 alone call their speed dial (or offer to assign one).
+  /// # a wait (";"); 1 alone calls voicemail; 2–9 alone call their speed dial (or offer to assign one).
   Future<void> _longPress(String digit) async {
     if (const {'0': '+', '*': ',', '#': ';'}[digit] case final char?) {
       HapticFeedback.mediumImpact();
       _replace('');
       _replace(char);
+      return;
+    }
+    if (digit == '1' && widget.input.value == '1') {
+      HapticFeedback.mediumImpact();
+      widget.input.value = '';
+      await placeCall(context, '', voicemail: true);
       return;
     }
     if (!DialerPrefs.speedDialDigits.contains(digit) || widget.input.value != digit) return;
@@ -773,6 +779,7 @@ class _Keypad extends StatelessWidget {
                       height: keyHeight,
                       label: switch (digit) {
                         '0' => context.l10n.keypadZeroHint,
+                        '1' => context.l10n.keypadVoicemailHint,
                         '2' || '3' || '4' || '5' || '6' || '7' || '8' || '9' => context.l10n.keypadDigitHint(digit),
                         _ => digit,
                       },

@@ -175,7 +175,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 MissedCallNotifier.cancel(context)
             }
             "getState" -> result.success(CallManager.snapshot())
-            "placeCall" -> placeCall(call.argument<String>("number"), call.argument<String>("simId"), result)
+            "placeCall" -> placeCall(call.argument<String>("number"), call.argument<String>("simId"), call.argument<Boolean>("voicemail") == true, result)
             "callBack" -> {
                 if (context.checkSelfPermission(Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
                     result.error("NO_PERMISSION", "CALL_PHONE not granted", null)
@@ -587,15 +587,17 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
     private fun isDefaultDialer(): Boolean =
         context.getSystemService(RoleManager::class.java).isRoleHeld(RoleManager.ROLE_DIALER)
 
-    private fun placeCall(number: String?, simId: String?, result: MethodChannel.Result) {
-        if (number.isNullOrBlank()) return result.error("NO_NUMBER", "Number is empty", null)
+    private fun placeCall(number: String?, simId: String?, voicemail: Boolean, result: MethodChannel.Result) {
+        if (!voicemail && number.isNullOrBlank()) return result.error("NO_NUMBER", "Number is empty", null)
         if (context.checkSelfPermission(Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
             return result.error("NO_PERMISSION", "CALL_PHONE not granted", null)
         }
         val telecom = context.getSystemService(TelecomManager::class.java)
         val extras = Bundle()
         simId?.let(::simHandle)?.let { extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, it) }
-        telecom.placeCall(Uri.fromParts("tel", number, null), extras)
+        // voicemail: Telecom dials the SIM's voicemail number, or shows its own "no voicemail number" dialog.
+        val uri = if (voicemail) Uri.fromParts(android.telecom.PhoneAccount.SCHEME_VOICEMAIL, "", null) else Uri.fromParts("tel", number, null)
+        telecom.placeCall(uri, extras)
         result.success(null)
     }
 

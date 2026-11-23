@@ -248,6 +248,41 @@ void main() {
     expect(input.value, '03331,333');
   });
 
+  group('long-press', () {
+    Future<ValueNotifier<String>> pumpKeypad(WidgetTester tester) async {
+      final input = ValueNotifier('');
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: OneUITheme.darkTheme,
+          home: Scaffold(body: KeypadScreen(open: ValueNotifier(true), input: input)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      return input;
+    }
+
+    testWidgets('1 alone calls voicemail', (tester) async {
+      final input = await pumpKeypad(tester);
+      await tester.longPress(find.text('1').last);
+      await tester.pumpAndSettle();
+      final placed = nativeCalls.singleWhere((c) => c.method == 'placeCall').arguments as Map;
+      expect(placed['voicemail'], isTrue);
+      expect(input.value, '');
+    });
+
+    testWidgets('1 after other digits just keeps typing', (tester) async {
+      final input = await pumpKeypad(tester);
+      await tester.tap(find.text('0').last);
+      await tester.pump();
+      await tester.longPress(find.text('1').last);
+      await tester.pumpAndSettle();
+      expect(nativeCalls.where((c) => c.method == 'placeCall'), isEmpty);
+      expect(input.value, '01');
+    });
+  });
+
   testWidgets('typing and clearing leave the keys at the same position', (tester) async {
     final input = ValueNotifier('');
     await tester.pumpWidget(

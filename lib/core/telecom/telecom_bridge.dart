@@ -263,9 +263,12 @@ class TelecomBridge {
   Future<void> markMissedRead() => _methods.invokeMethod('markMissedRead');
 
   // Calls
-  /// Calls [number], on the SIM with [simId] if given (otherwise Android's default or its own picker).
-  Future<void> placeCall(String number, {String? simId}) =>
-      _methods.invokeMethod('placeCall', {'number': number, 'simId': simId});
+  /// Calls [number], on the SIM with [simId] if given (otherwise Android's default or its own picker);
+  /// [voicemail] calls that SIM's voicemail instead of [number].
+  Future<void> placeCall(String number, {String? simId, bool voicemail = false}) => _methods.invokeMethod(
+    'placeCall',
+    {'number': number, 'simId': simId, if (voicemail) 'voicemail': true},
+  );
 
   /// Calls back call-log row [id]; an app's row (WhatsApp...) is called back by that app.
   Future<void> callBack(int id) => _methods.invokeMethod('callBack', {'id': id});

@@ -488,6 +488,12 @@ abstract class AppLocalizations {
   /// **'0, long-press for plus'**
   String get keypadZeroHint;
 
+  /// No description provided for @keypadVoicemailHint.
+  ///
+  /// In en, this message translates to:
+  /// **'1, long-press for voicemail'**
+  String get keypadVoicemailHint;
+
   /// No description provided for @keypadDigitHint.
   ///
   /// In en, this message translates to:

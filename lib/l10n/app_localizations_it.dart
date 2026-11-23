@@ -226,6 +226,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get keypadZeroHint => '0, tieni premuto per il segno più';
 
   @override
+  String get keypadVoicemailHint => '1, tieni premuto per la segreteria';
+
+  @override
   String keypadDigitHint(String digit) {
     return '$digit, tieni premuto per la chiamata rapida';
   }
