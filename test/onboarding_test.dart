@@ -15,7 +15,14 @@ void main() {
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     messenger.setMockMethodCallHandler(
       const MethodChannel('com.syedarhamraza.dialer/telecom'),
-      (call) async => call.method == 'getCallHealth' ? health : null,
+      (call) async => switch (call.method) {
+        'getCallHealth' => health,
+        'getSims' => [
+          {'id': 'a', 'label': 'SIM 1'},
+          {'id': 'b', 'label': 'SIM 2'},
+        ],
+        _ => null,
+      },
     );
     // permission_handler: 1 = granted.
     messenger.setMockMethodCallHandler(const MethodChannel('flutter.baseflow.com/permissions/methods'), (_) async => 1);
@@ -46,6 +53,13 @@ void main() {
 
     await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
+    expect(find.text('Making calls'), findsOneWidget);
+    expect(find.text('Which SIM to call with'), findsOneWidget); // dual SIM
+    expect(find.text('Tap a recent call'), findsOneWidget);
+    expect(find.text('Swipe to call or message'), findsOneWidget);
+
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
     expect(find.text('Ready for calls'), findsOneWidget);
     expect(find.text('Notifications are off'), findsOneWidget);
     expect(find.text('All set'), findsNothing);
@@ -58,10 +72,10 @@ void main() {
   testWidgets('health page says All set when nothing is missing', (tester) async {
     health = {'notificationsEnabled': true, 'fullScreenAllowed': true};
     await open(tester, () {});
-    await tester.tap(find.text('Next'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Next'));
-    await tester.pumpAndSettle();
+    for (var page = 0; page < 3; page++) {
+      await tester.tap(find.text('Next'));
+      await tester.pumpAndSettle();
+    }
     expect(find.text('All set'), findsOneWidget);
   });
 
@@ -81,7 +95,7 @@ void main() {
         health = {};
         await open(tester, () {}, locale: locale);
         // Every page, with the health check's rows all showing (the longest one).
-        for (var page = 0; page < 3; page++) {
+        for (var page = 0; page < 4; page++) {
           expect(tester.takeException(), isNull);
           await tester.drag(find.byType(PageView), Offset(-size.width, 0));
           await tester.pumpAndSettle();

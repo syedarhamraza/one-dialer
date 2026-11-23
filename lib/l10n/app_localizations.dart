@@ -4015,6 +4015,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'All set'**
   String get onboardingAllSet;
+
+  /// No description provided for @onboardingCallingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Making calls'**
+  String get onboardingCallingTitle;
+
+  /// No description provided for @onboardingCallingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the SIM for calls and what a tap or swipe on a call does.'**
+  String get onboardingCallingBody;
 }
 
 class _AppLocalizationsDelegate

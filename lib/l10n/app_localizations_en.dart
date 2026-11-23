@@ -2259,4 +2259,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingAllSet => 'All set';
+
+  @override
+  String get onboardingCallingTitle => 'Making calls';
+
+  @override
+  String get onboardingCallingBody =>
+      'Choose the SIM for calls and what a tap or swipe on a call does.';
 }

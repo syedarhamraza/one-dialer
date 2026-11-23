@@ -12,6 +12,8 @@ import '../../widgets/glow_button.dart';
 import '../../widgets/one_ui_group_card.dart';
 import '../in_call/call_controls.dart';
 import '../settings/call_settings_pages.dart';
+import '../../core/telecom/call_info.dart';
+import '../settings/dialing_settings_screen.dart';
 import '../settings/display_settings_screen.dart';
 import '../settings/settings_screen.dart';
 
@@ -28,7 +30,7 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  static const _pages = 3;
+  static const _pages = 4;
   final _controller = PageController();
   int _page = 0;
 
@@ -84,6 +86,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           title: l10n.onboardingAnswerTitle,
                           body: l10n.onboardingAnswerBody,
                           child: const _AnswerCard(),
+                        ),
+                        _Page(
+                          title: l10n.onboardingCallingTitle,
+                          body: l10n.onboardingCallingBody,
+                          child: const _CallingCard(),
                         ),
                         _Page(
                           title: l10n.onboardingHealthTitle,
@@ -245,6 +252,61 @@ class _AnswerCardState extends State<_AnswerCard> {
                 ),
         ),
       ],
+    );
+  }
+}
+
+/// Settings › Making calls' main choices: the SIM calls use (dual SIM only), what a tap on a
+/// recent call does, and swipe to call.
+class _CallingCard extends StatefulWidget {
+  const _CallingCard();
+
+  @override
+  State<_CallingCard> createState() => _CallingCardState();
+}
+
+class _CallingCardState extends State<_CallingCard> {
+  final _simKey = GlobalKey();
+  final _tapKey = GlobalKey();
+  List<SimCard> _sims = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    TelecomBridge.instance.getSims().then((sims) {
+      if (mounted) setState(() => _sims = sims);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final prefs = DialerPrefs.instance;
+    final l10n = context.l10n;
+    return ListenableBuilder(
+      listenable: prefs.swipeToCall,
+      builder: (context, _) => OneUIGroupCard(
+        items: [
+          if (_sims.length > 1)
+            choiceRow(
+              context,
+              title: l10n.chooseSimForCalls,
+              anchor: _simKey,
+              value: prefs.simChoice,
+              labels: SimSettingsScreen.choiceLabels(l10n, _sims),
+              onPick: prefs.setSimChoice,
+            ),
+          choiceRow(
+            context,
+            title: l10n.tapRecentCall,
+            subtitle: l10n.tapRecentCallSubtitle,
+            anchor: _tapKey,
+            value: prefs.recentTap,
+            labels: {'details': l10n.openDetails, 'dial': l10n.writeInKeypad, 'call': l10n.call},
+            onPick: prefs.setRecentTap,
+          ),
+          switchRow(l10n.swipeToCall, prefs.swipeToCall, prefs.setSwipeToCall, subtitle: l10n.swipeToCallSubtitle),
+        ],
+      ),
     );
   }
 }

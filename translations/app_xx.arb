@@ -652,5 +652,7 @@
   "onboardingAnswerBody": "Choose how incoming calls look and how you answer them.",
   "onboardingHealthTitle": "Ready for calls",
   "onboardingHealthBody": "Incoming calls need these from Android. Tap one to fix it.",
-  "onboardingAllSet": "All set"
+  "onboardingAllSet": "All set",
+  "onboardingCallingTitle": "Making calls",
+  "onboardingCallingBody": "Choose the SIM for calls and what a tap or swipe on a call does."
 }

@@ -2288,4 +2288,11 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get onboardingAllSet => 'Tutto pronto';
+
+  @override
+  String get onboardingCallingTitle => 'Effettuare chiamate';
+
+  @override
+  String get onboardingCallingBody =>
+      'Scegli la SIM per le chiamate e cosa fanno un tocco o uno scorrimento su una chiamata.';
 }
