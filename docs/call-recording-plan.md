@@ -27,6 +27,32 @@ The same idea as Shizuku, built into One Recorder (no separate app): the shell u
 - One Dialer reads `canRecord`, `method`, `helperPaired` and `helperRunning` from the status.
 - Verified on the vivo (Android 17): both sides records you and the other person. Not yet verified: Samsung, that the helper survives Wireless debugging going off, the reboot restart, and Wi-Fi calling (some phones lose one side).
 
+## Built: working with Developer options off (ideas from Shizuku Next)
+
+Banking apps refuse to open while Developer options, USB or Wireless debugging is on. These pieces copy what the Shizuku Next fork does, without Shizuku:
+
+- **The helper leaves adbd's cgroup.** `ShellMain.leaveAdbdCgroup()` writes its pid to the root `cgroup.procs` of `/acct`, `/sys/fs/cgroup`, `/dev/cg2_bpf` and `/dev/memcg/apps`, as Shizuku's starter does. When debugging goes off, init stops adbd and kills everything in its cgroup, and `setsid` doesn't change the cgroup.
+- **Turn off Developer options (on by default).** This is a Setup row. After every start, `ShellHelper.hideNow` writes `adb_wifi_enabled`, `adb_enabled` and `development_settings_enabled` to 0 with WRITE_SECURE_SETTINGS.
+  - If the helper dies with them, `hideNow` puts them back and sets `hideUnsupported`, so that phone keeps them on.
+  - A restart (reboot, update, Wi-Fi) switches Developer options and Wireless debugging on just long enough to start the helper, then hides them again.
+  - A failed start hides them again too.
+  - Turning the row off shows Developer options again.
+- **Pair automatically (optional).** `PairingAccessibilityService` is a pairing-only accessibility service, not the removed microphone tier.
+  - It reads the 6-digit code out of Settings' pairing dialog (`pairingCode`, unit-tested), pairs, and then calls `disableSelf()`. It also switches itself off after 5 minutes, because banking apps flag enabled accessibility services too.
+  - It only reads Settings and never taps, so it doesn't depend on the phone's language.
+  - On Android 13+, a sideloaded install needs "Allow restricted settings" before the service can be turned on.
+  - Once One Recorder holds WRITE_SECURE_SETTINGS, it turns the service on itself.
+- **Start without Wi-Fi (experimental, off by default, Android 12–16).** Implemented in `NoWifiStart`, after thedjchi/Shizuku issue 165.
+  - After a boot or update away from Wi-Fi, a `specialUse` foreground service writes `adb_wifi_enabled=1` every 20 ms for up to 2 minutes. The framework turns it back off without Wi-Fi, and sometimes a write lands in the gap.
+  - Meanwhile a local-only hotspot gives mDNS a network. That hotspot needs `NEARBY_WIFI_DEVICES` (13+) or fine location (12), asked for only when the switch is turned on, and Location must be on.
+  - Android 17's adbd won't run its wireless server offline, so the row is hidden there.
+- **Setup order:** notifications come first, since pairing's code is typed into a notification.
+- **Found on the Galaxy S25 (SM-S931U1, Android 17, running an OPPO Find X9 port ROM):**
+  - The helper moves out of adbd's cgroup v1 groups but not cgroup v2. `/sys/fs/cgroup/**/cgroup.procs` are `system:system 0775`, so it stays in `/system/uid_0/pid_<adbd>` and dies whenever adbd stops.
+  - Turning off only `development_settings_enabled` keeps adbd and the helper running. adbd keeps running on Wireless debugging alone, so `hideNow` turns off Developer options and USB debugging first, and turns off Wireless debugging only if the helper survives that. Otherwise it sets `keepWirelessDebugging`.
+  - That phone's Wireless debugging rejects every paired client with `CERTIFICATE_VERIFY_FAILED`, including Google's `adb` right after a fresh `adb pair`. `/data/misc/adb/adb_keys` is missing. This is a ROM fault: One Recorder can't start its helper there.
+- Not yet verified: all of it. Check on the vivo that the helper survives debugging going off, and that `adb_wifi_enabled=1` starts adbd while Developer options are off. Test Start without Wi-Fi on an Android 12–16 phone.
+
 Goal (original): a second build of One Dialer, downloaded from the website, that records calls. The Google Play build never contains any recording code or permissions.
 
 ## 1. What Android allows

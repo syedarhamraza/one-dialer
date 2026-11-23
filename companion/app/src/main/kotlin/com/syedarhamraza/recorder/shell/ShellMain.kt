@@ -39,7 +39,8 @@ object ShellMain {
     private const val SHELL = "com.android.shell"
     private const val CHUNK_BYTES = 2048 // ~21 ms of 16-bit mono
 
-    enum class Request { PING, PCM, QUIT }
+    /** HIDE and SHOW switch Developer options for One Recorder where it couldn't be granted WRITE_SECURE_SETTINGS. */
+    enum class Request { PING, PCM, QUIT, HIDE, SHOW }
 
     /** `<token> ping|pcm|quit`: the only lines the helper answers; anything else, or a wrong token, is dropped. */
     fun parse(line: String?, token: String): Request? {
@@ -49,6 +50,8 @@ object ShellMain {
             "ping" -> Request.PING
             "pcm" -> Request.PCM
             "quit" -> Request.QUIT
+            "hide" -> Request.HIDE
+            "show" -> Request.SHOW
             else -> null
         }
     }
@@ -58,6 +61,7 @@ object ShellMain {
         val port = args.getOrNull(0)?.toIntOrNull() ?: return
         val token = args.getOrNull(1)?.takeIf { it.length >= 32 } ?: return
         val apk = args.getOrNull(2)?.let(::File) ?: return
+        leaveAdbdCgroup()
         val server = try {
             ServerSocket(port, 4, InetAddress.getLoopbackAddress())
         } catch (_: IOException) {
@@ -76,6 +80,18 @@ object ShellMain {
         }
     }
 
+    /**
+     * When Developer options, USB or Wireless debugging go off, init stops adbd and kills every
+     * process in its cgroup; setsid doesn't change the cgroup, so the helper moves to the root
+     * ones (as Shizuku's starter does). Paths a phone lacks or refuses are skipped.
+     */
+    private fun leaveAdbdCgroup() {
+        val pid = Process.myPid().toString()
+        for (group in listOf("/acct", "/sys/fs/cgroup", "/dev/cg2_bpf", "/dev/memcg/apps")) {
+            runCatching { File(group, "cgroup.procs").writeText(pid) }
+        }
+    }
+
     private fun serve(socket: Socket, token: String, context: Context?) = socket.use {
         it.soTimeout = 2000 // for the request line only
         when (parse(readLine(it), token)) {
@@ -85,9 +101,19 @@ object ShellMain {
                 stream(it, context)
             }
             Request.QUIT -> exitProcess(0)
+            // Debugging stays on: some phones restart adbd when it goes off, which would end the helper.
+            Request.HIDE -> if (settings("development_settings_enabled", 0)) ok(it)
+            Request.SHOW -> if (settings("development_settings_enabled", 1)) ok(it)
             null -> {}
         }
     }
+
+    private fun ok(socket: Socket) = socket.getOutputStream().write("ok\n".toByteArray())
+
+    /** Shell holds WRITE_SECURE_SETTINGS; `settings` runs as this process's uid. */
+    private fun settings(key: String, value: Int) = runCatching {
+        ProcessBuilder("/system/bin/settings", "put", "global", key, value.toString()).start().waitFor() == 0
+    }.getOrDefault(false)
 
     private fun readLine(socket: Socket): String? = try {
         val input = socket.getInputStream()

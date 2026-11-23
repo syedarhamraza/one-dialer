@@ -62,4 +62,20 @@
     <string name="open_dialer">Apri One Dialer</string>
     <string name="step_after">Dopo il passo %d</string>
     <string name="recording_detail">Entrambe le voci · tocca per tornare alla chiamata</string>
+    <string name="option_on">Attivo</string>
+    <string name="option_off">Disattivo</string>
+    <string name="hide_dev">Disattiva Opzioni sviluppatore</string>
+    <string name="hide_dev_detail">Dopo l\'avvio del servizio di registrazione, Opzioni sviluppatore, debug USB e debug wireless vengono disattivati, così le app bancarie si aprono. La registrazione continua a funzionare</string>
+    <string name="setup_restart_blocked">Questo telefono l\'ha rifiutato. Su ColorOS, attiva Opzioni sviluppatore › Disattiva ottimizzazione di sistema, poi tocca qui</string>
+    <string name="hide_dev_keep_wireless">Opzioni sviluppatore e debug USB si disattivano dopo l\'avvio del servizio di registrazione, così la maggior parte delle app bancarie si apre. Questo telefono ha bisogno che il debug wireless resti attivo</string>
+    <string name="hide_dev_keep_usb">Opzioni sviluppatore si disattivano dopo l\'avvio del servizio di registrazione, così molte app bancarie si aprono. Questo telefono ha bisogno che il debug USB resti attivo</string>
+    <string name="hide_dev_keep_both">Opzioni sviluppatore si disattivano dopo l\'avvio del servizio di registrazione, così alcune app bancarie si aprono. Questo telefono ha bisogno che il debug USB e il debug wireless restino attivi</string>
+    <string name="hide_dev_unsupported">Questo telefono ferma il servizio di registrazione quando il debug si disattiva, quindi restano attivi</string>
+    <string name="no_wifi">Avvia senza Wi-Fi (sperimentale)</string>
+    <string name="no_wifi_detail">Dopo un riavvio senza Wi-Fi, prova per un massimo di 2 minuti tramite un hotspot locale. Richiede la Posizione attiva. Potrebbe non funzionare su tutti i telefoni</string>
+    <string name="no_wifi_starting">Avvio del servizio di registrazione senza Wi-Fi…</string>
+    <string name="auto_pair">Associa automaticamente (facoltativo)</string>
+    <string name="auto_pair_detail">Attiva One Recorder in Accessibilità: legge da solo il codice di associazione, poi si disattiva. Android 13+: se è disattivato in grigio, apri Info app › ⋮ › Consenti impostazioni con restrizioni</string>
+    <string name="auto_pair_service">Associazione di One Recorder</string>
+    <string name="auto_pair_service_description">Legge il codice a 6 cifre nella finestra di associazione del debug wireless, così non devi digitarlo. Legge solo Impostazioni, non tocca mai nulla e si disattiva dopo l\'associazione o dopo 5 minuti.</string>
 </resources>

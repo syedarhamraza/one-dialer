@@ -9,10 +9,12 @@ class BothSidesTest {
     private val token = "0123456789abcdef0123456789abcdef0123456789abcdef"
 
     @Test
-    fun theHelperAnswersOnlyItsThreeRequestsWithTheRightToken() {
+    fun theHelperAnswersOnlyItsRequestsWithTheRightToken() {
         assertEquals(ShellMain.Request.PING, ShellMain.parse("$token ping", token))
         assertEquals(ShellMain.Request.PCM, ShellMain.parse("$token pcm\r", token))
         assertEquals(ShellMain.Request.QUIT, ShellMain.parse("$token quit", token))
+        assertEquals(ShellMain.Request.HIDE, ShellMain.parse("$token hide", token))
+        assertEquals(ShellMain.Request.SHOW, ShellMain.parse("$token show", token))
     }
 
     @Test
@@ -25,5 +27,7 @@ class BothSidesTest {
         assertNull(ShellMain.parse("$token sh -c id", token))
         assertNull(ShellMain.parse("$token pcm extra", token))
         assertNull(ShellMain.parse("$token PCM", token))
+        assertNull(ShellMain.parse("hide", token))
+        assertNull(ShellMain.parse("$token hide adb_enabled", token))
     }
 }

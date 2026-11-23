@@ -64,4 +64,20 @@
     <string name="open_dialer">Open One Dialer</string>
     <string name="step_after">After step %d</string>
     <string name="recording_detail">Both sides · tap to return to the call</string>
+    <string name="option_on">On</string>
+    <string name="option_off">Off</string>
+    <string name="hide_dev">Turn off Developer options</string>
+    <string name="hide_dev_detail">After the recording service starts, Developer options, USB and Wireless debugging go off, so banking apps open. Recording keeps working</string>
+    <string name="setup_restart_blocked">This phone refused it. On ColorOS, turn on Developer options › Disable system optimization, then tap here</string>
+    <string name="hide_dev_keep_wireless">Developer options and USB debugging go off after the recording service starts, so most banking apps open. This phone needs Wireless debugging to stay on</string>
+    <string name="hide_dev_keep_usb">Developer options go off after the recording service starts, so many banking apps open. This phone needs USB debugging to stay on</string>
+    <string name="hide_dev_keep_both">Developer options go off after the recording service starts, so some banking apps open. This phone needs USB and Wireless debugging to stay on</string>
+    <string name="hide_dev_unsupported">This phone stops the recording service when debugging goes off, so they stay on</string>
+    <string name="no_wifi">Start without Wi-Fi (experimental)</string>
+    <string name="no_wifi_detail">After a reboot away from Wi-Fi, tries for up to 2 minutes through a local hotspot. Needs Location on. May not work on every phone</string>
+    <string name="no_wifi_starting">Starting the recording service without Wi-Fi…</string>
+    <string name="auto_pair">Pair automatically (optional)</string>
+    <string name="auto_pair_detail">Turn on One Recorder in Accessibility and it reads the pairing code itself, then switches itself off. Android 13+: if it\'s greyed out, open App info › ⋮ › Allow restricted settings first</string>
+    <string name="auto_pair_service">One Recorder pairing</string>
+    <string name="auto_pair_service_description">Reads the 6-digit code in Wireless debugging\'s pairing dialog so you don\'t have to type it. Reads only Settings, never taps anything, and turns itself off once paired or after 5 minutes.</string>
 </resources>

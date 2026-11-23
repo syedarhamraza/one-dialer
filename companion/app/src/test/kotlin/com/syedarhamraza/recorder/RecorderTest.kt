@@ -53,4 +53,13 @@ class RecorderTest {
         assertFalse(TrustedDialer.isTrusted(TrustedDialer.PACKAGE, release) { it.contentEquals(debugKey) })
         assertTrue(TrustedDialer.hex(TrustedDialer.PLAY_CERT).size == 32)
     }
+
+    @Test
+    fun pairingCodeIsTheSixDigitsInTheDialog() {
+        val code = com.syedarhamraza.recorder.shell.PairingAccessibilityService::pairingCode
+        assertEquals("482913", code(listOf("Pair with device", "Wi-Fi pairing code", "482913", "192.168.1.20:37415")))
+        assertEquals("482913", code(listOf(" 482 913 ")))
+        assertNull(code(listOf("37415", "1234567", "Wireless debugging", "12345a")))
+        assertNull(code(emptyList()))
+    }
 }
