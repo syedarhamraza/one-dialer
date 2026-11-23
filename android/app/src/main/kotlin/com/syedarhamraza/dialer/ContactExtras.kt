@@ -37,6 +37,10 @@ object ContactExtras {
                 Data.CONTENT_URI, arrayOf(Data._ID),
                 "${Data.CONTACT_ID} = ? AND ${Data.MIMETYPE} = ?", arrayOf(contactId, mime), null,
             )?.use { c -> if (c.moveToFirst()) c.getLong(0) else null } ?: continue
+            // A synced row (Meet's, from the Google account) stays when its app is missing or disabled,
+            // and tapping it opened nothing (NO_APP on vivo): show only rows the app can open.
+            val view = Intent(Intent.ACTION_VIEW).setDataAndType(ContentUris.withAppendedId(Data.CONTENT_URI, dataId), mime)
+            if (context.packageManager.queryIntentActivities(view.setPackage(pkg), 0).isEmpty()) continue
             out += mapOf("label" to label, "dataId" to dataId, "mimeType" to mime, "icon" to appIcon(context, pkg))
         }
         return out
@@ -45,13 +49,19 @@ object ContactExtras {
     /**
      * Opens a contact data row (e.g. WhatsApp's chat) the way Contacts apps do, in the app that owns
      * it: other apps (SHAREit) claim these links too, and WhatsApp opened from that chooser closed at once.
+     * Its exact activity, not just its package: with vivo's App Clone the package matches the clone too,
+     * and Android asked which WhatsApp to use.
      */
     fun openData(context: Context, dataId: Long, mimeType: String) {
         val uri = ContentUris.withAppendedId(Data.CONTENT_URI, dataId)
         val intent = Intent(Intent.ACTION_VIEW).setDataAndType(uri, mimeType).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         val owner = APPS.firstOrNull { it.third == mimeType }?.second
+        val target = Intent(intent).setPackage(owner)
+        // Only this user's activities: the clone's copy lives in another profile.
+        context.packageManager.queryIntentActivities(target, 0).firstOrNull()?.activityInfo
+            ?.let { target.setClassName(it.packageName, it.name) }
         try {
-            context.startActivity(Intent(intent).setPackage(owner))
+            context.startActivity(target)
         } catch (_: android.content.ActivityNotFoundException) {
             context.startActivity(intent) // the owner can't open it itself; let Android pick
         }

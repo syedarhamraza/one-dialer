@@ -73,6 +73,16 @@ class OneUITheme {
   static double get blurSigma => OneUIEffectsController.instance.blurSigma;
   static Border? get subtleBorder => null;
 
+  /// The theme's font family, set from the phone's choice before the first frame (the themes
+  /// below are built on first use). OPPO Serif is ColorOS's 'sys-serif'; anything else stays on
+  /// OPPO Sans, which falls back to sans-serif on phones without it.
+  static String fontFamily = 'sys-sans-en';
+  static void followSystemFont(String? name) {
+    if (name != null && name.toLowerCase().contains('serif') && !name.toLowerCase().contains('sans')) {
+      fontFamily = 'sys-serif';
+    }
+  }
+
   static final ThemeData darkTheme = _theme(Brightness.dark);
   static final ThemeData _lightFull = _theme(Brightness.light, OneUIPalette.light);
   static final ThemeData _lightFlat = _theme(Brightness.light, OneUIPalette.lightFlat);
@@ -87,9 +97,11 @@ class OneUITheme {
       primaryColor: accentBlue,
       canvasColor: p.page,
       cardColor: p.card,
-      // The phone's own font: OEM font themes (vivo's VivoFont.ttf, ColorOS...) swap the file behind
-      // Android's sans-serif, while 'Roboto' named plain Roboto and ignored them.
-      fontFamily: 'sans-serif',
+      // The phone's own font. ColorOS and realme UI keep sans-serif on Roboto and name OPPO Sans
+      // 'sys-sans-en' in fonts.xml (their framework swaps it in Java, which Flutter never sees);
+      // elsewhere that family is missing and sans-serif follows OEM font themes (vivo's VivoFont.ttf).
+      fontFamily: fontFamily,
+      fontFamilyFallback: const ['sans-serif'],
       colorScheme: (brightness == Brightness.light ? const ColorScheme.light() : const ColorScheme.dark()).copyWith(
         surface: p.page,
         primary: accentBlue,

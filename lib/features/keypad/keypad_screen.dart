@@ -652,7 +652,10 @@ class _NumberDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The theme's font, so the number is measured in the font it's drawn in.
     final style = TextStyle(
+      fontFamily: DefaultTextStyle.of(context).style.fontFamily,
+      fontFamilyFallback: DefaultTextStyle.of(context).style.fontFamilyFallback,
       fontSize: _fontSize,
       fontWeight: FontWeight.w500,
       letterSpacing: 0.5,

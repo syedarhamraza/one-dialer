@@ -39,3 +39,17 @@ Future<void> initCrashReporting({String engine = 'main'}) async {
   };
   await LagDiagnostics.instance.start(engine: engine, enabled: enabled);
 }
+
+final _reported = <String>{};
+
+/// Records a handled error as a non-fatal, once per [key] per process (a provider that refuses
+/// every reload would otherwise report each time). Nothing when Firebase isn't running (tests).
+void reportOnce(String key, Object error, StackTrace stack) {
+  if (!_reported.add(key)) return;
+  try {
+    if (Firebase.apps.isEmpty) return;
+    unawaited(FirebaseCrashlytics.instance.recordError(error, stack, reason: key).catchError((_) {}));
+  } catch (_) {
+    // Firebase isn't set up.
+  }
+}

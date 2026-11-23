@@ -145,7 +145,10 @@ class _FilterTabsState extends State<FilterTabs> {
                         child: Center(
                           child: AnimatedDefaultTextStyle(
                             duration: const Duration(milliseconds: 200),
+                            // Replaces the inherited style, so it carries the theme's font itself.
                             style: TextStyle(
+                              fontFamily: DefaultTextStyle.of(context).style.fontFamily,
+                              fontFamilyFallback: DefaultTextStyle.of(context).style.fontFamilyFallback,
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
                               color: i == _index ? context.palette.textPrimary : context.palette.textSecondary,

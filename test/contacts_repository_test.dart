@@ -91,6 +91,35 @@ void main() {
     repo.debugSetContacts(const []);
   });
 
+  testWidgets('a refused read keeps the last contacts instead of throwing', (tester) async {
+    var refuse = false;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(const MethodChannel('com.syedarhamraza.dialer/data'), (
+      _,
+    ) async {
+      // Samsung's provider on Android 15 (Crashlytics 1.0.0): a SecurityException from the read.
+      if (refuse) throw PlatformException(code: 'NO_PERMISSION', message: 'requires LOG_COMPAT_CHANGE');
+      return [
+        [
+          '1', 'Ann', null, null, null, false,
+          [
+            ['0300 1234567', 'mobile', null, false],
+          ],
+          <String>[],
+        ],
+      ];
+    });
+    final repo = ContactsRepository.instance..ignoreChanges = false;
+    repo.reload();
+    await tester.pump(const Duration(seconds: 1));
+    expect(repo.contacts.value.single.name, 'Ann');
+    refuse = true;
+    repo.reload();
+    await tester.pump(const Duration(seconds: 1));
+    expect(tester.takeException(), isNull);
+    expect(repo.contacts.value.single.name, 'Ann');
+    repo.debugSetContacts(const []);
+  });
+
   test('native rows become contacts: labels, primary, accounts, duplicate numbers, no numbers', () {
     final entries = ContactsRepository.entriesFrom(
       [

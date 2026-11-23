@@ -221,6 +221,7 @@
   "selectPhotos": "Seleziona foto",
   "deleteProfilePicture": "Elimina immagine del profilo",
   "couldNotOpenCamera": "Impossibile aprire la fotocamera",
+  "couldNotOpenApp": "Impossibile aprire l'app",
   "followSystem": "Segui il sistema",
   "customRingtone": "Suoneria personalizzata",
   "fromFollowingAccount": "Dal seguente account",
