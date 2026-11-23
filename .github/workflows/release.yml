@@ -143,6 +143,11 @@ jobs:
         run: |
           tag="v$NAME"
           cp companion/app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/one-dialer-recorder.apk"
+          # Which One Recorder this is (One Dialer's version and the release commit, from build.gradle.kts).
+          # Only GitHub's notes: Play's come from changelog.json above and never name the recorder.
+          aapt2="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)aapt2"
+          recorder=$("$aapt2" dump badging "$RUNNER_TEMP/one-dialer-recorder.apk" | sed -n "s/.*versionName='\([^']*\)'.*/\1/p" || true)
+          [ -z "$recorder" ] || printf '\nOne Recorder %s\n' "$recorder" >> "$RUNNER_TEMP/release-notes.md"
           # Decodes this build's crashes (flutter symbolize).
           zip -qr "$RUNNER_TEMP/symbols-$NAME-$CODE.zip" symbols
           if ! gh release view "$tag" > /dev/null 2>&1; then
