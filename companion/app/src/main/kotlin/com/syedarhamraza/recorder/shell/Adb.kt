@@ -105,11 +105,17 @@ class Adb private constructor(private val files: File) : AbsAdbConnectionManager
         false
     }
 
+    /** The last [connectNow] reached Wireless debugging, which turned this key down: it's no longer paired. */
+    @Volatile var refused = false
+        private set
+
     /** Connects to Wireless debugging (found over mDNS), or false when it's off or this app isn't paired. */
     fun connectNow(context: Context, timeoutMs: Long): Boolean = try {
-        isConnected || autoConnect(context, timeoutMs)
+        (isConnected || autoConnect(context, timeoutMs)).also { refused = false }
     } catch (e: Exception) {
         android.util.Log.w("OneRecorder", "Wireless debugging connect failed", e)
+        // adbd fails the TLS handshake for a key it doesn't trust (CERTIFICATE_VERIFY_FAILED).
+        refused = generateSequence(e as Throwable) { it.cause }.any { it is javax.net.ssl.SSLException }
         false
     }
 

@@ -89,4 +89,27 @@
     <string name="stopped_title">Se detuvo la grabación de las dos partes</string>
     <string name="stopped_detail">El Wi-Fi ha vuelto, pero el servicio de grabación no pudo iniciarse solo. Toca para iniciarlo otra vez</string>
     <string name="version">One Recorder %1$s</string>
+    <string name="section_about">Información</string>
+    <string name="update_title">Actualización de software</string>
+    <string name="update_checking">Comprobando…</string>
+    <string name="update_installing">Descargando e instalando… One Recorder se cerrará al terminar</string>
+    <string name="update_failed">No se pudo instalar la actualización. Inténtalo más tarde</string>
+    <string name="update_debug">Esta es una versión de prueba: las actualizaciones llegan con la versión publicada</string>
+    <string name="update_after_call">Hay una actualización lista: instálala después de la llamada</string>
+    <string name="update_available">La versión %1$s está disponible: toca para instalarla</string>
+    <string name="update_current">Actualizado. Toca para volver a comprobar</string>
+    <string name="check_title">Comprobar ahora</string>
+    <string name="check_detail">Comprueba que el servicio de grabación funciona, sigue vinculado y puede capturar el audio de las llamadas</string>
+    <string name="check_running">Comprobando…</string>
+    <string name="check_at">%1$s · %2$s</string>
+    <string name="check_works">Todo funciona: el servicio de grabación está activo y puede capturar el audio de las llamadas</string>
+    <string name="check_no_capture">El servicio de grabación está activo, pero este teléfono no le deja capturar el audio de las llamadas</string>
+    <string name="check_not_paired">La depuración inalámbrica ya no acepta One Recorder: vuelve a vincularlo arriba</string>
+    <string name="check_wont_start">El servicio de grabación no se inició: consulta el paso de arriba</string>
+    <string name="status_check">Revisa la última grabación</string>
+    <string name="last_call_heard">Última llamada grabada %1$s · %2$s</string>
+    <string name="last_call_silent">La última grabación (%1$s) estaba en silencio. Escúchala en One Dialer y toca Comprobar ahora</string>
+    <string name="last_call_failed">La última llamada (%1$s) no se grabó: el servicio de grabación no estaba activo. Toca Comprobar ahora</string>
+    <string name="diagnostics">Compartir diagnóstico</string>
+    <string name="diagnostics_detail">Versiones, teléfono, estado de la configuración y líneas de registro recientes para un informe de errores. Sin números ni nombres</string>
 </resources>

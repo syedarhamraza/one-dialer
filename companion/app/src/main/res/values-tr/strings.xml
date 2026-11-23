@@ -89,4 +89,27 @@
     <string name="stopped_title">İki taraflı kayıt durdu</string>
     <string name="stopped_detail">Wi-Fi geri geldi ama kayıt hizmeti kendiliğinden başlayamadı. Yeniden başlatmak için dokunun</string>
     <string name="version">One Recorder %1$s</string>
+    <string name="section_about">Hakkında</string>
+    <string name="update_title">Yazılım güncellemesi</string>
+    <string name="update_checking">Denetleniyor…</string>
+    <string name="update_installing">İndiriliyor ve yükleniyor… Bitince One Recorder kapanır</string>
+    <string name="update_failed">Güncelleme yüklenemedi. Daha sonra yeniden deneyin</string>
+    <string name="update_debug">Bu bir test derlemesi: güncellemeler sürüm derlemesiyle gelir</string>
+    <string name="update_after_call">Bir güncelleme hazır: aramadan sonra yükleyin</string>
+    <string name="update_available">%1$s sürümü mevcut: yüklemek için dokunun</string>
+    <string name="update_current">Güncel. Yeniden denetlemek için dokunun</string>
+    <string name="check_title">Şimdi denetle</string>
+    <string name="check_detail">Kayıt hizmetinin çalıştığını, hâlâ eşli olduğunu ve arama sesini alabildiğini denetler</string>
+    <string name="check_running">Denetleniyor…</string>
+    <string name="check_at">%1$s · %2$s</string>
+    <string name="check_works">Her şey çalışıyor: kayıt hizmeti çalışıyor ve arama sesini alabiliyor</string>
+    <string name="check_no_capture">Kayıt hizmeti çalışıyor, ancak bu telefon arama sesini almasına izin vermiyor</string>
+    <string name="check_not_paired">Kablosuz hata ayıklama artık One Recorder\'ı kabul etmiyor: yukarıdan yeniden eşleyin</string>
+    <string name="check_wont_start">Kayıt hizmeti başlamadı: yukarıdaki adıma bakın</string>
+    <string name="status_check">Son kaydı kontrol edin</string>
+    <string name="last_call_heard">Son arama kaydedildi %1$s · %2$s</string>
+    <string name="last_call_silent">Son kayıt (%1$s) sessizdi. One Dialer\'da dinleyin, ardından Şimdi denetle\'ye dokunun</string>
+    <string name="last_call_failed">Son arama (%1$s) kaydedilmedi: kayıt hizmeti çalışmıyordu. Şimdi denetle\'ye dokunun</string>
+    <string name="diagnostics">Tanılamayı paylaş</string>
+    <string name="diagnostics_detail">Hata bildirimi için sürümler, telefon, kurulum durumu ve son günlük satırları. Numara veya ad yok</string>
 </resources>

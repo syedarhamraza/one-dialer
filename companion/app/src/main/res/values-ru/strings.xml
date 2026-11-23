@@ -89,4 +89,27 @@
     <string name="stopped_title">Запись обеих сторон остановлена</string>
     <string name="stopped_detail">Wi-Fi снова есть, но служба записи не смогла запуститься сама. Нажмите, чтобы запустить её снова</string>
     <string name="version">One Recorder %1$s</string>
+    <string name="section_about">О приложении</string>
+    <string name="update_title">Обновление ПО</string>
+    <string name="update_checking">Проверка…</string>
+    <string name="update_installing">Загрузка и установка… One Recorder закроется по завершении</string>
+    <string name="update_failed">Не удалось установить обновление. Повторите попытку позже</string>
+    <string name="update_debug">Это тестовая сборка: обновления приходят с релизной сборкой</string>
+    <string name="update_after_call">Обновление готово: установите его после звонка</string>
+    <string name="update_available">Доступна версия %1$s: нажмите, чтобы установить</string>
+    <string name="update_current">Установлена последняя версия. Нажмите, чтобы проверить снова</string>
+    <string name="check_title">Проверить сейчас</string>
+    <string name="check_detail">Проверяет, что служба записи работает, сопряжение действует и звук звонка записывается</string>
+    <string name="check_running">Проверка…</string>
+    <string name="check_at">%1$s · %2$s</string>
+    <string name="check_works">Всё работает: служба записи запущена и может записывать звук звонка</string>
+    <string name="check_no_capture">Служба записи запущена, но этот телефон не даёт ей записывать звук звонка</string>
+    <string name="check_not_paired">Отладка по Wi-Fi больше не принимает One Recorder: выполните сопряжение заново выше</string>
+    <string name="check_wont_start">Служба записи не запустилась: см. шаг выше</string>
+    <string name="status_check">Проверьте последнюю запись</string>
+    <string name="last_call_heard">Последний звонок записан %1$s · %2$s</string>
+    <string name="last_call_silent">Последняя запись (%1$s) беззвучна. Прослушайте её в One Dialer, затем нажмите «Проверить сейчас»</string>
+    <string name="last_call_failed">Последний звонок (%1$s) не записан: служба записи не работала. Нажмите «Проверить сейчас»</string>
+    <string name="diagnostics">Поделиться диагностикой</string>
+    <string name="diagnostics_detail">Версии, телефон, состояние настройки и последние строки журнала для отчёта об ошибке. Без номеров и имён</string>
 </resources>

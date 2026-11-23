@@ -89,4 +89,27 @@
     <string name="stopped_title">Registrazione di entrambe le parti interrotta</string>
     <string name="stopped_detail">Il Wi-Fi è tornato, ma il servizio di registrazione non è riuscito ad avviarsi da solo. Tocca per riavviarlo</string>
     <string name="version">One Recorder %1$s</string>
+    <string name="section_about">Informazioni</string>
+    <string name="update_title">Aggiornamento software</string>
+    <string name="update_checking">Verifica…</string>
+    <string name="update_installing">Download e installazione… One Recorder si chiude al termine</string>
+    <string name="update_failed">Impossibile installare l\'aggiornamento. Riprova più tardi</string>
+    <string name="update_debug">Questa è una build di prova: gli aggiornamenti arrivano con la build di rilascio</string>
+    <string name="update_after_call">Un aggiornamento è pronto: installalo dopo la chiamata</string>
+    <string name="update_available">È disponibile la versione %1$s: tocca per installarla</string>
+    <string name="update_current">Aggiornato. Tocca per verificare di nuovo</string>
+    <string name="check_title">Verifica ora</string>
+    <string name="check_detail">Controlla che il servizio di registrazione sia attivo, ancora associato e in grado di catturare l\'audio delle chiamate</string>
+    <string name="check_running">Verifica…</string>
+    <string name="check_at">%1$s · %2$s</string>
+    <string name="check_works">Tutto funziona: il servizio di registrazione è attivo e cattura l\'audio delle chiamate</string>
+    <string name="check_no_capture">Il servizio di registrazione è attivo, ma questo telefono non gli consente di catturare l\'audio delle chiamate</string>
+    <string name="check_not_paired">Il debug wireless non accetta più One Recorder: associalo di nuovo qui sopra</string>
+    <string name="check_wont_start">Il servizio di registrazione non si è avviato: vedi il passo qui sopra</string>
+    <string name="status_check">Controlla l\'ultima registrazione</string>
+    <string name="last_call_heard">Ultima chiamata registrata %1$s · %2$s</string>
+    <string name="last_call_silent">L\'ultima registrazione (%1$s) era muta. Ascoltala in One Dialer, poi tocca Verifica ora</string>
+    <string name="last_call_failed">L\'ultima chiamata (%1$s) non è stata registrata: il servizio di registrazione non era attivo. Tocca Verifica ora</string>
+    <string name="diagnostics">Condividi diagnostica</string>
+    <string name="diagnostics_detail">Versioni, telefono, stato della configurazione e righe di log recenti per una segnalazione. Nessun numero o nome</string>
 </resources>

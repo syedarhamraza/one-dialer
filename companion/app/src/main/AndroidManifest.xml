@@ -80,6 +80,12 @@
                 android:value="Starts the call recording helper after a reboot without Wi-Fi (experimental, user-enabled)" />
         </service>
 
+        <!-- Every few hours while paired: starts the recording helper again if it stopped. -->
+        <service
+            android:name=".shell.Watchdog"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
         <!-- Optional auto pairing: reads Settings' pairing code, then switches itself off. -->
         <service
             android:name=".shell.PairingAccessibilityService"
