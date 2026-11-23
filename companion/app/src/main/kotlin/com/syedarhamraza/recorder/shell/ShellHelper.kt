@@ -161,7 +161,8 @@ object ShellHelper {
     fun start(context: Context): Boolean {
         if (!supported() || !paired(context)) return false
         if (running(context)) {
-            if (!stale(context)) return true
+            // Re-pairing turned debugging back on under a running helper: hide it again.
+            if (!stale(context)) return !(hiding(context) && exposed(context)) || hideNow(context) || start(context)
             ask(context, "quit") // still the version before an update
         }
         // Developer options were turned off by us: some phones won't run Wireless debugging without them.
@@ -268,6 +269,11 @@ object ShellHelper {
         }
         return true
     }
+
+    /** Something [hideNow] would turn off is on. */
+    private fun exposed(context: Context) = global(context, DEV_OPTIONS) == 1 ||
+        (!RecorderSettings.keepUsbDebugging(context) && global(context, Settings.Global.ADB_ENABLED) == 1) ||
+        (!RecorderSettings.keepWirelessDebugging(context) && global(context, ADB_WIFI) == 1)
 
     /** Writes [key] = 0 and checks the helper survived it; if not, puts the old value back. */
     private fun turnOff(context: Context, key: String): Boolean {
