@@ -2,6 +2,7 @@ import 'package:dialer/core/contacts/contacts_repository.dart';
 import 'package:dialer/core/prefs/dialer_prefs.dart';
 import 'package:dialer/features/contacts/contact_sections.dart';
 import 'package:dialer/features/contacts/contacts_screen.dart';
+import 'package:dialer/features/contacts/manage_contacts_screen.dart' show importVCards;
 import 'package:dialer/theme/one_ui_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -21,6 +22,14 @@ void main() {
         labels: [for (final _ in numbers) 'Mobile'],
         accounts: accounts,
       );
+
+  test('a vCard whose quoted-printable bytes are not UTF-8 is unreadable, not a crash', () {
+    // =C3=28 is an invalid UTF-8 pair (the 1.0.0 "Missing extension byte" import crash).
+    const bad = 'BEGIN:VCARD\r\nVERSION:2.1\r\nN;ENCODING=QUOTED-PRINTABLE:=C3=28st;;;;\r\nTEL:0300 1234567\r\nEND:VCARD\r\n';
+    expect(importVCards(bad), isNull);
+    const good = 'BEGIN:VCARD\r\nVERSION:3.0\r\nFN:Test\r\nTEL:0300 1234567\r\nEND:VCARD\r\n';
+    expect(importVCards(good), hasLength(1));
+  });
 
   test('duplicates share a number or a name, ignoring case and spaces', () {
     final groups = duplicateGroups([

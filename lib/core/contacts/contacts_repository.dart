@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 
 import '../../features/keypad/t9.dart';
 import '../../features/recents/call_log.dart';
 import '../prefs/dialer_prefs.dart';
 import '../telecom/telecom_bridge.dart';
+import '../crash_reporting.dart';
 import '../diagnostics/lag_diagnostics.dart';
 
 /// A device contact. Usable directly as a T9 entry; only [ContactsRepository.allContacts]
@@ -170,6 +172,10 @@ class ContactsRepository {
       if (!sameContacts(entries, allContacts.value)) allContacts.value = entries;
       if (!sameContacts(numbered, contacts.value)) _publish(numbered);
       revision.value++;
+    } on PlatformException catch (e, stack) {
+      // Samsung's contacts provider on Android 15 can refuse the read (LOG_COMPAT_CHANGE) on
+      // every change: keep the lists from the last read that worked instead of failing each time.
+      reportOnce('contacts_load_${e.code}', e, stack);
     } finally {
       LagDiagnostics.instance.action(DiagnosticAction.contactsLoad, elapsed: diagnosticTimer.elapsed);
     }

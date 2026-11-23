@@ -101,7 +101,8 @@ object CallNotifications {
         // vivo's own call island next to it, so it's plain actions there, as in updateOngoing.
         // Locked it's a plain CallStyle call with no island extras: vivo hides a notification with
         // them on the lock screen, which left no way back after leaving the call screen there.
-        if (callStyle(manager) && !(island && !screenOpening)) {
+        val styled = callStyle(manager) && !(island && !screenOpening)
+        if (styled) {
             val person = Person.Builder().setName(caller).setIcon(callerIcon(context, details.handle?.schemeSpecificPart))
                 .setImportant(true).build()
             builder.setStyle(Notification.CallStyle.forIncomingCall(person, decline, answer))
@@ -137,7 +138,10 @@ object CallNotifications {
             )
         }
 
-        post(manager, ID_INCOMING, builder.build())
+        if (!post(manager, ID_INCOMING, builder.build()) && styled) {
+            callStyleRefused = true
+            showIncoming(context, callId, call, screenOpening) // once more, with plain Answer and Decline
+        }
     }
 
     /**
@@ -299,7 +303,8 @@ object CallNotifications {
             builder.setUsesChronometer(true).setWhen(details.connectTimeMillis).setShowWhen(true)
         }
         // On vivo a CallStyle call gets vivo's own call island next to ours, so it's a plain action there.
-        if (callStyle(manager) && !vivoIsland) {
+        val styled = callStyle(manager) && !vivoIsland
+        if (styled) {
             val person = Person.Builder().setName(caller).setIcon(callerIcon(context, details.handle?.schemeSpecificPart))
                 .setImportant(true).build()
             builder.setStyle(Notification.CallStyle.forOngoingCall(person, hangUp))
@@ -375,20 +380,31 @@ object CallNotifications {
                 )
             )
         }
-        post(manager, ID_ONGOING, builder.build())
+        if (!post(manager, ID_ONGOING, builder.build()) && styled) {
+            callStyleRefused = true
+            updateOngoing(context, calls) // once more, with a plain Hang up
+        }
     }
 
     /**
      * Whether a call may use CallStyle: Android refuses (and the post threw) a CallStyle call without
      * a full-screen intent, which it strips when the user or the skin (HyperOS) turned them off.
      */
-    private fun callStyle(manager: NotificationManager) = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+    private fun callStyle(manager: NotificationManager) = !callStyleRefused && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
         (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE || manager.canUseFullScreenIntent())
 
+    /**
+     * Android refused a CallStyle post even though [callStyle] allowed it (a skin that strips the
+     * full-screen intent on its own): plain notifications from then on in this process, or a
+     * ringing call would show nothing to answer it with.
+     */
+    @Volatile private var callStyleRefused = false
+
     // Never crash the in-call service over a refused notification; the call screen still works.
-    private fun post(manager: NotificationManager, id: Int, notification: Notification) {
-        runCatching { manager.notify(id, notification) }.onFailure { android.util.Log.w("CallNotifications", "not posted", it) }
-    }
+    private fun post(manager: NotificationManager, id: Int, notification: Notification): Boolean =
+        runCatching { manager.notify(id, notification) }
+            .onFailure { android.util.Log.w("CallNotifications", "not posted", it) }
+            .isSuccess
 
     /** The call the ongoing notification describes, or null when none qualifies. */
     fun shownOngoing(calls: List<Pair<String, Call>>): Pair<String, Call>? =

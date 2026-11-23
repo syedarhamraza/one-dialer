@@ -387,6 +387,9 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
 
     /** Runs on the data channel's background task queue; answers from that thread. */
     private fun readData(call: MethodCall, result: MethodChannel.Result) {
+        // The provider's own time, without the wait in this queue or the trip to Dart: lag reports
+        // showed call-log loads of 3-7 s and couldn't say which part was slow.
+        val start = android.os.SystemClock.uptimeMillis()
         val outcome = runCatching {
             when (call.method) {
                 "getCallLog" -> {
@@ -397,11 +400,14 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 else -> return result.notImplemented()
             }
         }
+        val query = if (call.method == "getCallLog") "call_log_query" else "contacts_query"
+        LagDiagnostics.operation(engineName, query, android.os.SystemClock.uptimeMillis() - start)
         outcome.fold(
             onSuccess = { result.success(it) },
             onFailure = {
                 android.util.Log.w("CallBridge", "Data read failed", it)
-                if (it is SecurityException) result.error("NO_PERMISSION", it.message, null)
+                // The frames say which query a provider refused (retrace them with the R8 mapping).
+                if (it is SecurityException) result.error("NO_PERMISSION", it.message, it.stackTrace.take(8).joinToString("\n"))
                 else result.error("FAILED", it.message, null)
             },
         )

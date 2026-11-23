@@ -38,6 +38,16 @@ Account? _saveAccount() {
   return Account(id: '', type: key.substring(0, i), name: key.substring(i + 1));
 }
 
+/// The contacts in a .vcf, or null when it can't be read: the package decodes quoted-printable
+/// values as strict UTF-8, and files in another charset (or with a broken line break) threw.
+List<Contact>? importVCards(String text) {
+  try {
+    return FlutterContacts.vCard.import(text);
+  } on FormatException {
+    return null;
+  }
+}
+
 /// Contacts ⋮ › Manage contacts, ColorOS's page: what the list shows, where new contacts
 /// go, import and export, SIM contacts and merging duplicates.
 class ManageContactsScreen extends StatefulWidget {
@@ -90,7 +100,11 @@ class _ManageContactsScreenState extends State<ManageContactsScreen> {
       return;
     }
     if (text == null || !mounted) return;
-    final contacts = FlutterContacts.vCard.import(text);
+    final contacts = importVCards(text);
+    if (contacts == null) {
+      OneUIToast.show(context, context.l10n.couldNotOpenFile);
+      return;
+    }
     if (contacts.isEmpty) {
       OneUIToast.show(context, context.l10n.noContactsInFile);
       return;

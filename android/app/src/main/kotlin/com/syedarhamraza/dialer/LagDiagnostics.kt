@@ -1,11 +1,14 @@
 package com.syedarhamraza.dialer
 
 import android.content.Context
+import android.hardware.display.DisplayManager
 import android.os.Build
 import android.os.Debug
 import android.os.Handler
 import android.os.Looper
+import android.os.PowerManager
 import android.os.SystemClock
+import android.view.Display
 import android.view.MotionEvent
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodChannel
@@ -51,7 +54,7 @@ internal object LagDiagnostics {
     }
 
     private val actions = setOf("keypad", "backspace", "tab_calls", "tab_contacts", "contacts_load",
-        "call_log_load", "playTone", "stopTone", "answer", "reject", "hangUp",
+        "call_log_load", "call_log_query", "contacts_query", "playTone", "stopTone", "answer", "reject", "hangUp",
         "hold", "unhold", "playDtmf", "stopDtmf", "merge", "swap")
     private val categories = setOf("SevereFrameDelay", "NativeMainStall", "DartStall", "RenderStall", "InputStall", "UserReportedLag")
 
@@ -228,14 +231,19 @@ internal object LagDiagnostics {
         if (category !in categories) return null
         val state = engines[engine] ?: return null
         if (category != "UserReportedLag" && (!state.resumed || now - state.resumedAt < 5_000 || Debug.isDebuggerConnected())) return null
-        if (!policy.allow(category, now)) return null
         val context = app ?: return null
+        val interactive = context.getSystemService(PowerManager::class.java).isInteractive &&
+            context.getSystemService(DisplayManager::class.java).getDisplay(Display.DEFAULT_DISPLAY)?.state == Display.STATE_ON
+        // No vsync comes while the display is off, so a frame asked for then never draws: on ColorOS
+        // the activity can stay resumed with the screen off, and that was most RenderStalls.
+        if (category == "RenderStall" && !interactive) return null
+        if (!policy.allow(category, now)) return null
         val id = UUID.randomUUID().toString()
         val at = System.currentTimeMillis()
         val info = context.packageManager.getPackageInfo(context.packageName, 0)
         val payload = JSONObject().put("reportId", id).put("session", session).put("engine", engine)
             .put("category", category).put("at", at).put("context", state.context)
-            .put("lifecycle", if (state.resumed) "resumed" else "background")
+            .put("lifecycle", if (state.resumed) "resumed" else "background").put("interactive", interactive)
             .put("history", JSONArray(state.history.toList())).put("version", info.versionName)
             .put("build", info.longVersionCode).put("manufacturer", Build.MANUFACTURER)
             .put("model", Build.MODEL)
