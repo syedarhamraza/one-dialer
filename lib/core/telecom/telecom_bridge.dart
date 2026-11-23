@@ -160,6 +160,9 @@ class TelecomBridge {
   Future<Map<Object?, Object?>> getCallHealth() async =>
       await _methods.invokeMapMethod<Object?, Object?>('getCallHealth') ?? const {};
 
+  /// The font picked in ColorOS / realme UI's Display settings ("OPPO Sans", "OPPO Serif"), or null.
+  Future<String?> systemFontName() => _methods.invokeMethod<String>('systemFontName');
+
   /// The visual effects level this phone starts on (`DeviceTier.kt`): `tier` (`off`, `reduced` or
   /// `full`), `source` (`soc`, `platform`, `gpu` or `ram`) and the raw `soc`, `platform`,
   /// `hardware` and `gpu` strings it was read from.

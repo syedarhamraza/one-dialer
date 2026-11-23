@@ -297,7 +297,14 @@ class _OneUIFloatingNavBarState extends State<OneUIFloatingNavBar> {
                       const SizedBox(height: 2),
                       AnimatedDefaultTextStyle(
                         duration: duration,
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: color),
+                        // Replaces the inherited style, so it carries the theme's font itself.
+                        style: TextStyle(
+                          fontFamily: DefaultTextStyle.of(context).style.fontFamily,
+                          fontFamilyFallback: DefaultTextStyle.of(context).style.fontFamilyFallback,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          color: color,
+                        ),
                         child: Text(item.label, maxLines: 1),
                       ),
                     ],
