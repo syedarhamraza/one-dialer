@@ -605,7 +605,12 @@ class _TypedDigits extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 8),
             child: LayoutBuilder(
               builder: (context, box) {
-                final (text, style) = _fit(digits, box.maxWidth, MediaQuery.textScalerOf(context));
+                final (text, style) = _fit(
+                  digits,
+                  box.maxWidth,
+                  MediaQuery.textScalerOf(context),
+                  DefaultTextStyle.of(context).style,
+                );
                 return Text(
                   text,
                   key: const ValueKey('typed-digits'),
@@ -624,12 +629,12 @@ class _TypedDigits extends StatelessWidget {
 
   /// As on ColorOS: the digits shrink to fit as they're typed, then the earliest give way to
   /// an ellipsis so the latest stay in view.
-  (String, TextStyle) _fit(String digits, double width, TextScaler scaler) {
+  (String, TextStyle) _fit(String digits, double width, TextScaler scaler, TextStyle base) {
     final last = _last;
     if (last != null && last.$1 == digits && last.$2 == width && last.$3 == scaler && last.$4 == compact) {
       return last.$5;
     }
-    final fit = _measure(digits, width, scaler);
+    final fit = _measure(digits, width, scaler, base);
     _last = (digits, width, scaler, compact, fit);
     return fit;
   }
@@ -637,13 +642,16 @@ class _TypedDigits extends StatelessWidget {
   // Rebuilt every frame of the keypad's morph; the measuring only reruns when something changes.
   static (String, double, TextScaler, bool, (String, TextStyle))? _last;
 
-  (String, TextStyle) _measure(String digits, double width, TextScaler scaler) {
-    TextStyle style(double size) => TextStyle(
-      fontSize: size,
-      height: 1.15,
-      letterSpacing: size / 16,
-      color: Colors.white,
-      fontFeatures: const [FontFeature.tabularFigures()],
+  // [base] is the inherited style, so the digits are measured in the font they're drawn in.
+  (String, TextStyle) _measure(String digits, double width, TextScaler scaler, TextStyle base) {
+    TextStyle style(double size) => base.merge(
+      TextStyle(
+        fontSize: size,
+        height: 1.15,
+        letterSpacing: size / 16,
+        color: Colors.white,
+        fontFeatures: const [FontFeature.tabularFigures()],
+      ),
     );
     bool fits(String text, TextStyle style) {
       final painter = TextPainter(

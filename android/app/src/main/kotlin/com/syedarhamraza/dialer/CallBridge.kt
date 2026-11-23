@@ -247,6 +247,13 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             }
             "getCallHealth" -> inBackground(result) { callHealth() }
             "effectsDefault" -> inBackground(result) { effectsDefault() }
+            // The font picked in ColorOS / realme UI's Display settings ("OPPO Sans", "OPPO Serif"),
+            // null elsewhere or if Android won't let us read it.
+            "systemFontName" -> result.success(
+                runCatching { Settings.System.getString(context.contentResolver, "current_typeface_name") }
+                    .onFailure { android.util.Log.w("CallBridge", "current_typeface_name: $it") }
+                    .getOrNull(),
+            )
             "openSystemSettings" -> openSystemSettings(call.argument<String>("page"), result)
             "getBlocking" -> BlockingPrefs.read(context).let {
                 result.success(mapOf("blockHidden" to it.blockHidden, "blockNonContacts" to it.blockNonContacts))
