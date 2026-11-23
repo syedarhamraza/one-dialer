@@ -1,25 +1,41 @@
 version: 2
+# Each ecosystem's updates come as one pull request a week instead of one per package.
 updates:
   - package-ecosystem: pub
     directory: /
     schedule:
       interval: weekly
+    groups:
+      all:
+        patterns: ["*"]
     open-pull-requests-limit: 5
   - package-ecosystem: gradle
     directory: /android
     schedule:
       interval: weekly
+    groups:
+      all:
+        patterns: ["*"]
     open-pull-requests-limit: 5
   - package-ecosystem: gradle
     directory: /companion
     schedule:
       interval: weekly
+    groups:
+      all:
+        patterns: ["*"]
   - package-ecosystem: npm
     directory: /site
     schedule:
       interval: weekly
+    groups:
+      all:
+        patterns: ["*"]
     open-pull-requests-limit: 5
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    groups:
+      all:
+        patterns: ["*"]
