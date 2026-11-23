@@ -128,8 +128,8 @@ class _SetupGate extends StatefulWidget {
 class _SetupGateState extends State<_SetupGate> with WidgetsBindingObserver {
   bool? _isDefault; // null while checking
 
-  /// Onboarding shows only after this run's [SetupScreen]: someone who already had the role
-  /// when it shipped is no new user.
+  /// Onboarding shows after this run's [SetupScreen], or when nothing is saved yet (cleared data
+  /// keeps the role). Someone who had the role and their settings when it shipped is no new user.
   bool _setupShown = false;
   bool _onboarding = false;
 
@@ -165,7 +165,7 @@ class _SetupGateState extends State<_SetupGate> with WidgetsBindingObserver {
     final prefs = DialerPrefs.instance;
     var onboarding = false;
     if (isDefault && !await prefs.onboarded()) {
-      if (_setupShown) {
+      if (_setupShown || await prefs.isFresh()) {
         onboarding = true;
       } else {
         prefs.setOnboarded().ignore();

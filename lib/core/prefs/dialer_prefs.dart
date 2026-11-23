@@ -61,6 +61,9 @@ class DialerPrefs {
 
   Future<void> setOnboarded() => _prefs.setBool('onboarded', true);
 
+  /// Nothing saved yet: a fresh install, or the app's data was cleared.
+  Future<bool> isFresh() async => (await _prefs.getKeys()).isEmpty;
+
   /// Search page "Recent searches", newest first.
   Future<List<String>> recentSearches() async => await _prefs.getStringList('recent_searches') ?? const [];
 
