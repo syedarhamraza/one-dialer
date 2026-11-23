@@ -2,18 +2,20 @@
 
 > **Translators:** you don't need this page. Follow [TRANSLATING.md](../TRANSLATING.md) instead. This page is for developers.
 
-One Dialer ships in English and Italian. The Flutter UI uses Flutter's gen-l10n; the Kotlin layer's notification text uses Android string resources.
+One Dialer and One Recorder ship in English, Italian, Russian, Spanish, Turkish and German. The Flutter UI uses Flutter's gen-l10n; the Kotlin layer's notification text uses Android string resources.
 
 | What | Where |
 | --- | --- |
 | UI text (template) | `lib/l10n/app_en.arb` |
-| UI text, Italian | `lib/l10n/app_it.arb` |
+| UI text, other languages | `lib/l10n/app_xx.arb` (`it`, `ru`, `es`, `tr`, `de`) |
 | Generated classes | `lib/l10n/app_localizations*.dart` (`flutter gen-l10n`, also run by `flutter pub get`/`build`) |
 | Access in widgets | `context.l10n.key` (`lib/l10n/l10n.dart`) |
-| Notifications, channels, call announcement, default quick replies | `android/app/src/main/res/values/strings.xml`, `values-it/strings.xml` |
+| Notifications, channels, call announcement, default quick replies | `android/app/src/main/res/values/strings.xml`, `values-xx/strings.xml` |
 | Android 13+ per-app language list | `android/app/src/main/res/xml/locales_config.xml` |
+| One Recorder (all its text) | `companion/app/src/main/res/values*/strings.xml`, its own `res/xml/locales_config.xml` |
+| Layout check in every language | `test/l10n_layout_test.dart` (real Roboto font; `--dart-define=L10N_PREVIEWS=true` writes `build/l10n-previews/<locale>/`) |
 
-Keys are camelCase by meaning (`deleteCallsTitle`, `callTypeMissed`). Counts are ICU plurals, names and numbers are placeholders. Contact names, phone numbers, brand names (One Dialer, WhatsApp, Google Play) and internal ids (call states, audio routes, `call-N`) are never translated. Release notes (`lib/core/config/changelog.dart`) stay English.
+Keys are camelCase by meaning (`deleteCallsTitle`, `callTypeMissed`). Counts are ICU plurals, names and numbers are placeholders. Russian uses `one`/`few`/`many`/`other`; Flutter puts `=1` and `one` in the same slot, so a Russian message has no `=1` (its `one` covers 1, 21, 31...). Turkish nouns stay singular after a number. Contact names, phone numbers, brand names (One Dialer, WhatsApp, Google Play) and internal ids (call states, audio routes, `call-N`) are never translated. Release notes (`lib/core/config/changelog.dart`) stay English.
 
 Code without a `BuildContext` takes an `AppLocalizations` argument from its caller (`dayLabel(l10n, ...)`, `callerName(l10n, call)`, `labelDisplay(l10n, label)`), never a global lookup. Dates and times go through `intl`'s `DateFormat` with `l10n.localeName`.
 
@@ -35,8 +37,24 @@ Translators start from the templates in `translations/` ([TRANSLATING.md](../TRA
 1. Copy `lib/l10n/app_it.arb` to `app_xx.arb`, set `@@locale` and translate every value (`languageName` is the language's own name).
 2. Copy `values-it/strings.xml` to `values-xx/strings.xml` and translate it (plurals need the language's quantities).
 3. Add `<locale android:name="xx" />` to `res/xml/locales_config.xml`.
+4. One Recorder: copy `companion/app/src/main/res/values-it/strings.xml` to `values-xx` and add the locale to its `res/xml/locales_config.xml`.
+5. Run `flutter test test/l10n_layout_test.dart --dart-define=L10N_PREVIEWS=true` and look at the previews for labels that crowd (shorter words first, as Android's own translation would).
+6. A non-Latin script needs its keypad letters: `t9.dart` (`_foreignKeys` for search, `keyLetters` for the keys).
 
-That's all: `supportedLocales`, the language picker and Android's list pick it up. `test/l10n_test.dart` fails until the ARB has every key and placeholder, `values-xx` exists and `locales_config.xml` lists it. Right-to-left languages also need a layout pass (not done yet).
+That's all: `supportedLocales`, the language picker and Android's list pick it up. `test/l10n_test.dart` fails until the ARB has every key and placeholder, `values-xx` exists and `locales_config.xml` lists it; `test/l10n_layout_test.dart` fails on any overflow. Right-to-left languages also need a layout pass (not done yet).
+
+## Keypad letters and T9
+
+As AOSP Dialer's SmartDial maps do, T9 search (`lib/features/keypad/t9.dart`) folds accented Latin letters to their base key (é → 3, ñ → 6, ş → 7, ı and İ → 4, ß → 7) and always searches Cyrillic names on the Russian phone layout (2 АБВГ, 3 ДЕЁЖЗ, 4 ИЙКЛ, 5 МНОП, 6 РСТУ, 7 ФХЦЧ, 8 ШЩЪЫ, 9 ЬЭЮЯ), whatever the app's language. In Russian, the keypad and the in-call dial pad print the Cyrillic letters after the Latin ones on one line (`keyLetters`), as Google's and Samsung's dialers do, so the keys keep their height.
+
+## Glossaries
+
+Each follows its language's AOSP Dialer and Contacts terms, shortened where a round in-call button has no room (as Android's own translations do).
+
+- **German:** Anrufe, Kontakte, Wähltastatur, Favoriten, Entgangener Anruf, Annehmen, Ablehnen, Auflegen (notification), Anruf beenden, Stumm, Halten, Lautsprecher, Mailbox, Kurzwahl, Blockieren. Informal *du*, as Android's German.
+- **Spanish (Spain):** Llamadas, Contactos, Teclado, Favoritos, Llamada perdida, Responder, Rechazar, Colgar, Finalizar llamada, Silenciar, Retener, Altavoz, Buzón de voz, Marcación rápida. Informal *tú*.
+- **Russian:** Вызовы, Контакты, Клавиатура, Избранное, Пропущенный вызов, Ответить, Отклонить, Завершить, Без звука, Удержать, Динамик, Голосовая почта, Быстрый набор. Formal *вы*.
+- **Turkish:** Aramalar, Kişiler, Tuş takımı, Favoriler, Cevapsız arama, Yanıtla, Reddet, Kapat, Aramayı bitir, Sessiz, Beklet, Hoparlör, Sesli mesaj, Hızlı arama. Formal imperative (*-in*); placeholders are kept free of suffixes ("Kaldır: {item}").
 
 ## Italian glossary
 

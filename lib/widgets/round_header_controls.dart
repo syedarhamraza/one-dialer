@@ -59,9 +59,36 @@ class FilterTabs extends StatefulWidget {
   /// The thumb's spring; the floating menu's highlight moves on it too.
   static Curve get thumbSpring => _FilterTabsState.thumbSpring;
 
-  /// The pill's size for [count] tabs.
-  static Size sizeFor(int count) =>
-      Size(count * _FilterTabsState._tabWidth + 2 * _FilterTabsState._inset, _FilterTabsState._height);
+  /// The pill's size for these [labels].
+  static Size sizeFor(BuildContext context, List<String> labels) =>
+      Size(labels.length * _tabWidthFor(context, labels) + 2 * _FilterTabsState._inset, _FilterTabsState._height);
+
+  static TextStyle _labelStyle(BuildContext context, {Color? color}) => TextStyle(
+    fontFamily: DefaultTextStyle.of(context).style.fontFamily,
+    fontFamilyFallback: DefaultTextStyle.of(context).style.fontFamilyFallback,
+    fontSize: 15,
+    fontWeight: FontWeight.w500,
+    color: color,
+  );
+
+  /// Each tab is as wide as the longest label needs (German, Russian), from 74 up to 120 dp (less when four must fit);
+  /// a label longer still scales down.
+  static double _tabWidthFor(BuildContext context, List<String> labels) {
+    var widest = 0.0;
+    for (final label in labels) {
+      final painter = TextPainter(
+        text: TextSpan(text: label, style: _labelStyle(context)),
+        textDirection: TextDirection.ltr,
+        // Unscaled, as the pill's size never followed the text size: a scaled label shrinks to fit.
+        maxLines: 1,
+      )..layout();
+      widest = math.max(widest, painter.width);
+      painter.dispose();
+    }
+    // Four tabs (Recordings) still fit across the screen.
+    final most = math.min(120.0, (MediaQuery.sizeOf(context).width - 48) / labels.length);
+    return (widest + 20).clamp(math.min(_FilterTabsState._minTabWidth, most), most).floorToDouble();
+  }
 
   @override
   State<FilterTabs> createState() => _FilterTabsState();
@@ -84,7 +111,7 @@ class _FilterTabsState extends State<FilterTabs> {
     WidgetsBinding.instance.addPostFrameCallback((_) => widget.onChanged(i));
   }
 
-  static const double _tabWidth = 74;
+  static const double _minTabWidth = 74;
   static const double _height = 48; // as tall as the round buttons
   static const double _inset = 4;
 
@@ -101,11 +128,12 @@ class _FilterTabsState extends State<FilterTabs> {
   @override
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final tabWidth = FilterTabs._tabWidthFor(context, widget.labels);
     final content = Container(
       height: _height,
       padding: const EdgeInsets.all(_inset),
       child: SizedBox(
-        width: _tabWidth * widget.labels.length,
+        width: tabWidth * widget.labels.length,
         child: Stack(
           clipBehavior: Clip.none,
           children: [
@@ -115,10 +143,10 @@ class _FilterTabsState extends State<FilterTabs> {
               left: 0,
               top: 0,
               bottom: 0,
-              width: _tabWidth,
+              width: tabWidth,
               child: RepaintBoundary(
                 child: TweenAnimationBuilder<double>(
-                  tween: Tween(end: _index * _tabWidth),
+                  tween: Tween(end: _index * tabWidth),
                   duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 600),
                   curve: thumbSpring,
                   builder: (context, x, child) => Transform.translate(offset: Offset(x, 0), child: child),
@@ -141,19 +169,16 @@ class _FilterTabsState extends State<FilterTabs> {
                       behavior: HitTestBehavior.opaque,
                       onTap: () => _select(i),
                       child: SizedBox(
-                        width: _tabWidth,
+                        width: tabWidth,
                         child: Center(
                           child: AnimatedDefaultTextStyle(
                             duration: const Duration(milliseconds: 200),
                             // Replaces the inherited style, so it carries the theme's font itself.
-                            style: TextStyle(
-                              fontFamily: DefaultTextStyle.of(context).style.fontFamily,
-                              fontFamilyFallback: DefaultTextStyle.of(context).style.fontFamilyFallback,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
+                            style: FilterTabs._labelStyle(
+                              context,
                               color: i == _index ? context.palette.textPrimary : context.palette.textSecondary,
                             ),
-                            // Scales a long label (Italian) down instead of wrapping it.
+                            // Past the widest tab, scales a label down instead of wrapping it.
                             child: FittedBox(fit: BoxFit.scaleDown, child: Text(widget.labels[i], maxLines: 1)),
                           ),
                         ),

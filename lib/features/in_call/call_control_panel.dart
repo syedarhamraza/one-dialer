@@ -11,6 +11,7 @@ import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/one_ui_floating_menu.dart';
 import 'call_controls.dart';
 import '../../l10n/l10n.dart';
+import '../keypad/t9.dart';
 import '../../widgets/call_glyph.dart';
 import '../../widgets/call_icons.dart';
 
@@ -682,11 +683,13 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                           // room for an empty line.
                           if (letters.isNotEmpty)
                             Text(
-                              letters,
-                              style: const TextStyle(
+                              keyLetters(digit, letters, context.l10n.localeName),
+                              maxLines: 1,
+                              style: TextStyle(
                                 fontSize: 10,
+                                // Two alphabets need the room the spacing takes.
+                                letterSpacing: context.l10n.localeName == 'ru' ? 0.5 : 1.5,
                                 height: 1.2,
-                                letterSpacing: 1.5,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white60,
                               ),

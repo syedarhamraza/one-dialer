@@ -23,6 +23,8 @@ import 'package:dialer/l10n/app_localizations.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
+import 'real_font.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   final native = <MethodCall>[];
@@ -80,6 +82,8 @@ void main() {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
+      // The tabs size to their labels, so measure real text.
+      await tester.runAsync(loadRealFont);
       // No DesignWidth here, so the pills draw at 1 / size: big at a small App size.
       DialerPrefs.instance.displaySize.value = size;
       addTearDown(() => DialerPrefs.instance.displaySize.value = 1);
@@ -99,7 +103,7 @@ void main() {
       if (title.evaluate().isNotEmpty) {
         expect(tester.getRect(title).right, lessThan(tabs.left), reason: 'title under the tabs at $size');
       }
-      // The test font draws every letter as a wide square, so only the smallest pills leave room for it.
+      // Only the smallest pills leave room for it.
       if (size == DialerPrefs.displaySizes.last) expect(title, findsOneWidget);
       await tester.drag(find.byType(CustomScrollView), const Offset(0, 300));
       await tester.pumpAndSettle();
