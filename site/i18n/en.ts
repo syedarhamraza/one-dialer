@@ -1,7 +1,14 @@
 // The site's English text: the reference every other language in this folder follows, key for key.
 // In the recorder guide, **bold** and `code` mark up words (components/Rich.tsx); {name} is filled in.
 
-export type Block = { p: string } | { ul: string[] } | { ol: string[] };
+// A shot is a screenshot or screen recording slot (components/Shot.tsx, public/guide/<shot>.mp4 or .webp);
+// a setup is a recipe: the situation, then the settings to change.
+export type Block =
+  | { p: string }
+  | { ul: string[] }
+  | { ol: string[] }
+  | { shot: string; alt: string; caption?: string }
+  | { setup: string; when: string; steps: string[] };
 
 export const en = {
   meta: {
@@ -11,10 +18,13 @@ export const en = {
     beta: "Now in closed beta on Google Play.",
     recorderTitle: "One Recorder · One Dialer",
     recorderDescription: "Record your calls in One Dialer with One Recorder, a small companion app you install from this website. How to set it up, and what to expect.",
+    guideTitle: "Guide · One Dialer",
+    guideDescription: "How to use One Dialer: SIMs, calling from Calls, the keypad, contacts, blocking, the call screen and effects, with setups for common situations.",
   },
   nav: {
     label: "Site",
     whatsNew: "What's new",
+    guide: "Guide",
     recorder: "Recorder",
     privacy: "Privacy",
     getApp: "Get the app",
@@ -137,10 +147,244 @@ export const en = {
     feature: "Request a feature",
     report: "Report a bug",
     label: "Footer",
+    guide: "Guide",
     recorder: "One Recorder",
     privacy: "Privacy policy",
     contact: "Contact",
     language: "Language",
+  },
+  // The One Dialer guide (/guide/). Setting names match the app's own (lib/l10n/app_en.arb).
+  guide: {
+    back: "Back to One Dialer",
+    title: "Guide",
+    h1: "One Dialer,",
+    h1b: "explained.",
+    lead: "Where everything is, what each setting does, and the settings that fit your situation.",
+    toc: "On this page",
+    intro: "Pictures and short recordings show each step. Settings are under the ⋮ menu on the Calls tab.",
+    sections: [
+      {
+        id: "start",
+        title: "Get started",
+        blocks: [
+          {
+            ol: [
+              "Open One Dialer and tap **Set** to make it your **default phone app**. Calls, Recents and missed-call notifications only work once it is.",
+              "Allow **Contacts**, **Phone** and **Notifications** when Android asks.",
+              "Open **Settings**. If anything is wrong, a **Needs attention** card sits at the top, for example “Not your default phone app” or notifications turned off, with a **Fix** button that takes you straight to it.",
+            ],
+          },
+          { shot: "start-default", alt: "Setting One Dialer as the default phone app" },
+          { shot: "settings-health", alt: "Settings with the Needs attention card and Fix buttons" },
+        ],
+      },
+      {
+        id: "calls",
+        title: "Calls and recent calls",
+        blocks: [
+          { p: "The **Calls** tab lists your recent calls. Missed calls are red, repeat calls are grouped, and blocked calls are marked." },
+          {
+            p: "What tapping a call does is up to you, in **Settings › Quick calling › Tap a recent call**:",
+          },
+          {
+            ul: [
+              "**Open details**: the safe choice. The call's page opens, with the number, past calls, notes and a Call button.",
+              "**Call**: calls back straight away. Fast, but easy to do by accident.",
+              "**Write in keypad**: puts the number in the keypad, so you can check or change it before calling.",
+            ],
+          },
+          { shot: "recents-tap", alt: "The Tap a recent call setting with Call, Open details and Write in keypad" },
+          {
+            ul: [
+              "**Call button on rows** puts a call button on every row, so a tap can open details while the button calls. **Call button style** changes its look.",
+              "**Swipe to call or message**: swipe a row right to call, left to message.",
+              "**Group by contact** puts a person's calls together.",
+              "Hold a row to select several calls, for example to delete them.",
+            ],
+          },
+          { shot: "recents-swipe", alt: "Swiping a recent call right to call" },
+        ],
+      },
+      {
+        id: "sims",
+        title: "Two SIMs",
+        blocks: [
+          { p: "With two SIMs, **Settings › SIM cards** decides which one each call uses. Choose it separately for:" },
+          {
+            ul: [
+              "**Keypad and contacts**: **Phone's default SIM**, or **Ask every time**, which shows a SIM chooser when you call.",
+              "**Tap a recent call** and **Swipe to call**: **Same as keypad and contacts**, **Use the recent SIM** (the SIM that call used), **Ask every time**, or always one SIM. These are used only when that kind of calling is turned on in Quick calling.",
+            ],
+          },
+          { shot: "sim-settings", alt: "SIM cards settings: Which SIM to call with" },
+          {
+            p: "A contact can have **their own SIM**: open their page and pick it. It always comes first, before any rule above.",
+          },
+          { shot: "sim-contact", alt: "Choosing a SIM on a contact's page" },
+          {
+            p: "On the keypad, **Settings › Keypad › Two Call buttons** shows one Call button per SIM instead of one, so you choose as you call.",
+          },
+          { shot: "sim-chooser", alt: "The SIM chooser when calling with Ask every time" },
+        ],
+      },
+      {
+        id: "keypad",
+        title: "Keypad",
+        blocks: [
+          {
+            ul: [
+              "Type digits or letters: matching contacts appear as you type (**T9**). Tap one to call or open it.",
+              "Hold **1** for voicemail, and **2–9** for speed dial. Set speed dial in **Settings › Keypad › Speed dial**.",
+              "Hold **0** for **+**. Hold the star key (*) for a pause and **#** for a wait, for numbers with extensions.",
+              "Hold the number to paste one you copied. Hold **Delete** to clear it.",
+              "Swipe the keypad down, or tap the handle, to see your calls. The green button beside the nav bar brings it back with your number kept.",
+            ],
+          },
+          { shot: "keypad-t9", alt: "Typing on the keypad with matching contacts" },
+          { shot: "keypad-speed-dial", alt: "Speed dial settings" },
+        ],
+      },
+      {
+        id: "contacts",
+        title: "Contacts",
+        blocks: [
+          {
+            ul: [
+              "Favourites are at the top, under ★. Drag along the **A–Z** index on the right to jump.",
+              "Tap a contact for their page: numbers, their own SIM, call background, and blocking. Hold to select several.",
+              "**⋮ › Manage contacts** sets which accounts show, sort order and name format, where new contacts are saved, importing and exporting, SIM contacts and **Merge duplicate contacts**.",
+            ],
+          },
+          { shot: "contacts-index", alt: "Contacts with favourites and the A–Z index" },
+          { shot: "contacts-manage", alt: "Manage contacts" },
+        ],
+      },
+      {
+        id: "blocking",
+        title: "Blocking",
+        blocks: [
+          {
+            ul: [
+              "Block a number from its call's page or a contact's page. **Settings › Block & filter › Blocked numbers** lists them; Android itself rejects those calls.",
+              "**Block unknown/private numbers** stops callers who hide their number. **Block calls from numbers not in Contacts** lets only your contacts ring.",
+              "These two rules need One Dialer as your **Caller ID & spam app**. One Dialer asks when you turn one on. If another app takes that role, Settings shows “Blocking rules are paused”.",
+              "**Hide blocked calls** keeps them out of the Calls list.",
+            ],
+          },
+          { shot: "blocking-rules", alt: "Block & filter settings" },
+        ],
+      },
+      {
+        id: "callscreen",
+        title: "The call screen",
+        blocks: [
+          {
+            ul: [
+              "Incoming calls fill the screen, even on the lock screen. **Settings › Call screen** chooses how you answer (swipe up or down, or buttons), its effects, the caller's photo and the background.",
+              "During a call: mute, hold, speaker, the dial pad and adding a call are on big glass buttons. **⋮** has more, such as Record when One Recorder is installed.",
+              "**Quick decline messages** are the texts you can send when you decline a call.",
+              "**Answering and ending calls** has auto-answer, reply with SMS and speaker options. **Hide contact phone numbers** shows only names for saved contacts.",
+            ],
+          },
+          { shot: "call-incoming", alt: "An incoming call on the lock screen" },
+          { shot: "call-controls", alt: "In-call controls" },
+        ],
+      },
+      {
+        id: "look",
+        title: "Look and speed",
+        blocks: [
+          {
+            p: "**Settings › Display & effects › Reduce visual effects** sets how much glass and blur the app draws. One Dialer picks a level for your phone the first time; change it any time:",
+          },
+          {
+            ul: [
+              "**Full effects**: everything as designed, glass and blur.",
+              "**Reduced effects**: flatter glass, much less work for the phone.",
+              "**Effects off**: solid colours, no blur. The fastest.",
+            ],
+          },
+          { shot: "effects-levels", alt: "Reduce visual effects: Full, Reduced and Off" },
+          {
+            p: "With Full effects, **Glass & blur › Glass style** can be **Edge glow** or the experimental **Liquid glass**, which bends what's behind it but needs the most power. **Display size** makes the app and the nav bar larger or smaller, and the call screen has its own **Call screen effects**.",
+          },
+          { shot: "glass-style", alt: "Glass style: Edge glow and Liquid glass" },
+        ],
+      },
+      {
+        id: "more",
+        title: "Language, backup and updates",
+        blocks: [
+          {
+            ul: [
+              "**Settings › Language › App language** changes only One Dialer's language. **Same as phone** follows Android.",
+              "**Back up & restore** saves your settings, speed dial, call notes and call backgrounds to a file, for a new phone or a reinstall.",
+              "**Software update** shows when a new version is on Google Play, with what's new.",
+            ],
+          },
+          { shot: "settings-language", alt: "App language settings" },
+        ],
+      },
+      {
+        id: "setups",
+        title: "Setups for common situations",
+        blocks: [
+          { p: "Pick the situation that sounds like you, and change these settings." },
+          {
+            setup: "I keep calling people by accident",
+            when: "A tap on a recent call, or a swipe while scrolling, starts a call you didn't mean.",
+            steps: [
+              "**Settings › Quick calling › Tap a recent call** → **Open details**.",
+              "Turn off **Swipe to call or message**.",
+              "Optional: turn on **Call button on rows**, so calling is one deliberate tap on the button.",
+            ],
+          },
+          { shot: "setup-no-accidents", alt: "Quick calling set up to avoid accidental calls" },
+          {
+            setup: "Work SIM and personal SIM",
+            when: "You want work contacts on one SIM and everyone else on the other, without choosing every time.",
+            steps: [
+              "**Settings › SIM cards › Keypad and contacts** → your personal SIM (or Phone's default SIM).",
+              "On each work contact's page, choose the **work SIM**. It always wins.",
+              "**Tap a recent call** → **Use the recent SIM**, so calling back uses the SIM the call came in on.",
+            ],
+          },
+          { shot: "setup-two-sims", alt: "SIM settings for work and personal SIMs" },
+          {
+            setup: "I'm never sure which SIM will be used",
+            when: "Two SIMs and you'd rather decide on each call.",
+            steps: [
+              "**Settings › SIM cards › Keypad and contacts** → **Ask every time**.",
+              "**Settings › Keypad › Two Call buttons** on, so the keypad shows one button per SIM.",
+            ],
+          },
+          {
+            setup: "My phone feels slow",
+            when: "Scrolling stutters or the call screen opens slowly.",
+            steps: [
+              "**Settings › Display & effects › Reduce visual effects** → **Reduced effects**, or **Effects off** on an older phone.",
+              "**Glass style** → **Edge glow** (not Liquid glass).",
+              "Lower **Call screen effects** too.",
+            ],
+          },
+          { shot: "setup-slow-phone", alt: "Reduce visual effects set to Reduced" },
+          {
+            setup: "Only people I know should ring",
+            when: "Spam, private numbers or unknown callers.",
+            steps: [
+              "**Settings › Block & filter** → turn on **Block unknown/private numbers**, and if you want, **Block calls from numbers not in Contacts**.",
+              "Accept One Dialer as **Caller ID & spam app** when asked.",
+              "Turn on **Hide blocked calls** to keep Calls tidy.",
+            ],
+          },
+          {
+            setup: "I want to record calls",
+            when: "One Dialer from Google Play never records itself. Recording comes from a separate app, One Recorder.",
+            steps: ["Follow the **One Recorder** guide on this site: it takes about five minutes, once."],
+          },
+        ],
+      },
+    ] as { id: string; title: string; blocks: Block[] }[],
   },
   recorder: {
     back: "Back to One Dialer",
@@ -153,7 +397,9 @@ export const en = {
     prosTitle: "What you get",
     pros: [
       "Both sides of the call at full volume, on Android 12 and later: you and the other person, on the earpiece, speaker, Bluetooth or headphones. No root, no computer, no separate Shizuku app.",
-      "After a reboot it starts again by itself once you're on Wi-Fi.",
+      "After a reboot it starts again by itself once you're on Wi-Fi, and it checks every few hours that it's still running.",
+      "It turns Developer options off again by itself once it has started, so most banking apps open.",
+      "Check now tests that recording really works, and the last call's result shows whether it was recorded.",
       "No microphone permission and no accessibility service. One Recorder records the call itself, only during a call you record.",
       "Recordings stay on your phone. Nothing is uploaded, there's no account and no ads.",
       "Record when you choose, or automatically: every call, unknown numbers, or only the contacts you pick.",
@@ -163,10 +409,10 @@ export const en = {
     consTitle: "What to expect",
     cons: [
       "Both sides needs Developer options and Wireless debugging turned on once, and Wi-Fi whenever it starts. If it can't start again after a reboot (no Wi-Fi, or Developer options off), you tap Start in One Recorder.",
-      "Some banking and payment apps refuse to open while Developer options is on.",
+      "On some phones USB or Wireless debugging has to stay on for recording to keep working, and some banking apps still refuse to open then.",
       "On some phones, calls over Wi-Fi calling record only one side. That's the phone's audio driver, not One Recorder.",
       "It needs Android 12 or later. Android 10 and 11 can't start the helper over Wireless debugging, and there's no other way to record there.",
-      "It doesn't update itself. Google Play doesn't know about it, so you come back here for new versions.",
+      "It isn't on Google Play. It checks GitHub for new versions itself and installs them from Software update.",
       "It works only with One Dialer from Google Play, version 1.0.0-beta.9 or later, not with a copy installed from a file.",
       "The other person isn't told you're recording. That's on you, and in some places it's against the law without their consent.",
     ],
@@ -206,30 +452,49 @@ export const en = {
         id: "both",
         title: "Record both sides",
         blocks: [
-          { p: "Open One Recorder: **Record both sides** is at the top, and each row turns to Ready as you go." },
+          { p: "Open One Recorder: the steps are under **Set up**, and each one gets a green tick as you go. **Continue** at the top always does the next one." },
+          { shot: "rec-setup", alt: "One Recorder's setup steps" },
           {
             ol: [
+              "**Notifications.** Allow them first: the pairing code is typed into One Recorder's notification.",
               "**Developer options.** If they're off, open **Settings › About phone** (on some phones, About phone › Software information) and tap **Build number** seven times.",
               "**Pair with Wireless debugging.** Tap the row. One Recorder opens Developer options and posts a notification. Turn on **Wireless debugging**, open it, and tap **Pair device with pairing code**.",
               "Keep that code on screen, pull down the notification from One Recorder, tap **Enter code** and type the six digits. One Recorder pairs and starts its helper. You only pair once.",
-              "**Helper: Ready.** If it says Not running, make sure you're on Wi-Fi and tap **Start**. **Start after a reboot** turns on by itself the first time the helper starts.",
+              "**Or pair automatically:** turn on **Pair automatically (optional)** in One Recorder. It reads the code from the pairing dialog itself, then switches itself off. On Android 13 and later, if it's greyed out, open One Recorder's App info › ⋮ › **Allow restricted settings** first.",
+              "**Start the recording service.** If it isn't running, make sure you're on Wi-Fi and tap it. **Start after a reboot** turns on by itself the first time it starts.",
             ],
           },
+          { shot: "rec-pair", alt: "Typing the pairing code into One Recorder's notification" },
           {
-            p: "You can turn Wireless debugging off again: One Recorder switches it on for a moment when it needs to start the helper, and back off afterwards. If your phone stops the helper when Wireless debugging goes off, One Recorder leaves it on.",
+            p: "**Battery: Unrestricted** is the last step. It stops the phone from closing the recorder while it waits for a call.",
           },
         ],
       },
       {
-        id: "setup",
-        title: "Notifications and battery",
+        id: "devoptions",
+        title: "Developer options and banking apps",
         blocks: [
           {
-            ol: [
-              "**Notifications.** Allow them, so you can see when a call is being recorded.",
-              "**Battery: Unrestricted.** Optional, but recommended. It stops the phone from closing the recorder while it waits for a call.",
+            p: "Many banking and payment apps refuse to open while Developer options, USB debugging or Wireless debugging is on. **Turn off Developer options** is on by default: once the recording service has started, One Recorder turns them off one by one and checks that recording still works after each.",
+          },
+          {
+            p: "Some phones stop the recording service when USB or Wireless debugging goes off. One Recorder then turns that one back on and leaves it on, and the row says so. When it needs to start the service again (after a reboot, or when you're back on Wi-Fi), it turns them on for a moment and off again.",
+          },
+          { shot: "rec-devoptions", alt: "The Turn off Developer options setting" },
+        ],
+      },
+      {
+        id: "check",
+        title: "Check that it works",
+        blocks: [
+          {
+            ul: [
+              "**Check now** (under Set up) starts the recording service if it's down, which proves One Recorder is still paired, then has it open the call audio for a moment. It shows the time and the result.",
+              "If Wireless debugging no longer accepts One Recorder, Check now takes you back to the pairing step instead of still saying Paired.",
+              "After each call you record, the top of One Recorder shows the result: when and how long, or in red if the recording was silent or the call wasn't recorded.",
             ],
           },
+          { shot: "rec-check", alt: "Check now and the last call's result" },
         ],
       },
       {
@@ -252,6 +517,7 @@ export const en = {
           {
             p: "Find them in One Dialer under **Calls › ⋮ › Recordings**, or **Settings › Call recording**. They're grouped by day, with the contact's name, and you can search, filter (All, Starred, Contacts, Unknown), play, star, rename, share or delete them.",
           },
+          { shot: "rec-recordings", alt: "Recordings in One Dialer" },
           {
             p: "The files live inside One Recorder. **Save to phone** copies one to your phone's `Recordings/One Dialer` folder, where your other apps can see it. **Auto-delete** can clear recordings after 30 or 90 days, always keeping starred ones.",
           },
@@ -307,6 +573,47 @@ export const en = {
         ],
       },
       {
+        id: "setups",
+        title: "Setups for common situations",
+        blocks: [
+          {
+            setup: "I use banking apps",
+            when: "You want recording and your banking app on the same phone.",
+            steps: [
+              "Leave **Turn off Developer options** on (the default).",
+              "Leave **Keep recording away from Wi-Fi** off: it keeps USB debugging on.",
+              "If the row says your phone needs a debugging switch left on, try the banking app anyway: many only check Developer options.",
+            ],
+          },
+          {
+            setup: "I want calls recorded away from Wi-Fi",
+            when: "The recording service ends when Wi-Fi goes, because Wireless debugging needs Wi-Fi.",
+            steps: [
+              "Turn on **Keep recording away from Wi-Fi**. It keeps USB debugging on, so the service keeps running on mobile data.",
+              "Some banking apps won't open while it's on.",
+            ],
+          },
+          { shot: "rec-away-wifi", alt: "Keep recording away from Wi-Fi" },
+          {
+            setup: "My phone often restarts away from Wi-Fi",
+            when: "After a reboot the service waits for Wi-Fi before it starts.",
+            steps: [
+              "Make sure **Start after a reboot** says it starts by itself.",
+              "On Android 12 to 16, try **Start without Wi-Fi (experimental)**. It needs Location on, and may not work on every phone.",
+            ],
+          },
+          {
+            setup: "My recordings are silent or quiet",
+            when: "A recording has no sound, or the other person is hard to hear.",
+            steps: [
+              "Tap **Check now**. If it isn't all working, fix the step it points to.",
+              "Try the same call over the mobile network instead of Wi-Fi calling.",
+              "Still wrong: **Share diagnostics** and send it with a bug report.",
+            ],
+          },
+        ],
+      },
+      {
         id: "trouble",
         title: "If it doesn't work",
         blocks: [
@@ -318,6 +625,8 @@ export const en = {
               "**“Calls aren't being recorded” in One Dialer:** auto-record is on but One Recorder isn't ready. Open it and fix any row that isn't Ready, usually the helper.",
               "**“The recorder works only with One Dialer from Google Play”:** One Dialer was installed from a file, or it's older than 1.0.0-beta.9. Install it from Google Play, or update both apps.",
               "**No Record option on the call screen:** One Recorder isn't installed. One Dialer hides everything about recording until it is.",
+              "**A banking app still won't open:** your phone needs USB or Wireless debugging left on (One Recorder's Turn off Developer options row says which). Turn off **Keep recording away from Wi-Fi** if it's on, since that keeps USB debugging on.",
+              "**Still stuck:** tap **Share diagnostics** in One Recorder and send the report with your bug report. It has versions, your phone model, the setup state and recent log lines, and no numbers or names.",
             ],
           },
         ],
@@ -328,7 +637,7 @@ export const en = {
         blocks: [
           {
             ul: [
-              "**To update,** download the APK from this page again and install it over the old one. Your recordings and settings stay.",
+              "**To update,** open One Recorder › **Software update**. While the recording service runs, it installs the new version itself, with no prompt; otherwise it downloads it for you to install. You can also download the APK from this page and install it over the old one. Your recordings and settings stay.",
               "**To remove it,** uninstall One Recorder like any app. That deletes every recording inside it, so save the ones you want to your phone first. One Dialer keeps working and hides its recording options again.",
               "Recording laws differ by country. Some need everyone on the call to agree. You're responsible for telling the other person and getting their consent where it's required.",
             ],

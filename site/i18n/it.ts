@@ -9,10 +9,13 @@ export const it: Dict = {
     beta: "Ora in beta chiusa su Google Play.",
     recorderTitle: "One Recorder · One Dialer",
     recorderDescription: "Registra le chiamate in One Dialer con One Recorder, una piccola app compagna che installi da questo sito. Come configurarla e cosa aspettarsi.",
+    guideTitle: "Guida · One Dialer",
+    guideDescription: "Come usare One Dialer: SIM, chiamare da Chiamate, tastierino, contatti, blocco, schermata di chiamata ed effetti, con configurazioni per le situazioni più comuni.",
   },
   nav: {
     label: "Sito",
     whatsNew: "Novità",
+    guide: "Guida",
     recorder: "Recorder",
     privacy: "Privacy",
     getApp: "Scarica l'app",
@@ -131,10 +134,235 @@ export const it: Dict = {
     feature: "Chiedi una funzione",
     report: "Segnala un bug",
     label: "Piè di pagina",
+    guide: "Guida",
     recorder: "One Recorder",
     privacy: "Informativa sulla privacy (inglese)",
     contact: "Contatti",
     language: "Lingua",
+  },
+  guide: {
+    back: "Torna a One Dialer",
+    title: "Guida",
+    h1: "One Dialer,",
+    h1b: "spiegata.",
+    lead: "Dove si trova tutto, cosa fa ogni impostazione e le impostazioni adatte alla tua situazione.",
+    toc: "In questa pagina",
+    intro: "Immagini e brevi registrazioni mostrano ogni passaggio. Le impostazioni sono nel menu ⋮ della scheda Chiamate.",
+    sections: [
+      {
+        id: "start",
+        title: "Per iniziare",
+        blocks: [
+          {
+            ol: [
+              "Apri One Dialer e tocca **Imposta** per renderla la tua **app Telefono predefinita**. Chiamate, recenti e notifiche delle chiamate perse funzionano solo così.",
+              "Consenti **Contatti**, **Telefono** e **Notifiche** quando Android lo chiede.",
+              "Apri **Impostazioni**. Se qualcosa non va, in alto c'è una scheda **Richiede attenzione**, per esempio “Non è l'app Telefono predefinita” o notifiche disattivate, con un pulsante **Risolvi** che ti porta direttamente lì.",
+            ],
+          },
+          { shot: "start-default", alt: "Impostare One Dialer come app Telefono predefinita" },
+          { shot: "settings-health", alt: "Impostazioni con la scheda Richiede attenzione e i pulsanti Risolvi" },
+        ],
+      },
+      {
+        id: "calls",
+        title: "Chiamate e chiamate recenti",
+        blocks: [
+          { p: "La scheda **Chiamate** elenca le chiamate recenti. Le chiamate perse sono in rosso, quelle ripetute sono raggruppate e quelle bloccate sono segnate." },
+          { p: "Cosa succede quando tocchi una chiamata lo decidi tu, in **Impostazioni › Chiamata veloce › Tocco su una chiamata recente**:" },
+          {
+            ul: [
+              "**Apri dettagli**: la scelta sicura. Si apre la pagina della chiamata, con il numero, le chiamate passate, le note e un pulsante Chiama.",
+              "**Chiama**: richiama subito. Veloce, ma facile da fare per sbaglio.",
+              "**Scrivi nel tastierino**: mette il numero nel tastierino, così puoi controllarlo o modificarlo prima di chiamare.",
+            ],
+          },
+          { shot: "recents-tap", alt: "L'impostazione Tocco su una chiamata recente con Chiama, Apri dettagli e Scrivi nel tastierino" },
+          {
+            ul: [
+              "**Pulsante di chiamata sulle righe** mette un pulsante di chiamata su ogni riga, così il tocco può aprire i dettagli mentre il pulsante chiama. **Stile del pulsante di chiamata** ne cambia l'aspetto.",
+              "**Scorri per chiamare o scrivere**: scorri una riga a destra per chiamare, a sinistra per scrivere.",
+              "**Raggruppa per contatto** riunisce le chiamate di una persona.",
+              "Tieni premuta una riga per selezionare più chiamate, per esempio per eliminarle.",
+            ],
+          },
+          { shot: "recents-swipe", alt: "Scorrere una chiamata recente a destra per chiamare" },
+        ],
+      },
+      {
+        id: "sims",
+        title: "Due SIM",
+        blocks: [
+          { p: "Con due SIM, **Impostazioni › Schede SIM** decide quale usa ogni chiamata. Si sceglie separatamente per:" },
+          {
+            ul: [
+              "**Tastierino e contatti**: **SIM predefinita del telefono**, oppure **Chiedi ogni volta**, che mostra la scelta della SIM quando chiami.",
+              "**Tocco su una chiamata recente** e **Scorri per chiamare**: **Come tastierino**, **Usa la SIM recente** (la SIM usata da quella chiamata), **Chiedi ogni volta** o sempre una SIM. Valgono solo se quel tipo di chiamata è attivo in Chiamata veloce.",
+            ],
+          },
+          { shot: "sim-settings", alt: "Impostazioni Schede SIM" },
+          { p: "Un contatto può avere **la sua SIM**: apri la sua pagina e sceglila. Viene sempre prima di qualsiasi regola qui sopra." },
+          { shot: "sim-contact", alt: "Scegliere una SIM nella pagina di un contatto" },
+          { p: "Sul tastierino, **Impostazioni › Tastierino › Due pulsanti Chiama** mostra un pulsante Chiama per ogni SIM invece di uno solo, così scegli mentre chiami." },
+          { shot: "sim-chooser", alt: "La scelta della SIM quando si chiama con Chiedi ogni volta" },
+        ],
+      },
+      {
+        id: "keypad",
+        title: "Tastierino",
+        blocks: [
+          {
+            ul: [
+              "Scrivi cifre o lettere: i contatti corrispondenti compaiono mentre scrivi (**T9**). Toccane uno per chiamarlo o aprirlo.",
+              "Tieni premuto **1** per la segreteria e **2–9** per la chiamata rapida. Imposta la chiamata rapida in **Impostazioni › Tastierino › Chiamata rapida**.",
+              "Tieni premuto **0** per **+**. Tieni premuto il tasto asterisco (*) per una pausa e **#** per un'attesa, per i numeri con interno.",
+              "Tieni premuto il numero per incollarne uno copiato. Tieni premuto **Elimina** per cancellarlo.",
+              "Abbassa il tastierino, o tocca la maniglia, per vedere le chiamate. Il pulsante verde accanto alla barra di navigazione lo riporta su con il numero ancora lì.",
+            ],
+          },
+          { shot: "keypad-t9", alt: "Scrivere sul tastierino con i contatti corrispondenti" },
+          { shot: "keypad-speed-dial", alt: "Impostazioni della chiamata rapida" },
+        ],
+      },
+      {
+        id: "contacts",
+        title: "Contatti",
+        blocks: [
+          {
+            ul: [
+              "I preferiti sono in cima, sotto ★. Scorri l'indice **A–Z** a destra per saltare.",
+              "Tocca un contatto per la sua pagina: numeri, la sua SIM, lo sfondo di chiamata e il blocco. Tieni premuto per selezionarne più di uno.",
+              "**⋮ › Gestisci contatti** imposta quali account mostrare, ordine e formato del nome, dove salvare i nuovi contatti, importazione ed esportazione, contatti della SIM e **Unisci contatti duplicati**.",
+            ],
+          },
+          { shot: "contacts-index", alt: "Contatti con i preferiti e l'indice A–Z" },
+          { shot: "contacts-manage", alt: "Gestisci contatti" },
+        ],
+      },
+      {
+        id: "blocking",
+        title: "Blocco",
+        blocks: [
+          {
+            ul: [
+              "Blocca un numero dalla pagina della chiamata o del contatto. **Impostazioni › Blocca e filtra › Numeri bloccati** li elenca; è Android stesso a rifiutare quelle chiamate.",
+              "**Blocca numeri sconosciuti/privati** ferma chi nasconde il numero. **Blocca chiamate da numeri non presenti nei contatti** fa squillare solo i tuoi contatti.",
+              "Queste due regole richiedono One Dialer come **App ID chiamante e spam**. One Dialer lo chiede quando ne attivi una. Se un'altra app prende quel ruolo, le Impostazioni mostrano “Le regole di blocco sono in pausa”.",
+              "**Nascondi chiamate bloccate** le toglie dall'elenco Chiamate.",
+            ],
+          },
+          { shot: "blocking-rules", alt: "Impostazioni Blocca e filtra" },
+        ],
+      },
+      {
+        id: "callscreen",
+        title: "La schermata di chiamata",
+        blocks: [
+          {
+            ul: [
+              "Le chiamate in arrivo riempiono lo schermo, anche sulla schermata di blocco. **Impostazioni › Schermata di chiamata** sceglie come rispondi (scorrendo su o giù, o con i pulsanti), gli effetti, la foto del chiamante e lo sfondo.",
+              "Durante una chiamata: muto, attesa, vivavoce, tastierino e aggiunta di una chiamata sono su grandi pulsanti di vetro. **⋮** ha altro, come Registra quando One Recorder è installato.",
+              "I **Messaggi di rifiuto rapido** sono i testi che puoi inviare quando rifiuti una chiamata.",
+              "**Risposta e fine chiamate** ha la risposta automatica, la risposta con SMS e il vivavoce. **Nascondi i numeri dei contatti** mostra solo i nomi dei contatti salvati.",
+            ],
+          },
+          { shot: "call-incoming", alt: "Una chiamata in arrivo sulla schermata di blocco" },
+          { shot: "call-controls", alt: "I controlli durante la chiamata" },
+        ],
+      },
+      {
+        id: "look",
+        title: "Aspetto e velocità",
+        blocks: [
+          { p: "**Impostazioni › Schermo ed effetti › Riduci effetti visivi** stabilisce quanto vetro e sfocatura disegna l'app. One Dialer sceglie un livello per il tuo telefono la prima volta; puoi cambiarlo quando vuoi:" },
+          {
+            ul: [
+              "**Effetti completi**: tutto come progettato, vetro e sfocatura.",
+              "**Effetti ridotti**: vetro più piatto, molto meno lavoro per il telefono.",
+              "**Effetti disattivati**: colori pieni, nessuna sfocatura. Il più veloce.",
+            ],
+          },
+          { shot: "effects-levels", alt: "Riduci effetti visivi: completi, ridotti e disattivati" },
+          { p: "Con gli effetti completi, **Vetro e sfocatura › Stile vetro** può essere **Bagliore bordi** o lo sperimentale **Vetro liquido**, che piega ciò che sta dietro ma richiede più potenza. **Dimensioni schermo** ingrandisce o riduce l'app e la barra di navigazione, e la schermata di chiamata ha i suoi **Effetti schermata di chiamata**." },
+          { shot: "glass-style", alt: "Stile vetro: Bagliore bordi e Vetro liquido" },
+        ],
+      },
+      {
+        id: "more",
+        title: "Lingua, backup e aggiornamenti",
+        blocks: [
+          {
+            ul: [
+              "**Impostazioni › Lingua › Lingua dell'app** cambia solo la lingua di One Dialer. **Come il telefono** segue Android.",
+              "**Backup e ripristino** salva impostazioni, chiamata rapida, note delle chiamate e sfondi di chiamata in un file, per un nuovo telefono o una reinstallazione.",
+              "**Aggiornamento software** mostra quando c'è una nuova versione su Google Play, con le novità.",
+            ],
+          },
+          { shot: "settings-language", alt: "Impostazioni della lingua dell'app" },
+        ],
+      },
+      {
+        id: "setups",
+        title: "Configurazioni per le situazioni comuni",
+        blocks: [
+          { p: "Scegli la situazione che ti somiglia e cambia queste impostazioni." },
+          {
+            setup: "Chiamo le persone per sbaglio",
+            when: "Un tocco su una chiamata recente, o uno scorrimento mentre scorri l'elenco, avvia una chiamata che non volevi.",
+            steps: [
+              "**Impostazioni › Chiamata veloce › Tocco su una chiamata recente** → **Apri dettagli**.",
+              "Disattiva **Scorri per chiamare o scrivere**.",
+              "Facoltativo: attiva **Pulsante di chiamata sulle righe**, così chiamare è un tocco deciso sul pulsante.",
+            ],
+          },
+          { shot: "setup-no-accidents", alt: "Chiamata veloce impostata per evitare chiamate per sbaglio" },
+          {
+            setup: "SIM di lavoro e SIM personale",
+            when: "Vuoi i contatti di lavoro su una SIM e tutti gli altri sull'altra, senza scegliere ogni volta.",
+            steps: [
+              "**Impostazioni › Schede SIM › Tastierino e contatti** → la tua SIM personale (o SIM predefinita del telefono).",
+              "Nella pagina di ogni contatto di lavoro, scegli la **SIM di lavoro**. Vince sempre.",
+              "**Tocco su una chiamata recente** → **Usa la SIM recente**, così richiamare usa la SIM su cui è arrivata la chiamata.",
+            ],
+          },
+          { shot: "setup-two-sims", alt: "Impostazioni SIM per lavoro e uso personale" },
+          {
+            setup: "Non so mai quale SIM verrà usata",
+            when: "Due SIM e preferisci decidere a ogni chiamata.",
+            steps: [
+              "**Impostazioni › Schede SIM › Tastierino e contatti** → **Chiedi ogni volta**.",
+              "Attiva **Impostazioni › Tastierino › Due pulsanti Chiama**, così il tastierino mostra un pulsante per SIM.",
+            ],
+          },
+          {
+            setup: "Il mio telefono sembra lento",
+            when: "Lo scorrimento scatta o la schermata di chiamata si apre lentamente.",
+            steps: [
+              "**Impostazioni › Schermo ed effetti › Riduci effetti visivi** → **Effetti ridotti**, o **Effetti disattivati** su un telefono più vecchio.",
+              "**Stile vetro** → **Bagliore bordi** (non Vetro liquido).",
+              "Abbassa anche gli **Effetti schermata di chiamata**.",
+            ],
+          },
+          { shot: "setup-slow-phone", alt: "Riduci effetti visivi impostato su Effetti ridotti" },
+          {
+            setup: "Devono chiamarmi solo le persone che conosco",
+            when: "Spam, numeri privati o sconosciuti.",
+            steps: [
+              "**Impostazioni › Blocca e filtra** → attiva **Blocca numeri sconosciuti/privati** e, se vuoi, **Blocca chiamate da numeri non presenti nei contatti**.",
+              "Accetta One Dialer come **App ID chiamante e spam** quando te lo chiede.",
+              "Attiva **Nascondi chiamate bloccate** per tenere in ordine Chiamate.",
+            ],
+          },
+          {
+            setup: "Voglio registrare le chiamate",
+            when: "One Dialer da Google Play non registra mai da sola. La registrazione arriva da un'app separata, One Recorder.",
+            steps: [
+              "Segui la guida di **One Recorder** su questo sito: bastano circa cinque minuti, una volta sola.",
+            ],
+          },
+        ],
+      },
+    ],
   },
   recorder: {
     back: "Torna a One Dialer",
@@ -153,14 +381,17 @@ export const it: Dict = {
       "Registra quando vuoi tu o in automatico: ogni chiamata, i numeri sconosciuti o solo i contatti che scegli.",
       "Le registrazioni vivono in One Dialer, con nomi dei contatti, ricerca, stelle, condivisione ed eliminazione automatica.",
       "Open source, come One Dialer. Chiunque può verificare cosa fa.",
+      "Controlla ogni poche ore di essere ancora attivo, e se si è fermato riparte da solo.",
+      "Dopo l'avvio disattiva da solo le Opzioni sviluppatore, così la maggior parte delle app bancarie si apre.",
+      "Verifica ora controlla che la registrazione funzioni davvero, e il risultato dell'ultima chiamata mostra se è stata registrata.",
     ],
     consTitle: "Cosa aspettarsi",
     cons: [
       "Per entrambe le voci servono le Opzioni sviluppatore e il Debug wireless attivati una volta, e il Wi-Fi ogni volta che si avvia. Se dopo un riavvio non riesce a ripartire (niente Wi-Fi, o Opzioni sviluppatore disattivate), tocchi Avvia in One Recorder.",
-      "Alcune app di banche e pagamenti non si aprono finché le Opzioni sviluppatore sono attive.",
+      "Su alcuni telefoni il debug USB o il debug wireless deve restare attivo perché la registrazione continui a funzionare, e alcune app bancarie in quel caso non si aprono comunque.",
       "Su alcuni telefoni, le chiamate via Wi-Fi registrano una sola voce. Dipende dal driver audio del telefono, non da One Recorder.",
       "Serve Android 12 o successivo. Android 10 e 11 non possono avviare il servizio tramite il Debug wireless, e lì non c'è altro modo di registrare.",
-      "Non si aggiorna da sola. Google Play non la conosce, quindi torni qui per le nuove versioni.",
+      "Non è su Google Play. Cerca da solo le nuove versioni su GitHub e le installa da Aggiornamento software.",
       "Funziona solo con One Dialer da Google Play, versione 1.0.0-beta.9 o successiva, non con una copia installata da file.",
       "L'altra persona non viene avvisata che stai registrando. Spetta a te, e in alcuni paesi senza il suo consenso è vietato.",
     ],
@@ -200,30 +431,43 @@ export const it: Dict = {
         id: "both",
         title: "Registra entrambe le voci",
         blocks: [
-          { p: "Apri One Recorder: **Registra entrambe le voci** è in cima, e ogni riga diventa Pronto man mano che procedi." },
+          { p: "Apri One Recorder: i passaggi sono in **Configura**, e ognuno riceve una spunta verde man mano che procedi. **Continua** in alto fa sempre il passaggio successivo." },
+          { shot: "rec-setup", alt: "I passaggi di configurazione di One Recorder" },
           {
             ol: [
+              "**Notifiche.** Consentile per prime: il codice di associazione si scrive nella notifica di One Recorder.",
               "**Opzioni sviluppatore.** Se sono disattivate, apri **Impostazioni › Info telefono** (su alcuni telefoni Info telefono › Informazioni software) e tocca **Numero build** sette volte.",
               "**Associa con il Debug wireless.** Tocca la riga. One Recorder apre le Opzioni sviluppatore e mostra una notifica. Attiva **Debug wireless**, aprilo e tocca **Associa dispositivo con codice di accoppiamento**.",
               "Lascia il codice sullo schermo, abbassa la notifica di One Recorder, tocca **Inserisci codice** e scrivi le sei cifre. One Recorder si associa e avvia il suo servizio. L'associazione si fa una volta sola.",
-              "**Servizio di registrazione: pronto.** Se dice Non attivo, assicurati di essere sul Wi-Fi e tocca la riga per avviarlo. **Avvio dopo il riavvio** si attiva da solo al primo avvio del servizio.",
+              "**Oppure associa automaticamente:** attiva **Associa automaticamente (facoltativo)** in One Recorder. Legge da solo il codice nella finestra di associazione, poi si disattiva. Da Android 13, se è disattivato in grigio, apri prima Info app di One Recorder › ⋮ › **Consenti impostazioni con restrizioni**.",
+              "**Avvia il servizio di registrazione.** Se non è attivo, assicurati di essere sul Wi-Fi e tocca la riga. **Avvio dopo il riavvio** si attiva da solo al primo avvio.",
             ],
           },
-          {
-            p: "Puoi disattivare di nuovo il Debug wireless: One Recorder lo accende per un momento quando deve avviare il servizio, e poi lo spegne. Se il tuo telefono ferma il servizio quando il Debug wireless si spegne, One Recorder lo lascia acceso.",
-          },
+          { shot: "rec-pair", alt: "Scrivere il codice di associazione nella notifica di One Recorder" },
+          { p: "**Batteria: senza restrizioni** è l'ultimo passaggio. Impedisce al telefono di chiudere il registratore mentre aspetta una chiamata." },
         ],
       },
       {
-        id: "setup",
-        title: "Notifiche e batteria",
+        id: "devoptions",
+        title: "Opzioni sviluppatore e app bancarie",
+        blocks: [
+          { p: "Molte app bancarie e di pagamento non si aprono se Opzioni sviluppatore, debug USB o debug wireless sono attivi. **Disattiva Opzioni sviluppatore** è attivo per impostazione predefinita: dopo l'avvio del servizio di registrazione, One Recorder li spegne uno alla volta e controlla dopo ognuno che la registrazione funzioni ancora." },
+          { p: "Alcuni telefoni fermano il servizio di registrazione quando il debug USB o wireless si spegne. One Recorder allora lo riaccende e lo lascia attivo, e la riga lo dice. Quando deve riavviare il servizio (dopo un riavvio, o quando torni sul Wi-Fi), li accende per un momento e poi li spegne di nuovo." },
+          { shot: "rec-devoptions", alt: "L'impostazione Disattiva Opzioni sviluppatore" },
+        ],
+      },
+      {
+        id: "check",
+        title: "Controlla che funzioni",
         blocks: [
           {
-            ol: [
-              "**Notifiche.** Consentile, così vedi quando una chiamata viene registrata.",
-              "**Batteria: senza restrizioni.** Facoltativo ma consigliato. Impedisce al telefono di chiudere il registratore mentre aspetta una chiamata.",
+            ul: [
+              "**Verifica ora** (in Configura) avvia il servizio di registrazione se è fermo, il che dimostra che One Recorder è ancora associato, poi gli fa aprire l'audio della chiamata per un momento. Mostra l'ora e il risultato.",
+              "Se il debug wireless non accetta più One Recorder, Verifica ora ti riporta al passaggio di associazione invece di continuare a dire Associato.",
+              "Dopo ogni chiamata registrata, in cima a One Recorder compare il risultato: quando e quanto è durata, oppure in rosso se la registrazione era muta o la chiamata non è stata registrata.",
             ],
           },
+          { shot: "rec-check", alt: "Verifica ora e il risultato dell'ultima chiamata" },
         ],
       },
       {
@@ -246,6 +490,7 @@ export const it: Dict = {
           {
             p: "Le trovi in One Dialer in **Chiamate › ⋮ › Registrazioni**, o in **Impostazioni › Registrazione chiamate**. Sono raggruppate per giorno, con il nome del contatto, e puoi cercarle, filtrarle (Tutti, Preferiti, Contatti, Sconosciuti), riprodurle, aggiungerle ai preferiti, rinominarle, condividerle o eliminarle.",
           },
+          { shot: "rec-recordings", alt: "Le registrazioni in One Dialer" },
           {
             p: "I file restano dentro One Recorder. **Salva sul telefono** ne copia uno nella cartella `Recordings/One Dialer` del telefono, dove le altre app possono vederlo. L'**Eliminazione automatica** può cancellare le registrazioni dopo 30 o 90 giorni, tenendo sempre quelle con la stella.",
           },
@@ -303,6 +548,47 @@ export const it: Dict = {
         ],
       },
       {
+        id: "setups",
+        title: "Configurazioni per le situazioni comuni",
+        blocks: [
+          {
+            setup: "Uso app bancarie",
+            when: "Vuoi la registrazione e la tua app bancaria sullo stesso telefono.",
+            steps: [
+              "Lascia attivo **Disattiva Opzioni sviluppatore** (è l'impostazione predefinita).",
+              "Lascia disattivato **Continua a registrare senza Wi-Fi**: tiene acceso il debug USB.",
+              "Se la riga dice che il tuo telefono ha bisogno di un debug attivo, prova comunque l'app bancaria: molte controllano solo le Opzioni sviluppatore.",
+            ],
+          },
+          {
+            setup: "Voglio registrare anche senza Wi-Fi",
+            when: "Il servizio di registrazione si ferma quando il Wi-Fi se ne va, perché il debug wireless ha bisogno del Wi-Fi.",
+            steps: [
+              "Attiva **Continua a registrare senza Wi-Fi**. Tiene acceso il debug USB, così il servizio continua a funzionare con i dati mobili.",
+              "Alcune app bancarie non si aprono mentre è attivo.",
+            ],
+          },
+          { shot: "rec-away-wifi", alt: "Continua a registrare senza Wi-Fi" },
+          {
+            setup: "Il mio telefono si riavvia spesso lontano dal Wi-Fi",
+            when: "Dopo un riavvio il servizio aspetta il Wi-Fi prima di partire.",
+            steps: [
+              "Controlla che **Avvio dopo il riavvio** dica che parte da solo.",
+              "Da Android 12 a 16, prova **Avvia senza Wi-Fi (sperimentale)**. Richiede la Posizione attiva e potrebbe non funzionare su tutti i telefoni.",
+            ],
+          },
+          {
+            setup: "Le mie registrazioni sono mute o basse",
+            when: "Una registrazione non ha suono, o l'altra persona si sente poco.",
+            steps: [
+              "Tocca **Verifica ora**. Se non funziona tutto, sistema il passaggio che indica.",
+              "Prova la stessa chiamata sulla rete mobile invece che con le chiamate via Wi-Fi.",
+              "Ancora niente: **Condividi diagnostica** e invialo con una segnalazione.",
+            ],
+          },
+        ],
+      },
+      {
         id: "trouble",
         title: "Se non funziona",
         blocks: [
@@ -314,6 +600,8 @@ export const it: Dict = {
               "**One Dialer dice che le chiamate non vengono registrate:** la registrazione automatica è attiva ma One Recorder non è pronto. Aprilo e sistema ogni riga che non è Pronto, di solito il servizio.",
               "**One Dialer dice che il registratore funziona solo con One Dialer da Google Play:** One Dialer è stata installata da file, o è precedente alla 1.0.0-beta.9. Installala da Google Play, o aggiorna entrambe le app.",
               "**Nessuna opzione Registra nella schermata di chiamata:** One Recorder non è installato. One Dialer nasconde tutto ciò che riguarda la registrazione finché non lo è.",
+              "**Un'app bancaria continua a non aprirsi:** il tuo telefono ha bisogno che il debug USB o wireless resti attivo (la riga Disattiva Opzioni sviluppatore di One Recorder dice quale). Disattiva **Continua a registrare senza Wi-Fi** se è attivo, perché tiene acceso il debug USB.",
+              "**Ancora bloccato:** tocca **Condividi diagnostica** in One Recorder e invia il rapporto con la tua segnalazione. Contiene versioni, modello del telefono, stato della configurazione e righe di log recenti, senza numeri né nomi.",
             ],
           },
         ],
@@ -324,7 +612,7 @@ export const it: Dict = {
         blocks: [
           {
             ul: [
-              "**Per aggiornarla,** scarica di nuovo l'APK da questa pagina e installalo sopra quello vecchio. Registrazioni e impostazioni restano.",
+              "**Per aggiornarla,** apri One Recorder › **Aggiornamento software**. Mentre il servizio di registrazione è attivo, installa da solo la nuova versione, senza chiedere; altrimenti la scarica perché tu la installi. Puoi anche scaricare l'APK da questa pagina e installarlo sopra quello vecchio. Registrazioni e impostazioni restano.",
               "**Per rimuoverla,** disinstalla One Recorder come qualsiasi app. Così si cancellano tutte le registrazioni al suo interno, quindi salva prima sul telefono quelle che vuoi tenere. One Dialer continua a funzionare e nasconde di nuovo le opzioni di registrazione.",
               "Le leggi sulla registrazione cambiano da paese a paese. In alcuni tutti i partecipanti devono essere d'accordo. Sei responsabile di informare l'altra persona e di ottenere il suo consenso dove è richiesto.",
             ],

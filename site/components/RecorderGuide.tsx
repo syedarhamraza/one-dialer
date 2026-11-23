@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CaretLeftIcon, CheckIcon, DownloadSimpleIcon, MinusIcon } from "@phosphor-icons/react/dist/ssr";
 import { Footer } from "@/components/Footer";
-import { Rich } from "@/components/Rich";
+import { Blocks } from "@/components/Blocks";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { Toc } from "@/components/Toc";
 import { RECORDER_URL } from "@/app/links";
-import { type Block, DICTS, type Lang, alternates, href } from "@/i18n";
+import { DICTS, type Lang, alternates, href } from "@/i18n";
 
 export function recorderMetadata(lang: Lang): Metadata {
   const t = DICTS[lang].meta;
@@ -30,28 +30,6 @@ function Card({ title, items, good }: { title: string; items: string[]; good: bo
       </ul>
     </div>
   );
-}
-
-function Blocks({ blocks }: { blocks: Block[] }) {
-  return blocks.map((b, i) => {
-    if ("p" in b)
-      return (
-        <p key={i}>
-          <Rich text={b.p} />
-        </p>
-      );
-    const items = "ul" in b ? b.ul : b.ol;
-    const List = "ul" in b ? "ul" : "ol";
-    return (
-      <List key={i}>
-        {items.map((s) => (
-          <li key={s}>
-            <Rich text={s} />
-          </li>
-        ))}
-      </List>
-    );
-  });
 }
 
 export function RecorderGuide({ lang }: { lang: Lang }) {

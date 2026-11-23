@@ -9,10 +9,13 @@ export const tr: Dict = {
     beta: "Şimdi Google Play'de kapalı betada.",
     recorderTitle: "One Recorder · One Dialer",
     recorderDescription: "Aramalarınızı One Dialer'da, bu siteden yüklediğiniz küçük bir yardımcı uygulama olan One Recorder ile kaydedin. Nasıl kurulur ve neler beklenir.",
+    guideTitle: "Kılavuz · One Dialer",
+    guideDescription: "One Dialer nasıl kullanılır: SIM'ler, Aramalar'dan arama, tuş takımı, kişiler, engelleme, arama ekranı ve efektler; sık karşılaşılan durumlar için ayarlarla birlikte.",
   },
   nav: {
     label: "Site",
     whatsNew: "Yenilikler",
+    guide: "Kılavuz",
     recorder: "Recorder",
     privacy: "Gizlilik",
     getApp: "Uygulamayı al",
@@ -131,10 +134,235 @@ export const tr: Dict = {
     feature: "Özellik iste",
     report: "Hata bildir",
     label: "Alt bilgi",
+    guide: "Kılavuz",
     recorder: "One Recorder",
     privacy: "Gizlilik politikası (İngilizce)",
     contact: "İletişim",
     language: "Dil",
+  },
+  guide: {
+    back: "One Dialer'a dön",
+    title: "Kılavuz",
+    h1: "One Dialer,",
+    h1b: "adım adım.",
+    lead: "Her şeyin nerede olduğu, her ayarın ne yaptığı ve durumunuza uyan ayarlar.",
+    toc: "Bu sayfada",
+    intro: "Her adımı resimler ve kısa ekran kayıtları gösteriyor. Ayarlar, Aramalar sekmesindeki ⋮ menüsünde.",
+    sections: [
+      {
+        id: "start",
+        title: "Başlarken",
+        blocks: [
+          {
+            ol: [
+              "One Dialer'ı açın ve **varsayılan telefon uygulamanız** yapmak için **Varsayılan yap**'a dokunun. Aramalar, son aramalar ve cevapsız arama bildirimleri ancak o zaman çalışır.",
+              "Android sorduğunda **Kişiler**, **Telefon** ve **Bildirimler** izinlerini verin.",
+              "**Ayarlar**'ı açın. Bir sorun varsa en üstte bir **Dikkat gerekiyor** kartı olur, örneğin “Varsayılan telefon uygulamanız değil” ya da kapalı bildirimler; **Düzelt** düğmesi sizi doğrudan oraya götürür.",
+            ],
+          },
+          { shot: "start-default", alt: "One Dialer'ı varsayılan telefon uygulaması yapmak" },
+          { shot: "settings-health", alt: "Dikkat gerekiyor kartı ve Düzelt düğmeleriyle Ayarlar" },
+        ],
+      },
+      {
+        id: "calls",
+        title: "Aramalar ve son aramalar",
+        blocks: [
+          { p: "**Aramalar** sekmesi son aramalarınızı listeler. Cevapsız aramalar kırmızıdır, tekrarlananlar gruplanır, engellenenler işaretlenir." },
+          { p: "Bir aramaya dokunmanın ne yapacağına siz karar verirsiniz: **Ayarlar › Hızlı arama yapma › Son aramaya dokunma**:" },
+          {
+            ul: [
+              "**Ayrıntıları aç**: güvenli seçim. Aramanın sayfası açılır; numara, geçmiş aramalar, notlar ve bir Ara düğmesiyle.",
+              "**Ara**: hemen geri arar. Hızlıdır ama yanlışlıkla yapması kolaydır.",
+              "**Tuş takımına yaz**: numarayı tuş takımına koyar, aramadan önce kontrol edip değiştirebilirsiniz.",
+            ],
+          },
+          { shot: "recents-tap", alt: "Ara, Ayrıntıları aç ve Tuş takımına yaz seçenekleriyle Son aramaya dokunma ayarı" },
+          {
+            ul: [
+              "**Satırlarda arama düğmesi** her satıra bir arama düğmesi koyar; dokunma ayrıntıları açar, düğme arar. **Ara düğmesi stili** görünüşünü değiştirir.",
+              "**Aramak veya mesaj için kaydır**: bir satırı sağa kaydırınca arar, sola kaydırınca mesaj yazar.",
+              "**Kişiye göre grupla** bir kişinin aramalarını bir araya toplar.",
+              "Birden fazla aramayı seçmek için bir satırı basılı tutun, örneğin silmek için.",
+            ],
+          },
+          { shot: "recents-swipe", alt: "Aramak için son aramayı sağa kaydırmak" },
+        ],
+      },
+      {
+        id: "sims",
+        title: "İki SIM",
+        blocks: [
+          { p: "İki SIM ile her aramanın hangisini kullanacağına **Ayarlar › SIM kartlar** karar verir. Ayrı ayrı seçilir:" },
+          {
+            ul: [
+              "**Tuş takımı ve kişiler**: **Telefonun varsayılan SIM'i** ya da aradığınızda SIM seçici gösteren **Her seferinde sor**.",
+              "**Son aramaya dokunma** ve **Aramak için kaydır**: **Tuş takımıyla aynı**, **Son kullanılan SIM** (o aramanın SIM'i), **Her seferinde sor** ya da hep aynı SIM. Yalnızca o arama türü Hızlı arama yapma'da açıksa kullanılır.",
+            ],
+          },
+          { shot: "sim-settings", alt: "SIM kartlar ayarları" },
+          { p: "Bir kişinin **kendi SIM'i** olabilir: sayfasını açıp seçin. Yukarıdaki her kuraldan önce gelir." },
+          { shot: "sim-contact", alt: "Bir kişinin sayfasında SIM seçmek" },
+          { p: "Tuş takımında **Ayarlar › Tuş takımı › İki Ara düğmesi** tek düğme yerine her SIM için bir Ara düğmesi gösterir, aradığınız anda seçersiniz." },
+          { shot: "sim-chooser", alt: "Her seferinde sor ile ararken SIM seçici" },
+        ],
+      },
+      {
+        id: "keypad",
+        title: "Tuş takımı",
+        blocks: [
+          {
+            ul: [
+              "Rakam ya da harf yazın: eşleşen kişiler siz yazarken çıkar (**T9**). Aramak ya da açmak için birine dokunun.",
+              "Sesli mesaj için **1**'i, hızlı arama için **2–9**'u basılı tutun. Hızlı aramayı **Ayarlar › Tuş takımı › Hızlı arama**'dan ayarlayın.",
+              "**+** için **0**'ı basılı tutun. Dahili numaralar için duraklama eklemek üzere yıldız tuşunu (*), bekleme için **#**'yi basılı tutun.",
+              "Kopyaladığınız bir numarayı yapıştırmak için numaraya basılı tutun. Silmek için **Sil**'i basılı tutun.",
+              "Aramalarınızı görmek için tuş takımını aşağı kaydırın ya da tutamacına dokunun. Gezinme çubuğunun yanındaki yeşil düğme onu numaranız korunmuş olarak geri getirir.",
+            ],
+          },
+          { shot: "keypad-t9", alt: "Eşleşen kişilerle tuş takımında yazmak" },
+          { shot: "keypad-speed-dial", alt: "Hızlı arama ayarları" },
+        ],
+      },
+      {
+        id: "contacts",
+        title: "Kişiler",
+        blocks: [
+          {
+            ul: [
+              "Favoriler en üstte, ★ altında. Atlamak için sağdaki **A–Z** dizininde parmağınızı kaydırın.",
+              "Sayfasını açmak için bir kişiye dokunun: numaralar, kendi SIM'i, arama arka planı ve engelleme. Birden fazlasını seçmek için basılı tutun.",
+              "**⋮ › Kişileri yönet** hangi hesapların görüneceğini, sıralamayı ve ad biçimini, yeni kişilerin nereye kaydedileceğini, içe ve dışa aktarmayı, SIM kişilerini ve **Yinelenen kişileri birleştir**'i ayarlar.",
+            ],
+          },
+          { shot: "contacts-index", alt: "Favoriler ve A–Z dizini ile Kişiler" },
+          { shot: "contacts-manage", alt: "Kişileri yönet" },
+        ],
+      },
+      {
+        id: "blocking",
+        title: "Engelleme",
+        blocks: [
+          {
+            ul: [
+              "Bir numarayı aramanın ya da kişinin sayfasından engelleyin. **Ayarlar › Engelle ve filtrele › Engellenen numaralar** onları listeler; bu aramaları Android'in kendisi reddeder.",
+              "**Bilinmeyen/gizli numaraları engelle** numarasını gizleyenleri durdurur. **Kişilerde olmayan numaralardan gelen aramaları engelle** yalnızca kişilerinizin çaldırmasına izin verir.",
+              "Bu iki kural, One Dialer'ın **Arayan kimliği ve spam uygulaması** olmasını gerektirir. Birini açtığınızda One Dialer bunu ister. Bu rolü başka bir uygulama alırsa Ayarlar “Engelleme kuralları duraklatıldı” der.",
+              "**Engellenen aramaları gizle** onları Aramalar listesinden çıkarır.",
+            ],
+          },
+          { shot: "blocking-rules", alt: "Engelle ve filtrele ayarları" },
+        ],
+      },
+      {
+        id: "callscreen",
+        title: "Arama ekranı",
+        blocks: [
+          {
+            ul: [
+              "Gelen aramalar, kilit ekranında bile tüm ekranı kaplar. **Ayarlar › Arama ekranı** nasıl yanıtlayacağınızı (yukarı ya da aşağı kaydırma veya düğmeler), efektleri, arayanın fotoğrafını ve arka planı seçer.",
+              "Arama sırasında: sessiz, beklet, hoparlör, tuş takımı ve arama ekleme büyük cam düğmelerde. **⋮** daha fazlasını sunar, örneğin One Recorder kuruluysa Kaydet.",
+              "**Hızlı ret mesajları**, bir aramayı reddederken gönderebileceğiniz metinlerdir.",
+              "**Aramaları yanıtlama ve bitirme** otomatik yanıt, SMS ile yanıt ve hoparlör seçeneklerini içerir. **Kişilerin numaralarını gizle** kayıtlı kişiler için yalnızca adı gösterir.",
+            ],
+          },
+          { shot: "call-incoming", alt: "Kilit ekranında gelen bir arama" },
+          { shot: "call-controls", alt: "Arama sırasındaki düğmeler" },
+        ],
+      },
+      {
+        id: "look",
+        title: "Görünüm ve hız",
+        blocks: [
+          { p: "**Ayarlar › Ekran ve efektler › Görsel efektleri azalt** uygulamanın ne kadar cam ve bulanıklık çizeceğini belirler. One Dialer ilk seferde telefonunuz için bir düzey seçer; istediğiniz zaman değiştirin:" },
+          {
+            ul: [
+              "**Tüm efektler**: her şey tasarlandığı gibi, cam ve bulanıklık.",
+              "**Azaltılmış efektler**: daha düz cam, telefon için çok daha az iş.",
+              "**Efektler kapalı**: düz renkler, bulanıklık yok. En hızlısı.",
+            ],
+          },
+          { shot: "effects-levels", alt: "Görsel efektleri azalt: tümü, azaltılmış ve kapalı" },
+          { p: "Tüm efektlerle **Cam ve bulanıklık › Cam stili** **Kenar ışıltısı** ya da arkadakini büken ama en çok gücü isteyen deneysel **Sıvı cam** olabilir. **Ekran boyutu** uygulamayı ve gezinme çubuğunu büyütür ya da küçültür; arama ekranının da kendi **Arama ekranı efektleri** vardır." },
+          { shot: "glass-style", alt: "Cam stili: Kenar ışıltısı ve Sıvı cam" },
+        ],
+      },
+      {
+        id: "more",
+        title: "Dil, yedekleme ve güncellemeler",
+        blocks: [
+          {
+            ul: [
+              "**Ayarlar › Dil › Uygulama dili** yalnızca One Dialer'ın dilini değiştirir. **Telefonla aynı** Android'i izler.",
+              "**Yedekle ve geri yükle** ayarlarınızı, hızlı aramayı, arama notlarını ve arama arka planlarını yeni bir telefon ya da yeniden kurulum için bir dosyaya kaydeder.",
+              "**Yazılım güncellemesi** Google Play'de yeni bir sürüm olduğunda yenilikleriyle birlikte gösterir.",
+            ],
+          },
+          { shot: "settings-language", alt: "Uygulama dili ayarları" },
+        ],
+      },
+      {
+        id: "setups",
+        title: "Sık karşılaşılan durumlar için ayarlar",
+        blocks: [
+          { p: "Size uyan durumu seçin ve bu ayarları değiştirin." },
+          {
+            setup: "İnsanları yanlışlıkla arıyorum",
+            when: "Son aramaya bir dokunuş ya da kaydırırken bir hareket istemediğiniz bir aramayı başlatıyor.",
+            steps: [
+              "**Ayarlar › Hızlı arama yapma › Son aramaya dokunma** → **Ayrıntıları aç**.",
+              "**Aramak veya mesaj için kaydır**'ı kapatın.",
+              "İsteğe bağlı: **Satırlarda arama düğmesi**'ni açın; böylece aramak, düğmeye bilinçli bir dokunuş olur.",
+            ],
+          },
+          { shot: "setup-no-accidents", alt: "Yanlışlıkla aramaları önlemek için ayarlanmış Hızlı arama yapma" },
+          {
+            setup: "İş SIM'i ve kişisel SIM",
+            when: "İş kişilerini bir SIM'den, diğer herkesi öbüründen, her seferinde seçmeden aramak istiyorsunuz.",
+            steps: [
+              "**Ayarlar › SIM kartlar › Tuş takımı ve kişiler** → kişisel SIM'iniz (ya da Telefonun varsayılan SIM'i).",
+              "Her iş kişisinin sayfasında **iş SIM'ini** seçin. Her zaman o kazanır.",
+              "**Son aramaya dokunma** → **Son kullanılan SIM**; geri ararken arama hangi SIM'e geldiyse o kullanılır.",
+            ],
+          },
+          { shot: "setup-two-sims", alt: "İş ve kişisel kullanım için SIM ayarları" },
+          {
+            setup: "Hangi SIM'in kullanılacağından hiç emin değilim",
+            when: "İki SIM var ve her aramada siz karar vermek istiyorsunuz.",
+            steps: [
+              "**Ayarlar › SIM kartlar › Tuş takımı ve kişiler** → **Her seferinde sor**.",
+              "**Ayarlar › Tuş takımı › İki Ara düğmesi**'ni açın; tuş takımı her SIM için bir düğme gösterir.",
+            ],
+          },
+          {
+            setup: "Telefonum yavaş geliyor",
+            when: "Kaydırma takılıyor ya da arama ekranı yavaş açılıyor.",
+            steps: [
+              "**Ayarlar › Ekran ve efektler › Görsel efektleri azalt** → **Azaltılmış efektler**, eski bir telefonda **Efektler kapalı**.",
+              "**Cam stili** → **Kenar ışıltısı** (Sıvı cam değil).",
+              "**Arama ekranı efektleri**'ni de düşürün.",
+            ],
+          },
+          { shot: "setup-slow-phone", alt: "Görsel efektleri azalt: Azaltılmış efektler" },
+          {
+            setup: "Yalnızca tanıdıklarım arasın",
+            when: "Spam, gizli ya da bilinmeyen numaralar.",
+            steps: [
+              "**Ayarlar › Engelle ve filtrele** → **Bilinmeyen/gizli numaraları engelle**'yi ve isterseniz **Kişilerde olmayan numaralardan gelen aramaları engelle**'yi açın.",
+              "İstendiğinde One Dialer'ı **Arayan kimliği ve spam uygulaması** olarak kabul edin.",
+              "Aramalar düzenli kalsın diye **Engellenen aramaları gizle**'yi açın.",
+            ],
+          },
+          {
+            setup: "Aramaları kaydetmek istiyorum",
+            when: "Google Play'deki One Dialer hiçbir zaman kendisi kayıt yapmaz. Kayıt ayrı bir uygulamadan, One Recorder'dan gelir.",
+            steps: [
+              "Bu sitedeki **One Recorder** kılavuzunu izleyin: bir kerelik, yaklaşık beş dakika sürer.",
+            ],
+          },
+        ],
+      },
+    ],
   },
   recorder: {
     back: "One Dialer'a dön",
@@ -153,14 +381,17 @@ export const tr: Dict = {
       "İstediğiniz zaman ya da otomatik kaydedin: her arama, bilinmeyen numaralar veya yalnızca seçtiğiniz kişiler.",
       "Kayıtlarınız One Dialer'da; kişi adları, arama, yıldızlar, paylaşma ve otomatik silme ile.",
       "One Dialer gibi açık kaynak. Ne yaptığını herkes kontrol edebilir.",
+      "Birkaç saatte bir hâlâ çalıştığını denetler ve durmuşsa kendiliğinden yeniden başlar.",
+      "Başladıktan sonra Geliştirici seçeneklerini kendisi kapatır, böylece çoğu bankacılık uygulaması açılır.",
+      "Şimdi denetle kaydın gerçekten çalıştığını sınar ve son aramanın sonucu kaydedilip kaydedilmediğini gösterir.",
     ],
     consTitle: "Neler beklenir",
     cons: [
       "İki tarafı kaydetmek için Geliştirici seçenekleri ve Kablosuz hata ayıklama bir kez açılmalı, her başlatmada da Wi-Fi gerekir. Yeniden başlatmadan sonra başlayamazsa (Wi-Fi yoksa ya da Geliştirici seçenekleri kapalıysa), One Recorder'da dokunarak başlatırsınız.",
-      "Bazı bankacılık ve ödeme uygulamaları Geliştirici seçenekleri açıkken açılmaz.",
+      "Bazı telefonlarda kaydın çalışmaya devam etmesi için USB ya da kablosuz hata ayıklamanın açık kalması gerekir ve bazı bankacılık uygulamaları o zaman da açılmaz.",
       "Bazı telefonlarda Wi-Fi araması üzerinden yapılan aramalarda yalnızca bir taraf kaydedilir. Bu, One Recorder'dan değil telefonun ses sürücüsünden kaynaklanır.",
       "Android 12 veya üstü gerekir. Android 10 ve 11, hizmeti Kablosuz hata ayıklama üzerinden başlatamaz ve orada kaydetmenin başka yolu yoktur.",
-      "Kendini güncellemez. Google Play onu tanımaz, yeni sürümler için buraya dönersiniz.",
+      "Google Play'de değil. Yeni sürümleri kendisi GitHub'da arar ve Yazılım güncellemesi'nden yükler.",
       "Yalnızca Google Play'den yüklenmiş One Dialer 1.0.0-beta.9 veya üstüyle çalışır, dosyadan yüklenmiş bir kopyayla çalışmaz.",
       "Karşı tarafa kayıt yaptığınız söylenmez. Bu sizin sorumluluğunuzdadır ve bazı yerlerde onayı olmadan yasaya aykırıdır.",
     ],
@@ -198,32 +429,45 @@ export const tr: Dict = {
       },
       {
         id: "both",
-        title: "İki tarafı da kaydedin",
+        title: "İki tarafı da kaydet",
         blocks: [
-          { p: "One Recorder'ı açın: **İki tarafı da kaydet** en üstte; ilerledikçe her satır Hazır olur." },
+          { p: "One Recorder'ı açın: adımlar **Kurulum** altında ve ilerledikçe her birine yeşil bir onay işareti gelir. Üstteki **Devam** her zaman sıradaki adımı yapar." },
+          { shot: "rec-setup", alt: "One Recorder'ın kurulum adımları" },
           {
             ol: [
+              "**Bildirimler.** Önce bunlara izin verin: eşleme kodu One Recorder'ın bildirimine yazılır.",
               "**Geliştirici seçenekleri.** Kapalıysa **Ayarlar › Telefon hakkında**'yı açın (bazı telefonlarda Telefon hakkında › Yazılım bilgileri) ve **Yapım numarası**'na yedi kez dokunun.",
-              "**Kablosuz hata ayıklama ile eşleyin.** Satıra dokunun. One Recorder Geliştirici seçeneklerini açar ve bir bildirim gösterir. **Kablosuz hata ayıklama**'yı açın, içine girin ve **Eşleme koduyla cihaz eşle**'ye dokunun.",
-              "Kodu ekranda tutun, One Recorder bildirimini aşağı çekin, **Kodu girin**'e dokunun ve altı haneyi yazın. One Recorder eşlenir ve hizmetini başlatır. Yalnızca bir kez eşlersiniz.",
-              "**Kayıt hizmeti: hazır.** Çalışmıyor diyorsa Wi-Fi'da olduğunuzdan emin olun ve başlatmak için satıra dokunun. **Yeniden başlatmadan sonra başlat**, hizmet ilk kez başladığında kendiliğinden açılır.",
+              "**Kablosuz hata ayıklama ile eşle.** Satıra dokunun. One Recorder Geliştirici seçeneklerini açar ve bir bildirim gösterir. **Kablosuz hata ayıklama**'yı açın, içine girin ve **Cihazı eşleme koduyla eşle**'ye dokunun.",
+              "Kodu ekranda bırakın, One Recorder'ın bildirimini aşağı çekin, **Kodu girin**'e dokunun ve altı haneyi yazın. One Recorder eşlenir ve hizmetini başlatır. Yalnızca bir kez eşlersiniz.",
+              "**Ya da otomatik eşleyin:** One Recorder'da **Otomatik eşle (isteğe bağlı)**'yı açın. Kodu eşleme penceresinden kendisi okur, sonra kendini kapatır. Android 13 ve sonrasında gri görünüyorsa önce One Recorder'ın Uygulama bilgisi › ⋮ › **Kısıtlanmış ayarlara izin ver**'i açın.",
+              "**Kayıt hizmetini başlat.** Çalışmıyorsa Wi-Fi'de olduğunuzdan emin olun ve satıra dokunun. **Yeniden başlatmadan sonra başlat** ilk başlatmada kendiliğinden açılır.",
             ],
           },
-          {
-            p: "Kablosuz hata ayıklamayı yeniden kapatabilirsiniz: One Recorder hizmeti başlatması gerektiğinde onu bir anlığına açar, sonra yeniden kapatır. Telefonunuz Kablosuz hata ayıklama kapanınca hizmeti durduruyorsa One Recorder onu açık bırakır.",
-          },
+          { shot: "rec-pair", alt: "Eşleme kodunu One Recorder'ın bildirimine yazmak" },
+          { p: "**Pil: Kısıtlanmamış** son adımdır. Bir arama beklerken telefonun kaydediciyi kapatmasını önler." },
         ],
       },
       {
-        id: "setup",
-        title: "Bildirimler ve pil",
+        id: "devoptions",
+        title: "Geliştirici seçenekleri ve bankacılık uygulamaları",
+        blocks: [
+          { p: "Birçok bankacılık ve ödeme uygulaması Geliştirici seçenekleri, USB hata ayıklama ya da kablosuz hata ayıklama açıkken açılmaz. **Geliştirici seçeneklerini kapat** varsayılan olarak açıktır: kayıt hizmeti başladıktan sonra One Recorder bunları tek tek kapatır ve her birinden sonra kaydın hâlâ çalıştığını denetler." },
+          { p: "Bazı telefonlar USB ya da kablosuz hata ayıklama kapanınca kayıt hizmetini durdurur. One Recorder o zaman onu yeniden açar ve açık bırakır, satır da bunu söyler. Hizmeti yeniden başlatması gerektiğinde (yeniden başlatmadan sonra ya da Wi-Fi'ye dönünce) onları kısa süre açıp yeniden kapatır." },
+          { shot: "rec-devoptions", alt: "Geliştirici seçeneklerini kapat ayarı" },
+        ],
+      },
+      {
+        id: "check",
+        title: "Çalıştığını denetleyin",
         blocks: [
           {
-            ol: [
-              "**Bildirimler.** Bir aramanın kaydedildiğini görebilmek için izin verin.",
-              "**Pil: Kısıtlanmamış.** İsteğe bağlı ama önerilir. Telefonun, bir arama beklerken kaydediciyi kapatmasını önler.",
+            ul: [
+              "**Şimdi denetle** (Kurulum altında) kayıt hizmeti durmuşsa onu başlatır, bu da One Recorder'ın hâlâ eşli olduğunu kanıtlar; sonra kısa bir süre arama sesini açtırır. Saati ve sonucu gösterir.",
+              "Kablosuz hata ayıklama One Recorder'ı artık kabul etmiyorsa Şimdi denetle, Eşlendi demeye devam etmek yerine sizi eşleme adımına geri götürür.",
+              "Kaydettiğiniz her aramadan sonra One Recorder'ın üstünde sonuç görünür: ne zaman ve ne kadar sürdüğü, ya da kayıt sessizse veya arama kaydedilmediyse kırmızı.",
             ],
           },
+          { shot: "rec-check", alt: "Şimdi denetle ve son aramanın sonucu" },
         ],
       },
       {
@@ -246,6 +490,7 @@ export const tr: Dict = {
           {
             p: "Onları One Dialer'da **Aramalar › ⋮ › Kayıtlar** altında ya da **Ayarlar › Arama kaydı**'nda bulursunuz. Kişinin adıyla güne göre gruplanırlar; arayabilir, filtreleyebilir (Tümü, Yıldızlı, Kişiler, Bilinmiyor), oynatabilir, yıldızlayabilir, yeniden adlandırabilir, paylaşabilir veya silebilirsiniz.",
           },
+          { shot: "rec-recordings", alt: "One Dialer'daki kayıtlar" },
           {
             p: "Dosyalar One Recorder'ın içinde durur. **Telefona kaydet**, birini telefonunuzun `Recordings/One Dialer` klasörüne kopyalar; diğer uygulamalarınız onu orada görebilir. **Otomatik silme**, yıldızlıları her zaman koruyarak kayıtları 30 veya 90 gün sonra temizleyebilir.",
           },
@@ -303,6 +548,47 @@ export const tr: Dict = {
         ],
       },
       {
+        id: "setups",
+        title: "Sık karşılaşılan durumlar için ayarlar",
+        blocks: [
+          {
+            setup: "Bankacılık uygulamaları kullanıyorum",
+            when: "Kayıt ve bankacılık uygulamanız aynı telefonda olsun istiyorsunuz.",
+            steps: [
+              "**Geliştirici seçeneklerini kapat**'ı açık bırakın (varsayılan).",
+              "**Wi-Fi olmadan kaydetmeye devam et**'i kapalı bırakın: USB hata ayıklamayı açık tutar.",
+              "Satır telefonunuzun bir hata ayıklamanın açık kalmasını istediğini söylüyorsa bankacılık uygulamasını yine de deneyin: çoğu yalnızca Geliştirici seçeneklerine bakar.",
+            ],
+          },
+          {
+            setup: "Wi-Fi yokken de kaydetmek istiyorum",
+            when: "Wi-Fi gidince kayıt hizmeti durur, çünkü kablosuz hata ayıklama Wi-Fi ister.",
+            steps: [
+              "**Wi-Fi olmadan kaydetmeye devam et**'i açın. USB hata ayıklamayı açık tutar, böylece hizmet mobil veride de çalışır.",
+              "Açıkken bazı bankacılık uygulamaları açılmaz.",
+            ],
+          },
+          { shot: "rec-away-wifi", alt: "Wi-Fi olmadan kaydetmeye devam et" },
+          {
+            setup: "Telefonum sık sık Wi-Fi yokken yeniden başlıyor",
+            when: "Yeniden başlatmadan sonra hizmet başlamak için Wi-Fi'yi bekler.",
+            steps: [
+              "**Yeniden başlatmadan sonra başlat**'ın kendiliğinden başladığını söylediğinden emin olun.",
+              "Android 12–16'da **Wi-Fi olmadan başlat (deneysel)**'i deneyin. Konumun açık olması gerekir ve her telefonda çalışmayabilir.",
+            ],
+          },
+          {
+            setup: "Kayıtlarım sessiz ya da kısık",
+            when: "Bir kayıtta ses yok ya da karşı taraf zor duyuluyor.",
+            steps: [
+              "**Şimdi denetle**'ye dokunun. Her şey çalışmıyorsa gösterdiği adımı düzeltin.",
+              "Aynı aramayı Wi-Fi araması yerine mobil ağ üzerinden deneyin.",
+              "Hâlâ sorunluysa: **Tanılamayı paylaş** ve bir hata bildirimiyle gönderin.",
+            ],
+          },
+        ],
+      },
+      {
         id: "trouble",
         title: "Çalışmazsa",
         blocks: [
@@ -314,6 +600,8 @@ export const tr: Dict = {
               "**One Dialer aramaların kaydedilmediğini söylüyor:** otomatik kayıt açık ama One Recorder hazır değil. Açın ve Hazır olmayan satırları, genellikle hizmeti, düzeltin.",
               "**One Dialer kaydedicinin yalnızca Google Play'deki One Dialer ile çalıştığını söylüyor:** One Dialer bir dosyadan yüklendi ya da 1.0.0-beta.9'dan eski. Google Play'den yükleyin veya iki uygulamayı da güncelleyin.",
               "**Arama ekranında Kaydet seçeneği yok:** One Recorder yüklü değil. One Dialer, yüklenene kadar kayıtla ilgili her şeyi gizler.",
+              "**Bir bankacılık uygulaması hâlâ açılmıyor:** telefonunuz USB ya da kablosuz hata ayıklamanın açık kalmasını istiyor (One Recorder'daki Geliştirici seçeneklerini kapat satırı hangisi olduğunu söyler). **Wi-Fi olmadan kaydetmeye devam et** açıksa kapatın, çünkü USB hata ayıklamayı açık tutar.",
+              "**Hâlâ çözülmedi:** One Recorder'da **Tanılamayı paylaş**'a dokunun ve raporu hata bildiriminizle gönderin. Sürümleri, telefon modelini, kurulum durumunu ve son günlük satırlarını içerir; numara ya da ad içermez.",
             ],
           },
         ],
@@ -324,7 +612,7 @@ export const tr: Dict = {
         blocks: [
           {
             ul: [
-              "**Güncellemek için** APK'yı bu sayfadan yeniden indirin ve eskisinin üzerine yükleyin. Kayıtlarınız ve ayarlarınız kalır.",
+              "**Güncellemek için** One Recorder › **Yazılım güncellemesi**'ni açın. Kayıt hizmeti çalışırken yeni sürümü kendisi, sormadan yükler; aksi hâlde siz yükleyesiniz diye indirir. APK'yı bu sayfadan indirip eskisinin üzerine de yükleyebilirsiniz. Kayıtlarınız ve ayarlarınız kalır.",
               "**Kaldırmak için** One Recorder'ı diğer uygulamalar gibi kaldırın. Bu, içindeki tüm kayıtları siler; saklamak istediklerinizi önce telefonunuza kaydedin. One Dialer çalışmaya devam eder ve kayıt seçeneklerini yeniden gizler.",
               "Kayıt yasaları ülkeye göre değişir. Bazıları aramadaki herkesin onayını ister. Gereken yerlerde karşı tarafı bilgilendirmek ve onayını almak sizin sorumluluğunuzdadır.",
             ],

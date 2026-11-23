@@ -9,10 +9,13 @@ export const de: Dict = {
     beta: "Jetzt in der geschlossenen Beta bei Google Play.",
     recorderTitle: "One Recorder · One Dialer",
     recorderDescription: "Nimm deine Anrufe in One Dialer mit One Recorder auf, einer kleinen Begleit-App, die du von dieser Website installierst. Wie du sie einrichtest und was dich erwartet.",
+    guideTitle: "Anleitung · One Dialer",
+    guideDescription: "So nutzt du One Dialer: SIMs, Anrufe aus der Anrufliste, Wähltastatur, Kontakte, Blockieren, Anrufbildschirm und Effekte, mit Einstellungen für typische Situationen.",
   },
   nav: {
     label: "Website",
     whatsNew: "Neuigkeiten",
+    guide: "Anleitung",
     recorder: "Recorder",
     privacy: "Datenschutz",
     getApp: "App holen",
@@ -131,10 +134,235 @@ export const de: Dict = {
     feature: "Funktion vorschlagen",
     report: "Fehler melden",
     label: "Fußzeile",
+    guide: "Anleitung",
     recorder: "One Recorder",
     privacy: "Datenschutzerklärung (Englisch)",
     contact: "Kontakt",
     language: "Sprache",
+  },
+  guide: {
+    back: "Zurück zu One Dialer",
+    title: "Anleitung",
+    h1: "One Dialer,",
+    h1b: "erklärt.",
+    lead: "Wo alles ist, was jede Einstellung macht, und welche Einstellungen zu deiner Situation passen.",
+    toc: "Auf dieser Seite",
+    intro: "Bilder und kurze Aufnahmen zeigen jeden Schritt. Die Einstellungen findest du im ⋮-Menü des Tabs Anrufe.",
+    sections: [
+      {
+        id: "start",
+        title: "Erste Schritte",
+        blocks: [
+          {
+            ol: [
+              "Öffne One Dialer und tippe auf **Als Standard festlegen**, damit es deine **Standard-Telefon-App** wird. Anrufe, Anrufliste und Benachrichtigungen über verpasste Anrufe funktionieren nur dann.",
+              "Erlaube **Kontakte**, **Telefon** und **Benachrichtigungen**, wenn Android fragt.",
+              "Öffne **Einstellungen**. Stimmt etwas nicht, steht oben eine Karte **Erfordert Aufmerksamkeit**, etwa „Nicht deine Standard-Telefon-App“ oder ausgeschaltete Benachrichtigungen, mit einer Taste **Beheben**, die dich direkt hinbringt.",
+            ],
+          },
+          { shot: "start-default", alt: "One Dialer als Standard-Telefon-App festlegen" },
+          { shot: "settings-health", alt: "Einstellungen mit der Karte Erfordert Aufmerksamkeit und Beheben-Tasten" },
+        ],
+      },
+      {
+        id: "calls",
+        title: "Anrufe und letzte Anrufe",
+        blocks: [
+          { p: "Der Tab **Anrufe** zeigt deine letzten Anrufe. Verpasste sind rot, wiederholte werden gruppiert und blockierte markiert." },
+          { p: "Was ein Tippen auf einen Anruf macht, legst du in **Einstellungen › Schnell anrufen › Auf letzten Anruf tippen** fest:" },
+          {
+            ul: [
+              "**Details öffnen**: die sichere Wahl. Die Seite des Anrufs öffnet sich, mit Nummer, früheren Anrufen, Notizen und einer Anruftaste.",
+              "**Anrufen**: ruft sofort zurück. Schnell, aber leicht aus Versehen.",
+              "**In Wähltastatur schreiben**: setzt die Nummer in die Wähltastatur, damit du sie vor dem Anruf prüfen oder ändern kannst.",
+            ],
+          },
+          { shot: "recents-tap", alt: "Die Einstellung Auf letzten Anruf tippen mit Anrufen, Details öffnen und In Wähltastatur schreiben" },
+          {
+            ul: [
+              "**Anruftaste in Zeilen** setzt eine Anruftaste in jede Zeile, sodass ein Tippen die Details öffnet und die Taste anruft. **Stil der Anruftaste** ändert ihr Aussehen.",
+              "**Wischen zum Anrufen oder Schreiben**: eine Zeile nach rechts wischen ruft an, nach links schreibt eine Nachricht.",
+              "**Nach Kontakt gruppieren** fasst die Anrufe einer Person zusammen.",
+              "Halte eine Zeile gedrückt, um mehrere Anrufe auszuwählen, etwa um sie zu löschen.",
+            ],
+          },
+          { shot: "recents-swipe", alt: "Einen letzten Anruf nach rechts wischen, um anzurufen" },
+        ],
+      },
+      {
+        id: "sims",
+        title: "Zwei SIMs",
+        blocks: [
+          { p: "Mit zwei SIMs legt **Einstellungen › SIM-Karten** fest, welche jeder Anruf nutzt. Das wählst du getrennt für:" },
+          {
+            ul: [
+              "**Wähltastatur und Kontakte**: **Standard-SIM des Telefons** oder **Jedes Mal fragen**, das beim Anrufen eine SIM-Auswahl zeigt.",
+              "**Auf letzten Anruf tippen** und **Wischen zum Anrufen**: **Wie Wähltastatur**, **Zuletzt genutzte SIM** (die SIM dieses Anrufs), **Jedes Mal fragen** oder immer eine SIM. Sie gelten nur, wenn diese Art zu anrufen unter Schnell anrufen eingeschaltet ist.",
+            ],
+          },
+          { shot: "sim-settings", alt: "Einstellungen SIM-Karten" },
+          { p: "Ein Kontakt kann **eine eigene SIM** haben: Öffne seine Seite und wähle sie. Sie geht immer vor, vor jeder Regel oben." },
+          { shot: "sim-contact", alt: "Eine SIM auf der Seite eines Kontakts wählen" },
+          { p: "Auf der Wähltastatur zeigt **Einstellungen › Wähltastatur › Zwei Anruftasten** eine Anruftaste pro SIM statt einer, damit du beim Anrufen wählst." },
+          { shot: "sim-chooser", alt: "Die SIM-Auswahl beim Anrufen mit Jedes Mal fragen" },
+        ],
+      },
+      {
+        id: "keypad",
+        title: "Wähltastatur",
+        blocks: [
+          {
+            ul: [
+              "Tippe Ziffern oder Buchstaben: Passende Kontakte erscheinen beim Tippen (**T9**). Tippe einen an, um ihn anzurufen oder zu öffnen.",
+              "Halte **1** für die Mailbox und **2–9** für Kurzwahl. Kurzwahl stellst du in **Einstellungen › Wähltastatur › Kurzwahl** ein.",
+              "Halte **0** für **+**. Halte die Sterntaste (*) für eine Pause und **#** für ein Warten, für Nummern mit Durchwahl.",
+              "Halte die Nummer gedrückt, um eine kopierte einzufügen. Halte **Löschen**, um sie zu leeren.",
+              "Wische die Wähltastatur nach unten oder tippe auf den Griff, um deine Anrufe zu sehen. Die grüne Taste neben der Navigationsleiste holt sie mit deiner Nummer zurück.",
+            ],
+          },
+          { shot: "keypad-t9", alt: "Tippen auf der Wähltastatur mit passenden Kontakten" },
+          { shot: "keypad-speed-dial", alt: "Kurzwahl-Einstellungen" },
+        ],
+      },
+      {
+        id: "contacts",
+        title: "Kontakte",
+        blocks: [
+          {
+            ul: [
+              "Favoriten stehen oben unter ★. Fahre am **A–Z**-Index rechts entlang, um zu springen.",
+              "Tippe auf einen Kontakt für seine Seite: Nummern, eigene SIM, Anrufhintergrund und Blockieren. Gedrückt halten wählt mehrere aus.",
+              "**⋮ › Kontakte verwalten** legt fest, welche Konten erscheinen, Sortierung und Namensformat, wo neue Kontakte gespeichert werden, Import und Export, SIM-Kontakte und **Doppelte Kontakte zusammenführen**.",
+            ],
+          },
+          { shot: "contacts-index", alt: "Kontakte mit Favoriten und A–Z-Index" },
+          { shot: "contacts-manage", alt: "Kontakte verwalten" },
+        ],
+      },
+      {
+        id: "blocking",
+        title: "Blockieren",
+        blocks: [
+          {
+            ul: [
+              "Blockiere eine Nummer auf der Seite des Anrufs oder des Kontakts. **Einstellungen › Blockieren & filtern › Blockierte Nummern** listet sie auf; Android selbst lehnt diese Anrufe ab.",
+              "**Unbekannte/private Nummern blockieren** stoppt Anrufer, die ihre Nummer verbergen. **Anrufe von Nummern außerhalb der Kontakte blockieren** lässt nur deine Kontakte klingeln.",
+              "Diese beiden Regeln brauchen One Dialer als **App für Anrufer-ID und Spam**. One Dialer fragt danach, wenn du eine einschaltest. Übernimmt eine andere App diese Rolle, zeigen die Einstellungen „Blockierregeln sind pausiert“.",
+              "**Blockierte Anrufe ausblenden** hält sie aus der Anrufliste heraus.",
+            ],
+          },
+          { shot: "blocking-rules", alt: "Einstellungen Blockieren & filtern" },
+        ],
+      },
+      {
+        id: "callscreen",
+        title: "Der Anrufbildschirm",
+        blocks: [
+          {
+            ul: [
+              "Eingehende Anrufe füllen den Bildschirm, auch auf dem Sperrbildschirm. **Einstellungen › Anrufbildschirm** legt fest, wie du annimmst (nach oben oder unten wischen oder Tasten), die Effekte, das Foto des Anrufers und den Hintergrund.",
+              "Während eines Anrufs: Stumm, Halten, Lautsprecher, Wähltastatur und Anruf hinzufügen liegen auf großen Glastasten. **⋮** hat mehr, etwa Aufnehmen, wenn One Recorder installiert ist.",
+              "**Ablehnungsnachrichten** sind die Texte, die du senden kannst, wenn du einen Anruf ablehnst.",
+              "**Anrufe annehmen und beenden** hat automatische Annahme, Antwort per SMS und Lautsprecher. **Nummern von Kontakten ausblenden** zeigt bei gespeicherten Kontakten nur den Namen.",
+            ],
+          },
+          { shot: "call-incoming", alt: "Ein eingehender Anruf auf dem Sperrbildschirm" },
+          { shot: "call-controls", alt: "Tasten während des Anrufs" },
+        ],
+      },
+      {
+        id: "look",
+        title: "Aussehen und Tempo",
+        blocks: [
+          { p: "**Einstellungen › Anzeige & Effekte › Visuelle Effekte reduzieren** legt fest, wie viel Glas und Unschärfe die App zeichnet. One Dialer wählt beim ersten Start eine Stufe für dein Telefon; du kannst sie jederzeit ändern:" },
+          {
+            ul: [
+              "**Alle Effekte**: alles wie entworfen, Glas und Unschärfe.",
+              "**Weniger Effekte**: flacheres Glas, viel weniger Arbeit für das Telefon.",
+              "**Effekte aus**: volle Farben, keine Unschärfe. Am schnellsten.",
+            ],
+          },
+          { shot: "effects-levels", alt: "Visuelle Effekte reduzieren: alle, weniger und aus" },
+          { p: "Mit allen Effekten kann **Glas & Unschärfe › Glasstil** **Kantenleuchten** sein oder das experimentelle **Flüssigglas**, das den Hintergrund krümmt, aber am meisten Leistung braucht. **Anzeigegröße** macht die App und die Navigationsleiste größer oder kleiner, und der Anrufbildschirm hat eigene **Effekte im Anrufbildschirm**." },
+          { shot: "glass-style", alt: "Glasstil: Kantenleuchten und Flüssigglas" },
+        ],
+      },
+      {
+        id: "more",
+        title: "Sprache, Sicherung und Updates",
+        blocks: [
+          {
+            ul: [
+              "**Einstellungen › Sprache › App-Sprache** ändert nur die Sprache von One Dialer. **Wie Telefon** folgt Android.",
+              "**Sichern & wiederherstellen** speichert deine Einstellungen, Kurzwahl, Anrufnotizen und Anrufhintergründe in einer Datei, für ein neues Telefon oder eine Neuinstallation.",
+              "**Software-Update** zeigt, wenn eine neue Version auf Google Play ist, mit den Neuerungen.",
+            ],
+          },
+          { shot: "settings-language", alt: "Einstellungen der App-Sprache" },
+        ],
+      },
+      {
+        id: "setups",
+        title: "Einstellungen für typische Situationen",
+        blocks: [
+          { p: "Such dir die Situation aus, die zu dir passt, und ändere diese Einstellungen." },
+          {
+            setup: "Ich rufe Leute aus Versehen an",
+            when: "Ein Tippen auf einen letzten Anruf oder ein Wischen beim Scrollen startet einen Anruf, den du nicht wolltest.",
+            steps: [
+              "**Einstellungen › Schnell anrufen › Auf letzten Anruf tippen** → **Details öffnen**.",
+              "Schalte **Wischen zum Anrufen oder Schreiben** aus.",
+              "Optional: Schalte **Anruftaste in Zeilen** ein, dann ist Anrufen ein bewusstes Tippen auf die Taste.",
+            ],
+          },
+          { shot: "setup-no-accidents", alt: "Schnell anrufen so eingestellt, dass keine versehentlichen Anrufe passieren" },
+          {
+            setup: "Arbeits-SIM und private SIM",
+            when: "Arbeitskontakte sollen über eine SIM laufen, alle anderen über die andere, ohne jedes Mal zu wählen.",
+            steps: [
+              "**Einstellungen › SIM-Karten › Wähltastatur und Kontakte** → deine private SIM (oder Standard-SIM des Telefons).",
+              "Wähle auf der Seite jedes Arbeitskontakts die **Arbeits-SIM**. Sie gewinnt immer.",
+              "**Auf letzten Anruf tippen** → **Zuletzt genutzte SIM**, damit ein Rückruf die SIM nutzt, über die der Anruf kam.",
+            ],
+          },
+          { shot: "setup-two-sims", alt: "SIM-Einstellungen für Arbeit und Privates" },
+          {
+            setup: "Ich weiß nie, welche SIM benutzt wird",
+            when: "Zwei SIMs, und du entscheidest lieber bei jedem Anruf.",
+            steps: [
+              "**Einstellungen › SIM-Karten › Wähltastatur und Kontakte** → **Jedes Mal fragen**.",
+              "Schalte **Einstellungen › Wähltastatur › Zwei Anruftasten** ein, dann zeigt die Wähltastatur eine Taste pro SIM.",
+            ],
+          },
+          {
+            setup: "Mein Telefon fühlt sich langsam an",
+            when: "Scrollen ruckelt oder der Anrufbildschirm öffnet sich langsam.",
+            steps: [
+              "**Einstellungen › Anzeige & Effekte › Visuelle Effekte reduzieren** → **Weniger Effekte**, auf einem älteren Telefon **Effekte aus**.",
+              "**Glasstil** → **Kantenleuchten** (nicht Flüssigglas).",
+              "Senke auch die **Effekte im Anrufbildschirm**.",
+            ],
+          },
+          { shot: "setup-slow-phone", alt: "Visuelle Effekte reduzieren auf Weniger Effekte" },
+          {
+            setup: "Nur Leute, die ich kenne, sollen anrufen",
+            when: "Spam, private oder unbekannte Nummern.",
+            steps: [
+              "**Einstellungen › Blockieren & filtern** → schalte **Unbekannte/private Nummern blockieren** ein und, wenn du willst, **Anrufe von Nummern außerhalb der Kontakte blockieren**.",
+              "Akzeptiere One Dialer als **App für Anrufer-ID und Spam**, wenn danach gefragt wird.",
+              "Schalte **Blockierte Anrufe ausblenden** ein, damit die Anrufliste aufgeräumt bleibt.",
+            ],
+          },
+          {
+            setup: "Ich möchte Anrufe aufnehmen",
+            when: "One Dialer von Google Play nimmt selbst nie auf. Die Aufnahme kommt von einer eigenen App, One Recorder.",
+            steps: [
+              "Folge der Anleitung zu **One Recorder** auf dieser Website: Das dauert einmalig etwa fünf Minuten.",
+            ],
+          },
+        ],
+      },
+    ],
   },
   recorder: {
     back: "Zurück zu One Dialer",
@@ -153,14 +381,17 @@ export const de: Dict = {
       "Nimm auf, wann du willst, oder automatisch: jeden Anruf, unbekannte Nummern oder nur Kontakte, die du auswählst.",
       "Deine Aufnahmen leben in One Dialer, mit Kontaktnamen, Suche, Sternen, Teilen und automatischem Löschen.",
       "Open Source, wie One Dialer. Jeder kann prüfen, was sie tut.",
+      "Es prüft alle paar Stunden, ob es noch läuft, und startet von selbst neu, wenn es gestoppt wurde.",
+      "Nach dem Start schaltet es die Entwickleroptionen selbst wieder aus, damit sich die meisten Banking-Apps öffnen.",
+      "Jetzt prüfen testet, ob die Aufnahme wirklich funktioniert, und das Ergebnis des letzten Anrufs zeigt, ob er aufgenommen wurde.",
     ],
     consTitle: "Was dich erwartet",
     cons: [
       "Beide Seiten brauchen einmal eingeschaltete Entwickleroptionen und Drahtloses Debugging, und WLAN bei jedem Start. Kann sie nach einem Neustart nicht wieder starten (kein WLAN, oder Entwickleroptionen aus), startest du sie in One Recorder per Tipp.",
-      "Manche Banking- und Bezahl-Apps öffnen sich nicht, solange die Entwickleroptionen an sind.",
+      "Auf manchen Telefonen muss USB- oder drahtloses Debugging eingeschaltet bleiben, damit die Aufnahme weiter funktioniert, und manche Banking-Apps öffnen sich dann trotzdem nicht.",
       "Auf manchen Telefonen nehmen Anrufe über WLAN-Telefonie nur eine Seite auf. Das liegt am Audiotreiber des Telefons, nicht an One Recorder.",
       "Sie braucht Android 12 oder neuer. Android 10 und 11 können den Dienst nicht über Drahtloses Debugging starten, und dort gibt es keinen anderen Weg aufzunehmen.",
-      "Sie aktualisiert sich nicht selbst. Google Play kennt sie nicht, also kommst du für neue Versionen hierher zurück.",
+      "Es ist nicht auf Google Play. Es sucht selbst auf GitHub nach neuen Versionen und installiert sie über Software-Update.",
       "Sie funktioniert nur mit One Dialer aus Google Play, Version 1.0.0-beta.9 oder neuer, nicht mit einer aus einer Datei installierten Kopie.",
       "Die andere Person erfährt nicht, dass du aufnimmst. Das liegt bei dir, und an manchen Orten ist es ohne ihre Zustimmung verboten.",
     ],
@@ -200,30 +431,43 @@ export const de: Dict = {
         id: "both",
         title: "Beide Seiten aufnehmen",
         blocks: [
-          { p: "Öffne One Recorder: **Beide Seiten aufnehmen** steht oben, und jede Zeile wird nach und nach Bereit." },
+          { p: "Öffne One Recorder: Die Schritte stehen unter **Einrichten**, und jeder bekommt ein grünes Häkchen, sobald er erledigt ist. **Weiter** oben macht immer den nächsten." },
+          { shot: "rec-setup", alt: "Die Einrichtungsschritte von One Recorder" },
           {
             ol: [
-              "**Entwickleroptionen.** Sind sie aus, öffne **Einstellungen › Über das Telefon** (auf manchen Telefonen Über das Telefon › Softwareinformationen) und tippe siebenmal auf **Build-Nummer**.",
-              "**Mit Drahtlosem Debugging koppeln.** Tippe auf die Zeile. One Recorder öffnet die Entwickleroptionen und zeigt eine Benachrichtigung. Schalte **Drahtloses Debugging** ein, öffne es und tippe auf **Gerät über einen Kopplungscode koppeln**.",
+              "**Benachrichtigungen.** Erlaube sie zuerst: Der Kopplungscode wird in die Benachrichtigung von One Recorder eingegeben.",
+              "**Entwickleroptionen.** Wenn sie aus sind, öffne **Einstellungen › Über das Telefon** (auf manchen Telefonen Über das Telefon › Softwareinformationen) und tippe siebenmal auf **Build-Nummer**.",
+              "**Mit Drahtlosem Debugging koppeln.** Tippe auf die Zeile. One Recorder öffnet die Entwickleroptionen und zeigt eine Benachrichtigung. Schalte **Drahtloses Debugging** ein, öffne es und tippe auf **Gerät über Kopplungscode koppeln**.",
               "Lass den Code auf dem Bildschirm, zieh die Benachrichtigung von One Recorder herunter, tippe auf **Code eingeben** und gib die sechs Ziffern ein. One Recorder koppelt sich und startet seinen Dienst. Gekoppelt wird nur einmal.",
-              "**Aufnahmedienst: bereit.** Steht dort Läuft nicht, sorge für WLAN und tippe auf die Zeile, um ihn zu starten. **Nach Neustart starten** schaltet sich beim ersten Start des Dienstes von selbst ein.",
+              "**Oder automatisch koppeln:** Schalte **Automatisch koppeln (optional)** in One Recorder ein. Es liest den Code selbst aus dem Kopplungsdialog und schaltet sich danach aus. Ab Android 13: Ist es ausgegraut, öffne zuerst die App-Info von One Recorder › ⋮ › **Eingeschränkte Einstellungen zulassen**.",
+              "**Aufnahmedienst starten.** Läuft er nicht, sorge für WLAN und tippe auf die Zeile. **Nach Neustart starten** schaltet sich beim ersten Start von selbst ein.",
             ],
           },
-          {
-            p: "Du kannst Drahtloses Debugging wieder ausschalten: One Recorder schaltet es kurz ein, wenn es den Dienst starten muss, und danach wieder aus. Beendet dein Telefon den Dienst, wenn Drahtloses Debugging ausgeht, lässt One Recorder es an.",
-          },
+          { shot: "rec-pair", alt: "Den Kopplungscode in die Benachrichtigung von One Recorder eingeben" },
+          { p: "**Akku: Nicht eingeschränkt** ist der letzte Schritt. So schließt das Telefon den Recorder nicht, während er auf einen Anruf wartet." },
         ],
       },
       {
-        id: "setup",
-        title: "Benachrichtigungen und Akku",
+        id: "devoptions",
+        title: "Entwickleroptionen und Banking-Apps",
+        blocks: [
+          { p: "Viele Banking- und Bezahl-Apps öffnen sich nicht, solange Entwickleroptionen, USB-Debugging oder drahtloses Debugging eingeschaltet sind. **Entwickleroptionen ausschalten** ist standardmäßig an: Sobald der Aufnahmedienst läuft, schaltet One Recorder sie nacheinander aus und prüft nach jedem Schritt, ob die Aufnahme noch funktioniert." },
+          { p: "Manche Telefone beenden den Aufnahmedienst, wenn USB- oder drahtloses Debugging ausgeht. One Recorder schaltet es dann wieder ein und lässt es an, und die Zeile sagt das. Wenn der Dienst neu starten muss (nach einem Neustart oder zurück im WLAN), schaltet es sie kurz ein und wieder aus." },
+          { shot: "rec-devoptions", alt: "Die Einstellung Entwickleroptionen ausschalten" },
+        ],
+      },
+      {
+        id: "check",
+        title: "Prüfen, ob es funktioniert",
         blocks: [
           {
-            ol: [
-              "**Benachrichtigungen.** Erlaube sie, damit du siehst, wenn ein Anruf aufgenommen wird.",
-              "**Akku: Nicht eingeschränkt.** Optional, aber empfohlen. So beendet das Telefon den Recorder nicht, während er auf einen Anruf wartet.",
+            ul: [
+              "**Jetzt prüfen** (unter Einrichten) startet den Aufnahmedienst, wenn er nicht läuft – das beweist, dass One Recorder noch gekoppelt ist – und lässt ihn dann kurz den Anrufton öffnen. Es zeigt die Uhrzeit und das Ergebnis.",
+              "Akzeptiert das drahtlose Debugging One Recorder nicht mehr, führt dich Jetzt prüfen zurück zum Kopplungsschritt, statt weiter Gekoppelt anzuzeigen.",
+              "Nach jedem aufgenommenen Anruf zeigt One Recorder oben das Ergebnis: wann und wie lange, oder rot, wenn die Aufnahme stumm war oder der Anruf nicht aufgenommen wurde.",
             ],
           },
+          { shot: "rec-check", alt: "Jetzt prüfen und das Ergebnis des letzten Anrufs" },
         ],
       },
       {
@@ -246,6 +490,7 @@ export const de: Dict = {
           {
             p: "Du findest sie in One Dialer unter **Anrufe › ⋮ › Aufnahmen** oder **Einstellungen › Anrufaufzeichnung**. Sie sind nach Tag gruppiert, mit dem Namen des Kontakts, und du kannst sie suchen, filtern (Alle, Markiert, Kontakte, Unbekannt), abspielen, markieren, umbenennen, teilen oder löschen.",
           },
+          { shot: "rec-recordings", alt: "Aufnahmen in One Dialer" },
           {
             p: "Die Dateien liegen in One Recorder. **Auf Telefon speichern** kopiert eine in den Ordner `Recordings/One Dialer` deines Telefons, wo deine anderen Apps sie sehen. **Automatisch löschen** kann Aufnahmen nach 30 oder 90 Tagen entfernen und behält markierte immer.",
           },
@@ -303,6 +548,47 @@ export const de: Dict = {
         ],
       },
       {
+        id: "setups",
+        title: "Einstellungen für typische Situationen",
+        blocks: [
+          {
+            setup: "Ich nutze Banking-Apps",
+            when: "Du willst Aufnahme und deine Banking-App auf demselben Telefon.",
+            steps: [
+              "Lass **Entwickleroptionen ausschalten** an (Standard).",
+              "Lass **Ohne WLAN weiter aufnehmen** aus: Es hält USB-Debugging an.",
+              "Sagt die Zeile, dass dein Telefon ein Debugging eingeschaltet braucht, probier die Banking-App trotzdem: Viele prüfen nur die Entwickleroptionen.",
+            ],
+          },
+          {
+            setup: "Ich will auch ohne WLAN aufnehmen",
+            when: "Der Aufnahmedienst endet, wenn das WLAN weg ist, weil drahtloses Debugging WLAN braucht.",
+            steps: [
+              "Schalte **Ohne WLAN weiter aufnehmen** ein. Es hält USB-Debugging an, sodass der Dienst mit mobilen Daten weiterläuft.",
+              "Manche Banking-Apps öffnen sich nicht, solange es an ist.",
+            ],
+          },
+          { shot: "rec-away-wifi", alt: "Ohne WLAN weiter aufnehmen" },
+          {
+            setup: "Mein Telefon startet oft ohne WLAN neu",
+            when: "Nach einem Neustart wartet der Dienst auf WLAN, bevor er startet.",
+            steps: [
+              "Prüfe, dass **Nach Neustart starten** sagt, dass er von selbst startet.",
+              "Auf Android 12 bis 16 probier **Ohne WLAN starten (experimentell)**. Es braucht eingeschalteten Standort und funktioniert vielleicht nicht auf jedem Telefon.",
+            ],
+          },
+          {
+            setup: "Meine Aufnahmen sind stumm oder leise",
+            when: "Eine Aufnahme hat keinen Ton, oder die andere Person ist kaum zu hören.",
+            steps: [
+              "Tippe auf **Jetzt prüfen**. Funktioniert nicht alles, behebe den Schritt, auf den es zeigt.",
+              "Probier denselben Anruf über das Mobilfunknetz statt über WLAN-Telefonie.",
+              "Immer noch falsch: **Diagnose teilen** und mit einer Fehlermeldung schicken.",
+            ],
+          },
+        ],
+      },
+      {
         id: "trouble",
         title: "Wenn es nicht klappt",
         blocks: [
@@ -314,6 +600,8 @@ export const de: Dict = {
               "**One Dialer meldet, dass Anrufe nicht aufgenommen werden:** Automatisches Aufnehmen ist an, aber One Recorder ist nicht bereit. Öffne es und behebe jede Zeile, die nicht Bereit ist, meist den Dienst.",
               "**One Dialer meldet, dass der Recorder nur mit One Dialer aus Google Play funktioniert:** One Dialer wurde aus einer Datei installiert oder ist älter als 1.0.0-beta.9. Installiere die App aus Google Play oder aktualisiere beide Apps.",
               "**Keine Aufnahme-Option im Anrufbildschirm:** One Recorder ist nicht installiert. One Dialer blendet alles rund ums Aufnehmen aus, bis es installiert ist.",
+              "**Eine Banking-App öffnet sich immer noch nicht:** Dein Telefon braucht USB- oder drahtloses Debugging eingeschaltet (die Zeile Entwickleroptionen ausschalten in One Recorder sagt, welches). Schalte **Ohne WLAN weiter aufnehmen** aus, falls es an ist, denn es hält USB-Debugging an.",
+              "**Es klappt immer noch nicht:** Tippe in One Recorder auf **Diagnose teilen** und schick den Bericht mit deiner Fehlermeldung. Er enthält Versionen, Telefonmodell, Einrichtungsstatus und aktuelle Protokollzeilen, ohne Nummern oder Namen.",
             ],
           },
         ],
@@ -324,7 +612,7 @@ export const de: Dict = {
         blocks: [
           {
             ul: [
-              "**Zum Aktualisieren** lade die APK erneut von dieser Seite herunter und installiere sie über die alte. Deine Aufnahmen und Einstellungen bleiben.",
+              "**Zum Aktualisieren** öffne One Recorder › **Softwareupdate**. Während der Aufnahmedienst läuft, installiert es die neue Version selbst, ohne Nachfrage; sonst lädt es sie herunter, damit du sie installierst. Du kannst die APK auch von dieser Seite laden und über die alte installieren. Aufnahmen und Einstellungen bleiben erhalten.",
               "**Zum Entfernen** deinstalliere One Recorder wie jede App. Dabei werden alle Aufnahmen darin gelöscht, also speichere die gewünschten vorher auf deinem Telefon. One Dialer läuft weiter und blendet seine Aufnahmeoptionen wieder aus.",
               "Aufnahmegesetze unterscheiden sich je nach Land. Manche verlangen, dass alle Beteiligten zustimmen. Du bist dafür verantwortlich, die andere Person zu informieren und ihre Zustimmung einzuholen, wo sie nötig ist.",
             ],

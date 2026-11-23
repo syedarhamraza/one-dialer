@@ -420,6 +420,62 @@ body {
     border-radius: 6px;
     background: rgb(255 255 255 / 0.08);
   }
+  /* A screenshot or screen recording (components/Shot.tsx), phone-shaped. */
+  .guide .shot {
+    margin: 2rem 0 0;
+  }
+  .guide .shot-frame {
+    position: relative;
+    width: min(100%, 300px);
+    aspect-ratio: 9 / 19;
+    overflow: hidden;
+    border-radius: 34px;
+    border: 1px solid rgb(255 255 255 / 0.14);
+    background: #000;
+    box-shadow: 0 24px 60px -24px rgb(0 0 0 / 0.8);
+  }
+  .guide .shot-frame img,
+  .guide .shot-frame video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+  }
+  .guide .shot-tag {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgb(0 0 0 / 0.72);
+    color: rgb(255 255 255 / 0.75);
+    font-size: 12px;
+    text-align: center;
+  }
+  .guide .shot figcaption {
+    margin-top: 0.8rem;
+    font-size: 15px;
+    color: var(--color-ink-2);
+  }
+  /* A setup: a situation and the settings for it, as a card. */
+  .guide .setup {
+    margin-top: 1.5rem;
+    padding: 1.4rem 1.6rem;
+    border-radius: var(--radius-card);
+    background: rgb(255 255 255 / 0.05);
+    border: 1px solid rgb(255 255 255 / 0.08);
+  }
+  .guide .setup h3 {
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--color-ink);
+    letter-spacing: -0.02em;
+  }
+  .guide .setup p {
+    margin-top: 0.5rem;
+  }
   .policy strong {
     font-weight: 600;
     color: var(--color-ink);
