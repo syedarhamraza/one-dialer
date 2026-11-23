@@ -241,6 +241,56 @@ class _IncomingCallRemindersScreenState extends State<IncomingCallRemindersScree
 }
 
 /// Settings › Answer buttons: whether the call screen answers with two buttons or one.
+/// Settings › Answer buttons' 2 buttons / 1 button picker, also on the first-run onboarding.
+class AnswerStylePicker extends StatelessWidget {
+  const AnswerStylePicker({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final prefs = DialerPrefs.instance;
+    return ShowcasePicker(
+      value: DialerPrefs.instance.answerStyle,
+      onPick: DialerPrefs.instance.setAnswerStyle,
+      options: [
+        ShowcaseOption(
+          value: 'two',
+          label: context.l10n.twoButtons,
+          preview: const PhonePreview(child: Stack(children: [previewCallButtons])),
+        ),
+        ShowcaseOption(
+          value: 'one',
+          label: context.l10n.oneButton,
+          // Follows Answer call: the green arc is on the answering side.
+          preview: PhonePreview(
+            child: ValueListenableBuilder(
+              valueListenable: prefs.answerDirection,
+              builder: (context, direction, _) => Stack(
+                children: [
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 22,
+                    child: _Hinted(
+                      const PreviewCallButton(color: oneButtonWhite, icon: Icons.call_rounded, size: 22),
+                      up: direction == 'down' ? endRed : answerGreen,
+                      down: direction == 'down' ? answerGreen : endRed,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+Map<String, String> answerDirectionLabels(AppLocalizations l10n) => {
+  'up': l10n.swipeUpToAnswer,
+  'down': l10n.swipeDownToAnswer,
+};
+
 class AnswerButtonsScreen extends StatefulWidget {
   const AnswerButtonsScreen({super.key});
 
@@ -265,52 +315,13 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
     'stacked': l10n.callerPhotoStacked,
   };
 
-  static Map<String, String> _directions(AppLocalizations l10n) => {
-    'up': l10n.swipeUpToAnswer,
-    'down': l10n.swipeDownToAnswer,
-  };
-
   @override
   Widget build(BuildContext context) {
     final prefs = DialerPrefs.instance;
     return CosSubpage(
       title: context.l10n.answerButtons,
       children: [
-        ShowcasePicker(
-          value: DialerPrefs.instance.answerStyle,
-          onPick: DialerPrefs.instance.setAnswerStyle,
-          options: [
-            ShowcaseOption(
-              value: 'two',
-              label: context.l10n.twoButtons,
-              preview: const PhonePreview(child: Stack(children: [previewCallButtons])),
-            ),
-            ShowcaseOption(
-              value: 'one',
-              label: context.l10n.oneButton,
-              // Follows Answer call: the green arc is on the answering side.
-              preview: PhonePreview(
-                child: ValueListenableBuilder(
-                  valueListenable: prefs.answerDirection,
-                  builder: (context, direction, _) => Stack(
-                    children: [
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        bottom: 22,
-                        child: _Hinted(
-                          const PreviewCallButton(color: oneButtonWhite, icon: Icons.call_rounded, size: 22),
-                          up: direction == 'down' ? endRed : answerGreen,
-                          down: direction == 'down' ? answerGreen : endRed,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+        const AnswerStylePicker(),
         ListenableBuilder(
           listenable: Listenable.merge([
             prefs.answerStyle,
@@ -329,7 +340,7 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
                   title: context.l10n.answerCall,
                   anchor: _directionKey,
                   value: prefs.answerDirection,
-                  labels: _directions(context.l10n),
+                  labels: answerDirectionLabels(context.l10n),
                   onPick: prefs.setAnswerDirection,
                 ),
               choiceRow(

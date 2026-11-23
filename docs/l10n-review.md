@@ -35,6 +35,7 @@ The UI is laid out for English lengths; check these on the phone in Italian, esp
 | `speaker`, `speaker_off` (`values-it`) | "Vivavoce" / "Disattiva vivavoce", the Speaker button on the ongoing-call notification. |
 | `callScreenEffectsSubtitle` ★, `effectsFull/Reduced/Off`, `reduceVisualEffects` | ColorOS design names with no AOSP equivalent. |
 | `callScreenEdgeGlow`, `darkModeEdgeGlow`, `edgeGlowClassic/Soft/Bold` | "Bagliore bordi"; Tenue and Intenso for Soft and Bold. ColorOS names with no AOSP equivalent. |
+| `onboardingSkip`, `onboardingNext`, `onboardingStart`, `onboardingLookTitle/Body`, `onboardingAnswerTitle/Body`, `onboardingCallingTitle/Body`, `onboardingHealthTitle/Body`, `onboardingAllSet` | First-run onboarding: Salta / Avanti / Inizia, "Personalizzala", "Pronta per le chiamate" (feminine: l'app). |
 | `settingsDialing`, `settingsPersonalisation`, `settingsGeneral`, `displayAndEffects`, `keypadAndRecents` | Settings section and page titles: Composizione, Personalizzazione, Generali, Schermo ed effetti, Tastierino e recenti. |
 | `contactLabel` ★ | Contact field labels; several are gendered (Figlio, Amico) where Android's own Italian uses the masculine. |
 | `feedbackTypeTitle`, `feedbackBug`, `feedbackIdea`, `feedbackQuestion` | Send feedback's chooser: Di cosa si tratta? / Segnala un problema / Suggerisci un'idea / Fai una domanda. |

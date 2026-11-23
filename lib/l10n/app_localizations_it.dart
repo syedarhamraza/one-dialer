@@ -2267,4 +2267,44 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get swipeSimUnused =>
       'Si usa solo quando Scorri per chiamare è attivo, in Chiamata veloce';
+
+  @override
+  String get onboardingSkip => 'Salta';
+
+  @override
+  String get onboardingNext => 'Avanti';
+
+  @override
+  String get onboardingStart => 'Inizia';
+
+  @override
+  String get onboardingLookTitle => 'Personalizzala';
+
+  @override
+  String get onboardingLookBody =>
+      'Scegli la lingua dell\'app e se usare il tema chiaro o scuro.';
+
+  @override
+  String get onboardingAnswerTitle => 'Rispondere alle chiamate';
+
+  @override
+  String get onboardingAnswerBody =>
+      'Scegli come appaiono le chiamate in arrivo e come rispondere.';
+
+  @override
+  String get onboardingHealthTitle => 'Pronta per le chiamate';
+
+  @override
+  String get onboardingHealthBody =>
+      'Le chiamate in arrivo hanno bisogno di queste impostazioni di Android. Toccane una per sistemarla.';
+
+  @override
+  String get onboardingAllSet => 'Tutto pronto';
+
+  @override
+  String get onboardingCallingTitle => 'Effettuare chiamate';
+
+  @override
+  String get onboardingCallingBody =>
+      'Scegli la SIM per le chiamate e cosa fanno un tocco o uno scorrimento su una chiamata.';
 }

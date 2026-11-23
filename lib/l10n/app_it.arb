@@ -646,5 +646,17 @@
   "swipeToCallSim": "Scorri per chiamare",
   "sameAsKeypad": "Come tastierino e contatti",
   "tapSimUnused": "Si usa solo quando Tocco su una chiamata recente è impostato su Chiama, in Chiamata veloce",
-  "swipeSimUnused": "Si usa solo quando Scorri per chiamare è attivo, in Chiamata veloce"
+  "swipeSimUnused": "Si usa solo quando Scorri per chiamare è attivo, in Chiamata veloce",
+  "onboardingSkip": "Salta",
+  "onboardingNext": "Avanti",
+  "onboardingStart": "Inizia",
+  "onboardingLookTitle": "Personalizzala",
+  "onboardingLookBody": "Scegli la lingua dell'app e se usare il tema chiaro o scuro.",
+  "onboardingAnswerTitle": "Rispondere alle chiamate",
+  "onboardingAnswerBody": "Scegli come appaiono le chiamate in arrivo e come rispondere.",
+  "onboardingHealthTitle": "Pronta per le chiamate",
+  "onboardingHealthBody": "Le chiamate in arrivo hanno bisogno di queste impostazioni di Android. Toccane una per sistemarla.",
+  "onboardingAllSet": "Tutto pronto",
+  "onboardingCallingTitle": "Effettuare chiamate",
+  "onboardingCallingBody": "Scegli la SIM per le chiamate e cosa fanno un tocco o uno scorrimento su una chiamata."
 }

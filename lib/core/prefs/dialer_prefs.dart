@@ -56,6 +56,14 @@ class DialerPrefs {
 
   Future<void> setSideloadWarned() => _prefs.setBool('sideload_warned', true);
 
+  /// Whether the first-run onboarding was shown (or skipped, for people who had the app before it).
+  Future<bool> onboarded() async => await _prefs.getBool('onboarded') ?? false;
+
+  Future<void> setOnboarded() => _prefs.setBool('onboarded', true);
+
+  /// Nothing saved yet: a fresh install, or the app's data was cleared.
+  Future<bool> isFresh() async => (await _prefs.getKeys()).isEmpty;
+
   /// Search page "Recent searches", newest first.
   Future<List<String>> recentSearches() async => await _prefs.getStringList('recent_searches') ?? const [];
 
