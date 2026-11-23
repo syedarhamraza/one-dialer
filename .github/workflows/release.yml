@@ -41,11 +41,11 @@ jobs:
           [ -n "$KEYSTORE_B64" ] || { echo "::error::The release environment has no secrets yet."; exit 1; }
 
       # The deploy key is on the branch ruleset's bypass list, so the release commit can be pushed.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ssh-key: ${{ secrets.RELEASE_DEPLOY_KEY }}
           fetch-depth: 0
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "17"
@@ -54,7 +54,7 @@ jobs:
           flutter-version: 3.47.5
           channel: stable
           cache: true
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
 
       - name: Signing and service files
         env:
