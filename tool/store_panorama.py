@@ -6,6 +6,11 @@ docs/play-store/<lang>/01.png ... 08.png (1080 x 1920, RGB) plus feature-graphic
 
   python tool/store_panorama.py            # English
   python tool/store_panorama.py it         # Italian
+  python tool/store_panorama.py backgrounds  # writes the placeholder backgrounds
+
+Backgrounds: docs/play-store/backgrounds/01..08 (1080 x 1920) and feature-graphic (1024 x 500), as
+.png, .jpg or .webp. A frame with an image there uses it (cropped to fill); otherwise it gets the
+built-in gradient. `backgrounds` writes those gradients there as placeholders, skipping files you have.
 """
 
 import os
@@ -18,6 +23,16 @@ from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
+BACKGROUNDS = ROOT / 'docs' / 'play-store' / 'backgrounds'
+
+
+def background(name):
+    """CSS for the user's background image `name`, or '' for the built-in gradient."""
+    for ext in ('png', 'jpg', 'jpeg', 'webp'):
+        f = BACKGROUNDS / f'{name}.{ext}'
+        if f.exists():
+            return f'background:url({f.resolve().as_uri()}) center/cover;'
+    return ''
 FW, FH, GAP, SCALE = 270, 480, 8, 4  # one frame in CSS px; x4 = Play's 1080 x 1920
 FRAMES = 8
 
@@ -127,17 +142,21 @@ FONTS = ('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=
          'opsz,wght@12..96,800&family=Instrument+Serif:ital@1&display=swap">')
 
 
-def strip_html(lang, shots):
+def strip_html(lang, shots, bare=False):
     x = lambda i: i * (FW + GAP)
     w = x(FRAMES) - GAP
     out = [f'<div class="strip" style="width:{w}px;height:{FH}px">']
     for i, h in enumerate(HEADS[lang]):
         bg = 'green' if i in GREEN else 'black'
-        out.append(f'<section class="f {bg} f{i}" style="left:{x(i)}px">{head_html(h)}</section>')
-    for name, l, t, pw, r in PHONES:
+        if bare:
+            out.append(f'<section class="f {bg}" style="left:{x(i)}px"></section>')
+            continue
+        out.append(f'<section class="f {bg} f{i}" style="left:{x(i)}px;{background(f"{i + 1:02d}")}">'
+                   f'{head_html(h)}</section>')
+    for name, l, t, pw, r in [] if bare else PHONES:
         out.append(f'<div class="ph" style="left:{l}px;top:{t}px;width:{pw}px;transform:rotate({r}deg)">'
                    f'<img src="{shots[name]}"></div>')
-    for name, cx, cy, cw, ch, l, t, s, round_ in POPS:
+    for name, cx, cy, cw, ch, l, t, s, round_ in [] if bare else POPS:
         out.append(f'<div class="pop{" round" if round_ else ""}" style="left:{l}px;top:{t}px;'
                    f'width:{cw * s:.1f}px;height:{ch * s:.1f}px;background-image:url({shots[name]});'
                    f'background-size:{1080 * s:.1f}px {2160 * s:.1f}px;background-position:{-cx * s:.1f}px {-cy * s:.1f}px"></div>')
@@ -152,7 +171,7 @@ def feature_html(lang, shots, icon):
     phones = [('1-recents', 600, 60, 210, -6), ('4-incoming', 790, 120, 210, 6)]
     ph = ''.join(f'<div class="ph" style="left:{l}px;top:{t}px;width:{pw}px;transform:rotate({r}deg)">'
                  f'<img src="{shots[n]}"></div>' for n, l, t, pw, r in phones)
-    return (f'<div class="fg"><div class="name"><img src="{icon}">One Dialer</div>'
+    return (f'<div class="fg" style="{background("feature-graphic")}"><div class="name"><img src="{icon}">One Dialer</div>'
             f'<h2>{plain} <em>{accent}</em></h2>{ph}</div>')
 
 
@@ -166,8 +185,35 @@ def render(html, w, h, scale, png):
                        check=True, capture_output=True)
 
 
+def cut(strip, w, out, names):
+    """Cuts the rendered strip into one 24-bit PNG per frame (Play takes no alpha)."""
+    img = Image.open(strip).convert('RGB')
+    assert img.size == (w * SCALE, FH * SCALE), img.size
+    for i, name in enumerate(names):
+        left = i * (FW + GAP) * SCALE
+        if name:
+            img.crop((left, 0, left + FW * SCALE, FH * SCALE)).save(out / name)
+    strip.unlink()
+
+
+def placeholders():
+    BACKGROUNDS.mkdir(parents=True, exist_ok=True)
+    have = {f.stem for f in BACKGROUNDS.iterdir()}
+    names = [None if f'{i + 1:02d}' in have else f'{i + 1:02d}.png' for i in range(FRAMES)]
+    w, html = strip_html('en', {}, bare=True)
+    render(html, w, FH, SCALE, BACKGROUNDS / 'strip.png')
+    cut(BACKGROUNDS / 'strip.png', w, BACKGROUNDS, names)
+    if 'feature-graphic' not in have:
+        fg = BACKGROUNDS / 'feature-graphic.png'
+        render('<div class="fg"></div>', 1024, 500, 1, fg)
+        Image.open(fg).convert('RGB').save(fg)
+    print(f'Placeholder backgrounds are in {BACKGROUNDS}; replace any of them with your own.')
+
+
 def main():
     lang = sys.argv[1] if len(sys.argv) > 1 else 'en'
+    if lang == 'backgrounds':
+        return placeholders()
     src = ROOT / 'build' / 'play' / ('' if lang == 'en' else lang)
     shots = {p.stem: p.resolve().as_uri() for p in src.glob('[0-9]-*.png')}
     missing = {n for n, *_ in PHONES} - shots.keys()
@@ -179,12 +225,7 @@ def main():
     w, html = strip_html(lang, shots)
     strip = out / 'strip.png'
     render(html, w, FH, SCALE, strip)
-    img = Image.open(strip).convert('RGB')  # Play wants 24-bit PNG, no alpha
-    assert img.size == (w * SCALE, FH * SCALE), img.size
-    for i in range(FRAMES):
-        left = i * (FW + GAP) * SCALE
-        img.crop((left, 0, left + FW * SCALE, FH * SCALE)).save(out / f'{i + 1:02d}.png')
-    strip.unlink()
+    cut(strip, w, out, [f'{i + 1:02d}.png' for i in range(FRAMES)])
 
     fg = out / 'feature-graphic.png'
     render(feature_html(lang, shots, (ROOT / 'docs' / 'play-icon.png').resolve().as_uri()), 1024, 500, 1, fg)
