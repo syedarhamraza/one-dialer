@@ -80,4 +80,15 @@
     <string name="auto_pair_detail">Turn on One Recorder in Accessibility and it reads the pairing code itself, then switches itself off. Android 13+: if it\'s greyed out, open App info › ⋮ › Allow restricted settings first</string>
     <string name="auto_pair_service">One Recorder pairing</string>
     <string name="auto_pair_service_description">Reads the 6-digit code in Wireless debugging\'s pairing dialog so you don\'t have to type it. Reads only Settings, never taps anything, and turns itself off once paired or after 5 minutes.</string>
+    <string name="setup_helper_no_wifi">Didn\'t start: connect to Wi-Fi, then tap here</string>
+    <string name="setup_helper_debugging_off">Didn\'t start: Wireless debugging is off. Turn it on in Developer options (tap Build number 7 times if they\'re hidden), then come back and tap Fix</string>
+    <string name="setup_helper_connect_failed">Didn\'t start: Wireless debugging didn\'t accept One Recorder. Tap here to try again, or Pair again below</string>
+    <string name="pair_again">Pair again</string>
+    <string name="pair_again_detail">If the recording service won\'t start any more. Your recordings and settings stay</string>
+    <string name="off_wifi">Keep recording away from Wi-Fi</string>
+    <string name="off_wifi_detail">Keeps USB debugging on, so the recording service keeps running when Wi-Fi goes. Some banking apps won\'t open while it\'s on</string>
+    <string name="off_wifi_needs_restart">Needs Start after a reboot, so One Recorder can keep USB debugging on</string>
+    <string name="stopped_title">Recording both sides stopped</string>
+    <string name="stopped_detail">Wi-Fi is back, but the recording service couldn\'t start by itself. Tap to start it again</string>
+    <string name="version">One Recorder %1$s</string>
 </resources>
