@@ -1585,6 +1585,18 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sendFeedback => 'Geri bildirim gönder';
 
   @override
+  String get feedbackTypeTitle => 'Konu nedir?';
+
+  @override
+  String get feedbackBug => 'Sorun bildir';
+
+  @override
+  String get feedbackIdea => 'Fikir öner';
+
+  @override
+  String get feedbackQuestion => 'Soru sor';
+
+  @override
   String get developer => 'Geliştirici';
 
   @override
@@ -2235,4 +2247,44 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get swipeSimUnused =>
       'Yalnızca Hızlı arama yapma\'da Aramak için kaydır açıksa kullanılır';
+
+  @override
+  String get onboardingSkip => 'Atla';
+
+  @override
+  String get onboardingNext => 'İleri';
+
+  @override
+  String get onboardingStart => 'Başlayın';
+
+  @override
+  String get onboardingLookTitle => 'Size göre ayarlayın';
+
+  @override
+  String get onboardingLookBody =>
+      'Uygulamanın dilini ve açık mı koyu mu olacağını seçin.';
+
+  @override
+  String get onboardingAnswerTitle => 'Aramaları yanıtlama';
+
+  @override
+  String get onboardingAnswerBody =>
+      'Gelen aramaların nasıl görüneceğini ve nasıl yanıtlayacağınızı seçin.';
+
+  @override
+  String get onboardingHealthTitle => 'Aramalara hazır';
+
+  @override
+  String get onboardingHealthBody =>
+      'Gelen aramalar için Android\'den bunlar gerekiyor. Düzeltmek için birine dokunun.';
+
+  @override
+  String get onboardingAllSet => 'Her şey hazır';
+
+  @override
+  String get onboardingCallingTitle => 'Arama yapma';
+
+  @override
+  String get onboardingCallingBody =>
+      'Aramalar için SIM\'i ve bir aramaya dokunmanın ya da kaydırmanın ne yapacağını seçin.';
 }

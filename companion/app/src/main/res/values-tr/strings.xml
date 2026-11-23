@@ -78,4 +78,15 @@
     <string name="auto_pair_detail">Erişilebilirlik\'te One Recorder\'ı açın; eşleme kodunu kendisi okur, sonra kendini kapatır. Android 13+: gri görünüyorsa önce Uygulama bilgisi › ⋮ › Kısıtlanmış ayarlara izin ver\'i açın</string>
     <string name="auto_pair_service">One Recorder eşleme</string>
     <string name="auto_pair_service_description">Kablosuz hata ayıklamanın eşleme penceresindeki 6 haneli kodu okur, böylece yazmanız gerekmez. Yalnızca Ayarlar\'ı okur, hiçbir şeye dokunmaz ve eşlendikten veya 5 dakika sonra kendini kapatır.</string>
+    <string name="setup_helper_no_wifi">Başlamadı: Wi-Fi\'a bağlanın, sonra buraya dokunun</string>
+    <string name="setup_helper_debugging_off">Başlamadı: Kablosuz hata ayıklama kapalı. Geliştirici seçeneklerinden açın (gizliyse Yapım numarası\'na 7 kez dokunun), sonra geri gelip Düzelt\'e dokunun</string>
+    <string name="setup_helper_connect_failed">Başlamadı: Kablosuz hata ayıklama One Recorder\'ı kabul etmedi. Yeniden denemek için buraya ya da aşağıdaki Yeniden eşle\'ye dokunun</string>
+    <string name="pair_again">Yeniden eşle</string>
+    <string name="pair_again_detail">Kayıt hizmeti artık başlamıyorsa. Kayıtlarınız ve ayarlarınız kalır</string>
+    <string name="off_wifi">Wi-Fi olmadan kaydetmeye devam et</string>
+    <string name="off_wifi_detail">USB hata ayıklamayı açık tutar, böylece Wi-Fi gidince kayıt hizmeti çalışmaya devam eder. Açıkken bazı bankacılık uygulamaları açılmaz</string>
+    <string name="off_wifi_needs_restart">Yeniden başlatmadan sonra başlat gerekir; böylece One Recorder USB hata ayıklamayı açık tutabilir</string>
+    <string name="stopped_title">İki taraflı kayıt durdu</string>
+    <string name="stopped_detail">Wi-Fi geri geldi ama kayıt hizmeti kendiliğinden başlayamadı. Yeniden başlatmak için dokunun</string>
+    <string name="version">One Recorder %1$s</string>
 </resources>

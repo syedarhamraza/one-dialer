@@ -1597,6 +1597,18 @@ class AppLocalizationsDe extends AppLocalizations {
   String get sendFeedback => 'Feedback senden';
 
   @override
+  String get feedbackTypeTitle => 'Worum geht es?';
+
+  @override
+  String get feedbackBug => 'Problem melden';
+
+  @override
+  String get feedbackIdea => 'Idee vorschlagen';
+
+  @override
+  String get feedbackQuestion => 'Frage stellen';
+
+  @override
   String get developer => 'Entwickler';
 
   @override
@@ -2252,4 +2264,44 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get swipeSimUnused =>
       'Nur genutzt, wenn Wischen zum Anrufen in Schnell anrufen an ist';
+
+  @override
+  String get onboardingSkip => 'Überspringen';
+
+  @override
+  String get onboardingNext => 'Weiter';
+
+  @override
+  String get onboardingStart => 'Los geht’s';
+
+  @override
+  String get onboardingLookTitle => 'Mach sie zu deiner';
+
+  @override
+  String get onboardingLookBody =>
+      'Wähle die Sprache der App und ob sie hell oder dunkel ist.';
+
+  @override
+  String get onboardingAnswerTitle => 'Anrufe annehmen';
+
+  @override
+  String get onboardingAnswerBody =>
+      'Wähle, wie eingehende Anrufe aussehen und wie du sie annimmst.';
+
+  @override
+  String get onboardingHealthTitle => 'Bereit für Anrufe';
+
+  @override
+  String get onboardingHealthBody =>
+      'Eingehende Anrufe brauchen das von Android. Tippe auf einen Punkt, um ihn zu beheben.';
+
+  @override
+  String get onboardingAllSet => 'Alles bereit';
+
+  @override
+  String get onboardingCallingTitle => 'Anrufen';
+
+  @override
+  String get onboardingCallingBody =>
+      'Wähle die SIM für Anrufe und was Tippen oder Wischen auf einem Anruf bewirkt.';
 }
