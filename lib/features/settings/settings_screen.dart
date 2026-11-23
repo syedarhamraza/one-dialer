@@ -119,8 +119,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   }
 
   Future<void> _allowBluetoothNames() async {
-    // Android stops asking after two refusals; then only the app's settings page can grant it.
-    if (await Permission.bluetoothConnect.request().isPermanentlyDenied) await openAppSettings();
+    await allowBluetoothNames();
     _refresh();
   }
 
@@ -168,14 +167,8 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     ];
   }
 
-  OneUIGroupItem _problem(String title, String subtitle, VoidCallback onFix) => OneUIGroupItem(
-    leading: const Icon(Icons.warning_amber_rounded, color: OneUITheme.accentRed),
-    title: title,
-    subtitle: subtitle,
-    subtitleColor: OneUITheme.accentRed,
-    onTap: onFix,
-    value: context.l10n.fix,
-  );
+  OneUIGroupItem _problem(String title, String subtitle, VoidCallback onFix) =>
+      healthProblem(context, title, subtitle, onFix);
 
   @override
   Widget build(BuildContext context) {
@@ -264,7 +257,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
             ),
             OneUIGroupItem(
               title: l10n.settingsLanguageHeader,
-              value: _languageLabels(l10n)[DialerPrefs.instance.language.value],
+              value: languageLabels(l10n)[DialerPrefs.instance.language.value],
               onTap: () => _push(const LanguageScreen()),
             ),
           ],
@@ -323,6 +316,22 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   }
 }
 
+/// A Needs attention row, also on the first-run onboarding's health check.
+OneUIGroupItem healthProblem(BuildContext context, String title, String subtitle, VoidCallback onFix) => OneUIGroupItem(
+  leading: const Icon(Icons.warning_amber_rounded, color: OneUITheme.accentRed),
+  title: title,
+  subtitle: subtitle,
+  subtitleColor: OneUITheme.accentRed,
+  onTap: onFix,
+  value: context.l10n.fix,
+);
+
+/// Names the watch and earbuds in a call's audio menu.
+Future<void> allowBluetoothNames() async {
+  // Android stops asking after two refusals; then only the app's settings page can grant it.
+  if (await Permission.bluetoothConnect.request().isPermanentlyDenied) await openAppSettings();
+}
+
 /// A system screen that not every phone has (carrier settings, Contacts storage, Google's sync).
 Future<void> openSystemSetting(BuildContext context, String page) async {
   try {
@@ -333,7 +342,7 @@ Future<void> openSystemSetting(BuildContext context, String page) async {
 }
 
 /// Each language named in itself, so a new app_xx.arb shows up here on its own.
-Map<String, String> _languageLabels(AppLocalizations l10n) => {
+Map<String, String> languageLabels(AppLocalizations l10n) => {
   'system': l10n.settingsLanguageSystem,
   for (final locale in AppLocalizations.supportedLocales)
     locale.languageCode: lookupAppLocalizations(locale).languageName,
@@ -362,7 +371,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
             subtitle: context.l10n.settingsAppLanguageSubtitle,
             anchor: _languageKey,
             value: DialerPrefs.instance.language,
-            labels: _languageLabels(context.l10n),
+            labels: languageLabels(context.l10n),
             onPick: DialerPrefs.instance.setLanguage,
           ),
           OneUIGroupItem(

@@ -3955,6 +3955,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Used only when Swipe to call is on, in Quick calling'**
   String get swipeSimUnused;
+
+  /// No description provided for @onboardingSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get onboardingSkip;
+
+  /// No description provided for @onboardingNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get onboardingNext;
+
+  /// No description provided for @onboardingStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Get started'**
+  String get onboardingStart;
+
+  /// No description provided for @onboardingLookTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Make it yours'**
+  String get onboardingLookTitle;
+
+  /// No description provided for @onboardingLookBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the app\'s language and whether it\'s light or dark.'**
+  String get onboardingLookBody;
+
+  /// No description provided for @onboardingAnswerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Answering calls'**
+  String get onboardingAnswerTitle;
+
+  /// No description provided for @onboardingAnswerBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how incoming calls look and how you answer them.'**
+  String get onboardingAnswerBody;
+
+  /// No description provided for @onboardingHealthTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready for calls'**
+  String get onboardingHealthTitle;
+
+  /// No description provided for @onboardingHealthBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming calls need these from Android. Tap one to fix it.'**
+  String get onboardingHealthBody;
+
+  /// No description provided for @onboardingAllSet.
+  ///
+  /// In en, this message translates to:
+  /// **'All set'**
+  String get onboardingAllSet;
 }
 
 class _AppLocalizationsDelegate

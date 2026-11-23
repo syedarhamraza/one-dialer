@@ -1068,5 +1068,15 @@
   "swipeToCallSim": "Swipe to call",
   "sameAsKeypad": "Same as keypad and contacts",
   "tapSimUnused": "Used only when Tap a recent call is set to Call, in Quick calling",
-  "swipeSimUnused": "Used only when Swipe to call is on, in Quick calling"
+  "swipeSimUnused": "Used only when Swipe to call is on, in Quick calling",
+  "onboardingSkip": "Skip",
+  "onboardingNext": "Next",
+  "onboardingStart": "Get started",
+  "onboardingLookTitle": "Make it yours",
+  "onboardingLookBody": "Pick the app's language and whether it's light or dark.",
+  "onboardingAnswerTitle": "Answering calls",
+  "onboardingAnswerBody": "Choose how incoming calls look and how you answer them.",
+  "onboardingHealthTitle": "Ready for calls",
+  "onboardingHealthBody": "Incoming calls need these from Android. Tap one to fix it.",
+  "onboardingAllSet": "All set"
 }

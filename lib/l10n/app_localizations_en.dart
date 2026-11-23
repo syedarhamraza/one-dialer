@@ -2226,4 +2226,37 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get swipeSimUnused =>
       'Used only when Swipe to call is on, in Quick calling';
+
+  @override
+  String get onboardingSkip => 'Skip';
+
+  @override
+  String get onboardingNext => 'Next';
+
+  @override
+  String get onboardingStart => 'Get started';
+
+  @override
+  String get onboardingLookTitle => 'Make it yours';
+
+  @override
+  String get onboardingLookBody =>
+      'Pick the app\'s language and whether it\'s light or dark.';
+
+  @override
+  String get onboardingAnswerTitle => 'Answering calls';
+
+  @override
+  String get onboardingAnswerBody =>
+      'Choose how incoming calls look and how you answer them.';
+
+  @override
+  String get onboardingHealthTitle => 'Ready for calls';
+
+  @override
+  String get onboardingHealthBody =>
+      'Incoming calls need these from Android. Tap one to fix it.';
+
+  @override
+  String get onboardingAllSet => 'All set';
 }
