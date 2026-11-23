@@ -1596,6 +1596,18 @@ class AppLocalizationsIt extends AppLocalizations {
   String get sendFeedback => 'Invia feedback';
 
   @override
+  String get feedbackTypeTitle => 'Di cosa si tratta?';
+
+  @override
+  String get feedbackBug => 'Segnala un problema';
+
+  @override
+  String get feedbackIdea => 'Suggerisci un\'idea';
+
+  @override
+  String get feedbackQuestion => 'Fai una domanda';
+
+  @override
   String get developer => 'Sviluppatore';
 
   @override
