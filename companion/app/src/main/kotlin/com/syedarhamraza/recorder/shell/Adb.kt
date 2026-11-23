@@ -78,6 +78,8 @@ class Adb private constructor(private val files: File) : AbsAdbConnectionManager
         val saved = runCatching {
             KeyFactory.getInstance("RSA").generatePrivate(PKCS8EncodedKeySpec(keyFile.readBytes())) to
                 certFile.inputStream().use { CertificateFactory.getInstance("X.509").generateCertificate(it) }
+        }.onFailure {
+            if (keyFile.exists()) android.util.Log.w("OneRecorder", "saved adb key unreadable: a new one needs pairing again", it)
         }.getOrNull()
         if (saved != null) {
             privateKey = saved.first
@@ -98,14 +100,16 @@ class Adb private constructor(private val files: File) : AbsAdbConnectionManager
     /** Pairs with the code shown in Wireless debugging's pairing dialog. */
     fun pairWith(host: InetAddress, port: Int, code: String): Boolean = try {
         pair(host.hostAddress!!, port, code)
-    } catch (_: Exception) {
+    } catch (e: Exception) {
+        android.util.Log.w("OneRecorder", "pairing failed", e)
         false
     }
 
     /** Connects to Wireless debugging (found over mDNS), or false when it's off or this app isn't paired. */
     fun connectNow(context: Context, timeoutMs: Long): Boolean = try {
         isConnected || autoConnect(context, timeoutMs)
-    } catch (_: Exception) {
+    } catch (e: Exception) {
+        android.util.Log.w("OneRecorder", "Wireless debugging connect failed", e)
         false
     }
 

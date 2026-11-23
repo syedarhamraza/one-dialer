@@ -9,6 +9,8 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
+import com.syedarhamraza.recorder.shell.NoWifiStart
+import com.syedarhamraza.recorder.shell.PairingAccessibilityService
 import com.syedarhamraza.recorder.shell.ShellHelper
 import kotlin.concurrent.thread
 
@@ -67,9 +69,12 @@ class SetupActivity : Activity() {
             page.hero(getString(R.string.status_unsupported), OneLook.RED, getString(R.string.both_sides_unsupported), null)
         } else {
             val paired = ShellHelper.paired(this)
+            // Notifications first: pairing's code is typed into one.
             val steps = listOf(
+                notificationsStep,
+                // Paired counts too: hiding turns Developer options off, and Android 17 hides the flag from apps.
                 Step(getString(R.string.setup_dev_options), getString(R.string.setup_dev_options_detail),
-                    ShellHelper.developerOptionsOn(this), getString(R.string.setup_done)) {
+                    paired || ShellHelper.developerOptionsOn(this), getString(R.string.setup_done)) {
                     startActivity(Intent(Settings.ACTION_DEVICE_INFO_SETTINGS))
                 },
                 Step(getString(R.string.setup_pair), getString(R.string.setup_pair_detail), paired, getString(R.string.setup_paired)) {
@@ -80,7 +85,6 @@ class SetupActivity : Activity() {
                     getString(if (starting) R.string.setup_helper_starting else R.string.setup_helper_detail),
                     ShellHelper.running(this), getString(R.string.setup_done),
                     if (starting) null else ({ startHelper() })),
-                notificationsStep,
                 batteryStep,
             )
             val next = steps.indexOfFirst { !it.ok }
@@ -100,10 +104,12 @@ class SetupActivity : Activity() {
                         leading = Glyph.step(i + 1, pal.text), onTap = step.fix)
                     else -> page.row(step.title, getString(R.string.step_after, i), leading = Glyph.step(i + 1, pal.text2))
                 }
-            } + (if (paired) listOf(page.row(
-                getString(R.string.setup_restart),
-                getString(if (ShellHelper.canRestart(this)) R.string.setup_restart_ready else R.string.setup_restart_detail),
-            )) else emptyList()), header = getString(R.string.section_setup))
+            } + (if (paired) pairedRows() else listOf(page.row(getString(R.string.auto_pair), getString(R.string.auto_pair_detail)) {
+                // Once One Recorder holds WRITE_SECURE_SETTINGS (pairing again) it turns the service on itself.
+                if (!(ShellHelper.canRestart(this) && PairingAccessibilityService.enable(this))) {
+                    startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                }
+            })), header = getString(R.string.section_setup))
         }
 
         if (!ShellHelper.supported()) page.group(listOf(notificationsStep, batteryStep).map {
@@ -132,6 +138,54 @@ class SetupActivity : Activity() {
 
     private var starting = false
 
+    private fun onOff(on: Boolean) = if (on) "on" else "off"
+
+    /** Once paired: restarting after a reboot, hiding Developer options, and the experimental start without Wi-Fi. */
+    private fun pairedRows(): List<View> {
+        val app = applicationContext
+        val switch = listOf("on" to getString(R.string.option_on), "off" to getString(R.string.option_off))
+        val canRestart = ShellHelper.canRestart(this)
+        val helperUp = !canRestart && ShellHelper.running(this)
+        val rows = mutableListOf(page.row(
+            getString(R.string.setup_restart),
+            getString(when {
+                canRestart -> R.string.setup_restart_ready
+                helperUp -> R.string.setup_restart_blocked // the grant ran and was refused
+                else -> R.string.setup_restart_detail
+            }),
+            subtitleColor = if (helperUp) OneLook.RED else null,
+            onTap = if (helperUp) ({ thread { ShellHelper.grantAgain(app); runOnUiThread { if (!isDestroyed) render() } } }) else null,
+        ))
+        rows += choice(getString(R.string.hide_dev), onOff(RecorderSettings.hideDeveloperOptions(this)), switch,
+            getString(when {
+                RecorderSettings.hideUnsupported(this) -> R.string.hide_dev_unsupported
+                RecorderSettings.keepUsbDebugging(this) && RecorderSettings.keepWirelessDebugging(this) -> R.string.hide_dev_keep_both
+                RecorderSettings.keepUsbDebugging(this) -> R.string.hide_dev_keep_usb
+                RecorderSettings.keepWirelessDebugging(this) -> R.string.hide_dev_keep_wireless
+                else -> R.string.hide_dev_detail
+            })) { value ->
+            val on = value == "on"
+            RecorderSettings.setHideDeveloperOptions(app, on)
+            if (on) { // try this phone again
+                RecorderSettings.setHideUnsupported(app, false)
+                RecorderSettings.setKeepUsbDebugging(app, false)
+                RecorderSettings.setKeepWirelessDebugging(app, false)
+            }
+            thread {
+                if (!on) ShellHelper.showDeveloperOptions(app)
+                else if (ShellHelper.hiding(app) && ShellHelper.running(app)) ShellHelper.hideNow(app) || ShellHelper.start(app) // a step that ended the helper is kept on now
+                runOnUiThread { if (!isDestroyed) render() }
+            }
+        }
+        if (NoWifiStart.supported()) rows += choice(getString(R.string.no_wifi), onOff(RecorderSettings.startWithoutWifi(this)), switch,
+            getString(R.string.no_wifi_detail)) { value ->
+            RecorderSettings.setStartWithoutWifi(app, value == "on")
+            if (value == "on" && !NoWifiStart.hasPermissions(this)) requestPermissions(NoWifiStart.permissions(), 3)
+            render()
+        }
+        return rows
+    }
+
     /** Starts the helper over Wireless debugging (several seconds of network work), then redraws. */
     private fun startHelper() {
         starting = true
@@ -145,10 +199,12 @@ class SetupActivity : Activity() {
         }
     }
 
-    private fun choice(title: String, current: Any?, options: List<Pair<String, String>>, onPick: (String) -> Unit): View {
+    private fun choice(
+        title: String, current: Any?, options: List<Pair<String, String>>, subtitle: String? = null, onPick: (String) -> Unit,
+    ): View {
         val selected = options.indexOfFirst { it.first == current }.coerceAtLeast(0)
         var anchor: View? = null
-        return page.row(title, value = options[selected].second, anchor = { anchor = it }) {
+        return page.row(title, subtitle, value = options[selected].second, anchor = { anchor = it }) {
             FloatingMenu(this, anchor!!, options.map { it.second }, selected) { i -> onPick(options[i].first) }.show()
         }
     }

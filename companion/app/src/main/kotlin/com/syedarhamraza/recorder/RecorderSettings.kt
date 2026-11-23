@@ -44,4 +44,35 @@ object RecorderSettings {
     fun theme(context: Context) = prefs(context).getString(THEME, "system") ?: "system"
 
     fun setTheme(context: Context, theme: String) = prefs(context).edit().putString(THEME, theme).apply()
+
+    private const val HIDE_DEV = "hideDeveloperOptions"
+    private const val HIDE_UNSUPPORTED = "hideUnsupported"
+    private const val NO_WIFI = "startWithoutWifi"
+    private const val KEEP_WIRELESS = "keepWirelessDebugging"
+    private const val KEEP_USB = "keepUsbDebugging"
+
+    /** This phone ends the helper when USB debugging goes off, so hiding leaves it on. */
+    fun keepUsbDebugging(context: Context) = prefs(context).getBoolean(KEEP_USB, false)
+
+    fun setKeepUsbDebugging(context: Context, value: Boolean) = prefs(context).edit().putBoolean(KEEP_USB, value).apply()
+
+    /** This phone ends the helper when Wireless debugging goes off, so hiding leaves it on. */
+    fun keepWirelessDebugging(context: Context) = prefs(context).getBoolean(KEEP_WIRELESS, false)
+
+    fun setKeepWirelessDebugging(context: Context, value: Boolean) = prefs(context).edit().putBoolean(KEEP_WIRELESS, value).apply()
+
+    /** Turn Developer options, USB and Wireless debugging off once the helper runs, for banking apps. */
+    fun hideDeveloperOptions(context: Context) = prefs(context).getBoolean(HIDE_DEV, true)
+
+    fun setHideDeveloperOptions(context: Context, on: Boolean) = prefs(context).edit().putBoolean(HIDE_DEV, on).apply()
+
+    /** This phone ended the helper when debugging went off, so hiding is skipped here. */
+    fun hideUnsupported(context: Context) = prefs(context).getBoolean(HIDE_UNSUPPORTED, false)
+
+    fun setHideUnsupported(context: Context, value: Boolean) = prefs(context).edit().putBoolean(HIDE_UNSUPPORTED, value).apply()
+
+    /** Experimental: after a reboot away from Wi-Fi, force Wireless debugging on over a local-only hotspot. */
+    fun startWithoutWifi(context: Context) = prefs(context).getBoolean(NO_WIFI, false)
+
+    fun setStartWithoutWifi(context: Context, on: Boolean) = prefs(context).edit().putBoolean(NO_WIFI, on).apply()
 }
