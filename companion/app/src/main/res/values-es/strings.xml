@@ -112,4 +112,7 @@
     <string name="last_call_failed">La última llamada (%1$s) no se grabó: el servicio de grabación no estaba activo. Toca Comprobar ahora</string>
     <string name="diagnostics">Compartir diagnóstico</string>
     <string name="diagnostics_detail">Versiones, teléfono, estado de la configuración y líneas de registro recientes para un informe de errores. Sin números ni nombres</string>
+    <string name="privacy_policy">Política de privacidad</string>
+    <string name="source_code">Código fuente</string>
+    <string name="copyright_notice">Copyright (C) 2026 Syed Arham Raza\nSoftware libre bajo la GNU General Public License v3.0, sin garantía</string>
 </resources>

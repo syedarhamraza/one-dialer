@@ -28,7 +28,7 @@ class AudioPipeline(private val file: File, private val input: InputStream) {
 
     fun start() {
         running = true
-        thread = Thread(::loop, "recorder").apply { start() }
+        thread = Thread(::loop, "kq4v9sarz7od2").apply { start() }
     }
 
     /** Finishes the file; blocks until the encoder has written its last frame. */

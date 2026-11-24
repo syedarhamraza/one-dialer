@@ -247,15 +247,18 @@ class SetupActivity : Activity() {
                     runOnUiThread { if (!isDestroyed) Diagnostics.share(this, report, getString(R.string.diagnostics)) }
                 }
             },
+            page.row(getString(R.string.privacy_policy)) { open(PRIVACY_URL) },
+            page.row(getString(R.string.source_code), SOURCE_URL.removePrefix("https://")) { open(SOURCE_URL) },
         ), header = getString(R.string.section_about))
 
         page.group(listOf(page.row(getString(R.string.consent_title), getString(R.string.setup_consent)) {
             startActivity(Intent(this, ConsentActivity::class.java))
         }), header = getString(R.string.section_law))
 
-        // Which build this is, for testers' reports: One Dialer's version and the commit (build.gradle.kts).
+        // Which build this is, for testers' reports: One Dialer's version and the commit (build.gradle.kts),
+        // then the GPL's Appropriate Legal Notices (copyright, licence, no warranty).
         page.content.addView(android.widget.TextView(this).apply {
-            text = getString(R.string.version, BuildConfig.VERSION_NAME)
+            text = getString(R.string.version, BuildConfig.VERSION_NAME) + "\n" + getString(R.string.copyright_notice)
             OneLook.style(this, 13f, pal.text2)
             gravity = android.view.Gravity.CENTER
             setPadding(0, 0, 0, OneLook.px(this@SetupActivity, 24f).toInt())
@@ -372,5 +375,20 @@ class SetupActivity : Activity() {
         return page.row(title, subtitle, value = options[selected].second, anchor = { anchor = it }) {
             FloatingMenu(this, anchor!!, options.map { it.second }, selected) { i -> onPick(options[i].first) }.show()
         }
+    }
+
+    /** Opens [url] in the browser; without one installed there is nothing to open it in. */
+    private fun open(url: String) {
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        } catch (_: android.content.ActivityNotFoundException) {
+        }
+    }
+
+    private companion object {
+        /** One Recorder's own privacy section on the website (One Dialer's policy doesn't name it). */
+        const val PRIVACY_URL = "https://syedarhamraza.github.io/one-dialer/recorder/#privacy"
+        /** Where the source of every APK lives, as the GPL asks of object code. */
+        const val SOURCE_URL = "https://github.com/syedarhamraza/one-dialer"
     }
 }

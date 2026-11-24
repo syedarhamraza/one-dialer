@@ -112,4 +112,7 @@
     <string name="last_call_failed">Son arama (%1$s) kaydedilmedi: kayıt hizmeti çalışmıyordu. Şimdi denetle\'ye dokunun</string>
     <string name="diagnostics">Tanılamayı paylaş</string>
     <string name="diagnostics_detail">Hata bildirimi için sürümler, telefon, kurulum durumu ve son günlük satırları. Numara veya ad yok</string>
+    <string name="privacy_policy">Gizlilik politikası</string>
+    <string name="source_code">Kaynak kodu</string>
+    <string name="copyright_notice">Copyright (C) 2026 Syed Arham Raza\nGNU General Public License v3.0 kapsamında özgür yazılım, hiçbir garanti olmaksızın</string>
 </resources>

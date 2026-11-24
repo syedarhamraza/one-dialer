@@ -112,4 +112,7 @@
     <string name="last_call_failed">Der letzte Anruf (%1$s) wurde nicht aufgenommen: Der Aufnahmedienst lief nicht. Tippe auf Jetzt prüfen</string>
     <string name="diagnostics">Diagnose teilen</string>
     <string name="diagnostics_detail">Versionen, Telefon, Einrichtungsstatus und aktuelle Protokollzeilen für einen Fehlerbericht. Keine Nummern oder Namen</string>
+    <string name="privacy_policy">Datenschutzerklärung</string>
+    <string name="source_code">Quellcode</string>
+    <string name="copyright_notice">Copyright (C) 2026 Syed Arham Raza\nFreie Software unter der GNU General Public License v3.0, ohne Gewährleistung</string>
 </resources>
