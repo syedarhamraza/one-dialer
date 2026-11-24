@@ -132,7 +132,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   /// Rows only for problems; empty when everything incoming calls need is in place.
   List<OneUIGroupItem> get _problems {
     if (_health.isEmpty) return const [];
-    final rules = BlockingRepository.instance.rules.value;
     return [
       if (_health['isDefaultDialer'] != true)
         _problem(context.l10n.notDefaultApp, context.l10n.notDefaultAppSubtitle, () async {
@@ -151,7 +150,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           context.l10n.fullScreenOffSubtitle,
           () => _telecom.openSystemSettings('fullScreen'),
         ),
-      if ((rules.blockHidden || rules.blockNonContacts) && _health['screensCalls'] != true)
+      if (BlockingRepository.instance.needsScreening && _health['screensCalls'] != true)
         _problem(context.l10n.blockingPaused, context.l10n.blockingPausedShort, () => _push(const BlockingScreen())),
       if (_health['vipRing'] == true && (_health['screensCalls'] != true || _health['dndAccess'] != true))
         _problem(context.l10n.vipNeedsAccess, context.l10n.vipNeedsAccessSubtitle, () => _push(const VipCallsScreen())),

@@ -1,0 +1,27 @@
+One Dialer and One Recorder
+Copyright (C) 2026 Syed Arham Raza
+https://github.com/syedarhamraza/one-dialer
+
+One Dialer and its companion app One Recorder (companion/) are free software,
+licensed under the GNU General Public License, version 3 (GPL-3.0); see
+LICENSE. They come with no warranty.
+
+Additional terms under section 7 of the GPL-3.0
+------------------------------------------------
+
+These terms apply to One Dialer, to One Recorder, and to every work based on
+either of them.
+
+(b) Attribution. Modified versions must keep the attribution
+    "Based on One Dialer by Syed Arham Raza
+    (https://github.com/syedarhamraza/one-dialer)" in the Appropriate Legal
+    Notices they display (One Dialer's About screen, One Recorder's main
+    screen), and must not remove or hide the notice One Dialer shows when it
+    is not an official build.
+
+(c) Marking of modified versions. Modified versions must be marked in
+    reasonable ways as different from the original version, and must not be
+    named "One Dialer" or "One Recorder".
+
+(e) Trademarks. These terms grant no rights to use the names "One Dialer" or
+    "One Recorder", or their logos and icons; see TRADEMARK.md.

@@ -1,3 +1,4 @@
+import 'package:dialer/features/blocking/blocking_repository.dart';
 import 'package:dialer/features/blocking/blocking_screen.dart';
 import 'package:dialer/core/prefs/dialer_prefs.dart';
 import 'package:dialer/core/telecom/call_info.dart';
@@ -68,16 +69,51 @@ void main() {
 
   // Stops at the input: flutter_contacts' block call checks dart:io Platform.isAndroid, which
   // a desktop test host can't fake.
-  testWidgets('Add number opens the menu, and Enter number the floating input', (tester) async {
-    await open(tester, const BlockingScreen());
-    await tester.tap(find.text('Add number'));
+  testWidgets('Blocklist + opens the menu, and Enter number the floating input', (tester) async {
+    await open(tester, const NumberListScreen(allow: false));
+    expect(find.text('No numbers'), findsOneWidget);
+    await tester.tap(find.byTooltip('Add'));
     await tester.pumpAndSettle();
+    expect(find.text('Block by prefix'), findsOneWidget);
     expect(find.text('Choose from contacts'), findsOneWidget);
     await tester.tap(find.text('Enter number'));
     await tester.pumpAndSettle();
     expect(find.text('Choose from contacts'), findsNothing);
-    expect(find.text('Block number'), findsOneWidget);
+    expect(find.text('Enter number'), findsOneWidget);
     expect(find.byType(AlertDialog), findsNothing);
+  });
+
+  testWidgets('Allowlist has no prefix, and selecting starts empty then removes after asking', (tester) async {
+    BlockingRepository.instance.allowed.value = ['111', '222'];
+    addTearDown(() => BlockingRepository.instance.allowed.value = const []);
+    await open(tester, const NumberListScreen(allow: true));
+    await tester.tap(find.byTooltip('Add'));
+    await tester.pumpAndSettle();
+    expect(find.text('Block by prefix'), findsNothing);
+    await tester.tapAt(Offset.zero);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Select'));
+    await tester.pumpAndSettle();
+    expect(find.text('Select items'), findsOneWidget);
+    await tester.tap(find.text('222'));
+    await tester.pumpAndSettle();
+    expect(find.text('1 selected'), findsOneWidget);
+    await tester.tap(find.text('Remove'));
+    await tester.pumpAndSettle();
+    expect(find.text('Remove 1 number from the allowlist?'), findsOneWidget);
+    await tester.tap(find.text('Remove').last);
+    await tester.pumpAndSettle();
+    final saved = telecom.lastWhere((c) => c.method == 'setBlocking');
+    expect(saved.arguments['allowed'], ['111']);
+  });
+
+  testWidgets('Block & filter lists Block calls, the blocklist and the allowlist', (tester) async {
+    await open(tester, const BlockingScreen());
+    expect(find.text('Block calls'), findsOneWidget);
+    expect(find.text('Blocklist'), findsOneWidget);
+    expect(find.text('Allowlist'), findsOneWidget);
+    expect(find.text('None'), findsNWidgets(2));
   });
 
   testWidgets('call recording waits for the consent notice, then lists recordings', (tester) async {

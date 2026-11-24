@@ -696,18 +696,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String mergeGroupsTitle(String count, String groups) {
-    return 'Merge $count contacts into $groups?';
-  }
-
-  @override
   String mergeGroupMessage(String name) {
     return 'They become one contact named $name, with all their numbers and details.';
   }
-
-  @override
-  String get mergeGroupsMessage =>
-      'Each group becomes one contact, with all its numbers and details.';
 
   @override
   String contactsMerged(int count) {
@@ -725,11 +716,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noDuplicateContacts => 'No duplicate contacts';
-
-  @override
-  String mergeAll(String count) {
-    return 'Merge all ($count)';
-  }
 
   @override
   String get recentSearches => 'Recent searches';
@@ -946,16 +932,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Set Dialer as your caller ID & spam app to block these calls';
 
   @override
-  String get blockNumber => 'Block number';
-
-  @override
   String get phoneNumber => 'Phone number';
 
   @override
   String get blockAndFilter => 'Block & filter';
-
-  @override
-  String get searchBlockedNumbers => 'Search blocked numbers';
 
   @override
   String get blockingPaused => 'Blocking rules are paused';
@@ -978,12 +958,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get blockedNumbers => 'Blocked numbers';
-
-  @override
-  String get addNumber => 'Add number';
-
-  @override
-  String get noMatchingBlocked => 'No matching blocked numbers';
 
   @override
   String get blockedCalls => 'Blocked calls';
@@ -1513,7 +1487,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get copyrightNotice =>
-      'Copyright (C) 2026 Syed Arham Raza\nFree software under the GNU General Public License v3.0';
+      'Copyright (C) 2026 Syed Arham Raza\nFree software under the GNU General Public License v3.0, with no warranty';
 
   @override
   String get changelog => 'Changelog';
@@ -2282,4 +2256,152 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get onboardingCallingBody =>
       'Choose the SIM for calls and what a tap or swipe on a call does.';
+
+  @override
+  String get mergeDuplicatedNames => 'Merge duplicated names';
+
+  @override
+  String get mergeDuplicatedNumbers => 'Merge duplicated numbers';
+
+  @override
+  String get manuallyMergeDuplicates => 'Manually merge duplicates';
+
+  @override
+  String get sameNumberContacts => 'Contacts with the same number';
+
+  @override
+  String get sameNameContacts => 'Contacts with the same name';
+
+  @override
+  String groupCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count groups',
+      one: '1 group',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get mergeManually => 'Merge manually';
+
+  @override
+  String get manualMergingDetails => 'Manual merging details';
+
+  @override
+  String get nameRequired => 'Name (required)';
+
+  @override
+  String get numbersSelectMany => 'Number (can select more than one)';
+
+  @override
+  String mergeDeletesNumbers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'The $count unticked numbers will be deleted from the contact.',
+      one: 'The unticked number will be deleted from the contact.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get blockCalls => 'Block calls';
+
+  @override
+  String get blockMessages => 'Block messages';
+
+  @override
+  String get blockMessagesUnavailable =>
+      'One Dialer isn\'t your messaging app, so it can\'t block messages. Call blocking, the blocklist and the allowlist aren\'t affected.';
+
+  @override
+  String get blocklist => 'Blocklist';
+
+  @override
+  String get blocklistSubtitle =>
+      'Calls from numbers added to the blocklist will be blocked.';
+
+  @override
+  String get allowlist => 'Allowlist';
+
+  @override
+  String get allowlistSubtitle =>
+      'Calls from numbers added to the allowlist will not be blocked.';
+
+  @override
+  String get none => 'None';
+
+  @override
+  String get noNumbers => 'No numbers';
+
+  @override
+  String get blockByPrefix => 'Block by prefix';
+
+  @override
+  String get numberPrefix => 'Number prefix, e.g. 0300';
+
+  @override
+  String startsWith(String prefix) {
+    return 'Starts with $prefix';
+  }
+
+  @override
+  String removeFromBlocklist(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Remove $count numbers from the blocklist?',
+      one: 'Remove 1 number from the blocklist?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String removeFromAllowlist(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Remove $count numbers from the allowlist?',
+      one: 'Remove 1 number from the allowlist?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String searchContactNumbers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Search within $count contact numbers',
+      one: 'Search within 1 contact number',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get unofficialBuildTitle => 'Unofficial build';
+
+  @override
+  String get unofficialBuildCredit =>
+      'Based on One Dialer by Syed Arham Raza, github.com/syedarhamraza/one-dialer';
+
+  @override
+  String get unofficialBuildNotice =>
+      'Unofficial build. Based on One Dialer by Syed Arham Raza, github.com/syedarhamraza/one-dialer';
+
+  @override
+  String mergeAll(String count) {
+    return 'Merge all ($count)';
+  }
+
+  @override
+  String mergeGroupsTitle(String count, String groups) {
+    return 'Merge $count contacts into $groups?';
+  }
+
+  @override
+  String get mergeGroupsMessage =>
+      'Each group becomes one contact, with all its numbers and details.';
 }

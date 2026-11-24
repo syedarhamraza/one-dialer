@@ -14,6 +14,8 @@ uniform sampler2D u_texture;
 
 out vec4 fragColor;
 
+const float kq4v9sarz7od2 = 0.6;
+
 void main() {
   vec2 xy = FlutterFragCoord().xy;
   float t = xy.y / u_height;
@@ -30,7 +32,7 @@ void main() {
   for (int i = -3; i <= 3; i++) {
     for (int j = -3; j <= 3; j++) {
       // Steps of 0.6 sigma reach 1.8 sigma; the light blur before this fills the gaps.
-      vec2 offset = vec2(float(i), float(j)) * 0.6;
+      vec2 offset = vec2(float(i), float(j)) * kq4v9sarz7od2;
       float w = exp(-0.5 * dot(offset, offset));
       sum += texture(u_texture, (xy + offset * sigma) / u_size) * w;
       total += w;

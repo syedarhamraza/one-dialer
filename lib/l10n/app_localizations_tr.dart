@@ -696,18 +696,9 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String mergeGroupsTitle(String count, String groups) {
-    return '$count kişi $groups kişide birleştirilsin mi?';
-  }
-
-  @override
   String mergeGroupMessage(String name) {
     return 'Tüm numaraları ve bilgileriyle $name adlı tek bir kişi olurlar.';
   }
-
-  @override
-  String get mergeGroupsMessage =>
-      'Her grup, tüm numaraları ve bilgileriyle tek bir kişi olur.';
 
   @override
   String contactsMerged(int count) {
@@ -725,11 +716,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get noDuplicateContacts => 'Yinelenen kişi yok';
-
-  @override
-  String mergeAll(String count) {
-    return 'Tümünü birleştir ($count)';
-  }
 
   @override
   String get recentSearches => 'Son aramalar';
@@ -946,16 +932,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu aramaları engellemek için Dialer\'ı arayan kimliği ve spam uygulaması yapın';
 
   @override
-  String get blockNumber => 'Numarayı engelle';
-
-  @override
   String get phoneNumber => 'Telefon numarası';
 
   @override
   String get blockAndFilter => 'Engelle ve filtrele';
-
-  @override
-  String get searchBlockedNumbers => 'Engellenen numaralarda ara';
 
   @override
   String get blockingPaused => 'Engelleme kuralları duraklatıldı';
@@ -979,12 +959,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get blockedNumbers => 'Engellenen numaralar';
-
-  @override
-  String get addNumber => 'Numara ekle';
-
-  @override
-  String get noMatchingBlocked => 'Eşleşen engellenmiş numara yok';
 
   @override
   String get blockedCalls => 'Engellenen aramalar';
@@ -1517,7 +1491,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get copyrightNotice =>
-      'Copyright (C) 2026 Syed Arham Raza\nGNU General Public License v3.0 kapsamında özgür yazılım';
+      'Copyright (C) 2026 Syed Arham Raza\nGNU General Public License v3.0 kapsamında özgür yazılım, hiçbir garanti olmaksızın';
 
   @override
   String get changelog => 'Değişiklik günlüğü';
@@ -2291,4 +2265,152 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get onboardingCallingBody =>
       'Aramalar için SIM\'i ve bir aramaya dokunmanın ya da kaydırmanın ne yapacağını seçin.';
+
+  @override
+  String get mergeDuplicatedNames => 'Yinelenen adları birleştir';
+
+  @override
+  String get mergeDuplicatedNumbers => 'Yinelenen numaraları birleştir';
+
+  @override
+  String get manuallyMergeDuplicates => 'Yinelenenleri elle birleştir';
+
+  @override
+  String get sameNumberContacts => 'Aynı numaraya sahip kişiler';
+
+  @override
+  String get sameNameContacts => 'Aynı ada sahip kişiler';
+
+  @override
+  String groupCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count grup',
+      one: '1 grup',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get mergeManually => 'Elle birleştir';
+
+  @override
+  String get manualMergingDetails => 'Birleştirme ayrıntıları';
+
+  @override
+  String get nameRequired => 'Ad (zorunlu)';
+
+  @override
+  String get numbersSelectMany => 'Numara (birden fazla seçilebilir)';
+
+  @override
+  String mergeDeletesNumbers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'İşaretlenmeyen $count numara kişiden silinecek.',
+      one: 'İşaretlenmeyen numara kişiden silinecek.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get blockCalls => 'Aramaları engelle';
+
+  @override
+  String get blockMessages => 'Mesajları engelle';
+
+  @override
+  String get blockMessagesUnavailable =>
+      'One Dialer mesajlaşma uygulamanız değil, bu yüzden mesajları engelleyemez. Arama engelleme, engellenenler ve izin verilenler listesi etkilenmez.';
+
+  @override
+  String get blocklist => 'Engellenenler listesi';
+
+  @override
+  String get blocklistSubtitle =>
+      'Engellenenler listesindeki numaralardan gelen aramalar engellenir.';
+
+  @override
+  String get allowlist => 'İzin verilenler listesi';
+
+  @override
+  String get allowlistSubtitle =>
+      'İzin verilenler listesindeki numaralardan gelen aramalar engellenmez.';
+
+  @override
+  String get none => 'Yok';
+
+  @override
+  String get noNumbers => 'Numara yok';
+
+  @override
+  String get blockByPrefix => 'Ön eke göre engelle';
+
+  @override
+  String get numberPrefix => 'Ön ek, ör. 0300';
+
+  @override
+  String startsWith(String prefix) {
+    return '$prefix ile başlar';
+  }
+
+  @override
+  String removeFromBlocklist(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count numara engellenenler listesinden kaldırılsın mı?',
+      one: '1 numara engellenenler listesinden kaldırılsın mı?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String removeFromAllowlist(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count numara izin verilenler listesinden kaldırılsın mı?',
+      one: '1 numara izin verilenler listesinden kaldırılsın mı?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String searchContactNumbers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count kişi numarasında ara',
+      one: '1 kişi numarasında ara',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get unofficialBuildTitle => 'Resmi olmayan sürüm';
+
+  @override
+  String get unofficialBuildCredit =>
+      'Syed Arham Raza\'nın One Dialer uygulamasına dayanır, github.com/syedarhamraza/one-dialer';
+
+  @override
+  String get unofficialBuildNotice =>
+      'Resmi olmayan sürüm. Syed Arham Raza\'nın One Dialer uygulamasına dayanır, github.com/syedarhamraza/one-dialer';
+
+  @override
+  String mergeAll(String count) {
+    return 'Tümünü birleştir ($count)';
+  }
+
+  @override
+  String mergeGroupsTitle(String count, String groups) {
+    return '$count kişi $groups kişide birleştirilsin mi?';
+  }
+
+  @override
+  String get mergeGroupsMessage =>
+      'Her grup, tüm numaraları ve bilgileriyle tek bir kişi olur.';
 }

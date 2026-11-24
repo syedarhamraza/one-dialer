@@ -700,18 +700,9 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String mergeGroupsTitle(String count, String groups) {
-    return '¿Combinar $count contactos en $groups?';
-  }
-
-  @override
   String mergeGroupMessage(String name) {
     return 'Se convierten en un contacto llamado $name, con todos sus números y datos.';
   }
-
-  @override
-  String get mergeGroupsMessage =>
-      'Cada grupo se convierte en un contacto, con todos sus números y datos.';
 
   @override
   String contactsMerged(int count) {
@@ -729,11 +720,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get noDuplicateContacts => 'No hay contactos duplicados';
-
-  @override
-  String mergeAll(String count) {
-    return 'Combinar todo ($count)';
-  }
 
   @override
   String get recentSearches => 'Búsquedas recientes';
@@ -952,16 +938,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'Configura Dialer como app de identificación de llamadas y spam para bloquear estas llamadas';
 
   @override
-  String get blockNumber => 'Bloquear número';
-
-  @override
   String get phoneNumber => 'Número de teléfono';
 
   @override
   String get blockAndFilter => 'Bloquear y filtrar';
-
-  @override
-  String get searchBlockedNumbers => 'Buscar números bloqueados';
 
   @override
   String get blockingPaused => 'Las reglas de bloqueo están en pausa';
@@ -985,12 +965,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get blockedNumbers => 'Números bloqueados';
-
-  @override
-  String get addNumber => 'Añadir número';
-
-  @override
-  String get noMatchingBlocked => 'No hay números bloqueados que coincidan';
 
   @override
   String get blockedCalls => 'Llamadas bloqueadas';
@@ -1528,7 +1502,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get copyrightNotice =>
-      'Copyright (C) 2026 Syed Arham Raza\nSoftware libre bajo la GNU General Public License v3.0';
+      'Copyright (C) 2026 Syed Arham Raza\nSoftware libre bajo la GNU General Public License v3.0, sin garantía';
 
   @override
   String get changelog => 'Novedades';
@@ -2310,4 +2284,152 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get onboardingCallingBody =>
       'Elige la SIM para llamar y qué hace un toque o un deslizamiento sobre una llamada.';
+
+  @override
+  String get mergeDuplicatedNames => 'Combinar nombres duplicados';
+
+  @override
+  String get mergeDuplicatedNumbers => 'Combinar números duplicados';
+
+  @override
+  String get manuallyMergeDuplicates => 'Combinar duplicados manualmente';
+
+  @override
+  String get sameNumberContacts => 'Contactos con el mismo número';
+
+  @override
+  String get sameNameContacts => 'Contactos con el mismo nombre';
+
+  @override
+  String groupCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count grupos',
+      one: '1 grupo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get mergeManually => 'Combinar manualmente';
+
+  @override
+  String get manualMergingDetails => 'Detalles de la combinación';
+
+  @override
+  String get nameRequired => 'Nombre (obligatorio)';
+
+  @override
+  String get numbersSelectMany => 'Número (puedes elegir más de uno)';
+
+  @override
+  String mergeDeletesNumbers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Los $count números sin marcar se eliminarán del contacto.',
+      one: 'El número sin marcar se eliminará del contacto.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get blockCalls => 'Bloquear llamadas';
+
+  @override
+  String get blockMessages => 'Bloquear mensajes';
+
+  @override
+  String get blockMessagesUnavailable =>
+      'One Dialer no es tu app de mensajes, así que no puede bloquearlos. El bloqueo de llamadas, la lista de bloqueados y la de permitidos no cambian.';
+
+  @override
+  String get blocklist => 'Lista de bloqueados';
+
+  @override
+  String get blocklistSubtitle =>
+      'Las llamadas de los números de la lista de bloqueados se bloquearán.';
+
+  @override
+  String get allowlist => 'Lista de permitidos';
+
+  @override
+  String get allowlistSubtitle =>
+      'Las llamadas de los números de la lista de permitidos no se bloquearán.';
+
+  @override
+  String get none => 'Ninguno';
+
+  @override
+  String get noNumbers => 'Sin números';
+
+  @override
+  String get blockByPrefix => 'Bloquear por prefijo';
+
+  @override
+  String get numberPrefix => 'Prefijo, p. ej. 0300';
+
+  @override
+  String startsWith(String prefix) {
+    return 'Empieza por $prefix';
+  }
+
+  @override
+  String removeFromBlocklist(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '¿Quitar $count números de la lista de bloqueados?',
+      one: '¿Quitar 1 número de la lista de bloqueados?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String removeFromAllowlist(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '¿Quitar $count números de la lista de permitidos?',
+      one: '¿Quitar 1 número de la lista de permitidos?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String searchContactNumbers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Buscar en $count números de contactos',
+      one: 'Buscar en 1 número de contactos',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get unofficialBuildTitle => 'Versión no oficial';
+
+  @override
+  String get unofficialBuildCredit =>
+      'Basada en One Dialer de Syed Arham Raza, github.com/syedarhamraza/one-dialer';
+
+  @override
+  String get unofficialBuildNotice =>
+      'Versión no oficial. Basada en One Dialer de Syed Arham Raza, github.com/syedarhamraza/one-dialer';
+
+  @override
+  String mergeAll(String count) {
+    return 'Combinar todo ($count)';
+  }
+
+  @override
+  String mergeGroupsTitle(String count, String groups) {
+    return '¿Combinar $count contactos en $groups?';
+  }
+
+  @override
+  String get mergeGroupsMessage =>
+      'Cada grupo se convierte en un contacto, con todos sus números y datos.';
 }

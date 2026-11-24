@@ -716,18 +716,9 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String mergeGroupsTitle(String count, String groups) {
-    return 'Объединить контакты ($count) в $groups?';
-  }
-
-  @override
   String mergeGroupMessage(String name) {
     return 'Они станут одним контактом $name со всеми номерами и данными.';
   }
-
-  @override
-  String get mergeGroupsMessage =>
-      'Каждая группа станет одним контактом со всеми номерами и данными.';
 
   @override
   String contactsMerged(int count) {
@@ -747,11 +738,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get noDuplicateContacts => 'Нет дубликатов';
-
-  @override
-  String mergeAll(String count) {
-    return 'Объединить все ($count)';
-  }
 
   @override
   String get recentSearches => 'Недавние запросы';
@@ -972,16 +958,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Чтобы блокировать эти вызовы, сделайте Dialer приложением для определения номера и защиты от спама';
 
   @override
-  String get blockNumber => 'Заблокировать номер';
-
-  @override
   String get phoneNumber => 'Номер телефона';
 
   @override
   String get blockAndFilter => 'Блокировка и фильтры';
-
-  @override
-  String get searchBlockedNumbers => 'Поиск заблокированных номеров';
 
   @override
   String get blockingPaused => 'Правила блокировки приостановлены';
@@ -1004,12 +984,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get blockedNumbers => 'Заблокированные номера';
-
-  @override
-  String get addNumber => 'Добавить номер';
-
-  @override
-  String get noMatchingBlocked => 'Нет подходящих заблокированных номеров';
 
   @override
   String get blockedCalls => 'Заблокированные вызовы';
@@ -1542,7 +1516,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get copyrightNotice =>
-      'Copyright (C) 2026 Syed Arham Raza\nСвободное программное обеспечение по лицензии GNU General Public License v3.0';
+      'Copyright (C) 2026 Syed Arham Raza\nСвободное программное обеспечение по лицензии GNU General Public License v3.0, без каких-либо гарантий';
 
   @override
   String get changelog => 'Список изменений';
@@ -2330,4 +2304,158 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get onboardingCallingBody =>
       'Выберите SIM для вызовов и что делает нажатие или свайп по вызову.';
+
+  @override
+  String get mergeDuplicatedNames => 'Объединить одинаковые имена';
+
+  @override
+  String get mergeDuplicatedNumbers => 'Объединить одинаковые номера';
+
+  @override
+  String get manuallyMergeDuplicates => 'Объединить дубликаты вручную';
+
+  @override
+  String get sameNumberContacts => 'Контакты с одинаковым номером';
+
+  @override
+  String get sameNameContacts => 'Контакты с одинаковым именем';
+
+  @override
+  String groupCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count группы',
+      many: '$count групп',
+      few: '$count группы',
+      one: '$count группа',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get mergeManually => 'Объединить вручную';
+
+  @override
+  String get manualMergingDetails => 'Параметры объединения';
+
+  @override
+  String get nameRequired => 'Имя (обязательно)';
+
+  @override
+  String get numbersSelectMany => 'Номер (можно выбрать несколько)';
+
+  @override
+  String mergeDeletesNumbers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Неотмеченные номера ($count) будут удалены из контакта.',
+      one: 'Неотмеченный номер будет удалён из контакта.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get blockCalls => 'Блокировка вызовов';
+
+  @override
+  String get blockMessages => 'Блокировка сообщений';
+
+  @override
+  String get blockMessagesUnavailable =>
+      'One Dialer не является приложением для сообщений, поэтому не может их блокировать. Блокировка вызовов, чёрный и белый списки работают как прежде.';
+
+  @override
+  String get blocklist => 'Чёрный список';
+
+  @override
+  String get blocklistSubtitle =>
+      'Вызовы с номеров из чёрного списка будут блокироваться.';
+
+  @override
+  String get allowlist => 'Белый список';
+
+  @override
+  String get allowlistSubtitle =>
+      'Вызовы с номеров из белого списка не будут блокироваться.';
+
+  @override
+  String get none => 'Нет';
+
+  @override
+  String get noNumbers => 'Нет номеров';
+
+  @override
+  String get blockByPrefix => 'Блокировать по префиксу';
+
+  @override
+  String get numberPrefix => 'Префикс, например 0300';
+
+  @override
+  String startsWith(String prefix) {
+    return 'Начинается с $prefix';
+  }
+
+  @override
+  String removeFromBlocklist(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Удалить $count номера из чёрного списка?',
+      many: 'Удалить $count номеров из чёрного списка?',
+      few: 'Удалить $count номера из чёрного списка?',
+      one: 'Удалить $count номер из чёрного списка?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String removeFromAllowlist(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Удалить $count номера из белого списка?',
+      many: 'Удалить $count номеров из белого списка?',
+      few: 'Удалить $count номера из белого списка?',
+      one: 'Удалить $count номер из белого списка?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String searchContactNumbers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Поиск среди $count номеров контактов',
+      one: 'Поиск среди $count номера контактов',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get unofficialBuildTitle => 'Неофициальная сборка';
+
+  @override
+  String get unofficialBuildCredit =>
+      'Основано на One Dialer от Syed Arham Raza, github.com/syedarhamraza/one-dialer';
+
+  @override
+  String get unofficialBuildNotice =>
+      'Неофициальная сборка. Основано на One Dialer от Syed Arham Raza, github.com/syedarhamraza/one-dialer';
+
+  @override
+  String mergeAll(String count) {
+    return 'Объединить все ($count)';
+  }
+
+  @override
+  String mergeGroupsTitle(String count, String groups) {
+    return 'Объединить контакты ($count) в $groups?';
+  }
+
+  @override
+  String get mergeGroupsMessage =>
+      'Каждая группа станет одним контактом со всеми номерами и данными.';
 }

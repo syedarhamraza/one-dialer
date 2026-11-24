@@ -200,7 +200,12 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             "getContactAccounts" -> inBackground(result) { ContactExtras.contactAccounts(context) }
             "createLocalContact" -> inBackground(result) { ContactExtras.createLocalContact(context) }
             "mergeContacts" -> inBackground(result) {
-                ContactExtras.merge(context, call.argument<List<String>>("contactIds").orEmpty())
+                ContactExtras.merge(
+                    context,
+                    call.argument<List<String>>("contactIds").orEmpty(),
+                    call.argument<String>("nameContactId"),
+                    call.argument<List<String>>("removeNumbers").orEmpty(),
+                )
             }
             "unlinkRawContacts" -> inBackground(result) {
                 ContactExtras.unlink(
@@ -263,7 +268,14 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             )
             "openSystemSettings" -> openSystemSettings(call.argument<String>("page"), result)
             "getBlocking" -> BlockingPrefs.read(context).let {
-                result.success(mapOf("blockHidden" to it.blockHidden, "blockNonContacts" to it.blockNonContacts))
+                result.success(
+                    mapOf(
+                        "blockHidden" to it.blockHidden,
+                        "blockNonContacts" to it.blockNonContacts,
+                        "prefixes" to it.prefixes.sorted(),
+                        "allowed" to it.allowed.sorted(),
+                    ),
+                )
             }
             "setBlocking" -> {
                 BlockingPrefs.write(
@@ -271,10 +283,13 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                     com.syedarhamraza.dialer.telecom.BlockingSettings(
                         blockHidden = call.argument<Boolean>("blockHidden") == true,
                         blockNonContacts = call.argument<Boolean>("blockNonContacts") == true,
+                        prefixes = call.argument<List<String>>("prefixes").orEmpty().toSet(),
+                        allowed = call.argument<List<String>>("allowed").orEmpty().toSet(),
                     ),
                 )
                 result.success(null)
             }
+            "signingCertSha256" -> result.success(signingCertSha256())
             "getAppLanguage" -> result.success(AppLanguage.get(context))
             "setAppLanguage" -> {
                 AppLanguage.set(context, call.argument<String>("tag")!!)
@@ -539,6 +554,16 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
     }
 
     /** Opens the system screen that fixes a [callHealth] problem, or a web page (`url:` prefix). */
+    /** SHA-256 (lowercase hex) of the certificate this copy is signed with; official_build.dart checks it. */
+    private fun signingCertSha256(): String? {
+        val info = context.packageManager.getPackageInfo(context.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+        val signing = info.signingInfo ?: return null
+        val certs = if (signing.hasMultipleSigners()) signing.apkContentsSigners else signing.signingCertificateHistory
+        val cert = certs?.lastOrNull() ?: return null
+        return java.security.MessageDigest.getInstance("SHA-256").digest(cert.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+    }
+
     private fun openSystemSettings(page: String?, result: MethodChannel.Result) {
         val pkg = context.packageName
         val intent = when {

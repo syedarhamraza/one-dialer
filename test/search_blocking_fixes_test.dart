@@ -5,7 +5,6 @@ import 'package:dialer/app/main_shell.dart';
 import 'package:dialer/core/contacts/contacts_repository.dart';
 import 'package:dialer/core/prefs/dialer_prefs.dart';
 import 'package:dialer/features/blocking/blocking_repository.dart';
-import 'package:dialer/features/blocking/blocking_screen.dart';
 import 'package:dialer/features/contacts/contact_picker_screen.dart';
 import 'package:dialer/features/keypad/keypad_screen.dart';
 import 'package:dialer/features/recents/call_details_screen.dart';
@@ -277,9 +276,8 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('both blocking search and picker filter locally and clear on Cancel or Back', (tester) async {
-    BlockingRepository.instance.numbers.value = ['111', '222'];
-    for (final page in [const BlockingScreen(), const ContactPickerScreen(title: 'Block contact')]) {
+  testWidgets('the contact picker filters locally and clears on Cancel or Back', (tester) async {
+    for (final page in [const ContactPickerScreen(title: 'Block contact')]) {
       await open(tester, page);
       await tester.tap(find.byTooltip('Search'));
       await tester.pumpAndSettle();

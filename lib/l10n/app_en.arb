@@ -392,17 +392,6 @@
       }
     }
   },
-  "mergeGroupsTitle": "Merge {count} contacts into {groups}?",
-  "@mergeGroupsTitle": {
-    "placeholders": {
-      "count": {
-        "type": "String"
-      },
-      "groups": {
-        "type": "String"
-      }
-    }
-  },
   "mergeGroupMessage": "They become one contact named {name}, with all their numbers and details.",
   "@mergeGroupMessage": {
     "placeholders": {
@@ -411,7 +400,6 @@
       }
     }
   },
-  "mergeGroupsMessage": "Each group becomes one contact, with all its numbers and details.",
   "contactsMerged": "{count, plural, =1{Contacts merged} other{{count} contacts merged}}",
   "@contactsMerged": {
     "placeholders": {
@@ -423,14 +411,6 @@
   },
   "couldNotMergeContacts": "Couldn't merge these contacts",
   "noDuplicateContacts": "No duplicate contacts",
-  "mergeAll": "Merge all ({count})",
-  "@mergeAll": {
-    "placeholders": {
-      "count": {
-        "type": "String"
-      }
-    }
-  },
   "recentSearches": "Recent searches",
   "clearAll": "Clear all",
   "noResultsFound": "No results found",
@@ -541,10 +521,8 @@
   "enterNumber": "Enter number",
   "chooseFromContacts": "Choose from contacts",
   "blockingNeedsScreeningRole": "Set Dialer as your caller ID & spam app to block these calls",
-  "blockNumber": "Block number",
   "phoneNumber": "Phone number",
   "blockAndFilter": "Block & filter",
-  "searchBlockedNumbers": "Search blocked numbers",
   "blockingPaused": "Blocking rules are paused",
   "blockingPausedSubtitle": "Another app screens your calls. Tap to let Dialer screen them.",
   "blockUnknown": "Block unknown/private numbers",
@@ -552,8 +530,6 @@
   "blockNonContacts": "Block calls from numbers not in Contacts",
   "blockNonContactsSubtitle": "Only your contacts can ring you",
   "blockedNumbers": "Blocked numbers",
-  "addNumber": "Add number",
-  "noMatchingBlocked": "No matching blocked numbers",
   "blockedCalls": "Blocked calls",
   "addCall": "Add call",
   "@addCall": {
@@ -774,7 +750,7 @@
   "device": "Device",
   "androidVersion": "Android version",
   "openSourceLicences": "Open source licences",
-  "copyrightNotice": "Copyright (C) 2026 Syed Arham Raza\nFree software under the GNU General Public License v3.0",
+  "copyrightNotice": "Copyright (C) 2026 Syed Arham Raza\nFree software under the GNU General Public License v3.0, with no warranty",
   "changelog": "Changelog",
   "installedOn": "Installed {date}",
   "@installedOn": {
@@ -999,7 +975,13 @@
   "backUpRestoreSubtitle": "Settings, call notes and call backgrounds, in one file on this phone",
   "backUpNow": "Back up now",
   "lastBackup": "Last backup: {time}",
-  "@lastBackup": {"placeholders": {"time": {"type": "String"}}},
+  "@lastBackup": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "backupNever": "Not backed up yet",
   "restoreBackup": "Restore",
   "restoreBackupSubtitle": "Pick a backup file; the files app opens on Documents",
@@ -1085,5 +1067,96 @@
   "onboardingHealthBody": "Incoming calls need these from Android. Tap one to fix it.",
   "onboardingAllSet": "All set",
   "onboardingCallingTitle": "Making calls",
-  "onboardingCallingBody": "Choose the SIM for calls and what a tap or swipe on a call does."
+  "onboardingCallingBody": "Choose the SIM for calls and what a tap or swipe on a call does.",
+  "mergeDuplicatedNames": "Merge duplicated names",
+  "mergeDuplicatedNumbers": "Merge duplicated numbers",
+  "manuallyMergeDuplicates": "Manually merge duplicates",
+  "sameNumberContacts": "Contacts with the same number",
+  "sameNameContacts": "Contacts with the same name",
+  "groupCount": "{count, plural, =1{1 group} other{{count} groups}}",
+  "@groupCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mergeManually": "Merge manually",
+  "manualMergingDetails": "Manual merging details",
+  "nameRequired": "Name (required)",
+  "numbersSelectMany": "Number (can select more than one)",
+  "mergeDeletesNumbers": "{count, plural, =1{The unticked number will be deleted from the contact.} other{The {count} unticked numbers will be deleted from the contact.}}",
+  "@mergeDeletesNumbers": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "blockCalls": "Block calls",
+  "blockMessages": "Block messages",
+  "blockMessagesUnavailable": "One Dialer isn't your messaging app, so it can't block messages. Call blocking, the blocklist and the allowlist aren't affected.",
+  "blocklist": "Blocklist",
+  "blocklistSubtitle": "Calls from numbers added to the blocklist will be blocked.",
+  "allowlist": "Allowlist",
+  "allowlistSubtitle": "Calls from numbers added to the allowlist will not be blocked.",
+  "none": "None",
+  "noNumbers": "No numbers",
+  "blockByPrefix": "Block by prefix",
+  "numberPrefix": "Number prefix, e.g. 0300",
+  "startsWith": "Starts with {prefix}",
+  "@startsWith": {
+    "placeholders": {
+      "prefix": {
+        "type": "String"
+      }
+    }
+  },
+  "removeFromBlocklist": "{count, plural, =1{Remove 1 number from the blocklist?} other{Remove {count} numbers from the blocklist?}}",
+  "@removeFromBlocklist": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "removeFromAllowlist": "{count, plural, =1{Remove 1 number from the allowlist?} other{Remove {count} numbers from the allowlist?}}",
+  "@removeFromAllowlist": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchContactNumbers": "{count, plural, =1{Search within 1 contact number} other{Search within {count} contact numbers}}",
+  "@searchContactNumbers": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unofficialBuildTitle": "Unofficial build",
+  "unofficialBuildCredit": "Based on One Dialer by Syed Arham Raza, github.com/syedarhamraza/one-dialer",
+  "unofficialBuildNotice": "Unofficial build. Based on One Dialer by Syed Arham Raza, github.com/syedarhamraza/one-dialer",
+  "mergeAll": "Merge all ({count})",
+  "@mergeAll": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "mergeGroupsTitle": "Merge {count} contacts into {groups}?",
+  "@mergeGroupsTitle": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "groups": {
+        "type": "String"
+      }
+    }
+  },
+  "mergeGroupsMessage": "Each group becomes one contact, with all its numbers and details."
 }

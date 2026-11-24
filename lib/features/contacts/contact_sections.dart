@@ -29,9 +29,9 @@ List<DialerContact> searchContacts(List<DialerContact> contacts, String query) {
   ];
 }
 
-/// Merge duplicates: contacts that share a number or the same name (ignoring case and
-/// spaces), each group in list order. Contacts alone are left out.
-List<List<DialerContact>> duplicateGroups(List<DialerContact> contacts) {
+/// Merge duplicates: contacts that share a number ([byNumber]) or the same name (ignoring case
+/// and spaces), each group in list order. Contacts alone are left out.
+List<List<DialerContact>> duplicateGroups(List<DialerContact> contacts, {required bool byNumber}) {
   // Union-find over list indices, joined through shared keys.
   final parent = List.generate(contacts.length, (i) => i);
   int root(int i) => parent[i] == i ? i : parent[i] = root(parent[i]);
@@ -39,9 +39,10 @@ List<List<DialerContact>> duplicateGroups(List<DialerContact> contacts) {
   for (final (i, c) in contacts.indexed) {
     final name = c.name.toLowerCase().replaceAll(RegExp(r'\s+'), '');
     for (final key in [
-      if (name.isNotEmpty) 'name:$name',
-      for (final n in c.numbers)
-        if (numberKey(n) case final k when k.isNotEmpty) 'number:$k',
+      if (!byNumber && name.isNotEmpty) 'name:$name',
+      if (byNumber)
+        for (final n in c.numbers)
+          if (numberKey(n) case final k when k.isNotEmpty) 'number:$k',
     ]) {
       final other = owner[key];
       if (other == null) {

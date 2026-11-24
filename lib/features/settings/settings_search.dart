@@ -113,7 +113,13 @@ List<SettingsEntry> settingsIndex(AppLocalizations l10n, {bool recorder = false,
   entries.add(SettingsEntry(l10n.speedDial, '$making › ${l10n.keypadSettings}', page(const SpeedDialScreen())));
 
   final blocking = l10n.sectionBlocking;
-  add(blocking, l10n.blockAndFilter, page(const BlockingScreen()), rows: [l10n.blockUnknown, l10n.blockNonContacts]);
+  add(blocking, l10n.blockAndFilter, page(const BlockingScreen()), rows: [l10n.blocklist, l10n.allowlist]);
+  add(
+    '$blocking › ${l10n.blockAndFilter}',
+    l10n.blockCalls,
+    page(const BlockCallsScreen()),
+    rows: [l10n.blockUnknown, l10n.blockNonContacts],
+  );
   add(blocking, l10n.callerIdentification, system('defaultApps'), subtitle: l10n.callerIdSpamApp);
 
   final display = l10n.sectionDisplay;

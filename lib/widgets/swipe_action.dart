@@ -117,7 +117,7 @@ class _SwipeActionState extends State<SwipeAction> with TickerProviderStateMixin
             color: context.palette.page,
             shape: SquircleBorder(borderRadius: BorderRadius.circular(flat ? OneUITheme.radiusCard * p : 0)),
           ),
-          child: RepaintBoundary(child: widget.child),
+          child: RepaintBoundary(key: const ValueKey('kq4v9sarz7od2'), child: widget.child),
         );
         return GestureDetector(
           // From touch-down, so the row stays under the finger instead of trailing it by the slop.
