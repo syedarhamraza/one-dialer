@@ -437,7 +437,7 @@ export const it: Dict = {
             ol: [
               "**Notifiche.** Consentile per prime: il codice di associazione si scrive nella notifica di One Recorder.",
               "**Opzioni sviluppatore.** Se sono disattivate, apri **Impostazioni › Info telefono** (su alcuni telefoni Info telefono › Informazioni software) e tocca **Numero build** sette volte.",
-              "**Associa con il Debug wireless.** Tocca la riga. One Recorder apre le Opzioni sviluppatore e mostra una notifica. Attiva **Debug wireless**, aprilo e tocca **Associa dispositivo con codice di accoppiamento**.",
+              "**Associa con il Debug wireless.** Tocca la riga. One Recorder apre le Opzioni sviluppatore e mostra una notifica. Attiva **Debug wireless**, aprilo e tocca **Associa dispositivo con codice di accoppiamento**. Quando Android chiede se consentire il debug wireless su questa rete, spunta **Consenti sempre su questa rete**: dopo un riavvio, One Recorder può riattivare da solo il Debug wireless solo su una rete che hai consentito.",
               "Lascia il codice sullo schermo, abbassa la notifica di One Recorder, tocca **Inserisci codice** e scrivi le sei cifre. One Recorder si associa e avvia il suo servizio. L'associazione si fa una volta sola.",
               "**Oppure associa automaticamente:** attiva **Associa automaticamente (facoltativo)** in One Recorder. Legge da solo il codice nella finestra di associazione, poi si disattiva. Da Android 13, se è disattivato in grigio, apri prima Info app di One Recorder › ⋮ › **Consenti impostazioni con restrizioni**.",
               "**Avvia il servizio di registrazione.** Se non è attivo, assicurati di essere sul Wi-Fi e tocca la riga. **Avvio dopo il riavvio** si attiva da solo al primo avvio.",

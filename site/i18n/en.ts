@@ -458,7 +458,7 @@ export const en = {
             ol: [
               "**Notifications.** Allow them first: the pairing code is typed into One Recorder's notification.",
               "**Developer options.** If they're off, open **Settings › About phone** (on some phones, About phone › Software information) and tap **Build number** seven times.",
-              "**Pair with Wireless debugging.** Tap the row. One Recorder opens Developer options and posts a notification. Turn on **Wireless debugging**, open it, and tap **Pair device with pairing code**.",
+              "**Pair with Wireless debugging.** Tap the row. One Recorder opens Developer options and posts a notification. Turn on **Wireless debugging**, open it, and tap **Pair device with pairing code**. When Android asks whether to allow wireless debugging on this network, tick **Always allow on this network**: after a reboot, One Recorder can only turn Wireless debugging back on by itself on a network you allowed.",
               "Keep that code on screen, pull down the notification from One Recorder, tap **Enter code** and type the six digits. One Recorder pairs and starts its helper. You only pair once.",
               "**Or pair automatically:** turn on **Pair automatically (optional)** in One Recorder. It reads the code from the pairing dialog itself, then switches itself off. On Android 13 and later, if it's greyed out, open One Recorder's App info › ⋮ › **Allow restricted settings** first.",
               "**Start the recording service.** If it isn't running, make sure you're on Wi-Fi and tap it. **Start after a reboot** turns on by itself the first time it starts.",

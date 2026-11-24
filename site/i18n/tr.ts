@@ -437,7 +437,7 @@ export const tr: Dict = {
             ol: [
               "**Bildirimler.** Önce bunlara izin verin: eşleme kodu One Recorder'ın bildirimine yazılır.",
               "**Geliştirici seçenekleri.** Kapalıysa **Ayarlar › Telefon hakkında**'yı açın (bazı telefonlarda Telefon hakkında › Yazılım bilgileri) ve **Yapım numarası**'na yedi kez dokunun.",
-              "**Kablosuz hata ayıklama ile eşle.** Satıra dokunun. One Recorder Geliştirici seçeneklerini açar ve bir bildirim gösterir. **Kablosuz hata ayıklama**'yı açın, içine girin ve **Cihazı eşleme koduyla eşle**'ye dokunun.",
+              "**Kablosuz hata ayıklama ile eşle.** Satıra dokunun. One Recorder Geliştirici seçeneklerini açar ve bir bildirim gösterir. **Kablosuz hata ayıklama**'yı açın, içine girin ve **Cihazı eşleme koduyla eşle**'ye dokunun. Android bu ağda kablosuz hata ayıklamaya izin verilip verilmeyeceğini sorduğunda **Bu ağda her zaman izin ver**'i işaretleyin: yeniden başlatmadan sonra One Recorder Kablosuz hata ayıklamayı kendiliğinden yalnızca izin verdiğiniz bir ağda yeniden açabilir.",
               "Kodu ekranda bırakın, One Recorder'ın bildirimini aşağı çekin, **Kodu girin**'e dokunun ve altı haneyi yazın. One Recorder eşlenir ve hizmetini başlatır. Yalnızca bir kez eşlersiniz.",
               "**Ya da otomatik eşleyin:** One Recorder'da **Otomatik eşle (isteğe bağlı)**'yı açın. Kodu eşleme penceresinden kendisi okur, sonra kendini kapatır. Android 13 ve sonrasında gri görünüyorsa önce One Recorder'ın Uygulama bilgisi › ⋮ › **Kısıtlanmış ayarlara izin ver**'i açın.",
               "**Kayıt hizmetini başlat.** Çalışmıyorsa Wi-Fi'de olduğunuzdan emin olun ve satıra dokunun. **Yeniden başlatmadan sonra başlat** ilk başlatmada kendiliğinden açılır.",
