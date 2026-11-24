@@ -114,4 +114,7 @@
     <string name="last_call_failed">The last call (%1$s) wasn\'t recorded: the recording service wasn\'t running. Tap Check now</string>
     <string name="diagnostics">Share diagnostics</string>
     <string name="diagnostics_detail">Versions, phone, setup state and recent log lines for a bug report. No numbers or names</string>
+    <string name="privacy_policy">Privacy policy</string>
+    <string name="source_code">Source code</string>
+    <string name="copyright_notice">Copyright (C) 2026 Syed Arham Raza\nFree software under the GNU General Public License v3.0, with no warranty</string>
 </resources>
