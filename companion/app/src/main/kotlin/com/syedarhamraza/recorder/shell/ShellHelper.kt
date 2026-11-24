@@ -378,6 +378,8 @@ object ShellHelper {
 
     /** The system wakes [ShellReceiver] when Wi-Fi connects, even with One Recorder not running. */
     private fun waitForWifi(context: Context) {
+        // Already waiting: registering again while on Wi-Fi fires at once, and restart() calls back here, a loop.
+        if (wifiIntent(context, PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_MUTABLE) != null) return
         val request = NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI).build()
         context.getSystemService(ConnectivityManager::class.java)
             .registerNetworkCallback(request, wifiIntent(context, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE))
