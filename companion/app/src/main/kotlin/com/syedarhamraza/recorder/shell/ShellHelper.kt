@@ -119,6 +119,45 @@ object ShellHelper {
     }
 
     /**
+     * Installs One Recorder's update through the helper (Setup › Software update), with no prompt.
+     * Blocks; false when the helper isn't running or `pm` refused it. On success Android usually
+     * ends this process before it returns.
+     */
+    fun install(context: Context, apk: java.io.File): Boolean {
+        val (port, token) = endpoint(context) ?: return false
+        return try {
+            connect(port).use { socket ->
+                socket.soTimeout = 120_000 // pm install takes a while
+                val out = socket.getOutputStream()
+                out.write("$token install ${apk.length()}\n".toByteArray())
+                apk.inputStream().use { it.copyTo(out) }
+                socket.getInputStream().bufferedReader().readLine() == "ok"
+            }
+        } catch (e: IOException) {
+            Log.w("OneRecorder", "update install failed", e)
+            false
+        }
+    }
+
+    /** Setup's Check now: the first thing that doesn't work, tried for real, not read from what was saved. */
+    enum class Check { WORKS, NO_CAPTURE, NOT_PAIRED, WONT_START }
+
+    /** Starts the helper if it's down (proving pairing), then has it open the call audio for half a second. Blocks. */
+    fun check(context: Context): Check {
+        if (!running(context) && !start(context)) {
+            if (!Adb.get(context).refused) return Check.WONT_START
+            forgetPairing(context) // Wireless debugging no longer trusts this key: back to the pairing step
+            return Check.NOT_PAIRED
+        }
+        // A recording in progress already proves capture, and a second one could disturb it.
+        if (com.syedarhamraza.recorder.RecordingService.current != null) return Check.WORKS
+        val pcm = openPcm(context) ?: return Check.NO_CAPTURE
+        Thread.sleep(500)
+        runCatching { pcm.close() }
+        return Check.WORKS
+    }
+
+    /**
      * Android refuses sockets on the main thread, even to 127.0.0.1, and a binder call carries the
      * caller's main-thread rule along (One Dialer asks for status from its main thread), so these
      * short loopback calls always run on a fresh thread this one waits for.
@@ -309,6 +348,7 @@ object ShellHelper {
         showDeveloperOptions(context) // Wireless debugging lives there
         prefs(context).edit().putBoolean(PAIRED, false).commit()
         stopWaitingForWifi(context)
+        Watchdog.cancel(context)
         RecordingsProvider.notifyStatus(context)
     }
 
@@ -331,7 +371,10 @@ object ShellHelper {
     fun pair(context: Context, code: String): Boolean {
         val service = Adb.findPairingService(context, 8000)
         val ok = service != null && Adb.get(context).pairWith(service.first, service.second, code.trim())
-        if (ok) prefs(context).edit().putBoolean(PAIRED, true).commit()
+        if (ok) {
+            prefs(context).edit().putBoolean(PAIRED, true).commit()
+            Watchdog.schedule(context)
+        }
         val started = ok && start(context)
         notifyPairing(context, if (started) R.string.pair_done else if (ok) R.string.pair_paired else R.string.pair_failed)
         return ok

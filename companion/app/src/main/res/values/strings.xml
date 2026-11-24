@@ -91,4 +91,27 @@
     <string name="stopped_title">Recording both sides stopped</string>
     <string name="stopped_detail">Wi-Fi is back, but the recording service couldn\'t start by itself. Tap to start it again</string>
     <string name="version">One Recorder %1$s</string>
+    <string name="section_about">About</string>
+    <string name="update_title">Software update</string>
+    <string name="update_checking">Checking…</string>
+    <string name="update_installing">Downloading and installing… One Recorder closes when it\'s done</string>
+    <string name="update_failed">Couldn\'t install the update. Try again later</string>
+    <string name="update_debug">This is a test build: updates come with the release build</string>
+    <string name="update_after_call">An update is ready: install it after the call</string>
+    <string name="update_available">Version %1$s is available: tap to install</string>
+    <string name="update_current">Up to date. Tap to check again</string>
+    <string name="check_title">Check now</string>
+    <string name="check_detail">Makes sure the recording service runs, is still paired and can capture call audio</string>
+    <string name="check_running">Checking…</string>
+    <string name="check_at">%1$s · %2$s</string>
+    <string name="check_works">Everything works: the recording service runs and can capture call audio</string>
+    <string name="check_no_capture">The recording service runs, but this phone wouldn\'t let it capture call audio</string>
+    <string name="check_not_paired">Wireless debugging no longer accepts One Recorder: pair again above</string>
+    <string name="check_wont_start">The recording service didn\'t start: see the step above</string>
+    <string name="status_check">Check the last recording</string>
+    <string name="last_call_heard">Last call recorded %1$s · %2$s</string>
+    <string name="last_call_silent">The last recording (%1$s) was silent. Play it in One Dialer, then tap Check now</string>
+    <string name="last_call_failed">The last call (%1$s) wasn\'t recorded: the recording service wasn\'t running. Tap Check now</string>
+    <string name="diagnostics">Share diagnostics</string>
+    <string name="diagnostics_detail">Versions, phone, setup state and recent log lines for a bug report. No numbers or names</string>
 </resources>

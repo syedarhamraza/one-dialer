@@ -16,6 +16,8 @@ class BothSidesTest {
         assertEquals(ShellMain.Request.QUIT, ShellMain.parse("$token quit", token))
         assertEquals(ShellMain.Request.HIDE, ShellMain.parse("$token hide", token))
         assertEquals(ShellMain.Request.SHOW, ShellMain.parse("$token show", token))
+        assertEquals(ShellMain.Request.INSTALL, ShellMain.parse("$token install 17247484", token))
+        assertEquals(17_247_484L, ShellMain.size("$token install 17247484"))
     }
 
     @Test
@@ -49,5 +51,11 @@ class BothSidesTest {
         assertNull(ShellMain.parse("$token PCM", token))
         assertNull(ShellMain.parse("hide", token))
         assertNull(ShellMain.parse("$token hide adb_enabled", token))
+        assertNull(ShellMain.parse("$token install", token))
+        assertNull(ShellMain.parse("$token install 0", token))
+        assertNull(ShellMain.parse("$token install -5", token))
+        assertNull(ShellMain.parse("$token install 999999999999", token)) // over 100 MB
+        assertNull(ShellMain.parse("$token install /sdcard/x.apk", token))
+        assertNull(ShellMain.parse("wrong install 1000", token))
     }
 }

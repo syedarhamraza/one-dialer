@@ -55,6 +55,20 @@ Banking apps refuse to open while Developer options, USB or Wireless debugging i
   - That phone's Wireless debugging rejects every paired client with `CERTIFICATE_VERIFY_FAILED`, including Google's `adb` right after a fresh `adb pair`. `/data/misc/adb/adb_keys` is missing. This is a ROM fault: One Recorder can't start its helper there.
 - Not yet verified: all of it. Check on the vivo that the helper survives debugging going off, and that `adb_wifi_enabled=1` starts adbd while Developer options are off. Test Start without Wi-Fi on an Android 12–16 phone.
 
+## Built: updates and checks you can trust
+
+- **Software update** (Setup › About), from `Updates.kt`:
+  - Every 6 hours when Setup opens, and on a tap, it reads GitHub's `releases/latest` and its `one-dialer-recorder.apk` asset.
+  - The helper installs the update with no prompt: `install <bytes>` streams the APK into `pm install -S` as shell. Android only accepts an APK signed with the same key.
+  - Without the helper running, it opens the download in the browser.
+  - Debug builds don't check, because they can't update to a release-signed APK.
+- **Check now** (Setup, once paired) runs `ShellHelper.check`:
+  - If the helper is down, it starts it, which proves pairing. A TLS refusal (`Adb.refused`) means the key is no longer trusted, so it goes back to the pair step.
+  - It then has the helper open the call audio for half a second.
+- **Proof from real calls:** `AudioPipeline` keeps the loudest sample read before the Leveler. Setup's Ready hero shows the last call's result (recorded with sound, silent, or not recorded). A silent or failed last call turns the hero red.
+- **Watchdog** (`shell/Watchdog.kt`): a persisted JobScheduler job runs every 6 hours while paired. It calls `ShellHelper.restart`, which starts a stopped helper or posts the "tap to start" notification.
+- **Share diagnostics:** builds a plain-text report (versions, phone, setup flags, last check and last call, the last 50 `OneRecorder` log lines) and opens the share sheet. Nothing leaves the phone unless the user shares it.
+
 Goal (original): a second build of One Dialer, downloaded from the website, that records calls. The Google Play build never contains any recording code or permissions.
 
 ## 1. What Android allows

@@ -40,12 +40,16 @@ object ShellMain {
     private const val CHUNK_BYTES = 2048 // ~21 ms of 16-bit mono
 
     /** HIDE and SHOW switch Developer options for One Recorder where it couldn't be granted WRITE_SECURE_SETTINGS. */
-    enum class Request { PING, PCM, QUIT, HIDE, SHOW }
+    /** INSTALL takes One Recorder's own update (Setup › Software update), so it installs with no prompt. */
+    enum class Request { PING, PCM, QUIT, HIDE, SHOW, INSTALL }
 
-    /** `<token> ping|pcm|quit`: the only lines the helper answers; anything else, or a wrong token, is dropped. */
+    private const val MAX_APK = 100L * 1024 * 1024
+
+    /** `<token> ping|pcm|quit|hide|show`, or `<token> install <bytes>`: anything else, or a wrong token, is dropped. */
     fun parse(line: String?, token: String): Request? {
         val parts = line?.trim()?.split(' ') ?: return null
-        if (parts.size != 2 || !MessageDigest.isEqual(parts[0].toByteArray(), token.toByteArray())) return null
+        if (parts.size !in 2..3 || !MessageDigest.isEqual(parts[0].toByteArray(), token.toByteArray())) return null
+        if (parts.size == 3) return Request.INSTALL.takeIf { parts[1] == "install" && size(line) != null }
         return when (parts[1]) {
             "ping" -> Request.PING
             "pcm" -> Request.PCM
@@ -55,6 +59,9 @@ object ShellMain {
             else -> null
         }
     }
+
+    /** An install request's APK size. */
+    fun size(line: String) = line.trim().split(' ').getOrNull(2)?.toLongOrNull()?.takeIf { it in 1..MAX_APK }
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -94,7 +101,9 @@ object ShellMain {
 
     private fun serve(socket: Socket, token: String, context: Context?) = socket.use {
         it.soTimeout = 2000 // for the request line only
-        when (parse(readLine(it), token)) {
+        val line = readLine(it)
+        when (parse(line, token)) {
+            Request.INSTALL -> install(it, size(line!!)!!)
             Request.PING -> it.getOutputStream().write("ok\n".toByteArray())
             Request.PCM -> {
                 it.soTimeout = 0
@@ -109,6 +118,37 @@ object ShellMain {
     }
 
     private fun ok(socket: Socket) = socket.getOutputStream().write("ok\n".toByteArray())
+
+    /**
+     * `pm install` from the socket, as shell: no install prompt. Android only lets it replace One
+     * Recorder with an APK signed by the same key. Installing ends One Recorder's process, so it
+     * rarely reads the ok; the new version starts the helper again (MY_PACKAGE_REPLACED).
+     */
+    private fun install(socket: Socket, size: Long) {
+        socket.soTimeout = 30_000
+        val pm = try {
+            ProcessBuilder("/system/bin/pm", "install", "-r", "-S", size.toString()).redirectErrorStream(true).start()
+        } catch (_: IOException) {
+            return
+        }
+        try {
+            pm.outputStream.use { out ->
+                val input = socket.getInputStream()
+                val buffer = ByteArray(64 * 1024)
+                var left = size
+                while (left > 0) {
+                    val n = input.read(buffer, 0, minOf(buffer.size.toLong(), left).toInt())
+                    if (n < 0) throw IOException("short")
+                    out.write(buffer, 0, n)
+                    left -= n
+                }
+            }
+            val result = pm.inputStream.bufferedReader().readText()
+            if (pm.waitFor() == 0 && "Success" in result) ok(socket)
+        } catch (_: IOException) {
+            pm.destroy()
+        }
+    }
 
     /** Shell holds WRITE_SECURE_SETTINGS; `settings` runs as this process's uid. */
     private fun settings(key: String, value: Int) = runCatching {

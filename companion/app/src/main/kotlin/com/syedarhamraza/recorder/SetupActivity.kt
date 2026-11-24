@@ -12,6 +12,7 @@ import android.view.View
 import com.syedarhamraza.recorder.shell.NoWifiStart
 import com.syedarhamraza.recorder.shell.PairingAccessibilityService
 import com.syedarhamraza.recorder.shell.ShellHelper
+import com.syedarhamraza.recorder.shell.Watchdog
 import kotlin.concurrent.thread
 
 /**
@@ -37,6 +38,110 @@ class SetupActivity : Activity() {
         super.onResume()
         render()
         RecordingsProvider.notifyStatus(this)
+        if (ShellHelper.paired(this)) Watchdog.schedule(this)
+        if (Updates.enabled() && Updates.due(this)) checkForUpdate()
+    }
+
+    /** Software update: null, or what the row is doing right now. */
+    private var updateBusy: Int? = null
+    /** Check now is running. */
+    private var checking = false
+
+    private fun checkForUpdate() {
+        updateBusy = R.string.update_checking
+        render()
+        thread {
+            Updates.check(applicationContext)
+            runOnUiThread {
+                updateBusy = null
+                if (!isDestroyed) render()
+            }
+        }
+    }
+
+    /** Downloads the release and has the helper install it; without the helper, the browser downloads it. */
+    private fun update(release: Updates.Release) {
+        if (RecordingService.current != null) return
+        if (!ShellHelper.running(this)) {
+            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(release.url))) }
+            return
+        }
+        updateBusy = R.string.update_installing
+        render()
+        thread {
+            val apk = Updates.download(applicationContext, release)
+            // On success Android ends this process; getting here means it didn't install.
+            val installed = apk != null && ShellHelper.install(applicationContext, apk)
+            apk?.delete()
+            runOnUiThread {
+                updateBusy = if (installed) null else R.string.update_failed
+                if (!isDestroyed) render()
+                updateBusy = null // the next render offers it again
+            }
+        }
+    }
+
+    private fun updateRow(): View {
+        val release = if (Updates.enabled()) Updates.available(this) else null
+        val subtitle = when {
+            !Updates.enabled() -> getString(R.string.update_debug)
+            updateBusy != null -> getString(updateBusy!!)
+            release != null && RecordingService.current != null -> getString(R.string.update_after_call)
+            release != null -> getString(R.string.update_available, release.version)
+            else -> getString(R.string.update_current)
+        }
+        return page.row(getString(R.string.update_title), subtitle,
+            subtitleColor = if (release != null && updateBusy == null) OneLook.CALL_GREEN else null,
+            value = Updates.base(BuildConfig.VERSION_NAME),
+            onTap = when {
+                !Updates.enabled() || updateBusy != null -> null
+                release != null -> ({ update(release) })
+                else -> ({ checkForUpdate() })
+            })
+    }
+
+    private fun checkRow(): View {
+        val saved = RecorderSettings.lastCheck(this)?.split(' ')
+        val result = saved?.getOrNull(1)?.let { name -> ShellHelper.Check.entries.firstOrNull { it.name == name } }
+        val at = saved?.getOrNull(0)?.toLongOrNull()
+        val subtitle = when {
+            checking -> getString(R.string.check_running)
+            result == null || at == null -> getString(R.string.check_detail)
+            else -> getString(R.string.check_at, time(at), getString(when (result) {
+                ShellHelper.Check.WORKS -> R.string.check_works
+                ShellHelper.Check.NO_CAPTURE -> R.string.check_no_capture
+                ShellHelper.Check.NOT_PAIRED -> R.string.check_not_paired
+                ShellHelper.Check.WONT_START -> R.string.check_wont_start
+            }))
+        }
+        val bad = !checking && result != null && result != ShellHelper.Check.WORKS
+        return page.row(getString(R.string.check_title), subtitle, subtitleColor = if (bad) OneLook.RED else null,
+            onTap = if (checking) null else ({
+                checking = true
+                render()
+                thread {
+                    RecorderSettings.saveCheck(applicationContext, ShellHelper.check(applicationContext).name)
+                    runOnUiThread {
+                        checking = false
+                        if (!isDestroyed) render()
+                    }
+                }
+            }))
+    }
+
+    private fun time(at: Long): String =
+        android.text.format.DateUtils.formatDateTime(this, at, android.text.format.DateUtils.FORMAT_SHOW_TIME or
+            android.text.format.DateUtils.FORMAT_SHOW_DATE or android.text.format.DateUtils.FORMAT_ABBREV_MONTH)
+
+    /** The last call's recording, the proof Ready is true (second: it worked); null before the first call. */
+    private fun lastCallLine(): Pair<String, Boolean>? {
+        val last = RecorderSettings.lastCall(this) ?: return null
+        val length = android.text.format.DateUtils.formatElapsedTime(last.seconds.toLong())
+        return when (last.result) {
+            "heard" -> getString(R.string.last_call_heard, time(last.at), length) to true
+            "silent" -> getString(R.string.last_call_silent, time(last.at)) to false
+            else -> getString(R.string.last_call_failed, time(last.at)) to false
+        }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -87,7 +192,11 @@ class SetupActivity : Activity() {
             val next = steps.indexOfFirst { !it.ok }
             if (next < 0) {
                 val dialer = packageManager.getLaunchIntentForPackage(TrustedDialer.PACKAGE)
-                page.hero(getString(R.string.status_ready), OneLook.CALL_GREEN, getString(R.string.status_ready_detail),
+                val last = lastCallLine()
+                // The last call not recorded means Ready isn't the whole story.
+                val ready = last?.second != false
+                page.hero(getString(if (ready) R.string.status_ready else R.string.status_check), if (ready) OneLook.CALL_GREEN else OneLook.RED,
+                    listOfNotNull(last?.first, getString(R.string.status_ready_detail)).joinToString("\n\n"),
                     dialer?.let { getString(R.string.open_dialer) to { startActivity(it) } })
             } else {
                 page.hero(getString(R.string.status_step, next + 1, steps.size, steps[next].title), pal.text,
@@ -125,6 +234,16 @@ class SetupActivity : Activity() {
                 window.decorView.postDelayed({ recreate() }, 200) // after the menu has closed (170 ms)
             },
         ), header = getString(R.string.section_appearance))
+
+        page.group(listOf(
+            updateRow(),
+            page.row(getString(R.string.diagnostics), getString(R.string.diagnostics_detail)) {
+                thread {
+                    val report = Diagnostics.report(applicationContext)
+                    runOnUiThread { if (!isDestroyed) Diagnostics.share(this, report, getString(R.string.diagnostics)) }
+                }
+            },
+        ), header = getString(R.string.section_about))
 
         page.group(listOf(page.row(getString(R.string.consent_title), getString(R.string.setup_consent)) {
             startActivity(Intent(this, ConsentActivity::class.java))
@@ -172,7 +291,7 @@ class SetupActivity : Activity() {
         val switch = listOf("on" to getString(R.string.option_on), "off" to getString(R.string.option_off))
         val canRestart = ShellHelper.canRestart(this)
         val helperUp = !canRestart && ShellHelper.running(this)
-        val rows = mutableListOf(page.row(
+        val rows = mutableListOf(checkRow(), page.row(
             getString(R.string.setup_restart),
             getString(when {
                 canRestart -> R.string.setup_restart_ready

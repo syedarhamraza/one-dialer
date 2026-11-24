@@ -16,6 +16,14 @@ import java.nio.ByteOrder
  */
 class AudioPipeline(private val file: File, private val input: InputStream) {
     @Volatile private var running = false
+
+    /** The loudest sample read, before levelling: Setup's proof the last call had sound. */
+    @Volatile var peak = 0
+        private set
+
+    /** Seconds of audio written so far. */
+    @Volatile var seconds = 0
+        private set
     private var thread: Thread? = null
 
     fun start() {
@@ -64,9 +72,11 @@ class AudioPipeline(private val file: File, private val input: InputStream) {
                 val n = read(pcm)
                 if (n < 0) break // the helper hung up
                 if (n == 0) continue
+                for (i in 0 until n) peak = maxOf(peak, kotlin.math.abs(pcm[i].toInt()))
                 leveler.process(pcm, n)
                 writer.feed(pcm, n, written * 1_000_000L / RATE)
                 written += n
+                seconds = (written / RATE).toInt()
             }
             writer.finish(written * 1_000_000L / RATE)
         } finally {

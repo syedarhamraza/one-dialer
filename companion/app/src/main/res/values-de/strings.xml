@@ -89,4 +89,27 @@
     <string name="stopped_title">Aufnahme beider Seiten gestoppt</string>
     <string name="stopped_detail">Das WLAN ist zurück, aber der Aufnahmedienst konnte nicht von selbst starten. Tippe, um ihn neu zu starten</string>
     <string name="version">One Recorder %1$s</string>
+    <string name="section_about">Über</string>
+    <string name="update_title">Softwareupdate</string>
+    <string name="update_checking">Wird geprüft…</string>
+    <string name="update_installing">Wird geladen und installiert… One Recorder schließt sich danach</string>
+    <string name="update_failed">Das Update konnte nicht installiert werden. Versuche es später erneut</string>
+    <string name="update_debug">Dies ist ein Test-Build: Updates kommen mit dem Release-Build</string>
+    <string name="update_after_call">Ein Update ist bereit: installiere es nach dem Anruf</string>
+    <string name="update_available">Version %1$s ist verfügbar: zum Installieren tippen</string>
+    <string name="update_current">Aktuell. Zum erneuten Prüfen tippen</string>
+    <string name="check_title">Jetzt prüfen</string>
+    <string name="check_detail">Prüft, ob der Aufnahmedienst läuft, noch gekoppelt ist und Anrufaudio aufnehmen kann</string>
+    <string name="check_running">Wird geprüft…</string>
+    <string name="check_at">%1$s · %2$s</string>
+    <string name="check_works">Alles funktioniert: Der Aufnahmedienst läuft und kann Anrufaudio aufnehmen</string>
+    <string name="check_no_capture">Der Aufnahmedienst läuft, aber dieses Telefon lässt ihn kein Anrufaudio aufnehmen</string>
+    <string name="check_not_paired">Drahtloses Debugging akzeptiert One Recorder nicht mehr: oben erneut koppeln</string>
+    <string name="check_wont_start">Der Aufnahmedienst ist nicht gestartet: siehe den Schritt oben</string>
+    <string name="status_check">Letzte Aufnahme prüfen</string>
+    <string name="last_call_heard">Letzter Anruf aufgenommen %1$s · %2$s</string>
+    <string name="last_call_silent">Die letzte Aufnahme (%1$s) war stumm. Spiele sie in One Dialer ab und tippe dann auf Jetzt prüfen</string>
+    <string name="last_call_failed">Der letzte Anruf (%1$s) wurde nicht aufgenommen: Der Aufnahmedienst lief nicht. Tippe auf Jetzt prüfen</string>
+    <string name="diagnostics">Diagnose teilen</string>
+    <string name="diagnostics_detail">Versionen, Telefon, Einrichtungsstatus und aktuelle Protokollzeilen für einen Fehlerbericht. Keine Nummern oder Namen</string>
 </resources>
