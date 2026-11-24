@@ -1527,6 +1527,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get openSourceLicences => 'Licenze open source';
 
   @override
+  String get copyrightNotice =>
+      'Copyright (C) 2026 Syed Arham Raza\nSoftware libero distribuito con licenza GNU General Public License v3.0';
+
+  @override
   String get changelog => 'Novità';
 
   @override
