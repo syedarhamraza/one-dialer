@@ -22,7 +22,8 @@ export const viewport: Viewport = {
 
 // Before first paint: mark that scripts run (so entrances may start hidden), and start people who ask their
 // system for less transparency at Off effects.
-const BOOT = `document.documentElement.classList.add("js");if(matchMedia("(prefers-reduced-transparency: reduce)").matches)document.documentElement.dataset.fx="off"`;
+// It also sets the page's language from its path (/one-dialer/de/...), since one root layout serves every language.
+const BOOT = `var d=document.documentElement,l=location.pathname.split("/")[2];if(["it","ru","es","tr","de"].indexOf(l)>=0)d.lang=l;document.documentElement.classList.add("js");if(matchMedia("(prefers-reduced-transparency: reduce)").matches)document.documentElement.dataset.fx="off"`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
