@@ -120,4 +120,6 @@ Thanks to everyone who has helped build One Dialer.
 
 ## License
 
+Copyright (C) 2026 Syed Arham Raza
+
 One Dialer is free software under the [GNU General Public License v3.0](LICENSE). The "One Dialer" name, logo and icons are not covered by that license, so forks must use their own name and icons; see [TRADEMARK.md](TRADEMARK.md).
