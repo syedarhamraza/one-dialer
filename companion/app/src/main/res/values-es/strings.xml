@@ -37,7 +37,7 @@
     <string name="setup_dev_options">Opciones para desarrolladores</string>
     <string name="setup_dev_options_detail">Ajustes › Información del teléfono: toca 7 veces Número de compilación</string>
     <string name="setup_pair">Vincular con Depuración inalámbrica</string>
-    <string name="setup_pair_detail">Activa Depuración inalámbrica, toca Vincular dispositivo con un código de vinculación y escribe el código en la notificación de One Recorder</string>
+    <string name="setup_pair_detail">Activa Depuración inalámbrica, toca Vincular dispositivo con un código de vinculación y escribe el código en la notificación de One Recorder. Cuando Android pida permitir esta red, marca Permitir siempre en esta red</string>
     <string name="setup_paired">Vinculado</string>
     <string name="setup_helper">Iniciar el servicio de grabación</string>
     <string name="setup_helper_detail">No se está ejecutando. Necesita Wi-Fi y Depuración inalámbrica para iniciarse</string>
@@ -80,14 +80,14 @@
     <string name="auto_pair_service_description">Lee el código de 6 dígitos del cuadro de vinculación de Depuración inalámbrica para que no tengas que escribirlo. Solo lee Ajustes, nunca toca nada y se desactiva cuando se vincula o tras 5 minutos.</string>
     <string name="setup_helper_no_wifi">No se inició: conéctate a una Wi-Fi y toca aquí</string>
     <string name="setup_helper_debugging_off">No se inició: Depuración inalámbrica está desactivada. Actívala en Opciones para desarrolladores (toca 7 veces Número de compilación si están ocultas) y vuelve para tocar Arreglar</string>
-    <string name="setup_helper_connect_failed">No se inició: Depuración inalámbrica no aceptó One Recorder. Toca aquí para volver a intentarlo, o Volver a vincular abajo</string>
+    <string name="setup_helper_connect_failed">No se inició: Depuración inalámbrica no aceptó One Recorder. Toca aquí para volver a intentarlo, o Volver a vincular abajo. Si Android pidió permitir esta red, marca Permitir siempre en esta red</string>
     <string name="pair_again">Volver a vincular</string>
     <string name="pair_again_detail">Si el servicio de grabación ya no se inicia. Tus grabaciones y ajustes se mantienen</string>
     <string name="off_wifi">Seguir grabando sin Wi-Fi</string>
     <string name="off_wifi_detail">Mantiene activada la depuración USB para que el servicio de grabación siga funcionando cuando se va el Wi-Fi. Algunas apps de bancos no se abren mientras está activada</string>
     <string name="off_wifi_needs_restart">Necesita Iniciar tras reiniciar, para que One Recorder pueda mantener activada la depuración USB</string>
     <string name="stopped_title">Se detuvo la grabación de las dos partes</string>
-    <string name="stopped_detail">El Wi-Fi ha vuelto, pero el servicio de grabación no pudo iniciarse solo. Toca para iniciarlo otra vez</string>
+    <string name="stopped_detail">El Wi-Fi ha vuelto, pero el servicio de grabación no pudo iniciarse solo. Toca para iniciarlo otra vez. Depuración inalámbrica necesita esta red permitida: Permitir siempre en esta red</string>
     <string name="version">One Recorder %1$s</string>
     <string name="section_about">Información</string>
     <string name="update_title">Actualización de software</string>

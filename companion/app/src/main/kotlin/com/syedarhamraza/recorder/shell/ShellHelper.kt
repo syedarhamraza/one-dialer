@@ -407,6 +407,7 @@ object ShellHelper {
         context.getSystemService(NotificationManager::class.java).notify(STOPPED_NOTIFICATION, builder(context)
             .setContentTitle(context.getString(R.string.stopped_title))
             .setContentText(context.getString(R.string.stopped_detail))
+            .setStyle(Notification.BigTextStyle().bigText(context.getString(R.string.stopped_detail)))
             .setContentIntent(open).setAutoCancel(true).build())
     }
 

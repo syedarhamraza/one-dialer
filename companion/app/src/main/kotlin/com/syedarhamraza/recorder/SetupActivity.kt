@@ -183,8 +183,12 @@ class SetupActivity : Activity() {
                     startActivity(Intent(Settings.ACTION_DEVICE_INFO_SETTINGS))
                 },
                 Step(getString(R.string.setup_pair), getString(R.string.setup_pair_detail), paired, getString(R.string.setup_paired)) {
-                    ShellHelper.askForPairingCode(this)
-                    startActivity(ShellHelper.wirelessDebuggingIntent())
+                    // The code is typed into a notification: blocked, it never shows (issue #172).
+                    if (!notificationsOn) notificationsStep.fix?.invoke()
+                    else {
+                        ShellHelper.askForPairingCode(this)
+                        startActivity(ShellHelper.wirelessDebuggingIntent())
+                    }
                 },
                 helperStep(),
                 batteryStep,
