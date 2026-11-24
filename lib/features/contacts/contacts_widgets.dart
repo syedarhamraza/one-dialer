@@ -47,6 +47,7 @@ class ContactRow extends StatelessWidget {
     this.highlight,
     required this.onTap,
     required this.onLongPress,
+    this.subtitle,
   });
 
   /// Fixed, so the list can use a fixed-extent sliver and section offsets are known.
@@ -60,6 +61,9 @@ class ContactRow extends StatelessWidget {
   final Widget? highlight;
   final VoidCallback onTap, onLongPress;
 
+  /// A grey line under the name (the number picker's number); fits the fixed height.
+  final String? subtitle;
+
   @override
   Widget build(BuildContext context) {
     final row = InkWell(
@@ -71,7 +75,11 @@ class ContactRow extends StatelessWidget {
         padding: const EdgeInsets.only(left: 20),
         child: Row(
           children: [
-            ContactAvatar(id: contact.id, name: contact.name),
+            // No id: a number that isn't saved (the number picker's Calls tab).
+            if (contact.id.isEmpty)
+              LetterAvatar(name: contact.name)
+            else
+              ContactAvatar(id: contact.id, name: contact.name),
             const SizedBox(width: 14),
             Expanded(
               child: Container(
@@ -85,11 +93,26 @@ class ContactRow extends StatelessWidget {
                 child: Row(
                   children: [
                     Expanded(
-                      child: Text(
-                        contact.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500, letterSpacing: -0.2),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            contact.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500, letterSpacing: -0.2),
+                          ),
+                          if (subtitle case final subtitle?) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              subtitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 14, color: context.palette.textSecondary),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                     selectMark,

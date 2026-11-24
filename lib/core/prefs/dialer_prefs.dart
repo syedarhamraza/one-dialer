@@ -56,6 +56,11 @@ class DialerPrefs {
 
   Future<void> setSideloadWarned() => _prefs.setBool('sideload_warned', true);
 
+  /// Whether the one-time "Unofficial build" notice was shown.
+  Future<bool> unofficialNoted() async => await _prefs.getBool('unofficial_noted') ?? false;
+
+  Future<void> setUnofficialNoted() => _prefs.setBool('unofficial_noted', true);
+
   /// Whether the first-run onboarding was shown (or skipped, for people who had the app before it).
   Future<bool> onboarded() async => await _prefs.getBool('onboarded') ?? false;
 

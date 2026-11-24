@@ -163,7 +163,7 @@ class ContactsRepository {
       final rows = await TelecomBridge.instance.getContacts();
       // A newer load started while this one read: its result is the one to show, whichever lands last.
       if (load != _loads) return;
-      final entries = entriesFrom(rows, order: prefs.nameOrder.value, sortBy: prefs.sortBy.value);
+      final entries = collapseCopies(entriesFrom(rows, order: prefs.nameOrder.value, sortBy: prefs.sortBy.value));
       entries.sort((a, b) => a.sortKey.compareTo(b.sortKey));
       final numbered = [
         for (final e in entries)
@@ -219,6 +219,60 @@ class ContactsRepository {
       );
     }
     return entries;
+  }
+
+  /// Shows copies Android didn't join (a SIM's or WhatsApp's copy of a Google contact: same
+  /// name, a shared number) as one contact: the copy from the best account, with every number
+  /// and account of the others. Nothing on the device changes; Merge duplicates joins for real.
+  @visibleForTesting
+  static List<DialerContact> collapseCopies(List<DialerContact> entries) {
+    final out = <DialerContact>[];
+    final owner = <String, int>{}; // name + number key → index in out
+    for (final e in entries) {
+      final name = e.name.toLowerCase().replaceAll(RegExp(r'\s+'), '');
+      final keys = [
+        for (final n in e.numbers)
+          if (numberKey(n) case final k when k.isNotEmpty) '$name|$k',
+      ];
+      final i = keys.map((k) => owner[k]).nonNulls.firstOrNull;
+      if (i == null) {
+        for (final k in keys) {
+          owner[k] = out.length;
+        }
+        out.add(e);
+        continue;
+      }
+      final (keep, other) = _accountRank(e) > _accountRank(out[i]) ? (e, out[i]) : (out[i], e);
+      final seen = {for (final n in keep.numbers) numberKey(n)};
+      final extra = [
+        for (final (j, n) in other.numbers.indexed)
+          if (seen.add(numberKey(n))) j,
+      ];
+      out[i] = DialerContact(
+        id: keep.id,
+        name: keep.name,
+        numbers: [...keep.numbers, for (final j in extra) other.numbers[j]],
+        labels: [...keep.labels, for (final j in extra) other.labels[j]],
+        isFavorite: keep.isFavorite || other.isFavorite,
+        primaryIndex: keep.primaryIndex,
+        sortKey: keep._sortKey,
+        accounts: {...keep.accounts, ...other.accounts}.toList(),
+      );
+      for (final k in keys) {
+        owner.putIfAbsent(k, () => i);
+      }
+    }
+    return out;
+  }
+
+  /// Which copy speaks for the others: a synced account's (Google, Samsung) or the phone's
+  /// over an app's (WhatsApp, Telegram, Meet), and an app's over a SIM's.
+  static int _accountRank(DialerContact c) {
+    final types = [for (final a in c.accounts) a.substring(0, a.indexOf('|')).toLowerCase()];
+    if (types.isEmpty || types.any((t) => t.contains('google') && !t.contains('tachyon') || t.contains('samsung'))) {
+      return 2;
+    }
+    return types.every((t) => t.contains('sim') || t.contains('sdn')) ? 0 : 1;
   }
 
   /// The name to show in [order] (`first` or `last` first) and the sort key by [sortBy],

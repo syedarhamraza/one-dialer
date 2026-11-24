@@ -261,6 +261,7 @@ class SubpageHeader extends StatelessWidget {
     this.trailingIcon,
     this.trailingTooltip,
     this.onTrailing,
+    this.extra,
   });
 
   final bool selecting;
@@ -273,6 +274,10 @@ class SubpageHeader extends StatelessWidget {
   final IconData? trailingIcon;
   final String? trailingTooltip;
   final VoidCallback? onTrailing;
+
+  /// A round button before the trailing one (Blocklist's +): it fades and folds away while
+  /// selecting, so Cancel, the title and Select all keep their places.
+  final Widget? extra;
 
   static const double _button = 48;
   static const double _gap = 14;
@@ -382,6 +387,20 @@ class SubpageHeader extends StatelessWidget {
                       child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: titleStyle),
                     ),
                   ),
+                  if (extra case final extra? when sel < 1)
+                    ClipRect(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        widthFactor: 1 - sel.clamp(0.0, 1.0),
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: IgnorePointer(
+                            ignoring: selecting,
+                            child: Opacity(opacity: _out(sel), child: extra),
+                          ),
+                        ),
+                      ),
+                    ),
                   // The right pill's width also follows its label (Select all ⇄ Deselect all).
                   TweenAnimationBuilder<double>(
                     tween: Tween(end: selectAllWidth),

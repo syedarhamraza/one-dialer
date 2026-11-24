@@ -10,9 +10,12 @@ import android.graphics.Canvas
 import android.media.RingtoneManager
 import android.net.Uri
 import android.provider.ContactsContract.AggregationExceptions
+import android.provider.ContactsContract.CommonDataKinds.Phone
+import android.provider.ContactsContract.CommonDataKinds.StructuredName
 import android.provider.ContactsContract.Contacts
 import android.provider.ContactsContract.Data
 import android.provider.ContactsContract.RawContacts
+import com.syedarhamraza.dialer.telecom.BlockRules
 import java.io.ByteArrayOutputStream
 
 /** Contact details the contacts package doesn't cover: messaging apps, linked accounts, unlink, ringtone. */
@@ -102,9 +105,16 @@ object ContactExtras {
         if (ops.isNotEmpty()) context.contentResolver.applyBatch(android.provider.ContactsContract.AUTHORITY, ops)
     }
 
-    /** Manage contacts › Merge duplicates: joins every raw contact of [contactIds] into one contact. */
-    fun merge(context: Context, contactIds: List<String>) {
-        val raws = contactIds.flatMap { id -> rawContacts(context, id).map { it["id"] as Long } }
+    /**
+     * Manage contacts › Merge duplicates: joins every raw contact of [contactIds] into one
+     * contact, named after [nameContactId]'s name (its name row becomes the super-primary one,
+     * which the aggregator prefers), and deletes the phone rows whose number ends like one of
+     * [removeNumbers] (the ones left unticked).
+     */
+    fun merge(context: Context, contactIds: List<String>, nameContactId: String? = null, removeNumbers: List<String> = emptyList()) {
+        val ordered = nameContactId?.takeIf { it in contactIds }?.let { listOf(it) + (contactIds - it) } ?: contactIds
+        val nameRaws = nameContactId?.let { id -> rawContacts(context, id).map { it["id"] as Long } }.orEmpty().toSet()
+        val raws = ordered.flatMap { id -> rawContacts(context, id).map { it["id"] as Long } }.distinct()
         val first = raws.firstOrNull() ?: return
         val ops = ArrayList<ContentProviderOperation>()
         for (other in raws.drop(1)) {
@@ -114,7 +124,34 @@ object ContactExtras {
                 .withValue(AggregationExceptions.RAW_CONTACT_ID2, other)
                 .build()
         }
-        if (ops.isNotEmpty()) context.contentResolver.applyBatch(android.provider.ContactsContract.AUTHORITY, ops)
+        val resolver = context.contentResolver
+        if (ops.isNotEmpty()) resolver.applyBatch(android.provider.ContactsContract.AUTHORITY, ops)
+        // The name and the unticked numbers: one at a time, so a row another app's account
+        // protects (vivo has no is_read_only column to check first) stays without failing the merge.
+        val removeKeys = removeNumbers.map(BlockRules::numberKey).filter { it.isNotEmpty() }.toSet()
+        val edits = ArrayList<ContentProviderOperation>()
+        resolver.query(
+            Data.CONTENT_URI, arrayOf(Data._ID, Data.RAW_CONTACT_ID, Data.MIMETYPE, Phone.NUMBER),
+            "${Data.RAW_CONTACT_ID} IN (${raws.joinToString(",")}) AND ${Data.MIMETYPE} IN (?, ?)",
+            arrayOf(StructuredName.CONTENT_ITEM_TYPE, Phone.CONTENT_ITEM_TYPE), null,
+        )?.use { c ->
+            while (c.moveToNext()) {
+                val row = ContentUris.withAppendedId(Data.CONTENT_URI, c.getLong(0))
+                if (c.getString(2) == StructuredName.CONTENT_ITEM_TYPE) {
+                    if (nameRaws.isEmpty()) continue
+                    val primary = if (c.getLong(1) in nameRaws) 1 else 0
+                    edits += ContentProviderOperation.newUpdate(row)
+                        .withValue(Data.IS_PRIMARY, primary)
+                        .withValue(Data.IS_SUPER_PRIMARY, primary)
+                        .build()
+                } else if (BlockRules.numberKey(c.getString(3).orEmpty()) in removeKeys) {
+                    edits += ContentProviderOperation.newDelete(row).build()
+                }
+            }
+        }
+        for (op in edits) {
+            runCatching { resolver.applyBatch(android.provider.ContactsContract.AUTHORITY, arrayListOf(op)) }
+        }
     }
 
     /**

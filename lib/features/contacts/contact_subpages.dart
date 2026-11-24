@@ -45,7 +45,8 @@ class ContactHistoryScreen extends StatefulWidget {
 class _ContactHistoryScreenState extends State<ContactHistoryScreen> {
   List<SimCard> _sims = const [];
 
-  /// Selected call ids; null while not selecting (long-press a call to start).
+  /// Selected call ids; null while not selecting (long-press a call or the checklist button,
+  /// which starts with none).
   final _selected = ValueNotifier<Set<int>?>(null);
 
   /// Whether [_selected] is non-null: the page itself rebuilds only on entering and leaving
@@ -62,7 +63,7 @@ class _ContactHistoryScreenState extends State<ContactHistoryScreen> {
   void _toggle(int id) {
     final set = {...?_selected.value};
     if (!set.remove(id)) set.add(id);
-    _selected.value = set.isEmpty ? null : set;
+    _selected.value = set;
   }
 
   /// The selection still in [calls]: deleted calls drop out of it.
@@ -75,11 +76,13 @@ class _ContactHistoryScreenState extends State<ContactHistoryScreen> {
       return SubpageHeader(
         selecting: _selected.value != null,
         title: context.l10n.callLogs,
-        selectionTitle: context.l10n.selectedCount(selected.length),
-        allSelected: selected.length == calls.length,
+        selectionTitle: selected.isEmpty ? context.l10n.selectItems : context.l10n.selectedCount(selected.length),
+        allSelected: calls.isNotEmpty && selected.length == calls.length,
         onCancel: () => _selected.value = null,
-        onToggleSelectAll: () =>
-            _selected.value = selected.length == calls.length ? null : {for (final c in calls) c.id},
+        onToggleSelectAll: () => _selected.value = selected.length == calls.length ? {} : {for (final c in calls) c.id},
+        trailingIcon: calls.isEmpty ? null : Icons.checklist_rounded,
+        trailingTooltip: context.l10n.select,
+        onTrailing: () => _selected.value = {},
       );
     },
   );
@@ -133,14 +136,21 @@ class _ContactHistoryScreenState extends State<ContactHistoryScreen> {
             header: _header(calls),
             bottomPill: !selecting
                 ? null
-                : OneUISubpage.actionBar([
-                    OneUIFloatingActionBarItem(
-                      icon: Icons.delete_outline_rounded,
-                      label: context.l10n.delete,
-                      color: OneUITheme.accentRed,
-                      onTap: () => confirmDeleteCalls(context, _live(calls), onConfirmed: () => _selected.value = null),
-                    ),
-                  ]),
+                : ValueListenableBuilder(
+                    valueListenable: _selected,
+                    builder: (context, _, _) {
+                      final selected = _live(calls);
+                      return OneUISubpage.actionBar([
+                        OneUIFloatingActionBarItem(
+                          icon: Icons.delete_outline_rounded,
+                          label: context.l10n.delete,
+                          color: OneUITheme.accentRed,
+                          isEnabled: selected.isNotEmpty,
+                          onTap: () => confirmDeleteCalls(context, selected, onConfirmed: () => _selected.value = null),
+                        ),
+                      ]);
+                    },
+                  ),
             slivers: (context) => [
               if (calls.isEmpty)
                 SliverToBoxAdapter(

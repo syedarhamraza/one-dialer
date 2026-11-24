@@ -90,8 +90,14 @@ class TelecomBridge {
   Future<String> createLocalContact() async => (await _methods.invokeMethod<String>('createLocalContact'))!;
 
   /// Joins the contacts into one (Android's "link"), for Merge duplicates.
-  Future<void> mergeContacts(List<String> contactIds) =>
-      _methods.invokeMethod('mergeContacts', {'contactIds': contactIds});
+  /// Joins [contactIds] into one contact named after [nameContactId], deleting the phone rows
+  /// whose number matches one of [removeNumbers] (Manage contacts › Merge duplicates).
+  Future<void> mergeContacts(List<String> contactIds, {String? nameContactId, List<String> removeNumbers = const []}) =>
+      _methods.invokeMethod('mergeContacts', {
+        'contactIds': contactIds,
+        'nameContactId': nameContactId,
+        'removeNumbers': removeNumbers,
+      });
 
   /// A .vcf file's text from the files app; null when cancelled.
   Future<String?> pickVcf() => _methods.invokeMethod<String>('pickVcf');
@@ -188,12 +194,24 @@ class TelecomBridge {
   Future<Map<Object?, Object?>> getBlocking() async =>
       await _methods.invokeMapMethod<Object?, Object?>('getBlocking') ?? const {};
 
-  Future<void> setBlocking({required bool blockHidden, required bool blockNonContacts}) =>
-      _methods.invokeMethod('setBlocking', {'blockHidden': blockHidden, 'blockNonContacts': blockNonContacts});
+  Future<void> setBlocking({
+    required bool blockHidden,
+    required bool blockNonContacts,
+    required List<String> prefixes,
+    required List<String> allowed,
+  }) => _methods.invokeMethod('setBlocking', {
+    'blockHidden': blockHidden,
+    'blockNonContacts': blockNonContacts,
+    'prefixes': prefixes,
+    'allowed': allowed,
+  });
 
   /// Settings › Incoming call reminders and Answer/End calls (`CallPrefs.kt`, read by the call service):
   /// `incomingStyle`, `vibrateAnswerEnd`, `speakerDefault`, `autoAnswer`, `autoAnswerDelay`.
   /// Settings › Language: `system` or a language tag (`AppLanguage.kt`).
+  /// SHA-256 (lowercase hex) of the certificate this copy is signed with (`official_build.dart`).
+  Future<String?> signingCertSha256() => _methods.invokeMethod<String>('signingCertSha256');
+
   Future<String> getAppLanguage() async => await _methods.invokeMethod<String>('getAppLanguage') ?? 'system';
 
   Future<void> setAppLanguage(String tag) => _methods.invokeMethod('setAppLanguage', {'tag': tag});
@@ -265,10 +283,8 @@ class TelecomBridge {
   // Calls
   /// Calls [number], on the SIM with [simId] if given (otherwise Android's default or its own picker);
   /// [voicemail] calls that SIM's voicemail instead of [number].
-  Future<void> placeCall(String number, {String? simId, bool voicemail = false}) => _methods.invokeMethod(
-    'placeCall',
-    {'number': number, 'simId': simId, if (voicemail) 'voicemail': true},
-  );
+  Future<void> placeCall(String number, {String? simId, bool voicemail = false}) =>
+      _methods.invokeMethod('placeCall', {'number': number, 'simId': simId, if (voicemail) 'voicemail': true});
 
   /// Calls back call-log row [id]; an app's row (WhatsApp...) is called back by that app.
   Future<void> callBack(int id) => _methods.invokeMethod('callBack', {'id': id});

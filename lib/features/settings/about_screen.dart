@@ -15,6 +15,7 @@ import '../../widgets/version_mark.dart';
 import '../updates/data/update_service.dart';
 import '../updates/presentation/update_controller.dart';
 import 'software_update_screen.dart';
+import '../../app/official_build.dart';
 import '../../l10n/l10n.dart';
 import '../../theme/one_ui_theme.dart';
 
@@ -160,6 +161,20 @@ class _AboutScreenState extends State<AboutScreen> {
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
           ),
+        ),
+        // A rebuild signed by someone else keeps the credit (NOTICE, GPL-3.0 section 7).
+        FutureBuilder(
+          future: isOfficialBuild(),
+          builder: (context, official) => official.data != false
+              ? const SizedBox.shrink()
+              : Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                  child: Text(
+                    context.l10n.unofficialBuildNotice,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
+                  ),
+                ),
         ),
       ],
     );

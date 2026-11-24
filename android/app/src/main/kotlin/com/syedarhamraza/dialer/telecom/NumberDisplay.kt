@@ -55,7 +55,7 @@ data class NumberDisplay(val formatted: String?, val location: String?) {
 
         /** Loads the home region's number data off the main thread, so the first typed digit doesn't wait for it. */
         fun preload(context: Context) {
-            Thread { asYouType(context, "0") }.start()
+            Thread({ asYouType(context, "0") }, "kq4v9sarz7od2").start()
         }
 
         // shortcut: looked up once per process (a call into the phone service); a SIM from another country

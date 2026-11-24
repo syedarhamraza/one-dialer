@@ -15,6 +15,9 @@ class OneUIGroupItem {
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
 
+  /// False greys the row out (ColorOS's unavailable rows): it keeps its chevron, ignores taps.
+  final bool enabled;
+
   const OneUIGroupItem({
     this.leading,
     required this.title,
@@ -25,6 +28,7 @@ class OneUIGroupItem {
     this.value,
     this.onTap,
     this.onLongPress,
+    this.enabled = true,
   });
 }
 
@@ -76,6 +80,8 @@ class OneUIGroupItemTile extends StatelessWidget {
 
   const OneUIGroupItemTile({super.key, required this.item, required this.isFirst, required this.isLast});
 
+  Widget _dimmed(Widget row) => item.enabled ? row : Opacity(opacity: .4, child: row);
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -87,64 +93,68 @@ class OneUIGroupItemTile extends StatelessWidget {
             // Flutter's own long-press buzz would play on top of the row's Haptics.longPress,
             // so it's off; the tap click sound is played by hand instead.
             enableFeedback: item.onLongPress == null,
-            onTap: item.onTap == null || item.onLongPress == null
+            onTap: !item.enabled
+                ? null
+                : item.onTap == null || item.onLongPress == null
                 ? item.onTap
                 : () {
                     Feedback.forTap(context);
                     item.onTap!();
                   },
-            onLongPress: item.onLongPress,
+            onLongPress: item.enabled ? item.onLongPress : null,
             // Black on light cards, white on dark ones.
             splashColor: context.palette.textPrimary.withValues(alpha: 0.06),
             highlightColor: context.palette.textPrimary.withValues(alpha: 0.03),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 17),
-              child: Row(
-                children: [
-                  if (item.leading != null) ...[item.leading!, const SizedBox(width: 16)],
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          item.title,
-                          style: TextStyle(
-                            fontSize: 17.0,
-                            fontWeight: FontWeight.w400,
-                            height: 1.25,
-                            letterSpacing: -0.2,
-                            color: context.palette.textPrimary,
-                          ),
-                        ),
-                        if (item.customSubtitle != null) ...[
-                          const SizedBox(height: 1),
-                          item.customSubtitle!,
-                        ] else if (item.subtitle != null) ...[
-                          const SizedBox(height: 1),
+              child: _dimmed(
+                Row(
+                  children: [
+                    if (item.leading != null) ...[item.leading!, const SizedBox(width: 16)],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
                           Text(
-                            item.subtitle!,
+                            item.title,
                             style: TextStyle(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.normal,
+                              fontSize: 17.0,
+                              fontWeight: FontWeight.w400,
                               height: 1.25,
-                              color: item.subtitleColor ?? context.palette.textSecondary,
+                              letterSpacing: -0.2,
+                              color: context.palette.textPrimary,
                             ),
                           ),
+                          if (item.customSubtitle != null) ...[
+                            const SizedBox(height: 1),
+                            item.customSubtitle!,
+                          ] else if (item.subtitle != null) ...[
+                            const SizedBox(height: 1),
+                            Text(
+                              item.subtitle!,
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.normal,
+                                height: 1.25,
+                                color: item.subtitleColor ?? context.palette.textSecondary,
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 14),
-                  if (item.value case final value?) ...[
-                    Text(value, style: TextStyle(fontSize: 15, color: context.palette.textSecondary)),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 14),
+                    if (item.value case final value?) ...[
+                      Text(value, style: TextStyle(fontSize: 15, color: context.palette.textSecondary)),
+                      const SizedBox(width: 4),
+                    ],
+                    if (item.trailing != null)
+                      item.trailing!
+                    else if (item.onTap != null || !item.enabled)
+                      Icon(Icons.chevron_right_rounded, size: 22, color: context.palette.textSecondary),
                   ],
-                  if (item.trailing != null)
-                    item.trailing!
-                  else if (item.onTap != null)
-                    Icon(Icons.chevron_right_rounded, size: 22, color: context.palette.textSecondary),
-                ],
+                ),
               ),
             ),
           ),

@@ -1186,23 +1186,11 @@ abstract class AppLocalizations {
   /// **'Merge {count} contacts?'**
   String mergeGroupTitle(String count);
 
-  /// No description provided for @mergeGroupsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Merge {count} contacts into {groups}?'**
-  String mergeGroupsTitle(String count, String groups);
-
   /// No description provided for @mergeGroupMessage.
   ///
   /// In en, this message translates to:
   /// **'They become one contact named {name}, with all their numbers and details.'**
   String mergeGroupMessage(String name);
-
-  /// No description provided for @mergeGroupsMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Each group becomes one contact, with all its numbers and details.'**
-  String get mergeGroupsMessage;
 
   /// REVIEW: English "=1" means one group merged, check the Italian reads naturally
   ///
@@ -1221,12 +1209,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No duplicate contacts'**
   String get noDuplicateContacts;
-
-  /// No description provided for @mergeAll.
-  ///
-  /// In en, this message translates to:
-  /// **'Merge all ({count})'**
-  String mergeAll(String count);
 
   /// No description provided for @recentSearches.
   ///
@@ -1618,12 +1600,6 @@ abstract class AppLocalizations {
   /// **'Set Dialer as your caller ID & spam app to block these calls'**
   String get blockingNeedsScreeningRole;
 
-  /// No description provided for @blockNumber.
-  ///
-  /// In en, this message translates to:
-  /// **'Block number'**
-  String get blockNumber;
-
   /// No description provided for @phoneNumber.
   ///
   /// In en, this message translates to:
@@ -1635,12 +1611,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Block & filter'**
   String get blockAndFilter;
-
-  /// No description provided for @searchBlockedNumbers.
-  ///
-  /// In en, this message translates to:
-  /// **'Search blocked numbers'**
-  String get searchBlockedNumbers;
 
   /// No description provided for @blockingPaused.
   ///
@@ -1683,18 +1653,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Blocked numbers'**
   String get blockedNumbers;
-
-  /// No description provided for @addNumber.
-  ///
-  /// In en, this message translates to:
-  /// **'Add number'**
-  String get addNumber;
-
-  /// No description provided for @noMatchingBlocked.
-  ///
-  /// In en, this message translates to:
-  /// **'No matching blocked numbers'**
-  String get noMatchingBlocked;
 
   /// No description provided for @blockedCalls.
   ///
@@ -2683,7 +2641,7 @@ abstract class AppLocalizations {
   /// No description provided for @copyrightNotice.
   ///
   /// In en, this message translates to:
-  /// **'Copyright (C) 2026 Syed Arham Raza\nFree software under the GNU General Public License v3.0'**
+  /// **'Copyright (C) 2026 Syed Arham Raza\nFree software under the GNU General Public License v3.0, with no warranty'**
   String get copyrightNotice;
 
   /// No description provided for @changelog.
@@ -4065,6 +4023,198 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Choose the SIM for calls and what a tap or swipe on a call does.'**
   String get onboardingCallingBody;
+
+  /// No description provided for @mergeDuplicatedNames.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge duplicated names'**
+  String get mergeDuplicatedNames;
+
+  /// No description provided for @mergeDuplicatedNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge duplicated numbers'**
+  String get mergeDuplicatedNumbers;
+
+  /// No description provided for @manuallyMergeDuplicates.
+  ///
+  /// In en, this message translates to:
+  /// **'Manually merge duplicates'**
+  String get manuallyMergeDuplicates;
+
+  /// No description provided for @sameNumberContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Contacts with the same number'**
+  String get sameNumberContacts;
+
+  /// No description provided for @sameNameContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Contacts with the same name'**
+  String get sameNameContacts;
+
+  /// No description provided for @groupCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 group} other{{count} groups}}'**
+  String groupCount(int count);
+
+  /// No description provided for @mergeManually.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge manually'**
+  String get mergeManually;
+
+  /// No description provided for @manualMergingDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual merging details'**
+  String get manualMergingDetails;
+
+  /// No description provided for @nameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Name (required)'**
+  String get nameRequired;
+
+  /// No description provided for @numbersSelectMany.
+  ///
+  /// In en, this message translates to:
+  /// **'Number (can select more than one)'**
+  String get numbersSelectMany;
+
+  /// No description provided for @mergeDeletesNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{The unticked number will be deleted from the contact.} other{The {count} unticked numbers will be deleted from the contact.}}'**
+  String mergeDeletesNumbers(int count);
+
+  /// No description provided for @blockCalls.
+  ///
+  /// In en, this message translates to:
+  /// **'Block calls'**
+  String get blockCalls;
+
+  /// No description provided for @blockMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'Block messages'**
+  String get blockMessages;
+
+  /// No description provided for @blockMessagesUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'One Dialer isn\'t your messaging app, so it can\'t block messages. Call blocking, the blocklist and the allowlist aren\'t affected.'**
+  String get blockMessagesUnavailable;
+
+  /// No description provided for @blocklist.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocklist'**
+  String get blocklist;
+
+  /// No description provided for @blocklistSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls from numbers added to the blocklist will be blocked.'**
+  String get blocklistSubtitle;
+
+  /// No description provided for @allowlist.
+  ///
+  /// In en, this message translates to:
+  /// **'Allowlist'**
+  String get allowlist;
+
+  /// No description provided for @allowlistSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls from numbers added to the allowlist will not be blocked.'**
+  String get allowlistSubtitle;
+
+  /// No description provided for @none.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get none;
+
+  /// No description provided for @noNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'No numbers'**
+  String get noNumbers;
+
+  /// No description provided for @blockByPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Block by prefix'**
+  String get blockByPrefix;
+
+  /// No description provided for @numberPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Number prefix, e.g. 0300'**
+  String get numberPrefix;
+
+  /// No description provided for @startsWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts with {prefix}'**
+  String startsWith(String prefix);
+
+  /// No description provided for @removeFromBlocklist.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Remove 1 number from the blocklist?} other{Remove {count} numbers from the blocklist?}}'**
+  String removeFromBlocklist(int count);
+
+  /// No description provided for @removeFromAllowlist.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Remove 1 number from the allowlist?} other{Remove {count} numbers from the allowlist?}}'**
+  String removeFromAllowlist(int count);
+
+  /// No description provided for @searchContactNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Search within 1 contact number} other{Search within {count} contact numbers}}'**
+  String searchContactNumbers(int count);
+
+  /// No description provided for @unofficialBuildTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unofficial build'**
+  String get unofficialBuildTitle;
+
+  /// No description provided for @unofficialBuildCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'Based on One Dialer by Syed Arham Raza, github.com/syedarhamraza/one-dialer'**
+  String get unofficialBuildCredit;
+
+  /// No description provided for @unofficialBuildNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Unofficial build. Based on One Dialer by Syed Arham Raza, github.com/syedarhamraza/one-dialer'**
+  String get unofficialBuildNotice;
+
+  /// No description provided for @mergeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge all ({count})'**
+  String mergeAll(String count);
+
+  /// No description provided for @mergeGroupsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge {count} contacts into {groups}?'**
+  String mergeGroupsTitle(String count, String groups);
+
+  /// No description provided for @mergeGroupsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Each group becomes one contact, with all its numbers and details.'**
+  String get mergeGroupsMessage;
 }
 
 class _AppLocalizationsDelegate
