@@ -429,6 +429,7 @@
   "device": "Gerät",
   "androidVersion": "Android-Version",
   "openSourceLicences": "Open-Source-Lizenzen",
+  "copyrightNotice": "Copyright (C) 2026 Syed Arham Raza\nFreie Software unter der GNU General Public License v3.0",
   "changelog": "Änderungsprotokoll",
   "installedOn": "Installiert am {date}",
   "earlierVersions": "Frühere Versionen",

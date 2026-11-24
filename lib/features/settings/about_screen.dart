@@ -16,6 +16,7 @@ import '../updates/data/update_service.dart';
 import '../updates/presentation/update_controller.dart';
 import 'software_update_screen.dart';
 import '../../l10n/l10n.dart';
+import '../../theme/one_ui_theme.dart';
 
 /// Settings › About One Dialer (also Software update › Software information): the artwork card
 /// with the version and a button to Software update, then the details (where it came from too).
@@ -143,10 +144,22 @@ class _AboutScreenState extends State<AboutScreen> {
           items: [
             OneUIGroupItem(
               title: context.l10n.openSourceLicences,
-              onTap: () =>
-                  showLicensePage(context: context, applicationName: AppInfo.name, applicationVersion: v?.label),
+              onTap: () => showLicensePage(
+                context: context,
+                applicationName: AppInfo.name,
+                applicationVersion: v?.label,
+                applicationLegalese: context.l10n.copyrightNotice,
+              ),
             ),
           ],
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+          child: Text(
+            context.l10n.copyrightNotice,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
+          ),
         ),
       ],
     );

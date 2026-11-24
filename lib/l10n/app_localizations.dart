@@ -2680,6 +2680,12 @@ abstract class AppLocalizations {
   /// **'Open source licences'**
   String get openSourceLicences;
 
+  /// No description provided for @copyrightNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Copyright (C) 2026 Syed Arham Raza\nFree software under the GNU General Public License v3.0'**
+  String get copyrightNotice;
+
   /// No description provided for @changelog.
   ///
   /// In en, this message translates to:

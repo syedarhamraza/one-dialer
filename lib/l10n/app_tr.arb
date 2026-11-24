@@ -429,6 +429,7 @@
   "device": "Cihaz",
   "androidVersion": "Android sürümü",
   "openSourceLicences": "Açık kaynak lisansları",
+  "copyrightNotice": "Copyright (C) 2026 Syed Arham Raza\nGNU General Public License v3.0 kapsamında özgür yazılım",
   "changelog": "Değişiklik günlüğü",
   "installedOn": "Yüklenme: {date}",
   "earlierVersions": "Önceki sürümler",
