@@ -376,7 +376,7 @@ export const de: Dict = {
     pros: [
       "Beide Seiten des Anrufs in voller Lautstärke, ab Android 12: du und die andere Person, über Hörmuschel, Lautsprecher, Bluetooth oder Kopfhörer. Kein Root, kein Computer, keine eigene Shizuku-App.",
       "Nach einem Neustart startet sie von selbst wieder, sobald du im WLAN bist.",
-      "Keine Mikrofonberechtigung und kein Bedienungshilfen-Dienst. One Recorder nimmt den Anruf selbst auf, nur während eines Anrufs, den du aufnimmst.",
+      "Keine Mikrofonberechtigung. One Recorder nimmt den Anruf selbst auf, nur während eines Anrufs, den du aufnimmst. Sein einziger Bedienungshilfen-Dienst ist optional: Er liest nur den Kopplungscode und schaltet sich dann aus.",
       "Aufnahmen bleiben auf deinem Telefon. Nichts wird hochgeladen, es gibt kein Konto und keine Werbung.",
       "Nimm auf, wann du willst, oder automatisch: jeden Anruf, unbekannte Nummern oder nur Kontakte, die du auswählst.",
       "Deine Aufnahmen leben in One Dialer, mit Kontaktnamen, Suche, Sternen, Teilen und automatischem Löschen.",
@@ -517,7 +517,7 @@ export const de: Dict = {
             p: "Frühere Versionen konnten auch mit dem Mikrofon aufnehmen, über einen Bedienungshilfen-Dienst. Seit Android 10 bekommt eine App, die während eines Anrufs das Mikrofon nutzt, nur Stille, und Android macht nur für manche Bedienungshilfen-Apps eine Ausnahme, in engen Fällen. Hersteller schließen selbst diese: Auf dem getesteten Telefon, einem vivo mit Android 17, waren so gemachte Aufnahmen stumm, weil Android das Mikrofon für den ganzen Anruf stummschaltete.",
           },
           {
-            p: "Ein Weg, der still gar nichts aufnimmt, ist schlimmer als keiner, also ist er weg, zusammen mit der Mikrofonberechtigung, dem Bedienungshilfen-Dienst und den Einstellungen Lautstärke anheben und Mikrofonquelle, die nur er nutzte. Beide Seiten über Drahtloses Debugging aufzunehmen ist jetzt der einzige Weg, und er nimmt beide Stimmen in voller Lautstärke auf.",
+            p: "Ein Weg, der still gar nichts aufnimmt, ist schlimmer als keiner, also ist er weg, zusammen mit der Mikrofonberechtigung, diesem Bedienungshilfen-Dienst und den Einstellungen Lautstärke anheben und Mikrofonquelle, die nur er nutzte. Beide Seiten über Drahtloses Debugging aufzunehmen ist jetzt der einzige Weg, und er nimmt beide Stimmen in voller Lautstärke auf.",
           },
         ],
       },
@@ -530,7 +530,7 @@ export const de: Dict = {
             p: "One Recorder nimmt nur auf, während ein Anruf läuft, den du aufnehmen willst. Der Ton wird nur in One Recorder auf deinem Telefon gespeichert. Er wird nie hochgeladen, es gibt kein Konto, und nichts über dich oder deine Anrufe verlässt das Telefon, außer du teilst selbst eine Aufnahme. Aufnahmen werden gelöscht, wenn du sie löschst oder One Recorder deinstallierst.",
           },
           {
-            p: "Die Kopplung mit Drahtlosem Debugging ist ein Schlüssel im privaten Speicher von One Recorder auf deinem Telefon; er kann nicht gesichert oder von anderen Apps gelesen werden. Der Dienst nimmt nur Anrufe für One Recorder auf und kann nichts anderes ausführen. One Recorder hat keine Mikrofonberechtigung und keinen Bedienungshilfen-Dienst. Aufnahmegesetze unterscheiden sich je nach Land, und du bist dafür verantwortlich, die Zustimmung der anderen Person einzuholen, wo sie nötig ist.",
+            p: "Die Kopplung mit Drahtlosem Debugging ist ein Schlüssel im privaten Speicher von One Recorder auf deinem Telefon; er kann nicht gesichert oder von anderen Apps gelesen werden. Der Dienst nimmt nur Anrufe für One Recorder auf und kann nichts anderes ausführen, außer die Entwickleroptionen und das Debugging aus- und einzuschalten. One Recorder hat keine Mikrofonberechtigung. Sein optionaler Bedienungshilfen-Dienst zum Koppeln liest nur die Einstellungen-App, tippt nie etwas an und schaltet sich nach dem Koppeln oder nach fünf Minuten aus. Geräte in der Nähe oder Standort wird nur abgefragt, wenn du Ohne WLAN starten einschaltest, um den lokalen Hotspot zu öffnen. Aufnahmegesetze unterscheiden sich je nach Land, und du bist dafür verantwortlich, die Zustimmung der anderen Person einzuholen, wo sie nötig ist.",
           },
           {
             p: "**Rechtlicher Hinweis.** One Recorder wird ohne Mängelgewähr und ohne jede Garantie bereitgestellt. Sie kann beide Seiten eines Anrufs aufnehmen, und die Gesetze zur Anrufaufzeichnung unterscheiden sich je nach Land und Region: An manchen Orten müssen alle Beteiligten zustimmen, an manchen ist Aufnehmen gar nicht erlaubt. Du allein bist dafür verantwortlich, die Gesetze dort zu kennen und einzuhalten, wo du und die andere Person sich befinden, sie zu informieren und ihre Zustimmung einzuholen, wo das nötig ist, und dafür, wie du deine Aufnahmen verwendest. Syed Arham Raza, der One Recorder und One Dialer entwickelt, ist nicht dafür verantwortlich, wie du sie nutzt, oder für Aufnahmen, die du damit machst.",

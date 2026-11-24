@@ -376,7 +376,7 @@ export const es: Dict = {
     pros: [
       "Las dos partes de la llamada a volumen completo, en Android 12 o posterior: tú y la otra persona, con el auricular, el altavoz, Bluetooth o auriculares. Sin root, sin ordenador, sin una app Shizuku aparte.",
       "Tras un reinicio vuelve a arrancar sola en cuanto estás en una Wi-Fi.",
-      "Sin permiso de micrófono y sin servicio de accesibilidad. One Recorder graba la propia llamada, solo durante las llamadas que grabas.",
+      "Sin permiso de micrófono. One Recorder graba la propia llamada, solo durante las llamadas que grabas. Su único servicio de accesibilidad es opcional: solo lee el código de vinculación y luego se desactiva.",
       "Las grabaciones se quedan en tu teléfono. No se sube nada, no hay cuenta ni anuncios.",
       "Graba cuando quieras o automáticamente: todas las llamadas, los números desconocidos o solo los contactos que elijas.",
       "Tus grabaciones viven en One Dialer, con nombres de contacto, búsqueda, estrellas, compartir y eliminación automática.",
@@ -517,7 +517,7 @@ export const es: Dict = {
             p: "Las versiones anteriores también podían grabar con el micrófono, mediante un servicio de accesibilidad. Desde Android 10, una app que usa el micrófono durante una llamada solo recibe silencio, y Android solo hace una excepción con algunas apps de accesibilidad, en casos concretos. Los fabricantes cierran incluso esos: en el teléfono que probamos, un vivo con Android 17, las grabaciones hechas así salían mudas, con Android silenciando el micrófono durante toda la llamada.",
           },
           {
-            p: "Un método que en silencio no graba nada es peor que ninguno, así que se ha eliminado, junto con el permiso de micrófono, el servicio de accesibilidad y los ajustes Aumento de volumen y Fuente del micrófono que solo usaba él. Grabar las dos partes por Depuración inalámbrica es ahora la única forma, y graba las dos voces a volumen completo.",
+            p: "Un método que en silencio no graba nada es peor que ninguno, así que se ha eliminado, junto con el permiso de micrófono, ese servicio de accesibilidad y los ajustes Aumento de volumen y Fuente del micrófono que solo usaba él. Grabar las dos partes por Depuración inalámbrica es ahora la única forma, y graba las dos voces a volumen completo.",
           },
         ],
       },
@@ -530,7 +530,7 @@ export const es: Dict = {
             p: "One Recorder solo graba mientras hay una llamada que has elegido grabar. El audio se guarda únicamente dentro de One Recorder en tu teléfono. Nunca se sube, no hay cuenta, y nada sobre ti o tus llamadas sale del teléfono salvo que compartas tú una grabación. Las grabaciones se borran cuando las eliminas o desinstalas One Recorder.",
           },
           {
-            p: "Su vinculación con la Depuración inalámbrica es una llave guardada en el almacenamiento privado de One Recorder en tu teléfono; no se puede incluir en copias de seguridad ni la pueden leer otras apps. El servicio solo graba llamadas para One Recorder y no puede ejecutar nada más. One Recorder no tiene permiso de micrófono ni servicio de accesibilidad. Las leyes sobre grabación varían según el país, y eres responsable de obtener el consentimiento de la otra persona cuando se exija.",
+            p: "Su vinculación con la Depuración inalámbrica es una llave guardada en el almacenamiento privado de One Recorder en tu teléfono; no se puede incluir en copias de seguridad ni la pueden leer otras apps. El servicio solo graba llamadas para One Recorder y no puede ejecutar nada más, aparte de desactivar y activar las Opciones para desarrolladores y la depuración. One Recorder no tiene permiso de micrófono. Su servicio de accesibilidad opcional para la vinculación solo lee la app Ajustes, nunca toca nada y se desactiva al vincularse o tras cinco minutos. Dispositivos cercanos o Ubicación solo se piden si activas Iniciar sin Wi-Fi, para abrir el punto de acceso local. Las leyes sobre grabación varían según el país, y eres responsable de obtener el consentimiento de la otra persona cuando se exija.",
           },
           {
             p: "**Aviso legal.** One Recorder se ofrece tal cual, sin ninguna garantía. Puede grabar las dos partes de una llamada, y las leyes sobre grabación de llamadas varían según el país y la región: en algunos lugares todos los participantes deben estar de acuerdo, y en otros no se permite grabar en absoluto. Solo tú eres responsable de conocer y cumplir las leyes del lugar donde estáis tú y la otra persona, de avisarla y obtener su consentimiento cuando se exija, y del uso que hagas de tus grabaciones. Syed Arham Raza, que crea One Recorder y One Dialer, no es responsable de cómo la uses ni de ninguna grabación que hagas con ella.",

@@ -400,7 +400,7 @@ export const en = {
       "After a reboot it starts again by itself once you're on Wi-Fi, and it checks every few hours that it's still running.",
       "It turns Developer options off again by itself once it has started, so most banking apps open.",
       "Check now tests that recording really works, and the last call's result shows whether it was recorded.",
-      "No microphone permission and no accessibility service. One Recorder records the call itself, only during a call you record.",
+      "No microphone permission. One Recorder records the call itself, only during a call you record. Its one accessibility service is optional: it only reads the pairing code, then turns itself off.",
       "Recordings stay on your phone. Nothing is uploaded, there's no account and no ads.",
       "Record when you choose, or automatically: every call, unknown numbers, or only the contacts you pick.",
       "Your recordings live in One Dialer, with contact names, search, stars, sharing and auto-delete.",
@@ -544,7 +544,7 @@ export const en = {
             p: "Earlier versions could also record with the microphone, using an accessibility service. Since Android 10, an app using the microphone during a call gets silence, and Android makes an exception only for some accessibility apps, in narrow cases. Phone makers close even those: on the phone we tested, a vivo on Android 17, recordings made that way were silent, with Android muting the microphone for the whole call.",
           },
           {
-            p: "A method that silently records nothing is worse than none, so it's gone, along with the microphone permission, the accessibility service, and the Volume boost and Microphone source settings that only it used. Recording both sides through Wireless debugging is the only way now, and it records both voices at full volume.",
+            p: "A method that silently records nothing is worse than none, so it's gone, along with the microphone permission, that accessibility service, and the Volume boost and Microphone source settings that only it used. Recording both sides through Wireless debugging is the only way now, and it records both voices at full volume.",
           },
         ],
       },
@@ -556,7 +556,7 @@ export const en = {
             p: "One Recorder records only while a call you chose to record is going on. The audio is saved only inside One Recorder on your phone. It's never uploaded, there's no account, and nothing about you or your calls leaves the phone unless you share a recording yourself. Recordings are deleted when you delete them or uninstall One Recorder.",
           },
           {
-            p: "Its pairing with Wireless debugging is a key kept in One Recorder's private storage on your phone; it can't be backed up or read by other apps. The helper only records calls for One Recorder and can't run anything else. One Recorder has no microphone permission and no accessibility service. Recording laws differ by country, and you're responsible for getting the other person's consent where it's required.",
+            p: "Its pairing with Wireless debugging is a key kept in One Recorder's private storage on your phone; it can't be backed up or read by other apps. The helper only records calls for One Recorder and can't run anything else, apart from turning Developer options and debugging off and on. One Recorder has no microphone permission. Its optional pairing accessibility service reads only the Settings app, never taps anything, and turns itself off once paired or after five minutes. Nearby devices or Location is asked for only if you turn on Start without Wi-Fi, to open the local hotspot. Recording laws differ by country, and you're responsible for getting the other person's consent where it's required.",
           },
           {
             p: "**Legal notice.** One Recorder is provided as is, without any warranty. It can record both sides of a call, and call recording laws differ by country and region: some places need everyone on the call to agree, and some don't allow recording at all. You alone are responsible for knowing and following the laws where you and the other person are, for telling them and getting their consent where it's required, and for how you use your recordings. Syed Arham Raza, who makes One Recorder and One Dialer, isn't responsible for how you use it or for any recording you make with it.",

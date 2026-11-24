@@ -376,7 +376,7 @@ export const tr: Dict = {
     pros: [
       "Aramanın iki tarafı da tam ses seviyesinde, Android 12 ve üstünde: siz ve karşı taraf; ahize, hoparlör, Bluetooth veya kulaklıkla. Root yok, bilgisayar yok, ayrı bir Shizuku uygulaması yok.",
       "Yeniden başlatmadan sonra Wi-Fi'a bağlanır bağlanmaz kendiliğinden yeniden başlar.",
-      "Mikrofon izni ve erişilebilirlik hizmeti yok. One Recorder aramanın kendisini, yalnızca kaydettiğiniz bir arama sırasında kaydeder.",
+      "Mikrofon izni yok. One Recorder aramanın kendisini, yalnızca kaydettiğiniz bir arama sırasında kaydeder. Tek erişilebilirlik hizmeti isteğe bağlıdır: yalnızca eşleme kodunu okur, sonra kendini kapatır.",
       "Kayıtlar telefonunuzda kalır. Hiçbir şey yüklenmez; hesap ve reklam yoktur.",
       "İstediğiniz zaman ya da otomatik kaydedin: her arama, bilinmeyen numaralar veya yalnızca seçtiğiniz kişiler.",
       "Kayıtlarınız One Dialer'da; kişi adları, arama, yıldızlar, paylaşma ve otomatik silme ile.",
@@ -517,7 +517,7 @@ export const tr: Dict = {
             p: "Önceki sürümler bir erişilebilirlik hizmetiyle mikrofondan da kaydedebiliyordu. Android 10'dan beri arama sırasında mikrofonu kullanan bir uygulama yalnızca sessizlik alır; Android yalnızca bazı erişilebilirlik uygulamaları için, dar durumlarda istisna yapar. Üreticiler bunları bile kapatır: test ettiğimiz telefonda, Android 17'li bir vivo'da, bu yolla yapılan kayıtlar sessizdi; Android tüm arama boyunca mikrofonu susturuyordu.",
           },
           {
-            p: "Sessizce hiçbir şey kaydetmeyen bir yöntem hiç olmamasından kötüdür, bu yüzden kaldırıldı; onunla birlikte mikrofon izni, erişilebilirlik hizmeti ve yalnızca onun kullandığı Ses yükseltme ve Mikrofon kaynağı ayarları da gitti. Artık tek yol iki tarafı Kablosuz hata ayıklama üzerinden kaydetmek ve iki sesi de tam ses seviyesinde kaydediyor.",
+            p: "Sessizce hiçbir şey kaydetmeyen bir yöntem hiç olmamasından kötüdür, bu yüzden kaldırıldı; onunla birlikte mikrofon izni, o erişilebilirlik hizmeti ve yalnızca onun kullandığı Ses yükseltme ve Mikrofon kaynağı ayarları da gitti. Artık tek yol iki tarafı Kablosuz hata ayıklama üzerinden kaydetmek ve iki sesi de tam ses seviyesinde kaydediyor.",
           },
         ],
       },
@@ -530,7 +530,7 @@ export const tr: Dict = {
             p: "One Recorder yalnızca kaydetmeyi seçtiğiniz bir arama sürerken kayıt yapar. Ses yalnızca telefonunuzdaki One Recorder'ın içine kaydedilir. Asla yüklenmez, hesap yoktur ve siz bir kaydı paylaşmadıkça sizinle ya da aramalarınızla ilgili hiçbir şey telefondan çıkmaz. Kayıtlar, onları sildiğinizde veya One Recorder'ı kaldırdığınızda silinir.",
           },
           {
-            p: "Kablosuz hata ayıklama ile eşlemesi, telefonunuzda One Recorder'ın özel depolamasında tutulan bir anahtardır; yedeklenemez ve başka uygulamalar tarafından okunamaz. Hizmet yalnızca One Recorder için arama kaydeder ve başka bir şey çalıştıramaz. One Recorder'ın mikrofon izni ve erişilebilirlik hizmeti yoktur. Kayıt yasaları ülkeye göre değişir ve gereken yerlerde karşı tarafın onayını almak sizin sorumluluğunuzdadır.",
+            p: "Kablosuz hata ayıklama ile eşlemesi, telefonunuzda One Recorder'ın özel depolamasında tutulan bir anahtardır; yedeklenemez ve başka uygulamalar tarafından okunamaz. Hizmet yalnızca One Recorder için arama kaydeder ve Geliştirici seçeneklerini ve hata ayıklamayı kapatıp açmak dışında başka bir şey çalıştıramaz. One Recorder'ın mikrofon izni yoktur. Eşleme için isteğe bağlı erişilebilirlik hizmeti yalnızca Ayarlar uygulamasını okur, hiçbir şeye dokunmaz ve eşlendikten sonra ya da beş dakika sonra kendini kapatır. Yakındaki cihazlar ya da Konum izni yalnızca Wi-Fi olmadan başlat'ı açarsanız, yerel erişim noktasını açmak için istenir. Kayıt yasaları ülkeye göre değişir ve gereken yerlerde karşı tarafın onayını almak sizin sorumluluğunuzdadır.",
           },
           {
             p: "**Yasal uyarı.** One Recorder olduğu gibi, hiçbir garanti olmadan sunulur. Bir aramanın iki tarafını da kaydedebilir ve arama kaydı yasaları ülkeye ve bölgeye göre değişir: bazı yerlerde aramadaki herkesin onay vermesi gerekir, bazı yerlerde kayda hiç izin verilmez. Sizin ve karşı tarafın bulunduğu yerin yasalarını bilmek ve bunlara uymak, gereken yerlerde karşı tarafı bilgilendirip onayını almak ve kayıtlarınızı nasıl kullandığınız yalnızca sizin sorumluluğunuzdadır. One Recorder ve One Dialer'ı geliştiren Syed Arham Raza, onu nasıl kullandığınızdan ya da onunla yaptığınız herhangi bir kayıttan sorumlu değildir.",

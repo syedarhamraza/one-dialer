@@ -376,7 +376,7 @@ export const it: Dict = {
     pros: [
       "Entrambe le voci a pieno volume, da Android 12 in poi: tu e l'altra persona, con l'auricolare, il vivavoce, il Bluetooth o le cuffie. Niente root, niente computer, niente app Shizuku a parte.",
       "Dopo un riavvio ripartisce da sola appena sei sul Wi-Fi.",
-      "Nessun permesso del microfono e nessun servizio di accessibilità. One Recorder registra la chiamata stessa, solo durante le chiamate che registri.",
+      "Nessun permesso del microfono. One Recorder registra la chiamata stessa, solo durante le chiamate che registri. Il suo unico servizio di accessibilità è facoltativo: legge solo il codice di associazione, poi si disattiva.",
       "Le registrazioni restano sul telefono. Non viene caricato nulla, non c'è un account e non ci sono pubblicità.",
       "Registra quando vuoi tu o in automatico: ogni chiamata, i numeri sconosciuti o solo i contatti che scegli.",
       "Le registrazioni vivono in One Dialer, con nomi dei contatti, ricerca, stelle, condivisione ed eliminazione automatica.",
@@ -517,7 +517,7 @@ export const it: Dict = {
             p: "Le versioni precedenti potevano registrare anche con il microfono, tramite un servizio di accessibilità. Da Android 10, un'app che usa il microfono durante una chiamata riceve silenzio, e Android fa un'eccezione solo per alcune app di accessibilità, in casi limitati. I produttori chiudono anche quelli: sul telefono che abbiamo provato, un vivo con Android 17, le registrazioni fatte così erano mute, con Android che silenziava il microfono per tutta la chiamata.",
           },
           {
-            p: "Un metodo che in silenzio non registra nulla è peggio di nessuno, quindi è stato tolto, insieme al permesso del microfono, al servizio di accessibilità e alle impostazioni Aumento volume e Sorgente microfono che usava solo lui. Registrare entrambe le voci tramite il Debug wireless è ora l'unico modo, e registra entrambe le voci a pieno volume.",
+            p: "Un metodo che in silenzio non registra nulla è peggio di nessuno, quindi è stato tolto, insieme al permesso del microfono, a quel servizio di accessibilità e alle impostazioni Aumento volume e Sorgente microfono che usava solo lui. Registrare entrambe le voci tramite il Debug wireless è ora l'unico modo, e registra entrambe le voci a pieno volume.",
           },
         ],
       },
@@ -530,7 +530,7 @@ export const it: Dict = {
             p: "One Recorder registra solo mentre è in corso una chiamata che hai scelto di registrare. L'audio viene salvato solo dentro One Recorder sul telefono. Non viene mai caricato, non c'è un account e nulla su di te o sulle tue chiamate lascia il telefono, a meno che tu non condivida una registrazione. Le registrazioni vengono cancellate quando le elimini o disinstalli One Recorder.",
           },
           {
-            p: "L'associazione con il Debug wireless è una chiave conservata nella memoria privata di One Recorder sul telefono; non può essere inclusa nei backup né letta da altre app. Il servizio registra solo chiamate per One Recorder e non può eseguire altro. One Recorder non ha il permesso del microfono né un servizio di accessibilità. Le leggi sulla registrazione cambiano da paese a paese, e sei responsabile di ottenere il consenso dell'altra persona dove è richiesto.",
+            p: "L'associazione con il Debug wireless è una chiave conservata nella memoria privata di One Recorder sul telefono; non può essere inclusa nei backup né letta da altre app. Il servizio registra solo chiamate per One Recorder e non può eseguire altro, a parte disattivare e riattivare le Opzioni sviluppatore e il debug. One Recorder non ha il permesso del microfono. Il suo servizio di accessibilità facoltativo per l'associazione legge solo l'app Impostazioni, non tocca mai nulla e si disattiva una volta associato o dopo cinque minuti. Dispositivi nelle vicinanze o Posizione viene chiesto solo se attivi Avvia senza Wi-Fi, per aprire l'hotspot locale. Le leggi sulla registrazione cambiano da paese a paese, e sei responsabile di ottenere il consenso dell'altra persona dove è richiesto.",
           },
           {
             p: "**Note legali.** One Recorder è fornito così com'è, senza alcuna garanzia. Può registrare entrambe le voci di una chiamata, e le leggi sulla registrazione delle chiamate cambiano da paese a paese e da regione a regione: in alcuni posti tutti i partecipanti devono essere d'accordo, in altri registrare non è consentito affatto. Sei l'unico responsabile di conoscere e rispettare le leggi del luogo in cui ti trovi tu e quello dell'altra persona, di informarla e di ottenere il suo consenso dove è richiesto, e di come usi le tue registrazioni. Syed Arham Raza, che realizza One Recorder e One Dialer, non è responsabile di come la usi né delle registrazioni che fai con essa.",
