@@ -37,7 +37,7 @@
     <string name="setup_dev_options">Geliştirici seçenekleri</string>
     <string name="setup_dev_options_detail">Ayarlar › Telefon hakkında: Derleme numarasına 7 kez dokunun</string>
     <string name="setup_pair">Kablosuz hata ayıklama ile eşle</string>
-    <string name="setup_pair_detail">Kablosuz hata ayıklamayı açın, Eşleme koduyla cihaz eşle\'ye dokunun, ardından kodu One Recorder\'ın bildirimine yazın</string>
+    <string name="setup_pair_detail">Kablosuz hata ayıklamayı açın, Eşleme koduyla cihaz eşle\'ye dokunun, ardından kodu One Recorder\'ın bildirimine yazın. Android bu ağa izin vermek isteyip istemediğinizi sorduğunda Bu ağda her zaman izin ver\'i işaretleyin</string>
     <string name="setup_paired">Eşlendi</string>
     <string name="setup_helper">Kayıt hizmetini başlat</string>
     <string name="setup_helper_detail">Çalışmıyor. Başlaması için Wi-Fi ve Kablosuz hata ayıklama gerekir</string>
@@ -80,14 +80,14 @@
     <string name="auto_pair_service_description">Kablosuz hata ayıklamanın eşleme penceresindeki 6 haneli kodu okur, böylece yazmanız gerekmez. Yalnızca Ayarlar\'ı okur, hiçbir şeye dokunmaz ve eşlendikten veya 5 dakika sonra kendini kapatır.</string>
     <string name="setup_helper_no_wifi">Başlamadı: Wi-Fi\'a bağlanın, sonra buraya dokunun</string>
     <string name="setup_helper_debugging_off">Başlamadı: Kablosuz hata ayıklama kapalı. Geliştirici seçeneklerinden açın (gizliyse Yapım numarası\'na 7 kez dokunun), sonra geri gelip Düzelt\'e dokunun</string>
-    <string name="setup_helper_connect_failed">Başlamadı: Kablosuz hata ayıklama One Recorder\'ı kabul etmedi. Yeniden denemek için buraya ya da aşağıdaki Yeniden eşle\'ye dokunun</string>
+    <string name="setup_helper_connect_failed">Başlamadı: Kablosuz hata ayıklama One Recorder\'ı kabul etmedi. Yeniden denemek için buraya ya da aşağıdaki Yeniden eşle\'ye dokunun. Android bu ağa izin vermenizi istediyse Bu ağda her zaman izin ver\'i işaretleyin</string>
     <string name="pair_again">Yeniden eşle</string>
     <string name="pair_again_detail">Kayıt hizmeti artık başlamıyorsa. Kayıtlarınız ve ayarlarınız kalır</string>
     <string name="off_wifi">Wi-Fi olmadan kaydetmeye devam et</string>
     <string name="off_wifi_detail">USB hata ayıklamayı açık tutar, böylece Wi-Fi gidince kayıt hizmeti çalışmaya devam eder. Açıkken bazı bankacılık uygulamaları açılmaz</string>
     <string name="off_wifi_needs_restart">Yeniden başlatmadan sonra başlat gerekir; böylece One Recorder USB hata ayıklamayı açık tutabilir</string>
     <string name="stopped_title">İki taraflı kayıt durdu</string>
-    <string name="stopped_detail">Wi-Fi geri geldi ama kayıt hizmeti kendiliğinden başlayamadı. Yeniden başlatmak için dokunun</string>
+    <string name="stopped_detail">Wi-Fi geri geldi ama kayıt hizmeti kendiliğinden başlayamadı. Yeniden başlatmak için dokunun. Kablosuz hata ayıklama bu ağa izin verilmesini ister: Bu ağda her zaman izin ver</string>
     <string name="version">One Recorder %1$s</string>
     <string name="section_about">Hakkında</string>
     <string name="update_title">Yazılım güncellemesi</string>

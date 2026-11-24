@@ -37,7 +37,7 @@
     <string name="setup_dev_options">Opzioni sviluppatore</string>
     <string name="setup_dev_options_detail">Impostazioni › Info sul telefono: tocca 7 volte Numero build</string>
     <string name="setup_pair">Associa con il Debug wireless</string>
-    <string name="setup_pair_detail">Attiva il Debug wireless, tocca Associa dispositivo con codice di accoppiamento, poi scrivi il codice nella notifica di One Recorder</string>
+    <string name="setup_pair_detail">Attiva il Debug wireless, tocca Associa dispositivo con codice di accoppiamento, poi scrivi il codice nella notifica di One Recorder. Quando Android chiede di consentire questa rete, spunta Consenti sempre su questa rete</string>
     <string name="setup_paired">Associato</string>
     <string name="setup_helper">Avvia il servizio di registrazione</string>
     <string name="setup_helper_detail">Non attivo. Per avviarlo servono il Wi-Fi e il Debug wireless</string>
@@ -80,14 +80,14 @@
     <string name="auto_pair_service_description">Legge il codice a 6 cifre nella finestra di associazione del debug wireless, così non devi digitarlo. Legge solo Impostazioni, non tocca mai nulla e si disattiva dopo l\'associazione o dopo 5 minuti.</string>
     <string name="setup_helper_no_wifi">Non avviato: connettiti al Wi-Fi, poi tocca qui</string>
     <string name="setup_helper_debugging_off">Non avviato: il Debug wireless è disattivato. Attivalo in Opzioni sviluppatore (tocca 7 volte Numero build se sono nascoste), poi torna qui e tocca Risolvi</string>
-    <string name="setup_helper_connect_failed">Non avviato: il Debug wireless non ha accettato One Recorder. Tocca qui per riprovare, oppure Associa di nuovo qui sotto</string>
+    <string name="setup_helper_connect_failed">Non avviato: il Debug wireless non ha accettato One Recorder. Tocca qui per riprovare, oppure Associa di nuovo qui sotto. Se Android ha chiesto di consentire questa rete, spunta Consenti sempre su questa rete</string>
     <string name="pair_again">Associa di nuovo</string>
     <string name="pair_again_detail">Se il servizio di registrazione non si avvia più. Registrazioni e impostazioni restano</string>
     <string name="off_wifi">Continua a registrare senza Wi-Fi</string>
     <string name="off_wifi_detail">Lascia attivo il debug USB, così il servizio di registrazione resta attivo quando il Wi-Fi si disconnette. Alcune app bancarie non si aprono finché è attivo</string>
     <string name="off_wifi_needs_restart">Richiede Avvio dopo il riavvio, così One Recorder può lasciare attivo il debug USB</string>
     <string name="stopped_title">Registrazione di entrambe le parti interrotta</string>
-    <string name="stopped_detail">Il Wi-Fi è tornato, ma il servizio di registrazione non è riuscito ad avviarsi da solo. Tocca per riavviarlo</string>
+    <string name="stopped_detail">Il Wi-Fi è tornato, ma il servizio di registrazione non è riuscito ad avviarsi da solo. Tocca per riavviarlo. Il Debug wireless richiede questa rete consentita: Consenti sempre su questa rete</string>
     <string name="version">One Recorder %1$s</string>
     <string name="section_about">Informazioni</string>
     <string name="update_title">Aggiornamento software</string>

@@ -37,7 +37,7 @@
     <string name="setup_dev_options">Entwickleroptionen</string>
     <string name="setup_dev_options_detail">Einstellungen › Über das Telefon: 7-mal auf Build-Nummer tippen</string>
     <string name="setup_pair">Mit Drahtlosem Debugging koppeln</string>
-    <string name="setup_pair_detail">Schalte Drahtloses Debugging ein, tippe auf Gerät über einen Kopplungscode koppeln und gib den Code dann in der Benachrichtigung von One Recorder ein</string>
+    <string name="setup_pair_detail">Schalte Drahtloses Debugging ein, tippe auf Gerät über einen Kopplungscode koppeln und gib den Code dann in der Benachrichtigung von One Recorder ein. Wenn Android fragt, ob dieses Netzwerk erlaubt ist, hake In diesem Netzwerk immer zulassen an</string>
     <string name="setup_paired">Gekoppelt</string>
     <string name="setup_helper">Aufnahmedienst starten</string>
     <string name="setup_helper_detail">Läuft nicht. Braucht WLAN und Drahtloses Debugging zum Starten</string>
@@ -80,14 +80,14 @@
     <string name="auto_pair_service_description">Liest den 6-stelligen Code im Kopplungsdialog von Drahtloses Debugging, damit du ihn nicht eintippen musst. Liest nur die Einstellungen, tippt nie etwas an und schaltet sich nach dem Koppeln oder nach 5 Minuten aus.</string>
     <string name="setup_helper_no_wifi">Nicht gestartet: Verbinde dich mit dem WLAN und tippe dann hier</string>
     <string name="setup_helper_debugging_off">Nicht gestartet: Drahtloses Debugging ist aus. Schalte es in den Entwickleroptionen ein (tippe 7-mal auf Build-Nummer, falls sie ausgeblendet sind), komm zurück und tippe auf Beheben</string>
-    <string name="setup_helper_connect_failed">Nicht gestartet: Drahtloses Debugging hat One Recorder nicht angenommen. Tippe hier für einen neuen Versuch oder unten auf Erneut koppeln</string>
+    <string name="setup_helper_connect_failed">Nicht gestartet: Drahtloses Debugging hat One Recorder nicht angenommen. Tippe hier für einen neuen Versuch oder unten auf Erneut koppeln. Falls Android gefragt hat, ob dieses Netzwerk erlaubt ist, hake In diesem Netzwerk immer zulassen an</string>
     <string name="pair_again">Erneut koppeln</string>
     <string name="pair_again_detail">Falls der Aufnahmedienst nicht mehr startet. Deine Aufnahmen und Einstellungen bleiben</string>
     <string name="off_wifi">Ohne WLAN weiter aufnehmen</string>
     <string name="off_wifi_detail">Lässt USB-Debugging an, damit der Aufnahmedienst weiterläuft, wenn das WLAN weg ist. Manche Banking-Apps öffnen sich nicht, solange es an ist</string>
     <string name="off_wifi_needs_restart">Braucht Nach Neustart starten, damit One Recorder USB-Debugging anlassen kann</string>
     <string name="stopped_title">Aufnahme beider Seiten gestoppt</string>
-    <string name="stopped_detail">Das WLAN ist zurück, aber der Aufnahmedienst konnte nicht von selbst starten. Tippe, um ihn neu zu starten</string>
+    <string name="stopped_detail">Das WLAN ist zurück, aber der Aufnahmedienst konnte nicht von selbst starten. Tippe, um ihn neu zu starten. Drahtloses Debugging braucht dieses Netzwerk erlaubt: In diesem Netzwerk immer zulassen</string>
     <string name="version">One Recorder %1$s</string>
     <string name="section_about">Über</string>
     <string name="update_title">Softwareupdate</string>
