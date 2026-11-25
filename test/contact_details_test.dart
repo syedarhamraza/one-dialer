@@ -61,7 +61,7 @@ void main() {
     expect(find.text('Call logs'), findsNothing); // no calls yet
   });
 
-  testWidgets('Video is greyed out without Meet and opens Meet when the contact has it', (tester) async {
+  testWidgets('Video is greyed out without a video app and opens the only one straight away', (tester) async {
     await pump(tester);
     final video = find.widgetWithText(DetailsActionTile, 'Video');
     expect(tester.widget<DetailsActionTile>(video).onTap, isNull);
@@ -72,7 +72,7 @@ void main() {
       (call) async {
         opened.add(call);
         return switch (call.method) {
-          'getMessagingApps' => [
+          'getVideoApps' => [
             {
               'label': 'Meet',
               'dataId': 5,
@@ -90,6 +90,35 @@ void main() {
     await tester.tap(video);
     expect(opened.where((c) => c.method == 'openContactData').single.arguments['dataId'], 5);
     expect(find.text('Meet'), findsNothing); // the Video tile, not a chat-app row
+  });
+
+  testWidgets('Video with several apps asks which one in a menu', (tester) async {
+    final opened = <MethodCall>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+      const MethodChannel('com.syedarhamraza.dialer/telecom'),
+      (call) async {
+        opened.add(call);
+        return switch (call.method) {
+          'getVideoApps' => [
+            {'label': 'WhatsApp', 'dataId': 1, 'mimeType': 'vnd.android.cursor.item/vnd.com.whatsapp.video.call'},
+            {
+              'label': 'Telegram',
+              'dataId': 2,
+              'mimeType': 'vnd.android.cursor.item/vnd.org.telegram.messenger.android.call.video',
+            },
+          ],
+          'getSims' => [],
+          _ => null,
+        };
+      },
+    );
+    await pump(tester);
+    await tester.tap(find.widgetWithText(DetailsActionTile, 'Video'));
+    await tester.pumpAndSettle();
+    expect(find.text('WhatsApp'), findsOneWidget);
+    await tester.tap(find.text('Telegram'));
+    await tester.pumpAndSettle();
+    expect(opened.where((c) => c.method == 'openContactData').single.arguments['dataId'], 2);
   });
 
   testWidgets('lists the latest three calls with View all', (tester) async {

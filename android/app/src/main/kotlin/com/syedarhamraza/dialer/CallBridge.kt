@@ -191,6 +191,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 result.success(null)
             }
             "getMessagingApps" -> inBackground(result) { ContactExtras.messagingApps(context, call.argument<String>("contactId")!!) }
+            "getVideoApps" -> inBackground(result) { ContactExtras.videoApps(context, call.argument<String>("contactId")!!) }
             "openContactData" -> {
                 runCatching {
                     ContactExtras.openData(context, call.argument<Number>("dataId")!!.toLong(), call.argument<String>("mimeType")!!)

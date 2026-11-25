@@ -26,9 +26,37 @@ object ContactExtras {
         // (label, package, mimetype of the "Message" row)
         Triple("WhatsApp", "com.whatsapp", "vnd.android.cursor.item/vnd.com.whatsapp.profile"),
         Triple("WhatsApp Business", "com.whatsapp.w4b", "vnd.android.cursor.item/vnd.com.whatsapp.w4b.profile"),
-        // Google Meet's video-call row: the contact page shows it as the Video tile, not a chat app.
-        Triple("Meet", "com.google.android.apps.tachyon", MEET_VIDEO),
     )
+
+    /**
+     * Every app's video-call row for this contact (WhatsApp, Telegram, Meet...), one per app:
+     * label, dataId, mimeType. Apps name these rows `...video...` (Meet's is [MEET_VIDEO]), and the
+     * row's account type is the app's package. Only rows the app can open, like [messagingApps].
+     */
+    fun videoApps(context: Context, contactId: String): List<Map<String, Any?>> {
+        val pm = context.packageManager
+        val out = mutableListOf<Map<String, Any?>>()
+        val seen = mutableSetOf<String>()
+        context.contentResolver.query(
+            Data.CONTENT_URI, arrayOf(Data._ID, Data.MIMETYPE, RawContacts.ACCOUNT_TYPE),
+            "${Data.CONTACT_ID} = ? AND (${Data.MIMETYPE} LIKE '%video%' OR ${Data.MIMETYPE} = ?)",
+            arrayOf(contactId, MEET_VIDEO), null,
+        )?.use { c ->
+            while (c.moveToNext()) {
+                val pkg = c.getString(2) ?: continue
+                // shortcut: a contact on one app with two numbers gets that app's first row; list each if asked.
+                if (pkg in seen) continue
+                val dataId = c.getLong(0)
+                val mime = c.getString(1)
+                val view = Intent(Intent.ACTION_VIEW).setDataAndType(ContentUris.withAppendedId(Data.CONTENT_URI, dataId), mime)
+                if (pm.queryIntentActivities(view.setPackage(pkg), 0).isEmpty()) continue
+                val label = runCatching { pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString() }.getOrNull() ?: continue
+                seen += pkg
+                out += mapOf("label" to label, "dataId" to dataId, "mimeType" to mime)
+            }
+        }
+        return out
+    }
 
     const val MEET_VIDEO = "vnd.android.cursor.item/com.google.android.apps.tachyon.phone.meet"
 
@@ -58,7 +86,10 @@ object ContactExtras {
     fun openData(context: Context, dataId: Long, mimeType: String) {
         val uri = ContentUris.withAppendedId(Data.CONTENT_URI, dataId)
         val intent = Intent(Intent.ACTION_VIEW).setDataAndType(uri, mimeType).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        // The row's account type is its app's package (WhatsApp, Telegram, Meet...).
         val owner = APPS.firstOrNull { it.third == mimeType }?.second
+            ?: context.contentResolver.query(uri, arrayOf(RawContacts.ACCOUNT_TYPE), null, null, null)
+                ?.use { c -> if (c.moveToFirst()) c.getString(0) else null }
         val target = Intent(intent).setPackage(owner)
         // Only this user's activities: the clone's copy lives in another profile.
         context.packageManager.queryIntentActivities(target, 0).firstOrNull()?.activityInfo

@@ -9,6 +9,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/one_ui_floating_menu.dart';
+import '../../widgets/place_video_call.dart';
 import 'call_controls.dart';
 import '../../l10n/l10n.dart';
 import '../keypad/t9.dart';
@@ -87,20 +88,22 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
       duration: const Duration(milliseconds: 450),
       value: widget.keypadOpen ? 1 : 0,
     );
-    TelecomBridge.instance.canMeetCall().then((can) {
-      if (mounted && can) setState(() => _canMeet = true);
-    }, onError: (Object _) {});
+    if (!widget.call.isPrivate && !widget.call.isConference) {
+      videoOptions(widget.call.number ?? '').then((o) {
+        if (mounted) setState(() => _video = o);
+      }, onError: (Object _) {});
+    }
   }
 
-  /// Whether Google Meet is installed to take the Video call.
-  bool _canMeet = false;
+  /// The ways to take this call to video (the caller's WhatsApp, Telegram, Meet...); the phone call keeps going.
+  List<VideoOption> _video = const [];
   final _moreKey = GlobalKey();
   final _routeKey = GlobalKey();
 
   void _openMore(bool merging) {
     final call = widget.call;
     final number = call.number ?? '';
-    final canVideo = _canMeet && !call.isPrivate && !call.isConference && number.isNotEmpty;
+    final canVideo = _video.isNotEmpty && !call.isPrivate && !call.isConference;
     final holding = call.state == CallState.holding;
     final telecom = TelecomBridge.instance;
     OneUIFloatingMenu.show(
@@ -129,7 +132,7 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
           label: context.l10n.switchToVideoCall,
           glyph: CallIconShape.video,
           enabled: canVideo,
-          onTap: () => telecom.meetCall(number),
+          onTap: () => placeVideoCall(context, number, _video, anchorKey: _moreKey, scale: 1.15),
         ),
       ],
     );

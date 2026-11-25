@@ -10,6 +10,7 @@ import '../../widgets/call_glass.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_status_bar_scrim.dart';
 import '../../widgets/place_call.dart';
+import '../../widgets/place_video_call.dart';
 import '../../widgets/round_header_controls.dart';
 import '../blocking/blocking_repository.dart';
 import '../contacts/contact_details_screen.dart';
@@ -136,6 +137,18 @@ class CallDetailsScreen extends StatelessWidget {
                                       onTap: () => TelecomBridge.instance.sendSms(call.number),
                                     ),
                                   ),
+                                  // Every way to video call them (the contact's WhatsApp, Telegram, Meet...).
+                                  if (!call.isApp)
+                                    Expanded(
+                                      child: VideoTileLoader(
+                                        number: call.number,
+                                        builder: (context, onTap) => DetailsActionTile(
+                                          icon: Icons.videocam_rounded,
+                                          label: context.l10n.video,
+                                          onTap: onTap,
+                                        ),
+                                      ),
+                                    ),
                                   if (!isContact)
                                     Expanded(
                                       child: DetailsActionTile(
