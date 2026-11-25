@@ -60,6 +60,7 @@
     <string name="status_unsupported">На этом телефоне запись невозможна</string>
     <string name="status_continue">Продолжить</string>
     <string name="open_dialer">Открыть One Dialer</string>
+    <string name="dialer_on_play">One Dialer в Google Play</string>
     <string name="step_after">После шага %d</string>
     <string name="recording_detail">Обе стороны · нажмите, чтобы вернуться к вызову</string>
     <string name="option_on">Вкл.</string>

@@ -60,6 +60,7 @@
     <string name="status_unsupported">Bu telefonda kayıt yapılamıyor</string>
     <string name="status_continue">Devam</string>
     <string name="open_dialer">One Dialer\'ı aç</string>
+    <string name="dialer_on_play">Google Play\'de One Dialer</string>
     <string name="step_after">%d. adımdan sonra</string>
     <string name="recording_detail">İki taraf · aramaya dönmek için dokunun</string>
     <string name="option_on">Açık</string>
