@@ -1,5 +1,6 @@
 import 'dart:ui' show ImageFilter;
 
+import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -14,6 +15,9 @@ import '../../theme/one_ui_scroll.dart';
 import '../../core/prefs/dialer_prefs.dart';
 import '../contacts/editor/add_to_contacts.dart';
 import '../contacts/editor/contact_editor_screen.dart';
+import '../contacts/contact_details_screen.dart';
+import '../recents/call_details_screen.dart';
+import '../recents/call_log.dart';
 import '../recents/call_log_repository.dart';
 import 'special_codes.dart';
 import 'speed_dial_screen.dart';
@@ -182,12 +186,16 @@ class _KeypadScreenState extends State<KeypadScreen> {
   }
 
   /// The last search, so showing/hiding the sheet or opening a menu doesn't search again.
-  (String, List<DialerContact>, List<T9Match>)? _search;
+  (String, List<DialerContact>, List<CallLogEntry>, List<T9Match>)? _search;
 
-  List<T9Match> _matches(String number, List<DialerContact> contacts) {
-    if (_search case (final n, final c, final m) when n == number && identical(c, contacts)) return m;
-    final matches = t9Search(number, contacts);
-    _search = (number, contacts, matches);
+  /// Contacts first, then the unsaved numbers from Recents (as the phone's own dialers do).
+  List<T9Match> _matches(String number, List<DialerContact> contacts, List<CallLogEntry> calls) {
+    if (_search case (final n, final c, final l, final m)
+        when n == number && identical(c, contacts) && identical(l, calls)) {
+      return m;
+    }
+    final matches = keypadMatches(number, contacts, calls);
+    _search = (number, contacts, calls, matches);
     return matches;
   }
 
@@ -351,16 +359,19 @@ class _KeypadScreenState extends State<KeypadScreen> {
                               key: const ValueKey('results'),
                               child: ValueListenableBuilder<List<DialerContact>>(
                                 valueListenable: ContactsRepository.instance.contacts,
-                                builder: (context, contacts, _) => _Results(
-                                  number: number,
-                                  matches: _matches(number, contacts),
-                                  expanded: !open,
-                                  bottomPadding: open ? sheetHeight : clearance,
-                                  onScroll: _collapse,
-                                  onPick: (m) {
-                                    widget.input.value = m.number;
-                                    _show();
-                                  },
+                                builder: (context, contacts, _) => ValueListenableBuilder<List<CallLogEntry>>(
+                                  valueListenable: CallLogRepository.instance.calls,
+                                  builder: (context, calls, _) => _Results(
+                                    number: number,
+                                    matches: _matches(number, contacts, calls),
+                                    expanded: !open,
+                                    bottomPadding: open ? sheetHeight : clearance,
+                                    onScroll: _collapse,
+                                    onPick: (m) {
+                                      widget.input.value = m.number;
+                                      _show();
+                                    },
+                                  ),
                                 ),
                               ),
                             )
@@ -574,7 +585,7 @@ class _ResultTile extends StatelessWidget {
       splashColor: context.palette.textPrimary.withValues(alpha: 0.06),
       highlightColor: context.palette.textPrimary.withValues(alpha: 0.03),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+        padding: const EdgeInsets.fromLTRB(20, 10, 8, 10),
         child: Row(
           children: [
             switch (match.entry) {
@@ -601,11 +612,25 @@ class _ResultTile extends StatelessWidget {
                 ],
               ),
             ),
+            // Details, as on a Calls row: the contact's page, or this number's.
+            IconButton(
+              tooltip: context.l10n.callDetails,
+              onPressed: () => _details(context),
+              icon: Icon(CupertinoIcons.info, size: 24, color: context.palette.textSecondary),
+            ),
           ],
         ),
       ),
     );
   }
+
+  void _details(BuildContext context) => switch (match.entry) {
+    RecentNumber(:final call) => openCallDetails(context, call),
+    DialerContact(:final id) => Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => ContactDetailsScreen(contactId: id))),
+    _ => null,
+  };
 
   static Widget _highlighted(String text, (int, int)? range, TextStyle style) {
     if (range == null) return Text(text, style: style, maxLines: 1, overflow: TextOverflow.ellipsis);
@@ -1051,4 +1076,34 @@ class _Frosted extends StatelessWidget {
       },
     );
   }
+}
+
+/// An unsaved number from Recents, searchable on the keypad like a contact. Named by the
+/// carrier's caller name when the call had one, else by the number.
+class RecentNumber extends T9Entry {
+  RecentNumber(this.call)
+    : super(name: call.name?.trim().isNotEmpty == true ? call.name!.trim() : call.number, numbers: [call.number]);
+
+  /// Its newest call, whose details page the (i) opens.
+  final CallLogEntry call;
+}
+
+/// The keypad's results for [number]: contacts first, then the unsaved numbers from Recents.
+/// Searched apart, since an unsaved number is named by its digits and would rank as a name match.
+List<T9Match> keypadMatches(String number, List<DialerContact> contacts, List<CallLogEntry> calls) => [
+  ...t9Search(number, contacts),
+  ...t9Search(number, recentNumbers(calls)),
+];
+
+/// Recents' numbers that aren't saved, newest first, once each; hidden numbers and calls
+/// through other apps left out.
+@visibleForTesting
+List<RecentNumber> recentNumbers(List<CallLogEntry> calls) {
+  final seen = <String>{};
+  return [
+    for (final c in calls)
+      if (!c.isPrivate && !c.isApp && c.number.isNotEmpty)
+        if (numberKey(c.number) case final key when key.isNotEmpty && seen.add(key))
+          if (ContactsRepository.instance.contactFor(c.number) == null) RecentNumber(c),
+  ];
 }
