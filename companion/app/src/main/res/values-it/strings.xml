@@ -60,6 +60,7 @@
     <string name="status_unsupported">Impossibile registrare su questo telefono</string>
     <string name="status_continue">Continua</string>
     <string name="open_dialer">Apri One Dialer</string>
+    <string name="dialer_on_play">One Dialer su Google Play</string>
     <string name="step_after">Dopo il passo %d</string>
     <string name="recording_detail">Entrambe le voci · tocca per tornare alla chiamata</string>
     <string name="option_on">Attivo</string>
