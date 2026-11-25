@@ -75,6 +75,10 @@ class TelecomBridge {
   Future<List<Map<Object?, Object?>>> getMessagingApps(String contactId) async =>
       await _methods.invokeListMethod<Map<Object?, Object?>>('getMessagingApps', {'contactId': contactId}) ?? const [];
 
+  /// The contact's video-call rows, one per app (WhatsApp, Telegram, Meet...): label, dataId, mimeType.
+  Future<List<Map<Object?, Object?>>> getVideoApps(String contactId) async =>
+      await _methods.invokeListMethod<Map<Object?, Object?>>('getVideoApps', {'contactId': contactId}) ?? const [];
+
   Future<void> openContactData(int dataId, String mimeType) =>
       _methods.invokeMethod('openContactData', {'dataId': dataId, 'mimeType': mimeType});
 

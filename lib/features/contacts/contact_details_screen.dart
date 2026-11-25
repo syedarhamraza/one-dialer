@@ -20,6 +20,7 @@ import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_status_bar_scrim.dart';
 import '../../widgets/one_ui_toast.dart';
 import '../../widgets/place_call.dart';
+import '../../widgets/place_video_call.dart';
 import '../../widgets/call_glyph.dart';
 import '../../widgets/press_glow.dart';
 import '../../widgets/round_header_controls.dart';
@@ -78,10 +79,12 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
   Future<void> _load() async {
     // Together, so the page rebuilds once, early in its slide-in.
-    final (sims, simId, apps, raw, ringtone) = await (
+    final (sims, simId, apps, videoApps, canMeet, raw, ringtone) = await (
       _bridge.getSims(),
       DialerPrefs.instance.contactSim(widget.contactId),
       _bridge.getMessagingApps(widget.contactId),
+      _bridge.getVideoApps(widget.contactId),
+      _bridge.canMeetCall(),
       _bridge.getRawContacts(widget.contactId),
       _bridge.getRingtoneTitle(widget.contactId),
     ).wait;
@@ -90,6 +93,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       _sims = sims;
       _simId = simId;
       _apps = apps;
+      _videoApps = videoApps;
+      _canMeet = canMeet;
       _ringtone = ringtone;
       // Where it's stored, e.g. "Google · WhatsApp".
       _storage = {for (final r in raw) accountApp(context.l10n, r['accountType'] as String?)}.join(' · ');
@@ -115,10 +120,10 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
   List<String>? _described;
 
-  /// Meet's video row (the Video tile) and the chat apps (their own card).
-  Map<Object?, Object?>? get _meet => _apps.where(_isMeet).firstOrNull;
-  Iterable<Map<Object?, Object?>> get _chatApps => _apps.where((a) => !_isMeet(a));
-  static bool _isMeet(Map<Object?, Object?> app) => (app['mimeType'] as String?)?.contains('tachyon') ?? false;
+  /// The video apps' rows and Meet by number: the Video tile's menu ([placeVideoCall]).
+  List<Map<Object?, Object?>> _videoApps = const [];
+  bool _canMeet = false;
+  final _videoKey = GlobalKey();
 
   Future<void> _openApp(Map<Object?, Object?> app) async {
     try {
@@ -330,14 +335,15 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                           onTap: () => _bridge.sendSms(primary),
                         ),
                       ),
-                      // Google Meet, when the contact has a Meet video row; greyed out otherwise.
+                      // Every way to video call them (WhatsApp, Telegram, Meet...); greyed out without one.
                       Expanded(
                         child: DetailsActionTile(
+                          key: _videoKey,
                           icon: Icons.videocam_rounded,
                           label: context.l10n.video,
-                          onTap: switch (_meet) {
-                            final meet? => () => _openApp(meet),
-                            null => null,
+                          onTap: switch (videoOptionsFrom(_videoApps, meetByNumber: _canMeet)) {
+                            final none when none.isEmpty => null,
+                            final video => () => placeVideoCall(context, primary, video, anchorKey: _videoKey),
                           },
                         ),
                       ),
@@ -346,7 +352,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   const SizedBox(height: 20),
                   _numbersCard(contact),
                   if (_full case final full?) ..._detailCards(full),
-                  if (_chatApps.isNotEmpty) _appsCard(),
+                  if (_apps.isNotEmpty) _appsCard(),
                   CallNotesCard(numbers: contact.numbers),
                   _callLogs(contact),
                 ],
@@ -572,7 +578,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     return DetailsCard(
       dividerIndent: 40,
       children: [
-        for (final app in _chatApps)
+        for (final app in _apps)
           _ValueRow(
             leading: Align(
               alignment: Alignment.centerLeft,
