@@ -448,6 +448,18 @@ class AppLocalizationsTr extends AppLocalizations {
   String get video => 'Görüntülü';
 
   @override
+  String get videoCallMark => 'Görüntülü arama';
+
+  @override
+  String get wifiCallMark => 'Wi-Fi araması';
+
+  @override
+  String get volteCall => 'VoLTE araması';
+
+  @override
+  String get vonrCall => '5G sesli arama';
+
+  @override
   String get remove => 'Kaldır';
 
   @override

@@ -50,6 +50,8 @@ class CallInfo {
     this.simId,
     this.isHd = false,
     this.isWifi = false,
+    this.isVolte = false,
+    this.isVonr = false,
     this.isPrivate = false,
     this.formattedNumber,
     this.location,
@@ -72,6 +74,8 @@ class CallInfo {
       simId: map['simId'] as String?,
       isHd: map['isHd'] as bool? ?? false,
       isWifi: map['isWifi'] as bool? ?? false,
+      isVolte: map['isVolte'] as bool? ?? false,
+      isVonr: map['isVonr'] as bool? ?? false,
       isPrivate: map['isPrivate'] as bool? ?? false,
       formattedNumber: map['formattedNumber'] as String?,
       location: map['location'] as String?,
@@ -94,6 +98,9 @@ class CallInfo {
   final String? simId;
   final bool isHd;
   final bool isWifi;
+
+  /// Carried over 4G voice (VoLTE) or 5G voice (VoNR) right now.
+  final bool isVolte, isVonr;
 
   /// Caller hid their number.
   final bool isPrivate;

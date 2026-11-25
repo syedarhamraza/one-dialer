@@ -29,7 +29,7 @@ import '../recents/call_details_screen.dart' show CallNotesCard;
 import '../recents/call_log.dart';
 import '../recents/app_calls.dart' show appCallLabel;
 import '../recents/call_log_repository.dart';
-import '../recents/recents_screen.dart' show CallTypeIcon;
+import '../recents/recents_screen.dart' show CallMediaMarks, CallTypeIcon;
 import '../../widgets/sim_badge.dart';
 import '../settings/call_background_screen.dart';
 import 'contact_actions.dart';
@@ -904,8 +904,7 @@ class ContactCallLogRow extends StatelessWidget {
               CallTypeIcon(type: c.type, size: 15),
               const SizedBox(width: 6),
               if (badge != null) ...[SimBadge(label: badge), const SizedBox(width: 6)],
-              if (c.isVonr || c.isVolte) ...[_VolteMark(color: grey, nr: c.isVonr), const SizedBox(width: 6)],
-              if (c.isHd) ...[_HdMark(color: grey), const SizedBox(width: 6)],
+              CallMediaMarks(call: c, size: 15),
               Flexible(
                 child: Text(
                   detail,
@@ -927,49 +926,6 @@ class ContactCallLogRow extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-/// The history's VoLTE mark: "Vo" over "LTE" (or "NR" for 5G voice), tiny and grey.
-class _VolteMark extends StatelessWidget {
-  const _VolteMark({required this.color, this.nr = false});
-
-  final Color color;
-  final bool nr;
-
-  @override
-  Widget build(BuildContext context) {
-    final style = TextStyle(fontSize: 6.5, height: 1, fontWeight: FontWeight.w700, color: color);
-    return ExcludeSemantics(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text('Vo', style: style),
-          Text(nr ? 'NR' : 'LTE', style: style),
-        ],
-      ),
-    );
-  }
-}
-
-/// The history's HD voice mark: "HD" knocked out of a small grey tag.
-class _HdMark extends StatelessWidget {
-  const _HdMark({required this.color});
-
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return ExcludeSemantics(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 2.5, vertical: 1),
-        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
-        child: Text(
-          'HD',
-          style: TextStyle(fontSize: 8, height: 1.1, fontWeight: FontWeight.w800, color: context.palette.card),
-        ),
       ),
     );
   }

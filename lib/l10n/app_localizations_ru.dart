@@ -459,6 +459,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get video => 'Видео';
 
   @override
+  String get videoCallMark => 'Видеозвонок';
+
+  @override
+  String get wifiCallMark => 'Звонок по Wi-Fi';
+
+  @override
+  String get volteCall => 'Звонок VoLTE';
+
+  @override
+  String get vonrCall => 'Голосовой звонок 5G';
+
+  @override
   String get remove => 'Убрать';
 
   @override
