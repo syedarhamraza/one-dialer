@@ -153,8 +153,9 @@ export const en = {
     prosTitle: "What you get",
     pros: [
       "Both sides of the call at full volume, on Android 12 and later: you and the other person, on the earpiece, speaker, Bluetooth or headphones. No root, no computer, no separate Shizuku app.",
+      "Developer options turn themselves off once it's running, so banking and payment apps open.",
       "After a reboot it starts again by itself once you're on Wi-Fi.",
-      "No microphone permission and no accessibility service. One Recorder records the call itself, only during a call you record.",
+      "No microphone permission. One Recorder records the call itself, only during a call you record. Its one accessibility service is optional: it only reads the pairing code, then turns itself off.",
       "Recordings stay on your phone. Nothing is uploaded, there's no account and no ads.",
       "Record when you choose, or automatically: every call, unknown numbers, or only the contacts you pick.",
       "Your recordings live in One Dialer, with contact names, search, stars, sharing and auto-delete.",
@@ -162,8 +163,8 @@ export const en = {
     ],
     consTitle: "What to expect",
     cons: [
-      "Both sides needs Developer options and Wireless debugging turned on once, and Wi-Fi whenever it starts. If it can't start again after a reboot (no Wi-Fi, or Developer options off), you tap Start in One Recorder.",
-      "Some banking and payment apps refuse to open while Developer options is on.",
+      "Both sides needs Developer options and Wireless debugging turned on once, and Wi-Fi whenever the helper starts. If it can't start again after a reboot (no Wi-Fi), you tap Start in One Recorder.",
+      "Some phones stop the helper when USB or Wireless debugging goes off. There, One Recorder leaves that one on, and a banking app that checks for it may still refuse to open.",
       "On some phones, calls over Wi-Fi calling record only one side. That's the phone's audio driver, not One Recorder.",
       "It needs Android 12 or later. Android 10 and 11 can't start the helper over Wireless debugging, and there's no other way to record there.",
       "It doesn't update itself. Google Play doesn't know about it, so you come back here for new versions.",
@@ -209,27 +210,27 @@ export const en = {
           { p: "Open One Recorder: **Record both sides** is at the top, and each row turns to Ready as you go." },
           {
             ol: [
+              "**Notifications.** Allow them first: the pairing code goes in One Recorder's notification, and you see when a call is being recorded.",
               "**Developer options.** If they're off, open **Settings › About phone** (on some phones, About phone › Software information) and tap **Build number** seven times.",
               "**Pair with Wireless debugging.** Tap the row. One Recorder opens Developer options and posts a notification. Turn on **Wireless debugging**, open it, and tap **Pair device with pairing code**.",
               "Keep that code on screen, pull down the notification from One Recorder, tap **Enter code** and type the six digits. One Recorder pairs and starts its helper. You only pair once.",
+              "Or skip typing: tap **Pair automatically** first and turn on One Recorder in **Accessibility**. It reads the code from the pairing dialog itself, then turns itself off. If Android 13 or later greys it out, open One Recorder's **App info › ⋮ › Allow restricted settings** first.",
               "**Helper: Ready.** If it says Not running, make sure you're on Wi-Fi and tap **Start**. **Start after a reboot** turns on by itself the first time the helper starts.",
             ],
           },
           {
-            p: "You can turn Wireless debugging off again: One Recorder switches it on for a moment when it needs to start the helper, and back off afterwards. If your phone stops the helper when Wireless debugging goes off, One Recorder leaves it on.",
+            p: "**Turn off Developer options** is on by default. Once the helper runs, One Recorder turns off Developer options, USB debugging and Wireless debugging, one at a time, so banking apps open, and turns them on for a moment whenever it needs to start the helper again. If your phone stops the helper when one of them goes off, One Recorder turns that one back on and leaves it on, and the row says which.",
+          },
+          {
+            p: "**Start without Wi-Fi** (experimental, Android 12 to 16, off by default) tries to start the helper after a reboot away from Wi-Fi, for up to two minutes, through a hotspot only your phone uses. It needs Location on, and asks for Nearby devices (Android 13 and later) or Location (Android 12) when you turn it on. It may not work on every phone.",
           },
         ],
       },
       {
         id: "setup",
-        title: "Notifications and battery",
+        title: "Battery",
         blocks: [
-          {
-            ol: [
-              "**Notifications.** Allow them, so you can see when a call is being recorded.",
-              "**Battery: Unrestricted.** Optional, but recommended. It stops the phone from closing the recorder while it waits for a call.",
-            ],
-          },
+          { p: "**Battery: Unrestricted.** Optional, but recommended. It stops the phone from closing the recorder while it waits for a call." },
         ],
       },
       {
@@ -278,7 +279,7 @@ export const en = {
             p: "Earlier versions could also record with the microphone, using an accessibility service. Since Android 10, an app using the microphone during a call gets silence, and Android makes an exception only for some accessibility apps, in narrow cases. Phone makers close even those: on the phone we tested, a vivo on Android 17, recordings made that way were silent, with Android muting the microphone for the whole call.",
           },
           {
-            p: "A method that silently records nothing is worse than none, so it's gone, along with the microphone permission, the accessibility service, and the Volume boost and Microphone source settings that only it used. Recording both sides through Wireless debugging is the only way now, and it records both voices at full volume.",
+            p: "A method that silently records nothing is worse than none, so it's gone, along with the microphone permission, that accessibility service, and the Volume boost and Microphone source settings that only it used. Recording both sides through Wireless debugging is the only way now, and it records both voices at full volume.",
           },
         ],
       },
@@ -290,7 +291,7 @@ export const en = {
             p: "One Recorder records only while a call you chose to record is going on. The audio is saved only inside One Recorder on your phone. It's never uploaded, there's no account, and nothing about you or your calls leaves the phone unless you share a recording yourself. Recordings are deleted when you delete them or uninstall One Recorder.",
           },
           {
-            p: "Its pairing with Wireless debugging is a key kept in One Recorder's private storage on your phone; it can't be backed up or read by other apps. The helper only records calls for One Recorder and can't run anything else. One Recorder has no microphone permission and no accessibility service. Recording laws differ by country, and you're responsible for getting the other person's consent where it's required.",
+            p: "Its pairing with Wireless debugging is a key kept in One Recorder's private storage on your phone; it can't be backed up or read by other apps. The helper only records calls for One Recorder and can't run anything else, apart from turning Developer options and debugging off and on. One Recorder has no microphone permission. Its optional pairing accessibility service reads only the Settings app, never taps anything, and turns itself off once paired or after five minutes. Nearby devices or Location is asked for only if you turn on Start without Wi-Fi, to open the local hotspot. Recording laws differ by country, and you're responsible for getting the other person's consent where it's required.",
           },
           {
             p: "**Legal notice.** One Recorder is provided as is, without any warranty. It can record both sides of a call, and call recording laws differ by country and region: some places need everyone on the call to agree, and some don't allow recording at all. You alone are responsible for knowing and following the laws where you and the other person are, for telling them and getting their consent where it's required, and for how you use your recordings. Syed Arham Raza, who makes One Recorder and One Dialer, isn't responsible for how you use it or for any recording you make with it.",
@@ -312,7 +313,8 @@ export const en = {
         blocks: [
           {
             ul: [
-              "**“Both sides is paused” in One Dialer, or Helper: Not running:** the phone restarted away from Wi-Fi, or Developer options was turned off. Connect to Wi-Fi and tap **Start** in One Recorder. Until it's running, calls can't be recorded.",
+              "**“Both sides is paused” in One Dialer, or Helper: Not running:** the phone restarted away from Wi-Fi. Connect to Wi-Fi and tap **Start** in One Recorder. Until it's running, calls can't be recorded.",
+              "**A banking app still won't open:** look at **Turn off Developer options** in One Recorder. If it says your phone needs USB or Wireless debugging to stay on, that app is checking for it, and there's no way around it on that phone.",
               "**The pairing code isn't accepted:** keep the pairing dialog open while you type the code, on the same Wi-Fi network. If it still fails, close the dialog, open it again for a new code and try once more.",
               "**The recording has only one voice, or nothing:** some phones lose one side over Wi-Fi calling, and a few don't allow recording the line at all. Try the same call over the mobile network.",
               "**“Calls aren't being recorded” in One Dialer:** auto-record is on but One Recorder isn't ready. Open it and fix any row that isn't Ready, usually the helper.",

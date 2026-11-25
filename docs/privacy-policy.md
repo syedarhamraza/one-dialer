@@ -1,6 +1,6 @@
 # One Dialer — Privacy Policy
 
-_Last updated: 22 November 2026_
+_Last updated: 25 November 2026_
 
 One Dialer is a phone app for Android made by Syed Arham Raza. This policy explains what the app accesses and what it does with it.
 
@@ -15,6 +15,7 @@ When you make One Dialer your default phone app, Android gives it access to:
 | **Contacts** | Showing names and photos for calls, contact search, favourites and speed dial; importing contacts from your SIM card or a .vcf file you pick, exporting them to a .vcf you share, and merging duplicates (Manage contacts) |
 | **Notifications** | Showing incoming, ongoing and missed calls |
 | **Nearby devices** (Bluetooth) | Showing the names of your connected Bluetooth devices (a watch, earbuds) so you can pick which one a call uses; nothing is sent anywhere |
+| **Camera** (only if you allow it) | Carrier video calls: showing the other person your camera while a video call is on screen. The camera is off at all other times, and the app asks for it only when you start, answer or switch to a video call. The video goes to the other person through your carrier's network, like any carrier video call; One Dialer never records, stores or uploads it |
 | **Blocked numbers** | Blocking and unblocking numbers you choose |
 | **Do Not Disturb access** (only if you allow it) | VIP calls: letting calls from the contacts you mark as VIPs, or your favourites, ring while the phone is on Silent or Vibrate, then putting the sound back as it was. The app asks for it only when you turn on VIP calls |
 
