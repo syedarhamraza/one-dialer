@@ -985,6 +985,54 @@ class AppLocalizationsDe extends AppLocalizations {
   String get switchToVideoCall => 'Zu Videoanruf wechseln';
 
   @override
+  String get carrierVideo => 'Netz-Videoanruf';
+
+  @override
+  String get cameraNeeded => 'Erlaube die Kamera für Videoanrufe';
+
+  @override
+  String get answerAsVoice => 'Als Sprachanruf annehmen';
+
+  @override
+  String get videoRequest => 'Zu einem Videoanruf wechseln?';
+
+  @override
+  String get accept => 'Annehmen';
+
+  @override
+  String get switchToVoice => 'Zu Sprachanruf wechseln';
+
+  @override
+  String get cameraOff => 'Kamera aus';
+
+  @override
+  String get cameraOn => 'Kamera an';
+
+  @override
+  String get flipCamera => 'Kamera wechseln';
+
+  @override
+  String get incomingVideo => 'Videoanruf';
+
+  @override
+  String get incomingVideoCall => 'Eingehender Videoanruf';
+
+  @override
+  String get videoUnavailable => 'Videoanrufe sind nicht verfügbar';
+
+  @override
+  String get networkUnreachable => 'Netz nicht erreichbar';
+
+  @override
+  String get networkBusy => 'Das Netz ist ausgelastet';
+
+  @override
+  String get noService => 'Kein Netz';
+
+  @override
+  String get voiceCall => 'Sprachanruf';
+
+  @override
   String get mute => 'Stumm';
 
   @override

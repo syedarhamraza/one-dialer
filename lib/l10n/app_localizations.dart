@@ -1690,6 +1690,102 @@ abstract class AppLocalizations {
   /// **'Switch to video call'**
   String get switchToVideoCall;
 
+  /// No description provided for @carrierVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Carrier video'**
+  String get carrierVideo;
+
+  /// No description provided for @cameraNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow the camera to make video calls'**
+  String get cameraNeeded;
+
+  /// No description provided for @answerAsVoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer as voice call'**
+  String get answerAsVoice;
+
+  /// No description provided for @videoRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to a video call?'**
+  String get videoRequest;
+
+  /// No description provided for @accept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get accept;
+
+  /// No description provided for @switchToVoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to voice call'**
+  String get switchToVoice;
+
+  /// No description provided for @cameraOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn camera off'**
+  String get cameraOff;
+
+  /// No description provided for @cameraOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn camera on'**
+  String get cameraOn;
+
+  /// No description provided for @flipCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Flip camera'**
+  String get flipCamera;
+
+  /// No description provided for @incomingVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Video call'**
+  String get incomingVideo;
+
+  /// No description provided for @incomingVideoCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming video call'**
+  String get incomingVideoCall;
+
+  /// No description provided for @videoUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Video calling isn\'t available'**
+  String get videoUnavailable;
+
+  /// No description provided for @networkUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach the network'**
+  String get networkUnreachable;
+
+  /// No description provided for @networkBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'The network is busy'**
+  String get networkBusy;
+
+  /// No description provided for @noService.
+  ///
+  /// In en, this message translates to:
+  /// **'No service'**
+  String get noService;
+
+  /// No description provided for @voiceCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice call'**
+  String get voiceCall;
+
   /// REVIEW: In-call control label; AOSP uses "Disattiva audio", shortened to fit the button
   ///
   /// In en, this message translates to:

@@ -979,6 +979,54 @@ class AppLocalizationsTr extends AppLocalizations {
   String get switchToVideoCall => 'Görüntülü aramaya geç';
 
   @override
+  String get carrierVideo => 'Operatör görüntülü araması';
+
+  @override
+  String get cameraNeeded => 'Görüntülü arama için kameraya izin ver';
+
+  @override
+  String get answerAsVoice => 'Sesli arama olarak cevapla';
+
+  @override
+  String get videoRequest => 'Görüntülü aramaya geçilsin mi?';
+
+  @override
+  String get accept => 'Kabul et';
+
+  @override
+  String get switchToVoice => 'Sesli aramaya geç';
+
+  @override
+  String get cameraOff => 'Kamerayı kapat';
+
+  @override
+  String get cameraOn => 'Kamerayı aç';
+
+  @override
+  String get flipCamera => 'Kamerayı çevir';
+
+  @override
+  String get incomingVideo => 'Görüntülü arama';
+
+  @override
+  String get incomingVideoCall => 'Gelen görüntülü arama';
+
+  @override
+  String get videoUnavailable => 'Görüntülü arama kullanılamıyor';
+
+  @override
+  String get networkUnreachable => 'Ağa ulaşılamadı';
+
+  @override
+  String get networkBusy => 'Ağ meşgul';
+
+  @override
+  String get noService => 'Servis yok';
+
+  @override
+  String get voiceCall => 'Sesli arama';
+
+  @override
   String get mute => 'Sessiz';
 
   @override

@@ -986,6 +986,54 @@ class AppLocalizationsIt extends AppLocalizations {
   String get switchToVideoCall => 'Passa a videochiamata';
 
   @override
+  String get carrierVideo => 'Videochiamata operatore';
+
+  @override
+  String get cameraNeeded => 'Consenti la fotocamera per le videochiamate';
+
+  @override
+  String get answerAsVoice => 'Rispondi come chiamata vocale';
+
+  @override
+  String get videoRequest => 'Passare a una videochiamata?';
+
+  @override
+  String get accept => 'Accetta';
+
+  @override
+  String get switchToVoice => 'Passa a chiamata vocale';
+
+  @override
+  String get cameraOff => 'Spegni fotocamera';
+
+  @override
+  String get cameraOn => 'Accendi fotocamera';
+
+  @override
+  String get flipCamera => 'Cambia fotocamera';
+
+  @override
+  String get incomingVideo => 'Videochiamata';
+
+  @override
+  String get incomingVideoCall => 'Videochiamata in arrivo';
+
+  @override
+  String get videoUnavailable => 'Videochiamata non disponibile';
+
+  @override
+  String get networkUnreachable => 'Impossibile raggiungere la rete';
+
+  @override
+  String get networkBusy => 'La rete è occupata';
+
+  @override
+  String get noService => 'Nessun servizio';
+
+  @override
+  String get voiceCall => 'Chiamata vocale';
+
+  @override
   String get mute => 'Muto';
 
   @override

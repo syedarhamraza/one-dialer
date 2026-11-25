@@ -341,7 +341,11 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                           key: _videoKey,
                           icon: Icons.videocam_rounded,
                           label: context.l10n.video,
-                          onTap: switch (videoOptionsFrom(_videoApps, meetByNumber: _canMeet)) {
+                          onTap: switch (videoOptionsFrom(
+                            _videoApps,
+                            meetByNumber: _canMeet,
+                            carrier: _sims.any((s) => s.video),
+                          )) {
                             final none when none.isEmpty => null,
                             final video => () => placeVideoCall(context, primary, video, anchorKey: _videoKey),
                           },

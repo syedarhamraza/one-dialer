@@ -176,3 +176,11 @@ Release builds omit this diagnostic path.
   written to `build/call-previews/`.
 - Judge animation smoothness on a phone with `flutter run --profile`, never in a
   debug build.
+
+## Video calls
+
+Carrier video (ViLTE/ViNR) is Android's IMS stack's stream and camera, shown by us. `telecom/VideoCalls.kt` keeps one session per call that has a `VideoCall` (from the start, so the other side's ask to switch to video arrives), and makes two Flutter textures of the in-call engine (`SurfaceProducer`s) only when the call screen shows video: the other side's picture (`setDisplaySurface`) and our camera's preview (`setPreviewSurface`, with `setCamera`). They're dropped when the call goes back to voice or ends. `VideoCallView` (`lib/features/in_call/video_call_view.dart`) draws them under the header and controls, in place of the aurora; More holds Camera on/off, Flip camera and Switch to voice call. A ringing video call answers with the camera on (after the camera permission; without it, as voice), and shows an Answer as voice call pill. The speaker turns on once per video stretch, only from the earpiece.
+
+Apps' video calls (WhatsApp, Telegram, Meet...) aren't ours: `placeVideoCall` (`lib/widgets/place_video_call.dart`) opens the contact's video row in its app. Carrier video is its first option when a SIM's account has `CAPABILITY_VIDEO_CALLING` (or, in a call, when the call can switch).
+
+Test without a second phone: the debug fake line rings a video call with a moving test pattern (`--ez video true`), and `--ez ask_video true` has the latest fake call ask to switch to video.
