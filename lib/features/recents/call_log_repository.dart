@@ -80,6 +80,7 @@ class CallLogRepository {
           x.app != y.app ||
           x.appPackage != y.appPackage ||
           x.isVideo != y.isVideo ||
+          x.isWifi != y.isWifi ||
           x.isHd != y.isHd ||
           x.isVolte != y.isVolte ||
           x.isVonr != y.isVonr) {

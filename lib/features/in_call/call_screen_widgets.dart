@@ -14,6 +14,7 @@ import '../../widgets/sim_badge.dart';
 import 'call_controls.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/call_glyph.dart';
+import '../../widgets/call_marks.dart';
 import 'call_background.dart';
 
 /// The call backdrop: a soft aurora tinted from the caller's photo or avatar colour (or the
@@ -772,6 +773,11 @@ class _CallStatusState extends State<CallStatus> with SingleTickerProviderStateM
               ),
             ),
           ),
+        ),
+      if (call.isVonr || call.isVolte)
+        Semantics(
+          label: call.isVonr ? context.l10n.vonrCall : context.l10n.volteCall,
+          child: VolteMark(color: Colors.white70, nr: call.isVonr, fontSize: 8),
         ),
       if (call.isHd) const _HdCallGlyph(),
       if (call.isWifi) const Icon(Icons.wifi_calling_rounded, size: 17, color: Colors.white70),

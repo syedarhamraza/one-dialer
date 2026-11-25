@@ -92,6 +92,19 @@ void main() {
     expect(days.single.$2.length, 2);
   });
 
+  test('video and Wi-Fi calls read their marks', () {
+    final entry = CallLogEntry.fromMap({
+      'id': 1,
+      'number': '0300',
+      'type': 'incoming',
+      'date': 0,
+      'video': true,
+      'wifi': true,
+    });
+    expect((entry.isVideo, entry.isWifi), (true, true));
+    expect(CallLogEntry.fromMap({'id': 1, 'date': 0}).isWifi, false);
+  });
+
   test('5G voice calls read their VoNR mark', () {
     final entry = CallLogEntry.fromMap({
       'id': 1,

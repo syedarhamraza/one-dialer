@@ -143,6 +143,9 @@ object CallManager {
             "simId" to details.accountHandle?.let { "${it.componentName.flattenToString()}|${it.id}" },
             "isHd" to details.hasProperty(Call.Details.PROPERTY_HIGH_DEF_AUDIO),
             "isWifi" to details.hasProperty(Call.Details.PROPERTY_WIFI),
+            // The network carrying the call right now: 4G (VoLTE) or 5G (VoNR); Wi-Fi and 3G get no mark.
+            "isVolte" to (details.extras?.getInt(TelecomManager.EXTRA_CALL_NETWORK_TYPE, -1) == TelephonyManager.NETWORK_TYPE_LTE),
+            "isVonr" to isVonr(details),
             "isPrivate" to (details.handlePresentation != android.telecom.TelecomManager.PRESENTATION_ALLOWED),
         )
     }

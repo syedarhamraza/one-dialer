@@ -168,6 +168,7 @@ object CallLogSource {
                     // FEATURES_HD_CALL (API 30) and FEATURES_VOLTE (API 31) by value: minSdk is 29, and
                     // older phones just never set the bits.
                     "hd" to (c.getInt(10) and 0x4 != 0),
+                    "wifi" to (c.getInt(10) and Calls.FEATURES_WIFI != 0),
                     "volte" to (c.getInt(10) and 0x40 != 0),
                     // FEATURES_VONR (API 37) by value, or seen live on 5G voice (Telecom logs the call's creation time).
                     "vonr" to (c.getInt(10) and 0x100 != 0 || vonrTimes.any { abs(it - c.getLong(4)) < 5_000 }),

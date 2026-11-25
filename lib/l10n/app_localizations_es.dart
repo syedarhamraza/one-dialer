@@ -451,6 +451,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get video => 'Vídeo';
 
   @override
+  String get videoCallMark => 'Videollamada';
+
+  @override
+  String get wifiCallMark => 'Llamada por Wi-Fi';
+
+  @override
+  String get volteCall => 'Llamada VoLTE';
+
+  @override
+  String get vonrCall => 'Llamada de voz 5G';
+
+  @override
   String get remove => 'Quitar';
 
   @override

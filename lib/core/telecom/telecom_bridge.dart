@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'call_info.dart';
@@ -305,9 +305,17 @@ class TelecomBridge {
     final fresh = _methods
         .invokeListMethod<Map<Object?, Object?>>('getSims')
         .then((raw) => (raw ?? const []).map(SimCard.fromMap).toList());
-    fresh.then<void>((sims) => _lastSims = sims, onError: (_) {});
+    fresh.then<void>((sims) {
+      _lastSims = sims;
+      // Only a real change notifies: every resume reads them again.
+      if (!listEquals([for (final s in sims) s.id], [for (final s in this.sims.value) s.id])) this.sims.value = sims;
+    }, onError: (_) {});
     return fresh;
   }
+
+  /// The SIMs [getSims] read last, for screens that must follow them (Recents' SIM badges): a
+  /// first read that came back empty (SIMs still starting) is replaced on the next resume.
+  final ValueNotifier<List<SimCard>> sims = ValueNotifier(const []);
 
   /// The last list [getSims] got; a failed read keeps it.
   static List<SimCard>? _lastSims;
