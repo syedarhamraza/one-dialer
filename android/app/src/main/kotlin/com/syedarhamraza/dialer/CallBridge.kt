@@ -29,6 +29,7 @@ import com.syedarhamraza.dialer.telecom.ContactsSource
 import com.syedarhamraza.dialer.telecom.MissedCallNotifier
 import com.syedarhamraza.dialer.telecom.NumberDisplay
 import com.syedarhamraza.dialer.telecom.RecorderCompanion
+import com.syedarhamraza.dialer.telecom.VideoCalls
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
@@ -175,7 +176,10 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 MissedCallNotifier.cancel(context)
             }
             "getState" -> result.success(CallManager.snapshot())
-            "placeCall" -> placeCall(call.argument<String>("number"), call.argument<String>("simId"), call.argument<Boolean>("voicemail") == true, result)
+            "placeCall" -> placeCall(
+                call.argument<String>("number"), call.argument<String>("simId"), call.argument<Boolean>("voicemail") == true,
+                call.argument<Boolean>("video") == true, result,
+            )
             "callBack" -> {
                 if (context.checkSelfPermission(Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
                     result.error("NO_PERMISSION", "CALL_PHONE not granted", null)
@@ -389,7 +393,13 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
         val target = call.argument<String>("id")?.let(CallManager::get)
             ?: return result.error("NO_CALL", "Unknown call id", null)
         when (call.method) {
-            "answer" -> target.answer(VideoProfile.STATE_AUDIO_ONLY)
+            "answer" -> target.answer(
+                if (call.argument<Boolean>("video") == true) VideoProfile.STATE_BIDIRECTIONAL else VideoProfile.STATE_AUDIO_ONLY,
+            )
+            "videoTextures" -> return result.success(VideoCalls.textures(context, target))
+            "videoRequest" -> VideoCalls.request(context, target, call.argument<String>("state") ?: "audio")
+            "videoRespond" -> VideoCalls.respond(context, target, call.argument<Boolean>("accept") == true)
+            "flipCamera" -> VideoCalls.flipCamera(context, target)
             "reject" -> target.reject(false, null)
             "hangUp" -> target.disconnect()
             "hold" -> target.hold()
@@ -613,7 +623,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
     private fun isDefaultDialer(): Boolean =
         context.getSystemService(RoleManager::class.java).isRoleHeld(RoleManager.ROLE_DIALER)
 
-    private fun placeCall(number: String?, simId: String?, voicemail: Boolean, result: MethodChannel.Result) {
+    private fun placeCall(number: String?, simId: String?, voicemail: Boolean, video: Boolean, result: MethodChannel.Result) {
         if (!voicemail && number.isNullOrBlank()) return result.error("NO_NUMBER", "Number is empty", null)
         if (context.checkSelfPermission(Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
             return result.error("NO_PERMISSION", "CALL_PHONE not granted", null)
@@ -621,6 +631,8 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
         val telecom = context.getSystemService(TelecomManager::class.java)
         val extras = Bundle()
         simId?.let(::simHandle)?.let { extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, it) }
+        // A carrier video call (ViLTE/ViNR): the SIM's network sets it up, the call screen shows it.
+        if (video) extras.putInt(TelecomManager.EXTRA_START_CALL_WITH_VIDEO_STATE, VideoProfile.STATE_BIDIRECTIONAL)
         // voicemail: Telecom dials the SIM's voicemail number, or shows its own "no voicemail number" dialog.
         val uri = if (voicemail) Uri.fromParts(android.telecom.PhoneAccount.SCHEME_VOICEMAIL, "", null) else Uri.fromParts("tel", number, null)
         telecom.placeCall(uri, extras)
@@ -652,6 +664,8 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 "label" to account?.label?.toString(),
                 "color" to account?.highlightColor,
                 "isDefault" to (handle == default),
+                // The SIM's network can make carrier video calls right now (ViLTE/ViNR registered).
+                "video" to (account?.hasCapabilities(android.telecom.PhoneAccount.CAPABILITY_VIDEO_CALLING) == true),
             )
         }
         result.success(sims)

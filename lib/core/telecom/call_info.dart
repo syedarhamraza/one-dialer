@@ -57,6 +57,14 @@ class CallInfo {
     this.location,
     this.disconnectCode,
     this.disconnectLabel,
+    this.disconnectReason,
+    this.video = 'audio',
+    this.canVideo = false,
+    this.videoRequest = false,
+    this.peerSize = Size.zero,
+    this.previewSize = Size.zero,
+    this.frontCamera = true,
+    this.cameraRotation = 0,
   });
 
   factory CallInfo.fromMap(Map<Object?, Object?> map) {
@@ -81,8 +89,36 @@ class CallInfo {
       location: map['location'] as String?,
       disconnectCode: map['disconnectCode'] as String?,
       disconnectLabel: map['disconnectLabel'] as String?,
+      disconnectReason: map['disconnectReason'] as String?,
+      video: map['video'] as String? ?? 'audio',
+      canVideo: map['canVideo'] as bool? ?? false,
+      videoRequest: map['videoRequest'] as bool? ?? false,
+      peerSize: Size((map['peerWidth'] as int? ?? 0).toDouble(), (map['peerHeight'] as int? ?? 0).toDouble()),
+      previewSize: Size((map['previewWidth'] as int? ?? 0).toDouble(), (map['previewHeight'] as int? ?? 0).toDouble()),
+      frontCamera: map['frontCamera'] as bool? ?? true,
+      cameraRotation: map['cameraRotation'] as int? ?? 0,
     );
   }
+
+  /// Carrier video: `audio`, `bidirectional`, `tx` (only we send), `rx` (our camera off) or `paused`.
+  final String video;
+  bool get isVideo => video != 'audio';
+
+  /// Whether our camera is sending.
+  bool get cameraOn => video == 'bidirectional' || video == 'tx';
+
+  /// The call can be switched to carrier video (both sides' networks support it).
+  final bool canVideo;
+
+  /// The other side asked to switch this call to video; the screen offers Accept and Decline.
+  final bool videoRequest;
+
+  /// The other side's video and our camera's preview, in pixels (zero until the network says).
+  final Size peerSize, previewSize;
+  final bool frontCamera;
+
+  /// Our camera's sensor angle in degrees: its frames arrive turned by it.
+  final int cameraRotation;
 
   final String id;
   final CallState state;
@@ -116,6 +152,12 @@ class CallInfo {
 
   /// The carrier's own explanation, when it gave one.
   final String? disconnectLabel;
+
+  /// Telephony's name for why it ended (`SERVER_UNREACHABLE`, `OUT_OF_SERVICE`...).
+  final String? disconnectReason;
+
+  /// A video call the network refused before it connected: offered again as a voice call.
+  bool get videoFailed => disconnectCode == 'error' && isVideo && connectTime == null;
 
   String get displayName => (name?.isNotEmpty ?? false) ? name! : (number ?? 'Unknown');
 }
@@ -304,13 +346,20 @@ extension on String {
 
 /// A call-capable SIM (a Telecom phone account).
 class SimCard {
-  const SimCard({required this.id, required this.label, required this.color, this.isDefault = false});
+  const SimCard({
+    required this.id,
+    required this.label,
+    required this.color,
+    this.isDefault = false,
+    this.video = false,
+  });
 
   factory SimCard.fromMap(Map<Object?, Object?> map) => SimCard(
     id: map['id']! as String,
     label: (map['label'] as String?)?.trim().isNotEmpty == true ? map['label']! as String : 'SIM',
     color: Color(map['color'] as int? ?? 0xFF5390F5).withAlpha(0xFF),
     isDefault: map['isDefault'] as bool? ?? false,
+    video: map['video'] as bool? ?? false,
   );
 
   final String id;
@@ -319,4 +368,7 @@ class SimCard {
 
   /// The SIM Android calls with by default; none is default when "Ask every time" is set.
   final bool isDefault;
+
+  /// Its network can make carrier video calls right now.
+  final bool video;
 }

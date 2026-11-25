@@ -990,6 +990,54 @@ class AppLocalizationsEn extends AppLocalizations {
   String get switchToVideoCall => 'Switch to video call';
 
   @override
+  String get carrierVideo => 'Carrier video';
+
+  @override
+  String get cameraNeeded => 'Allow the camera to make video calls';
+
+  @override
+  String get answerAsVoice => 'Answer as voice call';
+
+  @override
+  String get videoRequest => 'Switch to a video call?';
+
+  @override
+  String get accept => 'Accept';
+
+  @override
+  String get switchToVoice => 'Switch to voice call';
+
+  @override
+  String get cameraOff => 'Turn camera off';
+
+  @override
+  String get cameraOn => 'Turn camera on';
+
+  @override
+  String get flipCamera => 'Flip camera';
+
+  @override
+  String get incomingVideo => 'Video call';
+
+  @override
+  String get incomingVideoCall => 'Incoming video call';
+
+  @override
+  String get videoUnavailable => 'Video calling isn\'t available';
+
+  @override
+  String get networkUnreachable => 'Couldn\'t reach the network';
+
+  @override
+  String get networkBusy => 'The network is busy';
+
+  @override
+  String get noService => 'No service';
+
+  @override
+  String get voiceCall => 'Voice call';
+
+  @override
   String get mute => 'Mute';
 
   @override

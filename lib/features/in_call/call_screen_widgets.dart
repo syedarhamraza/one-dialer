@@ -716,7 +716,14 @@ class _CallStatusState extends State<CallStatus> with SingleTickerProviderStateM
       'rejected' => context.l10n.callDeclined,
       'missed' => context.l10n.callTypeMissed,
       'canceled' => context.l10n.callCancelled,
-      'error' => call.disconnectLabel ?? context.l10n.callFailed,
+      'error' when call.videoFailed => context.l10n.videoUnavailable,
+      // Telephony's reasons in plain words; the carrier's own label otherwise.
+      'error' => switch (call.disconnectReason) {
+        'SERVER_UNREACHABLE' || 'TIMED_OUT' => context.l10n.networkUnreachable,
+        'CONGESTION' || 'NETWORK_CONGESTION' => context.l10n.networkBusy,
+        'OUT_OF_SERVICE' || 'OUT_OF_NETWORK' || 'POWER_OFF' => context.l10n.noService,
+        _ => call.disconnectLabel ?? context.l10n.callFailed,
+      },
       _ => context.l10n.callEnded,
     };
     final start = call.connectTime;
@@ -733,7 +740,7 @@ class _CallStatusState extends State<CallStatus> with SingleTickerProviderStateM
       CallState.connecting ||
       CallState.newCall ||
       CallState.selectPhoneAccount => context.l10n.calling,
-      CallState.ringing => context.l10n.callTypeIncoming,
+      CallState.ringing => call.isVideo ? context.l10n.incomingVideoCall : context.l10n.callTypeIncoming,
       CallState.holding => context.l10n.onHold,
       CallState.disconnecting || CallState.disconnected => _endedText(call),
       CallState.unknown => context.l10n.phoneCall,
@@ -774,6 +781,9 @@ class _CallStatusState extends State<CallStatus> with SingleTickerProviderStateM
             ),
           ),
         ),
+      // The camera's glyph sits small in its box: drawn at the text's cap height, in the text's colour.
+      if (call.isVideo)
+        Icon(Icons.videocam_rounded, size: 28, color: style.color, semanticLabel: context.l10n.incomingVideo),
       if (call.isVonr || call.isVolte)
         Semantics(
           label: call.isVonr ? context.l10n.vonrCall : context.l10n.volteCall,

@@ -126,6 +126,79 @@ void main() {
     await tester.pump();
   }
 
+  testWidgets('a ringing video call can be answered as a voice call', (tester) async {
+    await open(tester);
+    await emit(tester, [call('ringing')..['video'] = 'bidirectional']);
+    expect(find.text('Answer as voice call'), findsOneWidget);
+    expect(find.text('Incoming video call'), findsOneWidget);
+    await tester.tap(find.text('Answer as voice call'));
+    await tester.pump();
+    expect(nativeCalls.where((c) => c.method == 'answer').single.arguments, {'id': 'call-1', 'video': false});
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('the other side asking for video shows Decline and Accept', (tester) async {
+    await open(tester);
+    await emit(tester, [call('active')..['videoRequest'] = true]);
+    expect(find.text('Switch to a video call?'), findsOneWidget);
+    await tester.tap(find.text('Decline'));
+    await tester.pump();
+    expect(nativeCalls.where((c) => c.method == 'videoRespond').single.arguments, {'id': 'call-1', 'accept': false});
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('a live video call keeps the call layout, and a tap on the video hides it', (tester) async {
+    await open(tester);
+    await emit(tester, [call('active')..['video'] = 'bidirectional']);
+    for (final label in ['Mute', 'Speaker', 'More']) {
+      expect(find.text(label), findsOneWidget, reason: label);
+    }
+    expect(nativeCalls.where((c) => c.method == 'videoTextures'), isNotEmpty);
+    double opacity() => tester
+        .widget<AnimatedOpacity>(find.ancestor(of: find.text('Mute'), matching: find.byType(AnimatedOpacity)).first)
+        .opacity;
+    expect(opacity(), 1);
+    await tester.tapAt(const Offset(206, 450));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(opacity(), 0);
+    await tester.tapAt(const Offset(206, 450));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(opacity(), 1);
+    // Untouched, they fade on their own.
+    await tester.pump(const Duration(seconds: 5));
+    expect(opacity(), 0);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('a video call the network refuses says so and offers a voice call', (tester) async {
+    await open(tester);
+    Map<String, Object?> refused({bool video = true}) => call('disconnected')
+      ..['video'] = video ? 'bidirectional' : 'audio'
+      ..['connectTimeMillis'] = 0
+      ..['disconnectCode'] = 'error'
+      ..['disconnectLabel'] = 'Server unreachable'
+      ..['disconnectReason'] = 'SERVER_UNREACHABLE';
+    await emit(tester, [refused()]);
+    expect(find.text("Video calling isn't available"), findsOneWidget);
+    await tester.tap(find.text('Voice call'));
+    await tester.pump();
+    expect(nativeCalls.where((c) => c.method == 'placeCall').single.arguments, {'number': '5550100', 'simId': 'sim2'});
+    // A voice call's failure is worded for people too, without the button.
+    await emit(tester, [refused(video: false)..['id'] = 'call-2']);
+    expect(find.text("Couldn't reach the network"), findsOneWidget);
+    expect(find.text('Voice call'), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('a voice call shows no video picture or video answer', (tester) async {
+    await open(tester);
+    await emit(tester, [call('ringing')]);
+    expect(find.text('Answer as voice call'), findsNothing);
+    await emit(tester, [call('active')]);
+    expect(nativeCalls.where((c) => c.method == 'videoTextures'), isEmpty);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('incoming layout fits a compact screen and labels both swipe actions', (tester) async {
     await open(tester, size: const Size(320, 568));
     await emit(tester, [call('ringing')]);
@@ -371,9 +444,76 @@ void main() {
     testWidgets('a contact photo sits ${layout == 'side' ? 'beside' : 'centred above'} the name', (tester) async {
       // A 1×1 PNG.
       final png = Uint8List.fromList(const [
-        137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1, 0, 0, 0, 1,
-        8, 6, 0, 0, 0, 31, 21, 196, 137, 0, 0, 0, 13, 73, 68, 65, 84, 120, 156, 99, 248, 255, 255, 255,
-        127, 0, 9, 251, 3, 253, 42, 134, 227, 138, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
+        137,
+        80,
+        78,
+        71,
+        13,
+        10,
+        26,
+        10,
+        0,
+        0,
+        0,
+        13,
+        73,
+        72,
+        68,
+        82,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        8,
+        6,
+        0,
+        0,
+        0,
+        31,
+        21,
+        196,
+        137,
+        0,
+        0,
+        0,
+        13,
+        73,
+        68,
+        65,
+        84,
+        120,
+        156,
+        99,
+        248,
+        255,
+        255,
+        255,
+        127,
+        0,
+        9,
+        251,
+        3,
+        253,
+        42,
+        134,
+        227,
+        138,
+        0,
+        0,
+        0,
+        0,
+        73,
+        69,
+        78,
+        68,
+        174,
+        66,
+        96,
+        130,
       ]);
       final repo = ContactsRepository.instance
         ..debugSetContacts([

@@ -1016,6 +1016,54 @@ class AppLocalizationsRu extends AppLocalizations {
   String get switchToVideoCall => 'Перейти к видеовызову';
 
   @override
+  String get carrierVideo => 'Видеовызов оператора';
+
+  @override
+  String get cameraNeeded => 'Разрешите камеру для видеовызовов';
+
+  @override
+  String get answerAsVoice => 'Ответить голосом';
+
+  @override
+  String get videoRequest => 'Перейти к видеовызову?';
+
+  @override
+  String get accept => 'Принять';
+
+  @override
+  String get switchToVoice => 'Перейти к голосовому вызову';
+
+  @override
+  String get cameraOff => 'Выключить камеру';
+
+  @override
+  String get cameraOn => 'Включить камеру';
+
+  @override
+  String get flipCamera => 'Сменить камеру';
+
+  @override
+  String get incomingVideo => 'Видеовызов';
+
+  @override
+  String get incomingVideoCall => 'Входящий видеовызов';
+
+  @override
+  String get videoUnavailable => 'Видеозвонки недоступны';
+
+  @override
+  String get networkUnreachable => 'Сеть недоступна';
+
+  @override
+  String get networkBusy => 'Сеть перегружена';
+
+  @override
+  String get noService => 'Нет сети';
+
+  @override
+  String get voiceCall => 'Голосовой вызов';
+
+  @override
   String get mute => 'Без звука';
 
   @override

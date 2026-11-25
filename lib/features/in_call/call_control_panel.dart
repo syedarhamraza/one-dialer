@@ -89,7 +89,8 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
       value: widget.keypadOpen ? 1 : 0,
     );
     if (!widget.call.isPrivate && !widget.call.isConference) {
-      videoOptions(widget.call.number ?? '').then((o) {
+      // The carrier option follows the call itself ([CallInfo.canVideo]), added when the menu opens.
+      videoOptions(widget.call.number ?? '', carrier: false).then((o) {
         if (mounted) setState(() => _video = o);
       }, onError: (Object _) {});
     }
@@ -103,7 +104,8 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
   void _openMore(bool merging) {
     final call = widget.call;
     final number = call.number ?? '';
-    final canVideo = _video.isNotEmpty && !call.isPrivate && !call.isConference;
+    final video = [if (call.canVideo) const VideoOption.carrier(), ..._video];
+    final canVideo = video.isNotEmpty && !call.isPrivate && !call.isConference;
     final holding = call.state == CallState.holding;
     final telecom = TelecomBridge.instance;
     OneUIFloatingMenu.show(
@@ -128,12 +130,46 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
           )
         else
           OneUIFloatingMenuItem(label: context.l10n.addCall, glyph: CallIconShape.addCall, onTap: telecom.openDialer),
-        OneUIFloatingMenuItem(
-          label: context.l10n.switchToVideoCall,
-          glyph: CallIconShape.video,
-          enabled: canVideo,
-          onTap: () => placeVideoCall(context, number, _video, anchorKey: _moreKey, scale: 1.15),
-        ),
+        // A carrier video call: our camera, which camera, and back to voice.
+        if (call.isVideo) ...[
+          OneUIFloatingMenuItem(
+            label: call.cameraOn ? context.l10n.cameraOff : context.l10n.cameraOn,
+            icon: call.cameraOn ? Icons.videocam_off_rounded : Icons.videocam_rounded,
+            onTap: () async {
+              if (call.cameraOn) return telecom.videoRequest(call.id, 'rx');
+              if (await cameraAllowed(context)) await telecom.videoRequest(call.id, 'bidirectional');
+            },
+          ),
+          OneUIFloatingMenuItem(
+            label: context.l10n.flipCamera,
+            icon: Icons.flip_camera_android_rounded,
+            enabled: call.cameraOn,
+            onTap: () => telecom.flipCamera(call.id),
+          ),
+          OneUIFloatingMenuItem(
+            label: context.l10n.switchToVoice,
+            icon: Icons.call_rounded,
+            onTap: () => telecom.videoRequest(call.id, 'audio'),
+          ),
+        ] else
+          OneUIFloatingMenuItem(
+            label: context.l10n.switchToVideoCall,
+            glyph: CallIconShape.video,
+            enabled: canVideo,
+            onTap: () => placeVideoCall(
+              context,
+              number,
+              video,
+              anchorKey: _moreKey,
+              scale: 1.15,
+              // Carrier video switches this call itself, with our camera on when it's allowed.
+              onCarrier: () async {
+                if (!await cameraAllowed(context)) return false;
+                await telecom.videoRequest(call.id, 'bidirectional');
+                return true;
+              },
+            ),
+          ),
       ],
     );
   }

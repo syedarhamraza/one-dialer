@@ -287,8 +287,13 @@ class TelecomBridge {
   // Calls
   /// Calls [number], on the SIM with [simId] if given (otherwise Android's default or its own picker);
   /// [voicemail] calls that SIM's voicemail instead of [number].
-  Future<void> placeCall(String number, {String? simId, bool voicemail = false}) =>
-      _methods.invokeMethod('placeCall', {'number': number, 'simId': simId, if (voicemail) 'voicemail': true});
+  Future<void> placeCall(String number, {String? simId, bool voicemail = false, bool video = false}) =>
+      _methods.invokeMethod('placeCall', {
+        'number': number,
+        'simId': simId,
+        if (voicemail) 'voicemail': true,
+        if (video) 'video': true,
+      });
 
   /// Calls back call-log row [id]; an app's row (WhatsApp...) is called back by that app.
   Future<void> callBack(int id) => _methods.invokeMethod('callBack', {'id': id});
@@ -347,7 +352,22 @@ class TelecomBridge {
       await _methods.invokeMethod<bool>('handleSpecialCode', {'code': code}) ?? false;
   Future<void> stopTone() => _methods.invokeMethod('stopTone');
 
-  Future<void> answer(String id) => _call('answer', id);
+  /// [video] answers a carrier video call with our camera on; false answers it as a voice call.
+  Future<void> answer(String id, {bool video = false}) => _call('answer', id, {'video': video});
+
+  /// The call's carrier video textures `(remote, local)`, made on first ask; null without video.
+  Future<(int, int)?> videoTextures(String id) async {
+    final t = await _methods.invokeMapMethod<String, int>('videoTextures', {'id': id});
+    return t == null ? null : (t['remote']!, t['local']!);
+  }
+
+  /// Switches the call's carrier video: `bidirectional`, `rx` (our camera off) or `audio`.
+  Future<void> videoRequest(String id, String state) => _call('videoRequest', id, {'state': state});
+
+  /// Accepts or declines the other side's ask to switch to video.
+  Future<void> videoRespond(String id, {required bool accept}) => _call('videoRespond', id, {'accept': accept});
+
+  Future<void> flipCamera(String id) => _call('flipCamera', id);
   Future<void> reject(String id) => _call('reject', id);
 
   /// Opens the keypad to place another call; Telecom holds the current one.

@@ -29,4 +29,9 @@ void main() {
     expect(labels(o), ['WhatsApp', 'Meet']);
     expect(o.last.dataId, 3);
   });
+
+  test('carrier video comes first when the SIM can make it', () {
+    final o = videoOptionsFrom(const [whatsapp], meetByNumber: false, carrier: true);
+    expect([for (final x in o) x.carrier], [true, false]);
+  });
 }
