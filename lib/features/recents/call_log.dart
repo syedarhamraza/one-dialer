@@ -21,6 +21,7 @@ class CallLogEntry {
     this.app,
     this.appPackage,
     this.isVideo = false,
+    this.isWifi = false,
     this.isHd = false,
     this.isVolte = false,
     this.isVonr = false,
@@ -41,6 +42,7 @@ class CallLogEntry {
       app: map['app'] as String?,
       appPackage: map['appPackage'] as String?,
       isVideo: map['video'] as bool? ?? false,
+      isWifi: map['wifi'] as bool? ?? false,
       isHd: map['hd'] as bool? ?? false,
       isVolte: map['volte'] as bool? ?? false,
       isVonr: map['vonr'] as bool? ?? false,
@@ -70,6 +72,9 @@ class CallLogEntry {
   final String? app;
   final String? appPackage;
   final bool isVideo;
+
+  /// Carried over Wi-Fi calling.
+  final bool isWifi;
 
   bool get isMissed => type == CallType.missed;
   bool get isApp => appPackage != null;

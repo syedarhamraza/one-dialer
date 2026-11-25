@@ -772,6 +772,30 @@ abstract class AppLocalizations {
   /// **'Video'**
   String get video;
 
+  /// No description provided for @videoCallMark.
+  ///
+  /// In en, this message translates to:
+  /// **'Video call'**
+  String get videoCallMark;
+
+  /// No description provided for @wifiCallMark.
+  ///
+  /// In en, this message translates to:
+  /// **'Wi-Fi call'**
+  String get wifiCallMark;
+
+  /// No description provided for @volteCall.
+  ///
+  /// In en, this message translates to:
+  /// **'VoLTE call'**
+  String get volteCall;
+
+  /// No description provided for @vonrCall.
+  ///
+  /// In en, this message translates to:
+  /// **'5G voice call'**
+  String get vonrCall;
+
   /// No description provided for @remove.
   ///
   /// In en, this message translates to:

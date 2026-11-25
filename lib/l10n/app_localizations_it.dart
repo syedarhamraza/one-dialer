@@ -451,6 +451,18 @@ class AppLocalizationsIt extends AppLocalizations {
   String get video => 'Video';
 
   @override
+  String get videoCallMark => 'Videochiamata';
+
+  @override
+  String get wifiCallMark => 'Chiamata Wi-Fi';
+
+  @override
+  String get volteCall => 'Chiamata VoLTE';
+
+  @override
+  String get vonrCall => 'Chiamata voce 5G';
+
+  @override
   String get remove => 'Rimuovi';
 
   @override

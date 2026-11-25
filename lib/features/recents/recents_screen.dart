@@ -8,7 +8,6 @@ import '../../app/layout.dart';
 import '../../app/main_shell.dart' show navDock;
 import '../../core/contacts/contacts_repository.dart';
 import '../../core/prefs/dialer_prefs.dart';
-import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../theme/one_ui_scroll.dart';
@@ -37,6 +36,7 @@ import '../../widgets/select_mark.dart';
 import '../../widgets/sim_badge.dart';
 import '../blocking/blocking_repository.dart';
 import '../../l10n/l10n.dart';
+import '../../widgets/call_marks.dart';
 
 /// Samsung-style Recents: calls grouped by day, All / Missed filter, swipe right to
 /// call and left to message, tap for details, long-press to multi-select and delete.
@@ -74,7 +74,6 @@ class _RecentsScreenState extends State<RecentsScreen> {
 
   /// The big "Calls" going under the header, where a small one takes over.
   final _collapse = TitleCollapse(titleTop: 0);
-  List<SimCard> _sims = const [];
 
   /// Saved call notes by number key, shown under the rows' numbers.
   Map<String, List<(DateTime, String)>> _notes = const {};
@@ -85,9 +84,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
     TelecomBridge.instance.getRecorder().then((r) {
       if (mounted && r != null && r.consented) setState(() => _hasRecordings = true);
     }, onError: (Object _) {});
-    TelecomBridge.instance.getSims().then((s) {
-      if (mounted) setState(() => _sims = s);
-    });
+    TelecomBridge.instance.getSims().ignore(); // the badges follow TelecomBridge.sims
     DialerPrefs.instance.changes.addListener(_loadPrefs);
     // The call screen saves notes in its own engine; a call being logged is the cue to look.
     _repo.calls.addListener(_loadNotes);
@@ -263,8 +260,9 @@ class _RecentsScreenState extends State<RecentsScreen> {
 
   /// "1"/"2" badge, only on dual-SIM phones.
   String? _simBadge(String? simId) {
-    if (_sims.length < 2 || simId == null) return null;
-    final i = _sims.indexWhere((s) => s.id == simId);
+    final sims = TelecomBridge.instance.sims.value;
+    if (sims.length < 2 || simId == null) return null;
+    final i = sims.indexWhere((s) => s.id == simId);
     return i < 0 ? null : '${i + 1}';
   }
 
@@ -288,6 +286,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
           DialerPrefs.instance.recentTap, // decides the info button
           DialerPrefs.instance.swipeToCall,
           DialerPrefs.instance.groupByContact,
+          TelecomBridge.instance.sims, // SIM badges; re-read on every resume
         ]),
         builder: (context, _) => _buildList(context),
       ),
@@ -870,6 +869,7 @@ class _CallRow extends StatelessWidget {
                       CallTypeIcon(type: call.type),
                       const SizedBox(width: 6),
                       if (simBadge != null && !call.isApp) ...[SimBadge(label: simBadge!), const SizedBox(width: 6)],
+                      CallMediaMarks(call: call),
                       Flexible(
                         child: Text(
                           call.isApp
@@ -954,6 +954,38 @@ class _CallRow extends StatelessWidget {
   }
 }
 
+/// A SIM call's video, Wi-Fi calling, VoLTE/VoNR and HD marks, after its arrow and SIM badge (Recents and the
+/// call history). App calls already say "video" in their label.
+class CallMediaMarks extends StatelessWidget {
+  const CallMediaMarks({super.key, required this.call, this.size = 16});
+
+  final CallLogEntry call;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    if (call.isApp || !(call.isVideo || call.isWifi || call.isVolte || call.isVonr || call.isHd)) {
+      return const SizedBox.shrink();
+    }
+    final color = context.palette.textSecondary;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (call.isVideo) ...[
+          Icon(Icons.videocam_rounded, size: size, color: color, semanticLabel: context.l10n.videoCallMark),
+          const SizedBox(width: 6),
+        ],
+        if (call.isWifi) ...[
+          Icon(Icons.wifi_calling_rounded, size: size, color: color, semanticLabel: context.l10n.wifiCallMark),
+          const SizedBox(width: 6),
+        ],
+        if (call.isVonr || call.isVolte) ...[VolteMark(color: color, nr: call.isVonr), const SizedBox(width: 6)],
+        if (call.isHd) ...[_HdMark(color: color), const SizedBox(width: 6)],
+      ],
+    );
+  }
+}
+
 /// The small grey arrow of a call's details line (ColorOS's: in for missed calls too, a barred
 /// circle for rejected and blocked), our own glyphs from `tool/icons/render_icons.py`.
 class CallTypeIcon extends StatelessWidget {
@@ -1012,6 +1044,27 @@ class _Empty extends StatelessWidget {
               FilledButton(onPressed: onTap, child: Text(label)),
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A call's HD voice mark: "HD" knocked out of a small grey tag.
+class _HdMark extends StatelessWidget {
+  const _HdMark({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return ExcludeSemantics(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 2.5, vertical: 1),
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
+        child: Text(
+          'HD',
+          style: TextStyle(fontSize: 8, height: 1.1, fontWeight: FontWeight.w800, color: context.palette.card),
         ),
       ),
     );

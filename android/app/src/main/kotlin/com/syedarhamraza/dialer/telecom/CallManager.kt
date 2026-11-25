@@ -100,6 +100,9 @@ object CallManager {
         VideoCalls.release(call)
         speakerForVideo.remove(call)
         if (vonr.remove(call) || isVonr(call.details)) service?.let { CallLogSource.rememberVonr(it, call.details.creationTimeMillis) }
+        call.details.takeIf { it.callerDisplayNamePresentation == TelecomManager.PRESENTATION_ALLOWED }
+            ?.callerDisplayName?.trim()?.takeIf { it.isNotEmpty() }
+            ?.let { name -> service?.let { CallLogSource.rememberCnap(it, call.details.creationTimeMillis, name) } }
         lastState.remove(call)
         val id = ids.remove(call)?.also { calls.remove(it) }
         if (id != null && calls.isEmpty()) {
@@ -178,6 +181,9 @@ object CallManager {
             "simId" to details.accountHandle?.let { "${it.componentName.flattenToString()}|${it.id}" },
             "isHd" to details.hasProperty(Call.Details.PROPERTY_HIGH_DEF_AUDIO),
             "isWifi" to details.hasProperty(Call.Details.PROPERTY_WIFI),
+            // The network carrying the call right now: 4G (VoLTE) or 5G (VoNR); Wi-Fi and 3G get no mark.
+            "isVolte" to (details.extras?.getInt(TelecomManager.EXTRA_CALL_NETWORK_TYPE, -1) == TelephonyManager.NETWORK_TYPE_LTE),
+            "isVonr" to isVonr(details),
             "isPrivate" to (details.handlePresentation != android.telecom.TelecomManager.PRESENTATION_ALLOWED),
         ) + VideoCalls.info(call)
     }
