@@ -31,6 +31,7 @@ import kotlin.concurrent.thread
  * over Wireless debugging, the pairing notification, and starting it again after a reboot.
  */
 object ShellHelper {
+    private const val TAG = "OneRecorder"
     private const val PREFS = "shell"
     private const val PAIRED = "paired"
     private const val PORT = "port"
@@ -232,7 +233,11 @@ object ShellHelper {
         // Wireless debugging that was just switched on may refuse a first try before adbd has its keys.
         val deadline = System.currentTimeMillis() + 30_000 // adbd restarted by a hiding step takes a while to advertise Wireless debugging again
         while (!adb.connectNow(context, 5_000)) {
-            if (System.currentTimeMillis() > deadline) return false
+            if (System.currentTimeMillis() > deadline) {
+                // Off again right after we switched it on: Android turns it off on a Wi-Fi it doesn't trust.
+                Log.w(TAG, "Wireless debugging didn't connect (refused ${adb.refused}, on ${wirelessOn(context)})")
+                return false
+            }
             Thread.sleep(1000)
         }
         grant(context, adb)
@@ -387,16 +392,27 @@ object ShellHelper {
      */
     fun restart(context: Context, fromBoot: Boolean = false) {
         if (!supported() || !paired(context)) return stopWaitingForWifi(context)
-        if (running(context) && !stale(context)) return waitForWifi(context)
+        if (running(context) && !stale(context)) {
+            Watchdog.resetTries(context)
+            return waitForWifi(context)
+        }
+        // Warn, not info: some phones (vivo) hide an app's info lines, and Share diagnostics reads these.
+        Log.w(TAG, "restart (boot $fromBoot): Wi-Fi ${onWifi(context)}, Wireless debugging ${wirelessOn(context)}, grant ${canRestart(context)}")
         if (!onWifi(context)) {
             // Only from boot or an update: Android allows a foreground service start from there.
             if (fromBoot && canRestart(context) && NoWifiStart.enabled(context)) NoWifiStart.Service.start(context)
             return waitForWifi(context)
         }
         // Without the grant only a Wireless debugging the user left on can start it.
-        if ((canRestart(context) || wirelessOn(context)) && start(context)) return
+        if ((canRestart(context) || wirelessOn(context)) && start(context)) {
+            Log.w(TAG, "restart: started")
+            return Watchdog.resetTries(context)
+        }
         waitForWifi(context)
-        notifyStopped(context)
+        val retrying = Watchdog.retrySoon(context)
+        Log.w(TAG, "restart failed: ${problem(context)}, Wireless debugging now ${wirelessOn(context)}, ${if (retrying) "trying again soon" else "no tries left"}")
+        // Only once the tries are used up: one that works soon after a reboot needs no tap.
+        if (!retrying) notifyStopped(context)
     }
 
     private fun notifyStopped(context: Context) {

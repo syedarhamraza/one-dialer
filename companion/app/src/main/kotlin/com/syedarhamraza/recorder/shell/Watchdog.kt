@@ -30,6 +30,33 @@ class Watchdog : JobService() {
         }
 
         fun cancel(context: Context) = context.getSystemService(JobScheduler::class.java).cancel(JOB)
+
+        private const val RETRY = 2
+        private const val TRIES = "tries"
+        private val RETRY_AFTER_MS = longArrayOf(60_000, 3 * 60_000, 10 * 60_000)
+
+        private fun prefs(context: Context) = context.getSharedPreferences("watchdog", Context.MODE_PRIVATE)
+
+        /**
+         * After a failed automatic start: tries again on Wi-Fi in a minute, then 3, then 10, since
+         * right after a reboot Wireless debugging can take a while to come up. False once those are used up.
+         */
+        fun retrySoon(context: Context): Boolean {
+            val tries = prefs(context).getInt(TRIES, 0)
+            if (tries >= RETRY_AFTER_MS.size) return false
+            prefs(context).edit().putInt(TRIES, tries + 1).apply()
+            context.getSystemService(JobScheduler::class.java).schedule(JobInfo.Builder(RETRY, ComponentName(context, Watchdog::class.java))
+                .setMinimumLatency(RETRY_AFTER_MS[tries])
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED) // Wi-Fi
+                .build())
+            return true
+        }
+
+        /** Started, or a fresh reason to start (a reboot, Wi-Fi back): the next failure gets all its tries again. */
+        fun resetTries(context: Context) {
+            prefs(context).edit().remove(TRIES).apply()
+            context.getSystemService(JobScheduler::class.java).cancel(RETRY)
+        }
     }
 
     override fun onStartJob(params: JobParameters): Boolean {

@@ -26,7 +26,10 @@ class ShellReceiver : BroadcastReceiver() {
         thread {
             try {
                 if (code != null) ShellHelper.pair(app, code)
-                else ShellHelper.restart(app, fromBoot = intent.action != ACTION_WIFI)
+                else {
+                    Watchdog.resetTries(app)
+                    ShellHelper.restart(app, fromBoot = intent.action != ACTION_WIFI)
+                }
             } finally {
                 pending.finish()
             }
