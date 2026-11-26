@@ -1,6 +1,6 @@
 {
-  "version": "1.1.0",
-  "code": 25,
+  "version": "1.1.1",
+  "code": 26,
   "date": "Nov 2026",
   "changes": [
     "Carrier video calls on your SIM",
@@ -10,6 +10,7 @@
     "Merge duplicate contacts, Block & filter and Call logs, redesigned like ColorOS",
     "About shows One Dialer's copyright and licence",
     "Russian, Spanish, Turkish and German",
+    "Support One Dialer: leave a tip through Google Play",
     "A short welcome that helps you set up One Dialer",
     "Send feedback asks whether it's a problem, an idea or a question",
     "Brighter End button, new Mute icon, matching call menus, and an option for a blank launch screen",
@@ -32,6 +33,7 @@
     "Performance Monitoring is gone ahead of 1.0.0",
     "vivo: a minimised incoming call stays on the lock screen",
     "vivo shows one island for an incoming call, not two",
-    "Saving a new contact to Device works again"
+    "Saving a new contact to Device works again",
+    "Copies from Google Play no longer warn that they're unofficial or not from Google Play"
   ]
 }
