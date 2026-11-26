@@ -4,7 +4,8 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:in_app_update/in_app_update.dart' as play;
-import 'package:package_info_plus/package_info_plus.dart';
+
+import '../../../core/telecom/telecom_bridge.dart';
 
 /// What Google Play says about updates for this install.
 enum UpdateCheckResult {
@@ -151,9 +152,11 @@ class PlayUpdateService implements UpdateService {
     : _isAndroid = isAndroid ?? Platform.isAndroid,
       _installer = installer ?? installerStore;
 
+  /// Who updates this copy. Not package_info_plus's `installerStore`: that's the app that started
+  /// the first install, which isn't always Play for a copy Play installed and updates.
   static Future<String?> installerStore() async {
     try {
-      return (await PackageInfo.fromPlatform()).installerStore;
+      return await TelecomBridge.instance.installerPackage();
     } catch (_) {
       return null;
     }
