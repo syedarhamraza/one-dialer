@@ -1,7 +1,6 @@
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../app/app_info.dart';
 import '../../app/sideload_warning.dart';
@@ -44,7 +43,7 @@ class _AboutScreenState extends State<AboutScreen> {
     final version = await AppVersion.current();
     String? device, android, installer;
     try {
-      installer = (await PackageInfo.fromPlatform()).installerStore;
+      installer = await PlayUpdateService.installerStore();
       final info = await DeviceInfoPlugin().androidInfo;
       device = '${info.manufacturer} ${info.model}';
       android = info.version.release;
