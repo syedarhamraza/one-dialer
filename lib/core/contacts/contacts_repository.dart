@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 
 import '../../features/keypad/t9.dart';
 import '../../features/recents/call_log.dart';
 import '../prefs/dialer_prefs.dart';
 import '../telecom/telecom_bridge.dart';
+import '../crash_reporting.dart';
 import '../diagnostics/lag_diagnostics.dart';
 
 /// A device contact. Usable directly as a T9 entry; only [ContactsRepository.allContacts]
@@ -161,7 +163,7 @@ class ContactsRepository {
       final rows = await TelecomBridge.instance.getContacts();
       // A newer load started while this one read: its result is the one to show, whichever lands last.
       if (load != _loads) return;
-      final entries = entriesFrom(rows, order: prefs.nameOrder.value, sortBy: prefs.sortBy.value);
+      final entries = collapseCopies(entriesFrom(rows, order: prefs.nameOrder.value, sortBy: prefs.sortBy.value));
       entries.sort((a, b) => a.sortKey.compareTo(b.sortKey));
       final numbered = [
         for (final e in entries)
@@ -170,6 +172,10 @@ class ContactsRepository {
       if (!sameContacts(entries, allContacts.value)) allContacts.value = entries;
       if (!sameContacts(numbered, contacts.value)) _publish(numbered);
       revision.value++;
+    } on PlatformException catch (e, stack) {
+      // Samsung's contacts provider on Android 15 can refuse the read (LOG_COMPAT_CHANGE) on
+      // every change: keep the lists from the last read that worked instead of failing each time.
+      reportOnce('contacts_load_${e.code}', e, stack);
     } finally {
       LagDiagnostics.instance.action(DiagnosticAction.contactsLoad, elapsed: diagnosticTimer.elapsed);
     }
@@ -213,6 +219,60 @@ class ContactsRepository {
       );
     }
     return entries;
+  }
+
+  /// Shows copies Android didn't join (a SIM's or WhatsApp's copy of a Google contact: same
+  /// name, a shared number) as one contact: the copy from the best account, with every number
+  /// and account of the others. Nothing on the device changes; Merge duplicates joins for real.
+  @visibleForTesting
+  static List<DialerContact> collapseCopies(List<DialerContact> entries) {
+    final out = <DialerContact>[];
+    final owner = <String, int>{}; // name + number key → index in out
+    for (final e in entries) {
+      final name = e.name.toLowerCase().replaceAll(RegExp(r'\s+'), '');
+      final keys = [
+        for (final n in e.numbers)
+          if (numberKey(n) case final k when k.isNotEmpty) '$name|$k',
+      ];
+      final i = keys.map((k) => owner[k]).nonNulls.firstOrNull;
+      if (i == null) {
+        for (final k in keys) {
+          owner[k] = out.length;
+        }
+        out.add(e);
+        continue;
+      }
+      final (keep, other) = _accountRank(e) > _accountRank(out[i]) ? (e, out[i]) : (out[i], e);
+      final seen = {for (final n in keep.numbers) numberKey(n)};
+      final extra = [
+        for (final (j, n) in other.numbers.indexed)
+          if (seen.add(numberKey(n))) j,
+      ];
+      out[i] = DialerContact(
+        id: keep.id,
+        name: keep.name,
+        numbers: [...keep.numbers, for (final j in extra) other.numbers[j]],
+        labels: [...keep.labels, for (final j in extra) other.labels[j]],
+        isFavorite: keep.isFavorite || other.isFavorite,
+        primaryIndex: keep.primaryIndex,
+        sortKey: keep._sortKey,
+        accounts: {...keep.accounts, ...other.accounts}.toList(),
+      );
+      for (final k in keys) {
+        owner.putIfAbsent(k, () => i);
+      }
+    }
+    return out;
+  }
+
+  /// Which copy speaks for the others: a synced account's (Google, Samsung) or the phone's
+  /// over an app's (WhatsApp, Telegram, Meet), and an app's over a SIM's.
+  static int _accountRank(DialerContact c) {
+    final types = [for (final a in c.accounts) a.substring(0, a.indexOf('|')).toLowerCase()];
+    if (types.isEmpty || types.any((t) => t.contains('google') && !t.contains('tachyon') || t.contains('samsung'))) {
+      return 2;
+    }
+    return types.every((t) => t.contains('sim') || t.contains('sdn')) ? 0 : 1;
   }
 
   /// The name to show in [order] (`first` or `last` first) and the sort key by [sortBy],
@@ -309,25 +369,11 @@ class ContactsRepository {
     return hasAccess.value;
   }
 
-  /// Makes [number] the contact's default number (Samsung's "Set as default").
-  Future<void> setDefaultNumber(String id, String number) async {
-    // Fetch only the phones, so update() can't touch anything else.
-    final contact = await FlutterContacts.get(id, properties: {ContactProperty.phone});
-    if (contact == null) return;
-    final key = numberKey(number);
-    await FlutterContacts.update(
-      contact.copyWith(
-        phones: [
-          for (final p in contact.phones)
-            Phone(
-              number: p.number,
-              normalizedNumber: p.normalizedNumber,
-              label: p.label,
-              isPrimary: numberKey(p.number) == key,
-            ),
-        ],
-      ),
-    );
+  /// Makes [number] the contact's default number (Samsung's "Set as default"), or clears the
+  /// default when null. Android's contact-wide default, so Google's apps and Android Auto use it too.
+  Future<void> setDefaultNumber(String id, String? number) async {
+    await TelecomBridge.instance.setDefaultNumber(id, number);
+    await _load(); // at once, so the page shows it without waiting for the change observer
   }
 
   Future<void> delete(List<String> ids) => FlutterContacts.deleteAll(ids);

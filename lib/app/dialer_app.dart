@@ -8,6 +8,7 @@ import '../core/prefs/dialer_prefs.dart';
 import '../core/telecom/telecom_bridge.dart';
 import '../features/blocking/blocking_repository.dart';
 import '../features/recents/call_log_repository.dart';
+import '../features/setup/onboarding_screen.dart';
 import '../features/setup/setup_screen.dart';
 import '../l10n/l10n.dart';
 import '../theme/one_ui_theme.dart';
@@ -44,7 +45,9 @@ class DialerApp extends StatelessWidget {
         // Status and navigation bar icons follow the page.
         builder: (context, child) => AnnotatedRegion(
           value: context.palette.isLight ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light,
-          child: DesignWidth(child: LiquidQualityScope(child: ReducedMotionPages(child: child!))),
+          child: DesignWidth(
+            child: LiquidQualityScope(child: ReducedMotionPages(child: child!)),
+          ),
         ),
         home: const _SetupGate(),
       ),
@@ -86,7 +89,10 @@ class ReducedMotionPages extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MediaQuery.disableAnimationsOf(context)
-      ? Theme(data: Theme.of(context).copyWith(pageTransitionsTheme: _instant), child: child)
+      ? Theme(
+          data: Theme.of(context).copyWith(pageTransitionsTheme: _instant),
+          child: child,
+        )
       : child;
 }
 
@@ -111,7 +117,7 @@ class _NoTransition extends PageTransitionsBuilder {
   ) => BackdropGroup(child: GlassBackdropGroup(child: child));
 }
 
-/// Shows [SetupScreen] until the app is the default phone app.
+/// Shows [SetupScreen] until the app is the default phone app, then [OnboardingScreen] once.
 class _SetupGate extends StatefulWidget {
   const _SetupGate();
 
@@ -122,6 +128,11 @@ class _SetupGate extends StatefulWidget {
 class _SetupGateState extends State<_SetupGate> with WidgetsBindingObserver {
   bool? _isDefault; // null while checking
 
+  /// Onboarding shows after this run's [SetupScreen], or when nothing is saved yet (cleared data
+  /// keeps the role). Someone who had the role and their settings when it shipped is no new user.
+  bool _setupShown = false;
+  bool _onboarding = false;
+
   @override
   void initState() {
     super.initState();
@@ -131,7 +142,10 @@ class _SetupGateState extends State<_SetupGate> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _check(); // the role can be changed in Settings
+    if (state == AppLifecycleState.resumed) {
+      _check(); // the role can be changed in Settings
+      TelecomBridge.instance.getSims().ignore(); // and the SIMs, read ahead for the SIM menu (quickSims)
+    }
   }
 
   @override
@@ -148,13 +162,33 @@ class _SetupGateState extends State<_SetupGate> with WidgetsBindingObserver {
     ContactsRepository.instance.start();
     CallLogRepository.instance.start();
     BlockingRepository.instance.load();
-    setState(() => _isDefault = isDefault);
+    final prefs = DialerPrefs.instance;
+    var onboarding = false;
+    if (isDefault && !await prefs.onboarded()) {
+      if (_setupShown || await prefs.isFresh()) {
+        onboarding = true;
+      } else {
+        prefs.setOnboarded().ignore();
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _isDefault = isDefault;
+      _setupShown |= !isDefault;
+      _onboarding = onboarding;
+    });
+  }
+
+  void _onboarded() {
+    DialerPrefs.instance.setOnboarded().ignore();
+    setState(() => _onboarding = false);
   }
 
   @override
   Widget build(BuildContext context) {
     return switch (_isDefault) {
       null => const Scaffold(),
+      true when _onboarding => OnboardingScreen(onDone: _onboarded),
       true => const MainShell(),
       false => SetupScreen(onDone: _check),
     };

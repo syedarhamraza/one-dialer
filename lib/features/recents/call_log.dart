@@ -21,8 +21,10 @@ class CallLogEntry {
     this.app,
     this.appPackage,
     this.isVideo = false,
+    this.isWifi = false,
     this.isHd = false,
     this.isVolte = false,
+    this.isVonr = false,
   });
 
   factory CallLogEntry.fromMap(Map<Object?, Object?> map) {
@@ -40,16 +42,18 @@ class CallLogEntry {
       app: map['app'] as String?,
       appPackage: map['appPackage'] as String?,
       isVideo: map['video'] as bool? ?? false,
+      isWifi: map['wifi'] as bool? ?? false,
       isHd: map['hd'] as bool? ?? false,
       isVolte: map['volte'] as bool? ?? false,
+      isVonr: map['vonr'] as bool? ?? false,
     );
   }
 
   final int id;
   final String number;
 
-  /// HD voice, and carried over VoLTE (the history row's badges).
-  final bool isHd, isVolte;
+  /// HD voice, and carried over VoLTE or 5G voice (VoNR) (the history row's badges).
+  final bool isHd, isVolte, isVonr;
 
   /// The name Telecom cached when the call was logged; prefer the live contact name.
   final String? name;
@@ -68,6 +72,9 @@ class CallLogEntry {
   final String? app;
   final String? appPackage;
   final bool isVideo;
+
+  /// Carried over Wi-Fi calling.
+  final bool isWifi;
 
   bool get isMissed => type == CallType.missed;
   bool get isApp => appPackage != null;
@@ -95,25 +102,44 @@ String numberKey(String number) {
 
 DateTime _day(DateTime d) => DateTime(d.year, d.month, d.day);
 
-/// Groups newest-first [calls] into days (newest first), each holding [CallGroup]s.
-List<(DateTime, List<CallGroup>)> groupByDay(List<CallLogEntry> calls) {
+/// Groups newest-first [calls] into days (newest first), each holding one [CallGroup] per caller:
+/// every call to the same [keyOf] (default [numberKey]) that day, missed or not, adjacent or not.
+/// A group sits where its newest call is. Private calls and an app's calls never merge with others.
+/// With [backToBack], only consecutive calls with one number, of one kind (missed or not), merge.
+List<(DateTime, List<CallGroup>)> groupByDay(
+  List<CallLogEntry> calls, {
+  String Function(CallLogEntry)? keyOf,
+  bool backToBack = false,
+}) {
   final days = <(DateTime, List<CallGroup>)>[];
+  var byCaller = <String, CallGroup>{};
   for (final call in calls) {
     final day = _day(call.date);
-    if (days.isEmpty || days.last.$1 != day) days.add((day, []));
-    final groups = days.last.$2;
-    final last = groups.isEmpty ? null : groups.last.latest;
-    final sameRow =
-        last != null &&
-        !call.isPrivate &&
-        !last.isPrivate &&
-        numberKey(last.number) == numberKey(call.number) &&
-        last.appPackage == call.appPackage &&
-        last.isMissed == call.isMissed;
-    if (sameRow) {
-      groups.last.calls.add(call);
+    if (days.isEmpty || days.last.$1 != day) {
+      days.add((day, []));
+      byCaller = {};
+    }
+    if (backToBack) {
+      final groups = days.last.$2;
+      final last = groups.isEmpty ? null : groups.last.latest;
+      final sameRow =
+          last != null &&
+          !call.isPrivate &&
+          !last.isPrivate &&
+          numberKey(last.number) == numberKey(call.number) &&
+          last.appPackage == call.appPackage &&
+          last.isMissed == call.isMissed;
+      sameRow ? groups.last.calls.add(call) : groups.add(CallGroup([call]));
+      continue;
+    }
+    final key = call.isPrivate ? null : '${(keyOf ?? (c) => numberKey(c.number))(call)}|${call.appPackage}';
+    final group = key == null ? null : byCaller[key];
+    if (group != null) {
+      group.calls.add(call);
     } else {
-      groups.add(CallGroup([call]));
+      final created = CallGroup([call]);
+      days.last.$2.add(created);
+      if (key != null) byCaller[key] = created;
     }
   }
   return days;

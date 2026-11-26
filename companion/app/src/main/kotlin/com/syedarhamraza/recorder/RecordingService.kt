@@ -60,7 +60,10 @@ class RecordingService : Service() {
         fun start(context: Context, extras: android.os.Bundle?) {
             lastError = if (canRecord(context)) null else "helper"
             android.util.Log.i("OneRecorder", "start: error=$lastError")
-            if (lastError != null) return RecordingsProvider.notifyStatus(context)
+            if (lastError != null) {
+                RecorderSettings.saveLastCall(context, 0, heard = null)
+                return RecordingsProvider.notifyStatus(context)
+            }
             context.startForegroundService(Intent(context, RecordingService::class.java).apply { extras?.let(::putExtras) })
         }
 
@@ -114,6 +117,7 @@ class RecordingService : Service() {
         android.util.Log.i("OneRecorder", "begin: recording=${pipeline != null}")
         if (pipeline == null) {
             lastError = "helper"
+            RecorderSettings.saveLastCall(this, 0, heard = null)
             finish()
             return
         }
@@ -130,7 +134,11 @@ class RecordingService : Service() {
 
     private fun finish() {
         handler.removeCallbacks(watchCall)
-        pipeline?.stop()
+        pipeline?.let {
+            it.stop()
+            // Quieter than the Leveler's floor (silence or line hiss) means nothing was heard.
+            RecorderSettings.saveLastCall(this, it.seconds, heard = it.peak > 60)
+        }
         pipeline = null
         current = null
         prune(this)

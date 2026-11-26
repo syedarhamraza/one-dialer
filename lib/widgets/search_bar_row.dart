@@ -21,7 +21,7 @@ class SearchBarRow extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: _SearchField(
+          child: SearchField(
             controller: controller,
             onSubmitted: onSubmitted,
             hint: hint ?? context.l10n.searchContacts,
@@ -48,17 +48,31 @@ class SearchBarRow extends StatelessWidget {
 }
 
 /// ColorOS's search field: a glass stadium with the magnifier, the query and a clear button.
-class _SearchField extends StatelessWidget {
-  const _SearchField({required this.controller, required this.onSubmitted, required this.hint});
+class SearchField extends StatelessWidget {
+  const SearchField({
+    super.key,
+    required this.controller,
+    this.onSubmitted,
+    required this.hint,
+    this.autofocus = true,
+    this.blur = true,
+  });
 
   final TextEditingController controller;
   final ValueChanged<String>? onSubmitted;
   final String hint;
 
+  /// False for a field that sits on a page until tapped (the number picker's).
+  final bool autofocus;
+
+  /// False skips the backdrop blur, for a field on the plain page.
+  final bool blur;
+
   @override
   Widget build(BuildContext context) {
     return CallGlass(
       radius: 24,
+      blur: blur,
       child: SizedBox(
         height: 48,
         child: Padding(
@@ -70,7 +84,7 @@ class _SearchField extends StatelessWidget {
               Expanded(
                 child: TextField(
                   controller: controller,
-                  autofocus: true,
+                  autofocus: autofocus,
                   textInputAction: TextInputAction.search,
                   onSubmitted: onSubmitted,
                   style: const TextStyle(fontSize: 17),

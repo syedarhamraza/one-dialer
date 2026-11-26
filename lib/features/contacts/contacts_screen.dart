@@ -20,6 +20,9 @@ import '../../widgets/round_header_controls.dart';
 import '../../widgets/select_mark.dart';
 import '../search/search_screen.dart';
 import '../settings/settings_screen.dart';
+import '../../core/telecom/telecom_bridge.dart';
+import '../../widgets/swipe_action.dart';
+import 'call_contact.dart';
 import 'contact_actions.dart';
 import 'contact_details_screen.dart';
 import 'contact_sections.dart';
@@ -234,6 +237,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
           ContactsRepository.instance.hasAccess,
           DialerPrefs.instance.onlyWithNumbers,
           DialerPrefs.instance.hiddenAccounts,
+          DialerPrefs.instance.swipeToCall,
         ]),
         builder: (context, _) => _build(context),
       ),
@@ -356,7 +360,9 @@ class _ContactsScreenState extends State<ContactsScreen> {
                     itemCount: list.length,
                     itemBuilder: (context, i) {
                       final c = list[i];
-                      return ContactRow(
+                      final prefs = DialerPrefs.instance;
+                      final quick = _selected == null && c.numbers.isNotEmpty;
+                      final row = ContactRow(
                         contact: c,
                         isLast: i == list.length - 1,
                         selectMark: ValueListenableBuilder(
@@ -369,6 +375,15 @@ class _ContactsScreenState extends State<ContactsScreen> {
                         ),
                         onTap: () => _selected != null ? _toggleSelected(c) : _open(c),
                         onLongPress: () => _selected != null ? _toggleSelected(c) : _startSelection(c),
+                      );
+                      if (!quick || !prefs.swipeToCall.value) return row;
+                      return SwipeAction(
+                        onCall: () => callContact(context, c, rule: DialerPrefs.instance.swipeSim.value),
+                        onMessage: () async {
+                          final number = c.callNumber ?? await chooseNumber(context, c);
+                          if (number != null) await TelecomBridge.instance.sendSms(number);
+                        },
+                        child: row,
                       );
                     },
                   ),

@@ -1,3 +1,4 @@
+import 'package:dialer/features/blocking/blocking_repository.dart';
 import 'package:dialer/features/blocking/blocking_screen.dart';
 import 'package:dialer/core/prefs/dialer_prefs.dart';
 import 'package:dialer/core/telecom/call_info.dart';
@@ -7,6 +8,7 @@ import 'package:dialer/features/settings/dialing_settings_screen.dart';
 import 'package:dialer/features/settings/display_settings_screen.dart';
 import 'package:dialer/features/settings/glass_settings_screen.dart';
 import 'package:dialer/features/settings/quick_replies_screen.dart';
+import 'package:dialer/features/settings/settings_search.dart';
 import 'package:dialer/theme/one_ui_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -35,7 +37,13 @@ void main() {
         'getCallSettings' => <String, Object?>{},
         'getRecorderSettings' => <String, Object?>{'retentionDays': 0},
         'listRecordings' => [
-          {'name': '1762600000000_+923001234567.m4a', 'number': '+923001234567', 'startMillis': 1762600000000, 'durationMs': 65000, 'bytes': 1000},
+          {
+            'name': '1762600000000_+923001234567.m4a',
+            'number': '+923001234567',
+            'startMillis': 1762600000000,
+            'durationMs': 65000,
+            'bytes': 1000,
+          },
         ],
         'getSims' => [
           {'id': 'a', 'label': 'SIM 1'},
@@ -61,16 +69,51 @@ void main() {
 
   // Stops at the input: flutter_contacts' block call checks dart:io Platform.isAndroid, which
   // a desktop test host can't fake.
-  testWidgets('Add number opens the menu, and Enter number the floating input', (tester) async {
-    await open(tester, const BlockingScreen());
-    await tester.tap(find.text('Add number'));
+  testWidgets('Blocklist + opens the menu, and Enter number the floating input', (tester) async {
+    await open(tester, const NumberListScreen(allow: false));
+    expect(find.text('No numbers'), findsOneWidget);
+    await tester.tap(find.byTooltip('Add'));
     await tester.pumpAndSettle();
+    expect(find.text('Block by prefix'), findsOneWidget);
     expect(find.text('Choose from contacts'), findsOneWidget);
     await tester.tap(find.text('Enter number'));
     await tester.pumpAndSettle();
     expect(find.text('Choose from contacts'), findsNothing);
-    expect(find.text('Block number'), findsOneWidget);
+    expect(find.text('Enter number'), findsOneWidget);
     expect(find.byType(AlertDialog), findsNothing);
+  });
+
+  testWidgets('Allowlist has no prefix, and selecting starts empty then removes after asking', (tester) async {
+    BlockingRepository.instance.allowed.value = ['111', '222'];
+    addTearDown(() => BlockingRepository.instance.allowed.value = const []);
+    await open(tester, const NumberListScreen(allow: true));
+    await tester.tap(find.byTooltip('Add'));
+    await tester.pumpAndSettle();
+    expect(find.text('Block by prefix'), findsNothing);
+    await tester.tapAt(Offset.zero);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Select'));
+    await tester.pumpAndSettle();
+    expect(find.text('Select items'), findsOneWidget);
+    await tester.tap(find.text('222'));
+    await tester.pumpAndSettle();
+    expect(find.text('1 selected'), findsOneWidget);
+    await tester.tap(find.text('Remove'));
+    await tester.pumpAndSettle();
+    expect(find.text('Remove 1 number from the allowlist?'), findsOneWidget);
+    await tester.tap(find.text('Remove').last);
+    await tester.pumpAndSettle();
+    final saved = telecom.lastWhere((c) => c.method == 'setBlocking');
+    expect(saved.arguments['allowed'], ['111']);
+  });
+
+  testWidgets('Block & filter lists Block calls, the blocklist and the allowlist', (tester) async {
+    await open(tester, const BlockingScreen());
+    expect(find.text('Block calls'), findsOneWidget);
+    expect(find.text('Blocklist'), findsOneWidget);
+    expect(find.text('Allowlist'), findsOneWidget);
+    expect(find.text('None'), findsNWidgets(2));
   });
 
   testWidgets('call recording waits for the consent notice, then lists recordings', (tester) async {
@@ -196,10 +239,98 @@ void main() {
     expect(find.text('Glow strength'), findsNothing);
   });
 
-  testWidgets('Keypad & recents offers Choose SIM and call on dual SIM', (tester) async {
-    await open(tester, const DialingSettingsScreen());
-    await tester.tap(find.text('Tap a recent call'));
+  testWidgets('SIM cards greys the Swipe to call row, saying why, while swipe to call is off', (tester) async {
+    final prefs = DialerPrefs.instance;
+    addTearDown(() => prefs.swipeToCall.value = false);
+    await open(tester, const SimSettingsScreen());
+    expect(find.text('Keypad and contacts'), findsOneWidget);
+    expect(find.text('Swipe to call'), findsOneWidget);
+    expect(find.text('Used only when Swipe to call is on, in Quick calling'), findsOneWidget);
+    await tester.tap(find.text('Swipe to call'));
     await tester.pumpAndSettle();
-    expect(find.text('Choose SIM and call'), findsOneWidget);
+    expect(find.text('Ask every time'), findsOneWidget); // only Phone's default SIM: no menu while it's unused
+
+    prefs.swipeToCall.value = true;
+    await tester.pumpAndSettle();
+    expect(find.text('Used only when Swipe to call is on, in Quick calling'), findsNothing);
+    await tester.tap(find.text('Swipe to call'));
+    await tester.pumpAndSettle();
+    expect(find.text('Ask every time'), findsNWidgets(2)); // and in the menu
+  });
+
+  testWidgets('settings search finds a row on a page and opens it', (tester) async {
+    await open(tester, const SettingsSearchScreen());
+    await tester.enterText(find.byType(TextField), 'flash');
+    await tester.pumpAndSettle();
+    expect(find.text('Flash notification'), findsOneWidget);
+    expect(find.text('Calls › Incoming calls'), findsOneWidget);
+    await tester.tap(find.text('Flash notification'));
+    await tester.pumpAndSettle();
+    expect(find.text('Incoming calls'), findsWidgets);
+    expect(find.byType(TextField), findsNothing);
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'zzzz');
+    await tester.pumpAndSettle();
+    expect(find.text('No results found'), findsOneWidget);
+  });
+
+  testWidgets('every settings search entry opens', (tester) async {
+    await open(tester, const SettingsSearchScreen(recorder: true, appCallLog: true));
+    final context = tester.element(find.byType(SettingsSearchScreen));
+    final entries = settingsIndex(AppLocalizations.of(context), recorder: true, appCallLog: true);
+    expect(entries.length, greaterThan(40));
+    for (final e in entries) {
+      e.open(tester.element(find.byType(SettingsSearchScreen)));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      expect(tester.takeException(), isNull, reason: e.title);
+      final nav = tester.state<NavigatorState>(find.byType(Navigator).first);
+      while (nav.canPop()) {
+        nav.pop();
+        await tester.pump(const Duration(seconds: 1));
+      }
+    }
+  });
+
+  testWidgets('with taps set to Call, the call button is greyed with the reason and keeps its value', (tester) async {
+    final prefs = DialerPrefs.instance;
+    prefs.rowCallButton.value = true;
+    addTearDown(() {
+      prefs.rowCallButton.value = false;
+      prefs.recentTap.value = 'details';
+    });
+    await open(tester, const DialingSettingsScreen());
+    expect(find.text('Call button style'), findsOneWidget);
+
+    prefs.recentTap.value = 'call';
+    await tester.pumpAndSettle();
+    expect(find.text('Tapping a call already calls'), findsOneWidget);
+    expect(find.text('Call button style'), findsNothing);
+    await tester.tap(find.text('Call button on rows'));
+    await tester.pumpAndSettle();
+    expect(prefs.rowCallButton.value, isTrue);
+
+    prefs.recentTap.value = 'details';
+    await tester.pumpAndSettle();
+    expect(find.text('Tapping a call already calls'), findsNothing);
+    expect(find.text('Call button style'), findsOneWidget);
+    await tester.tap(find.text('Call button on rows'));
+    await tester.pumpAndSettle();
+    expect(prefs.rowCallButton.value, isFalse);
+  });
+
+  testWidgets('Settings › Keypad turns the two Call buttons off and back on', (tester) async {
+    final prefs = DialerPrefs.instance;
+    addTearDown(() => prefs.keypadSimButtons.value = null);
+    await open(tester, const KeypadSettingsScreen());
+    await tester.tap(find.text('Two Call buttons'));
+    await tester.pumpAndSettle();
+    expect(prefs.keypadSimButtons.value, isFalse);
+    await tester.tap(find.text('Two Call buttons'));
+    await tester.pumpAndSettle();
+    expect(prefs.keypadSimButtons.value, isTrue);
+    expect(find.text('Speed dial'), findsOneWidget);
   });
 }

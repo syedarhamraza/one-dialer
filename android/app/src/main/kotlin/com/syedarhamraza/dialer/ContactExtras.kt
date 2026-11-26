@@ -10,9 +10,12 @@ import android.graphics.Canvas
 import android.media.RingtoneManager
 import android.net.Uri
 import android.provider.ContactsContract.AggregationExceptions
+import android.provider.ContactsContract.CommonDataKinds.Phone
+import android.provider.ContactsContract.CommonDataKinds.StructuredName
 import android.provider.ContactsContract.Contacts
 import android.provider.ContactsContract.Data
 import android.provider.ContactsContract.RawContacts
+import com.syedarhamraza.dialer.telecom.BlockRules
 import java.io.ByteArrayOutputStream
 
 /** Contact details the contacts package doesn't cover: messaging apps, linked accounts, unlink, ringtone. */
@@ -23,9 +26,37 @@ object ContactExtras {
         // (label, package, mimetype of the "Message" row)
         Triple("WhatsApp", "com.whatsapp", "vnd.android.cursor.item/vnd.com.whatsapp.profile"),
         Triple("WhatsApp Business", "com.whatsapp.w4b", "vnd.android.cursor.item/vnd.com.whatsapp.w4b.profile"),
-        // Google Meet's video-call row: the contact page shows it as the Video tile, not a chat app.
-        Triple("Meet", "com.google.android.apps.tachyon", MEET_VIDEO),
     )
+
+    /**
+     * Every app's video-call row for this contact (WhatsApp, Telegram, Meet...), one per app:
+     * label, dataId, mimeType. Apps name these rows `...video...` (Meet's is [MEET_VIDEO]), and the
+     * row's account type is the app's package. Only rows the app can open, like [messagingApps].
+     */
+    fun videoApps(context: Context, contactId: String): List<Map<String, Any?>> {
+        val pm = context.packageManager
+        val out = mutableListOf<Map<String, Any?>>()
+        val seen = mutableSetOf<String>()
+        context.contentResolver.query(
+            Data.CONTENT_URI, arrayOf(Data._ID, Data.MIMETYPE, RawContacts.ACCOUNT_TYPE),
+            "${Data.CONTACT_ID} = ? AND (${Data.MIMETYPE} LIKE '%video%' OR ${Data.MIMETYPE} = ?)",
+            arrayOf(contactId, MEET_VIDEO), null,
+        )?.use { c ->
+            while (c.moveToNext()) {
+                val pkg = c.getString(2) ?: continue
+                // shortcut: a contact on one app with two numbers gets that app's first row; list each if asked.
+                if (pkg in seen) continue
+                val dataId = c.getLong(0)
+                val mime = c.getString(1)
+                val view = Intent(Intent.ACTION_VIEW).setDataAndType(ContentUris.withAppendedId(Data.CONTENT_URI, dataId), mime)
+                if (pm.queryIntentActivities(view.setPackage(pkg), 0).isEmpty()) continue
+                val label = runCatching { pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString() }.getOrNull() ?: continue
+                seen += pkg
+                out += mapOf("label" to label, "dataId" to dataId, "mimeType" to mime)
+            }
+        }
+        return out
+    }
 
     const val MEET_VIDEO = "vnd.android.cursor.item/com.google.android.apps.tachyon.phone.meet"
 
@@ -37,15 +68,37 @@ object ContactExtras {
                 Data.CONTENT_URI, arrayOf(Data._ID),
                 "${Data.CONTACT_ID} = ? AND ${Data.MIMETYPE} = ?", arrayOf(contactId, mime), null,
             )?.use { c -> if (c.moveToFirst()) c.getLong(0) else null } ?: continue
+            // A synced row (Meet's, from the Google account) stays when its app is missing or disabled,
+            // and tapping it opened nothing (NO_APP on vivo): show only rows the app can open.
+            val view = Intent(Intent.ACTION_VIEW).setDataAndType(ContentUris.withAppendedId(Data.CONTENT_URI, dataId), mime)
+            if (context.packageManager.queryIntentActivities(view.setPackage(pkg), 0).isEmpty()) continue
             out += mapOf("label" to label, "dataId" to dataId, "mimeType" to mime, "icon" to appIcon(context, pkg))
         }
         return out
     }
 
-    /** Opens a contact data row (e.g. WhatsApp's chat) the way Contacts apps do. */
+    /**
+     * Opens a contact data row (e.g. WhatsApp's chat) the way Contacts apps do, in the app that owns
+     * it: other apps (SHAREit) claim these links too, and WhatsApp opened from that chooser closed at once.
+     * Its exact activity, not just its package: with vivo's App Clone the package matches the clone too,
+     * and Android asked which WhatsApp to use.
+     */
     fun openData(context: Context, dataId: Long, mimeType: String) {
         val uri = ContentUris.withAppendedId(Data.CONTENT_URI, dataId)
-        context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri, mimeType).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        val intent = Intent(Intent.ACTION_VIEW).setDataAndType(uri, mimeType).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        // The row's account type is its app's package (WhatsApp, Telegram, Meet...).
+        val owner = APPS.firstOrNull { it.third == mimeType }?.second
+            ?: context.contentResolver.query(uri, arrayOf(RawContacts.ACCOUNT_TYPE), null, null, null)
+                ?.use { c -> if (c.moveToFirst()) c.getString(0) else null }
+        val target = Intent(intent).setPackage(owner)
+        // Only this user's activities: the clone's copy lives in another profile.
+        context.packageManager.queryIntentActivities(target, 0).firstOrNull()?.activityInfo
+            ?.let { target.setClassName(it.packageName, it.name) }
+        try {
+            context.startActivity(target)
+        } catch (_: android.content.ActivityNotFoundException) {
+            context.startActivity(intent) // the owner can't open it itself; let Android pick
+        }
     }
 
     /** The raw contacts (one per account) linked into this contact: id, name, account type and name. */
@@ -83,9 +136,16 @@ object ContactExtras {
         if (ops.isNotEmpty()) context.contentResolver.applyBatch(android.provider.ContactsContract.AUTHORITY, ops)
     }
 
-    /** Manage contacts › Merge duplicates: joins every raw contact of [contactIds] into one contact. */
-    fun merge(context: Context, contactIds: List<String>) {
-        val raws = contactIds.flatMap { id -> rawContacts(context, id).map { it["id"] as Long } }
+    /**
+     * Manage contacts › Merge duplicates: joins every raw contact of [contactIds] into one
+     * contact, named after [nameContactId]'s name (its name row becomes the super-primary one,
+     * which the aggregator prefers), and deletes the phone rows whose number ends like one of
+     * [removeNumbers] (the ones left unticked).
+     */
+    fun merge(context: Context, contactIds: List<String>, nameContactId: String? = null, removeNumbers: List<String> = emptyList()) {
+        val ordered = nameContactId?.takeIf { it in contactIds }?.let { listOf(it) + (contactIds - it) } ?: contactIds
+        val nameRaws = nameContactId?.let { id -> rawContacts(context, id).map { it["id"] as Long } }.orEmpty().toSet()
+        val raws = ordered.flatMap { id -> rawContacts(context, id).map { it["id"] as Long } }.distinct()
         val first = raws.firstOrNull() ?: return
         val ops = ArrayList<ContentProviderOperation>()
         for (other in raws.drop(1)) {
@@ -95,7 +155,34 @@ object ContactExtras {
                 .withValue(AggregationExceptions.RAW_CONTACT_ID2, other)
                 .build()
         }
-        if (ops.isNotEmpty()) context.contentResolver.applyBatch(android.provider.ContactsContract.AUTHORITY, ops)
+        val resolver = context.contentResolver
+        if (ops.isNotEmpty()) resolver.applyBatch(android.provider.ContactsContract.AUTHORITY, ops)
+        // The name and the unticked numbers: one at a time, so a row another app's account
+        // protects (vivo has no is_read_only column to check first) stays without failing the merge.
+        val removeKeys = removeNumbers.map(BlockRules::numberKey).filter { it.isNotEmpty() }.toSet()
+        val edits = ArrayList<ContentProviderOperation>()
+        resolver.query(
+            Data.CONTENT_URI, arrayOf(Data._ID, Data.RAW_CONTACT_ID, Data.MIMETYPE, Phone.NUMBER),
+            "${Data.RAW_CONTACT_ID} IN (${raws.joinToString(",")}) AND ${Data.MIMETYPE} IN (?, ?)",
+            arrayOf(StructuredName.CONTENT_ITEM_TYPE, Phone.CONTENT_ITEM_TYPE), null,
+        )?.use { c ->
+            while (c.moveToNext()) {
+                val row = ContentUris.withAppendedId(Data.CONTENT_URI, c.getLong(0))
+                if (c.getString(2) == StructuredName.CONTENT_ITEM_TYPE) {
+                    if (nameRaws.isEmpty()) continue
+                    val primary = if (c.getLong(1) in nameRaws) 1 else 0
+                    edits += ContentProviderOperation.newUpdate(row)
+                        .withValue(Data.IS_PRIMARY, primary)
+                        .withValue(Data.IS_SUPER_PRIMARY, primary)
+                        .build()
+                } else if (BlockRules.numberKey(c.getString(3).orEmpty()) in removeKeys) {
+                    edits += ContentProviderOperation.newDelete(row).build()
+                }
+            }
+        }
+        for (op in edits) {
+            runCatching { resolver.applyBatch(android.provider.ContactsContract.AUTHORITY, arrayListOf(op)) }
+        }
     }
 
     /**

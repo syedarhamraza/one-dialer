@@ -14,7 +14,9 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.os.Build
 import android.provider.Settings
+import android.util.Log
 import com.syedarhamraza.recorder.R
+import com.syedarhamraza.recorder.RecorderSettings
 import com.syedarhamraza.recorder.RecordingsProvider
 import java.io.IOException
 import java.io.InputStream
@@ -29,14 +31,18 @@ import kotlin.concurrent.thread
  * over Wireless debugging, the pairing notification, and starting it again after a reboot.
  */
 object ShellHelper {
+    private const val TAG = "OneRecorder"
     private const val PREFS = "shell"
     private const val PAIRED = "paired"
     private const val PORT = "port"
     private const val TOKEN = "token"
+    private const val APK = "apk"
     private const val CHANNEL = "setup"
     private const val PAIR_NOTIFICATION = 2
+    private const val STOPPED_NOTIFICATION = 3
     const val KEY_CODE = "code"
-    private const val ADB_WIFI = "adb_wifi_enabled"
+    const val ADB_WIFI = "adb_wifi_enabled"
+    private const val DEV_OPTIONS = Settings.Global.DEVELOPMENT_SETTINGS_ENABLED
 
     /** Both sides needs Android 12+: shell's call capture works there without scrcpy's Android 11 workaround. */
     fun supported() = Build.VERSION.SDK_INT >= 31
@@ -48,17 +54,44 @@ object ShellHelper {
     fun developerOptionsOn(context: Context) =
         Settings.Global.getInt(context.contentResolver, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) == 1
 
+    /** Why a start can't work: off Wi-Fi, or Wireless debugging off with no way to switch it on, else the connection itself. */
+    enum class Problem { WIFI, DEBUGGING, CONNECT }
+
+    fun problem(onWifi: Boolean, wirelessOn: Boolean, canSwitch: Boolean) = when {
+        !onWifi -> Problem.WIFI
+        !wirelessOn && !canSwitch -> Problem.DEBUGGING
+        else -> Problem.CONNECT
+    }
+
+    /** What Setup tells after a failed start, read from the phone as it is now. */
+    fun problem(context: Context) = problem(onWifi(context), wirelessOn(context), canRestart(context))
+
+    /** The last [start] didn't bring the helper up; Setup then says why ([problem]). */
+    @Volatile var startFailed = false
+        private set
+
+    fun wirelessOn(context: Context) = global(context, ADB_WIFI) == 1
+
     /** One Recorder can switch Wireless debugging on after a reboot (granted by the helper's first start). */
     fun canRestart(context: Context) =
         context.checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED
 
     /** Answers within a fraction of a second: a stopped helper refuses the connection at once. */
-    fun running(context: Context): Boolean = offMain(false) {
+    fun running(context: Context): Boolean = ask(context, "ping")
+
+    /**
+     * The helper runs an older One Recorder: it quits once its APK is gone, but Android 17 keeps
+     * an updated app's old APK while anything still has it open.
+     */
+    private fun stale(context: Context) = prefs(context).getString(APK, null) != context.applicationInfo.sourceDir
+
+    /** One request to the helper ([ShellMain.Request]); true when it answered ok. */
+    private fun ask(context: Context, request: String): Boolean = offMain(false) {
         val (port, token) = endpoint(context) ?: return@offMain false
         try {
             connect(port).use { socket ->
-                socket.soTimeout = 1000
-                socket.getOutputStream().write("$token ping\n".toByteArray())
+                socket.soTimeout = 3000
+                socket.getOutputStream().write("$token $request\n".toByteArray())
                 socket.getInputStream().bufferedReader().readLine() == "ok"
             }
         } catch (_: IOException) {
@@ -87,6 +120,45 @@ object ShellHelper {
     }
 
     /**
+     * Installs One Recorder's update through the helper (Setup › Software update), with no prompt.
+     * Blocks; false when the helper isn't running or `pm` refused it. On success Android usually
+     * ends this process before it returns.
+     */
+    fun install(context: Context, apk: java.io.File): Boolean {
+        val (port, token) = endpoint(context) ?: return false
+        return try {
+            connect(port).use { socket ->
+                socket.soTimeout = 120_000 // pm install takes a while
+                val out = socket.getOutputStream()
+                out.write("$token install ${apk.length()}\n".toByteArray())
+                apk.inputStream().use { it.copyTo(out) }
+                socket.getInputStream().bufferedReader().readLine() == "ok"
+            }
+        } catch (e: IOException) {
+            Log.w("OneRecorder", "update install failed", e)
+            false
+        }
+    }
+
+    /** Setup's Check now: the first thing that doesn't work, tried for real, not read from what was saved. */
+    enum class Check { WORKS, NO_CAPTURE, NOT_PAIRED, WONT_START }
+
+    /** Starts the helper if it's down (proving pairing), then has it open the call audio for half a second. Blocks. */
+    fun check(context: Context): Check {
+        if (!running(context) && !start(context)) {
+            if (!Adb.get(context).refused) return Check.WONT_START
+            forgetPairing(context) // Wireless debugging no longer trusts this key: back to the pairing step
+            return Check.NOT_PAIRED
+        }
+        // A recording in progress already proves capture, and a second one could disturb it.
+        if (com.syedarhamraza.recorder.RecordingService.current != null) return Check.WORKS
+        val pcm = openPcm(context) ?: return Check.NO_CAPTURE
+        Thread.sleep(500)
+        runCatching { pcm.close() }
+        return Check.WORKS
+    }
+
+    /**
      * Android refuses sockets on the main thread, even to 127.0.0.1, and a binder call carries the
      * caller's main-thread rule along (One Dialer asks for status from its main thread), so these
      * short loopback calls always run on a fresh thread this one waits for.
@@ -106,49 +178,190 @@ object ShellHelper {
         return if (port > 0 && token != null) port to token else null
     }
 
+    private fun global(context: Context, key: String) = Settings.Global.getInt(context.contentResolver, key, 0)
+
+    private fun putGlobal(context: Context, key: String, value: Int) =
+        runCatching { Settings.Global.putInt(context.contentResolver, key, value) }.isSuccess
+
+    /**
+     * Developer options and debugging go off while the helper runs (Setup's switch, and the phone
+     * allows it). Without WRITE_SECURE_SETTINGS (ColorOS refuses shell's pm grant unless Disable
+     * system optimization is on) the running helper switches them instead.
+     */
+    fun hiding(context: Context) =
+        RecorderSettings.hideDeveloperOptions(context) && !RecorderSettings.hideUnsupported(context) &&
+            (canRestart(context) || running(context))
+
     /**
      * Starts the helper over Wireless debugging. Switches Wireless debugging on first when it's off
-     * and One Recorder may ([canRestart]), and back off afterwards if the helper survives that.
-     * Blocks for up to about 20 s.
+     * and One Recorder may ([canRestart]), and back off afterwards if the helper survives that
+     * (all of debugging, while [hiding]). Blocks for up to about 20 s.
      */
     @Synchronized
     fun start(context: Context): Boolean {
         if (!supported() || !paired(context)) return false
-        if (running(context)) return true
-        val resolver = context.contentResolver
-        val wasOn = Settings.Global.getInt(resolver, ADB_WIFI, 0) == 1
-        val switched = !wasOn && canRestart(context) && runCatching { Settings.Global.putInt(resolver, ADB_WIFI, 1) }.isSuccess
+        if (running(context)) {
+            // Re-pairing turned debugging back on under a running helper: hide it again.
+            if (!stale(context)) return !(hiding(context) && exposed(context)) || hideNow(context) || start(context)
+            ask(context, "quit") // still the version before an update
+        }
+        // Developer options were turned off by us: some phones won't run Wireless debugging without them.
+        if (hiding(context)) putGlobal(context, DEV_OPTIONS, 1)
+        // Before the helper starts: switching USB debugging on may restart adbd.
+        if (RecorderSettings.keepRecordingOffWifi(context) && canRestart(context)) putGlobal(context, Settings.Global.ADB_ENABLED, 1)
+        val switched = global(context, ADB_WIFI) != 1 && canRestart(context) && putGlobal(context, ADB_WIFI, 1)
         val adb = Adb.get(context)
-        try {
-            if (!adb.connectNow(context, 15_000)) return false
-            // Lets One Recorder switch Wireless debugging on by itself after a reboot.
-            adb.shell("pm grant ${context.packageName} ${Manifest.permission.WRITE_SECURE_SETTINGS}")
-            val random = SecureRandom()
-            val token = ByteArray(24).also(random::nextBytes).joinToString("") { "%02x".format(it) }
-            val port = 20_000 + random.nextInt(40_000)
-            prefs(context).edit().putInt(PORT, port).putString(TOKEN, token).commit()
-            val apk = context.applicationInfo.sourceDir
-            // adbd kills the shell's process group when a plain shell: command returns, before a
-            // background job even starts: setsid moves the helper out, and the sleep lets it get there.
-            adb.shell(
-                "CLASSPATH='$apk' setsid app_process /system/bin ${ShellMain::class.java.name} $port $token '$apk' " +
-                    "</dev/null >/dev/null 2>&1 & sleep 1",
-            )
-            val up = waitUntilRunning(context)
-            if (up && switched) {
-                Settings.Global.putInt(resolver, ADB_WIFI, 0)
-                // Some phones end everything Wireless debugging started when it goes off: then leave it on.
-                Thread.sleep(1500)
-                if (!running(context)) {
-                    Settings.Global.putInt(resolver, ADB_WIFI, 1)
-                    return start(context)
-                }
-            }
-            return up
+        val up = try {
+            launch(context, adb)
         } finally {
             adb.disconnectQuietly()
-            RecordingsProvider.notifyStatus(context)
         }
+        // A failed start mustn't leave Developer options showing for banking apps to see (debugging stays as it was).
+        if (!up && hiding(context)) putGlobal(context, DEV_OPTIONS, 0)
+        val ok = up && settle(context, switched)
+        startFailed = !ok
+        if (ok) {
+            // The helper ends with Wireless debugging when Wi-Fi goes: start it again when Wi-Fi is back.
+            waitForWifi(context)
+            context.getSystemService(NotificationManager::class.java).cancel(STOPPED_NOTIFICATION)
+        }
+        RecordingsProvider.notifyStatus(context)
+        return ok
+    }
+
+    private fun launch(context: Context, adb: Adb): Boolean {
+        // Wireless debugging that was just switched on may refuse a first try before adbd has its keys.
+        val deadline = System.currentTimeMillis() + 30_000 // adbd restarted by a hiding step takes a while to advertise Wireless debugging again
+        while (!adb.connectNow(context, 5_000)) {
+            if (System.currentTimeMillis() > deadline) {
+                // Off again right after we switched it on: Android turns it off on a Wi-Fi it doesn't trust.
+                Log.w(TAG, "Wireless debugging didn't connect (refused ${adb.refused}, on ${wirelessOn(context)})")
+                return false
+            }
+            Thread.sleep(1000)
+        }
+        grant(context, adb)
+        val random = SecureRandom()
+        val token = ByteArray(24).also(random::nextBytes).joinToString("") { "%02x".format(it) }
+        val port = 20_000 + random.nextInt(40_000)
+        val apk = context.applicationInfo.sourceDir
+        prefs(context).edit().putInt(PORT, port).putString(TOKEN, token).putString(APK, apk).commit()
+        // adbd kills the shell's process group when a plain shell: command returns, before a
+        // background job even starts: setsid moves the helper out, and the sleep lets it get there.
+        adb.shell(
+            "CLASSPATH='$apk' setsid app_process /system/bin ${ShellMain::class.java.name} $port $token '$apk' " +
+                "</dev/null >/dev/null 2>&1 & sleep 1",
+        )
+        return waitUntilRunning(context)
+    }
+
+    /** Lets One Recorder switch Wireless debugging on by itself after a reboot. ColorOS refuses it until Disable system optimization is on. */
+    private fun grant(context: Context, adb: Adb) {
+        adb.shell("pm grant ${context.packageName} ${Manifest.permission.WRITE_SECURE_SETTINGS}")
+    }
+
+    /** Setup's "Start after a reboot" row, once the phone allows the grant: asks for it again over Wireless debugging. */
+    @Synchronized
+    fun grantAgain(context: Context): Boolean {
+        val adb = Adb.get(context)
+        try {
+            if (adb.connectNow(context, 10_000)) grant(context, adb)
+        } finally {
+            adb.disconnectQuietly()
+        }
+        val granted = canRestart(context)
+        // Now One Recorder may switch Wireless debugging back on, so all of debugging can go off.
+        if (granted && hiding(context) && running(context)) hideNow(context)
+        return granted
+    }
+
+    /** After a start: switches off what it switched on, or all of debugging while [hiding]. False only if the helper is gone. */
+    private fun settle(context: Context, switchedWifi: Boolean): Boolean {
+        if (hiding(context)) return hideNow(context) || start(context)
+        if (!switchedWifi) return true
+        putGlobal(context, ADB_WIFI, 0)
+        // Some phones end everything Wireless debugging started when it goes off: then leave it on.
+        Thread.sleep(1500)
+        if (running(context)) return true
+        putGlobal(context, ADB_WIFI, 1)
+        return start(context)
+    }
+
+    /**
+     * Turns Developer options, then USB debugging, then Wireless debugging off, so banking apps
+     * that refuse them open, checking after each that the helper still answers. Some phones
+     * restart adbd when one goes off, and where shell can't leave adbd's cgroup (Android 17's
+     * cgroup v2 is system-only) that kills the helper: that switch is put back and stays on from
+     * then on ([RecorderSettings.keepUsbDebugging], [RecorderSettings.keepWirelessDebugging]).
+     * If even Developer options end it, stops hiding on this phone.
+     */
+    fun hideNow(context: Context): Boolean {
+        // Only Developer options: with nothing to switch debugging back on, turning it off could end the helper for good.
+        if (!canRestart(context)) return ask(context, "hide")
+        if (!turnOff(context, DEV_OPTIONS)) {
+            RecorderSettings.setHideUnsupported(context, true)
+            return false
+        }
+        val keepUsb = RecorderSettings.keepUsbDebugging(context) || RecorderSettings.keepRecordingOffWifi(context)
+        if (!keepUsb && !turnOff(context, Settings.Global.ADB_ENABLED)) {
+            RecorderSettings.setKeepUsbDebugging(context, true)
+            return false
+        }
+        if (!RecorderSettings.keepWirelessDebugging(context) && !turnOff(context, ADB_WIFI)) {
+            RecorderSettings.setKeepWirelessDebugging(context, true)
+            return false
+        }
+        return true
+    }
+
+    /** Something [hideNow] would turn off is on. */
+    private fun exposed(context: Context) = global(context, DEV_OPTIONS) == 1 ||
+        (!RecorderSettings.keepUsbDebugging(context) && global(context, Settings.Global.ADB_ENABLED) == 1) ||
+        (!RecorderSettings.keepWirelessDebugging(context) && global(context, ADB_WIFI) == 1)
+
+    /** Writes [key] = 0 and checks the helper survived it; if not, puts the old value back. */
+    private fun turnOff(context: Context, key: String): Boolean {
+        val was = global(context, key)
+        putGlobal(context, key, 0)
+        Thread.sleep(1500)
+        val alive = running(context)
+        Log.i("OneRecorder", "$key off: helper ${if (alive) "still running" else "ended, turning it back on"}")
+        if (alive) return true
+        putGlobal(context, key, was)
+        return false
+    }
+
+    /**
+     * Settings' Keep recording away from Wi-Fi: USB debugging keeps adbd, and so the helper,
+     * running once Wi-Fi (and with it Wireless debugging) is gone. Switching it on may restart
+     * adbd, so a helper that ends with it is started again.
+     */
+    fun keepUsbDebugging(context: Context, on: Boolean) {
+        if (!on) {
+            if (hiding(context) && running(context)) hideNow(context)
+            return
+        }
+        if (!canRestart(context) || global(context, Settings.Global.ADB_ENABLED) == 1) return
+        val wasRunning = running(context)
+        putGlobal(context, Settings.Global.ADB_ENABLED, 1)
+        Thread.sleep(1500)
+        if (wasRunning && !running(context)) start(context)
+    }
+
+    /** Setup's Pair again: back to the pairing steps, keeping the key (pairing it again re-trusts it). */
+    fun forgetPairing(context: Context) {
+        showDeveloperOptions(context) // Wireless debugging lives there
+        prefs(context).edit().putBoolean(PAIRED, false).commit()
+        stopWaitingForWifi(context)
+        Watchdog.cancel(context)
+        RecordingsProvider.notifyStatus(context)
+    }
+
+    fun showDeveloperOptions(context: Context) = putGlobal(context, DEV_OPTIONS, 1) || ask(context, "show")
+
+    /** After a start forced through [NoWifiStart], whose writes may have turned Wireless debugging back on. */
+    fun settleForced(context: Context) {
+        if (hiding(context)) hideNow(context) else putGlobal(context, ADB_WIFI, 0)
     }
 
     private fun waitUntilRunning(context: Context): Boolean {
@@ -163,21 +376,58 @@ object ShellHelper {
     fun pair(context: Context, code: String): Boolean {
         val service = Adb.findPairingService(context, 8000)
         val ok = service != null && Adb.get(context).pairWith(service.first, service.second, code.trim())
-        if (ok) prefs(context).edit().putBoolean(PAIRED, true).commit()
+        if (ok) {
+            prefs(context).edit().putBoolean(PAIRED, true).commit()
+            Watchdog.schedule(context)
+        }
         val started = ok && start(context)
         notifyPairing(context, if (started) R.string.pair_done else if (ok) R.string.pair_paired else R.string.pair_failed)
         return ok
     }
 
-    /** After a reboot, an update or on reaching Wi-Fi: starts the helper again when One Recorder may. */
-    fun restart(context: Context) {
-        if (!supported() || !paired(context) || running(context)) return stopWaitingForWifi(context)
-        if (!canRestart(context)) return
-        if (!onWifi(context)) return waitForWifi(context)
-        if (start(context)) stopWaitingForWifi(context)
+    /**
+     * After a reboot, an update or on reaching Wi-Fi: starts the helper again when One Recorder
+     * may, and keeps waiting for Wi-Fi while paired, since the helper ends whenever Wi-Fi goes.
+     * When it can't start by itself, a notification takes the user to Setup.
+     */
+    fun restart(context: Context, fromBoot: Boolean = false) {
+        if (!supported() || !paired(context)) return stopWaitingForWifi(context)
+        if (running(context) && !stale(context)) {
+            Watchdog.resetTries(context)
+            return waitForWifi(context)
+        }
+        // Warn, not info: some phones (vivo) hide an app's info lines, and Share diagnostics reads these.
+        Log.w(TAG, "restart (boot $fromBoot): Wi-Fi ${onWifi(context)}, Wireless debugging ${wirelessOn(context)}, grant ${canRestart(context)}")
+        if (!onWifi(context)) {
+            // Only from boot or an update: Android allows a foreground service start from there.
+            if (fromBoot && canRestart(context) && NoWifiStart.enabled(context)) NoWifiStart.Service.start(context)
+            return waitForWifi(context)
+        }
+        // Without the grant only a Wireless debugging the user left on can start it.
+        if ((canRestart(context) || wirelessOn(context)) && start(context)) {
+            Log.w(TAG, "restart: started")
+            return Watchdog.resetTries(context)
+        }
+        waitForWifi(context)
+        val retrying = Watchdog.retrySoon(context)
+        Log.w(TAG, "restart failed: ${problem(context)}, Wireless debugging now ${wirelessOn(context)}, ${if (retrying) "trying again soon" else "no tries left"}")
+        // Only once the tries are used up: one that works soon after a reboot needs no tap.
+        if (!retrying) notifyStopped(context)
     }
 
-    private fun onWifi(context: Context): Boolean {
+    private fun notifyStopped(context: Context) {
+        val open = PendingIntent.getActivity(
+            context, 3, Intent(context, com.syedarhamraza.recorder.SetupActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        context.getSystemService(NotificationManager::class.java).notify(STOPPED_NOTIFICATION, builder(context)
+            .setContentTitle(context.getString(R.string.stopped_title))
+            .setContentText(context.getString(R.string.stopped_detail))
+            .setStyle(Notification.BigTextStyle().bigText(context.getString(R.string.stopped_detail)))
+            .setContentIntent(open).setAutoCancel(true).build())
+    }
+
+    fun onWifi(context: Context): Boolean {
         val manager = context.getSystemService(ConnectivityManager::class.java)
         return manager.getNetworkCapabilities(manager.activeNetwork)?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
     }
@@ -188,6 +438,8 @@ object ShellHelper {
 
     /** The system wakes [ShellReceiver] when Wi-Fi connects, even with One Recorder not running. */
     private fun waitForWifi(context: Context) {
+        // Already waiting: registering again while on Wi-Fi fires at once, and restart() calls back here, a loop.
+        if (wifiIntent(context, PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_MUTABLE) != null) return
         val request = NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI).build()
         context.getSystemService(ConnectivityManager::class.java)
             .registerNetworkCallback(request, wifiIntent(context, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE))
@@ -214,7 +466,7 @@ object ShellHelper {
     private fun notifyPairing(context: Context, text: Int) =
         post(context, builder(context).setContentText(context.getString(text)).setAutoCancel(true).setTimeoutAfter(15_000).build())
 
-    private fun builder(context: Context): Notification.Builder {
+    internal fun builder(context: Context): Notification.Builder {
         context.getSystemService(NotificationManager::class.java).createNotificationChannel(
             NotificationChannel(CHANNEL, context.getString(R.string.channel_setup), NotificationManager.IMPORTANCE_HIGH),
         )

@@ -5,7 +5,6 @@ import 'package:dialer/app/main_shell.dart';
 import 'package:dialer/core/contacts/contacts_repository.dart';
 import 'package:dialer/core/prefs/dialer_prefs.dart';
 import 'package:dialer/features/blocking/blocking_repository.dart';
-import 'package:dialer/features/blocking/blocking_screen.dart';
 import 'package:dialer/features/contacts/contact_picker_screen.dart';
 import 'package:dialer/features/keypad/keypad_screen.dart';
 import 'package:dialer/features/recents/call_details_screen.dart';
@@ -22,6 +21,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:dialer/l10n/app_localizations.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
+
+import 'real_font.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -80,6 +81,8 @@ void main() {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
+      // The tabs size to their labels, so measure real text.
+      await tester.runAsync(loadRealFont);
       // No DesignWidth here, so the pills draw at 1 / size: big at a small App size.
       DialerPrefs.instance.displaySize.value = size;
       addTearDown(() => DialerPrefs.instance.displaySize.value = 1);
@@ -99,7 +102,7 @@ void main() {
       if (title.evaluate().isNotEmpty) {
         expect(tester.getRect(title).right, lessThan(tabs.left), reason: 'title under the tabs at $size');
       }
-      // The test font draws every letter as a wide square, so only the smallest pills leave room for it.
+      // Only the smallest pills leave room for it.
       if (size == DialerPrefs.displaySizes.last) expect(title, findsOneWidget);
       await tester.drag(find.byType(CustomScrollView), const Offset(0, 300));
       await tester.pumpAndSettle();
@@ -158,6 +161,109 @@ void main() {
     expect(tester.getRect(find.byKey(pill)).height, moreOrLessEquals(48 / DialerPrefs.displaySizes.last, epsilon: .5));
   });
 
+  testWidgets('the row call button calls the number', (tester) async {
+    DialerPrefs.instance.rowCallButton.value = true;
+    addTearDown(() => DialerPrefs.instance.rowCallButton.value = false);
+    repo.calls.value = [call(1, '333')];
+    await open(tester, const RecentsScreen());
+    expect(find.byTooltip('Call details'), findsNothing);
+    await tester.tap(find.byTooltip('Call'));
+    await tester.pumpAndSettle();
+    expect(native.map((c) => c.method), contains('placeCall'));
+  });
+
+  for (final style in DialerPrefs.callButtonStyles) {
+    testWidgets('the $style row call button calls the number and fits beside the info button', (tester) async {
+      DialerPrefs.instance
+        ..rowCallButton.value = true
+        ..recentTap.value = 'dial'
+        ..callButtonStyle.value = style;
+      addTearDown(() {
+        DialerPrefs.instance
+          ..rowCallButton.value = false
+          ..recentTap.value = 'details'
+          ..callButtonStyle.value = 'tint';
+      });
+      repo.calls.value = [call(1, '333')];
+      await open(tester, const RecentsScreen());
+      expect(find.byTooltip('Call details'), findsOneWidget);
+      await tester.tap(find.byTooltip('Call'));
+      await tester.pumpAndSettle();
+      expect(native.map((c) => c.method), contains('placeCall'));
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('a call button saved on shows once the saved choices load at startup', (tester) async {
+    addTearDown(() => DialerPrefs.instance.rowCallButton.value = false);
+    repo.calls.value = [call(1, '333')];
+    await open(tester, const RecentsScreen());
+    expect(find.byTooltip('Call'), findsNothing);
+    await tester.runAsync(() async {
+      // Saved on by an earlier run, then read back as at startup.
+      await DialerPrefs.instance.setRowCallButton(true);
+      DialerPrefs.instance.rowCallButton.value = false;
+      await DialerPrefs.instance.loadChoices();
+    });
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Call'), findsOneWidget);
+  });
+
+  testWidgets('with taps set to call, the call button steps aside and taps call at once', (tester) async {
+    DialerPrefs.instance
+      ..rowCallButton.value = true
+      ..recentTap.value = 'call';
+    addTearDown(() {
+      DialerPrefs.instance
+        ..rowCallButton.value = false
+        ..recentTap.value = 'details';
+    });
+    repo.calls.value = [call(1, '333')];
+    await open(tester, const RecentsScreen());
+    expect(find.byTooltip('Call'), findsNothing);
+    expect(find.byTooltip('Call details'), findsOneWidget);
+    await tester.tap(find.text('333'));
+    await tester.pump();
+    expect(native.map((c) => c.method), contains('placeCall'));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('with the call button, info follows the tap choice as soon as it changes', (tester) async {
+    DialerPrefs.instance.rowCallButton.value = true;
+    addTearDown(() {
+      DialerPrefs.instance.rowCallButton.value = false;
+      DialerPrefs.instance.recentTap.value = 'details';
+    });
+    repo.calls.value = [call(1, '333')];
+    await open(tester, const RecentsScreen());
+    for (final (tap, info) in [('details', false), ('dial', true), ('details', false), ('sim', true), ('call', true)]) {
+      DialerPrefs.instance.recentTap.value = tap;
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Call details'), info ? findsOneWidget : findsNothing, reason: tap);
+    }
+  });
+
+  testWidgets('with the call button the time sits under the number, and the row keeps its height', (tester) async {
+    final now = DateTime.now();
+    repo.calls.value = [
+      for (final (id, number) in [(1, '0300 1234567'), (2, '0300 7654321')])
+        CallLogEntry(id: id, number: number, type: CallType.incoming, date: now),
+    ];
+    await open(tester, const RecentsScreen());
+    double pitch() => tester.getTopLeft(find.text('0300 7654321')).dy - tester.getTopLeft(find.text('0300 1234567')).dy;
+    final before = pitch();
+    DialerPrefs.instance.rowCallButton.value = true;
+    addTearDown(() => DialerPrefs.instance.rowCallButton.value = false);
+    await tester.pumpAndSettle();
+    expect(pitch(), before);
+    final number = tester.getRect(find.text('0300 1234567'));
+    final when = timeLabel(lookupAppLocalizations(const Locale('en')), repo.calls.value.first.date);
+    final time = tester.getRect(find.text(when).first);
+    expect(time.top, greaterThan(number.top));
+    expect(time.left, lessThan(number.right));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Calls search opens a page and Cancel closes it', (tester) async {
     await open(tester, const RecentsScreen());
     await tester.tap(find.byTooltip('Search'));
@@ -170,9 +276,8 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('both blocking search and picker filter locally and clear on Cancel or Back', (tester) async {
-    BlockingRepository.instance.numbers.value = ['111', '222'];
-    for (final page in [const BlockingScreen(), const ContactPickerScreen(title: 'Block contact')]) {
+  testWidgets('the contact picker filters locally and clears on Cancel or Back', (tester) async {
+    for (final page in [const ContactPickerScreen(title: 'Block contact')]) {
       await open(tester, page);
       await tester.tap(find.byTooltip('Search'));
       await tester.pumpAndSettle();

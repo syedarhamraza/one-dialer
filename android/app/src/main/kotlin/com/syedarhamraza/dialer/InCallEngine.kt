@@ -22,6 +22,8 @@ object InCallEngine {
         val app = context.applicationContext
         val engine = FlutterEngine(app)
         bridge = CallBridge(app, engine.dartExecutor.binaryMessenger, "in_call")
+        // The call screen shows carrier video as textures of this engine.
+        com.syedarhamraza.dialer.telecom.VideoCalls.textures = engine.renderer
         engine.dartExecutor.executeDartEntrypoint(
             DartExecutor.DartEntrypoint(
                 FlutterInjector.instance().flutterLoader().findAppBundlePath(),

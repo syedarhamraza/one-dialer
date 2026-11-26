@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.CallLog.Calls
 import android.telecom.TelecomManager
+import kotlin.math.abs
 
 /** Reads and edits the system call log (needs READ/WRITE_CALL_LOG, granted with the dialer role). */
 object CallLogSource {
@@ -91,6 +92,34 @@ object CallLogSource {
         edit.apply()
     }
 
+    private const val VONR_FILE = "vonr_calls"
+
+    /**
+     * Notes that the call created at [createdAt] went over VoNR: before Android 17 the call log
+     * has no VoNR bit (and before it, OEMs don't set it), so [query] matches these by time.
+     */
+    fun rememberVonr(context: Context, createdAt: Long) {
+        val prefs = context.getSharedPreferences(VONR_FILE, Context.MODE_PRIVATE)
+        val edit = prefs.edit().putLong("$createdAt", createdAt)
+        // shortcut: keeps the newest 500 (the log's LIMIT); older rows lose the mark, fine for a badge.
+        prefs.all.keys.mapNotNull { it.toLongOrNull() }.sortedDescending().drop(LIMIT - 1).forEach { edit.remove("$it") }
+        edit.apply()
+    }
+
+    private const val CNAP_FILE = "cnap_names"
+
+    /**
+     * Keeps the carrier's caller name (CNAP) for the call created at [createdAt]: the call log
+     * has no column for it, so [query] matches it by time for rows without a cached name.
+     */
+    fun rememberCnap(context: Context, createdAt: Long, name: String) {
+        val prefs = context.getSharedPreferences(CNAP_FILE, Context.MODE_PRIVATE)
+        val edit = prefs.edit().putString("$createdAt", name)
+        // shortcut: keeps the newest 500 (the log's LIMIT); older rows fall back to the number.
+        prefs.all.keys.mapNotNull { it.toLongOrNull() }.sortedDescending().drop(LIMIT - 1).forEach { edit.remove("$it") }
+        edit.apply()
+    }
+
     /** Newest first. `simId` matches the ids `CallBridge.getSims` returns. */
     fun query(context: Context): List<Map<String, Any?>> {
         fixBlocked(context)
@@ -106,6 +135,9 @@ object CallLogSource {
         val uri = readUri
         val ordinary = if (uri == Calls.CONTENT_URI) null else ordinaryIds(context)
         val labels = mutableMapOf<String, String?>()
+        val vonrTimes = context.getSharedPreferences(VONR_FILE, Context.MODE_PRIVATE).all.keys.mapNotNull { it.toLongOrNull() }
+        val cnapNames = context.getSharedPreferences(CNAP_FILE, Context.MODE_PRIVATE).all
+            .mapNotNull { (k, v) -> k.toLongOrNull()?.let { at -> (v as? String)?.let { at to it } } }
         context.contentResolver.query(uri, PROJECTION, args, null)?.use { c ->
             while (c.moveToNext()) {
                 val component = c.getString(6)
@@ -123,7 +155,9 @@ object CallLogSource {
                 rows += mapOf(
                     "id" to c.getLong(0),
                     "number" to c.getString(1).orEmpty(),
-                    "name" to c.getString(2),
+                    // Telecom's cached contact name, else the carrier's CNAP name seen live.
+                    "name" to (c.getString(2)?.takeIf { it.isNotBlank() }
+                        ?: cnapNames.firstOrNull { abs(it.first - c.getLong(4)) < 5_000 }?.second),
                     "type" to typeName(c.getInt(3)),
                     "date" to c.getLong(4),
                     "duration" to c.getLong(5),
@@ -134,7 +168,10 @@ object CallLogSource {
                     // FEATURES_HD_CALL (API 30) and FEATURES_VOLTE (API 31) by value: minSdk is 29, and
                     // older phones just never set the bits.
                     "hd" to (c.getInt(10) and 0x4 != 0),
+                    "wifi" to (c.getInt(10) and Calls.FEATURES_WIFI != 0),
                     "volte" to (c.getInt(10) and 0x40 != 0),
+                    // FEATURES_VONR (API 37) by value, or seen live on 5G voice (Telecom logs the call's creation time).
+                    "vonr" to (c.getInt(10) and 0x100 != 0 || vonrTimes.any { abs(it - c.getLong(4)) < 5_000 }),
                     // Uninstalled apps keep the package name as their label.
                     "appPackage" to pkg,
                     "app" to (app ?: pkg),

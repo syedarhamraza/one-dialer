@@ -3,6 +3,9 @@
 
     <!-- Placing and managing calls -->
     <uses-permission android:name="android.permission.CALL_PHONE" />
+    <!-- Carrier video calls (ViLTE/ViNR) only: the camera runs only while a video call shows it. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <!-- Bluetooth device names in the call's audio menu (a watch and earbuds at once) -->
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
@@ -17,6 +20,8 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- Android 16 Live Updates: lets skins like OriginOS put the ringing call in their island -->
     <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
+    <!-- VIP calls ring on Silent: leaving Silent is a Do Not Disturb change (the user grants access). -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <!-- Proximity sensor turns the screen off at the ear during calls -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- No ads: drop the Advertising ID permissions Firebase merges in -->

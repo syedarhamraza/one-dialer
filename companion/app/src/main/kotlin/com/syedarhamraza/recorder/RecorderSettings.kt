@@ -44,4 +44,66 @@ object RecorderSettings {
     fun theme(context: Context) = prefs(context).getString(THEME, "system") ?: "system"
 
     fun setTheme(context: Context, theme: String) = prefs(context).edit().putString(THEME, theme).apply()
+
+    private const val HIDE_DEV = "hideDeveloperOptions"
+    private const val HIDE_UNSUPPORTED = "hideUnsupported"
+    private const val NO_WIFI = "startWithoutWifi"
+    private const val KEEP_WIRELESS = "keepWirelessDebugging"
+    private const val KEEP_USB = "keepUsbDebugging"
+    private const val OFF_WIFI = "keepRecordingOffWifi"
+
+    /** This phone ends the helper when USB debugging goes off, so hiding leaves it on. */
+    fun keepUsbDebugging(context: Context) = prefs(context).getBoolean(KEEP_USB, false)
+
+    fun setKeepUsbDebugging(context: Context, value: Boolean) = prefs(context).edit().putBoolean(KEEP_USB, value).apply()
+
+    /** This phone ends the helper when Wireless debugging goes off, so hiding leaves it on. */
+    fun keepWirelessDebugging(context: Context) = prefs(context).getBoolean(KEEP_WIRELESS, false)
+
+    fun setKeepWirelessDebugging(context: Context, value: Boolean) = prefs(context).edit().putBoolean(KEEP_WIRELESS, value).apply()
+
+    /** Setup's Keep recording away from Wi-Fi: USB debugging stays on so the helper outlives Wi-Fi. Off by default. */
+    fun keepRecordingOffWifi(context: Context) = prefs(context).getBoolean(OFF_WIFI, false)
+
+    fun setKeepRecordingOffWifi(context: Context, on: Boolean) = prefs(context).edit().putBoolean(OFF_WIFI, on).apply()
+
+    /** Turn Developer options, USB and Wireless debugging off once the helper runs, for banking apps. */
+    fun hideDeveloperOptions(context: Context) = prefs(context).getBoolean(HIDE_DEV, true)
+
+    fun setHideDeveloperOptions(context: Context, on: Boolean) = prefs(context).edit().putBoolean(HIDE_DEV, on).apply()
+
+    /** This phone ended the helper when debugging went off, so hiding is skipped here. */
+    fun hideUnsupported(context: Context) = prefs(context).getBoolean(HIDE_UNSUPPORTED, false)
+
+    fun setHideUnsupported(context: Context, value: Boolean) = prefs(context).edit().putBoolean(HIDE_UNSUPPORTED, value).apply()
+
+    private const val LAST_AT = "lastCallAt"
+    private const val LAST_SECONDS = "lastCallSeconds"
+    private const val LAST_RESULT = "lastCallResult"
+
+    /** The last call's recording, for Setup: [heard] null when it couldn't be recorded at all. */
+    fun saveLastCall(context: Context, seconds: Int, heard: Boolean?) = prefs(context).edit()
+        .putLong(LAST_AT, System.currentTimeMillis()).putInt(LAST_SECONDS, seconds)
+        .putString(LAST_RESULT, when (heard) { true -> "heard"; false -> "silent"; null -> "failed" }).apply()
+
+    private const val CHECK = "lastCheck"
+
+    /** Setup's last Check now: "<millis> <ShellHelper.Check name>". */
+    fun lastCheck(context: Context) = prefs(context).getString(CHECK, null)
+
+    fun saveCheck(context: Context, result: String) =
+        prefs(context).edit().putString(CHECK, "${System.currentTimeMillis()} $result").apply()
+
+    class LastCall(val at: Long, val seconds: Int, val result: String)
+
+    fun lastCall(context: Context): LastCall? {
+        val prefs = prefs(context)
+        val at = prefs.getLong(LAST_AT, 0).takeIf { it > 0 } ?: return null
+        return LastCall(at, prefs.getInt(LAST_SECONDS, 0), prefs.getString(LAST_RESULT, "failed")!!)
+    }
+
+    /** Experimental: after a reboot away from Wi-Fi, force Wireless debugging on over a local-only hotspot. */
+    fun startWithoutWifi(context: Context) = prefs(context).getBoolean(NO_WIFI, false)
+
+    fun setStartWithoutWifi(context: Context, on: Boolean) = prefs(context).edit().putBoolean(NO_WIFI, on).apply()
 }

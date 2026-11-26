@@ -10,6 +10,7 @@ import '../../widgets/call_glass.dart';
 import '../../widgets/letter_avatar.dart';
 import '../../widgets/one_ui_status_bar_scrim.dart';
 import '../../widgets/place_call.dart';
+import '../../widgets/place_video_call.dart';
 import '../../widgets/round_header_controls.dart';
 import '../blocking/blocking_repository.dart';
 import '../contacts/contact_details_screen.dart';
@@ -44,7 +45,6 @@ class CallDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final repo = CallLogRepository.instance;
-    final key = numberKey(call.number);
     // Built here, above the list's listener, so its rebuilds keep the same key.
     final callTileKey = GlobalKey();
     final addTileKey = GlobalKey();
@@ -55,12 +55,14 @@ class CallDetailsScreen extends StatelessWidget {
           ListenableBuilder(
             listenable: Listenable.merge([repo.calls, ContactsRepository.instance.contacts]),
             builder: (context, _) {
+              // Every call with this caller (all of a contact's numbers), like their Recents row.
               // Private calls have no number to match on; show just this one.
+              final key = callerKey(call);
               final history = call.isPrivate
                   ? repo.calls.value.where((c) => c.id == call.id).toList()
                   : [
                       for (final c in repo.calls.value)
-                        if (numberKey(c.number) == key) c,
+                        if (!c.isPrivate && callerKey(c) == key) c,
                     ];
               final name = callerName(context.l10n, call);
               final isContact = ContactsRepository.instance.nameFor(call.number) != null;
@@ -135,6 +137,18 @@ class CallDetailsScreen extends StatelessWidget {
                                       onTap: () => TelecomBridge.instance.sendSms(call.number),
                                     ),
                                   ),
+                                  // Every way to video call them (the contact's WhatsApp, Telegram, Meet...).
+                                  if (!call.isApp)
+                                    Expanded(
+                                      child: VideoTileLoader(
+                                        number: call.number,
+                                        builder: (context, onTap) => DetailsActionTile(
+                                          icon: Icons.videocam_rounded,
+                                          label: context.l10n.video,
+                                          onTap: onTap,
+                                        ),
+                                      ),
+                                    ),
                                   if (!isContact)
                                     Expanded(
                                       child: DetailsActionTile(
@@ -216,7 +230,7 @@ class CallDetailsScreen extends StatelessWidget {
                           ? [call.id]
                           : [
                               for (final c in repo.calls.value)
-                                if (!c.isPrivate && numberKey(c.number) == key) c.id,
+                                if (!c.isPrivate && callerKey(c) == callerKey(call)) c.id,
                             ];
                       final deleted = await confirmDeleteCalls(context, ids);
                       if (deleted && context.mounted) Navigator.of(context).pop();

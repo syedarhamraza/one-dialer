@@ -54,23 +54,45 @@ class HelpFeedbackScreen extends StatelessWidget {
     }
   }
 
+  /// The email subject, e.g. `[Bug] One Dialer 1.4.0 · vivo V2309 · Android 15`. The tag stays
+  /// English in every language: it's what the developer's mail filters sort on.
+  @visibleForTesting
+  static String feedbackSubject(String tag, {String? version, String? device, String? android}) => [
+    '[$tag] ${AppInfo.name}${version == null ? '' : ' $version'}',
+    ?device,
+    if (android != null) 'Android $android',
+  ].join(' · ');
+
   static Future<void> _sendFeedback(BuildContext context) async {
+    final tag = await showCosActions<String>(
+      context,
+      title: context.l10n.feedbackTypeTitle,
+      actions: [
+        (label: context.l10n.feedbackBug, value: 'Bug', destructive: false),
+        (label: context.l10n.feedbackIdea, value: 'Idea', destructive: false),
+        (label: context.l10n.feedbackQuestion, value: 'Question', destructive: false),
+      ],
+    );
+    if (tag == null) return;
     final version = await AppVersion.current();
-    var phone = '';
+    String? device, android;
     try {
       final info = await DeviceInfoPlugin().androidInfo;
-      phone = '\nDevice: ${info.manufacturer} ${info.model}\nAndroid: ${info.version.release}';
+      device = '${info.manufacturer} ${info.model}';
+      android = info.version.release;
     } catch (_) {
       // Not on Android (tests): no phone details.
     }
     final code = version?.code;
+    final phone = device == null ? '' : '\nDevice: $device\nAndroid: $android';
     final details = 'Version: ${version?.label ?? 'unknown'}${code == null ? '' : ' ($code)'}$phone';
+    final subject = feedbackSubject(tag, version: version?.label, device: device, android: android);
     final mail = Uri(
       scheme: 'mailto',
       path: AppInfo.feedbackEmail,
       // Uri's queryParameters encodes spaces as '+', which mail apps show literally.
       query:
-          'subject=${Uri.encodeComponent('${AppInfo.name} feedback')}'
+          'subject=${Uri.encodeComponent(subject)}'
           '&body=${Uri.encodeComponent('\n\n\n---\n$details')}',
     );
     if (context.mounted) await _open(context, '$mail', context.l10n.noEmailApp);

@@ -57,6 +57,10 @@ class MainActivity : FlutterActivity() {
             it.photoPicker = ::pickPhoto
             it.photoTaker = ::takePhoto
             it.vcfPicker = ::pickVcf
+            // Android keeps the choice for every later cold start (Android 13+ only).
+            if (android.os.Build.VERSION.SDK_INT >= 33) it.splashIcon = { show ->
+                splashScreen.setSplashScreenTheme(if (show) android.content.res.Resources.ID_NULL else R.style.LaunchTheme_NoIcon)
+            }
             it.settingsBackup = ::settingsBackup
             it.backupFolderChooser = { result -> chooseBackupFolder(result, backUp = false) }
             it.ringtonePicker = ::pickRingtone
@@ -86,8 +90,7 @@ class MainActivity : FlutterActivity() {
         if (!roles.isRoleAvailable(role)) return result.success(false)
         pendingRoleResult?.success(false)
         pendingRoleResult = result
-        @Suppress("DEPRECATION") // FlutterActivity is not a ComponentActivity, so no ActivityResult API
-        startActivityForResult(roles.createRequestRoleIntent(role), REQUEST_ROLE)
+        launch(roles.createRequestRoleIntent(role), REQUEST_ROLE, result) { pendingRoleResult = null }
     }
 
     /** Android's photo picker (no storage permission needed); falls back to "get content". */
@@ -100,8 +103,7 @@ class MainActivity : FlutterActivity() {
         } else {
             Intent(Intent.ACTION_GET_CONTENT).setType("image/*")
         }
-        @Suppress("DEPRECATION")
-        startActivityForResult(intent, REQUEST_PHOTO)
+        launch(intent, REQUEST_PHOTO, result) { pendingPhotoResult = null }
     }
 
     /** Manage contacts › Import: a .vcf from the files app (no storage permission needed). */
@@ -112,8 +114,7 @@ class MainActivity : FlutterActivity() {
             .addCategory(Intent.CATEGORY_OPENABLE)
             .setType("*/*")
             .putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("text/x-vcard", "text/vcard", "text/directory"))
-        @Suppress("DEPRECATION")
-        startActivityForResult(intent, REQUEST_VCF)
+        launch(intent, REQUEST_VCF, result) { pendingVcfResult = null }
     }
 
     /**
@@ -138,8 +139,7 @@ class MainActivity : FlutterActivity() {
         pendingBackupResult = result
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*")
             .putExtra(android.provider.DocumentsContract.EXTRA_INITIAL_URI, AutoBackup.documentsUri)
-        @Suppress("DEPRECATION")
-        startActivityForResult(intent, REQUEST_IMPORT)
+        launch(intent, REQUEST_IMPORT, result) { pendingBackupResult = null }
     }
 
     /** The folder for backups, picked once in the system picker (opening on Documents). */
@@ -149,8 +149,20 @@ class MainActivity : FlutterActivity() {
         backUpAfterFolder = backUp
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
             .putExtra(android.provider.DocumentsContract.EXTRA_INITIAL_URI, AutoBackup.documentsUri)
-        @Suppress("DEPRECATION")
-        startActivityForResult(intent, REQUEST_BACKUP_FOLDER)
+        launch(intent, REQUEST_BACKUP_FOLDER, result) { pendingFolderResult = null }
+    }
+
+    /**
+     * Starts a picker for [result]. When it can't start, [forget] drops the pending result and the
+     * error is the one reply: some skins (OPPO) also send a cancelled result for the failed start,
+     * which would otherwise answer the same call twice ("Reply already submitted").
+     */
+    private fun launch(intent: Intent, code: Int, result: MethodChannel.Result, forget: () -> Unit) {
+        @Suppress("DEPRECATION") // FlutterActivity is not a ComponentActivity, so no ActivityResult API
+        runCatching { startActivityForResult(intent, code) }.onFailure {
+            forget()
+            result.error("NO_ACTIVITY", it.message, null)
+        }
     }
 
     private fun finishRestore(uri: android.net.Uri, result: MethodChannel.Result) = Thread {
@@ -171,12 +183,7 @@ class MainActivity : FlutterActivity() {
     private fun takePhoto(result: MethodChannel.Result) {
         pendingPhotoResult?.success(null)
         pendingPhotoResult = result
-        @Suppress("DEPRECATION")
-        runCatching { startActivityForResult(Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE), REQUEST_CAMERA) }
-            .onFailure {
-                pendingPhotoResult = null
-                result.error("NO_CAMERA", it.message, null)
-            }
+        launch(Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE), REQUEST_CAMERA, result) { pendingPhotoResult = null }
     }
 
     /** Android's ringtone picker with the contact's current tone selected; "Default" comes back as "". */
@@ -192,8 +199,7 @@ class MainActivity : FlutterActivity() {
                 android.media.RingtoneManager.EXTRA_RINGTONE_EXISTING_URI,
                 current?.let(android.net.Uri::parse) ?: android.provider.Settings.System.DEFAULT_RINGTONE_URI,
             )
-        @Suppress("DEPRECATION")
-        startActivityForResult(intent, REQUEST_RINGTONE)
+        launch(intent, REQUEST_RINGTONE, result) { pendingRingtoneResult = null }
     }
 
     @Deprecated("Deprecated in Java")

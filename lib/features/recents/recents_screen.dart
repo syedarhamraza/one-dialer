@@ -8,11 +8,11 @@ import '../../app/layout.dart';
 import '../../app/main_shell.dart' show navDock;
 import '../../core/contacts/contacts_repository.dart';
 import '../../core/prefs/dialer_prefs.dart';
-import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../theme/one_ui_scroll.dart';
 
+import '../../widgets/row_call_button.dart';
 import '../../widgets/cos_dialog.dart';
 import '../../widgets/call_glass.dart';
 import '../../widgets/letter_avatar.dart';
@@ -21,6 +21,7 @@ import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_status_bar_scrim.dart';
 import '../../widgets/round_header_controls.dart';
 import '../../widgets/place_call.dart';
+import '../../widgets/swipe_action.dart';
 import '../in_call/call_controls.dart';
 import '../keypad/keypad_screen.dart';
 import '../recordings/recordings_screen.dart';
@@ -35,6 +36,7 @@ import '../../widgets/select_mark.dart';
 import '../../widgets/sim_badge.dart';
 import '../blocking/blocking_repository.dart';
 import '../../l10n/l10n.dart';
+import '../../widgets/call_marks.dart';
 
 /// Samsung-style Recents: calls grouped by day, All / Missed filter, swipe right to
 /// call and left to message, tap for details, long-press to multi-select and delete.
@@ -72,7 +74,6 @@ class _RecentsScreenState extends State<RecentsScreen> {
 
   /// The big "Calls" going under the header, where a small one takes over.
   final _collapse = TitleCollapse(titleTop: 0);
-  List<SimCard> _sims = const [];
 
   /// Saved call notes by number key, shown under the rows' numbers.
   Map<String, List<(DateTime, String)>> _notes = const {};
@@ -83,9 +84,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
     TelecomBridge.instance.getRecorder().then((r) {
       if (mounted && r != null && r.consented) setState(() => _hasRecordings = true);
     }, onError: (Object _) {});
-    TelecomBridge.instance.getSims().then((s) {
-      if (mounted) setState(() => _sims = s);
-    });
+    TelecomBridge.instance.getSims().ignore(); // the badges follow TelecomBridge.sims
     DialerPrefs.instance.changes.addListener(_loadPrefs);
     // The call screen saves notes in its own engine; a call being logged is the cue to look.
     _repo.calls.addListener(_loadNotes);
@@ -143,6 +142,10 @@ class _RecentsScreenState extends State<RecentsScreen> {
         label: _appsOnly ? context.l10n.showAllCalls : context.l10n.showAppCallsOnly,
         onTap: () => setState(() => _appsOnly = !_appsOnly),
       ),
+    OneUIFloatingMenuItem(
+      label: DialerPrefs.instance.groupByContact.value ? context.l10n.dontGroupByContact : context.l10n.groupByContact,
+      onTap: () => DialerPrefs.instance.setGroupByContact(!DialerPrefs.instance.groupByContact.value),
+    ),
     OneUIFloatingMenuItem(
       label: _hideBlocked ? context.l10n.showBlockedCalls : context.l10n.hideBlockedCalls,
       onTap: () => DialerPrefs.instance.setHideBlockedCalls(!_hideBlocked),
@@ -257,8 +260,9 @@ class _RecentsScreenState extends State<RecentsScreen> {
 
   /// "1"/"2" badge, only on dual-SIM phones.
   String? _simBadge(String? simId) {
-    if (_sims.length < 2 || simId == null) return null;
-    final i = _sims.indexWhere((s) => s.id == simId);
+    final sims = TelecomBridge.instance.sims.value;
+    if (sims.length < 2 || simId == null) return null;
+    final i = sims.indexWhere((s) => s.id == simId);
     return i < 0 ? null : '${i + 1}';
   }
 
@@ -274,9 +278,15 @@ class _RecentsScreenState extends State<RecentsScreen> {
         listenable: Listenable.merge([
           _repo.calls,
           _repo.hasAccess,
+          _repo.loaded,
           ContactsRepository.instance.contacts,
           BlockingRepository.instance.numbers,
           DialerPrefs.instance.hideContactNumbers, // rows read it directly
+          DialerPrefs.instance.rowCallButton,
+          DialerPrefs.instance.recentTap, // decides the info button
+          DialerPrefs.instance.swipeToCall,
+          DialerPrefs.instance.groupByContact,
+          TelecomBridge.instance.sims, // SIM badges; re-read on every resume
         ]),
         builder: (context, _) => _buildList(context),
       ),
@@ -292,20 +302,30 @@ class _RecentsScreenState extends State<RecentsScreen> {
   ];
 
   // groupByDay is only redone when the calls or the filter change, not on every selection tap.
-  (List<CallLogEntry>, CallFilter, bool, List<String>, bool)? _groupedFor;
+  (List<CallLogEntry>, CallFilter, bool, List<String>, bool, Object, bool)? _groupedFor;
   List<(DateTime, List<CallGroup>)> _days = const [];
 
   List<(DateTime, List<CallGroup>)> get _groupedDays {
-    final key = (_repo.calls.value, _filter, _hideBlocked, BlockingRepository.instance.numbers.value, _appsOnly);
+    final key = (
+      _repo.calls.value,
+      _filter,
+      _hideBlocked,
+      BlockingRepository.instance.numbers.value,
+      _appsOnly,
+      ContactsRepository.instance.contacts.value, // rows group by contact
+      DialerPrefs.instance.groupByContact.value,
+    );
     final old = _groupedFor;
     if (old == null ||
         !identical(old.$1, key.$1) ||
         old.$2 != key.$2 ||
         old.$3 != key.$3 ||
         !identical(old.$4, key.$4) ||
-        old.$5 != key.$5) {
+        old.$5 != key.$5 ||
+        !identical(old.$6, key.$6) ||
+        old.$7 != key.$7) {
       _groupedFor = key;
-      _days = groupByDay(_visibleCalls);
+      _days = groupByDay(_visibleCalls, keyOf: callerKey, backToBack: !key.$7);
     }
     return _days;
   }
@@ -351,7 +371,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
                     final scale = headerScale(context);
                     // With big top buttons (a small App size) All | Missed slides left beside Search; the small title
                     // gives way if it would reach it. The controls are laid out at width / scale.
-                    final tabsLeft = _HeaderControls.tabsLeftFor(box.maxWidth / scale) * scale;
+                    final tabsLeft = _HeaderControls.tabsLeftFor(context, box.maxWidth / scale) * scale;
                     final clash = HeaderTitle.rightEdge(context, context.l10n.navCalls) + 8 > tabsLeft;
                     return Stack(
                       children: [
@@ -437,6 +457,8 @@ class _RecentsScreenState extends State<RecentsScreen> {
                       },
                     ),
                   )
+                else if (groups.isEmpty && !_repo.loaded.value)
+                  const SliverToBoxAdapter() // first read still on its way
                 else if (groups.isEmpty)
                   _Empty(
                     text: _appsOnly
@@ -465,19 +487,22 @@ class _RecentsScreenState extends State<RecentsScreen> {
     final call = group.latest;
     final day = dayLabel(context.l10n, call.date, now);
     void details() => openCallDetails(context, call);
+    final prefs = DialerPrefs.instance;
+    final callable = !call.isPrivate && call.number.isNotEmpty && !call.isApp;
+    void callNow(BuildContext row) => placeCall(context, call.number, anchorContext: row);
     // What a tap does is the Settings choice (DialerPrefs.recentTap): open the details page,
-    // write the number in the keypad so the call is one more, deliberate tap, or (dual SIM)
-    // pick a SIM from our menu and call.
+    // write the number in the keypad so the call is one more, deliberate tap, or call it on the
+    // tap's own SIM choice (DialerPrefs.tapSim).
     void tap(BuildContext row) {
       if (_selected != null) return _toggle(group);
       if (call.isApp) {
         showAppCallBack(context, call, anchorContext: row);
         return;
       }
-      final choice = DialerPrefs.instance.recentTap.value;
-      final callable = !call.isPrivate && call.number.isNotEmpty;
-      if (choice == 'sim' && callable && _sims.length > 1) {
-        placeCall(context, call.number, chooseSim: true, anchorContext: row);
+      final choice = prefs.recentTap.value;
+      if (choice == 'call' && callable) {
+        widget.keypadOpen?.value = false;
+        placeCall(context, call.number, anchorContext: row, rule: prefs.tapSim.value);
       } else if (choice == 'dial' && callable && widget.dialInput != null) {
         widget.dialInput!.value = call.number;
         widget.keypadOpen?.value = true;
@@ -493,33 +518,49 @@ class _RecentsScreenState extends State<RecentsScreen> {
         if (i > 0) Divider(height: 1, indent: 76, color: context.palette.divider),
         Builder(
           // The SIM menu pops from this row.
-          builder: (row) => _CallRow(
-            group: group,
-            simBadge: _simBadge(call.simId),
-            note: _noteFor(group),
-            when: day == context.l10n.today ? timeLabel(context.l10n, call.date) : day,
-            selecting: _selected != null,
-            // Only the box and the background listen to selection taps; the rest of the row stays built.
-            selectMark: ValueListenableBuilder(
-              valueListenable: _selectionChanged,
-              builder: (context, _, _) => SelectMark(selected: _selected?.contains(call.id), gap: 8, end: 12),
+          builder: (row) => _swipe(
+            enabled: prefs.swipeToCall.value && callable && _selected == null,
+            onCall: () => placeCall(context, call.number, anchorContext: row, rule: prefs.swipeSim.value),
+            onMessage: () => TelecomBridge.instance.sendSms(call.number),
+            child: _CallRow(
+              group: group,
+              simBadge: _simBadge(call.simId),
+              note: _noteFor(group),
+              when: day == context.l10n.today ? timeLabel(context.l10n, call.date) : day,
+              selecting: _selected != null,
+              // Only the box and the background listen to selection taps; the rest of the row stays built.
+              selectMark: ValueListenableBuilder(
+                valueListenable: _selectionChanged,
+                builder: (context, _, _) => SelectMark(selected: _selected?.contains(call.id), gap: 8, end: 12),
+              ),
+              highlight: ValueListenableBuilder(
+                valueListenable: _selectionChanged,
+                builder: (context, _, _) => SelectHighlight(selected: _selected?.contains(call.id) ?? false),
+              ),
+              onTap: () => tap(row),
+              onInfo: details,
+              onCall: prefs.rowCallButton.value && !prefs.tapCalls && callable ? () => callNow(row) : null,
+              // With the call button, info shows only while a tap does something other than open details.
+              showInfo: !(prefs.rowCallButton.value && callable) || prefs.recentTap.value != 'details',
+              onLongPress: () {
+                HapticFeedback.mediumImpact();
+                _toggle(group);
+              },
             ),
-            highlight: ValueListenableBuilder(
-              valueListenable: _selectionChanged,
-              builder: (context, _, _) => SelectHighlight(selected: _selected?.contains(call.id) ?? false),
-            ),
-            onTap: () => tap(row),
-            onInfo: details,
-            onLongPress: () {
-              HapticFeedback.mediumImpact();
-              _toggle(group);
-            },
           ),
         ),
       ],
     );
   }
 }
+
+/// [SwipeAction] around [child] only when [enabled], so rows stay as they were with it off.
+Widget _swipe({
+  required bool enabled,
+  required VoidCallback onCall,
+  required VoidCallback onMessage,
+  required Widget child,
+}) => enabled ? SwipeAction(onCall: onCall, onMessage: onMessage, child: child) : child;
 
 /// The Calls header, one set of glass controls that morph between two states
 /// instead of swapping:
@@ -547,7 +588,6 @@ class _HeaderControls extends StatelessWidget {
   final GlobalKey menuKey;
   final List<OneUIFloatingMenuItem> Function() menuItems;
 
-  static const _tabCount = 2; // All | Missed
   static const double _button = 48;
   static const double _gap = 8;
   static const double _edge = 16;
@@ -564,8 +604,10 @@ class _HeaderControls extends StatelessWidget {
 
   /// Where All | Missed starts in a header [w] wide: centred, or beside Search when centred would
   /// touch it (big top buttons lay the header out narrower).
-  static double tabsLeftFor(double w) {
-    final tabs = FilterTabs.sizeFor(_tabCount);
+  static List<String> tabLabels(BuildContext context) => [context.l10n.all, context.l10n.recentsFilterMissed];
+
+  static double tabsLeftFor(BuildContext context, double w) {
+    final tabs = FilterTabs.sizeFor(context, tabLabels(context));
     final searchLeft = w - _edge - _button - _gap - _button;
     return math.min((w - tabs.width) / 2, searchLeft - _gap - tabs.width);
   }
@@ -591,7 +633,7 @@ class _HeaderControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tabs = FilterTabs.sizeFor(_tabCount);
+    final tabs = FilterTabs.sizeFor(context, tabLabels(context));
     return SizedBox(
       height: _button,
       child: LayoutBuilder(
@@ -599,7 +641,7 @@ class _HeaderControls extends StatelessWidget {
           final w = box.maxWidth;
           final menuLeft = w - _edge - _button;
           final searchLeft = menuLeft - _gap - _button;
-          final tabsLeft = tabsLeftFor(w);
+          final tabsLeft = tabsLeftFor(context, w);
           final cancelWidth = SelectionPillLabel.widthFor(context, context.l10n.cancel);
           final selectAllWidth = SelectionPillLabel.widthFor(
             context,
@@ -714,7 +756,7 @@ class _HeaderControls extends StatelessWidget {
                                 minWidth: tabs.width,
                                 maxWidth: tabs.width,
                                 child: FilterTabs(
-                                  labels: [context.l10n.all, context.l10n.recentsFilterMissed],
+                                  labels: tabLabels(context),
                                   index: filterIndex,
                                   onChanged: onFilter,
                                   bare: true,
@@ -758,6 +800,8 @@ class _CallRow extends StatelessWidget {
     required this.highlight,
     required this.onTap,
     required this.onInfo,
+    this.onCall,
+    this.showInfo = true,
     required this.onLongPress,
   });
 
@@ -772,6 +816,8 @@ class _CallRow extends StatelessWidget {
   final Widget selectMark, highlight;
   final VoidCallback onTap;
   final VoidCallback onInfo;
+  final VoidCallback? onCall;
+  final bool showInfo;
   final VoidCallback onLongPress;
 
   @override
@@ -779,6 +825,12 @@ class _CallRow extends StatelessWidget {
     final call = group.latest;
     final name = callerName(context.l10n, call);
     final count = group.calls.length;
+    // With the call button, the time moves under the number (beside it when a note takes that line).
+    final timeBelow = onCall != null;
+    // Three lines fit the row's 61 dp only at a set line height, whatever the font's own.
+    final lineHeight = timeBelow ? 1.2 : null;
+    final secondary = TextStyle(fontSize: 14, height: lineHeight, color: context.palette.textSecondary);
+    final slot = (onCall != null ? RowCallButton.size : 0.0) + (showInfo ? 48.0 : 0);
     final row = InkWell(
       onTap: onTap,
       onLongPress: onLongPress,
@@ -805,6 +857,7 @@ class _CallRow extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 18,
+                      height: lineHeight,
                       fontWeight: FontWeight.w500,
                       letterSpacing: -0.2,
                       color: call.isMissed ? OneUITheme.accentRed : context.palette.textPrimary,
@@ -816,6 +869,7 @@ class _CallRow extends StatelessWidget {
                       CallTypeIcon(type: call.type),
                       const SizedBox(width: 6),
                       if (simBadge != null && !call.isApp) ...[SimBadge(label: simBadge!), const SizedBox(width: 6)],
+                      CallMediaMarks(call: call),
                       Flexible(
                         child: Text(
                           call.isApp
@@ -826,11 +880,13 @@ class _CallRow extends StatelessWidget {
                               : call.number,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 14, color: context.palette.textSecondary),
+                          style: secondary,
                         ),
                       ),
+                      if (timeBelow && note != null) Text(' · $when', style: secondary),
                     ],
                   ),
+                  if (timeBelow && note == null) ...[const SizedBox(height: 2), Text(when, style: secondary)],
                   if (note case final note?) ...[
                     const SizedBox(height: 2),
                     Row(
@@ -851,9 +907,8 @@ class _CallRow extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            Text(when, style: TextStyle(fontSize: 14, color: context.palette.textSecondary)),
-            // Info leaves on the selection box's spring as the box comes in, in its place.
+            if (!timeBelow) ...[const SizedBox(width: 8), Text(when, style: secondary)],
+            // Info (and the call button) leave on the selection box's spring as the box comes in, in their place.
             TweenAnimationBuilder<double>(
               tween: Tween(end: selecting ? 0 : 1),
               duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 450),
@@ -861,20 +916,27 @@ class _CallRow extends StatelessWidget {
               builder: (context, t, child) => t <= 0
                   ? const SizedBox.shrink()
                   : SizedBox(
-                      width: 48 * t.clamp(0.0, 1.0),
+                      width: slot * t.clamp(0.0, 1.0),
                       height: 48,
                       child: OverflowBox(
                         alignment: Alignment.centerLeft,
-                        minWidth: 48,
-                        maxWidth: 48,
+                        minWidth: slot,
+                        maxWidth: slot,
                         child: Transform.scale(scale: t, child: child),
                       ),
                     ),
-              child: IconButton(
-                tooltip: context.l10n.callDetails,
-                onPressed: selecting ? null : onInfo,
-                // Light like the time beside it.
-                icon: Icon(CupertinoIcons.info, size: 24, color: context.palette.textSecondary),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (onCall != null) RowCallButton(onPressed: selecting ? null : onCall),
+                  if (showInfo)
+                    IconButton(
+                      tooltip: context.l10n.callDetails,
+                      onPressed: selecting ? null : onInfo,
+                      // Light like the time beside it.
+                      icon: Icon(CupertinoIcons.info, size: 24, color: context.palette.textSecondary),
+                    ),
+                ],
               ),
             ),
             selectMark,
@@ -887,6 +949,38 @@ class _CallRow extends StatelessWidget {
       children: [
         Positioned.fill(child: highlight),
         row,
+      ],
+    );
+  }
+}
+
+/// A SIM call's video, Wi-Fi calling, VoLTE/VoNR and HD marks, after its arrow and SIM badge (Recents and the
+/// call history). App calls already say "video" in their label.
+class CallMediaMarks extends StatelessWidget {
+  const CallMediaMarks({super.key, required this.call, this.size = 16});
+
+  final CallLogEntry call;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    if (call.isApp || !(call.isVideo || call.isWifi || call.isVolte || call.isVonr || call.isHd)) {
+      return const SizedBox.shrink();
+    }
+    final color = context.palette.textSecondary;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (call.isVideo) ...[
+          Icon(Icons.videocam_rounded, size: size, color: color, semanticLabel: context.l10n.videoCallMark),
+          const SizedBox(width: 6),
+        ],
+        if (call.isWifi) ...[
+          Icon(Icons.wifi_calling_rounded, size: size, color: color, semanticLabel: context.l10n.wifiCallMark),
+          const SizedBox(width: 6),
+        ],
+        if (call.isVonr || call.isVolte) ...[VolteMark(color: color, nr: call.isVonr), const SizedBox(width: 6)],
+        if (call.isHd) ...[_HdMark(color: color), const SizedBox(width: 6)],
       ],
     );
   }
@@ -950,6 +1044,27 @@ class _Empty extends StatelessWidget {
               FilledButton(onPressed: onTap, child: Text(label)),
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A call's HD voice mark: "HD" knocked out of a small grey tag.
+class _HdMark extends StatelessWidget {
+  const _HdMark({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return ExcludeSemantics(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 2.5, vertical: 1),
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
+        child: Text(
+          'HD',
+          style: TextStyle(fontSize: 8, height: 1.1, fontWeight: FontWeight.w800, color: context.palette.card),
         ),
       ),
     );

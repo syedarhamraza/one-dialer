@@ -13,11 +13,14 @@ import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/place_call.dart';
+import '../../widgets/place_video_call.dart' show cameraAllowed;
 import 'call_control_panel.dart';
 import 'call_background.dart';
 import 'call_controls.dart';
 import 'call_screen_widgets.dart';
 import 'incoming_controls.dart';
+import 'video_call_view.dart';
+import '../../l10n/l10n.dart';
 import '../../widgets/call_glyph.dart';
 
 export 'call_screen_widgets.dart' show callerName;
@@ -122,17 +125,26 @@ class _InCallScreenState extends State<InCallScreen> {
                 CallState.disconnecting || CallState.disconnected => call?.connectTime != null,
                 _ => false,
               },
-              child: SafeArea(
-                child: switch ((state, call)) {
-                  (final state?, final call?) => _CallSession(
-                    key: ValueKey(call.id),
-                    snapshot: state,
-                    call: call,
-                    sims: _sims,
-                    keypadBlur: _keypadBlur,
+              child: Stack(
+                children: [
+                  // Carrier video: their picture replaces the backdrop, edge to edge under the status bar.
+                  if (call != null && showsVideo(call))
+                    Positioned.fill(
+                      child: VideoCallView(key: ValueKey('video-${call.id}'), call: call),
+                    ),
+                  SafeArea(
+                    child: switch ((state, call)) {
+                      (final state?, final call?) => _CallSession(
+                        key: ValueKey(call.id),
+                        snapshot: state,
+                        call: call,
+                        sims: _sims,
+                        keypadBlur: _keypadBlur,
+                      ),
+                      _ => const SizedBox.expand(),
+                    },
                   ),
-                  _ => const SizedBox.expand(),
-                },
+                ],
               ),
             );
           },
@@ -212,6 +224,40 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   Rect? _ball;
   Timer? _ballTimeout;
 
+  /// A video call's header and buttons: a tap on the video hides or shows them, and they fade
+  /// after a few seconds untouched (not while connecting, nor with a screen reader).
+  bool _chromeShown = true;
+  Timer? _chromeTimer;
+
+  void _armChrome(bool hideable) {
+    if (!hideable) {
+      _chromeTimer?.cancel();
+      _chromeTimer = null;
+      _chromeShown = true;
+      return;
+    }
+    if (!_chromeShown || _chromeTimer != null) return;
+    if (widget.call.state != CallState.active || MediaQuery.accessibleNavigationOf(context)) return;
+    _chromeTimer = Timer(const Duration(seconds: 4), () {
+      _chromeTimer = null;
+      if (mounted) setState(() => _chromeShown = false);
+    });
+  }
+
+  void _toggleChrome() {
+    _chromeTimer?.cancel();
+    _chromeTimer = null;
+    setState(() => _chromeShown = !_chromeShown);
+  }
+
+  /// Any touch while the buttons show starts their 4 seconds again.
+  void _pokeChrome(bool hideable) {
+    if (!_chromeShown || _chromeTimer == null) return;
+    _chromeTimer!.cancel();
+    _chromeTimer = null;
+    _armChrome(hideable);
+  }
+
   /// How far (global px) the released ball glides on up to the top of its travel, as on ColorOS.
   double _lift = 0;
 
@@ -229,7 +275,13 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   final _stackKey = GlobalKey();
 
   void _answered(Rect ball, double lift) {
-    TelecomBridge.instance.answer(widget.call.id);
+    final call = widget.call;
+    if (call.isVideo) {
+      // A carrier video call answers with our camera on when it's allowed, else as a voice call.
+      cameraAllowed(context).then((ok) => TelecomBridge.instance.answer(call.id, video: ok));
+    } else {
+      TelecomBridge.instance.answer(call.id);
+    }
     if (MediaQuery.disableAnimationsOf(context) || ball.isEmpty) return;
     setState(() {
       _ball = ball;
@@ -360,17 +412,34 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
                 opacity: red,
                 child: DecoratedBox(decoration: endPillBody(shape, flat: callFlat(context))),
               ),
-              // Our hang-up glyph is the handset turned 135°, so the handset simply tips over (growing to
-              // CallGlyph's hang-up size) and lands already as End's icon.
-              Transform.rotate(
-                angle: 3 * math.pi / 4 * tip,
-                child: CallGlyph(
-                  Icons.call_rounded,
-                  color: Colors.white,
-                  // The ball's handset is already drawn at the hang-up glyph's size.
-                  size: iconSize * CallGlyph.tipGrowth,
+              // A video call's camera crossfades into End's hang-up glyph.
+              if (widget.call.isVideo) ...[
+                Center(
+                  child: Icon(
+                    Icons.videocam_rounded,
+                    color: Colors.white.withValues(alpha: 1 - tip),
+                    size: iconSize,
+                  ),
                 ),
-              ),
+                Center(
+                  child: CallGlyph(
+                    Icons.call_end_rounded,
+                    color: Colors.white.withValues(alpha: tip),
+                    size: iconSize,
+                  ),
+                ),
+              ] else
+                // Our hang-up glyph is the handset turned 135°, so the handset simply tips over (growing to
+                // CallGlyph's hang-up size) and lands already as End's icon.
+                Transform.rotate(
+                  angle: 3 * math.pi / 4 * tip,
+                  child: CallGlyph(
+                    Icons.call_rounded,
+                    color: Colors.white,
+                    // The ball's handset is already drawn at the hang-up glyph's size.
+                    size: iconSize * CallGlyph.tipGrowth,
+                  ),
+                ),
             ],
           ),
         ),
@@ -418,6 +487,7 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
   @override
   void dispose() {
     _ballTimeout?.cancel();
+    _chromeTimer?.cancel();
     _fly.dispose();
     _rise.dispose();
     _morph.dispose();
@@ -432,6 +502,16 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
     final ended = call.state == CallState.disconnected || call.state == CallState.disconnecting;
     final held = widget.snapshot.calls.where((c) => c.id != call.id && c.state == CallState.holding).firstOrNull;
     final switchDuration = MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 350);
+    final hideable = showsVideo(call) && !_keypadOpen;
+    _armChrome(hideable);
+    final chromeShown = !hideable || _chromeShown;
+    final fade = MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 220);
+    // Always the same wrapper (only its opacity changes): swapping it in and out would rebuild the
+    // controls from scratch and cut the dial pad's animation.
+    Widget chrome(Widget child) => IgnorePointer(
+      ignoring: !chromeShown,
+      child: AnimatedOpacity(opacity: chromeShown ? 1 : 0, duration: fade, child: child),
+    );
     return PopScope(
       // Back can't dismiss a ringing call (as on AOSP): answer, decline, or the volume key to silence.
       canPop: !_keypadOpen && !ringing,
@@ -442,139 +522,202 @@ class _CallSessionState extends State<_CallSession> with TickerProviderStateMixi
         key: _stackKey,
         children: [
           Positioned.fill(
-            child: AnimatedBuilder(
-              animation: _morph,
-              builder: (context, _) => LayoutBuilder(
-                builder: (context, constraints) {
-                  final landscape = constraints.maxWidth > constraints.maxHeight;
-                  final compact = landscape || constraints.maxHeight < 700;
-                  final progress = Curves.easeInOutCubic.transform(_morph.value);
-                  final Widget controls = ended
-                      ? const SizedBox(key: ValueKey('ended'), width: double.infinity)
-                      : ringing
-                      ? IncomingControls(
-                          // Per call: the cached engine keeps this screen, so the next call's ball
-                          // would otherwise start where the last one was released.
-                          key: ValueKey('incoming-${call.id}'),
-                          call: call,
-                          compact: compact,
-                          isCurrent: () => mounted && widget.call.state == CallState.ringing,
-                          onAnswer: _answered,
-                          answerHidden: _ball != null,
-                        )
-                      : CallControlPanel(
-                          key: const ValueKey('connected'),
-                          call: call,
-                          audio: widget.snapshot.audio,
-                          recorder: widget.snapshot.recording,
-                          callCount: widget.snapshot.calls.length,
-                          width: landscape ? (constraints.maxWidth - 56) / 2 : constraints.maxWidth - 32,
-                          compact: compact,
-                          landscape: landscape,
-                          progress: _morph.value,
-                          animating: _morph.isAnimating,
-                          keypadOpen: _keypadOpen,
-                          onDigit: (digit) => setState(() => _digits += digit),
-                          onToggle: _toggleKeypad,
-                          entrance: _entrance,
-                          endKey: _endKey,
-                          hideEnd: _ball != null,
-                        );
-                  final animatedControls = AnimatedSwitcher(
-                    duration: switchDuration,
-                    switchInCurve: Curves.easeOutCubic,
-                    switchOutCurve: Curves.easeInCubic,
-                    layoutBuilder: (current, previous) =>
-                        Stack(alignment: Alignment.bottomCenter, children: [...previous, ?current]),
-                    // Incoming, connected and ended crossfade in place.
-                    transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
-                    child: controls,
-                  );
-                  final heldCard = held != null && !ringing && !ended;
-                  final header = _FadeIn(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // The held card slides the caller down as it comes in, and back up as it goes.
-                        AnimatedSize(
-                          duration: switchDuration,
-                          curve: Curves.easeOutCubic,
-                          alignment: Alignment.topCenter,
-                          child: AnimatedSwitcher(
-                            duration: switchDuration,
-                            child: heldCard
+            child: Listener(
+              onPointerDown: (_) => _pokeChrome(hideable),
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                // Buttons win their own taps; a tap anywhere else on the video hides or shows them.
+                onTap: hideable ? _toggleChrome : null,
+                child: AnimatedBuilder(
+                  animation: _morph,
+                  builder: (context, _) => LayoutBuilder(
+                    builder: (context, constraints) {
+                      final landscape = constraints.maxWidth > constraints.maxHeight;
+                      final compact = landscape || constraints.maxHeight < 700;
+                      final progress = Curves.easeInOutCubic.transform(_morph.value);
+                      final Widget controls = ended
+                          ? call.videoFailed && (call.number?.isNotEmpty ?? false)
+                                // The network refused video: the same number, same SIM, as a voice call.
                                 ? Padding(
-                                    key: ValueKey(held.id),
-                                    padding: const EdgeInsets.only(bottom: 20),
-                                    child: HeldCallCard(
-                                      call: held,
-                                      onSwitch: () => TelecomBridge.instance.unhold(held.id),
-                                      onEnd: () => TelecomBridge.instance.hangUp(held.id),
+                                    key: const ValueKey('ended'),
+                                    padding: EdgeInsets.only(bottom: compact ? 16 : 48),
+                                    child: Center(
+                                      child: VideoPill(
+                                        label: context.l10n.voiceCall,
+                                        icon: Icons.call_rounded,
+                                        onTap: () => TelecomBridge.instance.placeCall(call.number!, simId: call.simId),
+                                      ),
                                     ),
                                   )
-                                : const SizedBox(width: double.infinity),
+                                : const SizedBox(key: ValueKey('ended'), width: double.infinity)
+                          : ringing
+                          ? IncomingControls(
+                              // Per call: the cached engine keeps this screen, so the next call's ball
+                              // would otherwise start where the last one was released.
+                              key: ValueKey('incoming-${call.id}'),
+                              call: call,
+                              compact: compact,
+                              isCurrent: () => mounted && widget.call.state == CallState.ringing,
+                              onAnswer: _answered,
+                              answerHidden: _ball != null,
+                            )
+                          : CallControlPanel(
+                              key: const ValueKey('connected'),
+                              call: call,
+                              audio: widget.snapshot.audio,
+                              recorder: widget.snapshot.recording,
+                              callCount: widget.snapshot.calls.length,
+                              width: landscape ? (constraints.maxWidth - 56) / 2 : constraints.maxWidth - 32,
+                              compact: compact,
+                              landscape: landscape,
+                              progress: _morph.value,
+                              animating: _morph.isAnimating,
+                              keypadOpen: _keypadOpen,
+                              onDigit: (digit) => setState(() => _digits += digit),
+                              onToggle: _toggleKeypad,
+                              entrance: _entrance,
+                              endKey: _endKey,
+                              hideEnd: _ball != null,
+                            );
+                      final animatedControls = chrome(
+                        AnimatedSwitcher(
+                          duration: switchDuration,
+                          switchInCurve: Curves.easeOutCubic,
+                          switchOutCurve: Curves.easeInCubic,
+                          layoutBuilder: (current, previous) =>
+                              Stack(alignment: Alignment.bottomCenter, children: [...previous, ?current]),
+                          // Incoming, connected and ended crossfade in place.
+                          transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
+                          child: controls,
+                        ),
+                      );
+                      final heldCard = held != null && !ringing && !ended;
+                      final header = chrome(
+                        _FadeIn(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // The held card slides the caller down as it comes in, and back up as it goes.
+                              AnimatedSize(
+                                duration: switchDuration,
+                                curve: Curves.easeOutCubic,
+                                alignment: Alignment.topCenter,
+                                child: AnimatedSwitcher(
+                                  duration: switchDuration,
+                                  child: heldCard
+                                      ? Padding(
+                                          key: ValueKey(held.id),
+                                          padding: const EdgeInsets.only(bottom: 20),
+                                          child: HeldCallCard(
+                                            call: held,
+                                            onSwitch: () => TelecomBridge.instance.unhold(held.id),
+                                            onEnd: () => TelecomBridge.instance.hangUp(held.id),
+                                          ),
+                                        )
+                                      : const SizedBox(width: double.infinity),
+                                ),
+                              ),
+                              CallHeader(
+                                call: call,
+                                sims: widget.sims,
+                                compact: compact,
+                                keypadProgress: progress,
+                                recording: widget.snapshot.recording?.recording ?? false,
+                              ),
+                            ],
                           ),
                         ),
-                        CallHeader(
-                          call: call,
-                          sims: widget.sims,
-                          compact: compact,
-                          keypadProgress: progress,
-                          recording: widget.snapshot.recording?.recording ?? false,
-                        ),
-                      ],
-                    ),
-                  );
-                  // As on ColorOS, what's typed shows right above the keys.
-                  final typed = _TypedDigits(digits: _digits, progress: progress, compact: compact);
-                  if (landscape) {
-                    return Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: _scrollArea(
-                              Column(mainAxisAlignment: MainAxisAlignment.center, children: [header, typed]),
+                      );
+                      // As on ColorOS, what's typed shows right above the keys.
+                      final typed = chrome(_TypedDigits(digits: _digits, progress: progress, compact: compact));
+                      if (landscape) {
+                        return Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _scrollArea(
+                                  Column(mainAxisAlignment: MainAxisAlignment.center, children: [header, typed]),
+                                ),
+                              ),
+                              const SizedBox(width: 24),
+                              Expanded(
+                                child: ringing || ended
+                                    ? _scrollArea(
+                                        Column(mainAxisAlignment: MainAxisAlignment.end, children: [animatedControls]),
+                                      )
+                                    : animatedControls,
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: _scrollArea(
+                                Column(
+                                  children: [
+                                    // ColorOS 17 keeps the caller at the top, left-aligned.
+                                    SizedBox(height: compact ? 12 : 66),
+                                    header,
+                                    const SizedBox(height: 16),
+                                    const Spacer(),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 24),
-                          Expanded(
-                            child: ringing || ended
-                                ? _scrollArea(
-                                    Column(mainAxisAlignment: MainAxisAlignment.end, children: [animatedControls]),
-                                  )
-                                : animatedControls,
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                    child: Column(
-                      children: [
-                        Expanded(
-                          child: _scrollArea(
-                            Column(
+                            if (!ringing && !ended) typed,
+                            Stack(
+                              clipBehavior: Clip.none,
                               children: [
-                                // ColorOS 17 keeps the caller at the top, left-aligned.
-                                SizedBox(height: compact ? 12 : 66),
-                                header,
-                                const SizedBox(height: 16),
-                                const Spacer(),
+                                animatedControls,
+                                if (showsVideo(call) && call.cameraOn)
+                                  // Our camera: right above the controls, down in the corner while they're
+                                  // hidden, and out of the dial pad's way.
+                                  Positioned(
+                                    top: -(VideoPreview.heightFor(call) + 16),
+                                    bottom: 8,
+                                    right: 0,
+                                    child: IgnorePointer(
+                                      child: AnimatedOpacity(
+                                        opacity: _keypadOpen ? 0 : 1,
+                                        duration: fade,
+                                        child: AnimatedAlign(
+                                          alignment: chromeShown ? Alignment.topRight : Alignment.bottomRight,
+                                          duration: fade == Duration.zero ? fade : const Duration(milliseconds: 380),
+                                          curve: Curves.easeOutCubic,
+                                          child: VideoPreview(key: ValueKey('preview-${call.id}'), call: call),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                               ],
                             ),
-                          ),
+                          ],
                         ),
-                        if (!ringing && !ended) typed,
-                        animatedControls,
-                      ],
-                    ),
-                  );
-                },
+                      );
+                    },
+                  ),
+                ),
               ),
             ),
           ),
+          // The other side asks to switch to video; without the camera they're still seen (ours stays off).
+          if (call.videoRequest && !ringing && !ended)
+            Positioned(
+              top: MediaQuery.paddingOf(context).top + 8,
+              left: 16,
+              right: 16,
+              child: VideoRequestCard(
+                call: call,
+                onAccept: () =>
+                    cameraAllowed(context)
+                        .whenComplete(() => TelecomBridge.instance.videoRespond(call.id, accept: true)),
+              ),
+            ),
           if (_ball != null)
             AnimatedBuilder(animation: Listenable.merge([_rise, _fly]), builder: (context, _) => _flyingBall()),
         ],
@@ -605,7 +748,12 @@ class _TypedDigits extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 8),
             child: LayoutBuilder(
               builder: (context, box) {
-                final (text, style) = _fit(digits, box.maxWidth, MediaQuery.textScalerOf(context));
+                final (text, style) = _fit(
+                  digits,
+                  box.maxWidth,
+                  MediaQuery.textScalerOf(context),
+                  DefaultTextStyle.of(context).style,
+                );
                 return Text(
                   text,
                   key: const ValueKey('typed-digits'),
@@ -624,12 +772,12 @@ class _TypedDigits extends StatelessWidget {
 
   /// As on ColorOS: the digits shrink to fit as they're typed, then the earliest give way to
   /// an ellipsis so the latest stay in view.
-  (String, TextStyle) _fit(String digits, double width, TextScaler scaler) {
+  (String, TextStyle) _fit(String digits, double width, TextScaler scaler, TextStyle base) {
     final last = _last;
     if (last != null && last.$1 == digits && last.$2 == width && last.$3 == scaler && last.$4 == compact) {
       return last.$5;
     }
-    final fit = _measure(digits, width, scaler);
+    final fit = _measure(digits, width, scaler, base);
     _last = (digits, width, scaler, compact, fit);
     return fit;
   }
@@ -637,13 +785,16 @@ class _TypedDigits extends StatelessWidget {
   // Rebuilt every frame of the keypad's morph; the measuring only reruns when something changes.
   static (String, double, TextScaler, bool, (String, TextStyle))? _last;
 
-  (String, TextStyle) _measure(String digits, double width, TextScaler scaler) {
-    TextStyle style(double size) => TextStyle(
-      fontSize: size,
-      height: 1.15,
-      letterSpacing: size / 16,
-      color: Colors.white,
-      fontFeatures: const [FontFeature.tabularFigures()],
+  // [base] is the inherited style, so the digits are measured in the font they're drawn in.
+  (String, TextStyle) _measure(String digits, double width, TextScaler scaler, TextStyle base) {
+    TextStyle style(double size) => base.merge(
+      TextStyle(
+        fontSize: size,
+        height: 1.15,
+        letterSpacing: size / 16,
+        color: Colors.white,
+        fontFeatures: const [FontFeature.tabularFigures()],
+      ),
     );
     bool fits(String text, TextStyle style) {
       final painter = TextPainter(

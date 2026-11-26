@@ -11,16 +11,24 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 /**
- * Both sides: the shell helper's 48 kHz mono 16-bit PCM ([input]) → AAC (MediaCodec) → .m4a
+ * Both sides: the shell helper's 48 kHz mono 16-bit PCM ([input]) → [Leveler] → AAC (MediaCodec) → .m4a
  * (MediaMuxer), on its own thread. The microphone method records with MediaRecorder instead.
  */
 class AudioPipeline(private val file: File, private val input: InputStream) {
     @Volatile private var running = false
+
+    /** The loudest sample read, before levelling: Setup's proof the last call had sound. */
+    @Volatile var peak = 0
+        private set
+
+    /** Seconds of audio written so far. */
+    @Volatile var seconds = 0
+        private set
     private var thread: Thread? = null
 
     fun start() {
         running = true
-        thread = Thread(::loop, "recorder").apply { start() }
+        thread = Thread(::loop, "kq4v9sarz7od2").apply { start() }
     }
 
     /** Finishes the file; blocks until the encoder has written its last frame. */
@@ -56,6 +64,7 @@ class AudioPipeline(private val file: File, private val input: InputStream) {
             return
         }
         val pcm = ShortArray(CHUNK)
+        val leveler = Leveler(RATE)
         var written = 0L
 
         try {
@@ -63,8 +72,11 @@ class AudioPipeline(private val file: File, private val input: InputStream) {
                 val n = read(pcm)
                 if (n < 0) break // the helper hung up
                 if (n == 0) continue
+                for (i in 0 until n) peak = maxOf(peak, kotlin.math.abs(pcm[i].toInt()))
+                leveler.process(pcm, n)
                 writer.feed(pcm, n, written * 1_000_000L / RATE)
                 written += n
+                seconds = (written / RATE).toInt()
             }
             writer.finish(written * 1_000_000L / RATE)
         } finally {

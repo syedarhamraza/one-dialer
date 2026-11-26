@@ -226,6 +226,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get keypadZeroHint => '0, long-press for plus';
 
   @override
+  String get keypadVoicemailHint => '1, long-press for voicemail';
+
+  @override
   String keypadDigitHint(String digit) {
     return '$digit, long-press for speed dial';
   }
@@ -444,6 +447,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get video => 'Video';
+
+  @override
+  String get videoCallMark => 'Video call';
+
+  @override
+  String get wifiCallMark => 'Wi-Fi call';
+
+  @override
+  String get volteCall => 'VoLTE call';
+
+  @override
+  String get vonrCall => '5G voice call';
 
   @override
   String get remove => 'Remove';
@@ -693,18 +708,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String mergeGroupsTitle(String count, String groups) {
-    return 'Merge $count contacts into $groups?';
-  }
-
-  @override
   String mergeGroupMessage(String name) {
     return 'They become one contact named $name, with all their numbers and details.';
   }
-
-  @override
-  String get mergeGroupsMessage =>
-      'Each group becomes one contact, with all its numbers and details.';
 
   @override
   String contactsMerged(int count) {
@@ -722,11 +728,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noDuplicateContacts => 'No duplicate contacts';
-
-  @override
-  String mergeAll(String count) {
-    return 'Merge all ($count)';
-  }
 
   @override
   String get recentSearches => 'Recent searches';
@@ -852,6 +853,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get couldNotOpenCamera => 'Couldn\'t open the camera';
 
   @override
+  String get couldNotOpenApp => 'Couldn\'t open the app';
+
+  @override
   String get followSystem => 'Follow system';
 
   @override
@@ -940,16 +944,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Set Dialer as your caller ID & spam app to block these calls';
 
   @override
-  String get blockNumber => 'Block number';
-
-  @override
   String get phoneNumber => 'Phone number';
 
   @override
   String get blockAndFilter => 'Block & filter';
-
-  @override
-  String get searchBlockedNumbers => 'Search blocked numbers';
 
   @override
   String get blockingPaused => 'Blocking rules are paused';
@@ -974,12 +972,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get blockedNumbers => 'Blocked numbers';
 
   @override
-  String get addNumber => 'Add number';
-
-  @override
-  String get noMatchingBlocked => 'No matching blocked numbers';
-
-  @override
   String get blockedCalls => 'Blocked calls';
 
   @override
@@ -996,6 +988,54 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get switchToVideoCall => 'Switch to video call';
+
+  @override
+  String get carrierVideo => 'Carrier video';
+
+  @override
+  String get cameraNeeded => 'Allow the camera to make video calls';
+
+  @override
+  String get answerAsVoice => 'Answer as voice call';
+
+  @override
+  String get videoRequest => 'Switch to a video call?';
+
+  @override
+  String get accept => 'Accept';
+
+  @override
+  String get switchToVoice => 'Switch to voice call';
+
+  @override
+  String get cameraOff => 'Turn camera off';
+
+  @override
+  String get cameraOn => 'Turn camera on';
+
+  @override
+  String get flipCamera => 'Flip camera';
+
+  @override
+  String get incomingVideo => 'Video call';
+
+  @override
+  String get incomingVideoCall => 'Incoming video call';
+
+  @override
+  String get videoUnavailable => 'Video calling isn\'t available';
+
+  @override
+  String get networkUnreachable => 'Couldn\'t reach the network';
+
+  @override
+  String get networkBusy => 'The network is busy';
+
+  @override
+  String get noService => 'No service';
+
+  @override
+  String get voiceCall => 'Voice call';
 
   @override
   String get mute => 'Mute';
@@ -1121,7 +1161,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onlyWithHeadphones => 'Only with headphones';
 
   @override
-  String get incomingCallReminders => 'Incoming call reminders';
+  String get incomingCallReminders => 'Incoming calls';
 
   @override
   String get incomingFootnote =>
@@ -1153,20 +1193,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Turn one of them off, or both will blink. Find it in Settings under Notifications or Accessibility';
 
   @override
-  String get liveUpdateCapsule => 'Live Update capsule (Experimental)';
-
-  @override
-  String get liveUpdateCapsuleSubtitle =>
-      'Android 16: show a connected call in the status bar chip, and the capsule on ColorOS, OxygenOS and realme UI';
-
-  @override
   String get swipeUpToAnswer => 'Swipe up to answer';
 
   @override
   String get swipeDownToAnswer => 'Swipe down to answer';
 
   @override
-  String get answerButtons => 'Answer buttons';
+  String get answerButtons => 'Call screen';
 
   @override
   String get twoButtons => '2 buttons';
@@ -1222,7 +1255,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get answerEndCalls => 'Answer/End calls';
+  String get answerEndCalls => 'Answering and ending calls';
 
   @override
   String get vibrateAnswerEnd => 'Vibrate when your calls are answered/ended';
@@ -1335,19 +1368,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get writeInKeypad => 'Write in keypad';
 
   @override
-  String get twoCallButtons => 'Two Call buttons';
-
-  @override
-  String get chooseSimAndCall => 'Choose SIM and call';
-
-  @override
   String get tapRecentCall => 'Tap a recent call';
 
   @override
-  String get chooseSimForCalls => 'Choose SIM for calls';
-
-  @override
-  String get chooseSimSubtitle => 'Dual SIM with no default SIM';
+  String get chooseSimForCalls => 'Which SIM to call with';
 
   @override
   String get appearance => 'Appearance';
@@ -1418,6 +1442,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get glassSettings => 'Glass & blur';
+
+  @override
+  String get splashIcon => 'App icon on launch screen';
+
+  @override
+  String get splashIconSubtitle =>
+      'Turn off for a blank launch screen when your home screen uses a different icon';
 
   @override
   String get liquidGlassOn => 'Liquid glass on';
@@ -1515,6 +1546,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get openSourceLicences => 'Open source licences';
 
   @override
+  String get copyrightNotice =>
+      'Copyright (C) 2026 Syed Arham Raza\nFree software under the GNU General Public License v3.0, with no warranty';
+
+  @override
   String get changelog => 'Changelog';
 
   @override
@@ -1582,6 +1617,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sendFeedback => 'Send feedback';
+
+  @override
+  String get feedbackTypeTitle => 'What\'s it about?';
+
+  @override
+  String get feedbackBug => 'Report a problem';
+
+  @override
+  String get feedbackIdea => 'Suggest an idea';
+
+  @override
+  String get feedbackQuestion => 'Ask a question';
 
   @override
   String get developer => 'Developer';
@@ -1902,7 +1949,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get answerButtonsSubtitle =>
-      'How you answer, and how the call screen looks';
+      'How you answer, effects, caller photo and background';
+
+  @override
+  String get incomingCallsSubtitle =>
+      'Ringing style, announce caller, flash, Live Update';
+
+  @override
+  String get answerEndCallsSubtitle => 'Auto-answer, reply with SMS, speaker';
+
+  @override
+  String get sectionCalls => 'Calls';
+
+  @override
+  String get sectionMakingCalls => 'Making calls';
+
+  @override
+  String get sectionBlocking => 'Blocking and caller ID';
+
+  @override
+  String get sectionDisplay => 'Display';
+
+  @override
+  String get sectionSystem => 'Contacts and system';
+
+  @override
+  String get searchSettings => 'Search settings';
 
   @override
   String get carrierSettingsSubtitle =>
@@ -2052,4 +2124,344 @@ class AppLocalizationsEn extends AppLocalizations {
   String endHeldCall(String name) {
     return 'End call with $name';
   }
+
+  @override
+  String get fullScreenAsk =>
+      'Incoming calls only show in the notification shade. On the next page, turn on full-screen notifications for One Dialer. If it already looks on, turn it off and on again.';
+
+  @override
+  String get notNow => 'Not now';
+
+  @override
+  String get vipCalls => 'VIP calls';
+
+  @override
+  String get vipCallsSubtitle => 'Ring even on Silent or Vibrate';
+
+  @override
+  String get vipRing => 'Ring on Silent for VIPs';
+
+  @override
+  String get vipRingSubtitle =>
+      'Calls from your VIPs ring even when the phone is on Silent or Vibrate, then it goes back';
+
+  @override
+  String get vipFavourites => 'Include favourites';
+
+  @override
+  String get vipFavouritesSubtitle => 'Your starred contacts count as VIPs';
+
+  @override
+  String get vipContacts => 'VIP contacts';
+
+  @override
+  String get vipNeedsAccess => 'VIP calls can\'t ring on Silent';
+
+  @override
+  String get vipNeedsAccessSubtitle =>
+      'Allow call screening and Do Not Disturb access';
+
+  @override
+  String get vipDndHint =>
+      'With Do Not Disturb on, Android decides who rings: allow starred contacts in its Do Not Disturb settings.';
+
+  @override
+  String get rowCallButton => 'Call button on rows';
+
+  @override
+  String get rowCallButtonSubtitle => 'A call button on every row in Calls';
+
+  @override
+  String get swipeToCall => 'Swipe to call or message';
+
+  @override
+  String get swipeToCallSubtitle =>
+      'Swipe a row right to call, left to message';
+
+  @override
+  String get clearDefault => 'Clear default';
+
+  @override
+  String get swipeStyle => 'Swipe style';
+
+  @override
+  String get swipeStylePill => 'Glass button';
+
+  @override
+  String get swipeStyleFlat => 'Flat';
+
+  @override
+  String get quickCalling => 'Quick calling';
+
+  @override
+  String get quickCallingSubtitle => 'Tap, call button and swipe on rows';
+
+  @override
+  String get useRecentSim => 'Use the recent SIM';
+
+  @override
+  String get simSameAsPhone => 'Same as phone';
+
+  @override
+  String alwaysSim(Object sim) {
+    return 'Always $sim';
+  }
+
+  @override
+  String get keypadSimButtons => 'Two Call buttons';
+
+  @override
+  String get keypadSimButtonsSubtitle =>
+      'One for each SIM, instead of a single Call button';
+
+  @override
+  String get keypadSimButtonsOneSim => 'Only on phones with two SIMs';
+
+  @override
+  String get keypadSettings => 'Keypad';
+
+  @override
+  String get keypadSettingsSubtitle => 'Two Call buttons, speed dial';
+
+  @override
+  String get phoneDefaultSim => 'Phone\'s default SIM';
+
+  @override
+  String get simRulesHint =>
+      'A contact\'s own SIM, set on their page, always comes first.';
+
+  @override
+  String get callButtonStyle => 'Call button style';
+
+  @override
+  String get callButtonTint => 'Soft tint';
+
+  @override
+  String get callButtonGlyph => 'Glyph only';
+
+  @override
+  String get callButtonLit => 'Green circle';
+
+  @override
+  String get callsAndContactsRows => 'Rows in Calls and Contacts';
+
+  @override
+  String get callsRows => 'Rows in Calls';
+
+  @override
+  String get tapAlreadyCalls => 'Tapping a call already calls';
+
+  @override
+  String get simCards => 'SIM cards';
+
+  @override
+  String get groupByContact => 'Group by contact';
+
+  @override
+  String get dontGroupByContact => 'Don\'t group by contact';
+
+  @override
+  String get keypadAndContacts => 'Keypad and contacts';
+
+  @override
+  String get swipeToCallSim => 'Swipe to call';
+
+  @override
+  String get sameAsKeypad => 'Same as keypad and contacts';
+
+  @override
+  String get tapSimUnused =>
+      'Used only when Tap a recent call is set to Call, in Quick calling';
+
+  @override
+  String get swipeSimUnused =>
+      'Used only when Swipe to call is on, in Quick calling';
+
+  @override
+  String get onboardingSkip => 'Skip';
+
+  @override
+  String get onboardingNext => 'Next';
+
+  @override
+  String get onboardingStart => 'Get started';
+
+  @override
+  String get onboardingLookTitle => 'Make it yours';
+
+  @override
+  String get onboardingLookBody =>
+      'Pick the app\'s language and whether it\'s light or dark.';
+
+  @override
+  String get onboardingAnswerTitle => 'Answering calls';
+
+  @override
+  String get onboardingAnswerBody =>
+      'Choose how incoming calls look and how you answer them.';
+
+  @override
+  String get onboardingHealthTitle => 'Ready for calls';
+
+  @override
+  String get onboardingHealthBody =>
+      'Incoming calls need these from Android. Tap one to fix it.';
+
+  @override
+  String get onboardingAllSet => 'All set';
+
+  @override
+  String get onboardingCallingTitle => 'Making calls';
+
+  @override
+  String get onboardingCallingBody =>
+      'Choose the SIM for calls and what a tap or swipe on a call does.';
+
+  @override
+  String get mergeDuplicatedNames => 'Merge duplicated names';
+
+  @override
+  String get mergeDuplicatedNumbers => 'Merge duplicated numbers';
+
+  @override
+  String get manuallyMergeDuplicates => 'Manually merge duplicates';
+
+  @override
+  String get sameNumberContacts => 'Contacts with the same number';
+
+  @override
+  String get sameNameContacts => 'Contacts with the same name';
+
+  @override
+  String groupCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count groups',
+      one: '1 group',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get mergeManually => 'Merge manually';
+
+  @override
+  String get manualMergingDetails => 'Manual merging details';
+
+  @override
+  String get nameRequired => 'Name (required)';
+
+  @override
+  String get numbersSelectMany => 'Number (can select more than one)';
+
+  @override
+  String mergeDeletesNumbers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'The $count unticked numbers will be deleted from the contact.',
+      one: 'The unticked number will be deleted from the contact.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get blockCalls => 'Block calls';
+
+  @override
+  String get blockMessages => 'Block messages';
+
+  @override
+  String get blockMessagesUnavailable =>
+      'One Dialer isn\'t your messaging app, so it can\'t block messages. Call blocking, the blocklist and the allowlist aren\'t affected.';
+
+  @override
+  String get blocklist => 'Blocklist';
+
+  @override
+  String get blocklistSubtitle =>
+      'Calls from numbers added to the blocklist will be blocked.';
+
+  @override
+  String get allowlist => 'Allowlist';
+
+  @override
+  String get allowlistSubtitle =>
+      'Calls from numbers added to the allowlist will not be blocked.';
+
+  @override
+  String get none => 'None';
+
+  @override
+  String get noNumbers => 'No numbers';
+
+  @override
+  String get blockByPrefix => 'Block by prefix';
+
+  @override
+  String get numberPrefix => 'Number prefix, e.g. 0300';
+
+  @override
+  String startsWith(String prefix) {
+    return 'Starts with $prefix';
+  }
+
+  @override
+  String removeFromBlocklist(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Remove $count numbers from the blocklist?',
+      one: 'Remove 1 number from the blocklist?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String removeFromAllowlist(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Remove $count numbers from the allowlist?',
+      one: 'Remove 1 number from the allowlist?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String searchContactNumbers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Search within $count contact numbers',
+      one: 'Search within 1 contact number',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get unofficialBuildTitle => 'Unofficial build';
+
+  @override
+  String get unofficialBuildCredit =>
+      'Based on One Dialer by Syed Arham Raza, github.com/syedarhamraza/one-dialer';
+
+  @override
+  String get unofficialBuildNotice =>
+      'Unofficial build. Based on One Dialer by Syed Arham Raza, github.com/syedarhamraza/one-dialer';
+
+  @override
+  String mergeAll(String count) {
+    return 'Merge all ($count)';
+  }
+
+  @override
+  String mergeGroupsTitle(String count, String groups) {
+    return 'Merge $count contacts into $groups?';
+  }
+
+  @override
+  String get mergeGroupsMessage =>
+      'Each group becomes one contact, with all its numbers and details.';
 }

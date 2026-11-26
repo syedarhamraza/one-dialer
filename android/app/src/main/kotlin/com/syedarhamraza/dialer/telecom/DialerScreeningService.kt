@@ -12,7 +12,8 @@ import android.telecom.TelecomManager
 /**
  * Bound by Telecom for incoming calls while we're the default dialer. Numbers on Android's
  * block list are already rejected by Telecom before this runs; this adds the
- * "private/unknown callers" and "callers not in contacts" rules from [BlockingPrefs].
+ * "private/unknown callers", "callers not in contacts" and prefix rules from [BlockingPrefs],
+ * with the allowlist letting its numbers past them.
  */
 class DialerScreeningService : CallScreeningService() {
 
@@ -24,6 +25,7 @@ class DialerScreeningService : CallScreeningService() {
         val block = incoming && runCatching {
             BlockRules.shouldBlock(
                 hiddenNumber = details.handlePresentation != TelecomManager.PRESENTATION_ALLOWED || number.isBlank(),
+                number = number,
                 isContact = { isContact(number) },
                 settings = BlockingPrefs.read(this),
             )
@@ -36,6 +38,8 @@ class DialerScreeningService : CallScreeningService() {
             CallLogSource.rememberBlocked(this, number)
         }
         respondToCall(details, response.build())
+        // Telecom rings once screening answers; a VIP's ringer goes up before that.
+        if (incoming && !block) runCatching { VipRing.onIncoming(this, number) }
         // Telecom writes the log entry just after; fix it then too (also done on every read).
         val app = applicationContext
         android.os.Handler(mainLooper).postDelayed({ Thread { CallLogSource.fixBlocked(app) }.start() }, 3_000)
@@ -49,30 +53,69 @@ class DialerScreeningService : CallScreeningService() {
     }
 }
 
-/** The blocking toggles, in plain SharedPreferences so the screening service can read them without Flutter. */
-data class BlockingSettings(val blockHidden: Boolean = false, val blockNonContacts: Boolean = false)
+/**
+ * The blocking toggles, prefixes and allowlist, in plain SharedPreferences so the screening
+ * service can read them without Flutter.
+ */
+data class BlockingSettings(
+    val blockHidden: Boolean = false,
+    val blockNonContacts: Boolean = false,
+    val prefixes: Set<String> = emptySet(),
+    val allowed: Set<String> = emptySet(),
+)
 
 object BlockingPrefs {
     private const val FILE = "blocking"
 
     fun read(context: Context): BlockingSettings {
         val prefs = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
-        return BlockingSettings(prefs.getBoolean("blockHidden", false), prefs.getBoolean("blockNonContacts", false))
+        return BlockingSettings(
+            prefs.getBoolean("blockHidden", false),
+            prefs.getBoolean("blockNonContacts", false),
+            prefs.getStringSet("prefixes", null).orEmpty().toSet(),
+            prefs.getStringSet("allowed", null).orEmpty().toSet(),
+        )
     }
 
     fun write(context: Context, settings: BlockingSettings) {
         context.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit()
             .putBoolean("blockHidden", settings.blockHidden)
             .putBoolean("blockNonContacts", settings.blockNonContacts)
+            .putStringSet("prefixes", settings.prefixes)
+            .putStringSet("allowed", settings.allowed)
             .apply()
     }
 }
 
 object BlockRules {
-    /** [isContact] is only evaluated when the non-contacts rule is on (it's a contacts query). */
-    fun shouldBlock(hiddenNumber: Boolean, isContact: () -> Boolean, settings: BlockingSettings): Boolean = when {
-        hiddenNumber -> settings.blockHidden || settings.blockNonContacts
-        settings.blockNonContacts -> !isContact()
-        else -> false
+    /** The last 10 digits, as Dart's `numberKey`: "0300 1234567" and "+92 300 1234567" match. */
+    fun numberKey(number: String): String = number.filter { it.isDigit() }.takeLast(10)
+
+    /** Digits with a leading + kept, the form prefixes are typed and compared in. */
+    fun prefixForm(number: String): String {
+        val digits = number.filter { it.isDigit() }
+        return if (number.trimStart().startsWith("+")) "+$digits" else digits
+    }
+
+    /**
+     * Hidden numbers follow the hidden and non-contacts rules; otherwise an allowed number
+     * always rings, then prefixes block, then the non-contacts rule. [isContact] is only
+     * evaluated when the non-contacts rule decides (it's a contacts query).
+     */
+    // shortcut: a prefix is matched against the number as the carrier sends it (+92300... vs
+    // 0300...), so "0300" misses an international-form caller; upgrade with libphonenumber
+    // if users ask.
+    fun shouldBlock(
+        hiddenNumber: Boolean,
+        number: String,
+        isContact: () -> Boolean,
+        settings: BlockingSettings,
+    ): Boolean {
+        if (hiddenNumber) return settings.blockHidden || settings.blockNonContacts
+        val key = numberKey(number)
+        if (key.isNotEmpty() && settings.allowed.any { numberKey(it) == key }) return false
+        val form = prefixForm(number)
+        if (settings.prefixes.any { it.isNotEmpty() && form.startsWith(prefixForm(it)) }) return true
+        return settings.blockNonContacts && !isContact()
     }
 }

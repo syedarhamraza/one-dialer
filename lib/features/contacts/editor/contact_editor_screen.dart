@@ -758,8 +758,16 @@ class _ContactEditorScreenState extends State<ContactEditorScreen> {
         InkWell(
           customBorder: OneUITheme.cardShape,
           onTap: () async {
-            final picked = await TelecomBridge.instance.pickRingtone(_ringtone.isEmpty ? null : _ringtone);
-            if (picked != null && _active) setState(() => _ringtone = picked);
+            final String? picked;
+            try {
+              picked = await TelecomBridge.instance.pickRingtone(_ringtone.isEmpty ? null : _ringtone);
+            } on PlatformException {
+              // No ringtone picker on this phone (the start failed).
+              if (mounted) OneUIToast.show(context, context.l10n.couldNotOpenApp);
+              return;
+            }
+            if (picked == null || !_active) return;
+            setState(() => _ringtone = picked!);
           },
           child: EditorRow(
             icon: CupertinoIcons.bell,

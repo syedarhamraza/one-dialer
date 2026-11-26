@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'call_info.dart';
@@ -74,6 +75,10 @@ class TelecomBridge {
   Future<List<Map<Object?, Object?>>> getMessagingApps(String contactId) async =>
       await _methods.invokeListMethod<Map<Object?, Object?>>('getMessagingApps', {'contactId': contactId}) ?? const [];
 
+  /// The contact's video-call rows, one per app (WhatsApp, Telegram, Meet...): label, dataId, mimeType.
+  Future<List<Map<Object?, Object?>>> getVideoApps(String contactId) async =>
+      await _methods.invokeListMethod<Map<Object?, Object?>>('getVideoApps', {'contactId': contactId}) ?? const [];
+
   Future<void> openContactData(int dataId, String mimeType) =>
       _methods.invokeMethod('openContactData', {'dataId': dataId, 'mimeType': mimeType});
 
@@ -89,8 +94,14 @@ class TelecomBridge {
   Future<String> createLocalContact() async => (await _methods.invokeMethod<String>('createLocalContact'))!;
 
   /// Joins the contacts into one (Android's "link"), for Merge duplicates.
-  Future<void> mergeContacts(List<String> contactIds) =>
-      _methods.invokeMethod('mergeContacts', {'contactIds': contactIds});
+  /// Joins [contactIds] into one contact named after [nameContactId], deleting the phone rows
+  /// whose number matches one of [removeNumbers] (Manage contacts › Merge duplicates).
+  Future<void> mergeContacts(List<String> contactIds, {String? nameContactId, List<String> removeNumbers = const []}) =>
+      _methods.invokeMethod('mergeContacts', {
+        'contactIds': contactIds,
+        'nameContactId': nameContactId,
+        'removeNumbers': removeNumbers,
+      });
 
   /// A .vcf file's text from the files app; null when cancelled.
   Future<String?> pickVcf() => _methods.invokeMethod<String>('pickVcf');
@@ -124,6 +135,10 @@ class TelecomBridge {
       _methods.invokeMethod<String>('getRingtone', {'contactId': contactId});
 
   /// The contact's custom ringtone's name, or null when it follows the system.
+  /// Makes [number] the contact's default (Android's contact-wide default), or clears it when null.
+  Future<bool> setDefaultNumber(String contactId, String? number) async =>
+      await _methods.invokeMethod<bool>('setDefaultNumber', {'contactId': contactId, 'number': number}) ?? false;
+
   Future<String?> getRingtoneTitle(String contactId) =>
       _methods.invokeMethod<String>('getRingtoneTitle', {'contactId': contactId});
 
@@ -155,11 +170,19 @@ class TelecomBridge {
   Future<Map<Object?, Object?>> getCallHealth() async =>
       await _methods.invokeMapMethod<Object?, Object?>('getCallHealth') ?? const {};
 
+  /// The font picked in ColorOS / realme UI's Display settings ("OPPO Sans", "OPPO Serif"), or null.
+  Future<String?> systemFontName() => _methods.invokeMethod<String>('systemFontName');
+
   /// The visual effects level this phone starts on (`DeviceTier.kt`): `tier` (`off`, `reduced` or
   /// `full`), `source` (`soc`, `platform`, `gpu` or `ram`) and the raw `soc`, `platform`,
   /// `hardware` and `gpu` strings it was read from.
   Future<Map<String, Object?>> effectsDefault() async =>
       (await _methods.invokeMapMethod<String, Object?>('effectsDefault')) ?? const {};
+
+  /// Shows or hides the app icon on later launch splashes ([show] null only asks). Whether the
+  /// phone can (Android 13+).
+  Future<bool> setSplashIcon([bool? show]) async =>
+      await _methods.invokeMethod<bool>('setSplashIcon', {'show': show}) ?? false;
 
   /// `notifications`, `fullScreen`, `defaultApps`, `contactsStorage`, `googleContactsSync`, `app`,
   /// or `url:https://…`. Throws `NO_ACTIVITY` when the phone has no such screen.
@@ -175,12 +198,24 @@ class TelecomBridge {
   Future<Map<Object?, Object?>> getBlocking() async =>
       await _methods.invokeMapMethod<Object?, Object?>('getBlocking') ?? const {};
 
-  Future<void> setBlocking({required bool blockHidden, required bool blockNonContacts}) =>
-      _methods.invokeMethod('setBlocking', {'blockHidden': blockHidden, 'blockNonContacts': blockNonContacts});
+  Future<void> setBlocking({
+    required bool blockHidden,
+    required bool blockNonContacts,
+    required List<String> prefixes,
+    required List<String> allowed,
+  }) => _methods.invokeMethod('setBlocking', {
+    'blockHidden': blockHidden,
+    'blockNonContacts': blockNonContacts,
+    'prefixes': prefixes,
+    'allowed': allowed,
+  });
 
   /// Settings › Incoming call reminders and Answer/End calls (`CallPrefs.kt`, read by the call service):
   /// `incomingStyle`, `vibrateAnswerEnd`, `speakerDefault`, `autoAnswer`, `autoAnswerDelay`.
   /// Settings › Language: `system` or a language tag (`AppLanguage.kt`).
+  /// SHA-256 (lowercase hex) of the certificate this copy is signed with (`official_build.dart`).
+  Future<String?> signingCertSha256() => _methods.invokeMethod<String>('signingCertSha256');
+
   Future<String> getAppLanguage() async => await _methods.invokeMethod<String>('getAppLanguage') ?? 'system';
 
   Future<void> setAppLanguage(String tag) => _methods.invokeMethod('setAppLanguage', {'tag': tag});
@@ -250,9 +285,15 @@ class TelecomBridge {
   Future<void> markMissedRead() => _methods.invokeMethod('markMissedRead');
 
   // Calls
-  /// Calls [number], on the SIM with [simId] if given (otherwise Android's default or its own picker).
-  Future<void> placeCall(String number, {String? simId}) =>
-      _methods.invokeMethod('placeCall', {'number': number, 'simId': simId});
+  /// Calls [number], on the SIM with [simId] if given (otherwise Android's default or its own picker);
+  /// [voicemail] calls that SIM's voicemail instead of [number].
+  Future<void> placeCall(String number, {String? simId, bool voicemail = false, bool video = false}) =>
+      _methods.invokeMethod('placeCall', {
+        'number': number,
+        'simId': simId,
+        if (voicemail) 'voicemail': true,
+        if (video) 'video': true,
+      });
 
   /// Calls back call-log row [id]; an app's row (WhatsApp...) is called back by that app.
   Future<void> callBack(int id) => _methods.invokeMethod('callBack', {'id': id});
@@ -267,11 +308,41 @@ class TelecomBridge {
   Future<void> sendSms(String number, {String? body}) =>
       _methods.invokeMethod('sendSms', {'number': number, 'body': body});
 
-  /// Call-capable SIMs in slot order; empty without READ_PHONE_STATE.
-  Future<List<SimCard>> getSims() async {
-    final raw = await _methods.invokeListMethod<Map<Object?, Object?>>('getSims') ?? const [];
-    return raw.map(SimCard.fromMap).toList();
+  /// Call-capable SIMs in slot order; empty without READ_PHONE_STATE. Always asks Android (a
+  /// few Telecom calls), and keeps the answer for [quickSims].
+  Future<List<SimCard>> getSims() {
+    final fresh = _methods
+        .invokeListMethod<Map<Object?, Object?>>('getSims')
+        .then((raw) => (raw ?? const []).map(SimCard.fromMap).toList());
+    fresh.then<void>((sims) {
+      _lastSims = sims;
+      // Only a real change notifies: every resume reads them again.
+      if (!listEquals([for (final s in sims) s.id], [for (final s in this.sims.value) s.id])) this.sims.value = sims;
+    }, onError: (_) {});
+    return fresh;
   }
+
+  /// The SIMs [getSims] read last, for screens that must follow them (Recents' SIM badges): a
+  /// first read that came back empty (SIMs still starting) is replaced on the next resume.
+  final ValueNotifier<List<SimCard>> sims = ValueNotifier(const []);
+
+  /// The last list [getSims] got; a failed read keeps it.
+  static List<SimCard>? _lastSims;
+
+  /// [getSims] without waiting for Android when it has answered before: the SIM menu opens on the
+  /// tap. Refreshed behind it on every use and when the app comes back ([DialerApp]), so a change in
+  /// Android's SIM settings reaches at most the one call made right after it.
+  Future<List<SimCard>> quickSims() {
+    final last = _lastSims;
+    final fresh = getSims();
+    if (last == null) return fresh;
+    fresh.ignore();
+    return Future.value(last);
+  }
+
+  /// Tests: each starts from no SIMs read.
+  @visibleForTesting
+  static void forgetSims() => _lastSims = null;
 
   /// Keypad feedback tone (respects the system "Dial pad tones" setting).
   Future<void> playTone(String digit) => _methods.invokeMethod('playTone', {'digit': digit});
@@ -281,7 +352,22 @@ class TelecomBridge {
       await _methods.invokeMethod<bool>('handleSpecialCode', {'code': code}) ?? false;
   Future<void> stopTone() => _methods.invokeMethod('stopTone');
 
-  Future<void> answer(String id) => _call('answer', id);
+  /// [video] answers a carrier video call with our camera on; false answers it as a voice call.
+  Future<void> answer(String id, {bool video = false}) => _call('answer', id, {'video': video});
+
+  /// The call's carrier video textures `(remote, local)`, made on first ask; null without video.
+  Future<(int, int)?> videoTextures(String id) async {
+    final t = await _methods.invokeMapMethod<String, int>('videoTextures', {'id': id});
+    return t == null ? null : (t['remote']!, t['local']!);
+  }
+
+  /// Switches the call's carrier video: `bidirectional`, `rx` (our camera off) or `audio`.
+  Future<void> videoRequest(String id, String state) => _call('videoRequest', id, {'state': state});
+
+  /// Accepts or declines the other side's ask to switch to video.
+  Future<void> videoRespond(String id, {required bool accept}) => _call('videoRespond', id, {'accept': accept});
+
+  Future<void> flipCamera(String id) => _call('flipCamera', id);
   Future<void> reject(String id) => _call('reject', id);
 
   /// Opens the keypad to place another call; Telecom holds the current one.

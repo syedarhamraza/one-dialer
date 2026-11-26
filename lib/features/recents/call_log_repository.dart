@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../../core/contacts/contacts_repository.dart';
 import '../../core/diagnostics/lag_diagnostics.dart';
+import '../../core/prefs/dialer_prefs.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import 'call_log.dart';
 import '../../l10n/l10n.dart';
@@ -19,6 +20,9 @@ class CallLogRepository {
 
   /// False when call-log access is missing (not the default dialer).
   final ValueNotifier<bool> hasAccess = ValueNotifier(true);
+
+  /// False until the first read answers, so Recents doesn't flash "No recent calls" on a cold start.
+  final ValueNotifier<bool> loaded = ValueNotifier(false);
 
   Future<void> start() async {
     // Once loaded with access, the call-log observer keeps it current.
@@ -46,11 +50,13 @@ class CallLogRepository {
       // Unchanged rows (a change elsewhere in the log) rebuild nothing.
       if (!sameCalls(loaded, calls.value)) calls.value = loaded;
       hasAccess.value = true;
+      this.loaded.value = true;
     } on PlatformException catch (e) {
       if (revision != _revision) return;
       if (e.code != 'NO_PERMISSION') rethrow;
       calls.value = const [];
       hasAccess.value = false;
+      loaded.value = true;
     } finally {
       LagDiagnostics.instance.action(DiagnosticAction.callLogLoad, elapsed: diagnosticTimer.elapsed);
     }
@@ -73,7 +79,11 @@ class CallLogRepository {
           x.isNew != y.isNew ||
           x.app != y.app ||
           x.appPackage != y.appPackage ||
-          x.isVideo != y.isVideo) {
+          x.isVideo != y.isVideo ||
+          x.isWifi != y.isWifi ||
+          x.isHd != y.isHd ||
+          x.isVolte != y.isVolte ||
+          x.isVonr != y.isVonr) {
         return false;
       }
     }
@@ -121,6 +131,19 @@ class CallLogRepository {
     }
   }
 
+  /// The SIM to call [number] on without asking: the one its newest logged call used; null when
+  /// it has none, and the caller asks. Call-log `simId`s are the same `component|accountId` as
+  /// `getSims()`, but may name a SIM since removed: callers check.
+  String? recentSim(String number) {
+    final key = numberKey(number);
+    if (key.isEmpty) return null;
+    for (final c in calls.value) {
+      final sim = c.simId;
+      if (sim != null && sim.isNotEmpty && numberKey(c.number) == key) return sim;
+    }
+    return null;
+  }
+
   /// The most recently dialled number, for the keypad's empty-call-button redial.
   String? get lastDialled {
     for (final c in calls.value) {
@@ -136,4 +159,12 @@ String callerName(AppLocalizations l10n, CallLogEntry call) {
   final cached = call.name?.trim();
   return ContactsRepository.instance.nameFor(call.number) ??
       (cached != null && cached.isNotEmpty ? cached : call.number);
+}
+
+/// Who a call is with, for grouping: the saved contact (all their numbers), else the number;
+/// only the number while Calls doesn't group by contact ([DialerPrefs.groupByContact]).
+String callerKey(CallLogEntry call) {
+  if (!DialerPrefs.instance.groupByContact.value) return numberKey(call.number);
+  final id = ContactsRepository.instance.contactFor(call.number)?.id;
+  return id != null ? 'contact:$id' : numberKey(call.number);
 }

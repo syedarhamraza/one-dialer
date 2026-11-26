@@ -14,8 +14,8 @@ class DialerPrefs {
 
   static final DialerPrefs instance = DialerPrefs._();
 
-  // Lazy: widgets read the notifiers below without touching storage.
-  late final _prefs = SharedPreferencesAsync();
+  // A thin handle over the platform store, made per use, so tests that swap the store reach it.
+  SharedPreferencesAsync get _prefs => SharedPreferencesAsync();
 
   /// Bumped on every change, so screens can rebuild.
   final ValueNotifier<int> changes = ValueNotifier(0);
@@ -37,6 +37,12 @@ class DialerPrefs {
     changes.value++;
   }
 
+  /// Display & effects › "App icon on launch screen" (on by default). Android itself keeps the
+  /// splash choice; this only remembers the switch.
+  Future<bool> splashIcon() async => await _prefs.getBool('splash_icon') ?? true;
+
+  Future<void> setSplashIcon(bool value) => _prefs.setBool('splash_icon', value);
+
   /// Recents › "Hide blocked calls" (on by default; they're always in Block numbers).
   Future<bool> hideBlockedCalls() async => await _prefs.getBool('hide_blocked_calls') ?? true;
 
@@ -49,6 +55,19 @@ class DialerPrefs {
   Future<bool> sideloadWarned() async => await _prefs.getBool('sideload_warned') ?? false;
 
   Future<void> setSideloadWarned() => _prefs.setBool('sideload_warned', true);
+
+  /// Whether the one-time "Unofficial build" notice was shown.
+  Future<bool> unofficialNoted() async => await _prefs.getBool('unofficial_noted') ?? false;
+
+  Future<void> setUnofficialNoted() => _prefs.setBool('unofficial_noted', true);
+
+  /// Whether the first-run onboarding was shown (or skipped, for people who had the app before it).
+  Future<bool> onboarded() async => await _prefs.getBool('onboarded') ?? false;
+
+  Future<void> setOnboarded() => _prefs.setBool('onboarded', true);
+
+  /// Nothing saved yet: a fresh install, or the app's data was cleared.
+  Future<bool> isFresh() async => (await _prefs.getKeys()).isEmpty;
 
   /// Search page "Recent searches", newest first.
   Future<List<String>> recentSearches() async => await _prefs.getStringList('recent_searches') ?? const [];
@@ -154,13 +173,47 @@ class DialerPrefs {
   }
 
   /// Settings › "Tap a recent call": `details` (open its page), `dial` (write the number
-  /// in the keypad) or `sim` (dual SIM only: pick a SIM and call). Notifiers so rows read
-  /// it synchronously; [loadChoices] fills them at startup.
+  /// in the keypad) or `call` (call it, on [tapSim]). Notifiers so rows read it synchronously;
+  /// [loadChoices] fills them at startup.
   final recentTap = ValueNotifier('details');
 
-  /// Settings › "Choose SIM for calls" (dual SIM, no default): `buttons` (two Call keys)
-  /// or `menu` (ask on every call).
-  final simChoice = ValueNotifier('buttons');
+  /// A tap on a Calls row calls: the row's call button steps aside then, since it'd only repeat it (Settings greys the button out and says why).
+  bool get tapCalls => recentTap.value == 'call';
+
+  /// Settings › SIM cards › "Which SIM to call with" (dual SIM): `phone` (Android's default SIM,
+  /// asking when it's "Ask every time"), `menu` (always ask), `recent` (no asking: the SIM last used
+  /// with that number, asking when there's none, see [CallLogRepository.recentSim]) or `sim:<id>`
+  /// (always that SIM). It overrides Android's default; a contact's own SIM still comes first ([placeCall]).
+  final simChoice = ValueNotifier('phone');
+
+  /// The same choice for a tap that calls a Calls row ([recentTap] `call`) and for swipe to call,
+  /// each on its own row under SIM cards; `calls` follows [simChoice].
+  final tapSim = ValueNotifier('calls');
+  final swipeSim = ValueNotifier('calls');
+
+  static bool _isSimRule(String? v) =>
+      v == 'calls' || v == 'phone' || v == 'menu' || v == 'recent' || (v?.startsWith('sim:') ?? false);
+
+  /// Settings › Keypad › "Two Call buttons": one per SIM on a dual SIM phone, whatever SIM cards
+  /// says. Null until chosen: then the keypad shows them only where calls ask ([keypadTwoCallButtons]),
+  /// as before this was its own setting.
+  final keypadSimButtons = ValueNotifier<bool?>(null);
+
+  // Settings › Keypad & recents, quick calling (all off by default): a call button on Calls and
+  // Contacts rows, swipe right to call / left to message.
+  final rowCallButton = ValueNotifier(false);
+  final swipeToCall = ValueNotifier(false);
+
+  /// Calls ⋮ › Group by contact: one row per contact a day (all their numbers, any calls in
+  /// between), else only back-to-back calls from one number of one kind share a row.
+  final groupByContact = ValueNotifier(true);
+
+  /// Beta: the look of the swipe ([swipeStyles]) and of the row call button ([callButtonStyles]),
+  /// to compare on the phone before one is kept (`docs/beta-only.md`).
+  final swipeStyle = ValueNotifier('pill');
+  final callButtonStyle = ValueNotifier('tint');
+  static const swipeStyles = ['pill', 'flat'];
+  static const callButtonStyles = ['tint', 'glyph', 'lit'];
 
   // Manage contacts. Accounts are keyed `type|name` (`|` is the phone itself).
   final showPhotos = ValueNotifier(true);
@@ -190,9 +243,31 @@ class DialerPrefs {
     saveAccount.value = await _prefs.getString('contacts_save_account');
     // Ignores values from earlier test builds that no longer exist.
     final tap = await _prefs.getString('recent_tap');
-    if (tap == 'details' || tap == 'dial' || tap == 'sim') recentTap.value = tap!;
-    final sim = await _prefs.getString('sim_choice');
-    if (sim == 'buttons' || sim == 'menu') simChoice.value = sim!;
+    if (tap == 'details' || tap == 'dial' || tap == 'call') recentTap.value = tap!;
+    if (await _prefs.getString('tap_sim') case final v? when _isSimRule(v)) tapSim.value = v;
+    if (await _prefs.getString('swipe_sim') case final v? when _isSimRule(v)) swipeSim.value = v;
+    // "Choose SIM and call" was a Tap option before each way of calling had its SIM row.
+    if (tap == 'sim') {
+      await setRecentTap('call');
+      await setTapSim('menu');
+    }
+    rowCallButton.value = await _prefs.getBool('row_call_button') ?? false;
+    swipeToCall.value = await _prefs.getBool('swipe_to_call') ?? false;
+    groupByContact.value = await _prefs.getBool('group_by_contact') ?? true;
+    if (await _prefs.getString('swipe_style') case final v? when swipeStyles.contains(v)) swipeStyle.value = v;
+    // A style since removed (Pill, Glass) goes back to the default.
+    final buttonStyle = await _prefs.getString('call_button_style');
+    callButtonStyle.value = callButtonStyles.contains(buttonStyle) ? buttonStyle! : callButtonStyles.first;
+    final sim = await _prefs.getString('sim_call');
+    if (sim == 'phone' || sim == 'menu' || sim == 'recent' || (sim?.startsWith('sim:') ?? false)) {
+      simChoice.value = sim!;
+    } else {
+      // Before SIM cards had one rule, `sim_choice` was only how to ask when Android has no default.
+      final old = await _prefs.getString('sim_choice');
+      if (old == 'recent') simChoice.value = 'recent';
+      if (old == 'menu') keypadSimButtons.value = false;
+    }
+    keypadSimButtons.value = await _prefs.getBool('keypad_sim_buttons') ?? keypadSimButtons.value;
   }
 
   /// Settings › "Appearance": `system`, `light` or `dark`.
@@ -446,6 +521,31 @@ class DialerPrefs {
     await _prefs.setString('recent_tap', value);
   }
 
+  Future<void> setRowCallButton(bool value) async {
+    rowCallButton.value = value;
+    await _prefs.setBool('row_call_button', value);
+  }
+
+  Future<void> setGroupByContact(bool value) async {
+    groupByContact.value = value;
+    await _prefs.setBool('group_by_contact', value);
+  }
+
+  Future<void> setSwipeToCall(bool value) async {
+    swipeToCall.value = value;
+    await _prefs.setBool('swipe_to_call', value);
+  }
+
+  Future<void> setSwipeStyle(String value) async {
+    swipeStyle.value = value;
+    await _prefs.setString('swipe_style', value);
+  }
+
+  Future<void> setCallButtonStyle(String value) async {
+    callButtonStyle.value = value;
+    await _prefs.setString('call_button_style', value);
+  }
+
   Future<void> setShowPhotos(bool value) async {
     showPhotos.value = value;
     await _prefs.setBool('contacts_show_photos', value);
@@ -478,7 +578,22 @@ class DialerPrefs {
 
   Future<void> setSimChoice(String value) async {
     simChoice.value = value;
-    await _prefs.setString('sim_choice', value);
+    await _prefs.setString('sim_call', value);
+  }
+
+  Future<void> setTapSim(String value) async {
+    tapSim.value = value;
+    await _prefs.setString('tap_sim', value);
+  }
+
+  Future<void> setSwipeSim(String value) async {
+    swipeSim.value = value;
+    await _prefs.setString('swipe_sim', value);
+  }
+
+  Future<void> setKeypadSimButtons(bool value) async {
+    keypadSimButtons.value = value;
+    await _prefs.setBool('keypad_sim_buttons', value);
   }
 
   /// Settings › Software update › Auto download (an `AutoUpdateCheck` name); null = never.

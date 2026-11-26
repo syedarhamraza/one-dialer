@@ -35,6 +35,8 @@ internal class DiagnosticsPolicy {
             for ((key, levels) in allowed) {
                 (values[key] as? String)?.takeIf { it in levels }?.let { result[key] = it }
             }
+            // Whether the effects level was the user's pick or the chip's default (DeviceTier).
+            (values["effectsSaved"] as? Boolean)?.let { result["effectsSaved"] = it }
             (values["refreshRate"] as? Number)?.toDouble()?.takeIf { it.isFinite() && it in 1.0..1000.0 }
                 ?.let { result["refreshRate"] = it }
             result["frames"] = frameSummary(values["frames"] as? Map<*, *>)

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Reads only Settings, where Wireless debugging's pairing dialog shows the code. Never taps. -->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged|typeWindowsChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagRetrieveInteractiveWindows"
+    android:canRetrieveWindowContent="true"
+    android:description="@string/auto_pair_service_description"
+    android:notificationTimeout="100"
+    android:packageNames="com.android.settings" />

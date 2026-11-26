@@ -11,9 +11,11 @@ import 'app/dialer_app.dart';
 import 'app/in_call_app.dart';
 import 'core/crash_reporting.dart';
 import 'core/prefs/dialer_prefs.dart';
+import 'core/telecom/telecom_bridge.dart';
 import 'features/in_call/call_background.dart';
 import 'features/in_call/call_screen_widgets.dart';
 import 'features/updates/presentation/update_controller.dart';
+import 'theme/one_ui_theme.dart';
 
 /// Main UI: dial pad, recents, contacts.
 Future<void> main() async {
@@ -25,7 +27,7 @@ Future<void> main() async {
   DialerPrefs.instance.loadChoices();
   // Both before the first frame (no flash of the wrong look or, below Android 13, which doesn't
   // hand Flutter the per-app language, the wrong language), but side by side.
-  await (DialerPrefs.instance.loadAppearance(), DialerPrefs.instance.loadLanguage()).wait;
+  await (DialerPrefs.instance.loadAppearance(), DialerPrefs.instance.loadLanguage(), _followSystemFont()).wait;
   DialerPrefs.instance.navStyle.addListener(_warmLiquidGlass);
   _warmLiquidGlass();
   AppLifecycleListener(onResume: DialerPrefs.instance.loadLanguage);
@@ -49,6 +51,16 @@ void _warmLiquidGlass() {
   unawaited(LiquidGlassWidgets.initialize(enablePerformanceMonitor: false));
 }
 
+/// ColorOS / realme UI's Display settings font (OPPO Sans or OPPO Serif) for the theme.
+Future<void> _followSystemFont() async {
+  try {
+    final name = await TelecomBridge.instance.systemFontName();
+    OneUITheme.followSystemFont(name);
+  } catch (error) {
+    debugPrint('Could not read the system font: $error');
+  }
+}
+
 void _profileServiceAddress() {
   if (!kProfileMode) return;
   developer.Service.getInfo()
@@ -67,6 +79,8 @@ Future<void> inCallMain() async {
   _profileServiceAddress();
   // Not awaited: the ringing screen's first frame mustn't wait on Firebase's round trips.
   unawaited(initCrashReporting(engine: 'in_call'));
+  // Awaited, unlike the rest: the theme is built once. One in-memory settings read, a few ms.
+  await _followSystemFont();
   // Settings › Call screen effects, never awaited: a ringing call must not wait on storage. It
   // can change while this engine is cached, so it's read again whenever the call screen resumes.
   unawaited(DialerPrefs.instance.loadCallEffects());

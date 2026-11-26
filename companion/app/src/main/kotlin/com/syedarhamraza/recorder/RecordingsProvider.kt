@@ -104,6 +104,7 @@ class RecordingsProvider : ContentProvider() {
         putString("error", RecordingService.lastError)
         putLong("bytes", RecordingService.dir(context).listFiles().orEmpty().filter { it.name.endsWith(".m4a") }.sumOf { it.length() })
         putLong("versionCode", context.packageManager.getPackageInfo(context.packageName, 0).longVersionCode)
+        putString("versionName", BuildConfig.VERSION_NAME)
     }
 
     private fun list(context: Context): JSONArray {

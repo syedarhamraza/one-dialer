@@ -29,6 +29,7 @@ import com.syedarhamraza.dialer.telecom.ContactsSource
 import com.syedarhamraza.dialer.telecom.MissedCallNotifier
 import com.syedarhamraza.dialer.telecom.NumberDisplay
 import com.syedarhamraza.dialer.telecom.RecorderCompanion
+import com.syedarhamraza.dialer.telecom.VideoCalls
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
@@ -73,6 +74,9 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
 
     /** Set by [MainActivity]: picks a .vcf file; the result is its text or null. */
     var vcfPicker: ((MethodChannel.Result) -> Unit)? = null
+
+    /** Set by [MainActivity] on Android 13+: shows or hides the icon on later launch splashes. */
+    var splashIcon: ((Boolean) -> Unit)? = null
 
     /** Set by [MainActivity]: exports (true) or imports (false) the settings file; see [SettingsBackup]. */
     var settingsBackup: ((Boolean, MethodChannel.Result) -> Unit)? = null
@@ -172,7 +176,10 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 MissedCallNotifier.cancel(context)
             }
             "getState" -> result.success(CallManager.snapshot())
-            "placeCall" -> placeCall(call.argument<String>("number"), call.argument<String>("simId"), result)
+            "placeCall" -> placeCall(
+                call.argument<String>("number"), call.argument<String>("simId"), call.argument<Boolean>("voicemail") == true,
+                call.argument<Boolean>("video") == true, result,
+            )
             "callBack" -> {
                 if (context.checkSelfPermission(Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
                     result.error("NO_PERMISSION", "CALL_PHONE not granted", null)
@@ -188,6 +195,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 result.success(null)
             }
             "getMessagingApps" -> inBackground(result) { ContactExtras.messagingApps(context, call.argument<String>("contactId")!!) }
+            "getVideoApps" -> inBackground(result) { ContactExtras.videoApps(context, call.argument<String>("contactId")!!) }
             "openContactData" -> {
                 runCatching {
                     ContactExtras.openData(context, call.argument<Number>("dataId")!!.toLong(), call.argument<String>("mimeType")!!)
@@ -197,7 +205,12 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             "getContactAccounts" -> inBackground(result) { ContactExtras.contactAccounts(context) }
             "createLocalContact" -> inBackground(result) { ContactExtras.createLocalContact(context) }
             "mergeContacts" -> inBackground(result) {
-                ContactExtras.merge(context, call.argument<List<String>>("contactIds").orEmpty())
+                ContactExtras.merge(
+                    context,
+                    call.argument<List<String>>("contactIds").orEmpty(),
+                    call.argument<String>("nameContactId"),
+                    call.argument<List<String>>("removeNumbers").orEmpty(),
+                )
             }
             "unlinkRawContacts" -> inBackground(result) {
                 ContactExtras.unlink(
@@ -207,6 +220,9 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 )
             }
             "getRingtone" -> inBackground(result) { ContactExtras.ringtone(context, call.argument<String>("contactId")!!) }
+            "setDefaultNumber" -> inBackground(result) {
+                ContactsSource.setDefaultNumber(context, call.argument<String>("contactId")!!, call.argument<String>("number"))
+            }
             "getRingtoneTitle" -> inBackground(result) {
                 ContactExtras.ringtoneTitle(context, call.argument<String>("contactId")!!)
             }
@@ -244,9 +260,27 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             }
             "getCallHealth" -> inBackground(result) { callHealth() }
             "effectsDefault" -> inBackground(result) { effectsDefault() }
+            "setSplashIcon" -> {
+                call.argument<Boolean>("show")?.let { splashIcon?.invoke(it) }
+                result.success(splashIcon != null)
+            }
+            // The font picked in ColorOS / realme UI's Display settings ("OPPO Sans", "OPPO Serif"),
+            // null elsewhere or if Android won't let us read it.
+            "systemFontName" -> result.success(
+                runCatching { Settings.System.getString(context.contentResolver, "current_typeface_name") }
+                    .onFailure { android.util.Log.w("CallBridge", "current_typeface_name: $it") }
+                    .getOrNull(),
+            )
             "openSystemSettings" -> openSystemSettings(call.argument<String>("page"), result)
             "getBlocking" -> BlockingPrefs.read(context).let {
-                result.success(mapOf("blockHidden" to it.blockHidden, "blockNonContacts" to it.blockNonContacts))
+                result.success(
+                    mapOf(
+                        "blockHidden" to it.blockHidden,
+                        "blockNonContacts" to it.blockNonContacts,
+                        "prefixes" to it.prefixes.sorted(),
+                        "allowed" to it.allowed.sorted(),
+                    ),
+                )
             }
             "setBlocking" -> {
                 BlockingPrefs.write(
@@ -254,10 +288,13 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                     com.syedarhamraza.dialer.telecom.BlockingSettings(
                         blockHidden = call.argument<Boolean>("blockHidden") == true,
                         blockNonContacts = call.argument<Boolean>("blockNonContacts") == true,
+                        prefixes = call.argument<List<String>>("prefixes").orEmpty().toSet(),
+                        allowed = call.argument<List<String>>("allowed").orEmpty().toSet(),
                     ),
                 )
                 result.success(null)
             }
+            "signingCertSha256" -> result.success(signingCertSha256())
             "getAppLanguage" -> result.success(AppLanguage.get(context))
             "setAppLanguage" -> {
                 AppLanguage.set(context, call.argument<String>("tag")!!)
@@ -356,7 +393,13 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
         val target = call.argument<String>("id")?.let(CallManager::get)
             ?: return result.error("NO_CALL", "Unknown call id", null)
         when (call.method) {
-            "answer" -> target.answer(VideoProfile.STATE_AUDIO_ONLY)
+            "answer" -> target.answer(
+                if (call.argument<Boolean>("video") == true) VideoProfile.STATE_BIDIRECTIONAL else VideoProfile.STATE_AUDIO_ONLY,
+            )
+            "videoTextures" -> return result.success(VideoCalls.textures(context, target))
+            "videoRequest" -> VideoCalls.request(context, target, call.argument<String>("state") ?: "audio")
+            "videoRespond" -> VideoCalls.respond(context, target, call.argument<Boolean>("accept") == true)
+            "flipCamera" -> VideoCalls.flipCamera(context, target)
             "reject" -> target.reject(false, null)
             "hangUp" -> target.disconnect()
             "hold" -> target.hold()
@@ -377,6 +420,9 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
 
     /** Runs on the data channel's background task queue; answers from that thread. */
     private fun readData(call: MethodCall, result: MethodChannel.Result) {
+        // The provider's own time, without the wait in this queue or the trip to Dart: lag reports
+        // showed call-log loads of 3-7 s and couldn't say which part was slow.
+        val start = android.os.SystemClock.uptimeMillis()
         val outcome = runCatching {
             when (call.method) {
                 "getCallLog" -> {
@@ -387,11 +433,14 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 else -> return result.notImplemented()
             }
         }
+        val query = if (call.method == "getCallLog") "call_log_query" else "contacts_query"
+        LagDiagnostics.operation(engineName, query, android.os.SystemClock.uptimeMillis() - start)
         outcome.fold(
             onSuccess = { result.success(it) },
             onFailure = {
                 android.util.Log.w("CallBridge", "Data read failed", it)
-                if (it is SecurityException) result.error("NO_PERMISSION", it.message, null)
+                // The frames say which query a provider refused (retrace them with the R8 mapping).
+                if (it is SecurityException) result.error("NO_PERMISSION", it.message, it.stackTrace.take(8).joinToString("\n"))
                 else result.error("FAILED", it.message, null)
             },
         )
@@ -490,16 +539,42 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
         return mapOf(
             "isDefaultDialer" to isDefaultDialer(),
             "notificationsEnabled" to notifications.areNotificationsEnabled(),
-            // Android 14+ lets users revoke full-screen intents; without it calls only show as a notification.
-            "fullScreenAllowed" to if (android.os.Build.VERSION.SDK_INT >= 34) notifications.canUseFullScreenIntent() else true,
+            "fullScreenAllowed" to fullScreenAllowed(notifications),
             "screensCalls" to roles.isRoleHeld(RoleManager.ROLE_CALL_SCREENING),
+            // VIP calls leave Silent, which Android counts as a Do Not Disturb change.
+            "dndAccess" to notifications.isNotificationPolicyAccessGranted,
+            "vipRing" to (com.syedarhamraza.dialer.telecom.CallPrefs.read(context)["vipRing"] == true),
             "version" to info.versionName,
             "build" to info.longVersionCode,
             "sdk" to android.os.Build.VERSION.SDK_INT,
         )
     }
 
+    /**
+     * Android 14+ lets users revoke full-screen intents; without them calls only show in the shade.
+     * vivo reports the permission granted but refuses it until its own switch is turned on, which
+     * sets the app op to allowed (it stays "default" until then), so on vivo that's what counts.
+     */
+    private fun fullScreenAllowed(notifications: android.app.NotificationManager): Boolean {
+        if (android.os.Build.VERSION.SDK_INT < 34) return true
+        if (!notifications.canUseFullScreenIntent()) return false
+        if (!android.os.Build.MANUFACTURER.equals("vivo", ignoreCase = true)) return true
+        return context.getSystemService(android.app.AppOpsManager::class.java).unsafeCheckOpNoThrow(
+            "android:use_full_screen_intent", android.os.Process.myUid(), context.packageName,
+        ) == android.app.AppOpsManager.MODE_ALLOWED
+    }
+
     /** Opens the system screen that fixes a [callHealth] problem, or a web page (`url:` prefix). */
+    /** SHA-256 (lowercase hex) of the certificate this copy is signed with; official_build.dart checks it. */
+    private fun signingCertSha256(): String? {
+        val info = context.packageManager.getPackageInfo(context.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+        val signing = info.signingInfo ?: return null
+        val certs = if (signing.hasMultipleSigners()) signing.apkContentsSigners else signing.signingCertificateHistory
+        val cert = certs?.lastOrNull() ?: return null
+        return java.security.MessageDigest.getInstance("SHA-256").digest(cert.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+    }
+
     private fun openSystemSettings(page: String?, result: MethodChannel.Result) {
         val pkg = context.packageName
         val intent = when {
@@ -515,6 +590,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             page == "deviceInfo" -> android.content.Intent(android.provider.Settings.ACTION_DEVICE_INFO_SETTINGS)
             // The phone's own flash notification has no public page on vivo or OPPO: open Settings.
             page == "systemSettings" -> android.content.Intent(android.provider.Settings.ACTION_SETTINGS)
+            page == "dndAccess" -> android.content.Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
             page == "defaultApps" -> android.content.Intent(android.provider.Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
             // The SIM provider's call settings (forwarding, waiting, caller ID), from the phone service.
             page == "carrier" -> android.content.Intent(android.telecom.TelecomManager.ACTION_SHOW_CALL_SETTINGS)
@@ -525,23 +601,41 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             page != null && page.startsWith("url:") -> android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(page.removePrefix("url:")))
             else -> android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$pkg"))
         }.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-        runCatching { context.startActivity(intent) }
-            .onSuccess { result.success(null) }
-            .onFailure { result.error("NO_ACTIVITY", it.message, null) }
+        val intents = if (page == "sim") simPages() else listOf(intent)
+        val opened = intents.any { runCatching { context.startActivity(it.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess }
+        if (opened) result.success(null) else result.error("NO_ACTIVITY", page, null)
     }
+
+    /**
+     * Where Android's default SIM for calls is set, most specific first: vivo's own page (Android's
+     * SIM action opens its eSIM manager, which refuses other apps), Android 14+'s SIMs page, the
+     * SIM list, then network settings.
+     */
+    private fun simPages(): List<android.content.Intent> = listOfNotNull(
+        android.content.Intent("com.android.phone.VivoCallDefaultSimSettings")
+            .takeIf { android.os.Build.MANUFACTURER.equals("vivo", ignoreCase = true) },
+        android.content.Intent(android.provider.Settings.ACTION_MANAGE_ALL_SIM_PROFILES_SETTINGS)
+            .takeIf { android.os.Build.VERSION.SDK_INT >= 34 && !android.os.Build.MANUFACTURER.equals("vivo", ignoreCase = true) },
+        android.content.Intent("android.settings.MOBILE_NETWORK_LIST"),
+        android.content.Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS),
+    )
 
     private fun isDefaultDialer(): Boolean =
         context.getSystemService(RoleManager::class.java).isRoleHeld(RoleManager.ROLE_DIALER)
 
-    private fun placeCall(number: String?, simId: String?, result: MethodChannel.Result) {
-        if (number.isNullOrBlank()) return result.error("NO_NUMBER", "Number is empty", null)
+    private fun placeCall(number: String?, simId: String?, voicemail: Boolean, video: Boolean, result: MethodChannel.Result) {
+        if (!voicemail && number.isNullOrBlank()) return result.error("NO_NUMBER", "Number is empty", null)
         if (context.checkSelfPermission(Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
             return result.error("NO_PERMISSION", "CALL_PHONE not granted", null)
         }
         val telecom = context.getSystemService(TelecomManager::class.java)
         val extras = Bundle()
         simId?.let(::simHandle)?.let { extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, it) }
-        telecom.placeCall(Uri.fromParts("tel", number, null), extras)
+        // A carrier video call (ViLTE/ViNR): the SIM's network sets it up, the call screen shows it.
+        if (video) extras.putInt(TelecomManager.EXTRA_START_CALL_WITH_VIDEO_STATE, VideoProfile.STATE_BIDIRECTIONAL)
+        // voicemail: Telecom dials the SIM's voicemail number, or shows its own "no voicemail number" dialog.
+        val uri = if (voicemail) Uri.fromParts(android.telecom.PhoneAccount.SCHEME_VOICEMAIL, "", null) else Uri.fromParts("tel", number, null)
+        telecom.placeCall(uri, extras)
         result.success(null)
     }
 
@@ -553,14 +647,25 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
         val telecom = context.getSystemService(TelecomManager::class.java)
         val default = telecom.getDefaultOutgoingPhoneAccount("tel")
         val sims = telecom.callCapablePhoneAccounts.mapNotNull { handle ->
-            val account = telecom.getPhoneAccount(handle) ?: return@mapNotNull null
+            // Android 17 on some phones (OnePlus) wants READ_PHONE_NUMBERS here, which we don't hold.
+            // shortcut: such a phone lists every call-capable account as a SIM, unlabelled; declare
+            // READ_PHONE_NUMBERS if a VoIP account shows up as a SIM button there.
+            val account = try {
+                telecom.getPhoneAccount(handle) ?: return@mapNotNull null
+            } catch (_: SecurityException) {
+                null
+            }
             // Only real SIM cards; VoIP/SIP calling accounts aren't SIM buttons.
-            if (!account.hasCapabilities(android.telecom.PhoneAccount.CAPABILITY_SIM_SUBSCRIPTION)) return@mapNotNull null
+            if (account != null && !account.hasCapabilities(android.telecom.PhoneAccount.CAPABILITY_SIM_SUBSCRIPTION)) {
+                return@mapNotNull null
+            }
             mapOf(
                 "id" to "${handle.componentName.flattenToString()}|${handle.id}",
-                "label" to account.label?.toString(),
-                "color" to account.highlightColor,
+                "label" to account?.label?.toString(),
+                "color" to account?.highlightColor,
                 "isDefault" to (handle == default),
+                // The SIM's network can make carrier video calls right now (ViLTE/ViNR registered).
+                "video" to (account?.hasCapabilities(android.telecom.PhoneAccount.CAPABILITY_VIDEO_CALLING) == true),
             )
         }
         result.success(sims)

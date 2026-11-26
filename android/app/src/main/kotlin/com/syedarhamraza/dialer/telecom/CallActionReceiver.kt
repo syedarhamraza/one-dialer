@@ -18,7 +18,8 @@ class CallActionReceiver : BroadcastReceiver() {
             val result = goAsync()
             Thread {
                 try {
-                    CallLogSource.markMissedRead(context)
+                    // Swiped after the app lost call-log access (no longer the default dialer): nothing to mark.
+                    runCatching { CallLogSource.markMissedRead(context) }
                 } finally {
                     result.finish()
                 }

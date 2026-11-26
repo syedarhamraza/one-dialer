@@ -18,6 +18,16 @@
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
 
+    <!-- Experimental Start without Wi-Fi only (shell/NoWifiStart.kt): a local-only hotspot gives
+         mDNS a network to find Wireless debugging on. Asked for only when that switch is turned on. -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES"
+        android:usesPermissionFlags="neverForLocation"
+        tools:targetApi="33" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
+        android:maxSdkVersion="32" />
+
     <!-- hasSigningCertificate on One Dialer needs to see it. -->
     <queries>
         <package android:name="com.syedarhamraza.onedialer" />
@@ -27,6 +37,7 @@
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:localeConfig="@xml/locales_config"
         android:theme="@style/Recorder">
 
         <activity
@@ -59,6 +70,35 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+
+        <service
+            android:name=".shell.NoWifiStart$Service"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Starts the call recording helper after a reboot without Wi-Fi (experimental, user-enabled)" />
+        </service>
+
+        <!-- Every few hours while paired: starts the recording helper again if it stopped. -->
+        <service
+            android:name=".shell.Watchdog"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
+        <!-- Optional auto pairing: reads Settings' pairing code, then switches itself off. -->
+        <service
+            android:name=".shell.PairingAccessibilityService"
+            android:exported="false"
+            android:label="@string/auto_pair_service"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/pairing_accessibility" />
+        </service>
 
         <!-- Exported for One Dialer's call(); every method checks its signing certificate. -->
         <provider

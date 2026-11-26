@@ -14,8 +14,10 @@ import '../widgets/call_glyph.dart';
 import '../widgets/one_ui_floating_nav_bar.dart';
 import '../theme/one_ui_theme.dart';
 import '../widgets/press_glow.dart';
+import 'full_screen_prompt.dart';
 import 'layout.dart';
 import 'return_to_call_banner.dart';
+import 'official_build.dart';
 import 'sideload_warning.dart';
 import '../l10n/l10n.dart';
 
@@ -80,7 +82,10 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
       if (action != null) _contactAction(action);
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) warnIfSideloaded(context);
+      if (!mounted) return;
+      warnIfSideloaded(context)
+          .then((_) => mounted ? noteIfUnofficial(context) : null)
+          .then((_) => mounted ? askForFullScreen(context) : null);
     });
   }
 

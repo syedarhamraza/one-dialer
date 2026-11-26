@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="channel_incoming">Gelen aramalar</string>
+    <string name="channel_incoming_quiet">Gelen aramalar (sessiz)</string>
+    <string name="channel_ongoing">Devam eden aramalar</string>
+    <string name="channel_missed">Cevapsız aramalar</string>
+    <string name="unknown">Bilinmiyor</string>
+    <string name="conference_call">Konferans araması</string>
+    <string name="unknown_caller">Bilinmeyen arayan</string>
+    <string name="announce_calling">%1$s arıyor</string>
+    <string name="incoming_call">Gelen arama</string>
+    <string name="island_incoming">Gelen</string>
+    <string name="decline">Reddet</string>
+    <string name="answer">Yanıtla</string>
+    <string name="ongoing_call">Devam eden arama</string>
+    <string name="on_hold">Beklemede</string>
+    <string name="calling_ellipsis">Aranıyor…</string>
+    <string name="island_calling">Aranıyor</string>
+    <string name="hang_up">Kapat</string>
+    <string name="speaker">Hoparlör</string>
+    <string name="speaker_off">Hoparlör kapalı</string>
+    <string name="missed_call">Cevapsız arama</string>
+    <plurals name="missed_calls">
+        <item quantity="one">%d cevapsız arama</item>
+        <item quantity="other">%d cevapsız arama</item>
+    </plurals>
+    <string name="missed_latest">Son: %1$s</string>
+    <string name="call_back">Geri ara</string>
+    <string name="message">Mesaj</string>
+    <string-array name="quick_replies">
+        <item>Şu an konuşamıyorum. Ne oldu?</item>
+        <item>Hemen geri arayacağım.</item>
+        <item>Seni sonra arayacağım.</item>
+        <item>Şu an konuşamıyorum. Sonra arar mısın?</item>
+    </string-array>
+</resources>

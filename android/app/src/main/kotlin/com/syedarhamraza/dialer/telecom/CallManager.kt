@@ -6,6 +6,8 @@ import android.os.Looper
 import android.telecom.Call
 import android.telecom.CallAudioState
 import android.telecom.DisconnectCause
+import android.telecom.TelecomManager
+import android.telephony.TelephonyManager
 import java.util.concurrent.CopyOnWriteArraySet
 
 /**
@@ -25,18 +27,50 @@ object CallManager {
 
     private val callback = object : Call.Callback() {
         override fun onStateChanged(call: Call, state: Int) {
+            videoSpeaker(call)
             service?.onStateChanged(call, lastState.put(call, state), state)
             // Only once nothing rings: another call ending during call waiting mustn't hide the ringing one.
             if (calls.values.none { stateOf(it) == Call.STATE_RINGING }) service?.let { CallNotifications.cancelIncoming(it) }
             notifyChanged()
         }
 
-        override fun onDetailsChanged(call: Call, details: Call.Details) = notifyChanged()
+        override fun onDetailsChanged(call: Call, details: Call.Details) {
+            if (isVonr(details)) vonr += call
+            // Back to voice: the camera and video surfaces go (the call screen asks again if video returns).
+            if (android.telecom.VideoProfile.isAudioOnly(details.videoState)) VideoCalls.dropSurfaces(call)
+            videoSpeaker(call)
+            notifyChanged()
+        }
         override fun onChildrenChanged(call: Call, children: List<Call>) = notifyChanged()
+
+        override fun onVideoCallChanged(call: Call, videoCall: android.telecom.InCallService.VideoCall?) {
+            VideoCalls.track(call)
+            notifyChanged()
+        }
 
         // Telecom says which calls can merge here, often after the second call connects.
         override fun onConferenceableCallsChanged(call: Call, conferenceableCalls: List<Call>) = notifyChanged()
     }
+
+    /** Video calls already moved to the speaker: once per video stretch, so the user can move it back. */
+    private val speakerForVideo = mutableSetOf<Call>()
+
+    /** A carrier video call that's live goes to the speaker, unless a headset or Bluetooth has it. */
+    private fun videoSpeaker(call: Call) {
+        if (android.telecom.VideoProfile.isAudioOnly(call.details.videoState)) {
+            speakerForVideo.remove(call)
+            return
+        }
+        if (stateOf(call) != Call.STATE_ACTIVE || !speakerForVideo.add(call)) return
+        @Suppress("DEPRECATION")
+        if (service?.callAudioState?.route == CallAudioState.ROUTE_EARPIECE) service?.setAudioRoute(CallAudioState.ROUTE_SPEAKER)
+    }
+
+    /** Calls seen on 5G voice (VoNR) at some point; the call log only marks them from Android 17. */
+    private val vonr = mutableSetOf<Call>()
+
+    private fun isVonr(details: Call.Details) =
+        details.extras?.getInt(TelecomManager.EXTRA_CALL_NETWORK_TYPE, -1) == TelephonyManager.NETWORK_TYPE_NR
 
     val hasCalls: Boolean get() = calls.isNotEmpty()
 
@@ -56,12 +90,19 @@ object CallManager {
         ids[call] = id
         lastState[call] = stateOf(call)
         call.registerCallback(callback)
+        VideoCalls.track(call)
         notifyChanged()
         return id
     }
 
     fun onCallRemoved(call: Call) {
         call.unregisterCallback(callback)
+        VideoCalls.release(call)
+        speakerForVideo.remove(call)
+        if (vonr.remove(call) || isVonr(call.details)) service?.let { CallLogSource.rememberVonr(it, call.details.creationTimeMillis) }
+        call.details.takeIf { it.callerDisplayNamePresentation == TelecomManager.PRESENTATION_ALLOWED }
+            ?.callerDisplayName?.trim()?.takeIf { it.isNotEmpty() }
+            ?.let { name -> service?.let { CallLogSource.rememberCnap(it, call.details.creationTimeMillis, name) } }
         lastState.remove(call)
         val id = ids.remove(call)?.also { calls.remove(it) }
         if (id != null && calls.isEmpty()) {
@@ -69,7 +110,17 @@ object CallManager {
             handler.removeCallbacks(clearEnded)
             // You hung up yourself: no reason to read, so the screen closes almost at once.
             val local = call.details.disconnectCause?.code == DisconnectCause.LOCAL
-            handler.postDelayed(clearEnded, if (local) LOCAL_ENDED_LINGER_MS else ENDED_LINGER_MS)
+            // A video call the network refused stays up for its Voice call button.
+            val videoFailed = call.details.disconnectCause?.code == DisconnectCause.ERROR &&
+                !android.telecom.VideoProfile.isAudioOnly(call.details.videoState) && call.details.connectTimeMillis == 0L
+            handler.postDelayed(
+                clearEnded,
+                when {
+                    local -> LOCAL_ENDED_LINGER_MS
+                    videoFailed -> VIDEO_FAILED_LINGER_MS
+                    else -> ENDED_LINGER_MS
+                },
+            )
         }
         notifyChanged()
     }
@@ -117,6 +168,8 @@ object CallManager {
             "location" to display?.location,
             "disconnectCode" to disconnectName(details.disconnectCause?.code),
             "disconnectLabel" to details.disconnectCause?.label?.toString()?.takeIf { it.isNotBlank() },
+            // Telephony's own name for it (SERVER_UNREACHABLE...), which the call screen words for people.
+            "disconnectReason" to details.disconnectCause?.reason?.takeIf { it.isNotBlank() },
             "name" to name,
             "state" to stateName(stateOf(call)),
             "connectTimeMillis" to details.connectTimeMillis,
@@ -128,8 +181,11 @@ object CallManager {
             "simId" to details.accountHandle?.let { "${it.componentName.flattenToString()}|${it.id}" },
             "isHd" to details.hasProperty(Call.Details.PROPERTY_HIGH_DEF_AUDIO),
             "isWifi" to details.hasProperty(Call.Details.PROPERTY_WIFI),
+            // The network carrying the call right now: 4G (VoLTE) or 5G (VoNR); Wi-Fi and 3G get no mark.
+            "isVolte" to (details.extras?.getInt(TelecomManager.EXTRA_CALL_NETWORK_TYPE, -1) == TelephonyManager.NETWORK_TYPE_LTE),
+            "isVonr" to isVonr(details),
             "isPrivate" to (details.handlePresentation != android.telecom.TelecomManager.PRESENTATION_ALLOWED),
-        )
+        ) + VideoCalls.info(call)
     }
 
     @Suppress("DEPRECATION") // CallAudioState is replaced by CallEndpoint on API 34+
@@ -185,6 +241,7 @@ object CallManager {
 
     private const val ENDED_LINGER_MS = 2000L
     private const val LOCAL_ENDED_LINGER_MS = 600L
+    private const val VIDEO_FAILED_LINGER_MS = 8000L
 
     private val ROUTES = listOf(
         CallAudioState.ROUTE_EARPIECE to "earpiece",

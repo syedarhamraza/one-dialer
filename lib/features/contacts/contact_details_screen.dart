@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show Clipboard, ClipboardData;
+import 'package:flutter/services.dart' show Clipboard, ClipboardData, PlatformException;
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:intl/intl.dart';
 
@@ -20,6 +20,7 @@ import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_status_bar_scrim.dart';
 import '../../widgets/one_ui_toast.dart';
 import '../../widgets/place_call.dart';
+import '../../widgets/place_video_call.dart';
 import '../../widgets/call_glyph.dart';
 import '../../widgets/press_glow.dart';
 import '../../widgets/round_header_controls.dart';
@@ -29,7 +30,7 @@ import '../recents/call_details_screen.dart' show CallNotesCard;
 import '../recents/call_log.dart';
 import '../recents/app_calls.dart' show appCallLabel;
 import '../recents/call_log_repository.dart';
-import '../recents/recents_screen.dart' show CallTypeIcon;
+import '../recents/recents_screen.dart' show CallMediaMarks, CallTypeIcon;
 import '../../widgets/sim_badge.dart';
 import '../settings/call_background_screen.dart';
 import 'contact_actions.dart';
@@ -78,10 +79,12 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
   Future<void> _load() async {
     // Together, so the page rebuilds once, early in its slide-in.
-    final (sims, simId, apps, raw, ringtone) = await (
+    final (sims, simId, apps, videoApps, canMeet, raw, ringtone) = await (
       _bridge.getSims(),
       DialerPrefs.instance.contactSim(widget.contactId),
       _bridge.getMessagingApps(widget.contactId),
+      _bridge.getVideoApps(widget.contactId),
+      _bridge.canMeetCall(),
       _bridge.getRawContacts(widget.contactId),
       _bridge.getRingtoneTitle(widget.contactId),
     ).wait;
@@ -90,6 +93,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       _sims = sims;
       _simId = simId;
       _apps = apps;
+      _videoApps = videoApps;
+      _canMeet = canMeet;
       _ringtone = ringtone;
       // Where it's stored, e.g. "Google · WhatsApp".
       _storage = {for (final r in raw) accountApp(context.l10n, r['accountType'] as String?)}.join(' · ');
@@ -115,13 +120,18 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
   List<String>? _described;
 
-  /// Meet's video row (the Video tile) and the chat apps (their own card).
-  Map<Object?, Object?>? get _meet => _apps.where(_isMeet).firstOrNull;
-  Iterable<Map<Object?, Object?>> get _chatApps => _apps.where((a) => !_isMeet(a));
-  static bool _isMeet(Map<Object?, Object?> app) => (app['mimeType'] as String?)?.contains('tachyon') ?? false;
+  /// The video apps' rows and Meet by number: the Video tile's menu ([placeVideoCall]).
+  List<Map<Object?, Object?>> _videoApps = const [];
+  bool _canMeet = false;
+  final _videoKey = GlobalKey();
 
-  Future<void> _openApp(Map<Object?, Object?> app) =>
-      _bridge.openContactData(app['dataId']! as int, app['mimeType']! as String);
+  Future<void> _openApp(Map<Object?, Object?> app) async {
+    try {
+      await _bridge.openContactData(app['dataId']! as int, app['mimeType']! as String);
+    } on PlatformException {
+      if (mounted) OneUIToast.show(context, context.l10n.couldNotOpenApp);
+    }
+  }
 
   /// Reloads all fields (after editing, the repository notifies).
   Future<void> _loadFull() async {
@@ -137,8 +147,11 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
   // --- Share / More --------------------------------------------------------------
 
-  void _copyMenu(String number, GlobalKey anchor) {
+  /// Copy, and for a several-number contact Set as default / Clear default: the number calls,
+  /// Android Auto and Google's apps use without asking.
+  void _numberMenu(DialerContact contact, String number, GlobalKey anchor) {
     Haptics.longPress();
+    final isDefault = contact.callNumber != null && numberKey(contact.callNumber!) == numberKey(number);
     OneUIFloatingMenu.show(
       context: context,
       anchorKey: anchor,
@@ -150,6 +163,11 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             OneUIToast.show(context, context.l10n.numberCopied);
           },
         ),
+        if (contact.numbers.length > 1)
+          OneUIFloatingMenuItem(
+            label: isDefault ? context.l10n.clearDefault : context.l10n.setAsDefault,
+            onTap: () => ContactsRepository.instance.setDefaultNumber(contact.id, isDefault ? null : number),
+          ),
       ],
     );
   }
@@ -317,14 +335,19 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                           onTap: () => _bridge.sendSms(primary),
                         ),
                       ),
-                      // Google Meet, when the contact has a Meet video row; greyed out otherwise.
+                      // Every way to video call them (WhatsApp, Telegram, Meet...); greyed out without one.
                       Expanded(
                         child: DetailsActionTile(
+                          key: _videoKey,
                           icon: Icons.videocam_rounded,
                           label: context.l10n.video,
-                          onTap: switch (_meet) {
-                            final meet? => () => _openApp(meet),
-                            null => null,
+                          onTap: switch (videoOptionsFrom(
+                            _videoApps,
+                            meetByNumber: _canMeet,
+                            carrier: _sims.any((s) => s.video),
+                          )) {
+                            final none when none.isEmpty => null,
+                            final video => () => placeVideoCall(context, primary, video, anchorKey: _videoKey),
                           },
                         ),
                       ),
@@ -333,7 +356,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   const SizedBox(height: 20),
                   _numbersCard(contact),
                   if (_full case final full?) ..._detailCards(full),
-                  if (_chatApps.isNotEmpty) _appsCard(),
+                  if (_apps.isNotEmpty) _appsCard(),
                   CallNotesCard(numbers: contact.numbers),
                   _callLogs(contact),
                 ],
@@ -429,20 +452,26 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             child: _ValueRow(
               label: [
                 labelDisplay(context.l10n, contact.labels[i]),
-                if (contact.numbers.length > 1 && i == contact.primaryIndex) context.l10n.defaultNumber,
                 _display[n]?.location,
                 simLabel,
               ].whereType<String>().where((s) => s.isNotEmpty).join('  |  '),
               value: _display[n]?.formatted ?? n,
+              tag: contact.numbers.length > 1 && i == contact.primaryIndex ? context.l10n.defaultNumber : null,
               onTap: () => _call(n, _numberKeys[n]!),
-              onLongPress: () => _copyMenu(n, _numberKeys[n]!),
+              onLongPress: () => _numberMenu(contact, n, _numberKeys[n]!),
             ),
           ),
         _ValueRow(
           value: _ringtone ?? context.l10n.followSystem,
           label: context.l10n.ringtone,
           onTap: () async {
-            await ContactActions.changeRingtone(contact.id);
+            try {
+              await ContactActions.changeRingtone(contact.id);
+            } on PlatformException {
+              // No ringtone picker on this phone (the start failed).
+              if (mounted) OneUIToast.show(context, context.l10n.couldNotOpenApp);
+              return;
+            }
             final ringtone = await _bridge.getRingtoneTitle(contact.id);
             if (mounted) setState(() => _ringtone = ringtone);
           },
@@ -553,7 +582,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     return DetailsCard(
       dividerIndent: 40,
       children: [
-        for (final app in _chatApps)
+        for (final app in _apps)
           _ValueRow(
             leading: Align(
               alignment: Alignment.centerLeft,
@@ -766,11 +795,14 @@ class RowDivider extends StatelessWidget {
 /// A value over its grey label, ColorOS style, with no icon column ([leading] is a chat app's own
 /// icon); tappable when [onTap] is set.
 class _ValueRow extends StatelessWidget {
-  const _ValueRow({this.leading, this.label = '', required this.value, this.onTap, this.onLongPress});
+  const _ValueRow({this.leading, this.label = '', required this.value, this.tag, this.onTap, this.onLongPress});
 
   final Widget? leading;
   final String label;
   final String value;
+
+  /// A small grey tag after the value ("Default").
+  final String? tag;
 
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
@@ -790,7 +822,24 @@ class _ValueRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(value, style: const TextStyle(fontSize: 19, height: 1.3)),
+                  Row(
+                    children: [
+                      Flexible(child: Text(value, style: const TextStyle(fontSize: 19, height: 1.3))),
+                      if (tag case final tag?) ...[
+                        const SizedBox(width: 10),
+                        DecoratedBox(
+                          decoration: ShapeDecoration(
+                            color: context.palette.textPrimary.withValues(alpha: 0.08),
+                            shape: SquircleBorder(borderRadius: BorderRadius.circular(6)),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                            child: Text(tag, style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                   if (label.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(label, style: TextStyle(fontSize: 14, color: context.palette.textSecondary)),
@@ -865,8 +914,7 @@ class ContactCallLogRow extends StatelessWidget {
               CallTypeIcon(type: c.type, size: 15),
               const SizedBox(width: 6),
               if (badge != null) ...[SimBadge(label: badge), const SizedBox(width: 6)],
-              if (c.isVolte) ...[_VolteMark(color: grey), const SizedBox(width: 6)],
-              if (c.isHd) ...[_HdMark(color: grey), const SizedBox(width: 6)],
+              CallMediaMarks(call: c, size: 15),
               Flexible(
                 child: Text(
                   detail,
@@ -888,48 +936,6 @@ class ContactCallLogRow extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-/// The history's VoLTE mark: "Vo" over "LTE", tiny and grey.
-class _VolteMark extends StatelessWidget {
-  const _VolteMark({required this.color});
-
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final style = TextStyle(fontSize: 6.5, height: 1, fontWeight: FontWeight.w700, color: color);
-    return ExcludeSemantics(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text('Vo', style: style),
-          Text('LTE', style: style),
-        ],
-      ),
-    );
-  }
-}
-
-/// The history's HD voice mark: "HD" knocked out of a small grey tag.
-class _HdMark extends StatelessWidget {
-  const _HdMark({required this.color});
-
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return ExcludeSemantics(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 2.5, vertical: 1),
-        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
-        child: Text(
-          'HD',
-          style: TextStyle(fontSize: 8, height: 1.1, fontWeight: FontWeight.w800, color: context.palette.card),
-        ),
       ),
     );
   }

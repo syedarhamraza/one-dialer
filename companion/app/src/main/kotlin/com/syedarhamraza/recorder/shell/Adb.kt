@@ -78,6 +78,8 @@ class Adb private constructor(private val files: File) : AbsAdbConnectionManager
         val saved = runCatching {
             KeyFactory.getInstance("RSA").generatePrivate(PKCS8EncodedKeySpec(keyFile.readBytes())) to
                 certFile.inputStream().use { CertificateFactory.getInstance("X.509").generateCertificate(it) }
+        }.onFailure {
+            if (keyFile.exists()) android.util.Log.w("OneRecorder", "saved adb key unreadable: a new one needs pairing again", it)
         }.getOrNull()
         if (saved != null) {
             privateKey = saved.first
@@ -98,14 +100,22 @@ class Adb private constructor(private val files: File) : AbsAdbConnectionManager
     /** Pairs with the code shown in Wireless debugging's pairing dialog. */
     fun pairWith(host: InetAddress, port: Int, code: String): Boolean = try {
         pair(host.hostAddress!!, port, code)
-    } catch (_: Exception) {
+    } catch (e: Exception) {
+        android.util.Log.w("OneRecorder", "pairing failed", e)
         false
     }
 
+    /** The last [connectNow] reached Wireless debugging, which turned this key down: it's no longer paired. */
+    @Volatile var refused = false
+        private set
+
     /** Connects to Wireless debugging (found over mDNS), or false when it's off or this app isn't paired. */
     fun connectNow(context: Context, timeoutMs: Long): Boolean = try {
-        isConnected || autoConnect(context, timeoutMs)
-    } catch (_: Exception) {
+        (isConnected || autoConnect(context, timeoutMs)).also { refused = false }
+    } catch (e: Exception) {
+        android.util.Log.w("OneRecorder", "Wireless debugging connect failed", e)
+        // adbd fails the TLS handshake for a key it doesn't trust (CERTIFICATE_VERIFY_FAILED).
+        refused = generateSequence(e as Throwable) { it.cause }.any { it is javax.net.ssl.SSLException }
         false
     }
 

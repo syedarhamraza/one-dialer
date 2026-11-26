@@ -9,8 +9,10 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import '../../core/telecom/call_info.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/one_ui_floating_menu.dart';
+import '../../widgets/place_video_call.dart';
 import 'call_controls.dart';
 import '../../l10n/l10n.dart';
+import '../keypad/t9.dart';
 import '../../widgets/call_glyph.dart';
 import '../../widgets/call_icons.dart';
 
@@ -86,20 +88,24 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
       duration: const Duration(milliseconds: 450),
       value: widget.keypadOpen ? 1 : 0,
     );
-    TelecomBridge.instance.canMeetCall().then((can) {
-      if (mounted && can) setState(() => _canMeet = true);
-    }, onError: (Object _) {});
+    if (!widget.call.isPrivate && !widget.call.isConference) {
+      // The carrier option follows the call itself ([CallInfo.canVideo]), added when the menu opens.
+      videoOptions(widget.call.number ?? '', carrier: false).then((o) {
+        if (mounted) setState(() => _video = o);
+      }, onError: (Object _) {});
+    }
   }
 
-  /// Whether Google Meet is installed to take the Video call.
-  bool _canMeet = false;
+  /// The ways to take this call to video (the caller's WhatsApp, Telegram, Meet...); the phone call keeps going.
+  List<VideoOption> _video = const [];
   final _moreKey = GlobalKey();
   final _routeKey = GlobalKey();
 
   void _openMore(bool merging) {
     final call = widget.call;
     final number = call.number ?? '';
-    final canVideo = _canMeet && !call.isPrivate && !call.isConference && number.isNotEmpty;
+    final video = [if (call.canVideo) const VideoOption.carrier(), ..._video];
+    final canVideo = video.isNotEmpty && !call.isPrivate && !call.isConference;
     final holding = call.state == CallState.holding;
     final telecom = TelecomBridge.instance;
     OneUIFloatingMenu.show(
@@ -124,12 +130,46 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
           )
         else
           OneUIFloatingMenuItem(label: context.l10n.addCall, glyph: CallIconShape.addCall, onTap: telecom.openDialer),
-        OneUIFloatingMenuItem(
-          label: context.l10n.switchToVideoCall,
-          glyph: CallIconShape.video,
-          enabled: canVideo,
-          onTap: () => telecom.meetCall(number),
-        ),
+        // A carrier video call: our camera, which camera, and back to voice.
+        if (call.isVideo) ...[
+          OneUIFloatingMenuItem(
+            label: call.cameraOn ? context.l10n.cameraOff : context.l10n.cameraOn,
+            icon: call.cameraOn ? Icons.videocam_off_rounded : Icons.videocam_rounded,
+            onTap: () async {
+              if (call.cameraOn) return telecom.videoRequest(call.id, 'rx');
+              if (await cameraAllowed(context)) await telecom.videoRequest(call.id, 'bidirectional');
+            },
+          ),
+          OneUIFloatingMenuItem(
+            label: context.l10n.flipCamera,
+            icon: Icons.flip_camera_android_rounded,
+            enabled: call.cameraOn,
+            onTap: () => telecom.flipCamera(call.id),
+          ),
+          OneUIFloatingMenuItem(
+            label: context.l10n.switchToVoice,
+            icon: Icons.call_rounded,
+            onTap: () => telecom.videoRequest(call.id, 'audio'),
+          ),
+        ] else
+          OneUIFloatingMenuItem(
+            label: context.l10n.switchToVideoCall,
+            glyph: CallIconShape.video,
+            enabled: canVideo,
+            onTap: () => placeVideoCall(
+              context,
+              number,
+              video,
+              anchorKey: _moreKey,
+              scale: 1.15,
+              // Carrier video switches this call itself, with our camera on when it's allowed.
+              onCarrier: () async {
+                if (!await cameraAllowed(context)) return false;
+                await telecom.videoRequest(call.id, 'bidirectional');
+                return true;
+              },
+            ),
+          ),
       ],
     );
   }
@@ -682,11 +722,13 @@ class _CallControlPanelState extends State<CallControlPanel> with TickerProvider
                           // room for an empty line.
                           if (letters.isNotEmpty)
                             Text(
-                              letters,
-                              style: const TextStyle(
+                              keyLetters(digit, letters, context.l10n.localeName),
+                              maxLines: 1,
+                              style: TextStyle(
                                 fontSize: 10,
+                                // Two alphabets need the room the spacing takes.
+                                letterSpacing: context.l10n.localeName == 'ru' ? 0.5 : 1.5,
                                 height: 1.2,
-                                letterSpacing: 1.5,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white60,
                               ),

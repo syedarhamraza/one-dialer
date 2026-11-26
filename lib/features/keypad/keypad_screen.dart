@@ -1,5 +1,6 @@
 import 'dart:ui' show ImageFilter;
 
+import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -14,6 +15,9 @@ import '../../theme/one_ui_scroll.dart';
 import '../../core/prefs/dialer_prefs.dart';
 import '../contacts/editor/add_to_contacts.dart';
 import '../contacts/editor/contact_editor_screen.dart';
+import '../contacts/contact_details_screen.dart';
+import '../recents/call_details_screen.dart';
+import '../recents/call_log.dart';
 import '../recents/call_log_repository.dart';
 import 'special_codes.dart';
 import 'speed_dial_screen.dart';
@@ -70,14 +74,26 @@ int fieldOffset(String text, int raw) {
   return text.length;
 }
 
+/// Whether the keypad shows one Call button per SIM ([sims] from `getSims`): Settings › Keypad ›
+/// Two Call buttons, or, until that's chosen, only where calls would ask which SIM.
+bool keypadTwoCallButtons(List<SimCard> sims) {
+  if (sims.length < 2) return false;
+  final prefs = DialerPrefs.instance;
+  final rule = prefs.simChoice.value;
+  return prefs.keypadSimButtons.value ?? (rule == 'menu' || (rule == 'phone' && !sims.any((s) => s.isDefault)));
+}
+
 class _KeypadScreenState extends State<KeypadScreen> {
   final _telecom = TelecomBridge.instance;
   final _callKey = GlobalKey();
   bool _calling = false;
 
-  /// Only set on dual SIM with no default SIM, where the SIM choice applies.
+  /// Both SIMs on a dual SIM phone; empty with one.
   // shortcut: read once per launch; re-read on resume if SIM hot-swap matters.
-  List<SimCard> _askSims = const [];
+  List<SimCard> _sims = const [];
+
+  /// One Call button per SIM, as Settings › Keypad › Two Call buttons says.
+  List<SimCard> get _askSims => keypadTwoCallButtons(_sims) ? _sims : const [];
 
   /// The number as shown ("0333 333"), editable with a cursor and the system's selection
   /// toolbar; [KeypadScreen.input] keeps the raw digits.
@@ -97,7 +113,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
   void initState() {
     super.initState();
     _telecom.getSims().then((sims) {
-      if (mounted && sims.length > 1 && !sims.any((s) => s.isDefault)) setState(() => _askSims = sims);
+      if (mounted && sims.length > 1) setState(() => _sims = sims);
     });
     widget.input.addListener(_syncField);
     _field.addListener(_onFieldChanged);
@@ -170,12 +186,16 @@ class _KeypadScreenState extends State<KeypadScreen> {
   }
 
   /// The last search, so showing/hiding the sheet or opening a menu doesn't search again.
-  (String, List<DialerContact>, List<T9Match>)? _search;
+  (String, List<DialerContact>, List<CallLogEntry>, List<T9Match>)? _search;
 
-  List<T9Match> _matches(String number, List<DialerContact> contacts) {
-    if (_search case (final n, final c, final m) when n == number && identical(c, contacts)) return m;
-    final matches = t9Search(number, contacts);
-    _search = (number, contacts, matches);
+  /// Contacts first, then the unsaved numbers from Recents (as the phone's own dialers do).
+  List<T9Match> _matches(String number, List<DialerContact> contacts, List<CallLogEntry> calls) {
+    if (_search case (final n, final c, final l, final m)
+        when n == number && identical(c, contacts) && identical(l, calls)) {
+      return m;
+    }
+    final matches = keypadMatches(number, contacts, calls);
+    _search = (number, contacts, calls, matches);
     return matches;
   }
 
@@ -211,19 +231,30 @@ class _KeypadScreenState extends State<KeypadScreen> {
       // Android doesn't let apps read the IMEI; the phone's own About page shows it.
       widget.input.value = '';
       final l10n = context.l10n;
-      if (await showCosConfirm(context, title: l10n.imeiTitle, message: l10n.imeiUnavailable, confirmLabel: l10n.aboutPhone)) {
+      if (await showCosConfirm(
+        context,
+        title: l10n.imeiTitle,
+        message: l10n.imeiUnavailable,
+        confirmLabel: l10n.aboutPhone,
+      )) {
         await _telecom.openSystemSettings('deviceInfo');
       }
     }
   }
 
   /// Long-press (the key already typed its digit on press): 0 becomes "+", * a pause (","),
-  /// # a wait (";"); 2–9 alone call their speed dial (or offer to assign one).
+  /// # a wait (";"); 1 alone calls voicemail; 2–9 alone call their speed dial (or offer to assign one).
   Future<void> _longPress(String digit) async {
     if (const {'0': '+', '*': ',', '#': ';'}[digit] case final char?) {
       HapticFeedback.mediumImpact();
       _replace('');
       _replace(char);
+      return;
+    }
+    if (digit == '1' && widget.input.value == '1') {
+      HapticFeedback.mediumImpact();
+      widget.input.value = '';
+      await placeCall(context, '', voicemail: true);
       return;
     }
     if (!DialerPrefs.speedDialDigits.contains(digit) || widget.input.value != digit) return;
@@ -273,7 +304,12 @@ class _KeypadScreenState extends State<KeypadScreen> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge([widget.input, widget.open, DialerPrefs.instance.simChoice]),
+      listenable: Listenable.merge([
+        widget.input,
+        widget.open,
+        DialerPrefs.instance.simChoice,
+        DialerPrefs.instance.keypadSimButtons,
+      ]),
       builder: (context, _) {
         final number = widget.input.value;
         final open = widget.open.value;
@@ -323,16 +359,19 @@ class _KeypadScreenState extends State<KeypadScreen> {
                               key: const ValueKey('results'),
                               child: ValueListenableBuilder<List<DialerContact>>(
                                 valueListenable: ContactsRepository.instance.contacts,
-                                builder: (context, contacts, _) => _Results(
-                                  number: number,
-                                  matches: _matches(number, contacts),
-                                  expanded: !open,
-                                  bottomPadding: open ? sheetHeight : clearance,
-                                  onScroll: _collapse,
-                                  onPick: (m) {
-                                    widget.input.value = m.number;
-                                    _show();
-                                  },
+                                builder: (context, contacts, _) => ValueListenableBuilder<List<CallLogEntry>>(
+                                  valueListenable: CallLogRepository.instance.calls,
+                                  builder: (context, calls, _) => _Results(
+                                    number: number,
+                                    matches: _matches(number, contacts, calls),
+                                    expanded: !open,
+                                    bottomPadding: open ? sheetHeight : clearance,
+                                    onScroll: _collapse,
+                                    onPick: (m) {
+                                      widget.input.value = m.number;
+                                      _show();
+                                    },
+                                  ),
                                 ),
                               ),
                             )
@@ -388,9 +427,7 @@ class _KeypadScreenState extends State<KeypadScreen> {
                                           _CallRow(
                                             keyHeight: keyHeight,
                                             callKey: _callKey,
-                                            sims: DialerPrefs.instance.simChoice.value == 'buttons'
-                                                ? _askSims
-                                                : const [],
+                                            sims: _askSims,
                                             onHide: _hide,
                                             onCall: _calling ? null : _call,
                                             onBackspace: _backspace,
@@ -548,7 +585,7 @@ class _ResultTile extends StatelessWidget {
       splashColor: context.palette.textPrimary.withValues(alpha: 0.06),
       highlightColor: context.palette.textPrimary.withValues(alpha: 0.03),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+        padding: const EdgeInsets.fromLTRB(20, 10, 8, 10),
         child: Row(
           children: [
             switch (match.entry) {
@@ -575,11 +612,25 @@ class _ResultTile extends StatelessWidget {
                 ],
               ),
             ),
+            // Details, as on a Calls row: the contact's page, or this number's.
+            IconButton(
+              tooltip: context.l10n.callDetails,
+              onPressed: () => _details(context),
+              icon: Icon(CupertinoIcons.info, size: 24, color: context.palette.textSecondary),
+            ),
           ],
         ),
       ),
     );
   }
+
+  void _details(BuildContext context) => switch (match.entry) {
+    RecentNumber(:final call) => openCallDetails(context, call),
+    DialerContact(:final id) => Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => ContactDetailsScreen(contactId: id))),
+    _ => null,
+  };
 
   static Widget _highlighted(String text, (int, int)? range, TextStyle style) {
     if (range == null) return Text(text, style: style, maxLines: 1, overflow: TextOverflow.ellipsis);
@@ -632,7 +683,10 @@ class _NumberDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The theme's font, so the number is measured in the font it's drawn in.
     final style = TextStyle(
+      fontFamily: DefaultTextStyle.of(context).style.fontFamily,
+      fontFamilyFallback: DefaultTextStyle.of(context).style.fontFamilyFallback,
       fontSize: _fontSize,
       fontWeight: FontWeight.w500,
       letterSpacing: 0.5,
@@ -750,6 +804,7 @@ class _Keypad extends StatelessWidget {
                       height: keyHeight,
                       label: switch (digit) {
                         '0' => context.l10n.keypadZeroHint,
+                        '1' => context.l10n.keypadVoicemailHint,
                         '2' || '3' || '4' || '5' || '6' || '7' || '8' || '9' => context.l10n.keypadDigitHint(digit),
                         _ => digit,
                       },
@@ -771,7 +826,11 @@ class _Keypad extends StatelessWidget {
                           if (letters == 'VM')
                             Icon(Icons.voicemail_rounded, size: 14, color: context.palette.textSecondary)
                           else if (letters.isNotEmpty)
-                            Text(letters, style: TextStyle(fontSize: 11, color: context.palette.textSecondary)),
+                            Text(
+                              keyLetters(digit, letters, context.l10n.localeName),
+                              maxLines: 1,
+                              style: TextStyle(fontSize: 11, color: context.palette.textSecondary),
+                            ),
                         ],
                       ),
                     ),
@@ -1017,4 +1076,34 @@ class _Frosted extends StatelessWidget {
       },
     );
   }
+}
+
+/// An unsaved number from Recents, searchable on the keypad like a contact. Named by the
+/// carrier's caller name when the call had one, else by the number.
+class RecentNumber extends T9Entry {
+  RecentNumber(this.call)
+    : super(name: call.name?.trim().isNotEmpty == true ? call.name!.trim() : call.number, numbers: [call.number]);
+
+  /// Its newest call, whose details page the (i) opens.
+  final CallLogEntry call;
+}
+
+/// The keypad's results for [number]: contacts first, then the unsaved numbers from Recents.
+/// Searched apart, since an unsaved number is named by its digits and would rank as a name match.
+List<T9Match> keypadMatches(String number, List<DialerContact> contacts, List<CallLogEntry> calls) => [
+  ...t9Search(number, contacts),
+  ...t9Search(number, recentNumbers(calls)),
+];
+
+/// Recents' numbers that aren't saved, newest first, once each; hidden numbers and calls
+/// through other apps left out.
+@visibleForTesting
+List<RecentNumber> recentNumbers(List<CallLogEntry> calls) {
+  final seen = <String>{};
+  return [
+    for (final c in calls)
+      if (!c.isPrivate && !c.isApp && c.number.isNotEmpty)
+        if (numberKey(c.number) case final key when key.isNotEmpty && seen.add(key))
+          if (ContactsRepository.instance.contactFor(c.number) == null) RecentNumber(c),
+  ];
 }

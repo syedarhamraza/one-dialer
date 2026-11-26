@@ -25,7 +25,11 @@ class ShellReceiver : BroadcastReceiver() {
         val pending = goAsync()
         thread {
             try {
-                if (code != null) ShellHelper.pair(app, code) else ShellHelper.restart(app)
+                if (code != null) ShellHelper.pair(app, code)
+                else {
+                    Watchdog.resetTries(app)
+                    ShellHelper.restart(app, fromBoot = intent.action != ACTION_WIFI)
+                }
             } finally {
                 pending.finish()
             }

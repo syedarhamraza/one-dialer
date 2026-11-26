@@ -7,47 +7,58 @@ import '../core/contacts/contacts_repository.dart';
 import '../core/prefs/dialer_prefs.dart';
 import '../core/telecom/call_info.dart';
 import '../core/telecom/telecom_bridge.dart';
+import '../features/recents/call_log_repository.dart';
 import '../l10n/l10n.dart';
 import 'one_ui_floating_menu.dart';
 import 'one_ui_toast.dart';
 
-/// Calls [number] the way Samsung does: on [simId] if given, else on the contact's chosen
-/// SIM, else (dual SIM with "Ask every time") after asking with our SIM menu, which pops
-/// from [anchorKey]'s button (or [anchorContext]'s widget) when given. [chooseSim] always asks on dual SIM.
+/// Calls [number]: on [simId] if given, else on the contact's own SIM, else by [rule], the SIM
+/// choice of the way this call was made (Settings › SIM cards: [DialerPrefs.tapSim],
+/// [DialerPrefs.swipeSim]; null or `calls` is [DialerPrefs.simChoice]). When it asks, our SIM menu
+/// pops from [anchorKey]'s button (or [anchorContext]'s widget).
 /// False when no call was placed: the SIM menu was dismissed, or Android refused (a toast says so).
+/// [voicemail] calls the chosen SIM's voicemail instead ([number] is then ignored); [video] makes it
+/// a carrier video call.
 Future<bool> placeCall(
   BuildContext context,
   String number, {
   String? simId,
   GlobalKey? anchorKey,
   BuildContext? anchorContext,
-  bool chooseSim = false,
+  String? rule,
+  bool voicemail = false,
+  bool video = false,
 }) async {
   final telecom = TelecomBridge.instance;
-  if (chooseSim) {
-    final sims = await telecom.getSims();
+  // Read together, so the SIM menu waits on one lookup at most.
+  final contact = simId == null && !voicemail ? ContactsRepository.instance.contactFor(number) : null;
+  final (contactSim, sims) = await (
+    contact == null ? Future<String?>.value() : DialerPrefs.instance.contactSim(contact.id),
+    simId == null ? telecom.quickSims() : Future.value(const <SimCard>[]),
+  ).wait;
+  simId ??= contactSim;
+  // Settings › SIM cards › Which SIM to call with.
+  if (simId == null) {
     if (sims.length > 1) {
-      if (!context.mounted) return false;
-      final sim = await pickSim(context, sims, anchorKey: anchorKey, anchorContext: anchorContext);
-      if (sim == null) return false;
-      simId = sim.id;
-    }
-  }
-  if (simId == null) {
-    final contact = ContactsRepository.instance.contactFor(number);
-    if (contact != null) simId = await DialerPrefs.instance.contactSim(contact.id);
-  }
-  if (simId == null) {
-    final sims = await telecom.getSims();
-    if (sims.length > 1 && !sims.any((s) => s.isDefault)) {
-      if (!context.mounted) return false;
-      final sim = await pickSim(context, sims, anchorKey: anchorKey, anchorContext: anchorContext);
-      if (sim == null) return false;
-      simId = sim.id;
+      String? present(String? id) => sims.any((s) => s.id == id) ? id : null;
+      if (rule == null || rule == 'calls') rule = DialerPrefs.instance.simChoice.value;
+      if (rule.startsWith('sim:')) simId = present(rule.substring(4));
+      // Null: Telecom calls on Android's default SIM.
+      final phoneDecides = rule == 'phone' && sims.any((s) => s.isDefault);
+      if (simId == null && !phoneDecides) {
+        if (rule == 'recent') simId = present(CallLogRepository.instance.recentSim(number));
+        // Asks: Ask every time, a removed fixed SIM, or no calls with this number to take the SIM from.
+        if (simId == null) {
+          if (!context.mounted) return false;
+          final sim = await pickSim(context, sims, anchorKey: anchorKey, anchorContext: anchorContext);
+          if (sim == null) return false;
+          simId = sim.id;
+        }
+      }
     }
   }
   // The page may have closed during the lookups above; the call still goes out, and only the toast needs the page.
-  final placed = await _placed(() => telecom.placeCall(number, simId: simId));
+  final placed = await _placed(() => telecom.placeCall(number, simId: simId, voicemail: voicemail, video: video));
   if (!placed && context.mounted) OneUIToast.show(context, context.l10n.couldNotPlaceCall);
   return placed;
 }

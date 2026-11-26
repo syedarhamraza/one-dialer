@@ -28,7 +28,6 @@ class _CallSettings {
       if (s['autoAnswerDelay'] case final int v) delay.value = '$v';
       if (s['announceCalls'] case final String v) announce.value = v;
       if (s['flashOnCall'] case final bool v) flash.value = v;
-      if (s['liveUpdates'] case final bool v) liveUpdates.value = v;
     });
   }
 
@@ -39,13 +38,12 @@ class _CallSettings {
   final delay = ValueNotifier<String?>('5');
   final announce = ValueNotifier('off');
   final flash = ValueNotifier(false);
-  final liveUpdates = ValueNotifier(false);
 
   bool _disposed = false;
 
   void dispose() {
     _disposed = true;
-    for (final n in [incomingStyle, vibrate, speaker, autoAnswer, delay, announce, flash, liveUpdates]) {
+    for (final n in [incomingStyle, vibrate, speaker, autoAnswer, delay, announce, flash]) {
       n.dispose();
     }
   }
@@ -215,16 +213,6 @@ class _IncomingCallRemindersScreenState extends State<IncomingCallRemindersScree
               labels: _announce(context.l10n),
               onPick: (v) => _settings.set(_settings.announce, 'announceCalls', v),
             ),
-            OneUIGroupItem(
-              title: context.l10n.liveUpdateCapsule,
-              subtitle: context.l10n.liveUpdateCapsuleSubtitle,
-              onTap: () => _settings.set(_settings.liveUpdates, 'liveUpdates', !_settings.liveUpdates.value),
-              trailing: ValueListenableBuilder(
-                valueListenable: _settings.liveUpdates,
-                builder: (context, on, _) =>
-                    OneUISwitch(value: on, onChanged: (v) => _settings.set(_settings.liveUpdates, 'liveUpdates', v)),
-              ),
-            ),
           ],
         ),
         OneUIGroupCard(
@@ -253,6 +241,56 @@ class _IncomingCallRemindersScreenState extends State<IncomingCallRemindersScree
 }
 
 /// Settings › Answer buttons: whether the call screen answers with two buttons or one.
+/// Settings › Answer buttons' 2 buttons / 1 button picker, also on the first-run onboarding.
+class AnswerStylePicker extends StatelessWidget {
+  const AnswerStylePicker({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final prefs = DialerPrefs.instance;
+    return ShowcasePicker(
+      value: DialerPrefs.instance.answerStyle,
+      onPick: DialerPrefs.instance.setAnswerStyle,
+      options: [
+        ShowcaseOption(
+          value: 'two',
+          label: context.l10n.twoButtons,
+          preview: const PhonePreview(child: Stack(children: [previewCallButtons])),
+        ),
+        ShowcaseOption(
+          value: 'one',
+          label: context.l10n.oneButton,
+          // Follows Answer call: the green arc is on the answering side.
+          preview: PhonePreview(
+            child: ValueListenableBuilder(
+              valueListenable: prefs.answerDirection,
+              builder: (context, direction, _) => Stack(
+                children: [
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 22,
+                    child: _Hinted(
+                      const PreviewCallButton(color: oneButtonWhite, icon: Icons.call_rounded, size: 22),
+                      up: direction == 'down' ? endRed : answerGreen,
+                      down: direction == 'down' ? answerGreen : endRed,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+Map<String, String> answerDirectionLabels(AppLocalizations l10n) => {
+  'up': l10n.swipeUpToAnswer,
+  'down': l10n.swipeDownToAnswer,
+};
+
 class AnswerButtonsScreen extends StatefulWidget {
   const AnswerButtonsScreen({super.key});
 
@@ -277,52 +315,13 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
     'stacked': l10n.callerPhotoStacked,
   };
 
-  static Map<String, String> _directions(AppLocalizations l10n) => {
-    'up': l10n.swipeUpToAnswer,
-    'down': l10n.swipeDownToAnswer,
-  };
-
   @override
   Widget build(BuildContext context) {
     final prefs = DialerPrefs.instance;
     return CosSubpage(
       title: context.l10n.answerButtons,
       children: [
-        ShowcasePicker(
-          value: DialerPrefs.instance.answerStyle,
-          onPick: DialerPrefs.instance.setAnswerStyle,
-          options: [
-            ShowcaseOption(
-              value: 'two',
-              label: context.l10n.twoButtons,
-              preview: const PhonePreview(child: Stack(children: [previewCallButtons])),
-            ),
-            ShowcaseOption(
-              value: 'one',
-              label: context.l10n.oneButton,
-              // Follows Answer call: the green arc is on the answering side.
-              preview: PhonePreview(
-                child: ValueListenableBuilder(
-                  valueListenable: prefs.answerDirection,
-                  builder: (context, direction, _) => Stack(
-                    children: [
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        bottom: 22,
-                        child: _Hinted(
-                          const PreviewCallButton(color: oneButtonWhite, icon: Icons.call_rounded, size: 22),
-                          up: direction == 'down' ? endRed : answerGreen,
-                          down: direction == 'down' ? answerGreen : endRed,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+        const AnswerStylePicker(),
         ListenableBuilder(
           listenable: Listenable.merge([
             prefs.answerStyle,
@@ -341,7 +340,7 @@ class _AnswerButtonsScreenState extends State<AnswerButtonsScreen> {
                   title: context.l10n.answerCall,
                   anchor: _directionKey,
                   value: prefs.answerDirection,
-                  labels: _directions(context.l10n),
+                  labels: answerDirectionLabels(context.l10n),
                   onPick: prefs.setAnswerDirection,
                 ),
               choiceRow(

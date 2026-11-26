@@ -149,7 +149,7 @@ void main() {
   });
 
   for (final dual in [true, false]) {
-    testWidgets('"Choose SIM and call" asks for a SIM on dual SIM${dual ? '' : ', opens details on one'}', (
+    testWidgets('a tap that calls, on Ask every time, asks for a SIM on dual SIM${dual ? '' : ', calls on one'}', (
       tester,
     ) async {
       final native = <MethodCall>[];
@@ -169,16 +169,18 @@ void main() {
       CallLogRepository.instance.calls.value = [
         CallLogEntry(id: 1, number: '03001234567', type: CallType.incoming, date: DateTime.now()),
       ];
-      DialerPrefs.instance.recentTap.value = 'sim';
+      DialerPrefs.instance.recentTap.value = 'call';
+      DialerPrefs.instance.tapSim.value = 'menu';
       addTearDown(() {
         CallLogRepository.instance.calls.value = const [];
         DialerPrefs.instance.recentTap.value = 'details';
+        DialerPrefs.instance.tapSim.value = 'calls';
       });
       await open(tester);
       await tester.tap(find.text('03001234567'));
       await tester.pumpAndSettle();
       if (!dual) {
-        expect(find.text('Call logs'), findsOneWidget);
+        expect((native.singleWhere((c) => c.method == 'placeCall').arguments as Map)['simId'], isNull);
         return;
       }
       // Asks even though SIM 1 is the default.

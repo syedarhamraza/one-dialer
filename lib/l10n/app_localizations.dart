@@ -5,8 +5,12 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
+import 'app_localizations_de.dart';
 import 'app_localizations_en.dart';
+import 'app_localizations_es.dart';
 import 'app_localizations_it.dart';
+import 'app_localizations_ru.dart';
+import 'app_localizations_tr.dart';
 
 // ignore_for_file: type=lint
 
@@ -94,8 +98,12 @@ abstract class AppLocalizations {
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
+    Locale('de'),
     Locale('en'),
+    Locale('es'),
     Locale('it'),
+    Locale('ru'),
+    Locale('tr'),
   ];
 
   /// No description provided for @languageName.
@@ -488,6 +496,12 @@ abstract class AppLocalizations {
   /// **'0, long-press for plus'**
   String get keypadZeroHint;
 
+  /// No description provided for @keypadVoicemailHint.
+  ///
+  /// In en, this message translates to:
+  /// **'1, long-press for voicemail'**
+  String get keypadVoicemailHint;
+
   /// No description provided for @keypadDigitHint.
   ///
   /// In en, this message translates to:
@@ -757,6 +771,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Video'**
   String get video;
+
+  /// No description provided for @videoCallMark.
+  ///
+  /// In en, this message translates to:
+  /// **'Video call'**
+  String get videoCallMark;
+
+  /// No description provided for @wifiCallMark.
+  ///
+  /// In en, this message translates to:
+  /// **'Wi-Fi call'**
+  String get wifiCallMark;
+
+  /// No description provided for @volteCall.
+  ///
+  /// In en, this message translates to:
+  /// **'VoLTE call'**
+  String get volteCall;
+
+  /// No description provided for @vonrCall.
+  ///
+  /// In en, this message translates to:
+  /// **'5G voice call'**
+  String get vonrCall;
 
   /// No description provided for @remove.
   ///
@@ -1172,23 +1210,11 @@ abstract class AppLocalizations {
   /// **'Merge {count} contacts?'**
   String mergeGroupTitle(String count);
 
-  /// No description provided for @mergeGroupsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Merge {count} contacts into {groups}?'**
-  String mergeGroupsTitle(String count, String groups);
-
   /// No description provided for @mergeGroupMessage.
   ///
   /// In en, this message translates to:
   /// **'They become one contact named {name}, with all their numbers and details.'**
   String mergeGroupMessage(String name);
-
-  /// No description provided for @mergeGroupsMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Each group becomes one contact, with all its numbers and details.'**
-  String get mergeGroupsMessage;
 
   /// REVIEW: English "=1" means one group merged, check the Italian reads naturally
   ///
@@ -1207,12 +1233,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No duplicate contacts'**
   String get noDuplicateContacts;
-
-  /// No description provided for @mergeAll.
-  ///
-  /// In en, this message translates to:
-  /// **'Merge all ({count})'**
-  String mergeAll(String count);
 
   /// No description provided for @recentSearches.
   ///
@@ -1424,6 +1444,12 @@ abstract class AppLocalizations {
   /// **'Couldn\'t open the camera'**
   String get couldNotOpenCamera;
 
+  /// No description provided for @couldNotOpenApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the app'**
+  String get couldNotOpenApp;
+
   /// No description provided for @followSystem.
   ///
   /// In en, this message translates to:
@@ -1598,12 +1624,6 @@ abstract class AppLocalizations {
   /// **'Set Dialer as your caller ID & spam app to block these calls'**
   String get blockingNeedsScreeningRole;
 
-  /// No description provided for @blockNumber.
-  ///
-  /// In en, this message translates to:
-  /// **'Block number'**
-  String get blockNumber;
-
   /// No description provided for @phoneNumber.
   ///
   /// In en, this message translates to:
@@ -1615,12 +1635,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Block & filter'**
   String get blockAndFilter;
-
-  /// No description provided for @searchBlockedNumbers.
-  ///
-  /// In en, this message translates to:
-  /// **'Search blocked numbers'**
-  String get searchBlockedNumbers;
 
   /// No description provided for @blockingPaused.
   ///
@@ -1664,18 +1678,6 @@ abstract class AppLocalizations {
   /// **'Blocked numbers'**
   String get blockedNumbers;
 
-  /// No description provided for @addNumber.
-  ///
-  /// In en, this message translates to:
-  /// **'Add number'**
-  String get addNumber;
-
-  /// No description provided for @noMatchingBlocked.
-  ///
-  /// In en, this message translates to:
-  /// **'No matching blocked numbers'**
-  String get noMatchingBlocked;
-
   /// No description provided for @blockedCalls.
   ///
   /// In en, this message translates to:
@@ -1711,6 +1713,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Switch to video call'**
   String get switchToVideoCall;
+
+  /// No description provided for @carrierVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Carrier video'**
+  String get carrierVideo;
+
+  /// No description provided for @cameraNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow the camera to make video calls'**
+  String get cameraNeeded;
+
+  /// No description provided for @answerAsVoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer as voice call'**
+  String get answerAsVoice;
+
+  /// No description provided for @videoRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to a video call?'**
+  String get videoRequest;
+
+  /// No description provided for @accept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get accept;
+
+  /// No description provided for @switchToVoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to voice call'**
+  String get switchToVoice;
+
+  /// No description provided for @cameraOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn camera off'**
+  String get cameraOff;
+
+  /// No description provided for @cameraOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn camera on'**
+  String get cameraOn;
+
+  /// No description provided for @flipCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Flip camera'**
+  String get flipCamera;
+
+  /// No description provided for @incomingVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Video call'**
+  String get incomingVideo;
+
+  /// No description provided for @incomingVideoCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming video call'**
+  String get incomingVideoCall;
+
+  /// No description provided for @videoUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Video calling isn\'t available'**
+  String get videoUnavailable;
+
+  /// No description provided for @networkUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach the network'**
+  String get networkUnreachable;
+
+  /// No description provided for @networkBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'The network is busy'**
+  String get networkBusy;
+
+  /// No description provided for @noService.
+  ///
+  /// In en, this message translates to:
+  /// **'No service'**
+  String get noService;
+
+  /// No description provided for @voiceCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice call'**
+  String get voiceCall;
 
   /// REVIEW: In-call control label; AOSP uses "Disattiva audio", shortened to fit the button
   ///
@@ -1949,7 +2047,7 @@ abstract class AppLocalizations {
   /// No description provided for @incomingCallReminders.
   ///
   /// In en, this message translates to:
-  /// **'Incoming call reminders'**
+  /// **'Incoming calls'**
   String get incomingCallReminders;
 
   /// No description provided for @incomingFootnote.
@@ -2006,18 +2104,6 @@ abstract class AppLocalizations {
   /// **'Turn one of them off, or both will blink. Find it in Settings under Notifications or Accessibility'**
   String get systemFlashSubtitle;
 
-  /// No description provided for @liveUpdateCapsule.
-  ///
-  /// In en, this message translates to:
-  /// **'Live Update capsule (Experimental)'**
-  String get liveUpdateCapsule;
-
-  /// No description provided for @liveUpdateCapsuleSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Android 16: show a connected call in the status bar chip, and the capsule on ColorOS, OxygenOS and realme UI'**
-  String get liveUpdateCapsuleSubtitle;
-
   /// No description provided for @swipeUpToAnswer.
   ///
   /// In en, this message translates to:
@@ -2033,7 +2119,7 @@ abstract class AppLocalizations {
   /// No description provided for @answerButtons.
   ///
   /// In en, this message translates to:
-  /// **'Answer buttons'**
+  /// **'Call screen'**
   String get answerButtons;
 
   /// No description provided for @twoButtons.
@@ -2123,7 +2209,7 @@ abstract class AppLocalizations {
   /// No description provided for @answerEndCalls.
   ///
   /// In en, this message translates to:
-  /// **'Answer/End calls'**
+  /// **'Answering and ending calls'**
   String get answerEndCalls;
 
   /// No description provided for @vibrateAnswerEnd.
@@ -2336,18 +2422,6 @@ abstract class AppLocalizations {
   /// **'Write in keypad'**
   String get writeInKeypad;
 
-  /// No description provided for @twoCallButtons.
-  ///
-  /// In en, this message translates to:
-  /// **'Two Call buttons'**
-  String get twoCallButtons;
-
-  /// No description provided for @chooseSimAndCall.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose SIM and call'**
-  String get chooseSimAndCall;
-
   /// No description provided for @tapRecentCall.
   ///
   /// In en, this message translates to:
@@ -2357,14 +2431,8 @@ abstract class AppLocalizations {
   /// No description provided for @chooseSimForCalls.
   ///
   /// In en, this message translates to:
-  /// **'Choose SIM for calls'**
+  /// **'Which SIM to call with'**
   String get chooseSimForCalls;
-
-  /// No description provided for @chooseSimSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Dual SIM with no default SIM'**
-  String get chooseSimSubtitle;
 
   /// No description provided for @appearance.
   ///
@@ -2503,6 +2571,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Glass & blur'**
   String get glassSettings;
+
+  /// No description provided for @splashIcon.
+  ///
+  /// In en, this message translates to:
+  /// **'App icon on launch screen'**
+  String get splashIcon;
+
+  /// No description provided for @splashIconSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off for a blank launch screen when your home screen uses a different icon'**
+  String get splashIconSubtitle;
 
   /// No description provided for @liquidGlassOn.
   ///
@@ -2678,6 +2758,12 @@ abstract class AppLocalizations {
   /// **'Open source licences'**
   String get openSourceLicences;
 
+  /// No description provided for @copyrightNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Copyright (C) 2026 Syed Arham Raza\nFree software under the GNU General Public License v3.0, with no warranty'**
+  String get copyrightNotice;
+
   /// No description provided for @changelog.
   ///
   /// In en, this message translates to:
@@ -2803,6 +2889,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send feedback'**
   String get sendFeedback;
+
+  /// No description provided for @feedbackTypeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s it about?'**
+  String get feedbackTypeTitle;
+
+  /// No description provided for @feedbackBug.
+  ///
+  /// In en, this message translates to:
+  /// **'Report a problem'**
+  String get feedbackBug;
+
+  /// No description provided for @feedbackIdea.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest an idea'**
+  String get feedbackIdea;
+
+  /// No description provided for @feedbackQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask a question'**
+  String get feedbackQuestion;
 
   /// No description provided for @developer.
   ///
@@ -3365,8 +3475,56 @@ abstract class AppLocalizations {
   /// No description provided for @answerButtonsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'How you answer, and how the call screen looks'**
+  /// **'How you answer, effects, caller photo and background'**
   String get answerButtonsSubtitle;
+
+  /// No description provided for @incomingCallsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ringing style, announce caller, flash, Live Update'**
+  String get incomingCallsSubtitle;
+
+  /// No description provided for @answerEndCallsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-answer, reply with SMS, speaker'**
+  String get answerEndCallsSubtitle;
+
+  /// No description provided for @sectionCalls.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls'**
+  String get sectionCalls;
+
+  /// No description provided for @sectionMakingCalls.
+  ///
+  /// In en, this message translates to:
+  /// **'Making calls'**
+  String get sectionMakingCalls;
+
+  /// No description provided for @sectionBlocking.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocking and caller ID'**
+  String get sectionBlocking;
+
+  /// No description provided for @sectionDisplay.
+  ///
+  /// In en, this message translates to:
+  /// **'Display'**
+  String get sectionDisplay;
+
+  /// No description provided for @sectionSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Contacts and system'**
+  String get sectionSystem;
+
+  /// No description provided for @searchSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Search settings'**
+  String get searchSettings;
 
   /// No description provided for @carrierSettingsSubtitle.
   ///
@@ -3631,6 +3789,552 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'End call with {name}'**
   String endHeldCall(String name);
+
+  /// No description provided for @fullScreenAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming calls only show in the notification shade. On the next page, turn on full-screen notifications for One Dialer. If it already looks on, turn it off and on again.'**
+  String get fullScreenAsk;
+
+  /// No description provided for @notNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get notNow;
+
+  /// No description provided for @vipCalls.
+  ///
+  /// In en, this message translates to:
+  /// **'VIP calls'**
+  String get vipCalls;
+
+  /// No description provided for @vipCallsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ring even on Silent or Vibrate'**
+  String get vipCallsSubtitle;
+
+  /// No description provided for @vipRing.
+  ///
+  /// In en, this message translates to:
+  /// **'Ring on Silent for VIPs'**
+  String get vipRing;
+
+  /// No description provided for @vipRingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls from your VIPs ring even when the phone is on Silent or Vibrate, then it goes back'**
+  String get vipRingSubtitle;
+
+  /// No description provided for @vipFavourites.
+  ///
+  /// In en, this message translates to:
+  /// **'Include favourites'**
+  String get vipFavourites;
+
+  /// No description provided for @vipFavouritesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your starred contacts count as VIPs'**
+  String get vipFavouritesSubtitle;
+
+  /// No description provided for @vipContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'VIP contacts'**
+  String get vipContacts;
+
+  /// No description provided for @vipNeedsAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'VIP calls can\'t ring on Silent'**
+  String get vipNeedsAccess;
+
+  /// No description provided for @vipNeedsAccessSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow call screening and Do Not Disturb access'**
+  String get vipNeedsAccessSubtitle;
+
+  /// No description provided for @vipDndHint.
+  ///
+  /// In en, this message translates to:
+  /// **'With Do Not Disturb on, Android decides who rings: allow starred contacts in its Do Not Disturb settings.'**
+  String get vipDndHint;
+
+  /// No description provided for @rowCallButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Call button on rows'**
+  String get rowCallButton;
+
+  /// No description provided for @rowCallButtonSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A call button on every row in Calls'**
+  String get rowCallButtonSubtitle;
+
+  /// No description provided for @swipeToCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe to call or message'**
+  String get swipeToCall;
+
+  /// No description provided for @swipeToCallSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe a row right to call, left to message'**
+  String get swipeToCallSubtitle;
+
+  /// No description provided for @clearDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear default'**
+  String get clearDefault;
+
+  /// No description provided for @swipeStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe style'**
+  String get swipeStyle;
+
+  /// No description provided for @swipeStylePill.
+  ///
+  /// In en, this message translates to:
+  /// **'Glass button'**
+  String get swipeStylePill;
+
+  /// No description provided for @swipeStyleFlat.
+  ///
+  /// In en, this message translates to:
+  /// **'Flat'**
+  String get swipeStyleFlat;
+
+  /// No description provided for @quickCalling.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick calling'**
+  String get quickCalling;
+
+  /// No description provided for @quickCallingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap, call button and swipe on rows'**
+  String get quickCallingSubtitle;
+
+  /// No description provided for @useRecentSim.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the recent SIM'**
+  String get useRecentSim;
+
+  /// No description provided for @simSameAsPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Same as phone'**
+  String get simSameAsPhone;
+
+  /// No description provided for @alwaysSim.
+  ///
+  /// In en, this message translates to:
+  /// **'Always {sim}'**
+  String alwaysSim(Object sim);
+
+  /// No description provided for @keypadSimButtons.
+  ///
+  /// In en, this message translates to:
+  /// **'Two Call buttons'**
+  String get keypadSimButtons;
+
+  /// No description provided for @keypadSimButtonsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'One for each SIM, instead of a single Call button'**
+  String get keypadSimButtonsSubtitle;
+
+  /// No description provided for @keypadSimButtonsOneSim.
+  ///
+  /// In en, this message translates to:
+  /// **'Only on phones with two SIMs'**
+  String get keypadSimButtonsOneSim;
+
+  /// No description provided for @keypadSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Keypad'**
+  String get keypadSettings;
+
+  /// No description provided for @keypadSettingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Two Call buttons, speed dial'**
+  String get keypadSettingsSubtitle;
+
+  /// No description provided for @phoneDefaultSim.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone\'s default SIM'**
+  String get phoneDefaultSim;
+
+  /// No description provided for @simRulesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A contact\'s own SIM, set on their page, always comes first.'**
+  String get simRulesHint;
+
+  /// No description provided for @callButtonStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Call button style'**
+  String get callButtonStyle;
+
+  /// No description provided for @callButtonTint.
+  ///
+  /// In en, this message translates to:
+  /// **'Soft tint'**
+  String get callButtonTint;
+
+  /// No description provided for @callButtonGlyph.
+  ///
+  /// In en, this message translates to:
+  /// **'Glyph only'**
+  String get callButtonGlyph;
+
+  /// No description provided for @callButtonLit.
+  ///
+  /// In en, this message translates to:
+  /// **'Green circle'**
+  String get callButtonLit;
+
+  /// No description provided for @callsAndContactsRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Rows in Calls and Contacts'**
+  String get callsAndContactsRows;
+
+  /// No description provided for @callsRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Rows in Calls'**
+  String get callsRows;
+
+  /// No description provided for @tapAlreadyCalls.
+  ///
+  /// In en, this message translates to:
+  /// **'Tapping a call already calls'**
+  String get tapAlreadyCalls;
+
+  /// No description provided for @simCards.
+  ///
+  /// In en, this message translates to:
+  /// **'SIM cards'**
+  String get simCards;
+
+  /// No description provided for @groupByContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Group by contact'**
+  String get groupByContact;
+
+  /// No description provided for @dontGroupByContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t group by contact'**
+  String get dontGroupByContact;
+
+  /// No description provided for @keypadAndContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Keypad and contacts'**
+  String get keypadAndContacts;
+
+  /// No description provided for @swipeToCallSim.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe to call'**
+  String get swipeToCallSim;
+
+  /// No description provided for @sameAsKeypad.
+  ///
+  /// In en, this message translates to:
+  /// **'Same as keypad and contacts'**
+  String get sameAsKeypad;
+
+  /// No description provided for @tapSimUnused.
+  ///
+  /// In en, this message translates to:
+  /// **'Used only when Tap a recent call is set to Call, in Quick calling'**
+  String get tapSimUnused;
+
+  /// No description provided for @swipeSimUnused.
+  ///
+  /// In en, this message translates to:
+  /// **'Used only when Swipe to call is on, in Quick calling'**
+  String get swipeSimUnused;
+
+  /// No description provided for @onboardingSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get onboardingSkip;
+
+  /// No description provided for @onboardingNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get onboardingNext;
+
+  /// No description provided for @onboardingStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Get started'**
+  String get onboardingStart;
+
+  /// No description provided for @onboardingLookTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Make it yours'**
+  String get onboardingLookTitle;
+
+  /// No description provided for @onboardingLookBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the app\'s language and whether it\'s light or dark.'**
+  String get onboardingLookBody;
+
+  /// No description provided for @onboardingAnswerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Answering calls'**
+  String get onboardingAnswerTitle;
+
+  /// No description provided for @onboardingAnswerBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how incoming calls look and how you answer them.'**
+  String get onboardingAnswerBody;
+
+  /// No description provided for @onboardingHealthTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready for calls'**
+  String get onboardingHealthTitle;
+
+  /// No description provided for @onboardingHealthBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming calls need these from Android. Tap one to fix it.'**
+  String get onboardingHealthBody;
+
+  /// No description provided for @onboardingAllSet.
+  ///
+  /// In en, this message translates to:
+  /// **'All set'**
+  String get onboardingAllSet;
+
+  /// No description provided for @onboardingCallingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Making calls'**
+  String get onboardingCallingTitle;
+
+  /// No description provided for @onboardingCallingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the SIM for calls and what a tap or swipe on a call does.'**
+  String get onboardingCallingBody;
+
+  /// No description provided for @mergeDuplicatedNames.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge duplicated names'**
+  String get mergeDuplicatedNames;
+
+  /// No description provided for @mergeDuplicatedNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge duplicated numbers'**
+  String get mergeDuplicatedNumbers;
+
+  /// No description provided for @manuallyMergeDuplicates.
+  ///
+  /// In en, this message translates to:
+  /// **'Manually merge duplicates'**
+  String get manuallyMergeDuplicates;
+
+  /// No description provided for @sameNumberContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Contacts with the same number'**
+  String get sameNumberContacts;
+
+  /// No description provided for @sameNameContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Contacts with the same name'**
+  String get sameNameContacts;
+
+  /// No description provided for @groupCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 group} other{{count} groups}}'**
+  String groupCount(int count);
+
+  /// No description provided for @mergeManually.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge manually'**
+  String get mergeManually;
+
+  /// No description provided for @manualMergingDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual merging details'**
+  String get manualMergingDetails;
+
+  /// No description provided for @nameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Name (required)'**
+  String get nameRequired;
+
+  /// No description provided for @numbersSelectMany.
+  ///
+  /// In en, this message translates to:
+  /// **'Number (can select more than one)'**
+  String get numbersSelectMany;
+
+  /// No description provided for @mergeDeletesNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{The unticked number will be deleted from the contact.} other{The {count} unticked numbers will be deleted from the contact.}}'**
+  String mergeDeletesNumbers(int count);
+
+  /// No description provided for @blockCalls.
+  ///
+  /// In en, this message translates to:
+  /// **'Block calls'**
+  String get blockCalls;
+
+  /// No description provided for @blockMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'Block messages'**
+  String get blockMessages;
+
+  /// No description provided for @blockMessagesUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'One Dialer isn\'t your messaging app, so it can\'t block messages. Call blocking, the blocklist and the allowlist aren\'t affected.'**
+  String get blockMessagesUnavailable;
+
+  /// No description provided for @blocklist.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocklist'**
+  String get blocklist;
+
+  /// No description provided for @blocklistSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls from numbers added to the blocklist will be blocked.'**
+  String get blocklistSubtitle;
+
+  /// No description provided for @allowlist.
+  ///
+  /// In en, this message translates to:
+  /// **'Allowlist'**
+  String get allowlist;
+
+  /// No description provided for @allowlistSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls from numbers added to the allowlist will not be blocked.'**
+  String get allowlistSubtitle;
+
+  /// No description provided for @none.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get none;
+
+  /// No description provided for @noNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'No numbers'**
+  String get noNumbers;
+
+  /// No description provided for @blockByPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Block by prefix'**
+  String get blockByPrefix;
+
+  /// No description provided for @numberPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Number prefix, e.g. 0300'**
+  String get numberPrefix;
+
+  /// No description provided for @startsWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts with {prefix}'**
+  String startsWith(String prefix);
+
+  /// No description provided for @removeFromBlocklist.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Remove 1 number from the blocklist?} other{Remove {count} numbers from the blocklist?}}'**
+  String removeFromBlocklist(int count);
+
+  /// No description provided for @removeFromAllowlist.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Remove 1 number from the allowlist?} other{Remove {count} numbers from the allowlist?}}'**
+  String removeFromAllowlist(int count);
+
+  /// No description provided for @searchContactNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Search within 1 contact number} other{Search within {count} contact numbers}}'**
+  String searchContactNumbers(int count);
+
+  /// No description provided for @unofficialBuildTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unofficial build'**
+  String get unofficialBuildTitle;
+
+  /// No description provided for @unofficialBuildCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'Based on One Dialer by Syed Arham Raza, github.com/syedarhamraza/one-dialer'**
+  String get unofficialBuildCredit;
+
+  /// No description provided for @unofficialBuildNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Unofficial build. Based on One Dialer by Syed Arham Raza, github.com/syedarhamraza/one-dialer'**
+  String get unofficialBuildNotice;
+
+  /// No description provided for @mergeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge all ({count})'**
+  String mergeAll(String count);
+
+  /// No description provided for @mergeGroupsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge {count} contacts into {groups}?'**
+  String mergeGroupsTitle(String count, String groups);
+
+  /// No description provided for @mergeGroupsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Each group becomes one contact, with all its numbers and details.'**
+  String get mergeGroupsMessage;
 }
 
 class _AppLocalizationsDelegate
@@ -3643,8 +4347,14 @@ class _AppLocalizationsDelegate
   }
 
   @override
-  bool isSupported(Locale locale) =>
-      <String>['en', 'it'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>[
+    'de',
+    'en',
+    'es',
+    'it',
+    'ru',
+    'tr',
+  ].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -3653,10 +4363,18 @@ class _AppLocalizationsDelegate
 AppLocalizations lookupAppLocalizations(Locale locale) {
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
+    case 'de':
+      return AppLocalizationsDe();
     case 'en':
       return AppLocalizationsEn();
+    case 'es':
+      return AppLocalizationsEs();
     case 'it':
       return AppLocalizationsIt();
+    case 'ru':
+      return AppLocalizationsRu();
+    case 'tr':
+      return AppLocalizationsTr();
   }
 
   throw FlutterError(

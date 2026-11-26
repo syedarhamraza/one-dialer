@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Settings › Display & effects › App icon on launch screen, off: the system splash without
+         the icon, for people whose launcher shows a different (themed or custom) icon. Applied on
+         Android 13+ through SplashScreen.setSplashScreenTheme. -->
+    <style name="LaunchTheme.NoIcon" parent="LaunchTheme">
+        <item name="android:windowSplashScreenAnimatedIcon">@android:color/transparent</item>
+    </style>
+</resources>

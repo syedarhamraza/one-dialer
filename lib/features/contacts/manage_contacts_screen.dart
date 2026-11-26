@@ -8,7 +8,14 @@ import '../../core/telecom/telecom_bridge.dart';
 import '../../theme/one_ui_theme.dart';
 import '../../widgets/choice_row.dart';
 import '../../widgets/cos_dialog.dart';
+import '../../widgets/letter_avatar.dart';
+import '../../widgets/one_ui_floating_action_bar.dart';
+import '../../widgets/one_ui_floating_menu.dart';
 import '../../widgets/one_ui_group_card.dart';
+import '../../widgets/one_ui_radio.dart';
+import '../../widgets/select_mark.dart';
+import '../recents/call_log.dart' show numberKey;
+import 'contact_details_screen.dart' show DetailsCard;
 import '../../widgets/one_ui_subpage.dart';
 import '../../widgets/one_ui_switch.dart';
 import '../../widgets/one_ui_toast.dart';
@@ -38,6 +45,16 @@ Account? _saveAccount() {
   return Account(id: '', type: key.substring(0, i), name: key.substring(i + 1));
 }
 
+/// The contacts in a .vcf, or null when it can't be read: the package decodes quoted-printable
+/// values as strict UTF-8, and files in another charset (or with a broken line break) threw.
+List<Contact>? importVCards(String text) {
+  try {
+    return FlutterContacts.vCard.import(text);
+  } on FormatException {
+    return null;
+  }
+}
+
 /// Contacts ⋮ › Manage contacts, ColorOS's page: what the list shows, where new contacts
 /// go, import and export, SIM contacts and merging duplicates.
 class ManageContactsScreen extends StatefulWidget {
@@ -52,6 +69,7 @@ class _ManageContactsScreenState extends State<ManageContactsScreen> {
   final _sortKey = GlobalKey();
   final _orderKey = GlobalKey();
   final _saveKey = GlobalKey();
+  final _mergeKey = GlobalKey();
   Map<String, String> _saveLabels = const {};
   bool _busy = false;
 
@@ -90,7 +108,11 @@ class _ManageContactsScreenState extends State<ManageContactsScreen> {
       return;
     }
     if (text == null || !mounted) return;
-    final contacts = FlutterContacts.vCard.import(text);
+    final contacts = importVCards(text);
+    if (contacts == null) {
+      OneUIToast.show(context, context.l10n.couldNotOpenFile);
+      return;
+    }
     if (contacts.isEmpty) {
       OneUIToast.show(context, context.l10n.noContactsInFile);
       return;
@@ -174,7 +196,27 @@ class _ManageContactsScreenState extends State<ManageContactsScreen> {
           ],
         ),
         OneUIGroupCard(
-          items: [OneUIGroupItem(title: context.l10n.mergeDuplicates, onTap: () => _push(const _DuplicatesScreen()))],
+          items: [
+            OneUIGroupItem(
+              title: context.l10n.mergeDuplicates,
+              trailing: Icon(Icons.unfold_more_rounded, key: _mergeKey, size: 22, color: context.palette.textSecondary),
+              onTap: () => OneUIFloatingMenu.show(
+                context: context,
+                anchorKey: _mergeKey,
+                width: 270,
+                items: [
+                  OneUIFloatingMenuItem(
+                    label: context.l10n.mergeDuplicatedNames,
+                    onTap: () => _push(const _DuplicatesScreen(byNumber: false)),
+                  ),
+                  OneUIFloatingMenuItem(
+                    label: context.l10n.mergeDuplicatedNumbers,
+                    onTap: () => _push(const _DuplicatesScreen(byNumber: true)),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -295,41 +337,260 @@ class _SimContactsScreenState extends State<_SimContactsScreen> {
   }
 }
 
-/// Manage contacts › Merge duplicate contacts: contacts sharing a number or a name.
-class _DuplicatesScreen extends StatefulWidget {
-  const _DuplicatesScreen();
+/// Manage contacts › Merge duplicate contacts › names or numbers: ColorOS's "Manually merge
+/// duplicates", one card per group with Merge manually.
+class _DuplicatesScreen extends StatelessWidget {
+  const _DuplicatesScreen({required this.byNumber});
+
+  final bool byNumber;
 
   @override
-  State<_DuplicatesScreen> createState() => _DuplicatesScreenState();
-}
-
-class _DuplicatesScreenState extends State<_DuplicatesScreen> {
-  bool _busy = false;
-
-  Future<void> _merge(List<List<DialerContact>> groups) async {
-    final count = groups.fold(0, (n, g) => n + g.length);
-    final ok = await showCosConfirm(
-      context,
-      title: groups.length == 1
-          ? context.l10n.mergeGroupTitle('${groups.single.length}')
-          : context.l10n.mergeGroupsTitle('$count', '${groups.length}'),
-      message: groups.length == 1
-          ? context.l10n.mergeGroupMessage(groups.single.first.name)
-          : context.l10n.mergeGroupsMessage,
-      confirmLabel: context.l10n.merge,
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return OneUISubpage(
+      title: l10n.manuallyMergeDuplicates,
+      listenable: ContactsRepository.instance.allContacts,
+      bottomPill: ValueListenableBuilder(
+        valueListenable: ContactsRepository.instance.allContacts,
+        builder: (context, contacts, _) {
+          final groups = duplicateGroups(contacts, byNumber: byNumber);
+          if (groups.isEmpty) return const SizedBox.shrink();
+          return OneUISubpage.actionBar([
+            OneUIFloatingActionBarItem(
+              icon: Icons.merge_rounded,
+              label: l10n.mergeAll('${groups.length}'),
+              onTap: () => _mergeAll(context, groups),
+            ),
+          ]);
+        },
+      ),
+      builder: (context) {
+        final groups = duplicateGroups(ContactsRepository.instance.allContacts.value, byNumber: byNumber);
+        if (groups.isEmpty) return [_Message(l10n.noDuplicateContacts)];
+        final grey = TextStyle(fontSize: 14, color: context.palette.textSecondary);
+        return [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 0, 18, 8),
+            child: Row(
+              children: [
+                Expanded(child: Text(byNumber ? l10n.sameNumberContacts : l10n.sameNameContacts, style: grey)),
+                Text(l10n.groupCount(groups.length), style: grey),
+              ],
+            ),
+          ),
+          for (final g in groups)
+            DetailsCard(
+              padding: const EdgeInsets.fromLTRB(18, 4, 18, 4),
+              dividerIndent: 62,
+              children: [
+                for (final c in g)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Row(
+                      children: [
+                        ContactAvatar(id: c.id, name: c.name, size: 46),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                c.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 18),
+                              ),
+                              if (c.numbers.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  c.numbers.join(', '),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontSize: 15, color: context.palette.textSecondary),
+                                ),
+                              ],
+                              const SizedBox(height: 4),
+                              _AccountsLine(contact: c),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                Row(
+                  children: [
+                    Expanded(child: _groupAction(l10n.merge, () => _mergeGroups(context, [g]))),
+                    Container(width: 1, height: 20, color: context.palette.divider),
+                    Expanded(
+                      child: _groupAction(
+                        l10n.mergeManually,
+                        () =>
+                            Navigator.of(context)
+                                .push(MaterialPageRoute<void>(builder: (_) => _MergeDetailsScreen(group: g))),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+        ];
+      },
     );
-    if (!ok || !mounted) return;
-    setState(() => _busy = true);
+  }
+
+  Widget _groupAction(String label, VoidCallback onTap) => TextButton(
+    onPressed: onTap,
+    style: TextButton.styleFrom(foregroundColor: OneUITheme.accentGreen, minimumSize: const Size.fromHeight(52)),
+    child: Text(label, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500)),
+  );
+
+  static bool _merging = false;
+
+  /// Merges each group without the details page: every number kept, the best name
+  /// ([_nameRank]). One failed group doesn't stop the rest.
+  static Future<void> _mergeGroups(BuildContext context, List<List<DialerContact>> groups) async {
+    if (_merging) return; // a second tap would merge ids the first one already replaced
+    _merging = true;
+    final l10n = context.l10n;
+    var merged = 0;
     try {
       for (final g in groups) {
-        await TelecomBridge.instance.mergeContacts([for (final c in g) c.id]);
+        final keep = g.reduce((a, b) => _nameRank(b) > _nameRank(a) ? b : a);
+        try {
+          await TelecomBridge.instance.mergeContacts([for (final c in g) c.id], nameContactId: keep.id);
+          merged++;
+        } on PlatformException {
+          // Counted below as not merged.
+        }
       }
       ContactsRepository.instance.reload();
-      if (mounted) {
-        OneUIToast.show(context, context.l10n.contactsMerged(groups.length));
+      if (!context.mounted) return;
+      OneUIToast.show(context, merged == 0 ? l10n.couldNotMergeContacts : l10n.contactsMerged(merged));
+    } finally {
+      _merging = false;
+    }
+  }
+
+  static Future<void> _mergeAll(BuildContext context, List<List<DialerContact>> groups) async {
+    final l10n = context.l10n;
+    final ok = await showCosConfirm(
+      context,
+      title: l10n.mergeGroupsTitle('${groups.fold(0, (n, g) => n + g.length)}', '${groups.length}'),
+      message: l10n.mergeGroupsMessage,
+      confirmLabel: l10n.merge,
+    );
+    if (ok && context.mounted) await _mergeGroups(context, groups);
+  }
+
+  /// A real name beats a bare number, and a synced account's copy beats a SIM's.
+  static int _nameRank(DialerContact c) =>
+      (RegExp(r'\p{L}', unicode: true).hasMatch(c.name) ? 2 : 0) +
+      (c.accounts.any((a) => !a.toLowerCase().contains('sim')) ? 1 : 0);
+}
+
+/// Where a duplicate lives, one icon and app name per account: SIM card, Google, WhatsApp...
+class _AccountsLine extends StatelessWidget {
+  const _AccountsLine({required this.contact});
+
+  final DialerContact contact;
+
+  static IconData _icon(String type) => switch (type.toLowerCase()) {
+    final t when t.contains('sdn') || t.contains('sim') => Icons.sim_card_outlined,
+    final t when t.contains('google') && !t.contains('tachyon') => Icons.cloud_outlined,
+    '' => Icons.smartphone_rounded,
+    _ => Icons.apps_rounded, // WhatsApp, Telegram, Meet and other apps' copies
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final types = contact.accounts.isEmpty ? [''] : [for (final a in contact.accounts) a.substring(0, a.indexOf('|'))];
+    final seen = <String>{};
+    final color = context.palette.textSecondary;
+    return Wrap(
+      spacing: 12,
+      runSpacing: 4,
+      children: [
+        for (final t in types)
+          if (seen.add(accountApp(l10n, t)))
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(_icon(t), size: 15, color: color),
+                const SizedBox(width: 4),
+                Text(accountApp(l10n, t), style: TextStyle(fontSize: 13, color: color)),
+              ],
+            ),
+      ],
+    );
+  }
+}
+
+/// "Manual merging details": which name the merged contact keeps, and which numbers (an
+/// unticked one is deleted from it).
+class _MergeDetailsScreen extends StatefulWidget {
+  const _MergeDetailsScreen({required this.group});
+
+  final List<DialerContact> group;
+
+  @override
+  State<_MergeDetailsScreen> createState() => _MergeDetailsScreenState();
+}
+
+class _MergeDetailsScreenState extends State<_MergeDetailsScreen> {
+  /// One name per contact (the same name twice once), in group order: the contact it's from.
+  late final Map<String, String> _names = () {
+    final out = <String, String>{};
+    for (final c in widget.group) {
+      if (c.name.trim().isNotEmpty) out.putIfAbsent(c.name, () => c.id);
+    }
+    return out;
+  }();
+
+  /// Every number once, by [numberKey], as first written.
+  late final Map<String, String> _numbers = () {
+    final out = <String, String>{};
+    for (final c in widget.group) {
+      for (final n in c.numbers) {
+        if (numberKey(n).isNotEmpty) out.putIfAbsent(numberKey(n), () => n);
       }
+    }
+    return out;
+  }();
+
+  late String? _name = _names.keys.firstOrNull;
+  late final Set<String> _kept = {..._numbers.keys};
+  bool _busy = false;
+
+  Future<void> _merge() async {
+    final l10n = context.l10n;
+    final removed = [
+      for (final MapEntry(:key, :value) in _numbers.entries)
+        if (!_kept.contains(key)) value,
+    ];
+    if (removed.isNotEmpty) {
+      final ok = await showCosConfirm(
+        context,
+        title: l10n.mergeGroupTitle('${widget.group.length}'),
+        message: l10n.mergeDeletesNumbers(removed.length),
+        confirmLabel: l10n.merge,
+        destructive: true,
+      );
+      if (!ok || !mounted) return;
+    }
+    setState(() => _busy = true);
+    try {
+      await TelecomBridge.instance.mergeContacts(
+        [for (final c in widget.group) c.id],
+        nameContactId: _names[_name],
+        removeNumbers: removed,
+      );
+      ContactsRepository.instance.reload();
+      if (!mounted) return;
+      OneUIToast.show(context, l10n.contactsMerged(1));
+      Navigator.of(context).pop();
     } on PlatformException {
-      if (mounted) OneUIToast.show(context, context.l10n.couldNotMergeContacts);
+      if (mounted) OneUIToast.show(context, l10n.couldNotMergeContacts);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -337,35 +598,52 @@ class _DuplicatesScreenState extends State<_DuplicatesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final label = TextStyle(fontSize: 15, color: context.palette.textSecondary);
     return OneUISubpage(
-      title: context.l10n.mergeDuplicates,
-      listenable: ContactsRepository.instance.allContacts,
-      builder: (context) {
-        final groups = duplicateGroups(ContactsRepository.instance.allContacts.value);
-        if (groups.isEmpty) return [_Message(context.l10n.noDuplicateContacts)];
-        return [
+      title: l10n.manualMergingDetails,
+      bottomPill: OneUISubpage.actionBar([
+        OneUIFloatingActionBarItem(
+          icon: Icons.merge_rounded,
+          label: l10n.merge,
+          isEnabled: !_busy && (_numbers.isEmpty || _kept.isNotEmpty),
+          onTap: _merge,
+        ),
+      ]),
+      builder: (context) => [
+        if (_names.isNotEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.only(left: 18, bottom: 8),
+            child: Text(l10n.nameRequired, style: label),
+          ),
           OneUIGroupCard(
             items: [
-              OneUIGroupItem(
-                leading: Icon(Icons.merge_rounded, color: context.palette.textPrimary),
-                title: context.l10n.mergeAll('${groups.length}'),
-                onTap: _busy ? null : () => _merge(groups),
-              ),
+              for (final name in _names.keys)
+                OneUIGroupItem(
+                  title: name,
+                  onTap: () => setState(() => _name = name),
+                  trailing: OneUIRadio(isSelected: name == _name, selectedColor: OneUITheme.accentGreen),
+                ),
             ],
           ),
-          for (final g in groups)
-            OneUIGroupCard(
-              items: [
-                for (final c in g) OneUIGroupItem(title: c.name, subtitle: c.numbers.join(', ')),
+        ],
+        if (_numbers.isNotEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.only(left: 18, bottom: 8),
+            child: Text(l10n.numbersSelectMany, style: label),
+          ),
+          OneUIGroupCard(
+            items: [
+              for (final MapEntry(:key, :value) in _numbers.entries)
                 OneUIGroupItem(
-                  title: context.l10n.merge,
-                  leading: const Icon(Icons.merge_rounded, color: OneUITheme.accentGreen),
-                  onTap: _busy ? null : () => _merge([g]),
+                  title: value,
+                  onTap: () => setState(() => _kept.contains(key) ? _kept.remove(key) : _kept.add(key)),
+                  trailing: SelectMark(selected: _kept.contains(key), gap: 0),
                 ),
-              ],
-            ),
-        ];
-      },
+            ],
+          ),
+        ],
+      ],
     );
   }
 }

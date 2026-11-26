@@ -57,7 +57,8 @@ class DialerInCallService : InCallService() {
     override fun onDestroy() {
         CallFlash.stop()
         handler.removeCallbacksAndMessages(null)
-        onTts { shutdown() }
+        // Runs after the service is gone; never let a late unbind take the process down with it.
+        onTts { runCatching { shutdown() } }
         ttsThread.shutdown()
         CallManager.removeListener(onCallsChanged)
         RecorderCompanion.unwatch(this)
@@ -107,7 +108,10 @@ class DialerInCallService : InCallService() {
 
     override fun onCallRemoved(call: Call) {
         CallManager.onCallRemoved(call)
-        if (CallManager.all().none { (_, c) -> CallManager.stateOf(c) == Call.STATE_RINGING }) CallFlash.stop()
+        if (CallManager.all().none { (_, c) -> CallManager.stateOf(c) == Call.STATE_RINGING }) {
+            CallFlash.stop()
+            VipRing.restore(this)
+        }
         if (!CallManager.hasCalls) {
             CallNotifications.cancelIncoming(this)
             // The app ran: a good moment for a due auto backup (never during a call).
@@ -120,6 +124,7 @@ class DialerInCallService : InCallService() {
         if (from == Call.STATE_RINGING) {
             onTts { stop() }
             CallFlash.stop()
+            if (CallManager.all().none { (_, c) -> CallManager.stateOf(c) == Call.STATE_RINGING }) VipRing.restore(this)
         }
         if (!CallPrefs.buzzes(from, to)) return
         val prefs = CallPrefs.read(this)
@@ -164,7 +169,9 @@ class DialerInCallService : InCallService() {
             }
         }
         tts?.let { return speak.run() }
-        tts = TextToSpeech(this) { status ->
+        // Bound to the app, not this service: onDestroy's shutdown runs later on ttsThread, after
+        // Android already unbound the destroyed service's connections ("Service not registered").
+        tts = TextToSpeech(applicationContext) { status ->
             if (status != TextToSpeech.SUCCESS) return@TextToSpeech
             tts?.setAudioAttributes(
                 AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
