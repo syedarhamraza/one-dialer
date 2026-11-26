@@ -66,6 +66,11 @@ class DialerPrefs {
 
   Future<void> setOnboarded() => _prefs.setBool('onboarded', true);
 
+  /// A tip whose payment hadn't cleared yet; checked again at the next launch.
+  Future<bool> tipPending() async => await _prefs.getBool('tip_pending') ?? false;
+
+  Future<void> setTipPending(bool value) => _prefs.setBool('tip_pending', value);
+
   /// Nothing saved yet: a fresh install, or the app's data was cleared.
   Future<bool> isFresh() async => (await _prefs.getKeys()).isEmpty;
 
