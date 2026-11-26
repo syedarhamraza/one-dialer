@@ -13,15 +13,17 @@ const officialCertHashes = {
   'b11c05d54364c5a210a3a5d809f4c3b19350817aefe8639a3bf515ee17a9a65b',
 };
 
-/// Whether [hash] (the copy's signing certificate) is one of ours. Unknown (null or empty)
-/// counts as official, so a failed read never nags real users.
-bool isOfficialCert(String? hash) =>
-    hash == null || hash.isEmpty || officialCertHashes.contains(hash.trim().toLowerCase());
+/// Whether any of [hashes] (the copy's signing history, newest last) is one of ours. Unknown
+/// (null or empty) counts as official, so a failed read never nags real users.
+bool isOfficialCert(List<String>? hashes) =>
+    hashes == null ||
+    hashes.isEmpty ||
+    hashes.any((hash) => officialCertHashes.contains(hash.trim().toLowerCase()));
 
 /// Whether this copy is signed by One Dialer's own keys (read once); true on any error.
 Future<bool> isOfficialBuild() => _official ??= () async {
   try {
-    return isOfficialCert(await TelecomBridge.instance.signingCertSha256());
+    return isOfficialCert(await TelecomBridge.instance.signingCertHashes());
   } on Object {
     return true;
   }
