@@ -1375,6 +1375,42 @@ class AppLocalizationsRu extends AppLocalizations {
   String get softwareUpdate => 'Обновление ПО';
 
   @override
+  String get supportOneDialer => 'Поддержать One Dialer';
+
+  @override
+  String get supportIntro =>
+      'One Dialer бесплатен, без рекламы и отслеживания, и таким останется. Если приложение вам полезно и вы хотите помочь его развитию, можно оставить разовые чаевые. Чаевые ничего не открывают.';
+
+  @override
+  String get leaveATip => 'Оставить чаевые';
+
+  @override
+  String get tipSmall => 'Небольшие чаевые';
+
+  @override
+  String get tipMedium => 'Средние чаевые';
+
+  @override
+  String get tipLarge => 'Большие чаевые';
+
+  @override
+  String get tipsLoading => 'Загрузка…';
+
+  @override
+  String get tipsUnavailable =>
+      'Чаевые сейчас недоступны. Для них нужен Google Play.';
+
+  @override
+  String get tipThanks => 'Спасибо, что поддерживаете One Dialer!';
+
+  @override
+  String get tipPending =>
+      'Ваши чаевые ожидают оплаты. Они будут зачислены после подтверждения платежа.';
+
+  @override
+  String get tipFailed => 'Не удалось отправить чаевые. Деньги не списаны.';
+
+  @override
   String get helpFeedback => 'Справка и отзывы';
 
   @override
