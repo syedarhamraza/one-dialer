@@ -36,6 +36,8 @@ param(
   [switch]$Promote,
   [switch]$Rebuild,
   [switch]$Debug,
+  # Release build of HEAD for Play's internal testing: no bump, commit or tag.
+  [switch]$Internal,
   [ValidateSet('appbundle', 'apk')]
   [string]$Target,
   # Don't pause for release notes (they must already be written).
@@ -69,6 +71,7 @@ One Dialer release  -  version lives in pubspec.yaml as MAJOR.MINOR.PATCH[-alpha
   ./tool/release.ps1 -Promote                turn the alpha/beta into the real release
   ./tool/release.ps1 -Rebuild                same version, new build number (re-upload)
   ./tool/release.ps1 -Debug [-Target apk]    debug build of the current version (no bump)
+  ./tool/release.ps1 -Internal               signed build of HEAD for internal testing (no bump)
 
   Extra: -Yes (don't pause for release notes), -SkipBuild (bump/commit/tag only)
 
@@ -117,6 +120,48 @@ function Invoke-Checked([string]$what, [scriptblock]$command) {
   if ($LASTEXITCODE -ne 0) { Fail "$what failed (exit $LASTEXITCODE)." }
 }
 
+# Signed, obfuscated release build of $version ("NAME+CODE"), with its Dart symbols uploaded to
+# Crashlytics. Returns whether flutter build succeeded.
+function Build-ForPlay([string]$version, [string]$sha) {
+  if (-not $script:Target) { $script:Target = 'appbundle' }
+  $name, $code = $version -split '\+'
+  # Dart code is obfuscated; its symbols go to symbols/<version> (git-ignored, kept per
+  # release) and are needed to read Crashlytics stack traces.
+  $symbolsDir = "symbols/$version"
+  # Crashlytics never deobfuscates exception messages ("Field '_Dgb@...' has not been
+  # initialized"), so keep the rename map to decode them. It sits beside the symbols folder,
+  # not in it, so the upload below never sees it; gen_snapshot needs an absolute path.
+  $obfuscationMap = Join-Path (Get-Location) "symbols/$version.obfuscation-map.json"
+  # One universal APK, so its versionCode matches the bundle's (split APKs add 1000 * ABI).
+  # Name and code are passed, so -Internal builds needn't change pubspec.yaml.
+  $buildArgs = @($script:Target, '--release', '--obfuscate', "--split-debug-info=$symbolsDir",
+    "--extra-gen-snapshot-options=--save-obfuscation-map=$obfuscationMap", "--dart-define=GIT_SHA=$sha",
+    "--build-name=$name", "--build-number=$code")
+  # x86_64 is only for emulators; the bundle keeps it since Play serves per-ABI splits anyway.
+  if ($script:Target -eq 'apk') { $buildArgs += '--target-platform=android-arm,android-arm64' }
+  Write-Host "`nBuilding $($script:Target) for $version ($sha)..."
+  Invoke-Native { flutter build @buildArgs }
+  if ($LASTEXITCODE -ne 0) { return $false }
+
+  # Upload the Dart symbols so Crashlytics can deobfuscate. A failure only warns: the build
+  # is done and the symbols stay in $symbolsDir for a manual upload.
+  $appId = (Get-Content 'android/app/google-services.json' -Raw | ConvertFrom-Json).client[0].client_info.mobilesdk_app_id
+  $uploadCommand = "npx --yes firebase-tools crashlytics:symbols:upload --app=$appId $symbolsDir"
+  Write-Host "`nUploading Dart symbols to Crashlytics..."
+  try { Invoke-Expression $uploadCommand } catch { $global:LASTEXITCODE = 1 }
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host 'Symbol upload failed (run `npx firebase-tools login` once). Upload them later with:' -ForegroundColor Yellow
+    Write-Host "  $uploadCommand" -ForegroundColor Yellow
+  }
+  return $true
+}
+
+# Commits up to HEAD. Build numbers are commit counts, so a build number names its commit.
+function Get-CommitCount {
+  if ((Invoke-Native { git rev-parse --is-shallow-repository }).Trim() -eq 'true') { Fail 'This is a shallow clone, so the commit count is wrong. Fetch the full history (fetch-depth: 0).' }
+  return [int](Invoke-Native { git rev-list --count HEAD }).Trim()
+}
+
 if ($Help) { Show-Usage; exit 0 }
 
 $current = Read-Version
@@ -131,6 +176,21 @@ if ($Debug) {
   exit 0
 }
 
+# --- Internal build: HEAD for Play's internal testing; nothing is committed ---------
+# Keeps pubspec's name (testers see "1.1.1 (build 912)"); the code is HEAD's commit count, which
+# the next release's commit (HEAD + 1) is always above.
+if ($Internal) {
+  if (Invoke-Native { git status --porcelain }) { Fail 'Commit or stash your changes first; a build is made from a clean tree.' }
+  $code = Get-CommitCount
+  if ($code -le $current.Code) { Fail "Build $code isn't above the last release's $($current.Code): nothing new since it." }
+  if (-not $SkipBuild -and -not (Test-Path 'android/key.properties')) { Fail 'android/key.properties is missing, so the build would be signed with the DEBUG key.' }
+  $name = Get-Name $current
+  if (-not $SkipBuild -and -not (Build-ForPlay "$name+$code" $sha)) { Fail 'The build failed.' }
+  if ($env:GITHUB_OUTPUT) { Add-Content $env:GITHUB_OUTPUT "name=$name`ncode=$code" }
+  Write-Host "`nDone: internal build $name ($code) of $sha" -ForegroundColor Green
+  exit 0
+}
+
 # --- Work out the next version ----------------------------------------------------
 $modes = @($Bump, $Promote, $Rebuild) | Where-Object { $_ }
 if ($modes.Count -eq 0 -and $Pre) { $modes = @('pre') }
@@ -140,9 +200,7 @@ $next = $current.PSObject.Copy()
 # The code is the commit count of the release commit (HEAD's + 1), so a build number names its
 # commit on develop and automatic builds between releases can share the counter. Never below
 # the last code, so a release from a branch behind it still goes up.
-if ((Invoke-Native { git rev-parse --is-shallow-repository }).Trim() -eq 'true') { Fail 'This is a shallow clone, so the commit count is wrong. Fetch the full history (fetch-depth: 0).' }
-$commitCount = [int](Invoke-Native { git rev-list --count HEAD }).Trim()
-$next.Code = [Math]::Max($commitCount + 1, $current.Code + 1)
+$next.Code = [Math]::Max((Get-CommitCount) + 1, $current.Code + 1)
 
 if ($Bump) {
   switch ($Bump) {
@@ -249,35 +307,9 @@ Invoke-Checked 'git commit' { git commit -q -m "chore(release): $newName ($($nex
 $sha = (Invoke-Native { git rev-parse --short HEAD }).Trim()
 
 if (-not $SkipBuild) {
-  if (-not $Target) { $Target = 'appbundle' }
-  # Dart code is obfuscated; its symbols go to symbols/<version> (git-ignored, kept per
-  # release) and are needed to read Crashlytics stack traces.
-  $symbolsDir = "symbols/$newVersion"
-  # Crashlytics never deobfuscates exception messages ("Field '_Dgb@...' has not been
-  # initialized"), so keep the rename map to decode them. It sits beside the symbols folder,
-  # not in it, so the upload below never sees it; gen_snapshot needs an absolute path.
-  $obfuscationMap = Join-Path (Get-Location) "symbols/$newVersion.obfuscation-map.json"
-  # One universal APK, so its versionCode matches the bundle's (split APKs add 1000 * ABI).
-  $buildArgs = @($Target, '--release', '--obfuscate', "--split-debug-info=$symbolsDir",
-    "--extra-gen-snapshot-options=--save-obfuscation-map=$obfuscationMap", "--dart-define=GIT_SHA=$sha")
-  # x86_64 is only for emulators; the bundle keeps it since Play serves per-ABI splits anyway.
-  if ($Target -eq 'apk') { $buildArgs += '--target-platform=android-arm,android-arm64' }
-  Write-Host "`nBuilding $Target for $newVersion ($sha)..."
-  Invoke-Native { flutter build @buildArgs }
-  if ($LASTEXITCODE -ne 0) {
+  if (-not (Build-ForPlay $newVersion $sha)) {
     Invoke-Native { git reset -q --soft HEAD~1 }
     Fail 'The build failed. The release commit was undone; your version changes are still staged.'
-  }
-
-  # Upload the Dart symbols so Crashlytics can deobfuscate. A failure only warns: the build
-  # is done and the symbols stay in $symbolsDir for a manual upload.
-  $appId = (Get-Content 'android/app/google-services.json' -Raw | ConvertFrom-Json).client[0].client_info.mobilesdk_app_id
-  $uploadCommand = "npx --yes firebase-tools crashlytics:symbols:upload --app=$appId $symbolsDir"
-  Write-Host "`nUploading Dart symbols to Crashlytics..."
-  try { Invoke-Expression $uploadCommand } catch { $global:LASTEXITCODE = 1 }
-  if ($LASTEXITCODE -ne 0) {
-    Write-Host 'Symbol upload failed (run `npx firebase-tools login` once). Upload them later with:' -ForegroundColor Yellow
-    Write-Host "  $uploadCommand" -ForegroundColor Yellow
   }
 
   # One Recorder (companion/): the sideloaded call recorder, shared from the website, never Play.
