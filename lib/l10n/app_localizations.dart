@@ -4282,18 +4282,6 @@ abstract class AppLocalizations {
   /// **'Block calls'**
   String get blockCalls;
 
-  /// No description provided for @blockMessages.
-  ///
-  /// In en, this message translates to:
-  /// **'Block messages'**
-  String get blockMessages;
-
-  /// No description provided for @blockMessagesUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'One Dialer isn\'t your messaging app, so it can\'t block messages. Call blocking, the blocklist and the allowlist aren\'t affected.'**
-  String get blockMessagesUnavailable;
-
   /// No description provided for @blocklist.
   ///
   /// In en, this message translates to:

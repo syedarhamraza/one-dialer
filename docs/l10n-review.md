@@ -58,7 +58,7 @@ The UI is laid out for English lengths; check these on the phone in Italian, esp
 | `callBackground*` | Call screen: "Sfondo chiamata", "Foto del contatto", "Come tutte le chiamate", "Predefinito", "Colore", "Foto", "Scegli foto". |
 | `vip*` | VIP calls: "Chiamate VIP", "Squillo in Silenzioso per i VIP", "Includi preferiti"; `vipDndHint` names Android's Do Not Disturb starred-contacts option ("contatti speciali"). |
 | `splashIcon*` | Display & effects: "Icona app all'avvio" (the launch splash's icon switch). |
-| `blocklist*`, `allowlist*`, `blockCalls`, `blockMessages*`, `blockByPrefix`, `numberPrefix`, `startsWith`, `removeFromBlocklist/Allowlist`, `noNumbers`, `none` | Block & filter: "Lista bloccati" / "Lista consentiti" (ColorOS's Italian may say "Lista nera" / "Lista bianca"), "Blocca per prefisso". |
+| `blocklist*`, `allowlist*`, `blockCalls`, `blockByPrefix`, `numberPrefix`, `startsWith`, `removeFromBlocklist/Allowlist`, `noNumbers`, `none` | Block & filter: "Lista bloccati" / "Lista consentiti" (ColorOS's Italian may say "Lista nera" / "Lista bianca"), "Blocca per prefisso". |
 | `mergeDuplicatedNames/Numbers`, `manuallyMergeDuplicates`, `mergeManually`, `manualMergingDetails`, `nameRequired`, `numbersSelectMany`, `mergeDeletesNumbers`, `sameNumberContacts`, `sameNameContacts`, `groupCount`, `searchContactNumbers` | Merge duplicates and the number picker: "Unisci manualmente", "Dettagli unione manuale", "Numero (puoi sceglierne più di uno)". |
 
 ## Russian, Spanish, Turkish, German

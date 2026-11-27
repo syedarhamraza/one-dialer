@@ -696,8 +696,6 @@
   "numbersSelectMany": "Número (puedes elegir más de uno)",
   "mergeDeletesNumbers": "{count, plural, =1{El número sin marcar se eliminará del contacto.} other{Los {count} números sin marcar se eliminarán del contacto.}}",
   "blockCalls": "Bloquear llamadas",
-  "blockMessages": "Bloquear mensajes",
-  "blockMessagesUnavailable": "One Dialer no es tu app de mensajes, así que no puede bloquearlos. El bloqueo de llamadas, la lista de bloqueados y la de permitidos no cambian.",
   "blocklist": "Lista de bloqueados",
   "blocklistSubtitle": "Las llamadas de los números de la lista de bloqueados se bloquearán.",
   "allowlist": "Lista de permitidos",

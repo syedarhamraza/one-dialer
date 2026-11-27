@@ -2415,13 +2415,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get blockCalls => 'Aramaları engelle';
 
   @override
-  String get blockMessages => 'Mesajları engelle';
-
-  @override
-  String get blockMessagesUnavailable =>
-      'One Dialer mesajlaşma uygulamanız değil, bu yüzden mesajları engelleyemez. Arama engelleme, engellenenler ve izin verilenler listesi etkilenmez.';
-
-  @override
   String get blocklist => 'Engellenenler listesi';
 
   @override
