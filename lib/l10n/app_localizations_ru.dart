@@ -2456,13 +2456,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get blockCalls => 'Блокировка вызовов';
 
   @override
-  String get blockMessages => 'Блокировка сообщений';
-
-  @override
-  String get blockMessagesUnavailable =>
-      'One Dialer не является приложением для сообщений, поэтому не может их блокировать. Блокировка вызовов, чёрный и белый списки работают как прежде.';
-
-  @override
   String get blocklist => 'Чёрный список';
 
   @override

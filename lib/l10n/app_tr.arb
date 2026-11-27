@@ -696,8 +696,6 @@
   "numbersSelectMany": "Numara (birden fazla seçilebilir)",
   "mergeDeletesNumbers": "{count, plural, =1{İşaretlenmeyen numara kişiden silinecek.} other{İşaretlenmeyen {count} numara kişiden silinecek.}}",
   "blockCalls": "Aramaları engelle",
-  "blockMessages": "Mesajları engelle",
-  "blockMessagesUnavailable": "One Dialer mesajlaşma uygulamanız değil, bu yüzden mesajları engelleyemez. Arama engelleme, engellenenler ve izin verilenler listesi etkilenmez.",
   "blocklist": "Engellenenler listesi",
   "blocklistSubtitle": "Engellenenler listesindeki numaralardan gelen aramalar engellenir.",
   "allowlist": "İzin verilenler listesi",

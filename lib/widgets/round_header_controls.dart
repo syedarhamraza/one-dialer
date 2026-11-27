@@ -388,7 +388,9 @@ class SubpageHeader extends StatelessWidget {
                     ),
                   ),
                   if (extra case final extra? when sel < 1)
+                    // Clipped only mid-morph, as the pills are, so its press glow isn't cut off.
                     ClipRect(
+                      clipBehavior: sel == 0 ? Clip.none : Clip.hardEdge,
                       child: Align(
                         alignment: Alignment.centerLeft,
                         widthFactor: 1 - sel.clamp(0.0, 1.0),

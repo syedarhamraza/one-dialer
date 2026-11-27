@@ -1125,8 +1125,6 @@
     }
   },
   "blockCalls": "Block calls",
-  "blockMessages": "Block messages",
-  "blockMessagesUnavailable": "One Dialer isn't your messaging app, so it can't block messages. Call blocking, the blocklist and the allowlist aren't affected.",
   "blocklist": "Blocklist",
   "blocklistSubtitle": "Calls from numbers added to the blocklist will be blocked.",
   "allowlist": "Allowlist",

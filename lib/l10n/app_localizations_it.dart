@@ -2436,13 +2436,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get blockCalls => 'Blocca chiamate';
 
   @override
-  String get blockMessages => 'Blocca messaggi';
-
-  @override
-  String get blockMessagesUnavailable =>
-      'One Dialer non è la tua app per i messaggi, quindi non può bloccarli. Il blocco delle chiamate, la lista bloccati e la lista consentiti non cambiano.';
-
-  @override
   String get blocklist => 'Lista bloccati';
 
   @override
