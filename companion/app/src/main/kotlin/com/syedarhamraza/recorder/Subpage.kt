@@ -255,19 +255,19 @@ class Subpage(private val activity: Activity, title: String, onBack: (() -> Unit
     // ---- Status hero ----
 
     /**
-     * The top of a root page: the app's icon (drawn in the phone's own icon shape), a big
-     * [status] in [statusColor], a grey [detail] and, when there's something to do, a lit button.
+     * The top of a root page: [orb] (the status, [Glyph.orb]), a big [status] in [statusColor],
+     * a grey [detail] and, when there's something to do, a lit button.
      */
-    fun hero(status: String, statusColor: Int, detail: String, action: Pair<String, () -> Unit>?) {
+    fun hero(status: String, statusColor: Int, detail: String, action: Pair<String, () -> Unit>?, orb: Drawable) {
         val box = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
             clipChildren = false
             setPadding(di(8f), di(12f), di(8f), di(28f))
             addView(ImageView(activity).apply {
-                setImageDrawable(activity.packageManager.getApplicationIcon(activity.packageName))
+                setImageDrawable(orb)
                 importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
-            }, LinearLayout.LayoutParams(di(88f), di(88f)).apply { bottomMargin = di(18f) })
+            }, LinearLayout.LayoutParams(di(112f), di(112f)).apply { topMargin = di(12f); bottomMargin = di(20f) })
             addView(TextView(activity).apply {
                 text = status
                 gravity = Gravity.CENTER

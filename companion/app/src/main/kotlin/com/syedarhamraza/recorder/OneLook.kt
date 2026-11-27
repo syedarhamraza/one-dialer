@@ -459,6 +459,44 @@ class Glyph(private val color: Int, private val draw: (Canvas, Paint) -> Unit) :
             c.drawPath(Path().apply { moveTo(7.6f, 12.3f); lineTo(10.6f, 15.2f); lineTo(16.4f, 9.2f) }, p)
         }
 
+        /**
+         * The main screen's status orb: a ring in [color] around a faint fill of it, holding a
+         * microphone, or [step]'s number while setting up.
+         */
+        fun orb(color: Int, step: Int?) = Glyph(color) { c, p ->
+            p.alpha = 0x1F
+            c.drawCircle(12f, 12f, 11f, p)
+            p.alpha = 0xFF
+            stroke(p, .9f)
+            c.drawCircle(12f, 12f, 11f, p)
+            if (step != null) {
+                p.style = Paint.Style.FILL
+                p.textSize = 10f
+                p.textAlign = Paint.Align.CENTER
+                p.typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, 600, false)
+                c.drawText(step.toString(), 12f, 12f - (p.descent() + p.ascent()) / 2, p)
+                return@Glyph
+            }
+            p.style = Paint.Style.FILL
+            c.drawRoundRect(RectF(10f, 6f, 14f, 13.4f), 2f, 2f, p)
+            stroke(p, 1.1f)
+            c.drawArc(RectF(8f, 8.6f, 16f, 15.6f), 20f, 140f, false, p)
+            c.drawLine(12f, 15.6f, 12f, 17.8f, p)
+        }
+
+        /** Icons.call_rounded, outlined: the handset beside the last call. */
+        fun phone(color: Int) = Glyph(color) { c, p ->
+            stroke(p, 1.8f)
+            c.drawPath(Path().apply {
+                moveTo(6.6f, 3.8f); lineTo(9.2f, 4.2f); lineTo(10.2f, 8.3f); lineTo(8.3f, 10f)
+                cubicTo(9.4f, 12.3f, 11.7f, 14.6f, 14f, 15.7f)
+                lineTo(15.7f, 13.8f); lineTo(19.8f, 14.8f); lineTo(20.2f, 17.4f)
+                cubicTo(20.2f, 18.8f, 19f, 20f, 17.6f, 19.9f)
+                cubicTo(10.3f, 19.4f, 4.6f, 13.7f, 4.1f, 6.4f)
+                cubicTo(4f, 5f, 5.2f, 3.8f, 6.6f, 3.8f); close()
+            }, p)
+        }
+
         /** A numbered step still to do: the number inside a thin ring. */
         fun step(n: Int, color: Int) = Glyph(color) { c, p ->
             stroke(p, 1.6f)
