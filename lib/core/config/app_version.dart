@@ -13,8 +13,9 @@ enum ReleaseChannel {
 
 /// The app version, as set in pubspec.yaml: `MAJOR.MINOR.PATCH[-alpha.N|-beta.N]+CODE`.
 ///
-/// The name (`1.0.0-beta.2`) is what users see; the code (`5`) is the Android
-/// versionCode and goes up by one with every Play upload. See `tool/release.ps1`.
+/// The name (`1.0.0-beta.2`) is what users see; the code (`868`) is the Android
+/// versionCode: the release commit's number on develop, so it goes up with every
+/// Play upload. See `tool/release.ps1`.
 class AppVersion {
   final int major;
   final int minor;
