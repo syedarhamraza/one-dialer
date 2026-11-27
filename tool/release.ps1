@@ -7,8 +7,10 @@
 
       version: MAJOR.MINOR.PATCH[-alpha.N|-beta.N]+CODE
 
-  The name (before +) is what users see. CODE (after +) is the Android versionCode;
-  every run of this script (except -Debug) raises it by one, so each upload is accepted.
+  The name (before +) is what users see. CODE (after +) is the Android versionCode: every
+  run of this script (except -Debug) sets it to the release commit's number in the branch's
+  history (git rev-list --count), so it always goes up and names its commit on develop.
+  Never force-push develop, or the count goes back.
 
   Run it from a clean working tree, only when you are about to upload to Play Console.
   Day-to-day development stays `flutter run`.
@@ -135,7 +137,12 @@ if ($modes.Count -eq 0 -and $Pre) { $modes = @('pre') }
 if ($modes.Count -ne 1 -or ($Pre -and ($Promote -or $Rebuild))) { Show-Usage; exit 1 }
 
 $next = $current.PSObject.Copy()
-$next.Code = $current.Code + 1
+# The code is the commit count of the release commit (HEAD's + 1), so a build number names its
+# commit on develop and automatic builds between releases can share the counter. Never below
+# the last code, so a release from a branch behind it still goes up.
+if ((Invoke-Native { git rev-parse --is-shallow-repository }).Trim() -eq 'true') { Fail 'This is a shallow clone, so the commit count is wrong. Fetch the full history (fetch-depth: 0).' }
+$commitCount = [int](Invoke-Native { git rev-list --count HEAD }).Trim()
+$next.Code = [Math]::Max($commitCount + 1, $current.Code + 1)
 
 if ($Bump) {
   switch ($Bump) {
