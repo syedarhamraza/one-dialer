@@ -118,15 +118,20 @@ def tile_grad(top, bottom):
 
 
 GLOSSY_PHONE_BG = tile_grad("#14DD5E", "#00C23A")
-# Drawn like One Recorder's wave (plain geometry, a top-to-bottom gloss and a drop shadow, no
-# filter thinning): vivo's Dark icon style then tints it green, as it does the Recorder's.
+# The Play icon's and Call button's handset (thinned evenly, the blur rounding the pads), with One
+# Recorder's top-to-bottom gloss and drop shadow, which vivo's Dark icon style tints green.
+THIN = ('<filter id="thinw" x="-20%" y="-20%" width="140%" height="140%">'
+        '<feMorphology in="SourceAlpha" operator="erode" radius="13" result="e"/>'
+        '<feGaussianBlur in="e" stdDeviation="10" result="b"/>'
+        '<feComponentTransfer in="b" result="m"><feFuncA type="linear" slope="12" intercept="-5.5"/></feComponentTransfer>'
+        '<feComposite in="SourceGraphic" in2="m" operator="in"/></filter>')
 hs_ = 0.62 * T
-GLOSSY_PHONE_FG = (f'<defs><linearGradient id="hgloss" x1="0" y1="{O + (T - hs_) / 2:.0f}" x2="0" y2="{O + (T + hs_) / 2:.0f}" '
-                   'gradientUnits="userSpaceOnUse"><stop stop-color="#FFFFFF"/><stop offset=".55" stop-color="#EEFCF4"/>'
+GLOSSY_PHONE_FG = ('<defs>' + THIN + f'<linearGradient id="hgloss" x1="0" y1="0" x2="0" y2="1">'  # the glyph's own box (its path is scaled)
+                   '<stop stop-color="#FFFFFF"/><stop offset=".55" stop-color="#EEFCF4"/>'
                    '<stop offset="1" stop-color="#BDF0D8"/></linearGradient>'
                    '<filter id="hdrop" x="-20%" y="-20%" width="140%" height="150%">'
                    '<feDropShadow dx="0" dy="11" stdDeviation="13" flood-color="#006E2A" flood-opacity=".35"/></filter></defs>'
-                   f'<g filter="url(#hdrop)">' + thin_handset(O + T / 2, O + T / 2, hs_, "url(#hgloss)", W) + '</g>')
+                   '<g filter="url(#hdrop)"><g filter="url(#thinw)">' + handset(O + T / 2, O + T / 2, hs_, "url(#hgloss)", W) + '</g></g>')
 
 RES.mkdir(parents=True, exist_ok=True)
 PREVIEW.mkdir(parents=True, exist_ok=True)
@@ -177,11 +182,6 @@ for name, body in ISLAND.items():
     render(svg(body, f"0 0 {ISL} {ISL}", ISL), RES / f"{name}.png", ISL)
 # The keypad Call button's glyph: Glossy's slimmed handset, plain white (tinted in Flutter), no shadow.
 HS, hs = 144, 0.62 * T
-THIN = ('<filter id="thinw" x="-20%" y="-20%" width="140%" height="140%">'
-        '<feMorphology in="SourceAlpha" operator="erode" radius="13" result="e"/>'
-        '<feGaussianBlur in="e" stdDeviation="10" result="b"/>'
-        '<feComponentTransfer in="b" result="m"><feFuncA type="linear" slope="12" intercept="-5.5"/></feComponentTransfer>'
-        '<feComposite in="SourceGraphic" in2="m" operator="in"/></filter>')
 pathlib.Path("assets/icons").mkdir(parents=True, exist_ok=True)
 render(svg(f'<defs>{THIN}</defs><g filter="url(#thinw)">' + handset(O + T / 2, O + T / 2, hs, "#FFFFFF", W) + '</g>',
            f"{O + (T - hs) / 2:.1f} {O + (T - hs) / 2:.1f} {hs:.1f} {hs:.1f}", HS), pathlib.Path("assets/icons/handset.png"), HS)
