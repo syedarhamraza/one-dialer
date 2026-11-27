@@ -9,7 +9,7 @@ export const PLAY_URL = "https://play.google.com/store/apps/details?id=com.syeda
 export const REPO_URL = "https://github.com/syedarhamraza/one-dialer";
 export const EMAIL = "arhamraza399@gmail.com";
 // The community server's never-expiring invite. Play reviewers can join it, so it never names the recorder.
-export const DISCORD_URL = "https://discord.gg/YXCN43Fghc";
+export const DISCORD_URL = "https://discord.gg/yyKKr5nxbk";
 // Every GitHub release carries the recorder under this name and none is marked pre-release, so this is always the newest.
 export const RECORDER_URL = `${REPO_URL}/releases/latest/download/one-dialer-recorder.apk`;
 // Open GitHub's issue form straight on the repo's templates (.github/ISSUE_TEMPLATE).
