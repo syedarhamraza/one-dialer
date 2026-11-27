@@ -127,6 +127,8 @@ Recording is a separate sideloaded app, **One Recorder** (`companion/`, plain Ko
 
 Google Play mustn't hear about the recorder (Play bans accessibility-based recording and links to it): nothing Play or its reviewers see names it. That's the app without the companion installed, `docs/privacy-policy.md` (Play's privacy URL; One Recorder's privacy is a section of the site's `/recorder/` page, and the privacy page's footer hides its link) and the Play listing. The release notes come from pull request titles, so name recorder branches `feat/recorder-...` or `fix/recorder-...`: Release Drafter labels those `skip-changelog`, and any pull request touching `companion/` or `site/app/recorder/` too.
 
+The Discord server (`DISCORD_URL` in `site/app/links.ts`, linked from the README and the site's footer) counts as something Play sees: anyone can join it. It's built from `layout.mjs` in the separate `one-dialer-discord` repo (`setup.mjs`), which names no recorder. GitHub's own webhooks would (release notes and files, pull request titles), so nothing posts there from GitHub directly: the Release workflow posts Play's notes to #announcements (`DISCORD_RELEASE_WEBHOOK`), and the Internal build workflow posts non-`skip-changelog` pull request titles to #beta-announcements (`DISCORD_BETA_WEBHOOK`).
+
 ## Liquid Glass Widgets
 
 For any liquid glass work, read the package's own guide first: `skills/liquid-glass-widgets/SKILL.md` inside the `liquid_glass_widgets` package. Its folder is that package's `rootUri` in `.dart_tool/package_config.json` (after `flutter pub get`), so it always matches the version in `pubspec.lock`. Don't copy it into this repo.
