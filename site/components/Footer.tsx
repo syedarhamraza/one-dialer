@@ -51,6 +51,12 @@ export function Footer({ recorder = true, lang = "en", page }: { recorder?: bool
       <div className={`flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-8 text-[15px] text-ink-2 ${page ? "mt-8" : "mt-10"}`}>
         <span>© {new Date().getFullYear()} Syed Arham Raza</span>
         <nav aria-label={t.label} className="flex flex-wrap gap-x-7 gap-y-3">
+          {/* The guide links the recorder too, so it hides with it. */}
+          {recorder && (
+            <Link href={href(lang, "/guide/")} className="link">
+              {t.guide}
+            </Link>
+          )}
           {recorder && (
             <Link href={href(lang, "/recorder/")} className="link">
               {t.recorder}

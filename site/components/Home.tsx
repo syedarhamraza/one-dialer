@@ -88,6 +88,9 @@ export function Home({ lang }: { lang: Lang }) {
           <a href="#whats-new" className="px-4 whitespace-nowrap transition-colors hover:text-ink max-lg:hidden">
             {t.nav.whatsNew}
           </a>
+          <Link href={href(lang, "/guide/")} className="px-4 transition-colors hover:text-ink max-md:hidden">
+            {t.nav.guide}
+          </Link>
           <Link href={href(lang, "/recorder/")} className="px-4 transition-colors hover:text-ink max-md:hidden">
             {t.nav.recorder}
           </Link>
