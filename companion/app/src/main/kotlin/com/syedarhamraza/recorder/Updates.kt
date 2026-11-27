@@ -80,7 +80,7 @@ object Updates {
             .putString(VERSION, json.getString("tag_name").removePrefix("v")).putString(URL_KEY, url).apply()
         true
     }.getOrElse {
-        android.util.Log.w("OneRecorder", "update check failed", it)
+        RecLog.w("update check failed", it)
         false
     }
 
@@ -102,7 +102,7 @@ object Updates {
         }
         file
     }.getOrElse {
-        android.util.Log.w("OneRecorder", "update download failed", it)
+        RecLog.w("update download failed", it)
         null
     }
 

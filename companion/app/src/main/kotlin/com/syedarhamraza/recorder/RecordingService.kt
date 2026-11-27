@@ -59,7 +59,7 @@ class RecordingService : Service() {
 
         fun start(context: Context, extras: android.os.Bundle?) {
             lastError = if (canRecord(context)) null else "helper"
-            android.util.Log.i("OneRecorder", "start: error=$lastError")
+            RecLog.i("start: ${lastError?.let { "error $it" } ?: "ok"}")
             if (lastError != null) {
                 RecorderSettings.saveLastCall(context, 0, heard = null)
                 return RecordingsProvider.notifyStatus(context)
@@ -97,7 +97,7 @@ class RecordingService : Service() {
             if (Build.VERSION.SDK_INT >= 34) startForeground(NOTIFICATION_ID, notification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
             else startForeground(NOTIFICATION_ID, notification())
         } catch (e: Exception) {
-            android.util.Log.w("OneRecorder", "startForeground refused", e)
+            RecLog.w("startForeground refused", e)
             lastError = "start"
             stopSelf()
             RecordingsProvider.notifyStatus(this)
@@ -114,7 +114,7 @@ class RecordingService : Service() {
         ) { File(dir(this), it).exists() }
         val target = File(dir(this), entry.name)
         pipeline = ShellHelper.openPcm(this)?.let { pcm -> AudioPipeline(target, pcm).also { it.start() } }
-        android.util.Log.i("OneRecorder", "begin: recording=${pipeline != null}")
+        RecLog.i("begin: recording=${pipeline != null}")
         if (pipeline == null) {
             lastError = "helper"
             RecorderSettings.saveLastCall(this, 0, heard = null)
@@ -138,6 +138,7 @@ class RecordingService : Service() {
             it.stop()
             // Quieter than the Leveler's floor (silence or line hiss) means nothing was heard.
             RecorderSettings.saveLastCall(this, it.seconds, heard = it.peak > 60)
+            RecLog.i("finish: ${it.seconds} s, peak ${it.peak}")
         }
         pipeline = null
         current = null

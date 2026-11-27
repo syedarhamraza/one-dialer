@@ -33,12 +33,13 @@ class RecordingsProvider : ContentProvider() {
         fun notifyStatus(context: Context) = context.contentResolver.notifyChange(STATUS_URI, null)
     }
 
-    override fun onCreate() = true
+    // Providers start before anything else in the process: the earliest place for the log and its crash catcher.
+    override fun onCreate() = true.also { context?.let(RecLog::init) }
 
     override fun call(method: String, arg: String?, extras: Bundle?): Bundle? = try {
-        answer(method, arg, extras).also { if (method == "start") android.util.Log.i("OneRecorder", "$method -> $it") }
+        answer(method, arg, extras).also { if (method == "start" || method == "stop") RecLog.i("$method -> $it") }
     } catch (e: Exception) {
-        android.util.Log.w("OneRecorder", "$method failed", e)
+        RecLog.w("$method failed", e)
         throw e
     }
 

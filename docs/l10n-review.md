@@ -81,4 +81,5 @@ Written to each language's AOSP Dialer and Contacts terms (glossaries in `docs/l
 
 | `onboarding*`, `feedbackTypeTitle`, `feedbackBug`, `feedbackIdea`, `feedbackQuestion` | First-run pages and the feedback type picker, added after the four languages; de "Los geht’s", ru "Под себя". |
 | One Recorder's `off_wifi*`, `pair_again*`, `setup_helper_connect_failed`, `setup_helper_debugging_off`, `setup_helper_no_wifi`, `stopped_*` | Wi-Fi and pairing messages; they name Android's Developer options rows (Build number, Wireless debugging), which must match each language's own Settings. |
+| One Recorder's `logs_*` | Setup › Logs and report: "log" is it Log, ru Журнал, es Registro, tr Günlük, de Protokoll; GitHub's "issue" is it segnalazione, ru запрос, es incidencia, tr kayıt, de Issue. |
 | `supportOneDialer`, `supportIntro`, `leaveATip`, `tipSmall`, `tipMedium`, `tipLarge`, `tipsLoading`, `tipsUnavailable`, `tipThanks`, `tipPending`, `tipFailed` | Settings › Support One Dialer (Google Play tips); `supportIntro` says tips unlock nothing and the app stays free, which must stay accurate. |

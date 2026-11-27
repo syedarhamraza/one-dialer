@@ -1,6 +1,7 @@
 package com.syedarhamraza.recorder.shell
 
 import android.content.Context
+import com.syedarhamraza.recorder.RecLog
 import android.os.Build
 import io.github.muntashirakon.adb.AbsAdbConnectionManager
 import io.github.muntashirakon.adb.android.AdbMdns
@@ -79,7 +80,7 @@ class Adb private constructor(private val files: File) : AbsAdbConnectionManager
             KeyFactory.getInstance("RSA").generatePrivate(PKCS8EncodedKeySpec(keyFile.readBytes())) to
                 certFile.inputStream().use { CertificateFactory.getInstance("X.509").generateCertificate(it) }
         }.onFailure {
-            if (keyFile.exists()) android.util.Log.w("OneRecorder", "saved adb key unreadable: a new one needs pairing again", it)
+            if (keyFile.exists()) RecLog.w("saved adb key unreadable: a new one needs pairing again", it)
         }.getOrNull()
         if (saved != null) {
             privateKey = saved.first
@@ -101,7 +102,7 @@ class Adb private constructor(private val files: File) : AbsAdbConnectionManager
     fun pairWith(host: InetAddress, port: Int, code: String): Boolean = try {
         pair(host.hostAddress!!, port, code)
     } catch (e: Exception) {
-        android.util.Log.w("OneRecorder", "pairing failed", e)
+        RecLog.w("pairing failed", e)
         false
     }
 
@@ -113,7 +114,7 @@ class Adb private constructor(private val files: File) : AbsAdbConnectionManager
     fun connectNow(context: Context, timeoutMs: Long): Boolean = try {
         (isConnected || autoConnect(context, timeoutMs)).also { refused = false }
     } catch (e: Exception) {
-        android.util.Log.w("OneRecorder", "Wireless debugging connect failed", e)
+        RecLog.w("Wireless debugging connect failed", e)
         // adbd fails the TLS handshake for a key it doesn't trust (CERTIFICATE_VERIFY_FAILED).
         refused = generateSequence(e as Throwable) { it.cause }.any { it is javax.net.ssl.SSLException }
         false
