@@ -55,7 +55,7 @@ All four together are the difference; future work keeps every one:
 
 ## Evidence on Hand
 
-- Screenshots: `docs/screenshots/01-glass-design.webp` ... `08-make-it-yours.webp`.
+- Screenshots: phone shots in `docs/screenshots/` (README); the Play store set and feature graphic in `fastlane/metadata/android/en-US/images/`.
 - Icon: `docs/play-icon.png`, `assets/app_icons/default_phone.png`.
 - Changelog: `lib/core/config/changelog.dart`, `site/public/changelog.json`.
 - Privacy policy: `docs/privacy-policy.md`.
