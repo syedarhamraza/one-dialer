@@ -11,6 +11,7 @@ import 'app/dialer_app.dart';
 import 'app/in_call_app.dart';
 import 'core/crash_reporting.dart';
 import 'core/prefs/dialer_prefs.dart';
+import 'core/security/app_lock.dart';
 import 'core/telecom/telecom_bridge.dart';
 import 'features/in_call/call_background.dart';
 import 'features/in_call/call_screen_widgets.dart';
@@ -27,7 +28,12 @@ Future<void> main() async {
   DialerPrefs.instance.loadChoices();
   // Both before the first frame (no flash of the wrong look or, below Android 13, which doesn't
   // hand Flutter the per-app language, the wrong language), but side by side.
-  await (DialerPrefs.instance.loadAppearance(), DialerPrefs.instance.loadLanguage(), _followSystemFont()).wait;
+  await (
+    DialerPrefs.instance.loadAppearance(),
+    DialerPrefs.instance.loadLanguage(),
+    _followSystemFont(),
+    AppLock.instance.load(), // and the lock: a locked app mustn't flash its content
+  ).wait;
   DialerPrefs.instance.navStyle.addListener(_warmLiquidGlass);
   _warmLiquidGlass();
   AppLifecycleListener(onResume: DialerPrefs.instance.loadLanguage);

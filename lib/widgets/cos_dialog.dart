@@ -249,13 +249,21 @@ class CosPill extends StatelessWidget {
         child: SizedBox(
           width: double.infinity,
           height: 52,
-          child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 16.5,
-                fontWeight: FontWeight.w600,
-                color: destructive ? OneUITheme.accentRed : context.palette.textPrimary,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            // A long label (side by side, or translated) shrinks to one line rather than clipping.
+            child: Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 16.5,
+                    fontWeight: FontWeight.w600,
+                    color: destructive ? OneUITheme.accentRed : context.palette.textPrimary,
+                  ),
+                ),
               ),
             ),
           ),

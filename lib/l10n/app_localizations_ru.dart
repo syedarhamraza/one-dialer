@@ -2518,4 +2518,109 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get mergeGroupsMessage =>
       'Каждая группа станет одним контактом со всеми номерами и данными.';
+
+  @override
+  String get privacySecurity => 'Конфиденциальность и безопасность';
+
+  @override
+  String get privacySecuritySubtitle => 'Блокировка приложения, личный сейф';
+
+  @override
+  String get appLock => 'Блокировка приложения';
+
+  @override
+  String get appLockSubtitle =>
+      'Запрашивать отпечаток, лицо или блокировку экрана при открытии One Dialer';
+
+  @override
+  String get appLockNeedsScreenLock =>
+      'Сначала установите блокировку экрана в настройках телефона';
+
+  @override
+  String get appLockCalls =>
+      'Входящие звонки по-прежнему звонят, и на них можно ответить, даже если приложение заблокировано.';
+
+  @override
+  String get lockAfter => 'Блокировать';
+
+  @override
+  String get lockImmediately => 'Сразу';
+
+  @override
+  String get lockAfterOneMinute => 'Через 1 минуту';
+
+  @override
+  String get lockAfterFiveMinutes => 'Через 5 минут';
+
+  @override
+  String get appLocked => 'One Dialer заблокирован';
+
+  @override
+  String get unlock => 'Разблокировать';
+
+  @override
+  String get unlockOneDialer => 'Разблокировать One Dialer';
+
+  @override
+  String get privateVault => 'Личный сейф';
+
+  @override
+  String get privateVaultSubtitle =>
+      'Контакты и звонки, которые видит только One Dialer';
+
+  @override
+  String get unlockPrivateVault => 'Разблокировать личный сейф';
+
+  @override
+  String get moveToVault => 'Переместить в личный сейф';
+
+  @override
+  String moveToVaultTitle(String name) {
+    return 'Переместить $name в личный сейф?';
+  }
+
+  @override
+  String get moveToVaultMessage =>
+      'Контакт и история звонков с ним уйдут из контактов и журнала звонков телефона, и другие приложения их не увидят. Его звонки по-прежнему звонят и показывают имя.';
+
+  @override
+  String get move => 'Переместить';
+
+  @override
+  String get movedToVault => 'Перемещено в личный сейф';
+
+  @override
+  String get moveOutOfVault => 'Вернуть в контакты';
+
+  @override
+  String get movedOutOfVault => 'Возвращено в контакты';
+
+  @override
+  String get couldNotOpenVault => 'Не удалось обновить личный сейф';
+
+  @override
+  String get deleteFromVaultMessage =>
+      'Контакт и его звонки будут удалены из сейфа навсегда.';
+
+  @override
+  String get vaultEmpty =>
+      'Личных контактов пока нет. Откройте контакт и выберите ⋮ › Переместить в личный сейф.';
+
+  @override
+  String get vaultCalls => 'История звонков';
+
+  @override
+  String get vaultImport => 'Импорт в сейф';
+
+  @override
+  String get vaultExportMessage =>
+      'Экспортированный файл не зашифрован: любой, у кого он есть, сможет прочитать эти контакты.';
+
+  @override
+  String get vaultUninstallNote =>
+      'Сейф хранится только на этом телефоне в зашифрованном виде и не попадает в резервные копии. Удаление One Dialer или очистка его данных удалит сейф, поэтому сначала экспортируйте его.';
+
+  @override
+  String get appLockedHint =>
+      'Откройте с помощью отпечатка, лица или блокировки экрана';
 }

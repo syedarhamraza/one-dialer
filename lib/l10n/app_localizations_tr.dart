@@ -2473,4 +2473,109 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get mergeGroupsMessage =>
       'Her grup, tüm numaraları ve bilgileriyle tek bir kişi olur.';
+
+  @override
+  String get privacySecurity => 'Gizlilik ve güvenlik';
+
+  @override
+  String get privacySecuritySubtitle => 'Uygulama kilidi, özel kasa';
+
+  @override
+  String get appLock => 'Uygulama kilidi';
+
+  @override
+  String get appLockSubtitle =>
+      'One Dialer\'ı açmak için parmak izi, yüz veya ekran kilidi iste';
+
+  @override
+  String get appLockNeedsScreenLock =>
+      'Önce telefon ayarlarından bir ekran kilidi ayarlayın';
+
+  @override
+  String get appLockCalls =>
+      'Gelen aramalar uygulama kilitliyken de çalar ve yanıtlanabilir.';
+
+  @override
+  String get lockAfter => 'Kilitle';
+
+  @override
+  String get lockImmediately => 'Hemen';
+
+  @override
+  String get lockAfterOneMinute => '1 dakika sonra';
+
+  @override
+  String get lockAfterFiveMinutes => '5 dakika sonra';
+
+  @override
+  String get appLocked => 'One Dialer kilitli';
+
+  @override
+  String get unlock => 'Kilidi aç';
+
+  @override
+  String get unlockOneDialer => 'One Dialer\'ın kilidini aç';
+
+  @override
+  String get privateVault => 'Özel kasa';
+
+  @override
+  String get privateVaultSubtitle =>
+      'Yalnızca One Dialer\'ın görebildiği kişiler ve aramalar';
+
+  @override
+  String get unlockPrivateVault => 'Özel kasanın kilidini aç';
+
+  @override
+  String get moveToVault => 'Özel kasaya taşı';
+
+  @override
+  String moveToVaultTitle(String name) {
+    return '$name özel kasaya taşınsın mı?';
+  }
+
+  @override
+  String get moveToVaultMessage =>
+      'Kişi ve arama geçmişi telefonun kişilerinden ve arama kaydından çıkar, böylece diğer uygulamalar göremez. Aramaları yine çalar ve adını gösterir.';
+
+  @override
+  String get move => 'Taşı';
+
+  @override
+  String get movedToVault => 'Özel kasaya taşındı';
+
+  @override
+  String get moveOutOfVault => 'Kişilere geri taşı';
+
+  @override
+  String get movedOutOfVault => 'Kişilere geri taşındı';
+
+  @override
+  String get couldNotOpenVault => 'Özel kasa güncellenemedi';
+
+  @override
+  String get deleteFromVaultMessage =>
+      'Kişiyi ve aramalarını kasadan kalıcı olarak siler.';
+
+  @override
+  String get vaultEmpty =>
+      'Henüz özel kişi yok. Bir kişiyi açıp ⋮ › Özel kasaya taşı\'yı seçin.';
+
+  @override
+  String get vaultCalls => 'Arama geçmişi';
+
+  @override
+  String get vaultImport => 'Kasaya içe aktar';
+
+  @override
+  String get vaultExportMessage =>
+      'Dışa aktarılan dosya şifreli değildir: dosyaya sahip olan herkes bu kişileri okuyabilir.';
+
+  @override
+  String get vaultUninstallNote =>
+      'Kasa yalnızca bu telefonda şifreli olarak tutulur ve asla yedeklenmez. One Dialer\'ı kaldırmak veya verilerini silmek kasayı siler; önce dışa aktarın.';
+
+  @override
+  String get appLockedHint =>
+      'Açmak için parmak izi, yüz veya ekran kilidini kullanın';
 }

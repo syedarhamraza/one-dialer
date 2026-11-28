@@ -2464,4 +2464,109 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get mergeGroupsMessage =>
       'Each group becomes one contact, with all its numbers and details.';
+
+  @override
+  String get privacySecurity => 'Privacy & security';
+
+  @override
+  String get privacySecuritySubtitle => 'App lock, private vault';
+
+  @override
+  String get appLock => 'App lock';
+
+  @override
+  String get appLockSubtitle =>
+      'Ask for your fingerprint, face or screen lock to open One Dialer';
+
+  @override
+  String get appLockNeedsScreenLock =>
+      'Set a screen lock in your phone\'s settings first';
+
+  @override
+  String get appLockCalls =>
+      'Incoming calls still ring and can be answered while the app is locked.';
+
+  @override
+  String get lockAfter => 'Lock';
+
+  @override
+  String get lockImmediately => 'Immediately';
+
+  @override
+  String get lockAfterOneMinute => 'After 1 minute';
+
+  @override
+  String get lockAfterFiveMinutes => 'After 5 minutes';
+
+  @override
+  String get appLocked => 'One Dialer is locked';
+
+  @override
+  String get unlock => 'Unlock';
+
+  @override
+  String get unlockOneDialer => 'Unlock One Dialer';
+
+  @override
+  String get privateVault => 'Private vault';
+
+  @override
+  String get privateVaultSubtitle =>
+      'Contacts and calls that only One Dialer can see';
+
+  @override
+  String get unlockPrivateVault => 'Unlock private vault';
+
+  @override
+  String get moveToVault => 'Move to private vault';
+
+  @override
+  String moveToVaultTitle(String name) {
+    return 'Move $name to the private vault?';
+  }
+
+  @override
+  String get moveToVaultMessage =>
+      'The contact and its call history leave your phone\'s contacts and call log, so other apps can\'t see them. Calls from it still ring and show its name.';
+
+  @override
+  String get move => 'Move';
+
+  @override
+  String get movedToVault => 'Moved to private vault';
+
+  @override
+  String get moveOutOfVault => 'Move back to contacts';
+
+  @override
+  String get movedOutOfVault => 'Moved back to contacts';
+
+  @override
+  String get couldNotOpenVault => 'Couldn\'t update the private vault';
+
+  @override
+  String get deleteFromVaultMessage =>
+      'Deletes the contact and its calls from the vault for good.';
+
+  @override
+  String get vaultEmpty =>
+      'No private contacts yet. Open a contact and choose ⋮ › Move to private vault.';
+
+  @override
+  String get vaultCalls => 'Call history';
+
+  @override
+  String get vaultImport => 'Import into vault';
+
+  @override
+  String get vaultExportMessage =>
+      'The exported file isn\'t encrypted: anyone who has it can read these contacts.';
+
+  @override
+  String get vaultUninstallNote =>
+      'The vault is kept only on this phone, encrypted, and is never backed up. Uninstalling One Dialer or clearing its data deletes it, so export it first.';
+
+  @override
+  String get appLockedHint =>
+      'Use your fingerprint, face or screen lock to open it';
 }

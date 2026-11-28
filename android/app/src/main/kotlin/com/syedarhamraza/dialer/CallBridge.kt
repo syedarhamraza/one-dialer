@@ -50,6 +50,9 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
     // Big reads answer from a background task queue: a result sent from the main thread is
     // encoded there, and a large contact list froze both engines for seconds.
     private val data = MethodChannel(messenger, DATA_CHANNEL, StandardMethodCodec.INSTANCE, messenger.makeBackgroundTaskQueue())
+    // The call log on a queue of its own: behind the contacts read (seconds with many contacts),
+    // Recents opened blank; until beta 7 each read had its own thread.
+    private val callLogData = MethodChannel(messenger, CALL_LOG_CHANNEL, StandardMethodCodec.INSTANCE, messenger.makeBackgroundTaskQueue())
     private val diagnostics = LagDiagnostics.attach(context, messenger, engineName)
     private val events = EventChannel(messenger, EVENT_CHANNEL)
     private var listener: (() -> Unit)? = null
@@ -87,6 +90,12 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
     /** Set by [MainActivity]: the system ringtone picker; the result is the picked URI, "" for Default, null if cancelled. */
     var ringtonePicker: ((String?, MethodChannel.Result) -> Unit)? = null
 
+    /** Set by [MainActivity]: the unlock prompt ([AppLock.authenticate]) with this title. */
+    var authenticator: ((String, MethodChannel.Result) -> Unit)? = null
+
+    /** Set by [MainActivity]: hides the app from the recents thumbnail while App lock is on. */
+    var secureSetter: ((Boolean) -> Unit)? = null
+
     /** A `tel:` number the app was opened with, handed to Flutter once. */
     var pendingDialNumber: String? = null
 
@@ -99,6 +108,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
     init {
         methods.setMethodCallHandler(this)
         data.setMethodCallHandler { call, result -> readData(call, result) }
+        callLogData.setMethodCallHandler { call, result -> readData(call, result) }
         events.setStreamHandler(this)
         watchCallLog()
         if (engineName == "main") NumberDisplay.preload(context.applicationContext)
@@ -116,6 +126,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
         if (watchingCallLog) context.contentResolver.unregisterContentObserver(callLogObserver)
         methods.setMethodCallHandler(null)
         data.setMethodCallHandler(null)
+        callLogData.setMethodCallHandler(null)
         events.setStreamHandler(null)
     }
 
@@ -238,6 +249,25 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             "pickRingtone" -> ringtonePicker?.invoke(call.argument<String>("current"), result)
                 ?: result.error("NO_ACTIVITY", "Ringtones can only be picked from the main screen", null)
             "pickVcf" -> vcfPicker?.invoke(result)
+            "appLockAvailable" -> result.success(AppLock.available(context))
+            "authenticate" -> authenticator?.invoke(call.argument<String>("title")!!, result) ?: result.success(false)
+            "setSecure" -> {
+                secureSetter?.invoke(call.argument<Boolean>("on") == true)
+                result.success(null)
+            }
+            "expectingReturn" -> result.success(AppLock.expectReturn)
+            "vaultRead" -> inBackground(result) { com.syedarhamraza.dialer.telecom.Vault.read(context) }
+            "vaultAdd" -> inBackground(result) {
+                com.syedarhamraza.dialer.telecom.Vault.add(
+                    context, call.argument<String>("name").orEmpty(), call.argument<List<String>>("numbers").orEmpty(),
+                    call.argument<String>("vcard")!!,
+                )
+            }
+            "vaultRemove" -> inBackground(result) {
+                com.syedarhamraza.dialer.telecom.Vault.remove(
+                    context, call.argument<String>("id")!!, call.argument<Boolean>("restoreCalls") == true,
+                )
+            }
                 ?: result.error("NO_ACTIVITY", "Files can only be picked from the main screen", null)
             "exportSettings", "importSettings" -> settingsBackup?.invoke(call.method == "exportSettings", result)
                 ?: result.error("NO_ACTIVITY", "Files can only be picked from the main screen", null)
@@ -716,6 +746,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
     companion object {
         const val METHOD_CHANNEL = "com.syedarhamraza.dialer/telecom"
         const val DATA_CHANNEL = "com.syedarhamraza.dialer/data"
+        const val CALL_LOG_CHANNEL = "com.syedarhamraza.dialer/call_log"
         const val EVENT_CHANNEL = "com.syedarhamraza.dialer/call_state"
         private const val TONE_VOLUME = 80
         private const val TONE_LENGTH_MS = 150

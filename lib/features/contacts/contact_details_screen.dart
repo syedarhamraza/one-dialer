@@ -33,6 +33,7 @@ import '../recents/call_log_repository.dart';
 import '../recents/recents_screen.dart' show CallMediaMarks, CallTypeIcon;
 import '../../widgets/sim_badge.dart';
 import '../settings/call_background_screen.dart';
+import '../vault/vault.dart';
 import 'contact_actions.dart';
 import 'contact_subpages.dart';
 import 'editor/contact_editor_screen.dart';
@@ -211,6 +212,13 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             for (final n in contact.numbers) {
               await blocking.setBlocked(n, !blocked);
             }
+          },
+        ),
+        OneUIFloatingMenuItem(
+          label: context.l10n.moveToVault,
+          enabled: _full != null,
+          onTap: () async {
+            if (await PrivateVault.moveIn(context, _full!) && mounted) Navigator.of(context).pop();
           },
         ),
         OneUIFloatingMenuItem(

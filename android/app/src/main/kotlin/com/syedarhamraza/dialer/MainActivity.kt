@@ -64,6 +64,8 @@ class MainActivity : FlutterActivity() {
             it.settingsBackup = ::settingsBackup
             it.backupFolderChooser = { result -> chooseBackupFolder(result, backUp = false) }
             it.ringtonePicker = ::pickRingtone
+            it.authenticator = { title, result -> AppLock.authenticate(this, title) { ok -> result.success(ok) } }
+            it.secureSetter = { on -> AppLock.setSecure(this, on) }
             it.pendingDialNumber = dialNumberFrom(intent)
             it.pendingOpenRecents = intent.getBooleanExtra(EXTRA_OPEN_RECENTS, false)
             it.pendingContactAction = contactActionFrom(intent)
@@ -158,8 +160,11 @@ class MainActivity : FlutterActivity() {
      * which would otherwise answer the same call twice ("Reply already submitted").
      */
     private fun launch(intent: Intent, code: Int, result: MethodChannel.Result, forget: () -> Unit) {
+        // A picker isn't leaving the app: App lock doesn't lock on the way back.
+        AppLock.expectReturn = true
         @Suppress("DEPRECATION") // FlutterActivity is not a ComponentActivity, so no ActivityResult API
         runCatching { startActivityForResult(intent, code) }.onFailure {
+            AppLock.expectReturn = false
             forget()
             result.error("NO_ACTIVITY", it.message, null)
         }
@@ -206,6 +211,7 @@ class MainActivity : FlutterActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         @Suppress("DEPRECATION")
         super.onActivityResult(requestCode, resultCode, data)
+        AppLock.expectReturn = false
         if (requestCode == REQUEST_BACKUP_FOLDER) {
             val result = pendingFolderResult ?: return
             pendingFolderResult = null

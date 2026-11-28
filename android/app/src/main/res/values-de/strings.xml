@@ -20,6 +20,7 @@
     <string name="speaker">Lautsprecher</string>
     <string name="speaker_off">Lautsprecher aus</string>
     <string name="missed_call">Entgangener Anruf</string>
+    <string name="private_contact">Privater Kontakt</string>
     <plurals name="missed_calls">
         <item quantity="one">%d entgangener Anruf</item>
         <item quantity="other">%d entgangene Anrufe</item>

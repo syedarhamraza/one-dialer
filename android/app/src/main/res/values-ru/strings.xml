@@ -20,6 +20,7 @@
     <string name="speaker">Динамик</string>
     <string name="speaker_off">Выкл. динамик</string>
     <string name="missed_call">Пропущенный вызов</string>
+    <string name="private_contact">Личный контакт</string>
     <plurals name="missed_calls">
         <item quantity="one">%d пропущенный вызов</item>
         <item quantity="few">%d пропущенных вызова</item>

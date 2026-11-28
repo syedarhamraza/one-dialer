@@ -66,6 +66,16 @@ class DialerPrefs {
 
   Future<void> setOnboarded() => _prefs.setBool('onboarded', true);
 
+  /// Settings › Privacy & security › App lock (read through `AppLock`).
+  Future<bool> appLock() async => await _prefs.getBool('app_lock') ?? false;
+
+  Future<void> setAppLock(bool value) => _prefs.setBool('app_lock', value);
+
+  /// How long the app may stay in the background before App lock asks again, in seconds.
+  Future<int> lockAfter() async => await _prefs.getInt('lock_after') ?? 0;
+
+  Future<void> setLockAfter(int seconds) => _prefs.setInt('lock_after', seconds);
+
   /// Nothing saved yet: a fresh install, or the app's data was cleared.
   Future<bool> isFresh() async => (await _prefs.getKeys()).isEmpty;
 

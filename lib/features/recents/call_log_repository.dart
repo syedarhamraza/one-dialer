@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../core/contacts/contacts_repository.dart';
 import '../../core/diagnostics/lag_diagnostics.dart';
@@ -32,7 +35,38 @@ class CallLogRepository {
       _reload?.cancel();
       _reload = Timer(const Duration(milliseconds: 300), _load);
     };
-    await _load();
+    final read = _load(); // asked first: the cache must never hold up the real read
+    if (!loaded.value) await _showCached();
+    await read;
+  }
+
+  /// The last read, kept so a cold start shows Recents at once while the provider (seconds on a
+  /// cold boot) answers, as AOSP Dialer's AnnotatedCallLog does. In the cache folder: never backed up.
+  Future<File> _cacheFile() async => File('${(await getApplicationCacheDirectory()).path}/call_log.json');
+
+  Future<void> _showCached() async {
+    final revision = _revision;
+    try {
+      final rows = (jsonDecode(await (await _cacheFile()).readAsString()) as List).cast<Map<Object?, Object?>>();
+      if (revision != _revision || loaded.value) return; // the real read already answered
+      _saved = rows.map(CallLogEntry.fromMap).toList();
+      calls.value = _saved.where((c) => !_pendingDeletes.contains(c.id)).toList();
+      loaded.value = true;
+    } catch (_) {
+      // No cache yet, or unreadable: wait for the real read.
+    }
+  }
+
+  /// What the cache file holds.
+  List<CallLogEntry> _saved = const [];
+
+  Future<void> _saveCache(List<Map<Object?, Object?>>? rows) async {
+    try {
+      final file = await _cacheFile();
+      rows == null ? await file.delete() : await file.writeAsString(jsonEncode(rows));
+    } catch (_) {
+      // Best effort: the next read writes it again.
+    }
   }
 
   Timer? _reload;
@@ -49,12 +83,19 @@ class CallLogRepository {
       final loaded = rows.map(CallLogEntry.fromMap).where((c) => !_pendingDeletes.contains(c.id)).toList();
       // Unchanged rows (a change elsewhere in the log) rebuild nothing.
       if (!sameCalls(loaded, calls.value)) calls.value = loaded;
+      // Against the saved copy, not [calls]: a deletion already took its rows out of [calls].
+      if (!sameCalls(loaded, _saved)) {
+        _saved = loaded;
+        _saveCache(rows).ignore();
+      }
       hasAccess.value = true;
       this.loaded.value = true;
     } on PlatformException catch (e) {
       if (revision != _revision) return;
       if (e.code != 'NO_PERMISSION') rethrow;
       calls.value = const [];
+      _saved = const [];
+      _saveCache(null).ignore(); // no access, so keep no copy either
       hasAccess.value = false;
       loaded.value = true;
     } finally {

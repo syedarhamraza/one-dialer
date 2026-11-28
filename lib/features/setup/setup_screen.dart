@@ -67,7 +67,7 @@ class _SetupScreenState extends State<SetupScreen> {
                           opacity: t,
                           child: Transform.scale(scale: .9 + .1 * t, child: child),
                         ),
-                        child: const _AppIcon(),
+                        child: const AppIcon(),
                       ),
                       const SizedBox(height: 40),
                       Text(
@@ -117,8 +117,8 @@ class _SetupScreenState extends State<SetupScreen> {
 
 /// The launcher icon itself (the adaptive icon's layers, cropped to its visible middle 72 of
 /// 108 dp) in a ColorOS squircle.
-class _AppIcon extends StatelessWidget {
-  const _AppIcon();
+class AppIcon extends StatelessWidget {
+  const AppIcon({super.key});
 
   static const _res = 'android/app/src/main/res/drawable-nodpi';
 

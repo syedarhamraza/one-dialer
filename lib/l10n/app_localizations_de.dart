@@ -2491,4 +2491,110 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get mergeGroupsMessage =>
       'Jede Gruppe wird zu einem Kontakt, mit allen Nummern und Details.';
+
+  @override
+  String get privacySecurity => 'Datenschutz & Sicherheit';
+
+  @override
+  String get privacySecuritySubtitle => 'App-Sperre, privater Tresor';
+
+  @override
+  String get appLock => 'App-Sperre';
+
+  @override
+  String get appLockSubtitle =>
+      'Fingerabdruck, Gesicht oder Displaysperre zum Öffnen von One Dialer verlangen';
+
+  @override
+  String get appLockNeedsScreenLock =>
+      'Lege zuerst in den Einstellungen des Telefons eine Displaysperre fest';
+
+  @override
+  String get appLockCalls =>
+      'Eingehende Anrufe klingeln weiterhin und können auch bei gesperrter App angenommen werden.';
+
+  @override
+  String get lockAfter => 'Sperren';
+
+  @override
+  String get lockImmediately => 'Sofort';
+
+  @override
+  String get lockAfterOneMinute => 'Nach 1 Minute';
+
+  @override
+  String get lockAfterFiveMinutes => 'Nach 5 Minuten';
+
+  @override
+  String get appLocked => 'One Dialer ist gesperrt';
+
+  @override
+  String get unlock => 'Entsperren';
+
+  @override
+  String get unlockOneDialer => 'One Dialer entsperren';
+
+  @override
+  String get privateVault => 'Privater Tresor';
+
+  @override
+  String get privateVaultSubtitle =>
+      'Kontakte und Anrufe, die nur One Dialer sieht';
+
+  @override
+  String get unlockPrivateVault => 'Privaten Tresor entsperren';
+
+  @override
+  String get moveToVault => 'In privaten Tresor verschieben';
+
+  @override
+  String moveToVaultTitle(String name) {
+    return '$name in den privaten Tresor verschieben?';
+  }
+
+  @override
+  String get moveToVaultMessage =>
+      'Der Kontakt und seine Anrufliste verlassen die Kontakte und die Anrufliste des Telefons, sodass andere Apps sie nicht sehen. Seine Anrufe klingeln weiterhin und zeigen den Namen.';
+
+  @override
+  String get move => 'Verschieben';
+
+  @override
+  String get movedToVault => 'In den privaten Tresor verschoben';
+
+  @override
+  String get moveOutOfVault => 'Zurück in die Kontakte';
+
+  @override
+  String get movedOutOfVault => 'Zurück in die Kontakte verschoben';
+
+  @override
+  String get couldNotOpenVault =>
+      'Privater Tresor konnte nicht aktualisiert werden';
+
+  @override
+  String get deleteFromVaultMessage =>
+      'Löscht den Kontakt und seine Anrufe endgültig aus dem Tresor.';
+
+  @override
+  String get vaultEmpty =>
+      'Noch keine privaten Kontakte. Öffne einen Kontakt und wähle ⋮ › In privaten Tresor verschieben.';
+
+  @override
+  String get vaultCalls => 'Anrufliste';
+
+  @override
+  String get vaultImport => 'In den Tresor importieren';
+
+  @override
+  String get vaultExportMessage =>
+      'Die exportierte Datei ist nicht verschlüsselt: Wer sie hat, kann diese Kontakte lesen.';
+
+  @override
+  String get vaultUninstallNote =>
+      'Der Tresor liegt nur verschlüsselt auf diesem Telefon und wird nie gesichert. Deinstallieren von One Dialer oder Löschen der App-Daten löscht ihn, also exportiere ihn vorher.';
+
+  @override
+  String get appLockedHint =>
+      'Mit Fingerabdruck, Gesicht oder Displaysperre öffnen';
 }

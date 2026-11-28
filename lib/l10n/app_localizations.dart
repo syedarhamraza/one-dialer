@@ -4335,6 +4335,192 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Each group becomes one contact, with all its numbers and details.'**
   String get mergeGroupsMessage;
+
+  /// No description provided for @privacySecurity.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy & security'**
+  String get privacySecurity;
+
+  /// No description provided for @privacySecuritySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'App lock, private vault'**
+  String get privacySecuritySubtitle;
+
+  /// No description provided for @appLock.
+  ///
+  /// In en, this message translates to:
+  /// **'App lock'**
+  String get appLock;
+
+  /// No description provided for @appLockSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for your fingerprint, face or screen lock to open One Dialer'**
+  String get appLockSubtitle;
+
+  /// No description provided for @appLockNeedsScreenLock.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a screen lock in your phone\'s settings first'**
+  String get appLockNeedsScreenLock;
+
+  /// No description provided for @appLockCalls.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming calls still ring and can be answered while the app is locked.'**
+  String get appLockCalls;
+
+  /// No description provided for @lockAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock'**
+  String get lockAfter;
+
+  /// No description provided for @lockImmediately.
+  ///
+  /// In en, this message translates to:
+  /// **'Immediately'**
+  String get lockImmediately;
+
+  /// No description provided for @lockAfterOneMinute.
+  ///
+  /// In en, this message translates to:
+  /// **'After 1 minute'**
+  String get lockAfterOneMinute;
+
+  /// No description provided for @lockAfterFiveMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'After 5 minutes'**
+  String get lockAfterFiveMinutes;
+
+  /// No description provided for @appLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'One Dialer is locked'**
+  String get appLocked;
+
+  /// No description provided for @unlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get unlock;
+
+  /// No description provided for @unlockOneDialer.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock One Dialer'**
+  String get unlockOneDialer;
+
+  /// No description provided for @privateVault.
+  ///
+  /// In en, this message translates to:
+  /// **'Private vault'**
+  String get privateVault;
+
+  /// No description provided for @privateVaultSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Contacts and calls that only One Dialer can see'**
+  String get privateVaultSubtitle;
+
+  /// No description provided for @unlockPrivateVault.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock private vault'**
+  String get unlockPrivateVault;
+
+  /// No description provided for @moveToVault.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to private vault'**
+  String get moveToVault;
+
+  /// No description provided for @moveToVaultTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Move {name} to the private vault?'**
+  String moveToVaultTitle(String name);
+
+  /// No description provided for @moveToVaultMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The contact and its call history leave your phone\'s contacts and call log, so other apps can\'t see them. Calls from it still ring and show its name.'**
+  String get moveToVaultMessage;
+
+  /// No description provided for @move.
+  ///
+  /// In en, this message translates to:
+  /// **'Move'**
+  String get move;
+
+  /// No description provided for @movedToVault.
+  ///
+  /// In en, this message translates to:
+  /// **'Moved to private vault'**
+  String get movedToVault;
+
+  /// No description provided for @moveOutOfVault.
+  ///
+  /// In en, this message translates to:
+  /// **'Move back to contacts'**
+  String get moveOutOfVault;
+
+  /// No description provided for @movedOutOfVault.
+  ///
+  /// In en, this message translates to:
+  /// **'Moved back to contacts'**
+  String get movedOutOfVault;
+
+  /// No description provided for @couldNotOpenVault.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t update the private vault'**
+  String get couldNotOpenVault;
+
+  /// No description provided for @deleteFromVaultMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletes the contact and its calls from the vault for good.'**
+  String get deleteFromVaultMessage;
+
+  /// No description provided for @vaultEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No private contacts yet. Open a contact and choose ⋮ › Move to private vault.'**
+  String get vaultEmpty;
+
+  /// No description provided for @vaultCalls.
+  ///
+  /// In en, this message translates to:
+  /// **'Call history'**
+  String get vaultCalls;
+
+  /// No description provided for @vaultImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import into vault'**
+  String get vaultImport;
+
+  /// No description provided for @vaultExportMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The exported file isn\'t encrypted: anyone who has it can read these contacts.'**
+  String get vaultExportMessage;
+
+  /// No description provided for @vaultUninstallNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The vault is kept only on this phone, encrypted, and is never backed up. Uninstalling One Dialer or clearing its data deletes it, so export it first.'**
+  String get vaultUninstallNote;
+
+  /// No description provided for @appLockedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Use your fingerprint, face or screen lock to open it'**
+  String get appLockedHint;
 }
 
 class _AppLocalizationsDelegate

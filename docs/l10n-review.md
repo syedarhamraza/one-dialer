@@ -81,3 +81,7 @@ Written to each language's AOSP Dialer and Contacts terms (glossaries in `docs/l
 
 | `onboarding*`, `feedbackTypeTitle`, `feedbackBug`, `feedbackIdea`, `feedbackQuestion` | First-run pages and the feedback type picker, added after the four languages; de "Los geht’s", ru "Под себя". |
 | One Recorder's `off_wifi*`, `pair_again*`, `setup_helper_connect_failed`, `setup_helper_debugging_off`, `setup_helper_no_wifi`, `stopped_*` | Wi-Fi and pairing messages; they name Android's Developer options rows (Build number, Wireless debugging), which must match each language's own Settings. |
+| `appLock*`, `lockAfter*`, `lockImmediately`, `appLocked`, `appLockedHint`, `unlock*`, `privacySecurity*` | App lock: name the phone's own unlock methods (fingerprint, face, screen lock) the way each language's Settings does. |
+| `privateVault*`, `moveToVault*`, `movedToVault`, `moveOutOfVault`, `movedOutOfVault`, `couldNotOpenVault`, `deleteFromVaultMessage`, `vaultEmpty`, `vaultCalls`, `vaultImport` | Private vault; `vaultEmpty` quotes the ⋮ menu's row, which must match `moveToVault`. |
+| `moveToVaultMessage`, `vaultExportMessage`, `vaultUninstallNote`, `appLockCalls` | Say where data goes, that an export isn't encrypted, and that the vault is lost on uninstall: must stay exact. |
+| `private_contact` (`values-xx`) | Private vault's missed-call notification: shows no name or number. |
