@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BugIcon, LightbulbIcon } from "@phosphor-icons/react/dist/ssr";
-import { BUG_URL, EMAIL, FEATURE_URL, REPO_URL } from "@/app/links";
+import { BUG_URL, DISCORD_URL, EMAIL, FEATURE_URL, REPO_URL } from "@/app/links";
 import { DICTS, LANGS, type Lang, NAMES, href } from "@/i18n";
 
 const pill = "press inline-flex h-12 items-center gap-2.5 rounded-full bg-white/10 px-6 text-[15px] font-semibold text-ink transition-colors hover:bg-white/[0.16]";
@@ -61,6 +61,9 @@ export function Footer({ recorder = true, lang = "en", page }: { recorder?: bool
           </Link>
           <a href={REPO_URL} target="_blank" rel="noopener noreferrer" className="link">
             GitHub
+          </a>
+          <a href={DISCORD_URL} target="_blank" rel="noopener noreferrer" className="link">
+            Discord
           </a>
           <a href={`mailto:${EMAIL}?subject=One%20Dialer`} className="link">
             {t.contact}

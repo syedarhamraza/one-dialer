@@ -242,8 +242,11 @@ class TelecomBridge {
   /// Settings › Incoming call reminders and Answer/End calls (`CallPrefs.kt`, read by the call service):
   /// `incomingStyle`, `vibrateAnswerEnd`, `speakerDefault`, `autoAnswer`, `autoAnswerDelay`.
   /// Settings › Language: `system` or a language tag (`AppLanguage.kt`).
-  /// SHA-256 (lowercase hex) of the certificate this copy is signed with (`official_build.dart`).
-  Future<String?> signingCertSha256() => _methods.invokeMethod<String>('signingCertSha256');
+  /// SHA-256 (lowercase hex) of every certificate in this copy's signing history (`official_build.dart`).
+  Future<List<String>?> signingCertHashes() => _methods.invokeListMethod<String>('signingCertHashes');
+
+  /// The installer of record (`com.android.vending` for Google Play), who updates this copy.
+  Future<String?> installerPackage() => _methods.invokeMethod<String>('installerPackage');
 
   Future<String> getAppLanguage() async => await _methods.invokeMethod<String>('getAppLanguage') ?? 'system';
 

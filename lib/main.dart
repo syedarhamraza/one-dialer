@@ -9,6 +9,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import 'app/dialer_app.dart';
 import 'app/in_call_app.dart';
+import 'core/billing/tips.dart';
 import 'core/crash_reporting.dart';
 import 'core/prefs/dialer_prefs.dart';
 import 'core/security/app_lock.dart';
@@ -46,6 +47,8 @@ Future<void> main() async {
   WidgetsBinding.instance.addPostFrameCallback(
     (_) => UpdateController.instance.loadPreferences().then((_) => UpdateController.instance.autoCheck()),
   );
+  // A tip paid later (e.g. in cash) must be consumed within 3 days or Play refunds it.
+  unawaited(Tips.instance.resumePending());
 }
 
 /// The glass package's shaders, loaded once and only when Settings › Glass style is Liquid glass

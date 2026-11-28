@@ -1351,6 +1351,42 @@ class AppLocalizationsTr extends AppLocalizations {
   String get softwareUpdate => 'Yazılım güncellemesi';
 
   @override
+  String get supportOneDialer => 'One Dialer\'ı destekle';
+
+  @override
+  String get supportIntro =>
+      'One Dialer ücretsizdir; reklam ve takip içermez ve böyle kalacak. İşine yarıyorsa ve gelişmesine yardım etmek istersen tek seferlik bahşiş bırakabilirsin. Bahşişler hiçbir özelliğin kilidini açmaz.';
+
+  @override
+  String get leaveATip => 'Bahşiş bırak';
+
+  @override
+  String get tipSmall => 'Küçük bahşiş';
+
+  @override
+  String get tipMedium => 'Orta bahşiş';
+
+  @override
+  String get tipLarge => 'Büyük bahşiş';
+
+  @override
+  String get tipsLoading => 'Yükleniyor…';
+
+  @override
+  String get tipsUnavailable =>
+      'Bahşişler şu anda kullanılamıyor. Bahşiş için Google Play gerekir.';
+
+  @override
+  String get tipThanks => 'One Dialer\'ı desteklediğin için teşekkürler!';
+
+  @override
+  String get tipPending =>
+      'Bahşişin beklemede. Ödeme onaylanınca tamamlanacak.';
+
+  @override
+  String get tipFailed => 'Bahşiş gerçekleşmedi. Senden ücret alınmadı.';
+
+  @override
   String get helpFeedback => 'Yardım ve geri bildirim';
 
   @override
@@ -2377,13 +2413,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get blockCalls => 'Aramaları engelle';
-
-  @override
-  String get blockMessages => 'Mesajları engelle';
-
-  @override
-  String get blockMessagesUnavailable =>
-      'One Dialer mesajlaşma uygulamanız değil, bu yüzden mesajları engelleyemez. Arama engelleme, engellenenler ve izin verilenler listesi etkilenmez.';
 
   @override
   String get blocklist => 'Engellenenler listesi';

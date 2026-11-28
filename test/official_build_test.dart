@@ -11,13 +11,20 @@ void main() {
 
   test('only our three signing certificates are official; an unknown hash never nags', () {
     for (final hash in officialCertHashes) {
-      expect(isOfficialCert(hash), isTrue);
-      expect(isOfficialCert(hash.toUpperCase()), isTrue);
+      expect(isOfficialCert([hash]), isTrue);
+      expect(isOfficialCert([hash.toUpperCase()]), isTrue);
     }
     expect(isOfficialCert(null), isTrue);
-    expect(isOfficialCert(''), isTrue);
-    expect(isOfficialCert('0' * 64), isFalse);
-    expect(isOfficialCert('${officialCertHashes.first.substring(1)}0'), isFalse);
+    expect(isOfficialCert(const []), isTrue);
+    expect(isOfficialCert(['0' * 64]), isFalse);
+    expect(isOfficialCert(['${officialCertHashes.first.substring(1)}0']), isFalse);
+  });
+
+  test("Play's Android 17 signer counts: our Play key is earlier in its signing history", () {
+    // A v3.2 signer's new certificate, rotated from the Play app-signing key (as Play installs it).
+    const android17Signer = 'a3f9e489888df9dcf42ab7aea480599d77606003818d380c97e98d5d05477a3a';
+    expect(isOfficialCert([officialCertHashes.first, android17Signer]), isTrue);
+    expect(isOfficialCert(['1' * 64, android17Signer]), isFalse);
   });
 
   Future<void> launch(WidgetTester tester, bool official) async {

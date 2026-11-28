@@ -1347,6 +1347,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get softwareUpdate => 'Software update';
 
   @override
+  String get supportOneDialer => 'Support One Dialer';
+
+  @override
+  String get supportIntro =>
+      'One Dialer is free, with no ads and no tracking, and it stays that way. If it\'s useful to you and you\'d like to help keep it going, you can leave a one-time tip. Tips don\'t unlock anything.';
+
+  @override
+  String get leaveATip => 'Leave a tip';
+
+  @override
+  String get tipSmall => 'Small tip';
+
+  @override
+  String get tipMedium => 'Medium tip';
+
+  @override
+  String get tipLarge => 'Large tip';
+
+  @override
+  String get tipsLoading => 'Loading…';
+
+  @override
+  String get tipsUnavailable =>
+      'Tips aren\'t available right now. Google Play is needed to leave one.';
+
+  @override
+  String get tipThanks => 'Thank you for supporting One Dialer!';
+
+  @override
+  String get tipPending =>
+      'Your tip is pending. It goes through once the payment clears.';
+
+  @override
+  String get tipFailed => 'The tip didn\'t go through. You weren\'t charged.';
+
+  @override
   String get helpFeedback => 'Help & feedback';
 
   @override
@@ -2368,13 +2404,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get blockCalls => 'Block calls';
-
-  @override
-  String get blockMessages => 'Block messages';
-
-  @override
-  String get blockMessagesUnavailable =>
-      'One Dialer isn\'t your messaging app, so it can\'t block messages. Call blocking, the blocklist and the allowlist aren\'t affected.';
 
   @override
   String get blocklist => 'Blocklist';

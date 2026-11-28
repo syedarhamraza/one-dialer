@@ -14,7 +14,7 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.os.Build
 import android.provider.Settings
-import android.util.Log
+import com.syedarhamraza.recorder.RecLog
 import com.syedarhamraza.recorder.R
 import com.syedarhamraza.recorder.RecorderSettings
 import com.syedarhamraza.recorder.RecordingsProvider
@@ -31,7 +31,6 @@ import kotlin.concurrent.thread
  * over Wireless debugging, the pairing notification, and starting it again after a reboot.
  */
 object ShellHelper {
-    private const val TAG = "OneRecorder"
     private const val PREFS = "shell"
     private const val PAIRED = "paired"
     private const val PORT = "port"
@@ -135,7 +134,7 @@ object ShellHelper {
                 socket.getInputStream().bufferedReader().readLine() == "ok"
             }
         } catch (e: IOException) {
-            Log.w("OneRecorder", "update install failed", e)
+            RecLog.w("update install failed", e)
             false
         }
     }
@@ -144,7 +143,9 @@ object ShellHelper {
     enum class Check { WORKS, NO_CAPTURE, NOT_PAIRED, WONT_START }
 
     /** Starts the helper if it's down (proving pairing), then has it open the call audio for half a second. Blocks. */
-    fun check(context: Context): Check {
+    fun check(context: Context): Check = checkNow(context).also { RecLog.w("check: $it") }
+
+    private fun checkNow(context: Context): Check {
         if (!running(context) && !start(context)) {
             if (!Adb.get(context).refused) return Check.WONT_START
             forgetPairing(context) // Wireless debugging no longer trusts this key: back to the pairing step
@@ -220,6 +221,7 @@ object ShellHelper {
         if (!up && hiding(context)) putGlobal(context, DEV_OPTIONS, 0)
         val ok = up && settle(context, switched)
         startFailed = !ok
+        RecLog.w("start: ${if (ok) "running" else "failed (${problem(context)})"}, Wi-Fi ${onWifi(context)}, switched on $switched")
         if (ok) {
             // The helper ends with Wireless debugging when Wi-Fi goes: start it again when Wi-Fi is back.
             waitForWifi(context)
@@ -235,7 +237,7 @@ object ShellHelper {
         while (!adb.connectNow(context, 5_000)) {
             if (System.currentTimeMillis() > deadline) {
                 // Off again right after we switched it on: Android turns it off on a Wi-Fi it doesn't trust.
-                Log.w(TAG, "Wireless debugging didn't connect (refused ${adb.refused}, on ${wirelessOn(context)})")
+                RecLog.w("Wireless debugging didn't connect (refused ${adb.refused}, on ${wirelessOn(context)})")
                 return false
             }
             Thread.sleep(1000)
@@ -246,13 +248,39 @@ object ShellHelper {
         val port = 20_000 + random.nextInt(40_000)
         val apk = context.applicationInfo.sourceDir
         prefs(context).edit().putInt(PORT, port).putString(TOKEN, token).putString(APK, apk).commit()
+        // The log of the helper that ended, before this start adds to it; then it's cut to its last 128 KB.
+        fetchHelperLog(context, adb)
+        val log = ShellMain.LOG_PATH
         // adbd kills the shell's process group when a plain shell: command returns, before a
         // background job even starts: setsid moves the helper out, and the sleep lets it get there.
         adb.shell(
-            "CLASSPATH='$apk' setsid app_process /system/bin ${ShellMain::class.java.name} $port $token '$apk' " +
-                "</dev/null >/dev/null 2>&1 & sleep 1",
+            "tail -c 131072 $log > $log.new 2>/dev/null; mv $log.new $log; " +
+                "CLASSPATH='$apk' setsid app_process /system/bin ${ShellMain::class.java.name} $port $token '$apk' " +
+                "</dev/null >/dev/null 2>>$log & sleep 1",
         )
-        return waitUntilRunning(context)
+        return waitUntilRunning(context).also { if (!it) RecLog.w("helper didn't answer after its start") }
+    }
+
+    /**
+     * Saves the helper's log ([ShellMain.LOG_PATH], which only shell can read) into One Recorder's
+     * logs: over Wireless debugging when [adb] is connected, else from the running helper. Blocks.
+     */
+    fun fetchHelperLog(context: Context, adb: Adb? = null) {
+        val text = if (adb != null) adb.shell("cat ${ShellMain.LOG_PATH} 2>/dev/null") else readHelperLog(context)
+        if (!text.isNullOrBlank()) runCatching { RecLog.helperFile(context).writeText(RecLog.mask(text)) }
+    }
+
+    private fun readHelperLog(context: Context): String? = offMain(null) {
+        val (port, token) = endpoint(context) ?: return@offMain null
+        try {
+            connect(port).use { socket ->
+                socket.soTimeout = 3000
+                socket.getOutputStream().write("$token log\n".toByteArray())
+                socket.getInputStream().readBytes().toString(Charsets.UTF_8)
+            }
+        } catch (_: IOException) {
+            null
+        }
     }
 
     /** Lets One Recorder switch Wireless debugging on by itself after a reboot. ColorOS refuses it until Disable system optimization is on. */
@@ -325,7 +353,7 @@ object ShellHelper {
         putGlobal(context, key, 0)
         Thread.sleep(1500)
         val alive = running(context)
-        Log.i("OneRecorder", "$key off: helper ${if (alive) "still running" else "ended, turning it back on"}")
+        RecLog.i("$key off: helper ${if (alive) "still running" else "ended, turning it back on"}")
         if (alive) return true
         putGlobal(context, key, was)
         return false
@@ -380,6 +408,7 @@ object ShellHelper {
             prefs(context).edit().putBoolean(PAIRED, true).commit()
             Watchdog.schedule(context)
         }
+        RecLog.w("pairing: ${if (service == null) "no pairing dialog found" else if (ok) "paired" else "code refused"}")
         val started = ok && start(context)
         notifyPairing(context, if (started) R.string.pair_done else if (ok) R.string.pair_paired else R.string.pair_failed)
         return ok
@@ -397,7 +426,7 @@ object ShellHelper {
             return waitForWifi(context)
         }
         // Warn, not info: some phones (vivo) hide an app's info lines, and Share diagnostics reads these.
-        Log.w(TAG, "restart (boot $fromBoot): Wi-Fi ${onWifi(context)}, Wireless debugging ${wirelessOn(context)}, grant ${canRestart(context)}")
+        RecLog.w("restart (boot $fromBoot): Wi-Fi ${onWifi(context)}, Wireless debugging ${wirelessOn(context)}, grant ${canRestart(context)}")
         if (!onWifi(context)) {
             // Only from boot or an update: Android allows a foreground service start from there.
             if (fromBoot && canRestart(context) && NoWifiStart.enabled(context)) NoWifiStart.Service.start(context)
@@ -405,12 +434,12 @@ object ShellHelper {
         }
         // Without the grant only a Wireless debugging the user left on can start it.
         if ((canRestart(context) || wirelessOn(context)) && start(context)) {
-            Log.w(TAG, "restart: started")
+            RecLog.w("restart: started")
             return Watchdog.resetTries(context)
         }
         waitForWifi(context)
         val retrying = Watchdog.retrySoon(context)
-        Log.w(TAG, "restart failed: ${problem(context)}, Wireless debugging now ${wirelessOn(context)}, ${if (retrying) "trying again soon" else "no tries left"}")
+        RecLog.w("restart failed: ${problem(context)}, Wireless debugging now ${wirelessOn(context)}, ${if (retrying) "trying again soon" else "no tries left"}")
         // Only once the tries are used up: one that works soon after a reboot needs no tap.
         if (!retrying) notifyStopped(context)
     }

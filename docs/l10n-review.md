@@ -58,7 +58,7 @@ The UI is laid out for English lengths; check these on the phone in Italian, esp
 | `callBackground*` | Call screen: "Sfondo chiamata", "Foto del contatto", "Come tutte le chiamate", "Predefinito", "Colore", "Foto", "Scegli foto". |
 | `vip*` | VIP calls: "Chiamate VIP", "Squillo in Silenzioso per i VIP", "Includi preferiti"; `vipDndHint` names Android's Do Not Disturb starred-contacts option ("contatti speciali"). |
 | `splashIcon*` | Display & effects: "Icona app all'avvio" (the launch splash's icon switch). |
-| `blocklist*`, `allowlist*`, `blockCalls`, `blockMessages*`, `blockByPrefix`, `numberPrefix`, `startsWith`, `removeFromBlocklist/Allowlist`, `noNumbers`, `none` | Block & filter: "Lista bloccati" / "Lista consentiti" (ColorOS's Italian may say "Lista nera" / "Lista bianca"), "Blocca per prefisso". |
+| `blocklist*`, `allowlist*`, `blockCalls`, `blockByPrefix`, `numberPrefix`, `startsWith`, `removeFromBlocklist/Allowlist`, `noNumbers`, `none` | Block & filter: "Lista bloccati" / "Lista consentiti" (ColorOS's Italian may say "Lista nera" / "Lista bianca"), "Blocca per prefisso". |
 | `mergeDuplicatedNames/Numbers`, `manuallyMergeDuplicates`, `mergeManually`, `manualMergingDetails`, `nameRequired`, `numbersSelectMany`, `mergeDeletesNumbers`, `sameNumberContacts`, `sameNameContacts`, `groupCount`, `searchContactNumbers` | Merge duplicates and the number picker: "Unisci manualmente", "Dettagli unione manuale", "Numero (puoi sceglierne più di uno)". |
 
 ## Russian, Spanish, Turkish, German
@@ -85,3 +85,5 @@ Written to each language's AOSP Dialer and Contacts terms (glossaries in `docs/l
 | `privateVault*`, `moveToVault*`, `movedToVault`, `moveOutOfVault`, `movedOutOfVault`, `couldNotOpenVault`, `deleteFromVaultMessage`, `vaultEmpty`, `vaultCalls`, `vaultImport` | Private vault; `vaultEmpty` quotes the ⋮ menu's row, which must match `moveToVault`. |
 | `moveToVaultMessage`, `vaultExportMessage`, `vaultUninstallNote`, `appLockCalls` | Say where data goes, that an export isn't encrypted, and that the vault is lost on uninstall: must stay exact. |
 | `private_contact` (`values-xx`) | Private vault's missed-call notification: shows no name or number. |
+| One Recorder's `logs_*` | Setup › Logs and report: "log" is it Log, ru Журнал, es Registro, tr Günlük, de Protokoll; GitHub's "issue" is it segnalazione, ru запрос, es incidencia, tr kayıt, de Issue. |
+| `supportOneDialer`, `supportIntro`, `leaveATip`, `tipSmall`, `tipMedium`, `tipLarge`, `tipsLoading`, `tipsUnavailable`, `tipThanks`, `tipPending`, `tipFailed` | Settings › Support One Dialer (Google Play tips); `supportIntro` says tips unlock nothing and the app stays free, which must stay accurate. |

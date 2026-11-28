@@ -1363,6 +1363,43 @@ class AppLocalizationsDe extends AppLocalizations {
   String get softwareUpdate => 'Software-Update';
 
   @override
+  String get supportOneDialer => 'One Dialer unterstützen';
+
+  @override
+  String get supportIntro =>
+      'One Dialer ist kostenlos, ohne Werbung und ohne Tracking, und das bleibt so. Wenn dir die App nützt und du helfen möchtest, sie weiterzuentwickeln, kannst du ein einmaliges Trinkgeld geben. Trinkgelder schalten nichts frei.';
+
+  @override
+  String get leaveATip => 'Trinkgeld geben';
+
+  @override
+  String get tipSmall => 'Kleines Trinkgeld';
+
+  @override
+  String get tipMedium => 'Mittleres Trinkgeld';
+
+  @override
+  String get tipLarge => 'Großes Trinkgeld';
+
+  @override
+  String get tipsLoading => 'Wird geladen…';
+
+  @override
+  String get tipsUnavailable =>
+      'Trinkgelder sind gerade nicht verfügbar. Dafür wird Google Play benötigt.';
+
+  @override
+  String get tipThanks => 'Danke, dass du One Dialer unterstützt!';
+
+  @override
+  String get tipPending =>
+      'Dein Trinkgeld steht noch aus. Es wird abgeschlossen, sobald die Zahlung bestätigt ist.';
+
+  @override
+  String get tipFailed =>
+      'Das Trinkgeld hat nicht geklappt. Dir wurde nichts berechnet.';
+
+  @override
   String get helpFeedback => 'Hilfe & Feedback';
 
   @override
@@ -2395,13 +2432,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get blockCalls => 'Anrufe blockieren';
-
-  @override
-  String get blockMessages => 'Nachrichten blockieren';
-
-  @override
-  String get blockMessagesUnavailable =>
-      'One Dialer ist nicht deine Nachrichten-App und kann daher keine Nachrichten blockieren. Anrufsperre, Sperrliste und Zulassungsliste sind davon nicht betroffen.';
 
   @override
   String get blocklist => 'Sperrliste';

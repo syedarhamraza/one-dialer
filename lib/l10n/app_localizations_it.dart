@@ -1362,6 +1362,43 @@ class AppLocalizationsIt extends AppLocalizations {
   String get softwareUpdate => 'Aggiornamento software';
 
   @override
+  String get supportOneDialer => 'Sostieni One Dialer';
+
+  @override
+  String get supportIntro =>
+      'One Dialer è gratuito, senza pubblicità né tracciamento, e resterà così. Se ti è utile e vuoi aiutarlo ad andare avanti, puoi lasciare una mancia una tantum. Le mance non sbloccano nulla.';
+
+  @override
+  String get leaveATip => 'Lascia una mancia';
+
+  @override
+  String get tipSmall => 'Mancia piccola';
+
+  @override
+  String get tipMedium => 'Mancia media';
+
+  @override
+  String get tipLarge => 'Mancia grande';
+
+  @override
+  String get tipsLoading => 'Caricamento…';
+
+  @override
+  String get tipsUnavailable =>
+      'Le mance non sono disponibili ora. Serve Google Play per lasciarne una.';
+
+  @override
+  String get tipThanks => 'Grazie per sostenere One Dialer!';
+
+  @override
+  String get tipPending =>
+      'La tua mancia è in attesa. Andrà a buon fine quando il pagamento sarà confermato.';
+
+  @override
+  String get tipFailed =>
+      'La mancia non è andata a buon fine. Non ti è stato addebitato nulla.';
+
+  @override
   String get helpFeedback => 'Guida e feedback';
 
   @override
@@ -2397,13 +2434,6 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get blockCalls => 'Blocca chiamate';
-
-  @override
-  String get blockMessages => 'Blocca messaggi';
-
-  @override
-  String get blockMessagesUnavailable =>
-      'One Dialer non è la tua app per i messaggi, quindi non può bloccarli. Il blocco delle chiamate, la lista bloccati e la lista consentiti non cambiano.';
 
   @override
   String get blocklist => 'Lista bloccati';

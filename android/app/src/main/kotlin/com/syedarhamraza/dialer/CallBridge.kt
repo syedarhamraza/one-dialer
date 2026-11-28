@@ -324,7 +324,8 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
                 )
                 result.success(null)
             }
-            "signingCertSha256" -> result.success(signingCertSha256())
+            "signingCertHashes" -> result.success(signingCertHashes())
+            "installerPackage" -> result.success(installerPackage())
             "getAppLanguage" -> result.success(AppLanguage.get(context))
             "setAppLanguage" -> {
                 AppLanguage.set(context, call.argument<String>("tag")!!)
@@ -595,14 +596,36 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
     }
 
     /** Opens the system screen that fixes a [callHealth] problem, or a web page (`url:` prefix). */
-    /** SHA-256 (lowercase hex) of the certificate this copy is signed with; official_build.dart checks it. */
-    private fun signingCertSha256(): String? {
+    /**
+     * SHA-256 (lowercase hex) of every certificate this copy is signed with or rotated from;
+     * official_build.dart checks them. The whole history counts: on Android 17 Play adds a v3.2
+     * signer whose new certificate is rotated from our Play app-signing key, which stays in it.
+     */
+    /**
+     * The app store this copy belongs to: the installer of record, which is who updates it, not
+     * the app that started the first install (package_info_plus's `installerStore`), which can be
+     * another app even when Google Play installed and updates the copy.
+     */
+    private fun installerPackage(): String? = try {
+        if (android.os.Build.VERSION.SDK_INT >= 30) {
+            context.packageManager.getInstallSourceInfo(context.packageName)
+                .let { it.installingPackageName ?: it.initiatingPackageName }
+        } else {
+            @Suppress("DEPRECATION")
+            context.packageManager.getInstallerPackageName(context.packageName)
+        }
+    } catch (_: PackageManager.NameNotFoundException) {
+        null
+    }
+
+    private fun signingCertHashes(): List<String> {
         val info = context.packageManager.getPackageInfo(context.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
-        val signing = info.signingInfo ?: return null
+        val signing = info.signingInfo ?: return emptyList()
         val certs = if (signing.hasMultipleSigners()) signing.apkContentsSigners else signing.signingCertificateHistory
-        val cert = certs?.lastOrNull() ?: return null
-        return java.security.MessageDigest.getInstance("SHA-256").digest(cert.toByteArray())
-            .joinToString("") { "%02x".format(it) }
+        return certs.orEmpty().map { cert ->
+            java.security.MessageDigest.getInstance("SHA-256").digest(cert.toByteArray())
+                .joinToString("") { "%02x".format(it) }
+        }
     }
 
     private fun openSystemSettings(page: String?, result: MethodChannel.Result) {

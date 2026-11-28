@@ -176,7 +176,8 @@ class SetupActivity : Activity() {
         }
 
         if (!ShellHelper.supported()) {
-            page.hero(getString(R.string.status_unsupported), OneLook.RED, getString(R.string.both_sides_unsupported), null)
+            page.hero(getString(R.string.status_unsupported), OneLook.RED, getString(R.string.both_sides_unsupported), null,
+                Glyph.orb(OneLook.RED, null))
         } else {
             val paired = ShellHelper.paired(this)
             // Notifications first: pairing's code is typed into one.
@@ -204,12 +205,16 @@ class SetupActivity : Activity() {
                 val last = lastCallLine()
                 // The last call not recorded means Ready isn't the whole story.
                 val ready = last?.second != false
-                page.hero(getString(if (ready) R.string.status_ready else R.string.status_check), if (ready) OneLook.CALL_GREEN else OneLook.RED,
-                    listOfNotNull(last?.first, getString(R.string.status_ready_detail)).joinToString("\n\n"),
-                    dialer?.let { getString(R.string.open_dialer) to { startActivity(it) } })
+                val color = if (ready) OneLook.CALL_GREEN else OneLook.RED
+                page.hero(getString(if (ready) R.string.status_ready else R.string.status_check), color,
+                    getString(R.string.status_ready_detail),
+                    dialer?.let { getString(R.string.open_dialer) to { startActivity(it) } }, Glyph.orb(color, null))
+                // The proof Ready is true, in its own card under the orb.
+                if (last != null) page.group(listOf(page.row(last.first, leading = Glyph.phone(color))))
             } else {
                 page.hero(getString(R.string.status_step, next + 1, steps.size, steps[next].title), pal.text,
-                    getString(R.string.both_sides_intro), steps[next].fix?.let { getString(R.string.status_continue) to it })
+                    getString(R.string.both_sides_intro), steps[next].fix?.let { getString(R.string.status_continue) to it },
+                    Glyph.orb(OneLook.CALL_GREEN, next + 1))
             }
             page.group(steps.mapIndexed { i, step ->
                 when {
@@ -249,11 +254,8 @@ class SetupActivity : Activity() {
             dialer?.let { page.row(getString(R.string.open_dialer)) { startActivity(it) } },
             page.row(getString(R.string.dialer_on_play), DIALER_URL.removePrefix("https://")) { open(DIALER_URL) },
             updateRow(),
-            page.row(getString(R.string.diagnostics), getString(R.string.diagnostics_detail)) {
-                thread {
-                    val report = Diagnostics.report(applicationContext)
-                    runOnUiThread { if (!isDestroyed) Diagnostics.share(this, report, getString(R.string.diagnostics)) }
-                }
+            page.row(getString(R.string.logs_title), getString(R.string.logs_detail)) {
+                startActivity(Intent(this, LogsActivity::class.java))
             },
             page.row(getString(R.string.privacy_policy)) { open(PRIVACY_URL) },
             page.row(getString(R.string.source_code), SOURCE_URL.removePrefix("https://")) { open(SOURCE_URL) },

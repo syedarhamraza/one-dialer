@@ -64,11 +64,9 @@ class _BlockingScreenState extends State<BlockingScreen> {
         OneUIGroupCard(
           items: [
             OneUIGroupItem(title: l10n.blockCalls, onTap: () => _push(const BlockCallsScreen())),
-            OneUIGroupItem(title: l10n.blockMessages, enabled: false),
           ],
         ),
         OneUIGroupCard(
-          margin: const EdgeInsets.only(bottom: 10),
           items: [
             OneUIGroupItem(
               title: l10n.blocklist,
@@ -83,13 +81,6 @@ class _BlockingScreenState extends State<BlockingScreen> {
               onTap: () => _push(const NumberListScreen(allow: true)),
             ),
           ],
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18),
-          child: Text(
-            l10n.blockMessagesUnavailable,
-            style: TextStyle(fontSize: 13.5, height: 1.35, color: context.palette.textSecondary),
-          ),
         ),
       ],
     );

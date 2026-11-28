@@ -2380,6 +2380,72 @@ abstract class AppLocalizations {
   /// **'Software update'**
   String get softwareUpdate;
 
+  /// No description provided for @supportOneDialer.
+  ///
+  /// In en, this message translates to:
+  /// **'Support One Dialer'**
+  String get supportOneDialer;
+
+  /// No description provided for @supportIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'One Dialer is free, with no ads and no tracking, and it stays that way. If it\'s useful to you and you\'d like to help keep it going, you can leave a one-time tip. Tips don\'t unlock anything.'**
+  String get supportIntro;
+
+  /// No description provided for @leaveATip.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave a tip'**
+  String get leaveATip;
+
+  /// No description provided for @tipSmall.
+  ///
+  /// In en, this message translates to:
+  /// **'Small tip'**
+  String get tipSmall;
+
+  /// No description provided for @tipMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium tip'**
+  String get tipMedium;
+
+  /// No description provided for @tipLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Large tip'**
+  String get tipLarge;
+
+  /// No description provided for @tipsLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading…'**
+  String get tipsLoading;
+
+  /// No description provided for @tipsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Tips aren\'t available right now. Google Play is needed to leave one.'**
+  String get tipsUnavailable;
+
+  /// No description provided for @tipThanks.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you for supporting One Dialer!'**
+  String get tipThanks;
+
+  /// No description provided for @tipPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Your tip is pending. It goes through once the payment clears.'**
+  String get tipPending;
+
+  /// No description provided for @tipFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The tip didn\'t go through. You weren\'t charged.'**
+  String get tipFailed;
+
   /// No description provided for @helpFeedback.
   ///
   /// In en, this message translates to:
@@ -4215,18 +4281,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Block calls'**
   String get blockCalls;
-
-  /// No description provided for @blockMessages.
-  ///
-  /// In en, this message translates to:
-  /// **'Block messages'**
-  String get blockMessages;
-
-  /// No description provided for @blockMessagesUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'One Dialer isn\'t your messaging app, so it can\'t block messages. Call blocking, the blocklist and the allowlist aren\'t affected.'**
-  String get blockMessagesUnavailable;
 
   /// No description provided for @blocklist.
   ///

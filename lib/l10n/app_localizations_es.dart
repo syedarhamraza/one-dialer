@@ -1361,6 +1361,43 @@ class AppLocalizationsEs extends AppLocalizations {
   String get softwareUpdate => 'Actualización de software';
 
   @override
+  String get supportOneDialer => 'Apoyar One Dialer';
+
+  @override
+  String get supportIntro =>
+      'One Dialer es gratis, sin anuncios ni rastreo, y seguirá así. Si te resulta útil y quieres ayudar a que siga adelante, puedes dejar una propina única. Las propinas no desbloquean nada.';
+
+  @override
+  String get leaveATip => 'Dejar una propina';
+
+  @override
+  String get tipSmall => 'Propina pequeña';
+
+  @override
+  String get tipMedium => 'Propina mediana';
+
+  @override
+  String get tipLarge => 'Propina grande';
+
+  @override
+  String get tipsLoading => 'Cargando…';
+
+  @override
+  String get tipsUnavailable =>
+      'Las propinas no están disponibles ahora. Se necesita Google Play para dejar una.';
+
+  @override
+  String get tipThanks => '¡Gracias por apoyar One Dialer!';
+
+  @override
+  String get tipPending =>
+      'Tu propina está pendiente. Se completará cuando se confirme el pago.';
+
+  @override
+  String get tipFailed =>
+      'La propina no se completó. No se te ha cobrado nada.';
+
+  @override
   String get helpFeedback => 'Ayuda y comentarios';
 
   @override
@@ -2396,13 +2433,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get blockCalls => 'Bloquear llamadas';
-
-  @override
-  String get blockMessages => 'Bloquear mensajes';
-
-  @override
-  String get blockMessagesUnavailable =>
-      'One Dialer no es tu app de mensajes, así que no puede bloquearlos. El bloqueo de llamadas, la lista de bloqueados y la de permitidos no cambian.';
 
   @override
   String get blocklist => 'Lista de bloqueados';

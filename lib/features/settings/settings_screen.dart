@@ -27,6 +27,7 @@ import 'help_feedback_screen.dart';
 import 'settings_search.dart';
 import 'software_update_screen.dart';
 import 'privacy_screen.dart';
+import 'support_screen.dart';
 import 'vip_calls_screen.dart';
 import '../../l10n/l10n.dart';
 
@@ -308,6 +309,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               ),
               onTap: () => SoftwareUpdateScreen.open(context),
             ),
+            OneUIGroupItem(title: l10n.supportOneDialer, onTap: () => _push(const SupportScreen())),
             OneUIGroupItem(title: l10n.helpFeedback, onTap: () => _push(const HelpFeedbackScreen())),
             OneUIGroupItem(
               title: l10n.privacyPolicy,

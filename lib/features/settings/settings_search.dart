@@ -24,6 +24,7 @@ import 'help_feedback_screen.dart';
 import 'quick_replies_screen.dart';
 import 'settings_screen.dart';
 import 'software_update_screen.dart';
+import 'support_screen.dart';
 import 'vip_calls_screen.dart';
 
 /// One searchable setting: a page, or a row on one, and where it lives.
@@ -157,6 +158,7 @@ List<SettingsEntry> settingsIndex(AppLocalizations l10n, {bool recorder = false,
 
   final top = l10n.callSettings;
   add(top, l10n.softwareUpdate, SoftwareUpdateScreen.open);
+  add(top, l10n.supportOneDialer, page(const SupportScreen()), rows: [l10n.leaveATip]);
   add(top, l10n.helpFeedback, page(const HelpFeedbackScreen()));
   add(top, l10n.privacyPolicy, (_) => TelecomBridge.instance.openSystemSettings('url:${AppInfo.privacyPolicyUrl}'));
   add(top, l10n.aboutOneDialer, page(const AboutScreen()));

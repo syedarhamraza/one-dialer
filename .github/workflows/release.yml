@@ -132,6 +132,25 @@ jobs:
           releaseName: ${{ steps.build.outputs.name }} (${{ steps.build.outputs.code }})
           whatsNewDirectory: ${{ runner.temp }}/whatsnew
 
+      # #announcements gets Play's notes (changelog.json, which never names the recorder), not
+      # the GitHub release, whose notes and files do. Skipped without the secret.
+      - name: Post to Discord
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_RELEASE_WEBHOOK }}
+          NAME: ${{ steps.build.outputs.name }}
+          CODE: ${{ steps.build.outputs.code }}
+          TRACK: ${{ inputs.track }}
+        run: |
+          [ -n "$WEBHOOK" ] || exit 0
+          where=$(case "$TRACK" in production) echo "Google Play";; beta) echo "open testing on Google Play";; *) echo "closed testing on Google Play";; esac)
+          # Posted at upload, before Play's review (and production waits as a draft), so it says it's on its way.
+          head="**One Dialer $NAME** (build $CODE) is on its way to $where. It arrives as a Play update once Google approves it, usually within a day or two."
+          # Discord allows 2000 characters: whole lines while they fit, then the website's notes.
+          jq -n --arg head "$head" --slurpfile log site/public/changelog.json \
+            '{content: ((reduce ($log[0].changes[] | "• " + .) as $l ($head + "\n"; if (. + "\n" + $l | length) <= 1850 then . + "\n" + $l else . end))
+              + "\n\nAll notes: <https://syedarhamraza.github.io/one-dialer/>"), allowed_mentions: {parse: []}}' |
+            curl -fsS -H 'Content-Type: application/json' -d @- "$WEBHOOK" || echo "::warning::Couldn't post to Discord."
+
       # Never marked "pre-release": GitHub's releases/latest/download/one-dialer-recorder.apk
       # link, which the docs give out, skips pre-releases.
       - name: GitHub release with the recorder

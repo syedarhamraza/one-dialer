@@ -67,7 +67,7 @@ Banking apps refuse to open while Developer options, USB or Wireless debugging i
   - It then has the helper open the call audio for half a second.
 - **Proof from real calls:** `AudioPipeline` keeps the loudest sample read before the Leveler. Setup's Ready hero shows the last call's result (recorded with sound, silent, or not recorded). A silent or failed last call turns the hero red.
 - **Watchdog** (`shell/Watchdog.kt`): a persisted JobScheduler job runs every 6 hours while paired. It calls `ShellHelper.restart`, which starts a stopped helper or posts the "tap to start" notification.
-- **Share diagnostics:** builds a plain-text report (versions, phone, setup flags, last check and last call, the last 50 `OneRecorder` log lines) and opens the share sheet. Nothing leaves the phone unless the user shares it.
+- **Logs and report:** One Recorder writes its log to two rolling 256 KB files in its own storage (`RecLog`, with a crash catcher), and the helper writes its stderr to `/data/local/tmp/one-recorder.log`, which One Recorder copies over Wireless debugging before each start and from the running helper (`log` request) when a report is made. Setup › Logs and report shows the newest lines and sends the report (versions, phone, setup flags, last check and last call, both logs) by email, the share sheet or a GitHub issue (log copied to paste in). Lines carry no numbers or names, and `RecLog.mask` hides any run of 6+ digits. Nothing leaves the phone unless the user sends it.
 
 Goal (original): a second build of One Dialer, downloaded from the website, that records calls. The Google Play build never contains any recording code or permissions.
 
