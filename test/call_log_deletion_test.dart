@@ -19,7 +19,7 @@ void main() {
     repo.calls.value = native.map(CallLogEntry.fromMap).toList();
     bridge.onCallLogChanged = null;
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-    messenger.setMockMethodCallHandler(const MethodChannel('com.syedarhamraza.dialer/data'), (call) async {
+    messenger.setMockMethodCallHandler(const MethodChannel('com.syedarhamraza.dialer/call_log'), (call) async {
       if (call.method == 'getCallLog') return native;
       return null;
     });

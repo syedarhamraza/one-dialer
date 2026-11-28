@@ -17,6 +17,9 @@ class TelecomBridge {
   /// Big reads, answered off Android's main thread (see `CallBridge.readData`).
   static const _data = MethodChannel('com.syedarhamraza.dialer/data');
 
+  /// The call log's own queue, so Recents never waits behind the contacts read.
+  static const _callLog = MethodChannel('com.syedarhamraza.dialer/call_log');
+
   /// Fires when the app is opened from a `tel:` link while already running.
   void Function(String number)? onDialIntent;
 
@@ -275,7 +278,7 @@ class TelecomBridge {
   // Call log
   /// Newest first, up to 500 calls. Throws [PlatformException] `NO_PERMISSION` without call-log access.
   Future<List<Map<Object?, Object?>>> getCallLog() async =>
-      await _data.invokeListMethod<Map<Object?, Object?>>('getCallLog') ?? const [];
+      await _callLog.invokeListMethod<Map<Object?, Object?>>('getCallLog') ?? const [];
 
   /// Every contact, sorted by name: `[id, displayName, first, middle, last, starred,
   /// [[number, label, customLabel, isPrimary]], ["type|name"]]` (`ContactsSource.kt`).
