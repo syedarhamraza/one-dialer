@@ -77,9 +77,9 @@ object CallNotifications {
             context, 0, InCallActivity.intent(context),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
-        // Answer opens the call screen, as on stock Android. Where the skin has a call capsule
-        // (vivo's island, ColorOS's), answering unlocked keeps the call there instead.
-        val answer = if ((vivoIsland || oplusCapsule) && unlocked && !screenOpening) {
+        // Answer opens the call screen, as on stock Android. On vivo (any Android, Banner or Full
+        // screen) and in ColorOS's capsule, answering unlocked keeps the call in the notification.
+        val answer = if (unlocked && (vivo || (oplusCapsule && !screenOpening))) {
             CallActionReceiver.pendingIntent(context, CallActionReceiver.ACTION_ANSWER_IN_ISLAND, callId)
         } else {
             CallActionReceiver.answerIntent(context, callId)
@@ -216,6 +216,11 @@ object CallNotifications {
         capsuleAndroid &&
             Build.MANUFACTURER.equals("vivo", ignoreCase = true) &&
             NotificationManager::class.java.declaredMethods.any { it.name == "getSceneStatus" }
+    }
+
+    /** Any vivo, island or not; the beta's stock property opts out as for the capsules. */
+    private val vivo: Boolean by lazy {
+        Build.MANUFACTURER.equals("vivo", ignoreCase = true) && systemProperty("debug.onedialer.stock") != "1"
     }
 
     /**
