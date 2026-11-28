@@ -154,12 +154,11 @@ object CallManager {
 
     private fun serialize(id: String, call: Call): Map<String, Any?> {
         val details = call.details
-        val name = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            details.contactDisplayName ?: details.callerDisplayName
-        } else {
-            details.callerDisplayName
-        }
         val number = details.handle?.schemeSpecificPart
+        // A vault contact isn't in Android's contacts, so Telecom has no name for it.
+        val saved = (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) details.contactDisplayName else null)
+            ?: service?.let { Vault.nameFor(it, number) }
+        val name = saved ?: details.callerDisplayName
         val display = service?.let { NumberDisplay.of(it, number) }
         return mapOf(
             "id" to id,

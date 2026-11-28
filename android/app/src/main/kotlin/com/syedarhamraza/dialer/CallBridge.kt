@@ -90,6 +90,12 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
     /** Set by [MainActivity]: the system ringtone picker; the result is the picked URI, "" for Default, null if cancelled. */
     var ringtonePicker: ((String?, MethodChannel.Result) -> Unit)? = null
 
+    /** Set by [MainActivity]: the unlock prompt ([AppLock.authenticate]) with this title. */
+    var authenticator: ((String, MethodChannel.Result) -> Unit)? = null
+
+    /** Set by [MainActivity]: hides the app from the recents thumbnail while App lock is on. */
+    var secureSetter: ((Boolean) -> Unit)? = null
+
     /** A `tel:` number the app was opened with, handed to Flutter once. */
     var pendingDialNumber: String? = null
 
@@ -243,6 +249,25 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
             "pickRingtone" -> ringtonePicker?.invoke(call.argument<String>("current"), result)
                 ?: result.error("NO_ACTIVITY", "Ringtones can only be picked from the main screen", null)
             "pickVcf" -> vcfPicker?.invoke(result)
+            "appLockAvailable" -> result.success(AppLock.available(context))
+            "authenticate" -> authenticator?.invoke(call.argument<String>("title")!!, result) ?: result.success(false)
+            "setSecure" -> {
+                secureSetter?.invoke(call.argument<Boolean>("on") == true)
+                result.success(null)
+            }
+            "expectingReturn" -> result.success(AppLock.expectReturn)
+            "vaultRead" -> inBackground(result) { com.syedarhamraza.dialer.telecom.Vault.read(context) }
+            "vaultAdd" -> inBackground(result) {
+                com.syedarhamraza.dialer.telecom.Vault.add(
+                    context, call.argument<String>("name").orEmpty(), call.argument<List<String>>("numbers").orEmpty(),
+                    call.argument<String>("vcard")!!,
+                )
+            }
+            "vaultRemove" -> inBackground(result) {
+                com.syedarhamraza.dialer.telecom.Vault.remove(
+                    context, call.argument<String>("id")!!, call.argument<Boolean>("restoreCalls") == true,
+                )
+            }
                 ?: result.error("NO_ACTIVITY", "Files can only be picked from the main screen", null)
             "exportSettings", "importSettings" -> settingsBackup?.invoke(call.method == "exportSettings", result)
                 ?: result.error("NO_ACTIVITY", "Files can only be picked from the main screen", null)

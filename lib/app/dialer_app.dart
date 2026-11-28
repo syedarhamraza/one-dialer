@@ -5,9 +5,11 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import '../core/contacts/contacts_repository.dart';
 import '../core/diagnostics/lag_diagnostics.dart';
 import '../core/prefs/dialer_prefs.dart';
+import '../core/security/app_lock.dart';
 import '../core/telecom/telecom_bridge.dart';
 import '../features/blocking/blocking_repository.dart';
 import '../features/recents/call_log_repository.dart';
+import '../features/security/lock_screen.dart';
 import '../features/setup/onboarding_screen.dart';
 import '../features/setup/setup_screen.dart';
 import '../l10n/l10n.dart';
@@ -133,16 +135,22 @@ class _SetupGateState extends State<_SetupGate> with WidgetsBindingObserver {
   bool _setupShown = false;
   bool _onboarding = false;
 
+  /// App lock's cover, on top of every page while [AppLock.locked].
+  LockRoute? _lockRoute;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    AppLock.instance.locked.addListener(_syncLock);
     _check();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) AppLock.instance.left().ignore();
     if (state == AppLifecycleState.resumed) {
+      AppLock.instance.returned();
       _check(); // the role can be changed in Settings
       TelecomBridge.instance.getSims().ignore(); // and the SIMs, read ahead for the SIM menu (quickSims)
     }
@@ -151,7 +159,28 @@ class _SetupGateState extends State<_SetupGate> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    AppLock.instance.locked.removeListener(_syncLock);
     super.dispose();
+  }
+
+  /// Setup and onboarding show nothing private, so only the shell gets locked.
+  void _syncLock() {
+    if (!mounted) return;
+    final lock = AppLock.instance.locked.value && _isDefault == true && !_onboarding;
+    if (lock == (_lockRoute != null)) return;
+    final navigator = Navigator.of(context);
+    if (lock) {
+      navigator.push(_lockRoute = LockRoute());
+    } else {
+      final route = _lockRoute!;
+      _lockRoute = null;
+      // On top it fades into the app; under a page pushed while locked (a tel: link), it just goes.
+      if (route.isCurrent && !MediaQuery.disableAnimationsOf(context)) {
+        navigator.pop();
+      } else {
+        navigator.removeRoute(route);
+      }
+    }
   }
 
   Future<void> _check() async {
@@ -186,6 +215,7 @@ class _SetupGateState extends State<_SetupGate> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncLock());
     return switch (_isDefault) {
       null => const Scaffold(),
       true when _onboarding => OnboardingScreen(onDone: _onboarded),

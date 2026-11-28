@@ -26,6 +26,7 @@ import 'display_settings_screen.dart';
 import 'help_feedback_screen.dart';
 import 'settings_search.dart';
 import 'software_update_screen.dart';
+import 'privacy_screen.dart';
 import 'support_screen.dart';
 import 'vip_calls_screen.dart';
 import '../../l10n/l10n.dart';
@@ -240,6 +241,11 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           headerTitle: l10n.sectionBlocking,
           items: [
             OneUIGroupItem(title: l10n.blockAndFilter, onTap: () => _push(const BlockingScreen())),
+            OneUIGroupItem(
+              title: l10n.privacySecurity,
+              subtitle: l10n.privacySecuritySubtitle,
+              onTap: () => _push(const PrivacyScreen()),
+            ),
             OneUIGroupItem(
               title: l10n.callerIdentification,
               subtitle: l10n.callerIdSpamApp,

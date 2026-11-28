@@ -38,7 +38,7 @@ String accountLabel(AppLocalizations l10n, String key) {
 /// to Android's default.
 // shortcut: "This device" also goes to Android's default (the package can't create a
 // no-account contact; the editor makes one natively), upgrade if imports must stay local.
-Account? _saveAccount() {
+Account? saveAccount() {
   final key = DialerPrefs.instance.saveAccount.value;
   if (key == null || key.startsWith('|')) return null;
   final i = key.indexOf('|');
@@ -126,7 +126,7 @@ class _ManageContactsScreenState extends State<ManageContactsScreen> {
     if (!ok || !mounted) return;
     setState(() => _busy = true);
     try {
-      await FlutterContacts.createAll(contacts, account: _saveAccount());
+      await FlutterContacts.createAll(contacts, account: saveAccount());
       if (mounted) {
         OneUIToast.show(context, context.l10n.contactsImported(contacts.length));
       }
@@ -279,7 +279,7 @@ class _SimContactsScreenState extends State<_SimContactsScreen> {
   Future<void> _import(List<Contact> missing) async {
     setState(() => _busy = true);
     try {
-      await FlutterContacts.createAll(missing, account: _saveAccount());
+      await FlutterContacts.createAll(missing, account: saveAccount());
       if (mounted) {
         OneUIToast.show(context, context.l10n.contactsImported(missing.length));
       }

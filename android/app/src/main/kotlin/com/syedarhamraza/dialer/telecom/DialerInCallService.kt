@@ -113,6 +113,9 @@ class DialerInCallService : InCallService() {
             VipRing.restore(this)
         }
         if (!CallManager.hasCalls) {
+            // Telecom writes the call log a moment after the call ends; then the vault takes its calls.
+            val app = applicationContext
+            android.os.Handler(mainLooper).postDelayed({ Thread { Vault.sweepCallLog(app) }.start() }, 3_000)
             CallNotifications.cancelIncoming(this)
             // The app ran: a good moment for a due auto backup (never during a call).
             com.syedarhamraza.dialer.AutoBackup.runIfDue(this)

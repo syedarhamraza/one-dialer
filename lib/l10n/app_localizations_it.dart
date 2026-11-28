@@ -2523,4 +2523,109 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get mergeGroupsMessage =>
       'Ogni gruppo diventerà un unico contatto, con tutti i numeri e i dettagli.';
+
+  @override
+  String get privacySecurity => 'Privacy e sicurezza';
+
+  @override
+  String get privacySecuritySubtitle => 'Blocco app, archivio privato';
+
+  @override
+  String get appLock => 'Blocco app';
+
+  @override
+  String get appLockSubtitle =>
+      'Chiedi impronta, volto o blocco schermo per aprire One Dialer';
+
+  @override
+  String get appLockNeedsScreenLock =>
+      'Imposta prima un blocco schermo nelle impostazioni del telefono';
+
+  @override
+  String get appLockCalls =>
+      'Le chiamate in arrivo squillano comunque e si possono rispondere anche con l\'app bloccata.';
+
+  @override
+  String get lockAfter => 'Blocca';
+
+  @override
+  String get lockImmediately => 'Subito';
+
+  @override
+  String get lockAfterOneMinute => 'Dopo 1 minuto';
+
+  @override
+  String get lockAfterFiveMinutes => 'Dopo 5 minuti';
+
+  @override
+  String get appLocked => 'One Dialer è bloccato';
+
+  @override
+  String get unlock => 'Sblocca';
+
+  @override
+  String get unlockOneDialer => 'Sblocca One Dialer';
+
+  @override
+  String get privateVault => 'Archivio privato';
+
+  @override
+  String get privateVaultSubtitle =>
+      'Contatti e chiamate visibili solo a One Dialer';
+
+  @override
+  String get unlockPrivateVault => 'Sblocca archivio privato';
+
+  @override
+  String get moveToVault => 'Sposta nell\'archivio privato';
+
+  @override
+  String moveToVaultTitle(String name) {
+    return 'Spostare $name nell\'archivio privato?';
+  }
+
+  @override
+  String get moveToVaultMessage =>
+      'Il contatto e la sua cronologia chiamate escono dai contatti e dal registro chiamate del telefono, così le altre app non li vedono. Le sue chiamate squillano comunque e mostrano il nome.';
+
+  @override
+  String get move => 'Sposta';
+
+  @override
+  String get movedToVault => 'Spostato nell\'archivio privato';
+
+  @override
+  String get moveOutOfVault => 'Riporta nei contatti';
+
+  @override
+  String get movedOutOfVault => 'Riportato nei contatti';
+
+  @override
+  String get couldNotOpenVault => 'Impossibile aggiornare l\'archivio privato';
+
+  @override
+  String get deleteFromVaultMessage =>
+      'Elimina definitivamente il contatto e le sue chiamate dall\'archivio.';
+
+  @override
+  String get vaultEmpty =>
+      'Nessun contatto privato. Apri un contatto e scegli ⋮ › Sposta nell\'archivio privato.';
+
+  @override
+  String get vaultCalls => 'Cronologia chiamate';
+
+  @override
+  String get vaultImport => 'Importa nell\'archivio';
+
+  @override
+  String get vaultExportMessage =>
+      'Il file esportato non è crittografato: chiunque lo abbia può leggere questi contatti.';
+
+  @override
+  String get vaultUninstallNote =>
+      'L\'archivio resta solo su questo telefono, crittografato, e non viene mai incluso nei backup. Disinstallare One Dialer o cancellarne i dati lo elimina: esportalo prima.';
+
+  @override
+  String get appLockedHint =>
+      'Usa impronta, volto o blocco schermo per aprirlo';
 }

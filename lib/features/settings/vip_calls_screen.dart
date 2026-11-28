@@ -101,7 +101,9 @@ class _VipCallsScreenState extends State<VipCallsScreen> with WidgetsBindingObse
             OneUIGroupItem(
               title: l10n.vipContacts,
               onTap: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => RecordContactsScreen(prefKey: 'vipContacts', title: l10n.vipContacts)),
+                MaterialPageRoute<void>(
+                  builder: (_) => RecordContactsScreen(prefKey: 'vipContacts', title: l10n.vipContacts),
+                ),
               ),
             ),
           ],

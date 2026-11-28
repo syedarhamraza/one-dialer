@@ -123,6 +123,7 @@ object CallLogSource {
     /** Newest first. `simId` matches the ids `CallBridge.getSims` returns. */
     fun query(context: Context): List<Map<String, Any?>> {
         fixBlocked(context)
+        Vault.sweepCallLog(context)
         val args = Bundle().apply {
             putStringArray(android.content.ContentResolver.QUERY_ARG_SORT_COLUMNS, arrayOf(Calls.DATE))
             putInt(
@@ -203,6 +204,7 @@ object CallLogSource {
     /** Unseen missed calls, newest first: (number, cached name) pairs. */
     fun unseenMissed(context: Context): List<Triple<String, String?, Long>> {
         fixBlocked(context)
+        Vault.sweepCallLog(context)
         val out = mutableListOf<Triple<String, String?, Long>>()
         context.contentResolver.query(
             readUri,

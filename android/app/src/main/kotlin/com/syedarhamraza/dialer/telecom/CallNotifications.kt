@@ -69,6 +69,7 @@ object CallNotifications {
         val details = call.details
         // Saved contact name first (Telecom looks it up), like the call screen.
         val caller = (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) details.contactDisplayName else null)
+            ?: Vault.nameFor(context, details.handle?.schemeSpecificPart)
             ?: details.callerDisplayName?.takeIf { it.isNotBlank() }
             ?: details.handle?.schemeSpecificPart?.takeIf { it.isNotBlank() }
             ?: res.getString(R.string.unknown)
@@ -274,6 +275,7 @@ object CallNotifications {
         val details = call.details
         val caller = (if (details.hasProperty(Call.Details.PROPERTY_CONFERENCE)) res.getString(R.string.conference_call) else null)
             ?: (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) details.contactDisplayName else null)
+            ?: Vault.nameFor(context, details.handle?.schemeSpecificPart)
             ?: details.callerDisplayName?.takeIf { it.isNotBlank() }
             ?: details.handle?.schemeSpecificPart?.takeIf { it.isNotBlank() }
             ?: res.getString(R.string.unknown)

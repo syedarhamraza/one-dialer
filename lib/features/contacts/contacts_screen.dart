@@ -23,6 +23,7 @@ import '../settings/settings_screen.dart';
 import '../../core/telecom/telecom_bridge.dart';
 import '../../widgets/swipe_action.dart';
 import 'call_contact.dart';
+import '../vault/vault.dart';
 import 'contact_actions.dart';
 import 'contact_details_screen.dart';
 import 'contact_sections.dart';
@@ -210,6 +211,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
     width: 250,
     items: [
       OneUIFloatingMenuItem(label: context.l10n.select, onTap: _startSelection),
+      OneUIFloatingMenuItem(label: context.l10n.privateVault, onTap: () => PrivateVault.open(context)),
       OneUIFloatingMenuItem(
         label: context.l10n.manageContacts,
         onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ManageContactsScreen())),

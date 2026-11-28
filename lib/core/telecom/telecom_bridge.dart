@@ -109,6 +109,32 @@ class TelecomBridge {
   /// A .vcf file's text from the files app; null when cancelled.
   Future<String?> pickVcf() => _methods.invokeMethod<String>('pickVcf');
 
+  /// App lock and the private vault need a screen lock (PIN, pattern or password) on the phone.
+  Future<bool> appLockAvailable() async => await _methods.invokeMethod<bool>('appLockAvailable') ?? false;
+
+  /// The phone's fingerprint, face or screen-lock prompt under [title]; true when unlocked.
+  Future<bool> authenticate(String title) async =>
+      await _methods.invokeMethod<bool>('authenticate', {'title': title}) ?? false;
+
+  /// Hides the app from the recents thumbnail (and, before Android 13, from screenshots).
+  Future<void> setSecure(bool on) => _methods.invokeMethod('setSecure', {'on': on});
+
+  /// True while one of our own pickers or the unlock prompt covers the app.
+  Future<bool> expectingReturn() async => await _methods.invokeMethod<bool>('expectingReturn') ?? false;
+
+  /// The private vault (`Vault.kt`): `contacts` (id, name, numbers, vcard) and `calls` (number,
+  /// date, duration, type as the call log's TYPE), newest first.
+  Future<Map<Object?, Object?>> vaultRead() async =>
+      await _methods.invokeMapMethod<Object?, Object?>('vaultRead') ?? const {};
+
+  /// Adds a contact to the vault (its calls in the call log move with it); returns its id.
+  Future<String> vaultAdd(String name, List<String> numbers, String vcard) async =>
+      (await _methods.invokeMethod<String>('vaultAdd', {'name': name, 'numbers': numbers, 'vcard': vcard}))!;
+
+  /// Takes a contact out of the vault; its calls go back to the call log when [restoreCalls].
+  Future<void> vaultRemove(String id, {required bool restoreCalls}) =>
+      _methods.invokeMethod('vaultRemove', {'id': id, 'restoreCalls': restoreCalls});
+
   /// Back up now: writes the one backup file in the backup folder, over the last one (picking the
   /// folder first if there is none). True when saved, false when the folder can't be written,
   /// null when the folder pick was cancelled.

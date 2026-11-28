@@ -21,6 +21,7 @@
     <string name="speaker">Speaker</string>
     <string name="speaker_off">Speaker off</string>
     <string name="missed_call">Missed call</string>
+    <string name="private_contact">Private contact</string>
     <plurals name="missed_calls">
         <item quantity="one">%d missed call</item>
         <item quantity="other">%d missed calls</item>

@@ -20,6 +20,7 @@
     <string name="speaker">Hoparlör</string>
     <string name="speaker_off">Hoparlör kapalı</string>
     <string name="missed_call">Cevapsız arama</string>
+    <string name="private_contact">Özel kişi</string>
     <plurals name="missed_calls">
         <item quantity="one">%d cevapsız arama</item>
         <item quantity="other">%d cevapsız arama</item>
