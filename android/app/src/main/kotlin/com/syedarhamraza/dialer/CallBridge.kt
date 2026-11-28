@@ -50,6 +50,9 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
     // Big reads answer from a background task queue: a result sent from the main thread is
     // encoded there, and a large contact list froze both engines for seconds.
     private val data = MethodChannel(messenger, DATA_CHANNEL, StandardMethodCodec.INSTANCE, messenger.makeBackgroundTaskQueue())
+    // The call log on a queue of its own: behind the contacts read (seconds with many contacts),
+    // Recents opened blank; until beta 7 each read had its own thread.
+    private val callLogData = MethodChannel(messenger, CALL_LOG_CHANNEL, StandardMethodCodec.INSTANCE, messenger.makeBackgroundTaskQueue())
     private val diagnostics = LagDiagnostics.attach(context, messenger, engineName)
     private val events = EventChannel(messenger, EVENT_CHANNEL)
     private var listener: (() -> Unit)? = null
@@ -99,6 +102,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
     init {
         methods.setMethodCallHandler(this)
         data.setMethodCallHandler { call, result -> readData(call, result) }
+        callLogData.setMethodCallHandler { call, result -> readData(call, result) }
         events.setStreamHandler(this)
         watchCallLog()
         if (engineName == "main") NumberDisplay.preload(context.applicationContext)
@@ -116,6 +120,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
         if (watchingCallLog) context.contentResolver.unregisterContentObserver(callLogObserver)
         methods.setMethodCallHandler(null)
         data.setMethodCallHandler(null)
+        callLogData.setMethodCallHandler(null)
         events.setStreamHandler(null)
     }
 
@@ -739,6 +744,7 @@ class CallBridge(private val context: Context, messenger: BinaryMessenger, priva
     companion object {
         const val METHOD_CHANNEL = "com.syedarhamraza.dialer/telecom"
         const val DATA_CHANNEL = "com.syedarhamraza.dialer/data"
+        const val CALL_LOG_CHANNEL = "com.syedarhamraza.dialer/call_log"
         const val EVENT_CHANNEL = "com.syedarhamraza.dialer/call_state"
         private const val TONE_VOLUME = 80
         private const val TONE_LENGTH_MS = 150
